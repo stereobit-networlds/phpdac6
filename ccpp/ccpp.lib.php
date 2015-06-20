@@ -179,7 +179,7 @@ class CCPP
             fwrite(STDERR, '#error Not implemented execution method "include"');
             exit (1);
         }
-        else {
+        else { 
             $evalCode = $this->parseFilename($filename, $offset);
             $evalCode = '?>' . $evalCode . ((substr($evalCode, -2) == '?>')?'<?php ':'');
             return eval($evalCode);
