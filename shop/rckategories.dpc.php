@@ -77,6 +77,7 @@ class rckategories extends shkategories {
 	var $editmode;
 	var $charts;
 	var $ajaxLink, $hasgraph, $urlbase;	
+	var $cptemplate;
 
 	function rckategories() {
 	
@@ -108,7 +109,10 @@ class rckategories extends shkategories {
       $this->cseparator = $csep ? $csep : '^';	
 	  
 	  $this->charts = new swfcharts;	
-	  $this->ajaxLink = seturl('t=cpvstatsshow&statsid=');		  
+	  $this->ajaxLink = seturl('t=cpvstatsshow&statsid=');
+
+	  $this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);	  
+		  
 	}
 	
 	function event($event=null) {
@@ -883,7 +887,7 @@ function edit_cat() {
 		foreach ($cats as $c) {
 		   if (trim($c)) {//$cat = str_replace(' ','_',$c);
 		       $cat = str_replace(' ','_',$c);
-		       $editurl = $this->urlbase . "cp/cpmhtmleditor.php?htmlfile=&type=.html&editmode=1&id=".$cat;
+		       $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$cat;
                $frame .= "<iframe src =\"$editurl\" width=\"100%\" height=\"450px\"><p>Your browser does not support iframes</p></iframe>";    		   
 		   }
 		}   
@@ -923,7 +927,7 @@ function edit_cat() {
 
 	   if ($cat) {//preselected cat
 		 //$editurl = seturl("t=cpeditcat&editmode=1&cat=".$cat);//$id;
-		 $editurl = $this->urlbase . "cp/cpmhtmleditor.php?htmlfile=&type=.html&editmode=1&id=".$cat;
+		 $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$cat;
 		 $init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"450px\"><p>Your browser does not support iframes</p></iframe>";    
 	   }
 	   else

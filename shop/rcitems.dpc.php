@@ -192,7 +192,7 @@ class rcitems {
 	var $url;
 	var $cseparator, $encodeimageid;
     var $editimage, $phototype;	
-	var $eshop;
+	var $eshop, $cptemplate;
 	
 	function rcitems() {
 	  $GRX = GetGlobal('GRX');		
@@ -300,6 +300,7 @@ class rcitems {
 	  $this->editimage = true;//false;
 	  $this->phototype = remote_paramload('RCITEMS','phototype',$this->path);
 	  $this->eshop = remote_paramload('RCITEMS','eshop',$this->path);
+	  $this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);	  
 	}
 	
     function event($sAction) {
@@ -358,9 +359,11 @@ class rcitems {
 			                       break;									   
 		    case 'cpvphoto'    :   break;
 		   
-		    case 'cpeditframe':    echo $this->loadframe('edtem');
-								   die();
-		                           break;	
+		    case 'cpeditframe':    //echo $this->loadframe('edtem');
+								   //die();
+								   
+		                           break;
+								   
 		    case 'cpphotoframe':   echo $this->loadframe2('phtem');
 								   die();
 		                           break;								   
@@ -403,7 +406,11 @@ class rcitems {
 		 
 		 $out = $this->title();
 		 		 
-	     switch ($action) {			 
+	     switch ($action) {	
+		 
+		    case 'cpeditframe':    $out = $this->loadframe();
+								   break;		 
+
 		    case 'cpvaddattach' :$out .= $this->add_attachment(1);
 		                         break;
 
@@ -835,7 +842,7 @@ class rcitems {
 		   unset ($wina);		
 
 		   //edit text shortcut
-		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
+		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
 		   $tout = '<iframe src ="'.$edittexturl.'" width="100%" height="550px"><p>Your browser does not support iframes</p></iframe>'; 
            $wina = new window(localize('_EDITTEXT',getlocal()),$tout);
 		   $winout .= $wina->render("center::100%::0::group_dir_body::left::0::0::");
@@ -886,7 +893,7 @@ class rcitems {
 		   unset ($wina);	
 
 		   //edit text shortcut
-		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
+		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
 		   $tout = '<iframe src ="'.$edittexturl.'" width="100%" height="550px"><p>Your browser does not support iframes</p></iframe>'; 
            $wina = new window(localize('_EDITTEXT',getlocal()),$tout);
 		   $winout .= $wina->render("center::100%::0::group_dir_body::left::0::0::");
@@ -933,7 +940,7 @@ class rcitems {
 		   unset ($wina);	
 
            //edit text shortcut
-		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
+		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
 		   $tout = '<iframe src ="'.$edittexturl.'" width="100%" height="550px"><p>Your browser does not support iframes</p></iframe>'; 
            $wina = new window(localize('_EDITTEXT',getlocal()),$tout);
 		   $winout .= $wina->render("center::100%::0::group_dir_body::left::0::0::");
@@ -1193,10 +1200,14 @@ class rcitems {
 	    else
 	      $cats[] = $cat_selected;		
 		  
-        $active_code = 	$this->getmapf('code');	
-        $editlink = $editlink ?
-		            $editlink :
-		            seturl("t=cpvphoto&editmode=1&id={".$active_code."}");
+        $active_code = 	$this->getmapf('code');
+		if ($this->cptemplate)
+			$editlink = $editlink ?
+						$editlink : "javascript:edit_item({".$active_code."});";//seturl("t=cpmhtmleditor&htmlfile=&type=.html&editmode=1&ajax=1&id={".$active_code."}");				
+			//$editlink = seturl("t=cpmhtmleditor&htmlfile=&type=.html&editmode=1&id={".$active_code."}");
+		else
+			$editlink = $editlink ?
+						$editlink :	seturl("t=cpvphoto&editmode=1&id={".$active_code."}");
 					
 		$name_active = $lan?'itmname':'itmfname'; 
 		$itmdescr = $lan?'itmdescr':'itmfdescr'; 
@@ -2666,17 +2677,32 @@ CREATE TABLE `products` (
 		//due to str id of code2..transform from rec id
 	    $sSQL = 'select ' . $this->getmapf('code') . ' from products where id='.$id;
 		$ret = $db->Execute($sSQL,2);	 			
+		//echo $sSQL, '>',$ret->fields[0]; 
 		//$id = $ret->fields[0];
 	
 	    //$editurl = seturl("t=cpvmodify&editmode=1&id=").GetReq('id');
 		//$editurl = seturl("t=cpvphoto&editmode=1&id=").$ret->fields[0];//$id;
-	    $editurl = $this->urlbase . "cp/cpmhtmleditor.php?htmlfile=&type=.html&editmode=1&id=".$ret->fields[0];
-		$frame = "<iframe src =\"$editurl\" width=\"100%\" height=\"750px\"><p>Your browser does not support iframes</p></iframe>";    
-
-		if ($ajaxdiv)
-			return $ajaxdiv.'|'.$frame;
-		else
+		
+		if ($this->cptemplate) {
+			$editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$ret->fields[0];
+			$frame = "<iframe src =\"$editurl\" width=\"100%\" height=\"450px\"><p>Your browser does not support iframes</p></iframe>";    
+            return ($frame);
+			
+			//no-frame mode
+			//$frame = GetGlobal('controller')->calldpc_method("cpmhtmleditor.editor use ".$ret->fields[0]);
+			//die('xxx'); //die at pcntl page (ajax call)
+			   			
 			return ($frame);
+		}
+		else {
+			$editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$ret->fields[0];
+			$frame = "<iframe src =\"$editurl\" width=\"100%\" height=\"750px\"><p>Your browser does not support iframes</p></iframe>";    
+       
+			if ($ajaxdiv)
+				return $ajaxdiv.'|'.$frame;
+			else
+				return ($frame);
+		}		
 	}	
 	
 	function loadframe2($ajaxdiv=null) {
@@ -2689,7 +2715,10 @@ CREATE TABLE `products` (
 		//$id = $ret->fields[0];
 	
 	    //$editurl = seturl("t=cpvmodify&editmode=1&id=").GetReq('id');
-		$editurl = seturl("t=cpvphoto&editmode=1&id=").$ret->fields[0];//$id;
+		if ($cptemplate)
+			$editurl = seturl("t=cpmvphoto&ajax=1&editmode=1&id=").$ret->fields[0];//$id;
+		else
+			$editurl = seturl("t=cpvphoto&editmode=1&id=").$ret->fields[0];//$id;
 	    //$editurl = $this->urlbase . "cp/cpmhtmleditor.php?htmlfile=&type=.html&editmode=1&id=".$ret->fields[0];
 		$frame = "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
 
@@ -2762,7 +2791,7 @@ function photo_item() {
 	   
 	   if ($item_id) {//preselected item
 		 //$editurl = $editurl = seturl("t=cpvphoto&editmode=1&id=").$item_id;
-		 $editurl = $this->urlbase . "cp/cpmhtmleditor.php?htmlfile=&type=.html&editmode=1&id=".$item_id;
+		 $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$item_id;
 		 $init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"750px\"><p>Your browser does not support iframes</p></iframe>";    
 	   }
 	   else
@@ -2781,7 +2810,7 @@ function photo_item() {
 	   /*..second call disable the first..
 	   if ($item_id) {//preselected item
 		 $editurl = $editurl = seturl("t=cpvphoto&editmode=1&id=").$item_id;
-		 //$editurl = $this->urlbase . "cp/cpmhtmleditor.php?htmlfile=&type=.html&editmode=1&id=".$item_id;
+		 //$editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$item_id;
 		 $init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"750px\"><p>Your browser does not support iframes</p></iframe>";    
 	   }
 	   else
