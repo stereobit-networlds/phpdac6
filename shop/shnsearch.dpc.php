@@ -449,7 +449,7 @@ function get_stype()
 	}
 	
 	//override
-	function searchin() {
+	function searchin($staticmenu=0) {
 	
 		//INTERNAL
 		if (defined("SHKATEGORIES_DPC")) {//sql based cats			
