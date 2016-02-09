@@ -227,7 +227,7 @@ class shcustomers {
 	   $myf_button = remote_paramload('SHCUSTOMERS','buttonclass',$this->path);
 	   self::$myf_button_class = $myf_button ? $myf_button : 'myf_button';
 	   $myf_submit = remote_paramload('SHCUSTOMERS','buttonclasssubmit',$this->path);
-	   $this->myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';
+	   self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';
 	   	   
 	   $this->rewrite = 1;	   
 	}

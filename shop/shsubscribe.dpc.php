@@ -264,12 +264,18 @@ class shsubscribe {
 	
        $db = GetGlobal('db');
        $sFormErr = GetGlobal('sFormErr');	
+	   $name = $name ? $name : 'unknown';
+	   $dlist = 'default';
 	   
        $dtime = date('Y-m-d h:i:s');	   	
 	   
 	   if (checkmail($mail))  {
           //check if mail is in database
-		  $sSQL = "SELECT email,subscribe FROM users where email=". $db->qstr($mail); 
+		  //$sSQL = "SELECT email,subscribe FROM users where email=". $db->qstr($mail); 
+		  //TRANSITION TO ULIST
+		  $sSQL = "SELECT email FROM ulists where email=". $db->qstr($mail) .
+		          " and (listname='deleted' or listname='$dlist')"; 
+		  
 	      $ret = $db->Execute($sSQL,2);
           //print_r($ret);
 		  //echo $sSQL;
@@ -278,11 +284,16 @@ class shsubscribe {
 		  
           if (!isset($mymail)) {
 
-			   $sSQL = "insert into users (email,startdate,lname,fname,subscribe,notes) " .
+			   /*$sSQL = "insert into users (email,startdate,lname,fname,subscribe,notes) " .
 			           "values (" .
 					   $db->qstr(strtolower($mail)) . "," . $db->qstr($dtime) . "," .
 					   $db->qstr('SUBSCRIBER') . "," . $db->qstr('UNKNOWN') . ",1," . $db->qstr('ACTIVE') .
-		               ")";  
+		               ")"; */ 
+			   //TRANSITION TO ULIST	
+			   $sSQL = "insert into ulists (email,startdate,active,lid,listname,name) " .
+							"values (" .
+							$db->qstr(strtolower($mail)) . "," . $db->qstr($dtime) . "," .
+							"1,1,'$dlist'," . $db->qstr($name) . ")";   			   
 			   $db->Execute($sSQL,1);	
 			   
 			   if (!$bypasscheck)	    
@@ -368,12 +379,12 @@ class shsubscribe {
 			$result = $db->Execute($sSQL,1);
 			$remove = true;
 		  }
-		  //standart remove
-		  if ($this->isin($mail)) {
+		  //standart remove DISABLED / ULIST TRANSITION
+		  /*if ($this->isin($mail)) {
 			$sSQL = "update users set subscribe=0 where email=" . $db->qstr($mail) ; 
 			$result = $db->Execute($sSQL,1);
 			$remove = true;
-		  }
+		  }*/
 		  
 		  if ($remove) {
 			SetGlobal('sFormErr',localize('_MSG8',getlocal()));

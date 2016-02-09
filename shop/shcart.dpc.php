@@ -126,7 +126,7 @@ class shcart extends cart {
 	   self::$myf_button_class = (($bc2) && (GetReq('id'))) ? $bc2 : $bc1;
 	   
 	   $myf_submit = remote_paramload('SHCART','buttonclasssubmit',$this->path);
-	   $this->myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';
+	   self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';
 	   
 	   /*$status = GetReq('status');
 	   if ($status>=0) {//change cart status when return from todolist...after register or login
@@ -213,12 +213,6 @@ class shcart extends cart {
        $this->continue_button = loadTheme('continue_b',"");	
        $this->print_button = loadTheme('print_b',"");		   
 	   
-	   //IE8
-       /*$this->order_button = loadTheme('submit_b',"",1);		   
-       $this->cancel_button = loadTheme('cancel_b',"",1);
-       $this->recalc_button = loadTheme('recalc_b',"",1);   
-       $this->submit_button = loadTheme('submit_b',"",1);//one title for all steps
-	   */
 	   $this->cartloopdata = null;   
 	   $this->looptotals = null;
 	   
@@ -342,28 +336,12 @@ class shcart extends cart {
 		                         $this->loopcartdata = $this->loopcart();
 								 $this->looptotals = $this->foot();
 
-								 
 								 //$this->submit_order(1, true); 
 								 
 								 //dispatxh paypal etc... and exit..goto payment page
 								 //echo '>',$pw;
 								 $this->dispatch_pay_engines();
-								 
-								 //never goe here in case payengines (redirection)
-		                         /*SetSessionParam('amount',null);
-								 
-		                         SetSessionParam('paypalID',null);		   
-		                         SetSessionParam('piraeusID',null);
-								 								 
-	                             SetSessionParam('subtotal',0);
-	                             SetSessionParam('total',0);
- 	                             SetSessionParam('roadway',null);
-	                             SetSessionParam('payway',null);	
- 	                             SetSessionParam('addressway',null);
-	                             SetSessionParam('customerway',null);								 	   		   
-								 SetSessionParam('invway',null);	
-								 SetSessionParam('sxolia',null);								 
-	                             SetSessionParam('qty_total',null);*/									 
+									 
 								 break;
 						 
          case "fastpick"      : if (!GetSessionParam('fastpick'))
@@ -378,17 +356,7 @@ class shcart extends cart {
 									$this->javascript();
 								}*/	
 
-	  }
-	  
-	  //override theme title
-	  //IE8
-	  /*if ($stepname = loadTheme('submit_b'.$this->status,"",1)) {//has titles per step
-	     //echo $stepname;
-	     //echo '>',$this->status;
-		 //$z = loadTheme('submit_b'.$this->status,"",1);
-		 //echo '>',$z;
-         $this->submit_button = $stepname;	    	   	   
-	  }	*/	  
+	  }  
 	    
     }
 
@@ -447,8 +415,7 @@ class shcart extends cart {
 	  //    (stristr($payway,'paypal'))) {//automated redirection
 	  if (strcmp($payway,'PAYPAL')==0) {
 	   //echo 'z',$this->autopay,'-',$this->status;
-	   if (($this->status==3) && ($this->autopay>0) &&
-	      ( (defined('SHPAYPAL_DPC')) && (seclevel('SHPAYPAL_DPC',decode(GetSessionParam('UserSecID')))) )) {
+	   if (($this->status==3) && ($this->autopay>0)/* && (defined('SHPAYPAL_DPC'))*/) {
 		  //file to procced payment
 		  //echo '---paypal';
 		  //before reset transaction 
@@ -466,7 +433,8 @@ class shcart extends cart {
           SetSessionParam('cartstatus',0); 
 	      $this->status = 0;		  
 
-	      header("Location: ".strtolower(GetSessionParam('payway')).'.php');
+	      //header("Location: ".strtolower(GetSessionParam('payway')).'.php');
+		  header("Location: ".strtolower(GetSessionParam('payway')).'/');
           exit;
 	   }
 	  }
@@ -474,8 +442,7 @@ class shcart extends cart {
 	  //if ((stristr(GetSessionParam('payway'),'piraeus')) || 
 	    //  (stristr($payway,'piraeus'))) {//automated redirection
 	   //echo 'z',$this->autopay,'-',$this->status;
-	   if (($this->status==3) && ($this->autopay>0) &&
-	      ( (defined('SHPIRAEUS_DPC')) && (seclevel('SHPIRAEUS_DPC',decode(GetSessionParam('UserSecID')))) )) {
+	   if (($this->status==3) && ($this->autopay>0) /*&& (defined('SHPIRAEUS_DPC'))*/) {
 		  //file to procced payment
 		  //echo '---piraeus';
 		  //before reset transaction
@@ -493,10 +460,33 @@ class shcart extends cart {
           SetSessionParam('cartstatus',0); 
 	      $this->status = 0;		  
 
-	      header("Location: ".strtolower(GetSessionParam('payway')).'.php');
+	      //header("Location: ".strtolower(GetSessionParam('payway')).'.php');
+		  header("Location: ".strtolower(GetSessionParam('payway')).'/');
           exit;
 	   }
 	  }
+	  elseif (strcmp($payway,'EUROBANK')==0) {	
+	   if (($this->status==3) && ($this->autopay>0) /*&& (defined('SHEUROBANK_DPC'))*/)  {
+
+ 	      $this->submit_order(null, true, 'invoice.htm');		  
+
+		  SetSessionParam('eurobankID',$this->transaction_id);
+		  
+		  if ($test2pay=remote_paramload('SHCART','test2pay',$this->path))//!!!!!TEST PAY FOR PAYPAL ETC..
+		    SetSessionParam('amount',$test2pay);
+		  else
+		    SetSessionParam('amount',$this->myfinalcost);
+
+		  //reset global params
+          SetSessionParam('TransactionID',0);
+          SetSessionParam('cartstatus',0); 
+	      $this->status = 0;		  
+
+	      //header("Location: ".strtolower(GetSessionParam('payway')).'.php');
+		  header("Location: ".strtolower(GetSessionParam('payway')).'/');
+          exit;
+	   }
+	  }	  
 	  else { //simple order
 	  
  	    $this->submit_order(1, true, 'invoice.htm'); 
@@ -1362,11 +1352,11 @@ function addtocart(id,cartdetails)
 			    case 1 : /*if ($this->cancel_button)
 						   $ta .= "<input type=\"image\" src=\"".$this->cancel_button."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
 						 else*/  
-				           $ta .= "<input type=\"submit\" name=\"FormAction\" class=\"{$this->myf_button_submit_class}\" value=\"$this->cancel\">&nbsp;";
+				           $ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->cancel\">&nbsp;";
 				         /*if ($this->submit_button)//order became submit ...change in event
 				           $ta .= "<input type=\"image\" src=\"".$this->submit_button."\" name=\"FormAction\" value=\"$this->order\">&nbsp;";
 						 else */ 
-						   $ta .= "<input type=\"submit\" name=\"FormAction\" class=\"{$this->myf_button_submit_class}\" value=\"$this->order\">&nbsp;";
+						   $ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->order\">&nbsp;";
 						 break;
 						 
                 case 2 :
@@ -1382,12 +1372,12 @@ function addtocart(id,cartdetails)
 				
 				         if (((GetSessionParam('payway')=='PAYPAL') || (GetParam('payway')=='PAYPAL')) ||
 				             ((GetSessionParam('payway')=='PIRAEUS') || (GetParam('payway')=='PIRAEUS')))  {
-				             $ta .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;"/*. $this->print_button()*/;
-   				             $ta .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
+				             $ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;"/*. $this->print_button()*/;
+   				             $ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
                          }
                          else {
-				             $ta .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
-   				             $ta .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
+				             $ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
+   				             $ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
                          }
 					     break;
 						 
@@ -1414,8 +1404,8 @@ function addtocart(id,cartdetails)
 						   $ta .= $this->transformer->showlink();						 				 
 						   
 						 /*submit*/  
-						 $ta .= "&nbsp;<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->checkout\">";
-						 //$ta .= "&nbsp;<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" value=\"$this->checkout\">";
+						 $ta .= "&nbsp;<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->checkout\">";
+						 //$ta .= "&nbsp;<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"$this->checkout\">";
 						 //$ta .= "<input type=\"hidden\" name=\"FormAction\" value=\"cart-checkout\">"; /*formaction hidden*/
 						 /*as button*/
 						 //$ta .= "&nbsp;" . $this->myf_button($this->checkout,'cart-checkout/',$this->checkout);
@@ -1438,8 +1428,8 @@ function addtocart(id,cartdetails)
              //recalculate & checkout submit buttons
              switch ($this->status) {
 			    case 1 :
-						 $out .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->order\">&nbsp;";
-				         $out .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->cancel\">";
+						 $out .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->order\">&nbsp;";
+				         $out .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">";
 						 break;
 						 
                 case 2 : //SetSessionParam('orderdataprint',$printout);
@@ -1454,18 +1444,18 @@ function addtocart(id,cartdetails)
 						   
 				         if (((GetSessionParam('payway')=='PAYPAL') || (GetParam('payway')=='PAYPAL')) ||
 				             ((GetSessionParam('payway')=='PIRAEUS') || (GetParam('payway')=='PIRAEUS')))  {
-   				           $out .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";
-				           $out .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;"/*. $this->print_button()*/;
+   				           $out .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";
+				           $out .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;"/*. $this->print_button()*/;
                          }
                          else {
-   				           $out .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";
-				           $out .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
+   				           $out .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";
+				           $out .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
                          }
 					     break;
 						 
 			   default :
 				         //auto //$buttons =  "<input type=\"submit\" class=\"myf_button\" name=\"FormAction\" value=\"$this->recalc\">&nbsp;";
-						 $buttons .= "<input type=\"submit\" class=\"{$this->myf_button_submit_class}\" name=\"FormAction\" value=\"$this->checkout\">";
+						 $buttons .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->checkout\">";
 				         $resetb = seturl("t=clearcart&a=&g=" , $this->resetcart_button) . "&nbsp;" ;
 
 						 if (is_object($this->transformer))
@@ -2210,13 +2200,23 @@ function addtocart(id,cartdetails)
 
 	       $pways = remote_arrayload('SHCART','payways',$this->path);
 		   if (!$pways) return null;
-		   //print_r($pways);
+		   
 		   $defpay = remote_arrayload('SHCART','payway_default',$this->path);
-		   $default_pay = $defpay?$defpay:0; 
+		   $default_pay = $defpay ? $defpay : 0;
+           $payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');		   
+		   
+		   //print_r($pways);
+		   //echo "-". $payway;
 		   		   
 		   foreach ($pways as $i=>$w) {
 		     $lans_titles = explode('/',$w);
-		     $choices[] = $lans_titles[getlocal()];
+			 $choice = $lans_titles[getlocal()];
+			 $choices[] = $choice;
+			 
+			 if (strcmp($choice,$payway)==0) 
+				 $default_pay = $i;
+			 else
+				 $default_pay = 0;  
 		   }
 		   //print_r($choices);
 		   $params = implode(',',$choices);
@@ -2797,6 +2797,9 @@ function addtocart(id,cartdetails)
 	  //echo 'a';
 	  if (!$ways) return null;	
 	  //echo 'b';
+	  $wp = $ways[0];
+	  $w = explode('/',$wp);
+	  $roadway = array_pop($w);
       $shipway = GetParam("roadway") ? //no table in greek
 	             (getlocal() ? //if in greek, get the english descr
 				  str_replace('/'.GetParam("roadway"),'',$ways[0]) ://standart english descr 0array ??? 
@@ -2804,7 +2807,7 @@ function addtocart(id,cartdetails)
 				  ) :
 	             (GetSessionParam("roadway") ? 
 				  GetSessionParam("roadway") : 
-				  array_pop(explode('/',$ways[0]))//standart english descr ??? 0array
+				  $roadway  //standart english descr ??? 0array
 				  );	
 	  //echo 'b',$shipway;
 	  if ($this->supershipping) {
@@ -3133,8 +3136,8 @@ function addtocart(id,cartdetails)
 		if (!$this->transaction_id) 
 			$error .= "/Invalid transaction id.";
 
-		$msg = localize('_TRANSERROR',getlocal()) . "&nbsp;" .
-		    seturl("t=cmail&department=3&subject=transaction&body=".urlencode($error),$this->carterror_mail);					 
+		$msg = localize('_TRANSERROR',getlocal()) . "&nbsp;" . "<a href='contact.php'>$this->carterror_mail</a>";
+		    //seturl("t=cmail&department=3&subject=transaction&body=".urlencode($error),$this->carterror_mail);					 
 
 		if ($tmpl) {
 		  $tokens[] = $msg; 			
@@ -4363,7 +4366,7 @@ function addtocart(id,cartdetails)
 	    $tmzid = $mytmzid?$mytmzid:0;	  
 	  
 	  if (!$date)
-		$mkd = mktime();
+		$mkd = time(); //mktime();
 	  else {
 	    $d = explode('-',$date);	
 	    $mkd = mktime(0,0,0,$d[1],$d[2],$d[0],$dst);

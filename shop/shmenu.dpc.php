@@ -171,14 +171,16 @@ class shmenu {
            else {
                 foreach ($menu as $name=>$url) {
 				    $murl = $url ? $this->make_link($url) : '#';
-					if ($space_count = $sp[$name.'-spaces'])
+					$ss = $name . '-spaces';
+					if ((isset($sp[$ss])) && ($space_count = $sp[$ss]))
 					  $name_space = str_repeat('&nbsp;', $space_count) . $name . str_repeat('&nbsp;', $space_count);
 					else  
 					  $name_space = $name;  	
 					  
                     $ret .= "<a href='$murl'>$name_space</a>";
 
-                    if ($sub_menu = $smu[$name.'-submenu']) {
+                    $mm = $name . '-submenu'; 
+                    if ((isset($smu[$mm])) && ($sub_menu = $smu[$mm])) {
 					   //echo 'a',$sub_menu;
 					   $_smenu = (array) $m[$sub_menu];
 					   $ret .= $this->render_submenu($_smenu, $subtemplate, $glue_tag);
