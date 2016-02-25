@@ -1989,6 +1989,10 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
              $tokens[] = $this->item_has_discount($rec[$item_code]);
              $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";			 
 			 
+			 $tokens[] = $rec['code1'];
+			 $tokens[] = $rec['code4'];
+			 $tokens[] = $rec['resources']; //id=30
+			 
 			 //print_r($tokens);
 			 $toprn .= $this->combine_tokens($mytemplate, $tokens, true);
 			 unset($tokens);

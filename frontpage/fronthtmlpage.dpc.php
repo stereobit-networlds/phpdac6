@@ -1664,6 +1664,12 @@ EOF;
 		return ($ret ? $ret : '_loc_');
 	}
 	
+	public function slocaleParam($param=null) {
+		$id = GetGlobal($param) ? GetGlobal($param) : GetSessionParam($param); 
+	    $ret = localize($id, getlocal());
+		return ($ret ? $ret : '_loc_');
+	}	
+	
 	
 	//UTF-8
 	
@@ -1687,6 +1693,10 @@ EOF;
 		$ret = md5($string);
 		//echo 'target:'.$ret.'<br/>';
 		return ($ret);	
+	}
+	
+	public function echostr($string=null) {
+		return ($string);
 	}
 	
 };

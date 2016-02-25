@@ -79,6 +79,20 @@ $__LOCALE['SHCART_DPC'][25]='_MYCART;My Cart;Καλάθι';
 $__LOCALE['SHCART_DPC'][26]='_VIEWCART;View cart;Καλάθι';
 $__LOCALE['SHCART_DPC'][27]='_CHECKOUT;Checkout;Ταμείο';
 
+$__LOCALE['SHCART_DPC'][28]='Eurobank;Credit card;Πιστωτική κάρτα'; //used by mchoice param
+$__LOCALE['SHCART_DPC'][29]='Piraeus;Credit card;Πιστωτική κάρτα'; //used by mchoice param
+$__LOCALE['SHCART_DPC'][30]='Paypal;Credit card;Πιστωτική κάρτα'; //used by mchoice param
+$__LOCALE['SHCART_DPC'][31]='PayOnsite;Pay on site;Πληρωμή στο κατάστημά μας';//used by mchoice param
+$__LOCALE['SHCART_DPC'][32]='BankTransfer;Bank transfer;Κατάθεση σε τραπεζικό λογαριασμό';//used by mchoice param
+$__LOCALE['SHCART_DPC'][33]='PayOndelivery;Pay on delivery;Αντικαταβολή';//used by mchoice param
+$__LOCALE['SHCART_DPC'][34]='Invoice;Invoice;Τιμολόγιο';//used by mchoice param
+$__LOCALE['SHCART_DPC'][35]='Receipt;Receipt;Απόδειξη';//used by mchoice param
+$__LOCALE['SHCART_DPC'][36]='CompanyDelivery;Our Delivery Service;Διανομή με όχημα της εταιρείας (εντός θεσσαλονίκης)';//used by mchoice param
+$__LOCALE['SHCART_DPC'][37]='Logistics;3d Party Logistic Service;Μεταφορική εταιρεία';//used by mchoice param
+$__LOCALE['SHCART_DPC'][38]='Courier;Courier;Courier';//used by mchoice param
+$__LOCALE['SHCART_DPC'][39]='CustomerDelivery;Self Service;Παραλαβή απο το κατάστημα μας';//used by mchoice param
+
+
 class shcart extends cart {
 
 	var $uniname2;
@@ -687,8 +701,8 @@ function addtocart(id,cartdetails)
        //$orderdataprint = GetSessionParam('orderdataprint');
 	   $myuser = GetGlobal('UserID');	
        $user = decode($myuser);
-       $pways = remote_arrayload('SHCART','payways',remote_paramload('SHELL','prpath',$this->path));
-       $rways = remote_arrayload('SHCART','roadways',remote_paramload('SHELL','prpath',$this->path));
+       $pways = remote_arrayload('SHCART','payways',$this->path);
+       $rways = remote_arrayload('SHCART','roadways',$this->path);
        $payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
        $roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
        $invway = GetParam('invway')?GetParam('invway'):GetSessionParam('invway');	
@@ -2034,21 +2048,23 @@ function addtocart(id,cartdetails)
     }
 
     //called with trid from payengines when success to send the mails
-	function goto_mailer($trid=null, $simplebody=false, $invoice_template=null) {
+	function goto_mailer($trid=null, $simplebody=false, $invoice_template=null, $invoice_subject=null) {
+		
+		$this->transaction_id = $trid ? $trid : $this->transaction_id;		
 	
 	    //DO NOT RE-RENDER PRINT OUT..FOR MAIL
-	    if ($trid = $this->printout) {
+	    if ($mytrid = $this->printout) {
 			//GET IT FROM SAVED HTML TRANSACTION
 			//DONT USE trid for security reasons..
 			//GetSessionParam('TransactionID');
-			$mailout = GetGlobal('controller')->calldpc_method('shtransactions.getTransactionHtml use '.$trid);
+			$mailout = GetGlobal('controller')->calldpc_method('shtransactions.getTransactionHtml use '.$mytrid);
 			//SetSessionParam('printout',null); // NO reset
 			//return ($out);
 		}
         else {		
 	
 	      $headtitle = paramload('SHELL','urltitle');	
-		  $this->transaction_id = $trid?$trid:$this->transaction_id;
+
 	      //template
 	      $cart_template = $invoice_template ? $invoice_template : "shcartmail.htm";
 	      $template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
@@ -2084,14 +2100,14 @@ function addtocart(id,cartdetails)
 		   
 			//init tokens
 			$invoice_tokens = array();
-			$invoice_tokens['trid'] = $this->transaction_id;
-			$invoice_tokens['payway'] = GetSessionParam('payway');
-			$invoice_tokens['roadway'] = GetSessionParam('roadway');
-			$invoice_tokens['invway'] = GetSessionParam('invway');
+			$invoice_tokens['trid']       = $this->transaction_id;
+			$invoice_tokens['payway']     = localize(GetSessionParam('payway'), getlocal());
+			$invoice_tokens['roadway']    = localize(GetSessionParam('roadway'), getlocal());
+			$invoice_tokens['invway']     = localize(GetSessionParam('invway'), getlocal());
 			$invoice_tokens['addressway'] = GetSessionParam('addressway');
-			$invoice_tokens['sxolia'] = GetSessionParam('sxolia');		   
-			$invoice_tokens['cusdata'] = (array) GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use +++1');//array();	  
-			$invoice_tokens['cartdata'] = (array) $this->quickview(true); //array of array lines		   
+			$invoice_tokens['sxolia']     = GetSessionParam('sxolia');		   
+			$invoice_tokens['cusdata']    = (array) GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use +++1');//array();	  
+			$invoice_tokens['cartdata']   = (array) $this->quickview(true); //array of array lines		   
 		    
 			$x = 'notes123';//.var_export($invoice_tokens, true);
 			$date = date('d.m.y');			
@@ -2139,7 +2155,10 @@ function addtocart(id,cartdetails)
 		  }
         }//printout		  
 	   
-	    if ($ordermailsubject = remote_paramload('SHCART','ordermailsubject',$this->path)) {
+	    if ($invoice_subject!=null) {
+			$subject = $invoice_subject;
+		}	
+	    elseif ($ordermailsubject = remote_paramload('SHCART','ordermailsubject',$this->path)) {
 	        $subject = str_replace('@',$this->transaction_id,$ordermailsubject);	   
 		}
 		else
@@ -2247,7 +2266,7 @@ function addtocart(id,cartdetails)
 		 	         //hold param
                      SetSessionParam('payway',$mypway);	
 					 
-					 $subtokens[] = $mypway;
+					 $subtokens[] = localize($mypway, getlocal());
 					 
 					 if ($token) {
 						$s1 = $this->get_selection_text('payway',$subtokens,1,localize('_PWAY',getlocal()),true);
@@ -2327,7 +2346,7 @@ function addtocart(id,cartdetails)
 		 	         //hold param
                      SetSessionParam('roadway',$myrway);
 					 
-					 $subtokens[] = $myrway;
+					 $subtokens[] = localize($myrway, getlocal());
 					 $subtokens[] = '&nbsp;';
 					 
 					 if ($token) {
@@ -2425,7 +2444,7 @@ function addtocart(id,cartdetails)
 
                      SetSessionParam('invway',$myiway);
 					 
-					 $subtokens[] = $myiway;
+					 $subtokens[] = localize($myiway, getlocal());
 					 $subtokens[] = '&nbsp;';
 					 
 					 if ($token) {
@@ -2710,6 +2729,24 @@ function addtocart(id,cartdetails)
 		   }	 
 		   
 		   return ($token ? $tokens : $out); 	
+	}
+
+	//call from tmpls to add sxolia 
+    public function	addRemarks($text=null,$append=null) {
+		$sxolia = GetSessionParam('sxolia'); 
+		if ($append==true)
+			SetSessionParam('sxolia', $sxolia.$text);
+		else
+			SetSessionParam('sxolia', $text);
+		
+		return null;
+	}
+	
+	//call from tmpls to del sxolia 
+    public function	delRemarks() {
+		SetSessionParam('sxolia', '');
+		
+		return null;
 	}	
 	
 	function get_selection_text($id,$params=null,$hastitle=null,$title=null,$must_template=false) {
