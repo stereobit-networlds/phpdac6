@@ -7,9 +7,6 @@ define("RCCONTROLPANEL_DPC",true);
 
 $__DPC['RCCONTROLPANEL_DPC'] = 'rccontrolpanel';
 
-/*$ajx = GetGlobal('controller')->require_dpc('gui/ajax.dpc.php');
-require_once($ajx);*/
-
 $a = GetGlobal('controller')->require_dpc('libs/appkey.lib.php');
 require_once($a);
  
@@ -166,6 +163,13 @@ $__LOCALE['RCCONTROLPANEL_DPC'][125]='_ENTITIES;Entities;Στοιχεία';
 $__LOCALE['RCCONTROLPANEL_DPC'][126]='_categories;Sections;Κατηγορίες';
 $__LOCALE['RCCONTROLPANEL_DPC'][127]='_items;Items;Αντικείμενα';
 $__LOCALE['RCCONTROLPANEL_DPC'][128]='_configmenu;Config menu;Ρυθμίσεις menu';
+$__LOCALE['RCCONTROLPANEL_DPC'][129]='_xmlfeeds;XML feeds;XML feeds';
+$__LOCALE['RCCONTROLPANEL_DPC'][130]='_dynsql;SQL Syncs;Συγχρονισμοί';
+$__LOCALE['RCCONTROLPANEL_DPC'][131]='_bmailqueue;Mail queue;Διανομές';
+$__LOCALE['RCCONTROLPANEL_DPC'][132]='_bmailqueueadd;Subscribers;Εισαγωγή';
+$__LOCALE['RCCONTROLPANEL_DPC'][133]='_bmailsend;Send;Αποστολή';
+$__LOCALE['RCCONTROLPANEL_DPC'][134]='_bmail;e-Mail;e-Mail';
+$__LOCALE['RCCONTROLPANEL_DPC'][136]='_ITEMCOLLECTION;Collect;Συλλογή';
 
 class rccontrolpanel {
 
@@ -3784,7 +3788,7 @@ EOF;
 		return ($tokens);
      else 
 		return (implode('',$tokens));
-    }			
+    }		
 	
 	public function templatepanel($init=false) {
 		//echo 'z';
