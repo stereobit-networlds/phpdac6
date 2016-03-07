@@ -19,11 +19,13 @@ $__EVENTS['SHKATALOGMEDIA_DPC'][96]='sitemap';
 $__EVENTS['SHKATALOGMEDIA_DPC'][97]='feed';
 $__EVENTS['SHKATALOGMEDIA_DPC'][98]='showimage';
 $__EVENTS['SHKATALOGMEDIA_DPC'][99]='shkatalogmedia';
+$__EVENTS['SHKATALOGMEDIA_DPC'][100]='kfilter';
 
 $__ACTIONS['SHKATALOGMEDIA_DPC'][96]='sitemap';
 $__ACTIONS['SHKATALOGMEDIA_DPC'][97]='feed';
 $__ACTIONS['SHKATALOGMEDIA_DPC'][98]='showimage';
 $__ACTIONS['SHKATALOGMEDIA_DPC'][99]='shkatalogmedia';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][100]='kfilter';
 
 $__LOCALE['SHKATALOGMEDIA_DPC'][0]='SHKATALOGMEDIA_DPC;Catalogue;Καταλογος';
 $__LOCALE['SHKATALOGMEDIA_DPC'][1]='pcs;pcs;τμχ';
@@ -43,6 +45,7 @@ $__LOCALE['SHKATALOGMEDIA_DPC'][14]='_ADDITIONALINFO;Additional Informations;Π�
 $__LOCALE['SHKATALOGMEDIA_DPC'][15]='_REVIEWS;Reviews;Αναφορές';
 $__LOCALE['SHKATALOGMEDIA_DPC'][16]='_WITHTAX;with tax;με ΦΠΑ';
 $__LOCALE['SHKATALOGMEDIA_DPC'][17]='_NOTAX;net value;χωρίς ΦΠΑ';
+$__LOCALE['SHKATALOGMEDIA_DPC'][18]='_MANUFACTURER;Manufacturer;Κατασκευαστής';
 
 class shkatalogmedia extends shkatalog {
 
@@ -58,6 +61,7 @@ class shkatalogmedia extends shkatalog {
 	var $asceding_class, $nav_on;
 	var $pager_current_class;
 	var $orderid, $sortdef, $bypass_order_list;
+	var $isListView;
 
 	function shkatalogmedia() {
 
@@ -143,13 +147,15 @@ class shkatalogmedia extends shkatalog {
 	  $this->orderid = $oid ? $oid : 'orderid '.$this->sortdef;	  	  
 	  
 	  $bpsl = remote_paramload('SHKATALOGMEDIA','bypasssortlist',$this->path);
-	  $this->bypass_order_list = $bpsl ? true : false;		  
+	  $this->bypass_order_list = $bpsl ? true : false;		
+
+      $this->isListView = $_COOKIE['viewmode']=='list' ? 1 : 0;	  
     }
 	
 	function event($event=null) {
 	
 	    switch ($event) {
-		
+			
 		  case 'sitemap'       : 
 								 if ($dpc = GetReq('dpc')) {//special phpdac page..read
 								   $dpccmd = str_replace(',','+',$dpc);	
@@ -182,7 +188,9 @@ class shkatalogmedia extends shkatalog {
 		                        //$id = GetGlobal('controller')->calldpc_var('shtags.tagitem');
 		                        //$this->show_photodb($id, GetReq('type'));
 
-		
+		  case 'kfilter'      : $this->my_one_item = $this->fread_list(GetReq('input')); 
+		                        $this->lightbox_js();
+		                        break;		
 		  case 'klist'        : $this->my_one_item = $this->read_list(); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1 moved in func
 		                        $this->lightbox_js();
 		                        GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use ".GetReq('cat'));		  
@@ -244,6 +252,26 @@ class shkatalogmedia extends shkatalog {
 								  $out = GetGlobal('controller')->calldpc_method("shcart.cartview");   
 		                        break;			
 		
+          case 'kfilter'      :	$myctitle = GetReq('ctitle')?GetReq('ctitle'):localize('_items',getlocal());
+		                        if (($c=GetReq('cat')) && ($c{0}!='-'))
+		                          $out = $this->nav ? $this->tree_navigation('klist','',1) : null;  
+		                        else
+		                          $out = $this->nav ? setNavigator($this->title,$myctitle) : null;	
+								  
+								//banner up  
+								if (in_array('beforeitemslist',$this->catbanner))//before
+								  $out .= $this->show_category_banner();									  
+								  
+		                        //cat as items
+								$out .= $this->nav ? $this->tree_browser() : null;
+								//items  								
+		                        $out .= $this->list_katalog(0,'kfilter');		
+								
+								//banner down
+								if (in_array('afteritemslist',$this->catbanner))//after
+								  $out .= $this->show_category_banner();														 
+								break;
+								
 		  case 'klist'        : $myctitle = GetReq('ctitle')?GetReq('ctitle'):localize('_items',getlocal());
 		                        if (($c=GetReq('cat')) && ($c{0}!='-'))
 		                          $out = $this->nav ? $this->tree_navigation('klist','',1) : null;  
@@ -418,18 +446,29 @@ class shkatalogmedia extends shkatalog {
 	    }*/		
 	}	
 	
-	//called from constructor for func call at fp..always DISABLED
+	//called from constructor for func call at fp..always 
 	function gadgets_js() {
 	
-        /*if (iniload('JAVASCRIPT'))  {	
+        if (iniload('JAVASCRIPT'))  {	
 		
 	      //$code = $this->make_swfobjects($this->xmax,$this->ymax); //no need..called in lists
-		  
+		  $code = '
+function createCookie(name,value,days) {
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime()+(days*24*60*60*1000));
+        var expires = "; expires="+date.toGMTString();
+    }
+    else var expires = "";
+    document.cookie = name+"="+value+expires+"; path=/; domain=.'.str_replace('www.','',$_SERVER['HTTP_HOST']).';"
+}		  
+';
+ 
 		  $js = new jscript;  
-		  $js->load_js("swfobject/swfobject.js");	      		      	  		  
-          //$js->load_js($code,null,1);		   			   
+		  //$js->load_js("swfobject/swfobject.js");	      		      	  		  
+          $js->load_js($code,null,1);		   			   
 		  unset ($js);
-	    }*/		
+	    }		
 	}
 	
 	function getiteminfo($id) {
@@ -628,7 +667,7 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		    case 'code:' :  $sSQL .= " ( ".$this->getmapf('code')." like '%" . $this->decodeit($parts[1]) . "%')";
 			                break;
 		  
-		  default://normal search
+		    default      : //normal search
 		  
 		    if (defined("SHNSEARCH_DPC")) {
               $sSQL .= '('. GetGlobal('controller')->calldpc_method('shnsearch.findsql use '.$text2find.'+'.$this->getmapf('code').'<@>'.$itmname.'<@>'.$itmdescr.'<@>itmremark++'.$stype.'+'.$scase);		  
@@ -706,8 +745,89 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 	   	}
 	}		
 	
+	
+	function do_filter_search($text2find,$incategory=null) {
+        $db = GetGlobal('db');	
+		$page = GetReq('page')?GetReq('page'):0;
+	    $asc = GetReq('asc')?GetReq('asc'):GetSessionParam('asc');
+	    $order = GetReq('order')?GetReq('order'):GetSessionParam('order');		
+		$stype = GetParam('searchtype'); //echo $stype;
+		$scase = GetParam('searchcase'); //echo $scase;
+		
+		//$incategory = $incategory ? $incategory : GetGlobal('controller')->calldpc_var('shtags.tagcat');//!!!!!NO RESULT
+		$incategory = $incategory?$incategory:GetReq('cat');		
+		
+	    $lan = getlocal();
+	    $itmname = $lan?'itmname':'itmfname';
+	    $itmdescr = $lan?'itmdescr':'itmfdescr';						
+	  
+	    $dataerror = null;	
+		
+		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;	
+		
+		if ($text2find) {
+		
+	      $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
+	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,".
+				$this->getmapf('code').
+				$lastprice .
+				" from products ";
+		  	
+		  $sSQL .= " where manufacturer='" . $text2find . "'";
+		  
+          if ($incategory) {	
+		    $cats = explode($this->cseparator,$incategory);
+		    foreach ($cats as $c=>$mycat)
+		      $sSQL .= ' and cat'.$c ." ='" . $mycat . "'";		  	  
+		  }
+		   							  
+		  $sSQL .= " and itmactive>0 and active>0";	
+		  $search_sql = $sSQL;	
+		  $itmnamesort = $this->bypass_order_list ? null : ",".$itmname;
+		  $sSQL .= " ORDER BY ". "{$this->orderid}";			  
+		  
+		  switch ($order) {
+		    case 1  : $sSQL .= $this->bypass_order_list ? null : ','.$itmname; break;
+			case 2  : $sSQL .= $this->bypass_order_list ? null : ','.'price0';break;  
+		    case 3  : $sSQL .= $this->bypass_order_list ? null : ','.$this->getmapf('code'); break;//must be converted to the text equal????
+			case 4  : $sSQL .= $this->bypass_order_list ? null : ','.'cat1';break;			
+			case 5  : $sSQL .= $this->bypass_order_list ? null : ','.'cat2';break;
+			case 6  : $sSQL .= $this->bypass_order_list ? null : ','.'cat3';break;			
+			case 9  : $sSQL .= $this->bypass_order_list ? null : ','.'cat4';break;						
+		    default : $sSQL .= $this->bypass_order_list ? null : ','.$itmname;
+		  }
+		  
+		  $sSQL .= $this->bypass_order_list ? null : " {$this->sortdef}";
+		  
+		  //LIMITED SEARCH
+		  if ($this->pager) {
+		    $p = $page * $this->pager;
+		    $sSQL .= " LIMIT $p,".$this->pager; //page element count
+		  }
+		  
+		  //echo $page,'>',$sSQL;		  
+		  	
+		  if ($dataerror==null) {
+		    //echo $sSQL;		  
+	        $resultset = $db->Execute($sSQL,2); 
+	   	    //print_r($resultset);
+	        $this->result = $resultset; 
+			//print_r($this->result);
+			$this->meter = $db->Affected_Rows();
+			$this->max_items = $db->Affected_Rows();
+	        $this->max_selection = $this->get_max_result($text2find);	
+			//$this->msg = '<hr>' . $this->max_selection . ' ' . localize('_founded',getlocal());
+			//echo $this->msg,'>';																		
+	      }
+		  else {
+		    $this->msg = $dataerror;		
+			//echo $dataerror;
+		  }	
+	   	}
+	}	
+	
 	//override
-	function get_max_result($text2find=null) {
+	function get_max_result($text2find=null,$filter=null) {
         $db = GetGlobal('db');
 		$cat = GetReq('cat');	  
 	    //$cat = GetGlobal('controller')->calldpc_var('shtags.tagcat');
@@ -777,7 +897,9 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		   		
 		}
 		    
-		$sSQL .= $whereClause;				 
+		$sSQL .= $whereClause;		
+		  if ($filter)
+            $sSQL .= " and manufacturer=" . $db->qstr($filter);		
 		$sSQL .= " and itmactive>0 and active>0";
 		//echo $sSQL;	 
 	    $resultset = $db->Execute($sSQL,2);
@@ -1015,19 +1137,19 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		  $sSQL .= " WHERE ";		   
 		      	  
 		  if ($cat_tree[0])
-		    $whereClause .= ' cat0'.$oper . $db->qstr(/*rawurldecode*/str_replace('_',' ',$cat_tree[0]));		
+		    $whereClause .= ' cat0'.$oper . $db->qstr(str_replace('_',' ',$cat_tree[0]));		
 		  elseif ($this->onlyincategory)
 		 	$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
 		  if ($cat_tree[1])	
-		    $whereClause .= ' and cat1'.$oper . $db->qstr(/*rawurldecode*/str_replace('_',' ',$cat_tree[1]));	
+		    $whereClause .= ' and cat1'.$oper . $db->qstr(str_replace('_',' ',$cat_tree[1]));	
 		  elseif ($this->onlyincategory)
 			$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
 		  if ($cat_tree[2])	
-		    $whereClause .= ' and cat2'.$oper . $db->qstr(/*rawurldecode*/str_replace('_',' ',$cat_tree[2]));	
+		    $whereClause .= ' and cat2'.$oper . $db->qstr(str_replace('_',' ',$cat_tree[2]));	
 		  elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
 		  if ($cat_tree[3])	
-		    $whereClause .= ' and cat3'.$oper . $db->qstr(/*rawurldecode*/str_replace('_',' ',$cat_tree[3]));
+		    $whereClause .= ' and cat3'.$oper . $db->qstr(str_replace('_',' ',$cat_tree[3]));
 		  elseif ($this->onlyincategory)
 			$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		
@@ -1047,11 +1169,7 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		      default : $sSQL .= $this->bypass_order_list ? null : ','.$itmname;
 		  }
 		  
-		  /*switch ($asc) {
-		    case 1  : $sSQL .= ' ASC'; break;
-			case 2  : $sSQL .= ' DESC';break;
-		    default : $sSQL .= " {$this->sortdef}";
-		  }*/
+
 		  $sSQL .= $this->bypass_order_list ? null : " {$this->sortdef}";
 		  
 		  if ($this->pager) {
@@ -1075,6 +1193,114 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		  else { 
 		    //echo '>',$this->max_items;
 	        $this->max_selection = $this->get_max_result();			
+			return (null);
+		  }	
+		}
+		
+	}	
+	
+	/* filter */
+	function fread_list($filter=null) {
+        $db = GetGlobal('db');	
+	    $asc = GetReq('asc')?GetReq('asc'):GetSessionParam('asc');
+	    $order = GetReq('order')?GetReq('order'):GetSessionParam('order');	
+		$page = GetReq('page')?GetReq('page'):0;
+		$negative = false;
+	    $lan = getlocal();
+	    $mylan = $lan?$lan:'0';
+	    $itmname = $mylan?'itmname':'itmfname';
+	    $itmdescr = $mylan?'itmdescr':'itmfdescr';	
+        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;			
+	   
+	    if ($this->usetablelocales)
+	      $f = $mylan; 
+	    else
+	      $f = null;		
+		
+		$cat = GetReq('cat');	
+        //$cat = GetGlobal('controller')->calldpc_var('shtags.tagcat');	//?????
+		
+		if ($cat{0}=='-') {
+		    $negative = true;
+			$cat = substr($cat,1);//drop -
+		}	 
+		
+		//echo $filter,'>';
+		
+		$oper = $negative ? ' not like ' : '='; 			
+		
+		if ($cat!=null) {		   
+		  
+		  $cat_tree = explode($this->cseparator,str_replace('_',' ',$cat)); 
+			
+		   
+	      $sSQL = "select id,sysins,code1,pricepc,price2,sysupd,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
+	              "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
+				  $this->getmapf('code').
+				  $lastprice . ",orderid" .
+				  " from products ";
+		  $sSQL .= " WHERE ";		   
+		      	  
+		  if ($cat_tree[0])
+		    $whereClause = ' cat0'.$oper . $db->qstr(str_replace('_',' ',$cat_tree[0]));		
+		  elseif ($this->onlyincategory)
+		 	$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
+		  if ($cat_tree[1])	
+		    $whereClause .= ' and cat1'.$oper . $db->qstr(str_replace('_',' ',$cat_tree[1]));	
+		  elseif ($this->onlyincategory)
+			$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
+		  if ($cat_tree[2])	
+		    $whereClause .= ' and cat2'.$oper . $db->qstr(str_replace('_',' ',$cat_tree[2]));	
+		  elseif ($this->onlyincategory)
+			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
+		  if ($cat_tree[3])	
+		    $whereClause .= ' and cat3'.$oper . $db->qstr(str_replace('_',' ',$cat_tree[3]));
+		  elseif ($this->onlyincategory)
+			$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
+		   		
+		    
+		  $sSQL .= $whereClause;
+		  
+		  if ($filter)
+            $sSQL .= " and manufacturer=" . $db->qstr($filter);
+		
+		  $sSQL .= " and itmactive>0 and active>0";			   
+		  $sSQL .= " ORDER BY {$this->orderid}";
+		  
+		  switch ($order) {
+		      case 1  : $sSQL .= $this->bypass_order_list ? null : ','.$itmname; break;
+			  case 2  : $sSQL .= $this->bypass_order_list ? null : ',price0';break;  
+		      case 3  : $sSQL .= $this->bypass_order_list ? null : ','.$this->getmapf('code'); break;//must be converted to the text equal????
+			  case 4  : $sSQL .= $this->bypass_order_list ? null : ',cat0';break;			
+			  case 5  : $sSQL .= $this->bypass_order_list ? null : ',cat1';break;
+			  case 6  : $sSQL .= $this->bypass_order_list ? null : ',cat2';break;			
+			  case 9  : $sSQL .= $this->bypass_order_list ? null : ',cat3';break;						
+		      default : $sSQL .= $this->bypass_order_list ? null : ','.$itmname;
+		  }
+		  
+		  $sSQL .= $this->bypass_order_list ? null : " {$this->sortdef}";
+		  
+		  if ($this->pager) {
+		    $p = $page * $this->pager;
+		    $sSQL .= " LIMIT $p,".$this->pager; //page element count
+		  }
+			
+	      //echo $sSQL;
+	   
+	      $resultset = $db->Execute($sSQL,2);
+	      //$ret = $db->fetch_array_all($resultset);	 
+		  //if ($this->usetablelocales) 
+	   	    //print_r($resultset);  
+	      $this->result = $resultset; 
+ 	      $this->max_items = $db->Affected_Rows();//count($this->result);
+	      
+	      if ($this->max_items==1) {
+		    //echo $this->result->fields[$this->getmapf('code')];
+			return ($this->result->fields[$this->getmapf('code')]); //to view the item without click on dir
+		  }
+		  else { 
+		    //echo '>',$this->max_items;
+	        $this->max_selection = $this->get_max_result(null, $filter);			
 			return (null);
 		  }	
 		}
@@ -1107,7 +1333,7 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 				$this->getmapf('code') .
 				$lastprice .				
-				",weight,volume,dimensions,size,color from products ";
+				",weight,volume,dimensions,size,color,manufacturer from products ";
 				
 		switch ($direction) {
 		
@@ -1180,6 +1406,7 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 	   $pcmd = $pagecmd?$pagecmd:'klist';
 		  
 	   //echo '|paging>',$this->max_items,':',$this->max_cat_items,':',$this->max_selection;
+	   
 	   $mp = $this->max_cat_items;//$this->get_max_result(); //$this->max_selection
 	   $max_page = floor($mp/$this->pager);//<<<<<<<<<<<<<<<-1;	 plus ceil  
 	   //echo $max_page.">>>>".$mp.">>>>".$this->pager;
@@ -1199,12 +1426,18 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		 $m = 0;
 		 for($p=$page+1;$p<$max_page;$p++) {
 		   if ($m<$cutter) {
-		     if ($tmplcontents) {			
-				$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,$this->rewrite);
+		     if ($tmplcontents) {
+                if ($pcmd=='kfilter') 				 
+					$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$p,$p+1,null,null,null,$this->rewrite);
+              	else		
+					$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,$this->rewrite);
 				$next .= $this->combine_template($tmplcontents,'',$next_page_no);
 			 } 
-		     else { 		   
- 		       $next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,$this->rewrite);
+		     else { 		
+                if ($pcmd=='kfilter') 				 
+					$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$p,$p+1,null,null,null,$this->rewrite);
+				else
+					$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,$this->rewrite);
 		       $next .= "|" . $next_page_no;
 			 }  
 		   }
@@ -1212,28 +1445,42 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		 }	   
 	   	 if (($next) && (!$tmplcontents)) $next .= "|";
 	     $page_next = $page + 1;
-		 if ($tmplcontents) {			
-			$next_label = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_next,/*localize('_next',getlocal())*/'&gt;',null,null,null,$this->rewrite);
+		 if ($tmplcontents) {	
+            if ($pcmd=='kfilter') 		 
+				$next_label = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$page_next,'&gt;',null,null,null,$this->rewrite);
+			else	
+				$next_label = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_next,'&gt;',null,null,null,$this->rewrite);
 			$next .= $this->combine_template($tmplcontents,'',$next_label);
 		 } 
 		 else 
-	        $next .= seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_next,/*localize('_next',getlocal())*/'&gt;',null,null,null,$this->rewrite);
+	        $next .= seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_next,'&gt;',null,null,null,$this->rewrite);
 	   }
 	    
 	   if ($page>0) {
 	     $page_prev = $page - 1;
-		 if ($tmplcontents) {		
-            $prev_label = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_prev,/*localize('_prev',getlocal())*/'&lt;',null,null,null,$this->rewrite);		 
+		 if ($tmplcontents) {	
+            if ($pcmd=='kfilter')		 
+				$prev_label = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$page_prev,'&lt;',null,null,null,$this->rewrite);		 
+			else	
+				$prev_label = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_prev,'&lt;',null,null,null,$this->rewrite);		 
 			$prev = $this->combine_template($tmplcontents,'',$prev_label);
 		 } 
-		 else 
-	        $prev = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_prev,/*localize('_prev',getlocal())*/'&lt;',null,null,null,$this->rewrite);
+		 else {
+			if ($pcmd=='kfilter') 
+				$prev = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$page_prev,'&lt;',null,null,null,$this->rewrite);
+			else
+				$prev = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_prev,'&lt;',null,null,null,$this->rewrite);
+		 }	
 		 
          //prev pages
 		 $m = $page-$cutter;
 		 for($p=0;$p<$page;$p++) {
 		   if ($p>=$m) {
-		     $prev_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,$this->rewrite);
+			 if ($pcmd=='kfilter')  
+				$prev_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$p,$p+1,null,null,null,$this->rewrite);
+			 else
+				$prev_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,$this->rewrite);
+			
 		     if ($tmplcontents) 
 				$prev .= $this->combine_template($tmplcontents,'',$prev_page_no);
 		     else 
@@ -1561,6 +1808,8 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		   }//template	
 		  }//foreach 
 		  
+		  //print_r($_COOKIE);
+		  //echo $_COOKIE['viewmode'];
 		  //table generation
 		  if (!$custom_template) { 
             if (($mytemplate) && ($mytemplate_alt)) 	
@@ -1992,6 +2241,8 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 			 $tokens[] = $rec['code1'];
 			 $tokens[] = $rec['code4'];
 			 $tokens[] = $rec['resources']; //id=30
+			 $tokens[] = $rec['ypoloipo1'];
+			 $tokens[] = $rec['manufacturer'];	
 			 
 			 //print_r($tokens);
 			 $toprn .= $this->combine_tokens($mytemplate, $tokens, true);
@@ -2581,6 +2832,47 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		  
 		return ($out);	
 	}			
+	 
+	 
+	function show_group($group,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+        $db = GetGlobal('db');		
+	    $lan = $lang?$lang:getlocal();
+	    $itmname = $lan?'itmname':'itmfname';
+	    $itmdescr = $lan?'itmdescr':'itmfdescr';		
+	    $date2check = time() - ($days * 24 * 60 * 60);
+	    $entrydate = date('Y-m-d',$date2check);		
+		$pz = $photosize?$photosize:1;	
+        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;				
+	                                                                                //,date1
+        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
+	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
+				$this->getmapf('code').
+				$lastprice .
+				" from products ";
+		$sSQL .= " WHERE ";	
+		 
+		$sSQL .= $this->getmapf('code') . " in (" . $group .")";  //coma sep codes
+		  		
+		$sSQL .= " and itmactive>0 and active>0";	
+		$sSQL .= " ORDER BY {$this->orderid}";			
+		$sSQL .= $this->bypass_order_list ? null : 
+		         ($this->orderid ? ",$itmname {$this->sortdef} " : "$itmname {$this->sortdef} ");
+		$sSQL .= $items ? " LIMIT " . $items : null;		 
+	    //echo $sSQL;
+		
+	    $resultset = $db->Execute($sSQL,2);	
+		$this->result = $resultset;
+		
+		$xmax = $imgx?$imgx:100;
+		$ymax = $imgy?$imgy:null;//free y 75;		
+		
+		if ($linemax>1)
+		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_special use $contition,$items");
+		else  	
+          $out = $this->list_katalog(null,null,$template,$ainfo,null,$external_read,$pz,1,1,1,"shkatalogmedia.show_special use $contition,$items");
+		  
+		return ($out);	
+	}	 
 	 
 	//override
 	function show_special($contition,$items=10,$days=12,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
@@ -3807,6 +4099,69 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 		//echo $body;
 		return ($body);  
 	  }	
+	}
+
+	//read policy from item record or lookup
+    protected function read_array_policy2($itemcode=null,$price=null,$cart_details=null,$qtyscale=null,$prcscale=null) {
+		//$db = GetGlobal('db');	
+		$cat = $pcat?$pcat:GetReq('cat');
+		$cart_page = GetReq('page')?GetReq('page'):0;	  	
+		$cartd = explode(';',$cart_details);
+		$body = null;
+
+		$qs = explode(',', $qtyscale); //5,10,15 qty
+		$ps = explode(',', $prcscale); //-5.0,-8.0,-12.0 %- percent discount
+        if (count($qs)!=count(ps)) return null;		
+		
+		$template = 'fpitempolicy';
+		  
+	    //loop template 
+	    $loop_template= $template.".htm";
+	    $tpl = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loop_template) ;
+		
+	    if (is_readable($tpl)) {//file temaplate
+		  
+		    $mylooptemplate = file_get_contents($tpl);
+			
+			foreach ($ps as $ix=>$ax) {
+			  $data[] = $qs[$ix];
+	 
+			  $cartd[8] = $price ? $price +($price*$ax/100) : $ax;//'22.23';
+			  $cartd[9] = intval($qs[$ix]);//prev line //'12';
+			  
+		      $data[] =	number_format($cartd[8],$this->decimals,',','.');		  
+			  
+			  $cartout = implode(';',$cartd);
+			  $data[] = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+			  $data[] = $itemcode;
+			  $data[] = "addcart/$cartout/$cat/0/";
+			 
+			  $body .= $this->combine_tokens($mylooptemplate,$data,true);	
+			  //echo $body,'>';
+			  unset($data);			  
+			}		
+	    }
+
+        return ($body); 		
+	}
+	
+	//override
+	function show_availability($qty=null) {
+		if (!$this->availability) 
+			return 0;
+		//echo $qty;
+		$r_scale = array_reverse($this->availability,1);
+		
+		foreach ($r_scale as $i=>$s) {
+			if (floatval($qty)>=floatval($s)) return ($i+1);
+		}
+		
+		return 0;
+	}	
+	
+	//override
+	function show_availabillity_table($title=null,$plaisio=null) {
+		return null; //disabled
 	}	
 	
 	public function item_has_discount($id=null) {
@@ -3855,7 +4210,72 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 	  //$r3 = str_replace(')',"-",$r2);
 	  
 	  return ($r3);
-	}		
+	}
+
+	//FILTERS
+	function filter($field=null, $template=null, $incategory=null, $cmd=null, $header=null) {	
+		if (!$field) return;
+		$baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility
+		
+	    $db = GetGlobal('db');		
+        $filename = seturl("t=$mycmd");//&a=$a&g=$g");  
+	    $lan = getlocal()?getlocal():'0';
+		$command = $cmd ? $cmd : 'search';
+	  
+        //template form
+	    $template_file='searchfilter.htm';	   
+	    $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',$lan.'.',$template_file) ; 	
+		$contents = @file_get_contents($tfile);	
+		
+		$tokens = array(); 
+		$r = array();	
+		
+	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
+        if ($incategory) {	
+		    $cats = explode($this->cseparator, GetReq('cat'));
+		    foreach ($cats as $c=>$mycat)
+		      $s[] = 'cat'.$c ." ='" . str_replace('_',' ',$mycat) . "'";		  	  
+		}		
+
+		$sSQL .= implode(" AND ", $s);
+		$sSQL .= " and itmactive>0 and active>0";
+		$sSQL .= " group by " . $field;
+		//echo $sSQL;	  
+	  
+		$result = $db->Execute($sSQL,2); 
+	  
+		if (!empty($result)) {
+			//print_r($result);
+			foreach ($result as $n=>$t) {
+				//print_r($t); 
+				//echo $t[0];
+				if (trim($t[0])!='') {
+					$tokens[] = $t[0];
+					$tokens[] = $t[1];
+					$tokens[] = $baseurl . seturl('t='.$command.'&cat='.GetReq('cat').'&input='.$t[0],null,null,null,null,true);
+					$tokens[] = ($t[0]==GetReq('input')) ? 'checked="checked"' : null;
+					$r[] = $template ? $this->combine_tokens($contents,$tokens) : $rec;	
+					unset($tokens);		
+                }				
+			}	
+		    
+		}
+		
+		//header
+        if ($header) {		
+			$tokens[] = localize('_ALL',getlocal());
+			$tokens[] = GetReq('input') ? '*' : $this->max_cat_items; //$this->max_items; //'*';
+			$tokens[] = $baseurl . seturl('t=klist&cat='.GetReq('cat'),null,null,null,null,true);
+			$tokens[] = (!GetReq('input')) ? 'checked="checked"' : null;
+			if ($template) $r[] = $this->combine_tokens($contents,$tokens);
+			unset($tokens);
+		}			
+       
+		$x = $template ? '' : '<br/>';
+		$ret = (empty($r)) ? null : implode($x,$r);	
+		return ($ret);  
+	}
+		
 	
 };			  
 }

@@ -524,17 +524,21 @@ window.onload=function(){
 	   $db = GetGlobal('db');
 	   $a = GetReq('a');
 	   //$un = GetGlobal('UserName');
-	   $myfkey = $fkey?$fkey:$this->fkey;
+	   $myfkey = $fkey ? $fkey : $this->fkey;
 
 	   if ($id) 
 	     $cid = $id;//param
 	   elseif ($a) 
 	     $cid = $a;//update
-	   else {//insert
-		   if ($this->usemailasusername)
-		     $cid = "'".$this->username."'";
-		   else
-		     $cid = $this->userid;
+	   else {
+	        //cart procedure
+		    if ($cid=GetSessionParam('customerway')) { 
+			    $myfkey = 'id';
+			}	
+	        else {//insert procedure
+				$cid = ($this->usemailasusername) ? "'".$this->username."'" : $this->userid;
+				$myfkey = $this->fkey;
+			}	
 	   }
 	   
 	   //$recfields = $this->cusform; not in this
@@ -609,7 +613,9 @@ window.onload=function(){
 	   
        //when show activate viewed customer so deactivat all other same user clients
 	   $this->deactivatecustomers();	   
+	   
        //read data
+	   //$cus = GetSessionParam('customerway') ? GetSessionParam('customerway') : GetReq('customerway');
 	   if ($customerway = GetReq('customerway')) {
 	     //echo 'z22';
 	     $fields = $this->getcustomer($customerway,'id');

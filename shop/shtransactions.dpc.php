@@ -253,7 +253,7 @@ class shtransactions extends transactions {
 	     return true;// not exist ok  		
 	}	 
 	
-	function saveTransactionHtml($id, $data, $template=null) {
+	function saveTransactionHtml($id, $data, $template=null,$user=null,$fkey=null) {
 		$file = $this->path . $id . ".html"; 
 		//echo $file,'>',$template;//,$data;
 		
@@ -285,7 +285,9 @@ class shtransactions extends transactions {
 					$tokens[] = GetGlobal('controller')->calldpc_method('javascript.JS_function use js_printwin+'.localize('_PRINT',getlocal()));
 				else
 					$tokens[] = '&nbsp;';//dummy
-				$tokens[] = GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use ++cusdetails.htm');
+				
+				//echo $user,'>',$fkey;
+				$tokens[] = GetGlobal('controller')->calldpc_method("shcustomers.showcustomerdata use $user+$fkey+cusdetails.htm");
 				$tokens[] = GetSessionParam('orderdetails');
 				$tokens[] = GetSessionParam('ordercart');
 		  

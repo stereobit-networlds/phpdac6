@@ -126,7 +126,9 @@ class shcart extends cart {
 	static $staticpath, $myf_button_class, $myf_button_submit_class;
 	
 	var $tmpl_path, $tmpl_name;
-    var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght; 	
+    var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
+
+    var $twig_invoice_template_name; 	
 	
     function shcart() {
        $UserName = GetGlobal('UserName');		
@@ -286,6 +288,9 @@ class shcart extends cart {
 	   $this->plus = remote_paramload('SHCART','plusqtyclass',$this->path);
 	   $this->removeitemclass = remote_paramload('SHCART','removeitemclass',$this->path);
 	   
+	   $this->twig_invoice_template_name = str_replace('.', getlocal() . '.', 'invoice.htm');
+	   //echo $this->twig_invoice_template_name; 
+	   
 	   if ($this->maxqty<0) // || ($this->readonly)) { //free style
 		    $this->javascript(); //ONLY WHEN DEFAULT VIEW EVENT ??	
 			
@@ -433,7 +438,7 @@ class shcart extends cart {
 		  //file to procced payment
 		  //echo '---paypal';
 		  //before reset transaction 
- 	      $this->submit_order(null, true, 'invoice.htm');		  		  
+ 	      $this->submit_order(null, true, $this->twig_invoice_template_name);		  		  
 
 		  SetSessionParam('paypalID',$this->transaction_id);
 		  
@@ -460,7 +465,7 @@ class shcart extends cart {
 		  //file to procced payment
 		  //echo '---piraeus';
 		  //before reset transaction
- 	      $this->submit_order(null, true, 'invoice.htm');		  
+ 	      $this->submit_order(null, true, $this->twig_invoice_template_name);		  
 
 		  SetSessionParam('piraeusID',$this->transaction_id);
 		  
@@ -482,7 +487,7 @@ class shcart extends cart {
 	  elseif (strcmp($payway,'EUROBANK')==0) {	
 	   if (($this->status==3) && ($this->autopay>0) /*&& (defined('SHEUROBANK_DPC'))*/)  {
 
- 	      $this->submit_order(null, true, 'invoice.htm');		  
+ 	      $this->submit_order(null, true, $this->twig_invoice_template_name);		  
 
 		  SetSessionParam('eurobankID',$this->transaction_id);
 		  
@@ -503,7 +508,7 @@ class shcart extends cart {
 	  }	  
 	  else { //simple order
 	  
- 	    $this->submit_order(1, true, 'invoice.htm'); 
+ 	    $this->submit_order(1, true, $this->twig_invoice_template_name); 
 	  
 		SetSessionParam('amount',null);
 								 
@@ -706,7 +711,12 @@ function addtocart(id,cartdetails)
        $payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
        $roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
        $invway = GetParam('invway')?GetParam('invway'):GetSessionParam('invway');	
-	   $sxolia = GetParam('sxolia')?GetParam('sxolia'):GetSessionParam('sxolia');	
+	   $sxolia = GetParam('sxolia')?GetParam('sxolia'):GetSessionParam('sxolia');
+
+	   /*when goto save transaction html, customer/user = mail of customer, problem when user mail,cus mail diff */
+	   /*search by customerway / cart customer selection*/
+       $customer = GetSessionParam('customerway') ? GetSessionParam('customerway') : $user;
+       $fkey = 	is_numeric($customer) ? 'id' : 'mail';  
 	   
 	   if (!empty($pways))   
          $p = array_keys($pways,$payway);//print_r($p);
@@ -729,13 +739,15 @@ function addtocart(id,cartdetails)
 			//$invoice_tokens['invoice'] = $invway .' '.$this->transaction_id;
 			$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',getlocal()).' '.$this->transaction_id;
 			$invoice_tokens['mynotes'] = $sxolia;
-		    $invoice_tokens['mydate'] = $date;			
+		    $invoice_tokens['mydate'] = $date;	
+            $invoice_tokens['payway'] = localize(GetSessionParam('payway'), getlocal()); 			
+			$invoice_tokens['roadway'] = localize(GetSessionParam('roadway'), getlocal());
+			$invoice_tokens['invway'] = localize(GetSessionParam('invway'), getlocal());
 			  
 			$tokens = serialize($invoice_tokens);
 			//do it inside transaction func
 			//$htmlout = GetGlobal('controller')->calldpc_method('twigengine.render use '.$invoice_template.'++'.$tokens);
-			GetGlobal('controller')->calldpc_method('shtransactions.saveTransactionHtml use '.
-		                               $this->transaction_id.'+'.$tokens.'+'.$invoice_template);			
+			GetGlobal('controller')->calldpc_method('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.$tokens.'+'.$invoice_template."+$customer+$fkey");			
 			//save trid as printout var for print purposes
             $this->printout = $this->transaction_id;
             SetSessionParam('printout',$this->printout);			
@@ -747,15 +759,13 @@ function addtocart(id,cartdetails)
 	     	$tokens[] = GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use ++cusdetails.htm');
 		    $tokens[] = GetSessionParam('orderdetails');
 		    $tokens[] = GetSessionParam('ordercart');
-			GetGlobal('controller')->calldpc_method('shtransactions.saveTransactionHtml use '.
-		                               $this->transaction_id.'+'.serialize($tokens).'+shcartprint.htm');			
+			GetGlobal('controller')->calldpc_method('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.serialize($tokens).'+shcartprint.htm'."+$customer+$fkey");			
 		   }
 		   else {
 			$_data = GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use ++cusdetails.htm');
 			$_data .= GetSessionParam('ordercart');
 			$_data .= GetSessionParam('orderdetails');
-			GetGlobal('controller')->calldpc_method('shtransactions.saveTransactionHtml use '.
-		                               $this->transaction_id.'+'.serialize($_data));//$orderdataprint));
+			GetGlobal('controller')->calldpc_method('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.serialize($_data));
 		   }							 							 
 	     }		 
 	   }
@@ -767,7 +777,7 @@ function addtocart(id,cartdetails)
    	   if (($sendordermail) && ($this->transaction_id)) {
 
              //$this->goto_mailer_4print();//a printer friendly version
-             $error = $this->goto_mailer($this->transaction_id, false,'invoice.htm');//true);
+             $error = $this->goto_mailer($this->transaction_id, false,$this->twig_invoice_template_name);//true);
 
              if (!$this->mailerror) {
 			   //print action]
@@ -867,8 +877,9 @@ function addtocart(id,cartdetails)
 			//init-reset tokens
 			$invoice_tokens = array();
 			$invoice_tokens['trid'] = $this->transaction_id;
-			$invoice_tokens['sxolia'] = GetSessionParam('orderdetails');	   
-			$invoice_tokens['cusdata'] = (array) GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use +++1');	  
+			$invoice_tokens['sxolia'] = GetSessionParam('orderdetails');
+            //$cus = GetSessionParam('customerway'); 			
+			$invoice_tokens['cusdata'] = (array) GetGlobal('controller')->calldpc_method("shcustomers.showcustomerdata use +++1");	  
 			$invoice_tokens['cartdata'] = GetSessionParam('ordercart');		   
 		    
 			$x = 'notes123';//.var_export($invoice_tokens, true);

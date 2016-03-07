@@ -1230,7 +1230,8 @@ EOF;
 	    if (stristr($param,'.')) //dpc var
 		  $var = GetGlobal('controller')->calldpc_var($param);
         else
-          $var =  ${$param} ? ${$param} : ($_SESSION[$param] ? $_SESSION[$param] : $this->{$param});		
+          $var =  GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $_SESSION[$param]);		
+	        //${$param} ? ${$param} : ($_SESSION[$param] ? $_SESSION[$param] : $this->{$param});		
 		
         if ($value) 
 		   $ret = ($value==$var) ? $state1 : $state2;   		
@@ -1252,6 +1253,18 @@ EOF;
 		return ($ret);
 
     }	
+	
+	public function nvldecode($token=null,$state1=null,$state2=null,$value=null,$default=null) {
+		//echo '>',$token,':',$value,'<br/>';
+		if (is_numeric($value)) 
+           $ret = $default ? $default : (($token==$value) ? $state1 : $state2);			
+		elseif ($value) 
+			$ret = $default ? $default : (($token==$value) ? $state1 : $state2);  	
+        else 	
+           $ret = $token ? $state1 : $state2;
+  
+		return ($ret);
+    }		
 	
 	/*single dac cmds per state*/
 	public function nvldac($param=null,$state1=null,$state2=null,$value=null) {
@@ -1695,8 +1708,12 @@ EOF;
 		return ($ret);	
 	}
 	
-	public function echostr($string=null) {
-		return ($string);
+	public function echostr($param=null) {
+		if (stristr($param,'.')) //dpc var
+		  $s = GetGlobal('controller')->calldpc_var($param);
+		else  
+		  $s = GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $string);		
+		return ($s);
 	}
 	
 };

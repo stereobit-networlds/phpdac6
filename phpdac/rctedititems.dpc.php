@@ -422,22 +422,6 @@ class rctedititems extends rcitems {
 			$linemax=2;
 			$itemscount = count($items);
 			if ($itemscount>1) {   
-				/*$timestoloop = floor($itemscount/$linemax)+1;
-				$meter = 0;
-				for ($i=0;$i<$timestoloop;$i++) {
-					//echo $i,"---<br>";
-					for ($j=0;$j<$linemax;$j++) {
-						//echo $i*$j,"<br>";
-						$viewdata[] = (isset($items[$meter])? $items[$meter] : "&nbsp");
-						$viewattr[] = "center;10%";	
-						$meter+=1;	 
-					}
-	    
-					$myrec = new window('',$viewdata,$viewattr);
-					$ret .= $myrec->render("center::100%::0::::left::0::0::");		  
-					unset ($viewdata);
-					unset ($viewattr);	  
-				}*/
 				//LINE BY LINE...
 				foreach ($items as $i=>$item)
 				    $ret .= $item;

@@ -11,18 +11,23 @@ $__DPC['SHNSEARCH_DPC'] = 'shnsearch';
 $d = GetGlobal('controller')->require_dpc('shop/shsearch.dpc.php');
 require_once($d);
 
-$e = GetGlobal('controller')->require_dpc('nitobi/nitobi.lib.php');
-require_once($e);
+//$e = GetGlobal('controller')->require_dpc('nitobi/nitobi.lib.php');
+//require_once($e);
 
 GetGlobal('controller')->get_parent('SHSEARCH_DPC','SHNSEARCH_DPC');
 
-$__EVENTS['SHNSEARCH_DPC'][4]='shnearch';
+$__EVENTS['SHNSEARCH_DPC'][4]='shnsearch';
+$__EVENTS['SHNSEARCH_DPC'][5]='filter';
 
-$__ACTIONS['SHSEARCH_DPC'][4]='shnearch';
+$__ACTIONS['SHNSEARCH_DPC'][4]='shnsearch';
+$__ACTIONS['SHNSEARCH_DPC'][5]='filter';
 
 $__LOCALE['SHNSEARCH_DPC'][0]='SHNSEARCH_DPC;Search;Αναζήτηση';
 $__LOCALE['SHNSEARCH_DPC'][1]='_SEARCHIN;Search In:;Αναζήτηση σε:';
 $__LOCALE['SHNSEARCH_DPC'][2]='_founded;items found;εγγραφές βρέθηκαν';
+$__LOCALE['SHNSEARCH_DPC'][3]='_FILTERS;Product filters;Φίλτρο αναζήτησης';
+$__LOCALE['SHNSEARCH_DPC'][4]='_BRANDS;Brands;Μάρκες';
+$__LOCALE['SHNSEARCH_DPC'][5]='_ALL;All;Όλα';
 
 class shnsearch extends shsearch {
 
@@ -31,7 +36,8 @@ class shnsearch extends shsearch {
 	var $textsearch, $searchpath, $searchfiletypes;
 	var $attachsearch;
 	
-   var $tmpl_path, $tmpl_name;	
+    var $tmpl_path, $tmpl_name;	
+	var $cseparator;
 
 	function shnsearch() {
 
@@ -52,6 +58,9 @@ class shnsearch extends shsearch {
 	  $ft = remote_arrayload('SHNSEARCH','filetypes',$this->path);	
 	  $fp = array('.htm','.txt');//htm includes html
 	  $this->searchfiletypes = $ft?$ft:$fp; 
+	  
+	  $csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
+	  $this->cseparator = $csep ? $csep : '^';
 
 	  $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
 	  $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path); 	  
@@ -59,9 +68,12 @@ class shnsearch extends shsearch {
 
 	function event($event=null) {
 
-	  $this->text2find = GetParam('Input')?GetParam('Input'):GetReq('input'); 
+	  $this->text2find = GetParam('Input') ? GetParam('Input') : GetReq('input'); 
 	//echo $this->text2find,'>';
 	  switch ($event) {
+		  
+		case 'filter'         :     $this->do_filter_search($this->text2find, GetReq('cat')); //getreq input
+                                    break;		
 
 		//cart
 	     case 'searchtopic'   :
@@ -83,6 +95,9 @@ class shnsearch extends shsearch {
 	function action($action=null) {
 	
 	  switch ($action) {
+		  
+		case 'filter'         : $out = $this->form_search();
+                                break;			  
 	  
 		//cart
 	     case 'searchtopic'   :
@@ -107,7 +122,7 @@ class shnsearch extends shsearch {
 	  }			   	   	  
 		   
 	}
-
+/*
 	function nitobi_javascript() {
 
       if (iniload('JAVASCRIPT')) {
@@ -159,7 +174,7 @@ function init()
        return ($out);
 	}		
 
-	
+	*/
 
 	function show_combo($title=null,$preselcat=null,$isleaf=null) {
        //NITOBI
@@ -207,6 +222,13 @@ function init()
               GetGlobal('controller')->calldpc_method('shkatalog.do_quick_search use '.$text2find.'+'.$comboselection);
 			  
 	}
+	
+	function do_filter_search($filter,$cat=null) {
+	
+		  if (defined("SHKATALOGMEDIA_DPC")) {
+		      GetGlobal('controller')->calldpc_method('shkatalogmedia.do_filter_search use '.$filter.'+'.$cat);
+	      }		
+	}	
 	
 	//override
 	function search_categories($text2find=null,$template=null) {
@@ -667,7 +689,110 @@ function get_stype()
 
 	}	
 	
+	
+	//FILTERS
+	function filter($field=null, $template=null, $incategory=null, $cmd=null, $head=null) {	
+		if (!$field) return;
+		
+	    $db = GetGlobal('db');		
+        $filename = seturl("t=$mycmd");//&a=$a&g=$g");  
+	    $lan = getlocal()?getlocal():'0';
+		$command = $cmd ? $cmd : 'search';
+	  
+        //template form
+	    $template_file='searchfilter.htm';	   
+	    $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',$lan.'.',$template_file) ; 	
+		$contents = @file_get_contents($tfile);	
+		
+		$tokens = array(); 
+		$r = array();
+		
+	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
+        if ($incategory) {	
+		    $cats = explode($this->cseparator, GetReq('cat'));
+		    foreach ($cats as $c=>$mycat)
+		      $s[] = 'cat'.$c ." ='" . str_replace('_',' ',$mycat) . "'";		  	  
+		}		
 
+		$sSQL .= implode(" AND ", $s);
+		$sSQL .= " and itmactive>0 and active>0";
+		$sSQL .= " group by " . $field;
+		//echo $sSQL;	  
+	  
+		$result = $db->Execute($sSQL,2); 
+	  
+		if (!empty($result)) {
+			//print_r($result);
+			foreach ($result as $n=>$t) {
+				//print_r($t); 
+				//echo $t[0];
+				if (trim($t[0])!='') {
+					$tokens[] = $t[0];
+					$tokens[] = $t[1];
+					$tokens[] = seturl('t='.$command.'&input='.$t[0].'&cat='.GetReq('cat'),null,null,null,null,true);
+					$tokens[] = ($t[0]==GetReq('input')) ? 'checked="checked"' : null;
+					$r[] = $template ? $this->combine_tokens($contents,$tokens) : $rec;	
+					unset($tokens);		
+                }				
+			}	
+		}
+		
+					
+		//header
+        if ($header) {		
+			$tokens[] = localize('_ALL',getlocal());
+			$tokens[] = '*';
+			$tokens[] = seturl('t=klist&cat='.GetReq('cat'),null,null,null,null,true);
+			$tokens[] = (!GetReq('input')) ? 'checked="checked"' : null;
+			if ($template) $r[] = $this->combine_tokens($contents,$tokens);
+			unset($tokens);
+		}		
+       
+		$x = $template ? '' : '<br/>';
+		$ret = (empty($r)) ? null : implode($x,$r);	
+		return ($ret);   
+	}
+	
+
+	
+	
+	//override / method	 $x$
+	function combine_tokens($template_contents,$tokens, $execafter=null) {
+	
+	    if (!is_array($tokens)) return;
+		
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template_contents);
+		  unset ($fp);
+          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+		}		  		
+		else
+		  $ret = $template_contents;
+		  
+		//echo $ret;
+	    foreach ($tokens as $i=>$tok) {
+            //echo $tok,'<br>';
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<20;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);
+		//echo $ret;
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	}	
+		
+	
 };
 }
 ?>
