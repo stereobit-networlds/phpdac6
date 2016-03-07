@@ -169,7 +169,9 @@ $__LOCALE['RCCONTROLPANEL_DPC'][131]='_bmailqueue;Mail queue;Διανομές';
 $__LOCALE['RCCONTROLPANEL_DPC'][132]='_bmailqueueadd;Subscribers;Εισαγωγή';
 $__LOCALE['RCCONTROLPANEL_DPC'][133]='_bmailsend;Send;Αποστολή';
 $__LOCALE['RCCONTROLPANEL_DPC'][134]='_bmail;e-Mail;e-Mail';
-$__LOCALE['RCCONTROLPANEL_DPC'][136]='_ITEMCOLLECTION;Collect;Συλλογή';
+$__LOCALE['RCCONTROLPANEL_DPC'][135]='_bmailstats;Statistics;Στατιστική';
+$__LOCALE['RCCONTROLPANEL_DPC'][136]='_bmailcamp;Campaigns;Θέματα';
+$__LOCALE['RCCONTROLPANEL_DPC'][137]='_ITEMCOLLECTION;Collect;Συλλογή';
 
 class rccontrolpanel {
 
@@ -3361,9 +3363,12 @@ EOF;
 	 
 	 //BULK EMAIL
 	 if ($environment['BULKMAIL']==1) {
-	    $btokens[] = "<li><a $class href='cpsubscribers.php?encoding=$encoding&$passturl'>".localize('_bmailsend',$lan)."</a></li>";	 		 
-		$btokens[] = "<li><a $class href='cpsubscribers.php?t=cpadvsubscribe&encoding=$encoding&$passturl'>".localize('_bmailqueueadd',$lan)."</a></li>";		
-		$btokens[] = "<li><a $class href='cpsubscribers.php?t=cpviewsubsqueue&encoding=$encoding&$passturl'>".localize('_bmailqueue',$lan)."</a></li>";	 		 	 		 
+		    $cid =GetReq('cid'); //in case of self page load
+		    $btokens[] = "<li><a $class href='cpbulkmail.php?t=cpviewcamp&encoding=$encoding&$passturl'>".localize('_bmailcamp',$lan)."</a></li>";		
+			$btokens[] = "<li><a $class href='cpbulkmail.php?encoding=$encoding&$passturl'>".localize('_bmailsend',$lan)."</a></li>";	 		 
+			$btokens[] = "<li><a $class href='cpbulkmail.php?t=cpadvsubscribe&encoding=$encoding&$passturl'>".localize('_bmailqueueadd',$lan)."</a></li>";		
+			$btokens[] = "<li><a $class href='cpbulkmail.php?t=cpviewsubsqueue&encoding=$encoding&$passturl'>".localize('_bmailqueue',$lan)."</a></li>";	 		 	 		 
+			$btokens[] = "<li><a $class href='cpbulkmail.php?t=cpmailstats&cid=$cid&encoding=$encoding&$passturl'>".localize('_bmailstats',$lan)."</a></li>";	 		 	 		  		 	 		 
 
 		    $li0 = '<li class="sub-menu">
 			          <a href="javascript:;" class="">
