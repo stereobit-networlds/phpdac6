@@ -3341,7 +3341,7 @@ EOF;
 		$htmlfile = $_GET['htmlfile'] ? $_GET['htmlfile'] : urlencode(base64_encode($turl_file));
 		if ($htmlfile) 
 	       $otokens[] = "<li><a $class href='cpmhtmleditor.php?cke4=1&encoding=$encoding&$passturl&htmlfile=$htmlfile'>".localize('_editpage',$lan)."</a></li>";
-	 }  	 
+	 } 
 
      //win category.......................................................
 	 if (!empty($otokens)) {
@@ -3354,6 +3354,23 @@ EOF;
 			$li1 = '</li>';
 		    $tokens[] = $li0 . '<ul class="sub">'.implode('',$otokens).'</ul>' . $li1;	
 	 }
+	 
+	 //BULK EMAIL
+	 if ($environment['BULKMAIL']==1) {
+	    $btokens[] = "<li><a $class href='cpsubscribers.php?encoding=$encoding&$passturl'>".localize('_bmailsend',$lan)."</a></li>";	 		 
+		$btokens[] = "<li><a $class href='cpsubscribers.php?t=cpadvsubscribe&encoding=$encoding&$passturl'>".localize('_bmailqueueadd',$lan)."</a></li>";		
+		$btokens[] = "<li><a $class href='cpsubscribers.php?t=cpviewsubsqueue&encoding=$encoding&$passturl'>".localize('_bmailqueue',$lan)."</a></li>";	 		 	 		 
+
+		    $li0 = '<li class="sub-menu">
+			          <a href="javascript:;" class="">
+                          <i class="icon-list"></i>
+                          <span>'.localize('_bmail',$lan).'</span>
+                          <span class="arrow"></span>
+                      </a>';
+			$li1 = '</li>';
+		    $tokens[] = $li0 . '<ul class="sub">'.implode('',$btokens).'</ul>' . $li1;	
+		
+  	 }	 
 	 
 	 //ENTITIES
 	 if ($environment['EDIT_CATEGORY']==1) { 
@@ -3389,7 +3406,7 @@ EOF;
 	 }	 
 	 
 	 $new_elements = false;
-	 
+	 //echo '>',$_GET['turl'];
 	 $qquery = str_replace('_&_', '_%26_', base64_decode($_GET['turl'])); //echo '>',$qquery,'>'; //& category problem
      $urlquery = parse_url($qquery); /*parse_url(base64_decode($_GET['turl']));*/ //echo $urlquery['query'];
      parse_str($urlquery['query'],$getp); //echo implode('.',$getp);  
@@ -3432,7 +3449,10 @@ EOF;
 		 if ($environment['ITEM_SENDMAIL']==1) //category send mail..advanced mail template system (rctedit,rctedititems)
 		   $ctokens[] = "<li><a $class href='cpsubscribers.php?htmlfile=&encoding=$encoding&cat=$cat&$passturl'>".localize('_senditemmail',$lan)."</a></li>";	 		 
  		 
-	 
+	     if ($environment['ITEM_COLLECTION']==1) 
+           $ctokens[] = "<li><a $class href='cpcollections.php?cat=$cat&$passturl&encoding=$encoding'>".localize('_ITEMCOLLECTION',$lan)."</a></li>";	
+	
+	
 	     $mycurrentcat = explode($cseparator,$v);
 	     $vn = array_pop($mycurrentcat);
 	     $cat_htm_attachment = "html/". $vn . $lan . '.htm';		
@@ -3497,6 +3517,10 @@ EOF;
 		 
 		 if ($environment['ITEM_UPLOAD']==1) 
 		   $itokens[] = "<li><a $class href='cpupload.php?id=$v&$passturl&encoding=$encoding'>".localize('_uploadid',$lan)."</a></li>";	 		 
+			 
+	     if ($environment['ITEM_COLLECTION']==1) 
+           $itokens[] = "<li><a $class href='cpcollections.php?id=$v&$passturl&encoding=$encoding'>".localize('_ITEMCOLLECTION',$lan)."</a></li>";	
+				 
 			 
 
 		 if ($environment['ITEM_ATTACHMENT']==1) {
@@ -3653,6 +3677,12 @@ EOF;
 		   
 	   if ($environment['CONFIG']==1) 	 
          $stokens[] = "<li><a $class href='cpconfig.php?$passturl&encoding=$encoding'>".localize('_config',$lan)."</a></li>"; 
+	 
+	   if ($environment['XMLFEEDS']==1) 
+         $stokens[] = "<li><a $class href='cpxmlfeeds.php?$passturl&encoding=$encoding'>".localize('_xmlfeeds',$lan)."</a></li>";
+	 
+	   if ($environment['DYNSQL']==1) 
+         $stokens[] = "<li><a $class href='cpdynsql.php?$passturl&encoding=$encoding'>".localize('_dynsql',$lan)."</a></li>";
 	
 
      //$stokens[] =  "<li><a $class href=\"cpmdbrec.php?t=rempwd&$passturl\">".localize('_rempass',$lan)."</a></li>";				    	  
@@ -3754,7 +3784,7 @@ EOF;
 		return ($tokens);
      else 
 		return (implode('',$tokens));
-    }		
+    }			
 	
 	public function templatepanel($init=false) {
 		//echo 'z';
