@@ -17,9 +17,11 @@ $__LOCALE['RCXMLFEEDS_DPC'][0]='RCXMLFEEDS_DPC;XML feeds;XML feeds';
 $__LOCALE['RCXMLFEEDS_DPC'][1]='_XMLFILE;XML file;XML file';
 $__LOCALE['RCXMLFEEDS_DPC'][2]='_XMLITEMS;XML items;XML είδη';
 $__LOCALE['RCXMLFEEDS_DPC'][3]='_dimensions;Dimension;Διαστάσεις';
-$__LOCALE['RCXMLFEEDS_DPC'][4]='_size;Brand;Κατασκευαστής';
+$__LOCALE['RCXMLFEEDS_DPC'][4]='_size;Size;Μέγεθος';
 $__LOCALE['RCXMLFEEDS_DPC'][5]='_dimensions;XML item;Είδος XML';
 $__LOCALE['RCXMLFEEDS_DPC'][6]='_xmlcreate;Create XML;Δημιούργησε XML';
+$__LOCALE['RCXMLFEEDS_DPC'][7]='_xml;XML item;Είδος XML';
+$__LOCALE['RCXMLFEEDS_DPC'][8]='_manufacturer;Manufacturer;Κατασκευαστής';
 
 class rcxmlfeeds {
 
@@ -282,7 +284,7 @@ class rcxmlfeeds {
 			$tokens[] = $rec['itemurl'];
 			$tokens[] = $rec['itemimg'];
 			$tokens[] = $rec['itemcat']; /** <<<<<<<<<<<<<<<<<<<<<<<<<<< also add **/
-			
+			if ($n==0) print_r($tokens);
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);
             unset($tokens);						
 		}	
@@ -366,23 +368,16 @@ class rcxmlfeeds {
 	
 	//override from fronthtmlpage (use rcxmlfeeds.nvltokens)
 	public function nvltokens($token=null,$state1=null,$state2=null,$value=null,$isdigit=null) {
-	    //always string compare...else is digit 
 		//echo '>',$token,':',$value,'<br/>';
-		if (is_numeric($value) && ($isdigit==true)) { 
-		   //echo '1>>>>>>>>>>>>>>>>>>>><br/>',$token,':',$value,'<br/>';
+		if (is_numeric($value) && ($isdigit==true)) 
            $ret = ($token==$value) ? $state1 : $state2;			
-		}   
-		elseif ($value) {
-			//echo '2>>>>>>>>>>>>>>>>>>>><br/>',$token,':',$value,'<br/>';
+		elseif ($value) 
 			$ret = ($token==$value) ? $state1 : $state2;  	
-		}	
-        else {		
-		   //echo '3>>>>>>>>>>>>>>>>>>>><br/>',$token,':',$value,'<br/>';
+        else 	
            $ret = $token ? $state1 : $state2;
-		}   
+ 
 		   
 		return ($ret);
-
     }		
 };
 }

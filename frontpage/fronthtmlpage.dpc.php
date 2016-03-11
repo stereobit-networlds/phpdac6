@@ -1712,7 +1712,7 @@ EOF;
 		if (stristr($param,'.')) //dpc var
 		  $s = GetGlobal('controller')->calldpc_var($param);
 		else  
-		  $s = GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $string);		
+		  $s = GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $param);		
 		return ($s);
 	}
 	

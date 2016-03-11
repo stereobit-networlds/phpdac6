@@ -69,7 +69,7 @@ class CCPP
     protected $_cache_formats = array();
     
     //Constructor
-    public function __construct($config=null)
+    public function __construct($config=null, $novarMacros=false)
     {
         $this->options += array(
             //Translation
@@ -91,11 +91,14 @@ class CCPP
             //Output
             'output.format' => 'evaluated',
         );
+		
         $this->_prepareCache();
         $this->_predefineMacros();
 		
 		$this->_configMacros($config); /*pass conf vars as macros*/
-		$this->_varMacros(); /*pass session,globals,post,get vars as macros*/
+		
+		if ($novarMacros==false) 
+			$this->_varMacros(); /*pass session,globals,post,get vars as macros*/
     }
     
     protected function _prepareCache()
@@ -162,13 +165,16 @@ class CCPP
     protected function _configMacros($config=null)
     {   
 	    $phpdac_macros = array();
+		if (empty($config)) return false;
 		
-	    //print_r($config);
+		if (count($config)<10) $debug=1; //beware of master conf file
+	    //if ($debug) print_r($config);
+			
 		foreach ($config as $section=>$table) {
 		    $sec = strtoupper($section);
 			foreach ($table as $var=>$val) {
 			    $variable = 'CONF_'.$sec.'_'.strtoupper($var);
-			    //echo $variable . '=' . $val.'<br/>';
+			    //if ($debug) echo $variable . '=' . $val.'<br/>';
 			   
 			    if ($val)
 					$phpdac_macros[$variable] = is_numeric($val) ? $val : $this->_protector_quote($val); 
@@ -248,28 +254,35 @@ class CCPP
             exit (1);
         }
         else { 
-		    if ($isString==true) { 
+		    if ($isString==true) {//strings 
 			
 			    if ($ishtml==true) { //html string
-					$scode = '<?'. PHP_EOL .$filename . PHP_EOL .'?>'; //without php tags there is not preprocess
-					$evalCode = $this->parseHtmlString($scode, $offset);			
-					return eval($evalCode);	
+					$scode = '<?'. PHP_EOL .$filename . PHP_EOL .'?>';//without tags there is not preprocess
+					$code = $this->parseHtmlString($scode, $offset);			
+					//return $evalCode;	
+					if ($lines = explode(PHP_EOL,$code)) { 
+						//clean tags
+						array_pop($lines);//last line
+						array_shift($lines);//first line
+						return (implode(PHP_EOL,$lines));
+					}
+                    return null;					
 				}
 				else { //dpc code
-					$scode = '<?'. PHP_EOL .$filename . PHP_EOL .'?>'; //without php tags there is not preprocess
+					$scode = '<?'. PHP_EOL .$filename . PHP_EOL .'?>'; //without tags there is not preprocess
 					$evalCode = $this->parseString($scode, $offset);
 					/*$evalCode = '?>' . $evalCode . ((substr($evalCode, -2) == '?>')?'<?php ':'');*/
 					//return eval($evalCode); //test view
 					return $evalCode;
 				}	
 			}	
-			else {	
+			else {//files	
 			    if ($ishtml==true) {
 					$evalCode = $this->parseHtmlFile($filename, $offset);
-					$evalCode = '?>' . $evalCode . ((substr($evalCode, -2) == '?>')?'<?php ':'');
-					return eval($evalCode);				
+					/*$evalCode = '?>' . $evalCode . ((substr($evalCode, -2) == '?>')?'<?php ':'');*/
+					return $evalCode;				
 				}
-				else {
+				else { //original method
 					$evalCode = $this->parseFilename($filename, $offset);
 					$evalCode = '?>' . $evalCode . ((substr($evalCode, -2) == '?>')?'<?php ':'');
 					return eval($evalCode);
@@ -312,7 +325,7 @@ class CCPP
 			$code = implode(PHP_EOL, $lines);		
 	    }
 
-        return ($code);		
+        return (isset($code) ? $code : $string);		
 	}
 	
 	//parse html file
@@ -320,12 +333,17 @@ class CCPP
     {
         //Fetch file contents
         $code = file_get_contents($filename, false, null, $offset);
-		//echo $filename,':<br/>',$code;
-		//die();
-        /*return $this->parse('<?php\n echo '. $this->_protector_singleQuoted($code) . '\n?>');*/
 		
-		$code = $this->compileString($code);
-		return $this->parse($code); //,true); //NO ob_start...
+		$scode = '<?'. PHP_EOL .$code . PHP_EOL .'?>'; //without tags there is not preprocess
+		$code = $this->parse($scode);
+		
+		if ($lines = explode(PHP_EOL,$code)) { 
+			//clean tags
+			array_pop($lines);//last line
+			array_shift($lines);//first line
+			return (implode(PHP_EOL,$lines));
+		}
+		return null;
     }	
 	
 	//parse html string
@@ -333,7 +351,9 @@ class CCPP
     {
         //Fetch file contents
         $code = substr($string, $offset);
-        return $this->parse('<?php\n echo '. $this->_protector_singleQuoted($code) . '\n?>');
+        /*return $this->parse('<?php\n echo '. $this->_protector_singleQuoted($code) . '\n?>');
+		*/
+		return $this->parse($code);
     }		
 	
 	//parse php string
@@ -732,7 +752,10 @@ class CCPP
     }
     protected function _protector_quote($string) // Not utilized
     {
-        return '"'.addcslashes($string, '"').'"'; // C  style
+		if (is_string($string)) //me, error on string, object finding !!!
+			return '"'.addcslashes($string, '"').'"'; // C  style
+	    else
+			false;
     }
     protected function _protector_escapeSingleQuote($string)
     {

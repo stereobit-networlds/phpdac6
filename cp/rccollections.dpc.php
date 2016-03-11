@@ -393,9 +393,15 @@ class rccollections {
 	    $imgxval = $imgw ? $imgw : $this->imgxval; 
 		$imgyval = $imgh ? $imgh : $this->imgyval;		
 	
-	    if (($template) && (is_readable($template))) 
-	        $template_data = @file_get_contents($template);
-
+	    if (($template) && (is_readable($template)))  {
+			
+			/*if (defined('CCPP_VERSION')) { //one template for all lines
+				$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); 
+				$template_data = $preprocessor->execute($template, 0, false, true);
+			}
+			else*/
+				$template_data = @file_get_contents($template); 
+        }
 
         $this->selected_items = $this->get_selected_items(500,$imgxval,$imgyval);	
 		
@@ -429,12 +435,27 @@ class rccollections {
 				$tokens[] = $rec['cat3'];
 				$tokens[] = $rec['cat4'];
 				$tokens[] = $rec['item_name_url'];
-				$tokens[] = $rec['item_url'];
-				$tokens[] = $rec['photo_url'];
+				$tokens[] = (defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['item_url']) : $rec['item_url'];
+				$tokens[] =  $rec['photo_url']; /*(defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['photo_url']) : $rec['photo_url'];*/
 				$tokens[] = $rec['photo_html'];
 				$tokens[] = $rec['photo_link'];
 				$tokens[] = $rec['attachment'];
+				//print_r($tokens);
+				
+				if (defined('CCPP_VERSION')) { //override, customized per line
+					//$config = array();
+					if ($n % 2 == 0) 
+						$config = array('LINE'=>array('ODD'=>null,'EVEN'=>1),'PRICE'=>array('ON'=>1,));
+					else 
+						$config = array('LINE'=>array('ODD'=>1,'EVEN'=>null),'PRICE'=>array('ON'=>1,));
+					
+					$preprocessor = new CCPP($config, true); //new ccpp
+					$template_data = $preprocessor->execute($template_data, 0, true, true);
+					unset($preprocessor);
+				}			
+				
 				$items[] = $this->combine_tokens($template_data, $tokens, false);
+				
 				unset($tokens);		
             }
             else //default view..
@@ -443,19 +464,8 @@ class rccollections {
 		 }
 		} 
 		
-		if (!empty($items)) {
-
-			//make table
-			$linemax=2;
-			$itemscount = count($items);
-			if ($itemscount>1) {   
-				//LINE BY LINE...
-				foreach ($items as $i=>$item)
-				    $ret .= $item;
-            }
-            else //one item
-                $ret = $items[0];			
-		}
+		if (!empty($items)) 
+             $ret = implode('',$items);			
 		
 		return ($ret);
 	}

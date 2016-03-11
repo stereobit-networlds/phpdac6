@@ -128,7 +128,8 @@ class shcart extends cart {
 	var $tmpl_path, $tmpl_name;
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
 
-    var $twig_invoice_template_name; 	
+    var $twig_invoice_template_name; 
+    var $agentIsIE, $baseurl;	
 	
     function shcart() {
        $UserName = GetGlobal('UserName');		
@@ -294,6 +295,11 @@ class shcart extends cart {
 	   if ($this->maxqty<0) // || ($this->readonly)) { //free style
 		    $this->javascript(); //ONLY WHEN DEFAULT VIEW EVENT ??	
 			
+	   $useragent = $_SERVER["HTTP_USER_AGENT"];		
+       $this->agentIsIE = (strpos($useragent, 'Trident') !== false) ? '1' : '0';	 //ie 11 
+       //echo '>'	,$this->agentIsIE;
+
+	   $this->baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility	   
     }
 
     //override
@@ -1412,18 +1418,28 @@ function addtocart(id,cartdetails)
                            $continue_url = $continue_shopping_goto_cmd ? $continue_shopping_goto_cmd.'/' : 'klist'; 
 						   $continue_url .= $cat ? $cat .'/' : null;
 						   $ta .= "&nbsp;";//<a href=\"$continue_url\"><input type=\"button\" class=\"myf_button\" value=\"".localize('_CONTINUESHOP',getlocal())."\" /></a>";
-						   $ta .= $this->myf_button(localize('_CONTINUESHOP',getlocal()),$continue_url,'_CONTINUESHOP');
+						   if ($this->agentIsIE)
+						     $ta .= "<a href='".$this->baseurl.'/'.$continue_url."'>".localize('_CONTINUESHOP',getlocal())."</a>|";
+					       else  
+						     $ta .= $this->myf_button(localize('_CONTINUESHOP',getlocal()),$this->baseurl.'/'.$continue_url,'_CONTINUESHOP'); //url abs path (ie problem)
 						 }
                    
 				         //$ta .= seturl("t=clearcart&a=&g=" , $this->resetcart_button) . "&nbsp;" ;		
 						 //$clear_cart_url = 'clearcart/';//seturl("t=clearcart"); 						 
-						 $ta .= "&nbsp;";//<a href=\"$clear_cart_url\"><input type=\"button\" class=\"myf_button\" value=\"".localize('_CLEARCARTITEMS',getlocal())."\" /></a>";
-						 $ta .= $this->myf_button(localize('_CLEARCARTITEMS',getlocal()),'clearcart/','_CLEARCARTITEMS');
+						 
+						 $ta .= "&nbsp;";
+						 if ($this->agentIsIE)
+						   $ta .= "<a href='".$this->baseurl.'/clearcart/'."'>".localize('_CLEARCARTITEMS',getlocal())."</a>|";
+					     else
+						   $ta .= $this->myf_button(localize('_CLEARCARTITEMS',getlocal()),$this->baseurl.'/clearcart/','_CLEARCARTITEMS'); //url abs path (ie problem)
 						 
 	                     //FAST PICK
 						 $ta .= "&nbsp;";
 	                     $lnk2 = seturl('t=fastpick',null,null,null,null,$this->rewrite);//,localize('_FASTPICK',getlocal()));
-		                 $ta .= $this->myf_button(localize('_FASTPICK',getlocal()),$lnk2);					 
+						 if ($this->agentIsIE)
+						   $ta .= "<a href='".$this->baseurl.'/'.$lnk2."'>".localize('_FASTPICK',getlocal())."</a>";
+					     else
+		                   $ta .= $this->myf_button(localize('_FASTPICK',getlocal()),$this->baseurl.'/'.$lnk2); //url abs path (ie problem)					 
 						 
 						 if (is_object($this->transformer))
 						   $ta .= $this->transformer->showlink();						 				 
@@ -4553,6 +4569,7 @@ function addtocart(id,cartdetails)
 	   }
 	   
 	   if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
+	   //if (strpos($_SERVER['HTTP_USER_AGENT'], 'Trident/7.0; rv:11.0') != -1) { 
 	      //echo 'ie';
 		  $_b = $imglink ? $imglink : "[$title]";
 		  $ret = "&nbsp;<a href=\"$link\">$_b</a>&nbsp;";

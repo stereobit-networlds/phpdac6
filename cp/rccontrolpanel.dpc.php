@@ -3341,9 +3341,14 @@ EOF;
 		 $otokens[] = "<li><a $class href='cpmckfinder.php?&$passturl&encoding=$encoding'>".localize('_ckfinder',$lan)."</a></li>";	 		 
 	
 	 if ($environment['EDITHTML']==1) {
-	    //$turl = array_shift(explode('?',urldecode(base64_decode($_GET['turl']))));//$_GET['turl'];
-		$turl_file = str_replace('.php','.html',array_shift(explode('?',urldecode(base64_decode($_GET['turl'])))));
+		//$turl_file = str_replace('.php','.html',array_shift(explode('?',urldecode(base64_decode($_GET['turl'])))));
+		$a = base64_decode($_GET['turl']); 
+		$b = urldecode($a);
+		$c = explode('?', $b);
+		$d = array_shift($c);
+		$e = str_replace('.php','.html', $d);		
 		//echo $turl_file,'..';
+		
 		$htmlfile = $_GET['htmlfile'] ? $_GET['htmlfile'] : urlencode(base64_encode($turl_file));
 		if ($htmlfile) 
 	       $otokens[] = "<li><a $class href='cpmhtmleditor.php?cke4=1&encoding=$encoding&$passturl&htmlfile=$htmlfile'>".localize('_editpage',$lan)."</a></li>";
