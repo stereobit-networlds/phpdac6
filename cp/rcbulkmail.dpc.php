@@ -99,7 +99,7 @@ class rcbulkmail {
 	var $stats, $cpStats, $hasgraph, $goto, $refresh, $ajaxgraph, $objcall;
 	var $sendOk;
 	
-	var $appname, $appkey, $skin, $urlRedir;
+	var $appname, $appkey, $skin, $urlRedir, $urlRedir2;
 		
     function __construct() {
 	  
@@ -160,6 +160,7 @@ class rcbulkmail {
 		$this->objcall = array();
 		
 		$this->urlRedir = 'http://www.stereobit.gr/mtrackurl.php';
+		$this->urlRedir2 = 'http://www.stereobit.gr/m/' ; //htaccess
 		
 		$this->skin = 'metro'; //remote_paramload('FRONTHTMLPAGE','cptemplate', $this->prpath);	
 		
@@ -1732,8 +1733,7 @@ This email and any files transmitted with it are confidential and intended solel
 	public function encUrl($url) {
 		if ($url) {
 			
-			$key = '1234567890'; //hex2bin('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f');
-		
+			//$key = '1234567890'; //hex2bin('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f');
 			//$mycurl = $url."::".$cid."::".$this->baseurl;
 			//$c = new cipherSaber();
 			//$_url = $c->encrypt($mycurl, $key);
@@ -1741,10 +1741,14 @@ This email and any files transmitted with it are confidential and intended solel
 			$burl = explode('/', $url);
 			array_shift($burl); //shift http
 			array_shift($burl); //shift //
-			$qry = 'u=' . base64_encode(implode('/',$burl)) . '&cid=_CID_&a='. base64_encode($this->appname) . '&r=_TRACK_';
-			//$encoded_qry = urlencode(base64_encode($qry));
+			array_shift($burl); //www //
+			$xurl = implode('/',$burl);
 			
+			$qry = 'a='.$this->appname.'&u=' . $xurl . '&cid=_CID_' . '&r=_TRACK_';
 			$uredir = $this->urlRedir .'?'. $qry; //'?turl=' . $encoded_qry;
+			
+			/*RewriteRule ^m/([^/]*)/([^/]*)/([^/]*)/([^/]*)/$ /mtrackurl.php?t=mtrack&a=$1&u=$2&cid=$3&r=$4 [L] */
+			//$uredir = $this->urlRedir2 .'/'. $this->appname .'/'. str_replace('/','-', $xurl) . '/_CID_/_TRACK_/' ; // htaccess / problem
 			
 			return ($uredir);
 		}
@@ -1754,7 +1758,7 @@ This email and any files transmitted with it are confidential and intended solel
 	
 	protected function add_urltracker_to_mailbody($mailbody=null,$id=null,$cid=null) {
 
-		$ret = str_replace(array('_TRACK_','_CID_'), array(base64_encode($id), base64_encode($cid)), $mailbody);
+		$ret = str_replace(array('_TRACK_','_CID_'), array(base64_encode($id), $cid), $mailbody);
 		return ($ret);
 	}
 	

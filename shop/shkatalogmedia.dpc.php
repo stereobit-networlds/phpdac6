@@ -450,7 +450,7 @@ class shkatalogmedia extends shkatalog {
 	function gadgets_js() {
 	
         if (iniload('JAVASCRIPT'))  {	
-		
+		/*
 	      //$code = $this->make_swfobjects($this->xmax,$this->ymax); //no need..called in lists
 		  $code = '
 function createCookie(name,value,days) {
@@ -461,13 +461,13 @@ function createCookie(name,value,days) {
     }
     else var expires = "";
     document.cookie = name+"="+value+expires+"; path=/; domain=.'.str_replace('www.','',$_SERVER['HTTP_HOST']).';"
-}		  
+}	//use cc of rcvstata which loaded -must- before this dpc	  
 ';
  
 		  $js = new jscript;  
 		  //$js->load_js("swfobject/swfobject.js");	      		      	  		  
           $js->load_js($code,null,1);		   			   
-		  unset ($js);
+		  unset ($js); */
 	    }		
 	}
 	

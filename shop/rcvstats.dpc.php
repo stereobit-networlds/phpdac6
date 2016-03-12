@@ -17,9 +17,11 @@ require_once($a);
 
 $__EVENTS['RCVSTATS_DPC'][0]='cpvstats';
 $__EVENTS['RCVSTATS_DPC'][1]='cpvstatsshow';
+$__EVENTS['RCVSTATS_DPC'][2]='cpvmcstart';
 
 $__ACTIONS['RCVSTATS_DPC'][0]='cpvstats';
 $__ACTIONS['RCVSTATS_DPC'][1]='cpvstatsshow';
+$__ACTIONS['RCVSTATS_DPC'][2]='cpvmcstart';
 
 $__DPCATTR['RCVSTATS_DPC']['cpvstats'] = 'cpvstats,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -28,21 +30,20 @@ $__LOCALE['RCVSTATS_DPC'][1]='_GNAVAL;Chart not available!;Στατιστική 
 
 class rcvstats  {
 
-    var $reset_db, $title;
+    var $title;
 	var $_grids, $charts;
 	var $ajaxLink;
 	var $hasgraph;
 	var $graphx, $graphy;
 	
-	var $ref;
+	var $mc, $cid, $hashtag;
 		
 	function rcvstats() {
 
 	  $this->title = localize('RCVSTATS_DPC',getlocal());		
-	  $this->reset_db = false;
   
-	  $this->_grids[] = new nitobi("Items");	//must initialized althouth it handled by vehicles dpc  		  	  
-      $this->_grids[] = new nitobi("ItemsStats");		
+	  //$this->_grids[] = new nitobi("Items");	//must initialized althouth it handled by vehicles dpc  		  	  
+      //$this->_grids[] = new nitobi("ItemsStats");		
 
 	  $this->ajaxLink = seturl('t=cpvstatsshow&statsid='); //for use with...	      
 
@@ -50,33 +51,43 @@ class rcvstats  {
 	  $this->hasgraph = false;
 	  $this->graphx = remote_paramload('RCVSTATS','graphx',$this->path);
 	  $this->graphy = remote_paramload('RCVSTATS','graphy',$this->path);
-
-      /*if ($r= parse_url($qquery, PHP_URL_FRAGMENT))	  {
-		  $this->ref = $r;
-	      echo '>', $r;
-	  }*/
+	  
+	  //$u = $_SERVER['REQUEST_URI'].$_SERVER['QUERY_STRING']; //basename($_SERVER['REQUEST_URI']);
+	  //echo $u;
+	  
+	  $this->hashtag = $_COOKIE['hashtag']; //fetch generic hashtag if any
+	  $this->cid = $_COOKIE['cid']; //fetch mail campaign id	  
+	  $this->mc = $_COOKIE['mc'];	//fetch client mail base64encoded
+	  
+	  $this->javascript(); //check for hash and save cookies	  
 	}
-
 	
 
     function event($event=null) {
 
 	   //ALLOW EXPRIRED APPS
 	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
+	   //if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	moved per event
 	   /////////////////////////////////////////////////////////////		 
 
 	   switch ($event) {
+		   
+		 case 'cpvmcstart'  : //SetSessionParam('cid', $cid); //campaign id                  (saved as cookies)
+			                  //SetSessionParam('mc', $mc);  //client email (base64 encoded) (--//--)
+							  $this->callback_update_first_referece_record();
+							  die();// $this->mc.','.$this->cid.','.$this->hashtag);
+							  break;
 
-		 case 'cpvstatsshow': if (!$cvid = GetParam('statsid')) $cvid=-1; 
+		 case 'cpvstatsshow': if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");
+		                      if (!$cvid = GetParam('statsid')) $cvid=-1; 
 		                      $this->charts = new swfcharts;	
 		                      $this->hasgraph = $this->charts->create_chart_data('statistics',"where tid='".$cvid . "' and year>=2000");
 							  break; 	   
 
 	     case 'cpvstats'    :
-		 default            : $this->nitobi_javascript();
-			                  $this->sidewin(); 		 
-		                      if ($this->reset_db) $this->reset_db();
+		 default            : if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");
+		                      $this->graph_javascript();
+			                  //$this->sidewin(); 		 
 		                      $this->charts = new swfcharts;	
 		                      $this->hasgraph = $this->charts->create_chart_data('statisticscat',"where year>=2000 and attr1='".urldecode(GetReq('cat'))."'");
 	   }
@@ -93,6 +104,8 @@ class rcvstats  {
       }
 
 	  switch ($action) {
+		  
+		 case 'cpvmcstart'  : break;  
 
 		 case 'cpvstatsshow': if ($this->hasgraph)
 		                        $out = $this->show_graph('statistics','Product statistics',$this->ajaxLink,'stats');
@@ -109,33 +122,122 @@ class rcvstats  {
     }
 
 	
+	function javascript() {
+        if (iniload('JAVASCRIPT')) {
+		
+		    //return no js when tags already loaded 
+			//(NOT A GOOD IDEA CC BECAME GLOBAL FUNC $ STORE COOKIES)
+			//if (isset($this->hashtag) || (isset($this->cid) && isset($this->mc))) 
+			//	return null;
+			$code = $this->javascript_ajax();
+			$code .= $this->reference_js();		
+           	//$code.= $this->alert_reference_js();	
+			
+		    $js = new jscript;
+            $js->load_js($code,"",1);			   
+		    unset ($js);		
+     	}	  
+	}
+	
+	protected function alert_reference_js() {
+		//alert js
+		//substring Puts hash in variable, and removes the # character
+		$ret = "if (window.location.hash) {var hash = window.location.hash.substring(1); alert (hash);} else {	}
+		";
+	
+        return ($ret);
+	}
+	
+	//save hasg tag comming from redirection page mtrackurl at root app
+	protected function reference_js() {	
+		//if value 1 means a redir reference hash to split in 2 (save ref for one day)
+		//else is another type of hash (days keep ?)
+		//create cookie is a part of shkatalogmedia js		
+		//cc=createcookies of shkatalogmedia /not loaded yet
+		$code = '
+function cc(name,value,days) {
+    if (days) { var date = new Date(); date.setTime(date.getTime()+(days*24*60*60*1000)); var expires = "; expires="+date.toGMTString();} else var expires = "";
+    document.cookie = name+"="+value+expires+"; path=/; domain=.'.str_replace('www.','',$_SERVER['HTTP_HOST']).';" }		
+    if (window.location.hash) {
+	var hash = window.location.hash.substring(1);
+	var value = hash.split("|");
+	if (value[1]!=null) { cc("cid",value[0],"1"); cc("mc",value[1],"1");} else cc("hashtag",hash,"1");
+	//$.get( "katalog.php?t=cpvmcstart", function( data ) { alert( "Data Loaded: " + data ); });
+	sndUrl("katalog.php?t=cpvmcstart");
+}
+else { }		
+';
+		return ($code);
+	}
+	
+    protected function javascript_ajax()  {
+   
+      $jscript = <<<EOF
+function createRequestObject() {
+    var ro;
+    var browser = navigator.appName;
+    if(browser == "Microsoft Internet Explorer"){
+        ro = new ActiveXObject("Microsoft.XMLHTTP");
+    }else{
+        ro = new XMLHttpRequest();
+    }
+    return ro;
+}
+var http = createRequestObject();
+function sndUrl(url) {
+    http.open('get', url+'&ajax=1');
+    http.onreadystatechange = handleResponse;
+    http.send(null);
+}
+function handleResponse() {
+    if(http.readyState == 4){
+        var response = http.responseText;
+        var update = new Array();
+        response = response.replace( /^\s+/g, "" ); // strip leading 
+        response = response.replace( /\s+$/g, "" ); // strip trailing		
+        if(response.indexOf('|' != -1)) {
+            alert(response); 	
+            //update = response.split('|');
+            //document.getElementById(update[0]).innerHTML = update[1];
+        }	
+    }
+}
 
-	function nitobi_javascript() {
+EOF;
+
+      return ($jscript);
+   }		
+	
+
+	function graph_javascript() {
 
       if (iniload('JAVASCRIPT')) {
 
-		   $template = $this->set_template();   		      
+		   //$template = $this->set_template();   		      
 	       $code = $this->init_grids();			
+		   
 		   //$code .= $this->_grids[0]->OnClick(20,'StatisticDetails',$template,'VehicleStats','vid',19);
 		   //REMOTE GRID ARRAY CALLED TO ENABLE onclick !!!!!
-		   $vgrids = GetGlobal('controller')->calldpc_var('rcitems._grids');
+		   /*$vgrids = GetGlobal('controller')->calldpc_var('rcitems._grids');
 		   $code .= $vgrids[0]->OnClick(17,'StatisticDetails',$template,'ItemsStats','tid',0);
-
+            */ 
+			
 		   $js = new jscript;
-		   $js->setloadparams("init()");
-           $js->load_js('nitobi.grid.js');		   
+		   //$js->setloadparams("init()");
+           //$js->load_js('nitobi.grid.js');		   
+		   
            $js->load_js($code,"",1);			   
 		   unset ($js);
 
 	  }		
 	}
-
+/*
 	function set_template() {
 
 		   return ($template);	
 	}
 
-	
+*/	
 
 	function show_graph($xmlfile,$title=null,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
 	  $gx = $this->graphx?$this->graphx:$xmax?$xmax:550;
@@ -149,8 +251,9 @@ class rcvstats  {
 	
 	function show_statistics() {
 
-	   if ($this->msg) $out = $this->msg;
+	   /*if ($this->msg) $out = $this->msg;
 
+	   
 	   if (GetReq('cat')) {
 		  if (defined("RCCATEGORIES_DPC"))//text based cats
 		    $toprint .= GetGlobal('controller')->calldpc_method('rccategories.show_categories use cpvstats+1');		
@@ -160,6 +263,7 @@ class rcvstats  {
        }
 
 	   $toprint .= $this->show_grids();	
+	   */
        $mywin = new window($this->title,$toprint);
        $out .= $mywin->render();	
 	   //HIDDEN FIELD TO HOLD STATS ID FOR AJAX HANDLE
@@ -167,25 +271,53 @@ class rcvstats  {
 	   return ($out);		   
 
 	}		
+	
+	//hash can't fetched for first time by php (not yet saved in cookies)
+	//this function update the last rec were no tag info = first in tags history
+	//run once when cookie set
+	protected function callback_update_first_referece_record() {
+        $db = GetGlobal('db'); 
+        $UserName = GetGlobal('UserName');	
+		$name = $UserName ? decode($UserName) : session_id();
+		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : '');
+		$cmail = $this->mc ? base64_decode($this->mc) : '';		
+		$day = date('d'); $month = date('m'); $year = date('Y');
+		$sSQL = "select id from stats where attr2=" . $db->qstr($name) . " and (attr3='' or ref='') ";
+		$sSQL.= "and year='$year' and month='$month' and day='$day' order by id desc LIMIT 1";
+     	$res = $db->Execute($sSQL,2);
+        if (!empty($res->fields)) {
+			$sSQL = "update stats set attr3=".$db->qstr($cmail).", ref=".$db->qstr($ref)." where id=".$res->fields[0];
+			//echo $sSQL;
+			$db->Execute($sSQL,1);	 		
+			if ($db->Affected_Rows()) 
+				return true;
+        }	
+		return false;			
+	}	
 
 	function update_item_statistics($id) {
         $db = GetGlobal('db'); 
         $UserName = GetGlobal('UserName');	
-		$name = $UserName?decode($UserName):session_id();
+		$name = $UserName ? decode($UserName) : session_id();
 
 	    $currentdate = time();
 	    $mydate = $db->qstr(date('Y-m-d h:i:s',$currentdate));		
 	    $myday  = date('d',$currentdate);	
 	    $mymonth= date('m',$currentdate);	
-	    $myyear = date('Y',$currentdate);	
+	    $myyear = date('Y',$currentdate);
+
+		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : '');
+		$cmail = $this->mc ? base64_decode($this->mc) : '';		
 						
-		$sSQL = "insert into stats (date,day,month,year,tid,attr2) values (";
+		$sSQL = "insert into stats (date,day,month,year,tid,attr2,attr3,ref) values (";
 		$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
 		$sSQL.= $myyear . ",";						
 		$sSQL.= $db->qstr($id) . ',';
-        $sSQL.= $db->qstr($name) . ")";
+        $sSQL.= $db->qstr($name) . ','; 
+		$sSQL.= $db->qstr($cmail) . ',';
+		$sSQL.= $db->qstr($ref) . ")";
 		//echo $sSQL;
 		$db->Execute($sSQL,1);	 		
 		if ($db->Affected_Rows()) 
@@ -198,20 +330,25 @@ class rcvstats  {
         $db = GetGlobal('db'); 
 
         $UserName = GetGlobal('UserName');		
-		$name = $UserName?decode($UserName):session_id();			
+		$name = $UserName ? decode($UserName) : session_id();			
 	    $currentdate = time();
 	    $mydate = $db->qstr(date('Y-m-d h:i:s',$currentdate));		
 	    $myday  = date('d',$currentdate);	
 	    $mymonth= date('m',$currentdate);	
 	    $myyear = date('Y',$currentdate);	
+		
+		$ref = $this->cid ? $this->cid : '';
+		$cmail = $this->mc ? base64_decode($this->mc) : ($this->hashtag ? $this->hashtag : '');
 
-		$sSQL = "insert into stats (date,day,month,year,attr1,attr2) values (";
+		$sSQL = "insert into stats (date,day,month,year,attr1,attr2,attr3, ref) values (";
 		$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
 		$sSQL.= $myyear . ",";						
 		$sSQL.= $db->qstr($cat) . ",";		
-		$sSQL.= $db->qstr($name) . ")";
+		$sSQL.= $db->qstr($name) . ","; 
+		$sSQL.= $db->qstr($cmail) . ",";
+		$sSQL.= $db->qstr($ref) . ")";
 		//echo $sSQL;		
 		$db->Execute($sSQL,1);	 		
 
@@ -222,43 +359,8 @@ class rcvstats  {
 		  return false;		
 	}	
 
-	function reset_db() {
-        $db = GetGlobal('db'); 
-
-	    $sSQL0 = "drop table stats";
-	    $result0 = $db->Execute($sSQL0,1);	
-	    if ($result0) $message = "Drop table ...\n";
-
-	    //create table
-	    $sSQL1 = 'CREATE TABLE `stats` ('
-        . ' `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, '
-        . ' `date` DATE NULL, '
-        . ' `day` INT NULL, '
-        . ' `month` INT NULL, '
-        . ' `year` INT NULL, '
-        . ' `vid` INT NULL, '
-        . ' `tid` VARCHAR(64) NULL, '
-        . ' `attr1` VARCHAR(254) NULL, '
-        . ' `attr2` VARCHAR(254) NULL, '
-        . ' `attr3` VARCHAR(254) NULL,'
-        . ' INDEX (`vid`)'
-        . ' )'
-        . ' ENGINE = myisam'
-        . ' CHARACTER SET greek COLLATE greek_general_ci'
-        . ' COMMENT = \'item statistics\';';  
-
-	    $result1 = $db->Execute($sSQL1,1);
-
-	    if ($result1) $message .= "Create table ...\n";
-
-	    setInfo($message);	  	
-	}
-
-	function init_grids() {
-        //disable alert !!!!!!!!!!!!		
+	function init_grids() {	
 		$out = "
-
-function alert() {}\r\n 
 
 function update_stats_id() {
   var str = arguments[0];
@@ -271,7 +373,10 @@ function update_stats_id() {
 
   return str1+' '+str2;
 }
-
+";
+		return ($out);
+    }
+	/*..grid js disabled
 function init()
 {
 ";
@@ -280,7 +385,7 @@ function init()
 		  $out .= $g->init_grid($n);
         $out .= "\r\n}";
         return ($out);
-	}
+	}*/
 
 	function show_grids() {
 
