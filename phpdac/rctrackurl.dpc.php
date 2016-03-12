@@ -116,47 +116,7 @@ class rctrackurl  {
 			$this->javascript();
 			//$link = "<a href='$url'>".$url."</a>";
 			//echo $link;
-		}
-		//... write something to db ???
-		if (!$i = GetReq('i')) return;
-	   	
-		//$di = rawurldecode($i); echo $di,'<br>';
-		//$dr = rawurldecode($r);
-	   
-		$trackid = $i;//decode($i); echo $i,'<br>';
-		$receiver = $r;//decode($r);
-	   
-		/*$p = explode('<DLM>',$id);
-		print_r($p);
-		if (!empty($p)) {
-	       echo 'z';
-	       $trackid = $p[0];
-		   $sender = $p[1];
-		   $app = $p[2];*/
-		$p = explode('@',$trackid);	   
-		if (!empty($p)) {	   
-	   
-	       $app = trim($p[1]);	   
-		   //echo $app,'>';
-		   if ($app)
-		     $db = GetGlobal('controller')->calldpc_method('database.switch_db use '.$app.'++1');
-		   else
-		     $db = GetGlobal('db');//root db
-			 
-           $sSQL = "select id,trackid,reply from mailqueue where trackid=" . $db->qstr($trackid);			 	 
-		   $result = $db->Execute($sSQL,2);
-		   //echo $sSQL;
-		   
-		   if ($tid = $result->fields['trackid']) {//if trackid exist...
-		     
-			 $replies = intval($result->fields['reply'])+1;//addon replies
-			 
-             $sSQL = "update mailqueue set reply=$replies, status=1 where trackid=" . $db->qstr($trackid);			 	 
-		     $result = $db->Execute($sSQL,1);
-			 //echo $sSQL;		     
-		   }
-		   	 
-		}
+		}  
 	}	
 };
 }

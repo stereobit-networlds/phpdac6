@@ -72,9 +72,7 @@ class rcvstats  {
 
 	   switch ($event) {
 		   
-		 case 'cpvmcstart'  : //SetSessionParam('cid', $cid); //campaign id                  (saved as cookies)
-			                  //SetSessionParam('mc', $mc);  //client email (base64 encoded) (--//--)
-							  $this->callback_update_first_referece_record();
+		 case 'cpvmcstart'  : $this->callback_update_first_referece_record();
 							  die();// $this->mc.','.$this->cid.','.$this->hashtag);
 							  break;
 
@@ -86,8 +84,7 @@ class rcvstats  {
 
 	     case 'cpvstats'    :
 		 default            : if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");
-		                      $this->graph_javascript();
-			                  //$this->sidewin(); 		 
+		                      $this->graph_javascript();		 
 		                      $this->charts = new swfcharts;	
 		                      $this->hasgraph = $this->charts->create_chart_data('statisticscat',"where year>=2000 and attr1='".urldecode(GetReq('cat'))."'");
 	   }
@@ -95,13 +92,6 @@ class rcvstats  {
     }   
 
     function action($action=null) {
-
-      if (!GetReq('editmode')) {
-	    if (GetSessionParam('REMOTELOGIN')) 
-	      $out = setNavigator(seturl("t=cpremotepanel","Remote Panel"),$this->title); 	 
-	    else  
-          $out = setNavigator(seturl("t=cp","Control Panel"),$this->title);	 	 
-      }
 
 	  switch ($action) {
 		  
@@ -125,13 +115,15 @@ class rcvstats  {
 	function javascript() {
         if (iniload('JAVASCRIPT')) {
 		
+		    //became universal
+           	$code = $this->createcookie_js();				
+			
 		    //return no js when tags already loaded 
-			//(NOT A GOOD IDEA CC BECAME GLOBAL FUNC $ STORE COOKIES)
-			//if (isset($this->hashtag) || (isset($this->cid) && isset($this->mc))) 
-			//	return null;
-			$code = $this->javascript_ajax();
-			$code .= $this->reference_js();		
-           	//$code.= $this->alert_reference_js();	
+			if (isset($this->hashtag) || (isset($this->cid) && isset($this->mc))) {}
+			else {	
+				$code.= $this->javascript_ajax();			
+				$code.= $this->reference_js();		
+			}	
 			
 		    $js = new jscript;
             $js->load_js($code,"",1);			   
@@ -139,12 +131,13 @@ class rcvstats  {
      	}	  
 	}
 	
-	protected function alert_reference_js() {
-		//alert js
-		//substring Puts hash in variable, and removes the # character
-		$ret = "if (window.location.hash) {var hash = window.location.hash.substring(1); alert (hash);} else {	}
-		";
-	
+	protected function createcookie_js() {
+		
+		$ret = '
+function cc(name,value,days) {
+    if (days) { var date = new Date(); date.setTime(date.getTime()+(days*24*60*60*1000)); var expires = "; expires="+date.toGMTString();} else var expires = "";
+    document.cookie = name+"="+value+expires+"; path=/; domain=.'.str_replace('www.','',$_SERVER['HTTP_HOST']).';" }
+';
         return ($ret);
 	}
 	
@@ -154,11 +147,8 @@ class rcvstats  {
 		//else is another type of hash (days keep ?)
 		//create cookie is a part of shkatalogmedia js		
 		//cc=createcookies of shkatalogmedia /not loaded yet
-		$code = '
-function cc(name,value,days) {
-    if (days) { var date = new Date(); date.setTime(date.getTime()+(days*24*60*60*1000)); var expires = "; expires="+date.toGMTString();} else var expires = "";
-    document.cookie = name+"="+value+expires+"; path=/; domain=.'.str_replace('www.','',$_SERVER['HTTP_HOST']).';" }		
-    if (window.location.hash) {
+		$code = '		
+if (window.location.hash) {
 	var hash = window.location.hash.substring(1);
 	var value = hash.split("|");
 	if (value[1]!=null) { cc("cid",value[0],"1"); cc("mc",value[1],"1");} else cc("hashtag",hash,"1");
@@ -173,34 +163,34 @@ else { }
     protected function javascript_ajax()  {
    
       $jscript = <<<EOF
-function createRequestObject() {
-    var ro;
-    var browser = navigator.appName;
-    if(browser == "Microsoft Internet Explorer"){
-        ro = new ActiveXObject("Microsoft.XMLHTTP");
-    }else{
-        ro = new XMLHttpRequest();
-    }
-    return ro;
-}
+function createRequestObject() {var ro; var browser = navigator.appName;
+    if(browser == "Microsoft Internet Explorer"){ro = new ActiveXObject("Microsoft.XMLHTTP");} else{
+        ro = new XMLHttpRequest();}
+    return ro;}
 var http = createRequestObject();
 function sndUrl(url) {
     http.open('get', url+'&ajax=1');
-    http.onreadystatechange = handleResponse;
+    //http.onreadystatechange = handleResponse;
     http.send(null);
 }
-function handleResponse() {
-    if(http.readyState == 4){
-        var response = http.responseText;
-        var update = new Array();
-        response = response.replace( /^\s+/g, "" ); // strip leading 
-        response = response.replace( /\s+$/g, "" ); // strip trailing		
-        if(response.indexOf('|' != -1)) {
-            alert(response); 	
-            //update = response.split('|');
-            //document.getElementById(update[0]).innerHTML = update[1];
-        }	
-    }
+function sndReqArg(url) {var params = url+'&ajax=1';
+    http.open('post', params, true);
+    http.setRequestHeader("Content-Type", "text/html; charset=utf-8");
+    http.setRequestHeader("encoding", "utf-8");	
+    http.onreadystatechange = handleResponse;	
+    http.send(null);
+}
+function handleResponse() {if(http.readyState == 4){
+    var response = http.responseText;
+    var update = new Array();
+    response = response.replace( /^\s+/g, "" ); // strip leading 
+    response = response.replace( /\s+$/g, "" ); // strip trailing		
+    if(response.indexOf('|' != -1)) {
+        //alert(response); 	
+        update = response.split('|');
+        document.getElementById(update[0]).innerHTML = update[1];
+    }	
+  }
 }
 
 EOF;
@@ -214,7 +204,7 @@ EOF;
       if (iniload('JAVASCRIPT')) {
 
 		   //$template = $this->set_template();   		      
-	       $code = $this->init_grids();			
+	       $code = $this->update_stats();			
 		   
 		   //$code .= $this->_grids[0]->OnClick(20,'StatisticDetails',$template,'VehicleStats','vid',19);
 		   //REMOTE GRID ARRAY CALLED TO ENABLE onclick !!!!!
@@ -231,13 +221,15 @@ EOF;
 
 	  }		
 	}
-/*
-	function set_template() {
-
-		   return ($template);	
-	}
-
-*/	
+	
+	protected function init_grids() {	
+		$out = "
+function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  var str2 = arguments[2]; statsid.value = str;
+  sndReqArg('$this->ajaxLink'+statsid.value,'stats');
+  return str1+' '+str2; }
+";
+		return ($out);
+    }	
 
 	function show_graph($xmlfile,$title=null,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
 	  $gx = $this->graphx?$this->graphx:$xmax?$xmax:550;
@@ -358,34 +350,6 @@ EOF;
 		else 
 		  return false;		
 	}	
-
-	function init_grids() {	
-		$out = "
-
-function update_stats_id() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];
-
-  statsid.value = str;
-  //alert(statsid.value);
-  sndReqArg('$this->ajaxLink'+statsid.value,'stats');
-
-  return str1+' '+str2;
-}
-";
-		return ($out);
-    }
-	/*..grid js disabled
-function init()
-{
-";
-
-        foreach ($this->_grids as $n=>$g)
-		  $out .= $g->init_grid($n);
-        $out .= "\r\n}";
-        return ($out);
-	}*/
 
 	function show_grids() {
 
