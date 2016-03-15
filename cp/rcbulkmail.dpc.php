@@ -30,6 +30,7 @@ $__EVENTS['RCBULKMAIL_DPC'][12]='cpsubloadhtmlmail';
 $__EVENTS['RCBULKMAIL_DPC'][13]='cpviewcamp';
 $__EVENTS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
 $__EVENTS['RCBULKMAIL_DPC'][15]='cpmailstats';
+$__EVENTS['RCBULKMAIL_DPC'][16]='cpviewclicks';
 
 $__ACTIONS['RCBULKMAIL_DPC'][0]='cpbulkmail';
 $__ACTIONS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
@@ -47,6 +48,7 @@ $__ACTIONS['RCBULKMAIL_DPC'][12]='cpsubloadhtmlmail';
 $__ACTIONS['RCBULKMAIL_DPC'][13]='cpviewcamp';
 $__ACTIONS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
 $__ACTIONS['RCBULKMAIL_DPC'][15]='cpmailstats';
+$__ACTIONS['RCBULKMAIL_DPC'][16]='cpviewclicks';
 
 $__LOCALE['RCBULKMAIL_DPC'][0]='RCBULKMAIL_DPC;Mail queue;Mail queue';
 $__LOCALE['RCBULKMAIL_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
@@ -74,7 +76,11 @@ $__LOCALE['RCBULKMAIL_DPC'][22]='_OPTIONS;Options;Επιλογές';
 $__LOCALE['RCBULKMAIL_DPC'][23]='_status;Status;Κατάσταση';
 $__LOCALE['RCBULKMAIL_DPC'][24]='_mailstatus;Reason;Αιτία';
 $__LOCALE['RCBULKMAIL_DPC'][25]='_date;Date sent;Ημ. αποστολής';
-
+$__LOCALE['RCBULKMAIL_DPC'][26]='_unsubscribe;Unsubscribe;Διαγραφή απο την λίστα';
+$__LOCALE['RCBULKMAIL_DPC'][27]='_viewasweb;View as web page;Πατήστε εδώ για να δείτε την ιστοσελίδα';
+$__LOCALE['RCBULKMAIL_DPC'][28]='_notifications;Notifications;Ειδοποιήσεις';
+$__LOCALE['RCBULKMAIL_DPC'][29]='_viewallnotifications;View all notifications;Όλες οι ειδοποιήσεις';
+$__LOCALE['RCBULKMAIL_DPC'][30]='_MAILCLICKS;Responses;Ανταπόκριση';
 $__LOCALE['RCBULKMAIL_DPC'][31]='_dashboard;Dashboard;Στατιστικά';
 $__LOCALE['RCBULKMAIL_DPC'][32]='_year;Year;Έτος';
 $__LOCALE['RCBULKMAIL_DPC'][33]='_month;Month;Μήνας';
@@ -97,9 +103,9 @@ class rcbulkmail {
 	var $ishtml, $mailbody, $template_ext, $template_images_path, $template;
 	var $ulistselect, $messages, $cid, $savehtmlpath, $savehtmlurl;
 	var $stats, $cpStats, $hasgraph, $goto, $refresh, $ajaxgraph, $objcall;
-	var $sendOk;
+	var $sendOk, $iscollection;
 	
-	var $appname, $appkey, $skin, $urlRedir, $urlRedir2;
+	var $appname, $appkey, $cptemplate, $urlRedir, $urlRedir2, $webview, $nsPage;
 		
     function __construct() {
 	  
@@ -139,13 +145,16 @@ class rcbulkmail {
 		$this->ulistselect = GetReq('ulistselect') ? GetReq('ulistselect') : GetSessionParam('ulistselect');
 		$this->ishtml = true;
 		$this->mailbody = null;
-		$this->cid = GetReq('cid');
+		$this->cid = $_GET['cid'] ? $_GET['cid'] : $_POST['cid'];//no gereq,getparam may cid used by campaigns is in cookies
 		
         //$defaultsavepath = remote_paramload('FRONTHTMLPAGE','path', $this->prpath);
 		$tmplsavepath = remote_paramload('RCBULKMAIL','tmplsavepath', $this->prpath);		
+		$this->nsPage = remote_paramload('RCBULKMAIL','webview', $this->prpath);
+		$this->webview = $this->nsPage ? 1 : 0;
+		
 		$savepath = $tmplsavepath ? $tmplsavepath : null;//$defaultsavepath;
 		$this->savehtmlpath = $savepath ? $this->urlpath . $savepath : null;
-		$this->savehtmlurl = $savepath ? $this->url . $savepath : null;
+		$this->savehtmlurl = $savepath ? ($this->webview ? $this->url .'/'. $this->nsPage : $this->url . $savepath) : null;
 
 		$this->appname = paramload('ID','instancename');
 		$this->appkey = new appkey();			
@@ -159,11 +168,12 @@ class rcbulkmail {
 		$this->goto = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
 		$this->objcall = array();
 		
-		$this->urlRedir = 'http://www.stereobit.gr/mtrackurl.php';
-		$this->urlRedir2 = 'http://www.stereobit.gr/m/' ; //htaccess
+		$this->urlRedir = remote_paramload('RCBULKMAIL','urlredir', $this->prpath);
+		$this->urlRedir2 = remote_paramload('RCBULKMAIL','urlredir2', $this->prpath);
 		
-		$this->skin = 'metro'; //remote_paramload('FRONTHTMLPAGE','cptemplate', $this->prpath);	
-		
+		$tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
+	    $this->cptemplate = $tmpl ? $tmpl : 'metro';		
+
 		//$timeZone = 'Europe/Athens';  // +2 hours !!! (cron must run at the same timezone)
 	}
 	
@@ -172,6 +182,13 @@ class rcbulkmail {
 	    /////////////////////////////////////////////////////////////
 	    if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
 	    /////////////////////////////////////////////////////////////			
+  
+		if (defined('RCCOLLECTIONS_DPC')) //used by wizard html page !!
+			$this->iscollection = GetGlobal('controller')->calldpc_method('rccollection.isCollection');  
+			
+		//set message 
+		//GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use warning|test 123|1|#");						
+		$this->percentofCamps();
   
 	    switch ($event) {
 			
@@ -192,7 +209,7 @@ class rcbulkmail {
 			case 'cppreviewcamp'   : die($this->preview_campaign());
 			                         break;							 
 			 
-			case 'cpsubloadhtmlmail': if (defined('RCCOLLECTIONS_DPC'))
+			case 'cpsubloadhtmlmail': if ($this->iscollection>0)
 										$this->loadTemplate2(); 					  
 									  else
 										$this->loadTemplate();	
@@ -225,9 +242,9 @@ class rcbulkmail {
 									
 			case 'cpadvsubscribe' : break; 									
 			
+			case 'cpviewclicks'        :
             case 'cpviewsubsqueueactiv':
-		    case 'cpviewsubsqueue'     : //print_r($_POST);
-			                             //$this->grid_javascript();				
+		    case 'cpviewsubsqueue'     : 				
 	                                     break;	
 										 
 			case "cpsubsend"      :	$this->sendOk = $this->send_mails();
@@ -241,7 +258,7 @@ class rcbulkmail {
 			case 'cpbulkmail'     :
 			default               :	if ($this->template) {
 				                        //also when returns in cp and template is selected
-										if (defined('RCCOLLECTIONS_DPC'))
+										if ($this->iscollection>0)
 											$this->loadTemplate2(); //subtemp						  
 										else
 											$this->loadTemplate();						  
@@ -274,6 +291,9 @@ class rcbulkmail {
 			case 'cpsubscribe'         :			 
 		    case 'cpadvsubscribe' 	   : $out .= $this->subscribeform(); 
 										 break;			 
+			 
+		    case 'cpviewclicks'  	   : $out = $this->viewClicks(); 				
+	                                     break;			 
 			 
 			case 'cpactivatequeuerec'  :
 			case 'cpdeactivatequeuerec':			 
@@ -841,11 +861,12 @@ function show_body() {
 		$template = $tmpl ? $tmpl : GetReq('stemplate'); 
 		$mailbody = null;
 
+		//if ($this->iscollection>0) {			
 		if (defined('RCCOLLECTIONS_DPC')) {
 			//echo 'RCCOLLECTIONS_DPC';	
 		    if ($template) {
 				$template_file = $this->templatepath . $template;
-				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page use ".$template_file);
+				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page use ".$template_file.'+++'.$this->templatepath);
 			}
 			else
 				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page");
@@ -865,16 +886,23 @@ function show_body() {
 	
 	//subload template including collections
     public function loadData($template) {
-		$data = null;
-		$path = $this->templatepath;		
+		$path = $this->templatepath;	
+		$data = null;	
 		
-		if (defined('CCPP_VERSION')) {
+		/*if (defined('CCPP_VERSION')) {
 			$config = null;
 			$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); //new CCPP($config);
 			$data = $preprocessor->execute($path . $template, 0, false, true);
         }
-        else		
+        else*/		
 			$data = @file_get_contents($path . $template); 
+		
+		$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
+		           $this->encUrl($this->savehtmlurl . $cid . '.html');
+		$tokens[] = "[<a href='$pageurl'>".localize('_viewasweb',getlocal())."</a>]";
+        $tokens[] = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";		
+			
+		$data = $this->combine_tokens($data, $tokens, true);				
 			 
 		$sub_template = str_replace($this->template_ext,$this->template_subext,$template);
 		//echo $path.$sub_template,'>';
@@ -892,68 +920,50 @@ function show_body() {
 			$data .= $this->spam_conditions_text(null,0,$this->ishtml);				
 		}*/
 		
-        /* //*** beware of twing file path of the instance ***
-		if (defined('TWIGENGINE_DPC')) {
-			$date = date('m.d.y');
-			$x = 'notes123';//.var_export($invoice_tokens, true);
-			$t = array('invoice'=>GetSessionParam('invway') .' '.$this->transaction_id,
-			           'mynotes'=>$x,
-					   'mydate'=>$date);
-			$tokens = serialize($t);
-			echo GetGlobal('controller')->calldpc_method('twigengine.render use '.$invoice_template.'++'.$tokens);
-			//echo 'z';
-			die();
-		}	*/
-
-        /*
-		if (defined('CCPP_VERSION')) {
-			$config = null;
-			$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); //new CCPP($config);
-			$code = $preprocessor->execute($data, 0, true, true);
-			//echo $code;
-			//echo 'CCPP';
-			return ($code);
-        }*/
-		
 		return ($data);		
 	}		
 	
 	//load template including collections
     protected function loadTemplate2() {
 		$path = $this->templatepath;
-		$data = null;
 		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');				
 		   
 		if (is_readable($path . $template)) {
 		   
 		    SetSessionParam('stemplate', $template); //save tmpl 
 		   
-		    $data = $this->loadData($template);			
+		    $this->mailbody = $this->loadData($template);			
+			
+			return true;
 		}
-
-        $this->mailbody = $data;
-		
-        return true;	  			
+		return false;	  			
 	}	
 	
 	protected function loadTemplate() {
 		$path = $this->templatepath;
-		$data = null;
+		$body = null;
 		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');
 		
 		if (is_readable($path . $template)) {
 		  
 			SetSessionParam('stemplate', $template); //save tmpl 
 			
-			if (defined('CCPP_VERSION')) {
+			/*if (defined('CCPP_VERSION')) {
 				$config = null;
 				$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); //new CCPP($config);
 				$data = $preprocessor->execute($path . $template, 0, false, true);
 			}
-			else		
+			else*/		
 				$data = @file_get_contents($path . $template); 
+			
+		    $pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
+		               $this->encUrl($this->savehtmlurl . $cid . '.html');
+			$tokens[] = "[<a href='$pageurl'>".localize('_viewasweb',getlocal())."</a>]";
+			$tokens[] = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";
+			
+			$body = $this->combine_tokens($data, $tokens, true);			
 		}	
-		$this->mailbody = $data;
+		$this->mailbody = $body;
 		
 		return true;
 	}	
@@ -1091,20 +1101,31 @@ function show_body() {
 		$cid = md5(GetParam('mail_text') .'|'. GetParam('subject') .'|'. $to);
         $active = GetParam('savecmp') ? 1 : 0;	
 
-		//sign mail at foot
-		if (GetParam('dosign')) { 
-			$un = (GetParam('unsubscribelink')) ? 'Unsubscribe' : null;
-			$sign = $this->spam_conditions_text(GetParam('sign'), $un, $cid);
-			$body = str_replace('</body>',$sign .'</body>', $body);		
-		}
 		
+		//arg / BECAME TOKEN..not for pattern method
 		//add view as web page (not saved yet due to cid md5 creation on data in body)
 		if (GetParam('webpagelink')) {
 			
-			$pageurl = $this->encUrl($this->savehtmlurl . $cid . '.html');
-			$plink = "[<a href='$pageurl'>View as web page</a>]";
+			$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
+			                            $this->encUrl($this->savehtmlurl . $cid . '.html');
+			$plink = "[<a href='$pageurl'>".localize('_viewasweb',getlocal())."</a>]";
 			$body = str_replace('</body>', $plink.'</body>', $body);						   	
-		}			
+		}
+
+		//sign text /POSTED PARAM
+		if ($sign_text = GetParam('sign')) 
+			$body = str_replace('</body>',$sign_text .'</body>', $body);		
+		
+		//arg /sign mail at foot ..BECAME TOKEN..not for pattern method
+		//if (GetParam('dosign')) { 
+		if ($unlink = GetParam('unsubscribelink')) {
+			//$un = localize('_unsubscribe',getlocal());
+			//$sign_text = GetParam('sign');
+			//$sign = $this->spam_conditions_text($sign_text, $un, $cid);
+			//$body = str_replace('</body>',$sign .'</body>', $body);	
+			$un = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";			
+			$body = str_replace('</body>',$un .'</body>', $body);		
+		}		
 					
 		if (is_array($_POST['ulistname'])) {
 		    $altl = implode(',', $_POST['ulistname']);  	
@@ -1138,14 +1159,14 @@ function show_body() {
 		$result = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
-			$this->messages[] = $active ? 'Campaign saved' : 'Campaign is temporary';
+			$this->messages[] = $active ? 'Campaign stored' : 'Campaign is temporary';
 			
 			//save the file
 			if ($p = $this->savehtmlpath) {
 				$s = @file_put_contents($p .'/'. $cid . '.html' , $body);	
 				
 				if ($s) 
-					$this->messages[] = 'Campaign saved as ' . $this->savehtmlurl . $cid . '.html';
+					$this->messages[] = 'Saved as ' . $this->savehtmlurl . $cid . '.html';
 				else
 					$this->messages[] = $this->savehtmlurl . $cid . '.html NOT saved!';				
 			}
@@ -1380,21 +1401,17 @@ function show_body() {
 			
 			if (is_readable($this->savehtmlpath .'/'. $_POST['cid'].'.html')) {
 				
-				$rawtext = file_get_contents($this->savehtmlpath .'/'. $_POST['cid'].'.html'); //$this->mailbody; //not exist in this post			
-				$body = $this->combine_tokens($rawtext, array('0'=>'dummy'), null);
+				$rawtext = @file_get_contents($this->savehtmlpath .'/'. $_POST['cid'].'.html'); //$this->mailbody; //not exist in this post			
+				
+				$body = $this->combine_tokens($rawtext, array('0'=>'dummy'), true); //no need in this stage !!!
 				
 				$subs = implode(';',$_POST['include']);
 				//print_r($_POST['include']);
-		
 				$qty = count($subs) + 1;
 				//$this->messages[] = 'Mail(s) to send :' . $qty;		
-		
 				$res = $this->sendit($from,$to,$subject,$body,$subs); 
 				//print_r($this->messages);
-	   	 
-				if (!$res) 
-				//	$this->messages[] = $res . " mail(s) are going to sent";
-				//else 
+				if (!$res)  
 					$this->messages[] = "Sent failed";				
 				
 			    return ($res); 
@@ -1454,7 +1471,7 @@ function show_body() {
 		$origin = $this->prpath; 
 		$encoding = $this->overwrite_encoding ? $this->overwrite_encoding : $this->encoding;
 	   
-		$cid = GetParam('cid'); //cid mark
+		$cid = $_POST['cid']; //cid mark
 		if (!$cid) {
 		   $this->messages[] = 'CID Error.';	//error
 		}	   
@@ -1672,8 +1689,8 @@ function show_body() {
 	protected function spam_conditions_text($text=null, $say=null, $cid) {
 		$lan = getlocal();
 		
-		$unsubscribe_link = $say ? "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize($say, getlocal())."</a>" : null; 
-		
+		$unsubscribe_link = $say ? "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".$say."</a>" : null; 
+		/*
 		$text0 = "<p>This e-mail can not be considered spam as long as we include: Contact information & remove instructions. 
 If you have somehow gotten on this list in error, or for any other reason would like to be removed,  please click here $unsubscribe_link. 
 This email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed. Any unauthorized disclosure, use of dissemination, either whole or partial, is prohibited.
@@ -1683,8 +1700,11 @@ This email and any files transmitted with it are confidential and intended solel
 Αν είσαστε σε αυτή τη λίστα κατα λάθος ή για οποιονδήποτε άλλο λογο θέλετε να διαγραφεί το e-mail απο αυτή τη λίστα παραληπτών e-mail απλά πατήστε εδώ $unsubscribe_link.   
 Το μήνυμα πληρεί τις προυποθέσεις της Ευρωπαικής Νομοθεσίας περί διαφημιστικών μηνυμάτων. Κάθε μήνυμα θα πρέπει να φέρει τα πλήρη στοιχεια του αποστολέα ευκρινώς και θα πρέπει να δίνει στο δέκτη τη δυνατότητα διαγραφής. 
 (Directiva 2002/31/CE του Ευρωπαικού Κοινοβουλίου). $text</p>";	
-
+        
         $ret = $lan ?  $text0 . $unsubscribe_link : $text1 . $unsubscribe_link;	
+		*/
+		//remark used to rename when webview (not to show as web page)
+		$ret = "<!--REMARK--><p>" . $text .'&nbsp;'. $unsubscribe_link . "</p><!--REMARK-->";
 		return ($ret);
     }		
 	
@@ -1781,7 +1801,7 @@ This email and any files transmitted with it are confidential and intended solel
  	           filebrowserWindowHeight : '700'			   
 			   }		   
 			   );
-			   CKEDITOR.config.fullPage=true;
+			   CKEDITOR.config.fullPage = true;
                CKEDITOR.config.entities = false;
                CKEDITOR.config.entities_greek = false;
                CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;			   		
@@ -1790,7 +1810,8 @@ This email and any files transmitted with it are confidential and intended solel
 		
 		return ($ret);
 	}	
-	
+			   //CKEDITOR.config.basicEntities = false;
+			   //CKEDITOR.config.htmlEncodeOutput = false;	
 	//...
 	public function runSql($name, $sql, $retasis=false) {
 		$db = GetGlobal('db');			
@@ -1936,17 +1957,27 @@ This email and any files transmitted with it are confidential and intended solel
 		
 		foreach ($resultset as $n=>$rec) {
 		    if ($rec[2] > 0) { //float avg of actives (else must be 0)
-				if ($t) {
-					$tokens[] = $rec[0];
-					$tokens[] = $rec[1] . " (".$rec[3] . " > ...)"; //" > ".$rec[3].")";
-					$tokens[] = (100-intval($rec[2]*100));
-					$tokens[] = $rec[3];
-					$tokens[] = $rec[4];
-					$ret .= $this->combine_tokens($t, $tokens);
-					unset($tokens);
-				}
+				//if ($t) {
+					
+					$percent = (100-intval($rec[2]*100));
+					
+					if ($t) {
+						$tokens[] = $rec[0];
+						$tokens[] = seturl('t=cppreviewcamp&cid='.$rec[0], $rec[1]) . " (".$rec[3] . " > ...)";
+						$tokens[] = $percent;
+						$tokens[] = $rec[3];
+						$tokens[] = $rec[4];
+						$ret .= $this->combine_tokens($t, $tokens);
+						unset($tokens);
+					}
+					else { 
+						//send message 
+						$mt = seturl('t=cppreviewcamp&cid='.$rec[0]);
+						GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use warning|$rec[1]|$percent|$mt");
+					}	
+				/*}
 				else
-					$ret[] = $rec[1]; //?? no mean
+					$ret[] = $rec[1]; //?? no mean*/
 			}	
 		}
 
@@ -1965,14 +1996,14 @@ This email and any files transmitted with it are confidential and intended solel
 		$l = $limit ? $limit : 3;	
         $limitSQL = $timein ? ' LIMIT 30' : ($limit ? 'LIMIT '.$l : 'LIMIT 3'); 	
 		
-		$sSQL = "SELECT cid,subject, AVG(active),MIN(timein),MAX(timein) AS a FROM  mailqueue $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
+		$sSQL = "SELECT cid,subject,AVG(active),MIN(timeout),MAX(timeout) AS a FROM  mailqueue $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		foreach ($resultset as $n=>$rec) {
 		    if ($rec[2] == 0) { //float avg of actives (must be 0)
 				if ($t) {
 					$tokens[] = $rec[0];
-					$tokens[] = $rec[1] . " (".$rec[3]." > ".$rec[4].")";
+					$tokens[] = seturl('t=cppreviewcamp&cid='.$rec[0], $rec[1]) . " (".$rec[3]." > ".$rec[4].")";
 					$tokens[] = (100-intval($rec[2]*100));
 					$tokens[] = $rec[3];
 					$tokens[] = $rec[4];					
@@ -1989,20 +2020,20 @@ This email and any files transmitted with it are confidential and intended solel
 	
 	/* % of process of all the same cid camps (instances = replayed)*/
 	public function instanceCamps($template=null, $limit=null) {
-		if (!$cid = GetReq('cid')) return false;
+		if (!$cid = $_GET['cid']) return false;
 		$db = GetGlobal('db');			
 		$l = $limit ? $limit : 5;
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
-		$sSQL = "SELECT cid,subject, AVG(active),MIN(timein),MAX(timein) AS a FROM  mailqueue where cid='$cid' GROUP BY subject ORDER BY a DESC LIMIT ".$l;
+		$sSQL = "SELECT cid,subject, AVG(active),MIN(timeout),MAX(timeout) AS a FROM  mailqueue where cid='$cid' GROUP BY subject ORDER BY a DESC LIMIT ".$l;
 		$resultset = $db->Execute($sSQL,2);
-		
+		//echo $sSQL;
 		foreach ($resultset as $n=>$rec) {
 		    //if ($rec[2] == 0) { //float avg of actives (else must be 0)
 				if ($t) {
 					$tokens[] = $rec[0];
-					$tokens[] = $rec[1] . " (".$rec[3]." > ".$rec[4].")";
+					$tokens[] = seturl('t=cppreviewcamp&cid='.$rec[0], $rec[1]) . " (".$rec[3]." > ".$rec[4].")";
 					$tokens[] = (100-intval($rec[2]*100));
 					$tokens[] = $rec[3];
 					$tokens[] = $rec[4];						
@@ -2017,9 +2048,87 @@ This email and any files transmitted with it are confidential and intended solel
 		return ($ret);	
 	}	
 
-	public function showTasks() {
+	
+	public function getClicks($template=null, $limit=null) {
+		$db = GetGlobal('db');	
+		$l = $limit ? $limit : 5;
+		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
+		$t = ($template!=null) ? $this->select_template($template) : null;
+		$tokens = array();
 		
+		//$timein = $this->sqlDateRange('timein', true, false);
+		//if ($timein) return null; //no current tasks when time range
+		$refsql = $cid ? "and ref='$cid'" : null;
+		
+		//$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql order by date desc LIMIT " . $l;
+		$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql order by id desc LIMIT " . $l;
+		//echo $sSQL;
+		$resultset = $db->Execute($sSQL,2);
+		
+		foreach ($resultset as $n=>$rec) {
+			$tokens[] = $rec[1] . ' '. $rec[3];
+			$tokens[] = $rec[2];
+			$ret .= $this->combine_tokens($t, $tokens);
+			unset($tokens);	
+		}
+
+		return ($ret);			
+	}
+	
+	public function getClicksAll($template=null, $limit=null) {
+		$db = GetGlobal('db');	
+		$l = $limit ? $limit : 50;
+		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
+		$t = ($template!=null) ? $this->select_template($template) : null;
+		$tokens = array();
+		
+		$sSQL = "SELECT stats.id,date,attr3,title,ref FROM stats,mailcamp where stats.ref=mailcamp.cid group by ref order by date desc LIMIT " . $l;
+		$resultset = $db->Execute($sSQL,2);
+		
+		foreach ($resultset as $n=>$rec) {
+			$tokens[] = $rec[1] . ' '. $rec[3];
+			$tokens[] = $rec[2];
+			$ret .= $this->combine_tokens($t, $tokens);
+			unset($tokens);
+		}
+
+		return ($ret);	
+	}
+	
+	public function viewClicks() {
+		$active = $active?$active:GetReq('active');
+		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;
+		$cid = $_GET['cid'] ? $_GET['cid'] : null;	
+
+		$refsql = $cid ? "and ref='$cid'" : null;		
+		   	
+		if ((!$active) && (!$isajax_window) && (defined('MYGRID_DPC'))) {
+		    $title = str_replace(' ','_',localize('_MAILCLICKS',getlocal()));//NO SPACES !!!//localize('_MAILQUEUE',getlocal());
+		   
+	        //$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus from mailqueue";
+			$sSQL = "select * from (SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql order by date desc";
+            $sSQL.= ') as o';  				
+		   		   
+		    //echo $sSQL;
+
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|date|1');		   
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_receiver',getlocal()).'|10|1');
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+title|".localize('_subject',getlocal()).'|20|1');	
+
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
+			
+			//mail body ajax renderer
+			$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
+		}
+        else  
+			$out .= null;
+   		
+		
+	    return ($out);	
 	}	
+	
+	
 	
 	//load graphs urls to call
 	protected function load_graph_objects() {
@@ -2128,7 +2237,7 @@ This email and any files transmitted with it are confidential and intended solel
 		if (!$tfile) return;
 	  
 		$template = $tfile . '.htm';	
-		$t = $this->prpath . 'html/'. $this->skin .'/'. str_replace('.',getlocal().'.',$template) ;   
+		$t = $this->prpath . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
 		if (is_readable($t)) 
 			$mytemplate = file_get_contents($t);
 

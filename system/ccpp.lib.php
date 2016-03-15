@@ -90,6 +90,7 @@ class CCPP
             
             //Output
             'output.format' => 'evaluated',
+			//'output.format' => 'compiled',
         );
 		
         $this->_prepareCache();
@@ -333,6 +334,8 @@ class CCPP
     {
         //Fetch file contents
         $code = file_get_contents($filename, false, null, $offset);
+		//$outcode = $this->parse($code);
+		//return($outcode);
 		
 		$scode = '<?'. PHP_EOL .$code . PHP_EOL .'?>'; //without tags there is not preprocess
 		$code = $this->parse($scode);

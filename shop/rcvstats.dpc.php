@@ -1,19 +1,11 @@
 <?php
-
 $__DPCSEC['RCVSTATS_DPC']='1;1;1;1;1;1;1;1;1';
-
-
 
 if ((!defined("RCVSTATS_DPC")) && (seclevel('RCVSTATS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 
 define("RCVSTATS_DPC",true);
 
-
 $__DPC['RCVSTATS_DPC'] = 'rcvstats';
-
-
-$a = GetGlobal('controller')->require_dpc('nitobi/nitobi.lib.php');
-require_once($a);
 
 $__EVENTS['RCVSTATS_DPC'][0]='cpvstats';
 $__EVENTS['RCVSTATS_DPC'][1]='cpvstatsshow';
@@ -40,14 +32,10 @@ class rcvstats  {
 		
 	function rcvstats() {
 
-	  $this->title = localize('RCVSTATS_DPC',getlocal());		
-  
-	  //$this->_grids[] = new nitobi("Items");	//must initialized althouth it handled by vehicles dpc  		  	  
-      //$this->_grids[] = new nitobi("ItemsStats");		
+	  $this->title = localize('RCVSTATS_DPC',getlocal());			
 
 	  $this->ajaxLink = seturl('t=cpvstatsshow&statsid='); //for use with...	      
 
-	  //sndReqArg('index.php?t=existapp&application=meme2','existapp'
 	  $this->hasgraph = false;
 	  $this->graphx = remote_paramload('RCVSTATS','graphx',$this->path);
 	  $this->graphy = remote_paramload('RCVSTATS','graphy',$this->path);
@@ -287,7 +275,7 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 		return false;			
 	}	
 
-	function update_item_statistics($id) {
+	public function update_item_statistics($id) {
         $db = GetGlobal('db'); 
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
@@ -299,7 +287,7 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 	    $myyear = date('Y',$currentdate);
 
 		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : '');
-		$cmail = $this->mc ? base64_decode($this->mc) : '';		
+		$cmail = $this->mc ? base64_decode($this->mc) : 'NULL';		
 						
 		$sSQL = "insert into stats (date,day,month,year,tid,attr2,attr3,ref) values (";
 		$sSQL.= $mydate . ",";
@@ -318,7 +306,7 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 		  return false;		
 	}
 
-	function update_category_statistics($cat) {
+	public function update_category_statistics($cat) {
         $db = GetGlobal('db'); 
 
         $UserName = GetGlobal('UserName');		
@@ -349,75 +337,7 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 		}  
 		else 
 		  return false;		
-	}	
-
-	function show_grids() {
-
-	   //gets
-	   $cat = GetReq('cat');	
-       $filter = GetParam('filter');
-	   //grid 0 
-	   $datattr[] = GetGlobal('controller')->calldpc_method("rcitems.show_grid use 500+440+1+$filter") . $this->searchinbrowser();							  
-	   $viewattr[] = "left;50%";	   	   
-	   $grid0_get = "shhandler.php?t=shngetstats";
-	   $grid0_set = "";	   
-	   //grid 1
-	   $this->_grids[1]->set_text_column("AA","id","50","true");   	   	      	   	   	         	   	   	   	
-	   $this->_grids[1]->set_text_column("Date","date","100","true");	
-	   $this->_grids[1]->set_text_column("Day","day","60","true");	
-	   $this->_grids[1]->set_text_column("Month","month","60","true");		   	   	   
-	   $this->_grids[1]->set_text_column("Year","year","60","true");		   
-	   $this->_grids[1]->set_text_column("ItemID","tid","50","true");		   
-	   $this->_grids[1]->set_text_column("Attr1","attr1","100","true");		   	   	   
-	   $this->_grids[1]->set_text_column("Attr2","attr2","100","true");		   
-	   $this->_grids[1]->set_text_column("Attr3","attr3","100","true");		   
-
-	   $wd = $this->_grids[1]->set_grid_remote($grid0_get,$grid0_set,"550","220","livescrolling",10,"false");
-
-	   //businnes card	used to pass data from jscript
-	   //$message .= $this->charts->render('usage',400,250);
-	   $wd .= $this->_grids[1]->set_detail_div("StatisticDetails",550,20,'F0F0FF',$message);
-	   $wd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use stats");
-       if ($this->hasgraph) {
-		   $wd .= $this->show_graph('statisticscat','Category statistics',seturl('t=cpvstats&cat='.$cat.'&p='.$p));
-	   }	   
-	   else
-		   $wd .= "<h3>".localize('_GNAVAL',0)."</h3>";
-	   $datattr[] = $wd;
-	   $viewattr[] = "left;50%";
-
-	   $myw = new window('',$datattr,$viewattr);
-	   $ret = $myw->render("center::100%::0::group_article_selected::left::3::3::");
-	   unset ($datattr);
-	   unset ($viewattr);		   	
-	   return ($ret);	
-	}	
-
-	function sidewin() {
-		  if (defined("RCCATEGORIES_DPC")) {//text based cats
-		    if (!GetReq('cat'))//only when no cat sel else call other browser bellow
-		      GetGlobal('controller')->calldpc_method('rcsidewin.set_show_calldpc use rccategories.show_tree PARAMS cpvstats');		
-	      }		
-          elseif (defined("RCKATEGORIES_DPC"))//sql based cats			
-            GetGlobal('controller')->calldpc_method('rcsidewin.set_show_calldpc use rckategories.show_tree PARAMS cpvstats');					
-
-	}	
-
-    function searchinbrowser() {
-        $ret = "
-           <form name=\"searchinbrowser\" method=\"post\" action=\"\">
-           <input name=\"filter\" type=\"Text\" value=\"\" size=\"56\" maxlength=\"64\">
-           <input name=\"Image\" type=\"Image\" src=\"../images/b_go.gif\" alt=\"\"    align=\"absmiddle\" width=\"22\" height=\"28\" hspace=\"10\" border=\"0\">
-           </form>";
-
-        $ret .= "<br>Last search: " . GetParam('filter');
-
-
-
-        return ($ret);
-
-    }		
-			
+	}				
 };
 }
 ?>

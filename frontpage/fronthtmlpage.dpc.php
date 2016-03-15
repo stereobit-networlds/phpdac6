@@ -190,7 +190,9 @@ class fronthtmlpage {
 		$this->language = $lans[getlocal()];		
 		$isolans = arrayload('SHELL','isolangs');
 		$this->isolanguage = $isolans[getlocal()];
-		//echo $this->isolanguage,'>';		
+		//echo $this->isolanguage,'>';	
+
+		date_default_timezone_set('Europe/Athens');		
 	}	
 	
     function render($actiondata) { 	
@@ -245,8 +247,10 @@ class fronthtmlpage {
 	  }
 	  
 	  if (is_file($this->htmlfile)) {
+				
+		$htmdata = file_get_contents($this->htmlfile);
+		//echo '>',$this->htmlfile;
 		
-        $htmdata = file_get_contents($this->htmlfile);	  
         $cssdata = $this->process_css($htmdata);
         $jhtmdata = $this->process_javascript($cssdata);		
         $chunks_data = $this->process_chunks($data,$jhtmdata,$pageout);				
@@ -455,7 +459,7 @@ class fronthtmlpage {
       if (iniload('JAVASCRIPT')) {	
 		 $js = new jscript;
 		 $onload = $js->onLoad();//!!!!!!!!!!!!!!!MUST BE SET TO <BODY AT END>
-		 $jret = $js->callJavaS() . "</HEAD>";	 
+		 $jret = $js->callJavaS() . "</head>";	//body jqgrid problem 
 		 unset ($js);		 
 		 
 		 if ($jret) {
@@ -1430,7 +1434,14 @@ EOF;
 				
 			//echo 'INCLUDE_PART:'.$pathname;
 			if (is_readable($pathname)) {
-				$contents = @file_get_contents($pathname);
+				/*if (defined('CCPP_VERSION')) {
+					$config = null;
+					$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); 
+					$contents = $preprocessor->execute($pathname, 0, false, true);
+					//echo 'a>',$pathname;
+				}
+				else	*/			
+					$contents = @file_get_contents($pathname);
 				
 				//replace content args
 				if (!empty($arguments)) {
@@ -1486,7 +1497,16 @@ EOF;
 				
 			//echo 'INCLUDE_PART:'.$pathname;
 			if (is_readable($pathname)) {
-				$contents = @file_get_contents($pathname);
+				
+				/*if (defined('CCPP_VERSION')) {
+					$config = null;
+					$preprocessor = new CCPP($config, true); //new ccpp
+					//$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); 
+					$contents = $preprocessor->execute($pathname, 0, false, true);
+					//echo 'a>',$pathname;
+				}
+				else*/				
+					$contents = @file_get_contents($pathname);
 				
 				//replace content args
 				if (!empty($arguments)) {

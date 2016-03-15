@@ -27,7 +27,7 @@ class rccollections {
 	var $listName;
 	
 	var $imgxval, $imgyval, $image_size_path;
-	var $selected_items, $autoresize, $restype;	
+	var $selected_items, $autoresize, $restype, $odd;	
 
     function __construct() {
 	  
@@ -389,11 +389,116 @@ class rccollections {
 	}		
 	
 	
-	function create_page($template=null, $imgw=null,$imgh=null) {
-	    $imgxval = $imgw ? $imgw : $this->imgxval; 
-		$imgyval = $imgh ? $imgh : $this->imgyval;		
+	protected function readPattern($template=null, $path=null) {
+		$file = str_replace('-sub.htm', '', $template) . '.pattern.txt';
+		//echo $file;
+		if (is_readable($file))  {
+			$pf = file($file);
+			//search last edited line
+			foreach ($pf as $line) {
+				if (trim($line)) {
+					$joins = explode(',', array_pop($pf)); 
+					break;
+				}
+			}
+			//rest lines
+			foreach ($pf as $line) {
+				$subtemplates .= trim($line);
+			}
+			$pattern[0] = explode(',', $subtemplates);
+			$pattern[1] = (array) $joins;
+			//print_r($pattern);
+			return ($pattern);
+		}	
+		
+		return null;
+	}
 	
-	    if (($template) && (is_readable($template)))  {
+	public function create_page_test($template=null, $imgw=null,$imgh=null,$tmplpath=null) {		
+		$p = $this->readPattern($template);
+		$pattern = (array) $p[0];
+		$join = (array) $p[1];
+		
+		/*$p = array(0=>array(0=>'basis-xondriki-1-align-left-sub.htm',1=>'basis-xondriki-1-align-right-sub.htm'),1=>array(0=>'',1=>''));
+		$pattern= $p[0];
+		print_r($pattern);
+		$join = array();*/		
+		
+        $this->selected_items = $this->get_selected_items(500);	
+		
+		foreach ($this->selected_items as $n=>$rec) {
+		
+			    $tokens[] = $rec['code'];
+			    $tokens[] = $rec['itmname'];
+				$tokens[] = $rec['itmdescr'];
+				$tokens[] = $rec['itmremark'];
+				$tokens[] = $rec['uniname1'];
+				$tokens[] = $rec['price0'];
+				$tokens[] = $rec['price1'];
+				$tokens[] = $rec['cat0'];
+				$tokens[] = $rec['cat1'];
+				$tokens[] = $rec['cat2'];
+				$tokens[] = $rec['cat3'];
+				$tokens[] = $rec['cat4'];
+				$tokens[] = $rec['item_name_url'];
+				$tokens[] = (defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['item_url']) : $rec['item_url'];
+				$tokens[] =  $rec['photo_url']; /*(defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['photo_url']) : $rec['photo_url'];*/
+				$tokens[] = $rec['photo_html'];
+				$tokens[] = $rec['photo_link'];
+				$tokens[] = $rec['attachment'];
+				$tokens[] = ($n % 2 == 0) ? '1' : '0'; //even  / odd	
+				
+				$childs[] = $tokens;
+				unset($tokens);
+		}
+		/*echo '<pre>';
+		print_r($this->selected_items);
+		echo '</pre>';*/
+        if ($cn=count($pattern)) {		
+		$cc = array_chunk($childs, $cn);//, true);
+		/*echo '<pre>';
+		print_r($cc);
+		echo '</pre>';*/
+
+		foreach ($cc as $i=>$group) {
+			foreach ($group as $j=>$child) {
+				//echo $tmplpath . $pattern[$j] . '<br>';
+			    $ret .= $this->ct($tmplpath . $pattern[$j], $child, true);
+				if ($join[$j]) {
+					 $ret = $this->ct($tmplpath . $join[$j], array(0=>$ret), true);
+				}
+			}
+		}
+        }
+		return($ret);		
+	}
+	
+	public function create_page($template=null, $imgw=null,$imgh=null,$tmplpath=null) {
+	    $imgxval = $imgw ? $imgw : $this->imgxval; 
+		$imgyval = $imgh ? $imgh : $this->imgyval;	
+		
+		$pattern_method = false;
+		$p = $this->readPattern($template);
+		if (is_array($p)) {
+			//print_r($p);
+			$pattern = (array) $p[0];
+			$join = (array) $p[1];				
+			$pattern_method = true;
+	    }
+	    elseif (($template) && (is_readable($template)))  {
+			
+			/* //*** beware of twing file path of the instance ***
+			if (defined('TWIGENGINE_DPC')) {
+				$date = date('m.d.y');
+				$x = 'notes123';//.var_export($invoice_tokens, true);
+				$t = array('invoice'=>GetSessionParam('invway') .' '.$this->transaction_id,
+						'mynotes'=>$x,
+						'mydate'=>$date);
+				$tokens = serialize($t);
+				echo GetGlobal('controller')->calldpc_method('twigengine.render use '.$invoice_template.'++'.$tokens);
+				//echo 'z';
+				//die();
+			}	*/			
 			
 			/*if (defined('CCPP_VERSION')) { //one template for all lines
 				$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); 
@@ -402,25 +507,22 @@ class rccollections {
 			else*/
 				$template_data = @file_get_contents($template); 
         }
+		else
+			return null;
 
         $this->selected_items = $this->get_selected_items(500,$imgxval,$imgyval);	
 		
-		$tokens = array();
-		$items = array();
 		if (!empty($this->selected_items)) {
-		
-		 //..order array by key
-		 ksort($this->selected_items);
-		
-		 //print_r($this->selected_items);
-		 //echo count($this->selected_items); //>1 ?
+			$tokens = array();
+			$items = array();		
+			//..order array by key
+			ksort($this->selected_items);
 					
-		 foreach ($this->selected_items as $n=>$rec) {
+			foreach ($this->selected_items as $n=>$rec) {
 		
-		  //is not out of rendering list
-		  if ($rec['disabled']===false) {
+		      //is not out of rendering list
+		      if ($rec['disabled']===false) {
 		  
-			if ($template_data) { 
 			    //$ret.= $rec['itmname'].'<BR/>'; 
 			    $tokens[] = $rec['code'];
 			    $tokens[] = $rec['itmname'];
@@ -440,9 +542,12 @@ class rccollections {
 				$tokens[] = $rec['photo_html'];
 				$tokens[] = $rec['photo_link'];
 				$tokens[] = $rec['attachment'];
-				//print_r($tokens);
+				$tokens[] = ($n % 2 == 0) ? '1' : '0'; //even  / odd
+				//print_r($tokens); 
+				//echo '>',  ($n % 2 == 0) ? '1' : '0';
+				$this->odd = ($n % 2 == 0) ? '0' : '1';
 				
-				if (defined('CCPP_VERSION')) { //override, customized per line
+				/*if (defined('CCPP_VERSION')) { //override, customized per line
 					//$config = array();
 					if ($n % 2 == 0) 
 						$config = array('LINE'=>array('ODD'=>null,'EVEN'=>1),'PRICE'=>array('ON'=>1,));
@@ -452,21 +557,47 @@ class rccollections {
 					$preprocessor = new CCPP($config, true); //new ccpp
 					$template_data = $preprocessor->execute($template_data, 0, true, true);
 					unset($preprocessor);
-				}			
+				}*/			
 				
-				$items[] = $this->combine_tokens($template_data, $tokens, false);
+				if ($pattern_method) /** pattern method **/
+					$items[] = $tokens;
+				else                   /** standart method **/
+					$items[] = $this->combine_tokens($template_data, $tokens, true);
 				
 				unset($tokens);		
-            }
-            else //default view..
-                $ret.= $rec['itmname'].'<BR/>'; 
-		  }//disabled item		
-		 }
-		} 
-		
-		if (!empty($items)) 
-             $ret = implode('',$items);			
-		
+ 
+		      }//disabled item		
+			}//foreach
+		 
+			/** pattern method **/
+			if ($pattern_method) {
+				$out = null;
+				$tts = array();
+				$gr= array();
+				$cc = array_chunk($items, count($pattern));//, true);
+				foreach ($cc as $i=>$group) {
+					foreach ($group as $j=>$child) {
+						//echo $tmplpath . $pattern[$j] . '<br>';
+						$tts[] = $this->ct($tmplpath . $pattern[$j], $child, true);
+						if ($cmd = $join[$j]) {
+							//echo $tmplpath . $join[$j] . '<br>';
+							switch ($cmd) {
+							    case '_break' : $out .= implode('', $tts); break;
+								default       : $out .= $this->ct($tmplpath . $cmd, $tts, true);		
+							} 
+							unset($tts);
+						}
+					}
+					$gr[] = (empty($tts)) ? $out : $out . implode('', $tts) ;
+					unset($tts);
+					$out = null;
+				}
+				$ret = implode('',$gr);
+                $ret = $this->ct($template, array(0=>$ret), true);	
+			}
+			else
+				$ret = implode('',$items);			 
+		} 			
 		return ($ret);
 	}
 	
@@ -535,9 +666,23 @@ class rccollections {
 			
 	    return ($ret);		
 	}
+	
+	public function isCollection() {
+		$c = $this->savedlist;
+		if ($c) {
+			if (strstr($c, ',')) 
+				$ret = count(explode(',', $c));
+			else 
+				$ret = 1;
+		}
+		else
+			$ret = 0;
+		
+		return ($ret);
+	}
 
 	//tokens method	
-	function combine_tokens($template_contents, $tokens, $execafter=null) {
+	protected function combine_tokens($template_contents, $tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
 		
@@ -558,6 +703,40 @@ class rccollections {
 		for ($x=$i;$x<30;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
 		//echo $ret;
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	}	
+	
+	public function ct($template, $tokens, $execafter=null) {
+	    //if (!is_array($tokens)) return;
+		$template_contents = @file_get_contents($template);
+		
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template_contents);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template_contents; 
+		  
+		//echo $ret;
+	    foreach ($tokens as $i=>$tok) {
+            //echo $tok,'<br>';
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<30;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);
+		//echo $ret;		
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
