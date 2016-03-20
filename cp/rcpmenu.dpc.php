@@ -162,7 +162,7 @@ class rcpmenu {
    var $tmpl_path, $tmpl_name;
    var $dropdown_class, $dropdown_class2;  
 
-   var $environment, $seclevid, $turl, $cpGet; 
+   var $environment, $seclevid, $turl, $cpGet, $turldecoded; 
    var $location, $savelocation, $awstats;   
    var $messages, $cptemplate;
 	
@@ -184,19 +184,15 @@ class rcpmenu {
        $this->cseparator = $csep ? $csep : '^';	/*for cat links */
 
        $this->dropdown_class = remote_paramload('RCPMENU','dropdownclass',$this->path);	   
-	   $this->dropdown_class2 = remote_paramload('RCPMENU','dropdownclass2',$this->path);
+	   $this->dropdown_class2 = remote_paramload('RCPMENU','dropdownclass2',$this->path); 
+
+       $this->getTURL();	   
 	   
-	   if ($turl = GetSessionParam('turl')) {
-			$this->turl = $turl;
-			$this->cpGet = 	GetSessionParam('cpGet');
-		    //print_r($this->cpGet);
-	   }		
-	   
-	   //$this->environment = $this->parse_environment(); //true !!! //inside render menu as manu params / used by CCPP
-	   //$this->seclevid = GetSessionParam('ADMINSecID');
-	   $adminsecid = GetSessionParam('ADMINSecID') ? GetSessionParam('ADMINSecID') : $GLOBALS['ADMINSecID'];
-	   $this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;//...not instant sec level read//9; //test	  	   
+	   //$adminsecid = GetSessionParam('ADMINSecID') ? GetSessionParam('ADMINSecID') : $GLOBALS['ADMINSecID'];
+	   //$this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;//...not instant sec level read//9; //test	  	   
 	   //echo GetSessionParam('ADMINSecID'),'>',$adminsecid,':', $seclevid;
+	   //$this->environment = $this->parse_environment(); //true !!! //inside render menu as manu params / used by CCPP
+	   //$this->seclevid = GetSessionParam('ADMINSecID');	   
 		
 	   $this->awstats = 'cgi-bin/awstats.php';
 	   
@@ -225,6 +221,31 @@ class rcpmenu {
 	   
 	   return ($out);
    }
+   
+    protected function getTURL() {
+		$postedTURL = $_POST['turl'] ? $_POST['turl'] : $_GET['turl'];
+	   
+	    if ($turl = $_SESSION['turl']) { //GetSessionParam('turl')) {
+			$this->turl = $turl;
+			$this->turldecoded = GetSessionParam('turldecoded');
+			$this->cpGet = unserialize(base64_decode($_SESSION['cpGet']));
+			//echo 'insession:',print_r($_POST); print_r($this->cpGet);
+	    }
+        //elseif ($_GET['turl']) { //for the first time in cp
+	    elseif ($postedTURL) {//a post from login screen
+			$this->turl = $postedTURL;
+			$this->turldecoded = str_replace('_&_', '_%26_', base64_decode($postedTURL));
+			$urlquery = parse_url($this->turldecoded); 
+			parse_str($urlquery['query'], $getp); 	
+			$this->cpGet = $getp;
+			
+			SetSessionParam('turl', $postedTURL);
+			SetSessionParam('turldecoded', $this->turldecoded);		
+			SetSessionParam('cpGet', base64_encode(serialize($this->cpGet)));
+	    }		   
+	   
+	    return ($this->turldecoded);
+   }  
 
    protected function getPageName() {
 		$pn = explode('/',$this->url);
@@ -236,14 +257,18 @@ class rcpmenu {
    }
    
    public function exiturl() {
-	   return ('../' . $this->turl);
+	   return ('../' . $this->getTURL());//$this->turl);
    }
    
-   protected function parse_environment($save_session=false) {
-
-    if ($ret = GetSessionParam('env')) {
+   protected function parse_environment($save_session=false) {	   
+	$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
+	$this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;
+	//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$adminsecid.':'.$this->seclevid;
+	
+    if ($ret = $_SESSION['env']) { //saved by rccontrolpanel
 	    //echo 'insession';
 		//print_r($ret);
+		$GLOBALS['ADMINSecID'] = null; // for securuty erase the global leave the sessionid
 	    return ($ret);
 	}    
 
@@ -262,7 +287,7 @@ class rcpmenu {
 		    $ret[$env] = $val;
 	}
 
-	if (($save_session) && (!GetSessionParam('env'))) //rccontrolpanel also reads and save
+	if (($save_session) && (!$_SESSION['env'])) //rccontrolpanel also reads but save !!!!!
 		SetSessionParam('env', $ret); 		
 	
 	//print_r($ret);
@@ -279,6 +304,7 @@ class rcpmenu {
 			
 			if (is_readable($this->menufile)) {
 				$sini = @file_get_contents($this->menufile);
+				//echo $sini;
 			    
 				$preprocessor = new CCPP($config, true); //new ccpp
 				$rawini = $preprocessor->execute($sini, 0, true, true);
@@ -539,8 +565,8 @@ class rcpmenu {
 	} 
 	
 	public function getMessagesTotal() {
-		$ret = is_array($this->messages) ? count($this->messages) : 0;
-		return count($ret);
+		$ret = (empty($this->messages)) ? null : count($this->messages);
+		return $ret;
 	}	
 
 	public function getMessages() {

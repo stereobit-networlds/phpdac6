@@ -13,7 +13,7 @@ require_once($a);
 $__EVENTS['RCCONTROLPANEL_DPC'][0]='cp';
 $__EVENTS['RCCONTROLPANEL_DPC'][1]='cplogout';
 $__EVENTS['RCCONTROLPANEL_DPC'][2]='cplogin';
-$__EVENTS['RCCONTROLPANEL_DPC'][3]='cpnitobi';
+$__EVENTS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__EVENTS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
 $__EVENTS['RCCONTROLPANEL_DPC'][5]='cpmenushow';
 $__EVENTS['RCCONTROLPANEL_DPC'][6]='cpgaugeshow';
@@ -22,7 +22,7 @@ $__EVENTS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
 $__ACTIONS['RCCONTROLPANEL_DPC'][2]='cplogin';
-$__ACTIONS['RCCONTROLPANEL_DPC'][3]='cpnitobi';
+$__ACTIONS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__ACTIONS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
 $__ACTIONS['RCCONTROLPANEL_DPC'][5]='cpmenushow';
 $__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpgaugeshow';
@@ -171,24 +171,25 @@ $__LOCALE['RCCONTROLPANEL_DPC'][133]='_bmailsend;Send;Αποστολή';
 $__LOCALE['RCCONTROLPANEL_DPC'][134]='_bmail;e-Mail;e-Mail';
 $__LOCALE['RCCONTROLPANEL_DPC'][135]='_bmailstats;Statistics;Στατιστική';
 $__LOCALE['RCCONTROLPANEL_DPC'][136]='_bmailcamp;Campaigns;Θέματα';
-$__LOCALE['RCCONTROLPANEL_DPC'][137]='_ITEMCOLLECTION;Collect;Συλλογή';
+$__LOCALE['RCCONTROLPANEL_DPC'][137]='_ITEMCOLLECTION;Select items;Επιλογή ειδών';
+$__LOCALE['RCCONTROLPANEL_DPC'][138]='_GNAVAL;Empty;Μη διαθέσιμο';
 
 class rccontrolpanel {
 
 	var $title,$cmd,$subpath,$path,$dbpath,$prpath;
-	var $_ctree,$_ctabstrip, $dashboard, $cp0_tabtype, $cpn_tabtype;
+	var $dashboard, $cp0_tabtype, $cpn_tabtype;
 	
-    static $firstrun = 0;
 	var $charts, $hasgraph, $goto, $ajaxgraph, $refresh, $objcall, $objgauge, $hasgauge;
 	var $charset;
 	var $editmode;
 	var $application_path;	
 	var $environment, $url, $murl, $urlpath;
-	var $dhtml, $tools;
-	var $has_eshop, $htmlfolder, $htmlext;
+	var $dhtml, $tools, $has_eshop;
 	var $appkey, $awstats_url;
 	var $cptemplate, $stats, $cpStats;
-	var $turl, $messages;
+	var $turl, $cpGet, $turldecoded, $messages;
+	
+	var $rootapp_path;
 		
 	function rccontrolpanel() {
 		
@@ -221,30 +222,17 @@ class rccontrolpanel {
         $this->autoupdate = $au?$au:3600;
 		$this->dashboard = null;
 		
-		$this->cp0_tabtype = 'dom';//'iframe'; //first tab
-		$this->cpn_tabtype = 'iframe'; //all others
-		
 		$this->ajaxgraph=1;
 		$this->refresh = GetReq('refresh')?GetReq('refresh'):60;//0
 		$this->goto = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
 		
         //READ ENVIRONMENT ATTR
-		$this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);		
+		if ($_SESSION['LOGIN']=='yes')
+			$this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);		
 		//print_r($this->environment);
 		
-		$this->load_graph_objects();
+		//$this->load_graph_objects();
 		
-		//dynamic html loader
-	    $this->dhtml = remote_paramload('FRONTHTMLPAGE','dhtml',$this->prpath);		  
-		
-		//installed eshop code
-		//$this->has_eshop = remote_paramload('ESHOP','code',$this->prpath);		
-		
-		//edit html files
-		$htmltemplate  = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);
-		$this->htmlext  = remote_paramload('FRONTHTMLPAGE','htmlext',$this->prpath);
-		$this->htmlfolder  = remote_paramload('FRONTHTMLPAGE','path',$this->prpath) .
-		                     ($htmltemplate ? '/'. $htmltemplate : null);
 		//awstats cp window
         //$url = "cgi-bin/awstats.pl?config=".str_replace('www.','',$_ENV["HTTP_HOST"])."&framename=mainright#top";			   
 		//get last murl element = site.stereobit.gr 
@@ -252,99 +240,95 @@ class rccontrolpanel {
 		$this->awstats_url = $awurl ? $awurl :
 		                     ((!empty($this->murl)) ? array_pop($this->murl) : str_replace('www.','',$_ENV["HTTP_HOST"]));		
 		
-		$this->appkey = new appkey();		
+		$this->appkey = new appkey();	
+		$this->rootapp_path = 'stereobi'; //XIX !!!!
 		
 		$this->messages = GetSessionParam('cpMessages') ? GetSessionParam('cpMessages') : array();
-		
 		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath); //metro !!!!
+		
 		$this->stats = array();
 		$this->cpStats = false;
-		if ($this->cptemplate) {
-			$this->templatepanel(true); //always
-			$this->cpStats = $this->isStats();
-		}		
+		/*if ($this->cptemplate) {
+			//***$this->templatepanel(true); //always
+			//$this->_show_update_tools();
+			//$this->cpStats = $this->isStats();
+		}*/		
 	}
 	 	
     function event($sAction) {    	  
+	
+	   /////////////////////////////////////////////////////////////
+	   //if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	//re-login //!!!!
+	   /////////////////////////////////////////////////////////////		
 	   
-	   if (GetGlobal('login')|| (GetSessionParam('LOGIN')=='yes')) {
-	   $this->autoupdate();	   	  		  			      
+	   //if (GetGlobal('login') || (GetSessionParam('LOGIN')=='yes')) {
+		   
+	   $this->autoupdate();	  //!!!!! 	  		  			      
   
 	   switch ($sAction) {
 	   
 	     case 'cpzbackup' : break;
 	   
-		 case 'cpmenushow': //if ($menu = GetReq('group')) {//ajax call
-		                       //header("Content-Type", "text/html; charset=$this->charset");
-		                       $this->hasmenu = $this->read_directory($this->path);
-							   //$this->gotomenu = seturl('t=cpmenushow&group='.GetReq('group').'&ai=1&&statsid=');
-							 //}
-							 break; 
+		 /*case 'cpmenushow':  $this->hasmenu = $this->read_directory($this->path);
+							 break; */
 							 
 		 case 'cpchartshow': if ($report = GetReq('report')) {//ajax call
-		                       //$this->load_graph_objects();
 		                       $this->hasgraph = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use $report");
 							   $this->goto = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 							 }
 							 break;
 							 							 	   
-		 case 'cpgaugeshow': if ($report = GetReq('report')) {//ajax call
+		 /*case 'cpgaugeshow': if ($report = GetReq('report')) {//ajax call
 		                       //$this->load_graph_objects();
 		                       $this->hasgauge = GetGlobal('controller')->calldpc_method("swfcharts.create_gauge_data use $report+where cid=0++1+400+300+meter");
 							   $this->goto = seturl('t=cpgaugeshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 							 }
-							 break;	   
+							 break;	*/   
 	   	
-         case "cplogout"   : $this->logout();
+         case "cplogout"    : $this->logout();
 		                     break;
 		 case "cplogin"     :$valid = $this->verify_login();
-		                     $this->javascript();							  
+		                     //$this->javascript();							  
 							
-		 case "cpnitobi"    :if (GetSessionParam('LOGIN')=='yes')
-		                      $this->read_directory($this->path);//echo $this->path;
-		                     break;	
+		 case "cpinfo"      :if (GetSessionParam('LOGIN')=='yes') {//ajax call
+								$this->site_stats();  //run stats
+								echo $this->cpinfo($_GET['s']);// .'>>>'. $_GET['s']; 
+								die();
+							 }
+		                     break;
 							 
 		 case "cp"          :
-		 default         	:if ($this->cptemplate) {
+		 default         	://if ($this->cptemplate) {
 								$this->set_addons_list();
-		                     }
+								$this->load_graph_objects();
+		                     /*}
                              elseif (GetSessionParam('LOGIN')=='yes') { 
-								$this->javascript();	
+								//$this->javascript();	
 								$this->read_directory($this->path);//echo $this->path;
 							  
 								//$this->load_graph_objects();
 								$this->set_addons_list();
-							 }
+							 }*/
 		                     break;				 
        } 
-	   }//if
+	   //}//if
     }
   
     function action($sAction) {
 		   
-	  //echo GetSessionParam('LOGIN'),"...";
-	  if (GetGlobal('login')|| (GetSessionParam('LOGIN')=='yes')) {
-	    
-		$tmpl = 'cpdashboard.htm';  
-		$t = $this->path . '/html/'. str_replace('.',getlocal().'.',$tmpl) ; 
-		//echo $t;
-		if (is_readable($t)) 
-			$this->dashboard = file_get_contents($t);
-				  
-	  
 	    switch ($sAction) {
 		    
 			case 'cpzbackup' : $out = $this->zip_directory(GetReq('zname'),GetReq('zpath'));
 			                   break;
 		  
-		    case 'cpmenushow': if ($this->hasmenu) //ajax call
+		    /*case 'cpmenushow': if ($this->hasmenu) //ajax call
 		                          //$out = $this->show_directory_iconstable(4,3);
 								  $out = $this->ajax_menu(4,3);//,null,1); //xmlout
 							    else
 							      $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
 
 							    die('menu|'.$out); //ajax return
-								break;		  
+								break;	*/	  
 		  
 		    case 'cpchartshow': if ($this->hasgraph) {//ajax call
 		                          $out = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");								  
@@ -355,78 +339,72 @@ class rccontrolpanel {
 							    die(GetReq('report').'|'.$out); //ajax return
 								break;
 								
-		    case 'cpgaugeshow': if ($this->hasgauge) {//ajax call
+		    /*case 'cpgaugeshow': if ($this->hasgauge) {//ajax call
 		                          $out = GetGlobal('controller')->calldpc_method("swfcharts.show_gauge use ". GetReq('report') ."+400+300");								  
 								}  
 							    else
 							      $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
 
 							    die(GetReq('report').'|'.$out); //ajax return
-								break;										  
-		  	    
+								break;*/										  
+		  	case "cpinfo"      : break;    
 			case "cp"          :	
 			default            : $this->getTURL(); //save param for use by metro cp
 			
-                      			 if ($this->cptemplate) {
+                      			 //if ($this->cptemplate) {
 			                        //echo 'a'; //not always executed but ony ehwn in dashboard
-									if ((GetReq('t')=='cp')||(!GetReq('t'))) 
-										$this->templatepanel(); 
+									//if ((GetReq('t')=='cp')||(!GetReq('t'))) 
+										//$this->templatepanel(); 
+									$this->site_stats();
+									$this->_show_update_tools();
+									$this->_show_addon_tools();
 									$this->cpStats = $this->isStats();
-								 }	
-			                     else
-									$out .= $this->controlpanel(4,3,$this->editmode); 
+								 //}	
+			                    /* else
+									$out .= $this->controlpanel(4,3,$this->editmode); */
 			  
 		} 		 		  
-	  }  
+	  //}  
 	
 	  return ($out);
     } 
 	
 	//save param for use by metro cp
 	protected function getTURL() {
-		$qquery = str_replace('_&_', '_%26_', base64_decode($_GET['turl'])); //echo '>',$qquery,'>'; //& category problem
-		$urlquery = parse_url($qquery); /*parse_url(base64_decode($_GET['turl']));*/ //echo $urlquery['query'];
-		parse_str($urlquery['query'],$getp);
-        //echo $qquery;
-        //print_r($urlquery);		
-		//print_r($getp);
+		$postedTURL = $_POST['turl'] ? $_POST['turl'] : $_GET['turl']; 
 		
-		SetSessionParam('turl', $qquery);
-		SetSessionParam('cpGet', $getp);
+		if ($turl = $_SESSION['turl']) {//GetSessionParam('turl')) {
+			$this->turl = $turl;
+			$this->turldecoded = GetSessionParam('turldecoded');
+			$this->cpGet = unserialize(base64_decode($_SESSION['cpGet']));			
+			//echo 'insession:',print_r($_POST); print_r($this->cpGet);
+			return true;
+		} 
+        //elseif ($_GET['turl']) { //for the first time in cp
+		elseif ($postedTURL) {//a post from login screen
+		    $this->turl = $postedTURL ;
+			$this->turldecoded = str_replace('_&_', '_%26_', base64_decode($postedTURL)); 	
+			$urlquery = parse_url($this->turldecoded); 
+			parse_str($urlquery['query'], $getp); 	
+			$this->cpGet = $getp;
+
+			//echo $qquery;
+			//print_r($urlquery);		
+			//print_r($getp);
+		
+			SetSessionParam('turl', $postedTURL);		
+			SetSessionParam('turldecoded', $this->turldecoded);
+			SetSessionParam('cpGet', base64_encode(serialize($this->cpGet)));
+			
+			return true;	
+	    }
+		else {
+			
+		}
 		
 		return false;
 	}
-	
-	//load graphs urls to call
-	function load_graph_objects() {
-	
-        if (defined('RCKATEGORIES_DPC'))		  
-          $this->objcall['statisticscat'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=statisticscat&statsid=');
-        if (defined('RCITEMS_DPC'))		  
-          $this->objcall['statistics'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=statistics&statsid=');
-        if (defined('RCMAILDBQUEUE_DPC')) {		  
-          $this->objcall['mailqueue'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=mailqueue&statsid=');
-		  //$this->objcall['mailsendok'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=mailsendok&statsid=');
-		}  
-		if (defined('RCTRANSACTIONS_DPC')) {
-          $this->objcall['transactions'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=transactions&statsid=');  		  
-		  //$this->objcall['users'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=users&statsid=');  		  
-		  //$this->objcall['subscribers'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=subscribers&statsid=');  		  
-		}  
-		if (defined('RCUSERS_DPC')) {
-		  $this->objcall['users'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=users&statsid=');  		  
-		  $this->objcall['subscribers'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=subscribers&statsid='); 		
-		}
-        if (defined('RCSAPPVIEW_DPC')) {		  
-          $this->objcall['applications'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=applications&statsid=');
-          $this->objcall['appexpires'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=appexpires&statsid=');		  		  		  
-		} 
-		 
-		if (defined('RCTRANSACTIONS_DPC'))
-          $this->objgauge['income'] = seturl('t=cpgaugeshow&group='.GetReq('group').'&ai=1&report=income&statsid=');						    		
-		  	
-	}
-	
+	/*
 	function javascript() {
       if (iniload('JAVASCRIPT')) {
 	  
@@ -492,84 +470,16 @@ window.setTimeout(\"neu()\",$mytimeout);
 ";
 	 }
 	 return ($ret);
-    }			
-	
-	function nitobi_javascript() {
-      if (iniload('JAVASCRIPT')) {
-
-		   //$template = $this->set_template();   		      
-		   
-	       //$code = $this->init_tabstrip();
-	       $code = $this->_ctabstrip->tabstrip_init($this->cpn_tabtype);//'ajax');//null=iframe		   			
-	   
-		   $js = new jscript;
-		   $js->setloadparams("init()");
-           $js->load_js('nitobi.toolkit.js');		   
-           $js->load_js('nitobi.tabstrip.js');
-           $js->load_js('nitobi.tree.js');		   		   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }		
-	}	
-	
-    protected function tabstrip() {
-		$mytitle = (isset($this->dashboard))?localize('_DASHBOARD',getlocal()):'Control Panel';
-  
-		if ($this->cp0_tabtype=='dom')
-			$ret = $this->_ctabstrip->set_tabstrip($mytitle,'cp0',$this->cp0_tabtype,'nitobi','100%','700px','left','fade');
-		else
-			$ret = $this->_ctabstrip->set_tabstrip($mytitle,'cp.php?t=cpnitobi',$this->cp0_tabtype,'nitobi','100%','700px','left','fade');
-  
-		return ($ret);
-    }		  
+    }	*/			  
 	  
     protected function controlpanel($type=4,$linemax=3,$nav_off=null,$win_off=null) {
-     //echo '>',$this->editmode;
 	 
-	 if (!$nav_off) {
-	     if ($gr=GetReq('group'))
-	       $out = setNavigator(seturl("t=cp",$this->title),substr($gr,2));	 
-	     else	 
-           $out = setNavigator($this->title);//,$t);	   
-	 }
-	 
-	 if (isset($this->dashboard)) {
-			//all icons one token
-			if ($this->editmode) 
-			  $tokens[] = $this->site_stats();
-		    else
-			  $tokens[] = $this->show_directory_iconstable($type,$linemax);  	
-			  
-		    $out .= $this->combine_tokens($this->dashboard,$tokens);
-	 }
-	 else { 	  
-
-	   if ($this->ajaxgraph) { //ajax
-	     if ($this->editmode) {
-		   //$panel = ....;
-		 }  
-		 else
-		   $panel = GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use menu");
-	   }	 
-	   else	
-	     $panel = $this->show_directory_iconstable($type,$linemax);
-	   
-	   if ($win_off) {
-	     $out .= $panel;
-	   }
-	   else {	 		 		 
-	     if ($this->editmode) {
-		   $site_panel = $this->site_stats();
+		 $site_panel = $this->site_stats();
 		   
-		   $win1 = new window2(localize("_MENU",getlocal()),$site_panel,null,1,null,'SHOW',null,1);
-	       $panel = $win1->render();
-		   unset ($win1);		   
-		 }
-		 else {
-		   $win1 = new window2(localize("_MENU",getlocal()),$panel,null,1,null,'SHOW',null,1);
-	       $panel = $win1->render();
-		   unset ($win1);
-	     }
+		 $win1 = new window2(localize("_MENU",getlocal()),$site_panel,null,1,null,'SHOW',null,1);
+	     $panel = $win1->render();
+		 unset ($win1);		   
+
 
 		 //multicolumn view	
 		 
@@ -587,7 +497,7 @@ window.setTimeout(\"neu()\",$mytimeout);
 		 $left_panel = $this->_show_update_tools() . $panel;
 		 //$left_panel .= ($this->dhtml) ? null : $this->_show_charts() . $this->_show_gauges();			   
 		 $left_panel .= $this->_show_addons();
-		 $left_panel .= $this->_show_tweets_rss();
+		 //$left_panel .= $this->_show_tweets_rss();
 		 
 	     $data1[] = $left_panel;
          $attr1[] = isset($right_panel) ? (isset($middle_panel) ? "left;35%" : "left;50%") : "left;100%";	    
@@ -610,56 +520,12 @@ window.setTimeout(\"neu()\",$mytimeout);
 		 
 	     //HIDDEN FIELD TO HOLD STATS ID FOR AJAX HANDLE
 	     $out .= "<INPUT TYPE= \"hidden\" ID= \"statsid\" VALUE=\"0\" >";	  		 			   		 
-       }
-	 }  
 	 
-     return ($out);	 
+         return ($out);	 
     } 
   
-    protected function _show_charts() {
-		//$stats = $this->_show_addon_tools(); //tools to enable
-	    if (!empty($this->objcall)) {  
-		 
- 		    foreach ($this->objcall as $report=>$goto) {//goto not used in this case
-                $title = localize("_$report",getlocal()); //title
-		        if ($this->ajaxgraph)  {//ajax
-			        $ts = GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use $report");
-			    }
-		        elseif ($transtats = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use transactions")) {
-			        $ts = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use $report+500+240+$this->goto");
-			    }						
-			    $win1 = new window2($title,$ts,null,1,null,'SHOW',null,1);
-	            $stats .= $win1->render();
-		        unset ($win1);								 	   
-			}
-		}
-
-		return ($stats);		 
-    }
   
-    protected function _show_gauges() {
-  
-      if (!empty($this->objgauge)) {  
-	
-	    foreach ($this->objgauge as $report=>$goto) {
-           $title = localize("_$report",getlocal()); //title
-
-		   if ($this->ajaxgraph)  {//ajax
-			 $ts = GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use $report");
-		   }
-		   elseif ($transtats = calldpc_method("swfcharts.create_gauge_data use $report+where cid=0++1+400+300+meter")) {
-		     $ts = GetGlobal('controller')->calldpc_method("swfcharts.show_gauge use $report+400+300");
-		   }
-		      
-		   $win1 = new window2($title,$ts,null,1,null,'SHOW',null,1);
-           $chart .= $win1->render();
-           unset ($win1);		 
-	   }
-      }
-      return ($chart);	
-    }
-  
-    protected function _show_addons($template=false) {  
+    protected function _show_addons($template=false) {  //?????
       $winh = 'SHOW';
 	
       if (!empty($this->environment)) {    
@@ -712,7 +578,7 @@ window.setTimeout(\"neu()\",$mytimeout);
       return ($addons);	
     }
   
-    protected function _show_addon_tools($icons=null, $template=false) {
+    protected function _show_addon_tools() {
 
       $seclevid = GetSessionParam('ADMINSecID');   
       //print_r($this->environment);
@@ -727,7 +593,6 @@ window.setTimeout(\"neu()\",$mytimeout);
 		$mytool = strtolower($tool);
 		//echo $tool,'<br/>';		   
 		
-	    $icon_on = $icons ? true : false; //init pre tool
 		$e1 = null;//init pre tool
 		
 		//if (($ison>0) && ($this->environment[strtoupper($tool)]>0)) {//(isset($this->environment[strtoupper($tool)]))) {//enabled
@@ -745,19 +610,16 @@ window.setTimeout(\"neu()\",$mytimeout);
 										<!-- Alternate content for non-supporting browsers -->
 										<H2>Google analytics</H2>
 							   			<H3>iframe is not suported in your browser!</H3>
-										</IFRAME>";	
-                                         $icon_on =false; 										
+										</IFRAME>";									
 			                             break;	
 			   case 'add_categories':   if (defined('RCIMPORTDB_DPC')) {
 			                                $text = GetGlobal('controller')->calldpc_method('rcimportdb.upload_database_form use +++1');
-											$icon_on =false;
 										}	
 			                            else
 											$text = "<a href='cpimportdb.php?editmode=1&encoding=".$this->charset."'>Upload categories</a>"; 
 			                            break;
                case 'add_products'  :	if (defined('RCIMPORTDB_DPC')) {
 			                                $text = GetGlobal('controller')->calldpc_method('rcimportdb.upload_database_form use +++1');
-											$icon_on =false;
 										}	
 			                            else
 											$text = "<a href='cpimportdb.php?editmode=1&encoding=".$this->charset."'>Upload products</a>"; 
@@ -766,7 +628,6 @@ window.setTimeout(\"neu()\",$mytimeout);
 			                                $text = GetGlobal('controller')->calldpc_method('rcupload.advanced_uploadform use +logo.png++images+');
 											$text .= GetGlobal('controller')->calldpc_method('rcupload.advanced_uploadform use +pointer.png++images+');
 											$text .= GetGlobal('controller')->calldpc_method('rcupload.advanced_uploadform use +favicon.ico');
-											$icon_on =false;
 										}	
 			                            else
 											$text = "<a href='cpupload.php?editmode=1&encoding=utf-8'><img src='../images/logo.png'/></a>"; 
@@ -830,7 +691,6 @@ window.setTimeout(\"neu()\",$mytimeout);
 			   case 'awstats' :         $text = "AWStats installed"; break;	
 			   
 			   case 'edit_htmlfiles':   $text = $this->edit_html_files(false, true, true);
-			                            $icon_on =false;
 			                            break; 
                case 'addkey'        :  	//always repeat...
 			                            if ($e1 = $this->call_wizard_url('addkey')) 
@@ -985,7 +845,6 @@ window.setTimeout(\"neu()\",$mytimeout);
         //else disabled tool...		
 		
 		if ($text) {
-		  if ($template) {
 		    //echo $text,'<br/>';
 		    $tool_url = $text ? ($e1 ? $e1 : "help/$mytool/") : null;
 			$this->stats['Addons']['url'][] = $tool_url;
@@ -1002,34 +861,13 @@ window.setTimeout(\"neu()\",$mytimeout);
                         </div>
                    </div>';
 			$this->stats['Addons']['html'] .= $ao;
-          }
-          else {		  
-			if (($icons) && ($icon_on == true)) {
-				$tool_url = $text ? ($e1 ? $e1 : "help/$mytool/") : null;
-				$ic[] = $this->icon("images/$mytool.png",$tool_url,$text,4);
-			}
-			else {
-				$mtitle = localize('_'.$mytool, getlocal());
-				$win1 = new window2($mtitle,$text,null,1,null,'HIDE',null,1);
-				$wtools .= $win1->render();
-				unset ($win1);
-			}	
-		  }	
 		}		
       }	//foreach	
 	  }//if
 	
-	  if ($template) {
-		return true;
-	  }
-	  else {
-		if (($icons)&&(!empty($ic))) {
-			$wtools .= $this->show_iconstable($ic,localize('_addons', getlocal()),4); 
-		}
-		//edit photo if id or cat is selected
-		$wtools .= $this->change_photo_shortcut();
-      }
-      return ($wtools);	
+
+	  return true;
+
     }	
   
     //check if eshop exist and is valid
@@ -1064,10 +902,10 @@ window.setTimeout(\"neu()\",$mytimeout);
     protected function is_valid_newsletter() {
    	  
 		//installed mailqueue key
-		$timekey = remote_paramload('RCSHSUBSQUEUE','expires',$this->prpath);
+		$timekey = remote_paramload('RCBULKMAIL','expires',$this->prpath);
 
 		if ($timekey) {
-			$date = $this->appkey->decode_key($timekey, 'RCSHSUBSQUEUE');
+			$date = $this->appkey->decode_key($timekey, 'RCBULKMAIL'); 
 
 			if ($date) {
 				$daystosay = 30 * 24 * 60 *60; //30 days			
@@ -1085,29 +923,8 @@ window.setTimeout(\"neu()\",$mytimeout);
 	    return false;
     }	
   
-    //edit photo if id or cat is selected
-    protected function change_photo_shortcut() {
-		$qquery = str_replace('_&_', '_%26_', base64_decode($_GET['turl'])); //echo '>',$qquery,'>'; //& category problem
-		$urlquery = parse_url($qquery); /*parse_url(base64_decode($_GET['turl']));*/ //echo $urlquery['query'];
-		parse_str($urlquery['query'],$getp); //echo implode('.',$getp);  
-	
-		foreach ($getp as $p=>$v) {
-			if (stristr($p,'cat'))
-				$cat = $v;//urlencode($v);
-			if (stristr($p,'id'))
-				$id = $v;//urlencode($v);	
-		}
-		//print_r($getp);
-		//extras
-		//if (GetReq('id')) {
-		if (defined('RCITEMS_DPC') && (($id)||($cat))) {	
-			$out = GetGlobal('controller')->calldpc_method('rcitems.form_photo use 1+'.$cat.'+'.$id);
-		}
-		
-		return ($out);	
-    }
   
-    protected function _show_update_tools($template=false) {   
+    protected function _show_update_tools() {   
         $text = 'update';
 		$u = null;
 		//check for time limited services
@@ -1117,7 +934,7 @@ window.setTimeout(\"neu()\",$mytimeout);
                 $module = $section .'_DPC';
 				$mod = localize($module, getlocal());
 				$update_key_url = $this->call_wizard_url('addkey');//, true);	//is upgrade			
-				if ($template) {
+
 					$this->stats['Update']['value'] = ++$index;
 				    $this->stats['Update']['url'][] = $update_key_url;
 					$this->stats['Update']['href'][] = $exp_text;
@@ -1141,9 +958,6 @@ window.setTimeout(\"neu()\",$mytimeout);
                                    </a>
                                </li>'; 
                     if ($index<5) $this->stats['Update']['notify'] .= $notify;							   
-				}
-				else
-				  $u .= "<h3><a href='$update_key_url'>" . date("F d Y H:i:s.") . "&nbsp;".$mod."&nbsp;".$exp_text."</a></h3>";
 			}
 		}		
 		
@@ -1152,7 +966,6 @@ window.setTimeout(\"neu()\",$mytimeout);
 		    foreach ($dpc2copy as $d=>$dpc) {
 				//automated dpc update
 				$update_dpc_url = $this->call_wizard_url('dpcmod');//, true);	//is upgrade			
-				if ($template) {
 				    $this->stats['Update']['value'] = ++$index;
 					$this->stats['Update']['url'][] = $update_dpc_url;
 					$this->stats['Update']['href'][] = $dpc;
@@ -1176,9 +989,6 @@ window.setTimeout(\"neu()\",$mytimeout);
                                    </a>
                                </li>'; 
                     if ($index<5) $this->stats['Update']['notify'] .= $notify;					
-				}
-				else
-					$u .= "<h3><a href='$update_dpc_url'>" . date("F d Y H:i:s.") . "&nbsp;".$dpc."</a></h3>";
 			}	
 		}
 		
@@ -1187,13 +997,12 @@ window.setTimeout(\"neu()\",$mytimeout);
 		    foreach ($phpdac2copy as $p=>$dac) {
 				//automated dpc update
 				$update_dac_url = $this->call_wizard_url('dacpage');//, true);	//is upgrade			
-				if ($template) {
 				    $this->stats['Update']['value'] = ++$index;
 					$this->stats['Update']['url'][] = $update_dac_url;
 					$this->stats['Update']['href'][] = $dac;
 					$html = '<li>
                                 <span class="label label-important"><i class="icon-bullhorn"></i></span>
-                                    <span><a href="'.$update_dac_url.'">'.$dac.'</a></span>
+                                    <span><a href="'.$update_dac_url.'">'.ucfirst(strtolower($dac)).'</a></span>
                                     <div class="pull-right">
                                         <span class="small italic ">'.date("F d Y H:i:s.").'</span>
                                     </div>
@@ -1202,7 +1011,7 @@ window.setTimeout(\"neu()\",$mytimeout);
                     $notify = ' <li>
                                    <a href="#">
                                        <div class="task-info">
-                                         <div class="desc">'.$dac.'</div>
+                                         <div class="desc">'.ucfirst(strtolower($dac)).'</div>
                                          <div class="percent">44%</div>
                                        </div>
                                        <div class="progress progress-striped active no-margin-bot">
@@ -1211,9 +1020,6 @@ window.setTimeout(\"neu()\",$mytimeout);
                                    </a>
                                </li>'; 
                     if ($index<5) $this->stats['Update']['notify'] .= $notify;					
-				}
-				else
-					$u .= "<h3><a href='$update_dac_url'>" . date("F d Y H:i:s.") . "&nbsp;".$dac."</a></h3>";
 			}	
 		}	
 		
@@ -1221,7 +1027,6 @@ window.setTimeout(\"neu()\",$mytimeout);
 		if ($this->free_space() < (100*1024*1024)) { //get more in MB..100MB
 		    //automated add space
 		    $update_url = $this->call_wizard_url('addspace');//, true);	//is upgrade			
-			if ($template) {
 			    $this->stats['Update']['value'] = ++$index;
 				$this->stats['Update']['url'][] = localize('_addspace', getlocal());
 				$this->stats['Update']['href'][] = $update_url;
@@ -1245,9 +1050,6 @@ window.setTimeout(\"neu()\",$mytimeout);
                                 </a>
                             </li>'; 
                 if ($index<5) $this->stats['Update']['notify'] .= $notify;
-			}
-			else
-				$u .= "<h3><a href='$update_url'>" . date("F d Y H:i:s.") . "&nbsp;".localize('_addspace', getlocal())."</a></h3>";
 		}
 		
 	    $updates = $this->read_update_directory();
@@ -1257,13 +1059,12 @@ window.setTimeout(\"neu()\",$mytimeout);
 			    //$u .= $udatecreated . '&nbsp;';
 				
                 $update_url = $this->call_wizard_url($update, true);
-				if ($template) {
 				    $this->stats['Update']['value'] = ++$index;
-					$this->stats['Update']['url'][] = str_replace('_',' ',strtoupper($update));
+					$this->stats['Update']['url'][] = str_replace('_',' ',ucfirst($update));
 					$this->stats['Update']['href'][] = $update_url;
 					$html = '<li>
                                 <span class="label label-warning"><i class="icon-bullhorn"></i></span>
-                                    <span><a href="'.$update_url.'">'.str_replace('_',' ',strtoupper($update)).'</a></span>
+                                    <span><a href="'.$update_url.'">'.str_replace('_',' ',ucfirst($update)).'</a></span>
                                     <div class="pull-right">
                                         <span class="small italic ">'.date("F d Y H:i:s.", $udatecreated).'</span>
                                     </div>
@@ -1272,7 +1073,7 @@ window.setTimeout(\"neu()\",$mytimeout);
 					$notify = ' <li>
                                 <a href="#">
                                     <div class="task-info">
-                                        <div class="desc">'.str_replace('_',' ',strtoupper($update)).'</div>
+                                        <div class="desc">'.str_replace('_',' ',ucfirst($update)).'</div>
                                         <div class="percent">44%</div>
                                     </div>
                                     <div class="progress progress-striped active no-margin-bot">
@@ -1281,89 +1082,11 @@ window.setTimeout(\"neu()\",$mytimeout);
                                 </a>
                             </li>'; 
 					if ($index<5) $this->stats['Update']['notify'] .= $notify;					
-				}
-				else				
-					$u .= "<h3><a href='$update_url'>" . date("F d Y H:i:s.", $udatecreated) . "&nbsp;".str_replace('_',' ',strtoupper($update))."</a></h3>";
 			}	
 		}
 
-		if ($template) {
-			return true;
-		}
-		else {		
-			if ($u) {
-				$mtitle = localize('_update', getlocal());
-				$win1 = new window2($mtitle,$u,null,1,null,'SHOW',null,1);
-				$utools .= $win1->render();
-				unset ($win1);
-			}		   
-			return ($utools);
-		}	
+		return true;
     }
-   
-    protected function _show_tweets_rss($username=null) {
-		$tuser = $username ? $username : 'balexiou';
-   
-		$ret = <<<EOF
-<script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
-<script>
-new TWTR.Widget({
-  version: 2,
-  type: 'profile',
-  rpp: 4,
-  interval: 30000,
-  width: 225,
-  height: 300,
-  theme: {
-    shell: {
-      background: '#3B8EB6',
-      color: '#000000'
-    },
-    tweets: {
-      background: '#d4edf7',
-      color: '#000000',
-      links: '#f28a0b'
-    }
-  },
-  features: {
-    scrollbar: true,
-    loop: false,
-    live: false,
-    behavior: 'default'
-  }
-}).render().setUser('balexiou').start();
-</script>		 
-EOF;
- 
-		$tweets = "<a class=\"twitter-timeline\" href=\"https://twitter.com/$tuser\" data-widget-id=\"247970993891573760\">Tweets by @$tuser</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+\"://platform.twitter.com/widgets.js\";fjs.parentNode.insertBefore(js,fjs);}}(document,\"script\",\"twitter-wjs\");</script>";
-		//www.rssinclude.com widget balexiou/basilVk7dP 
-		$rss1 = " 
-<div id=\"rssincl-box-container-786722\"></div>
-<script type=\"text/javascript\">
-(function() {
-  var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true;
-  s.src = 'http://output72.rssinclude.com/output?type=asyncjs&id=786722&hash=fa1d433a49b4c11a1e56dc3ccd22240f';
-  document.getElementsByTagName('head')[0].appendChild(s);
-})();
-</script>
-";
-		//return ($tweets . $rss1);	
-	
-		$data1[] = $tweets;
-		$attr1[] = "left;70%";
-		$data1[] = $rss1;
-		$attr1[] = "left;30%";
-		$swin = new window(null,$data1,$attr1);
-		$out = $swin->render();//"center::100%::0::::center::0::2::");		 
-		unset ($swin);
-	
-		$win = new window2(localize("_TWEETSRSS",getlocal()),$out,null,1,null,'SHOW',null,1);
-		$wout .= $win->render();
-		unset($win);
-		
-		return ($wout);	 
-    }   
   
     //as call_upgrade_ini into rcuwizard dpc
     //in case of update must be also here for wizard to play..
@@ -1463,710 +1186,9 @@ EOF;
         }
 
 		return ($ret);
-    }    
+    }    			
   
-    function read_directory($dirname) {
-  
-        if ($gr=GetReq('group'))
-		  $dirname .= "/" . $gr;
-  
-        //echo $dirname;
-	    if (is_dir($dirname)) {
-          $mydir = dir($dirname);
-		 
-          while ($fileread = $mydir->read ()) {
-	        
-		   if (($fileread!='.') && ($fileread!='..'))  {
-		   
-                 //echo "<br>",$fileread;
-				 		   
-		         //read cp dirs
-		         if ((is_dir($dirname."/".$fileread)) &&
-		   		     ($fileread{0}==='c') &&
-					 ($fileread{1}==='p')) {
-					 
-			         $ddir[] = $fileread;		 
-		         } 		   
-	             //read cp files
-  	             if ((stristr ($fileread,".php")) &&
-				     ($fileread{0}==='c') &&
-					 ($fileread{1}==='p') &&
-					 ($fileread != "cp.php")) {		   
-
-		              $ddir[] = $fileread;						
-					}
-		   } 
-	      }
-	      $mydir->close ();
-        }
-
-		$this->cmds = $ddir;
-		return ($ddir);
-    }
-  
-    function show_directory()  {
-  
-	  //if (defined('SMSGUI_DPC')) {
-	    //$ret = GetGlobal('controller')->calldpc_method('smsgui.sendsms use aekara2+306936550848+1');
-	    //echo $ret;
-	  //}	  
-
-      if (is_array($this->cmds)) {
-	
-		$actions = GetGlobal('__ACTIONS');	//print_r($actions); 
-	
-		foreach ($this->cmds as $id=>$name) {
-	
-			$parts = explode(".",$name);
-		
-			if (isset($parts[1])) {//it means it is a file '.php'
-				$obj = strtoupper(str_replace("cp","rc",$parts[0])."_DPC");
-		
-				if (defined($obj)) {
-					$cmd = $actions[$obj][0];
-					$title = localize($obj,getlocal());
-	        
-					$ret .= $id.". " .seturl("t=".$cmd,$title) ."<br>"; 
-				}
-			}
-			else {//it is a dir with other .php files
-				$t = GetReq('t');	
-				$group = $parts[0];
-				$title = substr($group,2); //exclude cp chars
-				$ret .= $id.". " .seturl("t=$t&group=".$group,$title) ."<br>";
-			}
-		}	
-	  }
-	
-	  //$ret .= seturl("t=cplogout","Logout");		
-	  if (GetSessionParam('REMOTELOGIN')) {
-		//$ret .= seturl("t=cpremotelogout","Logout");	
-		if ($gr=GetReq('group')) {
-			$t = GetReq('t'); 
-			$ret .= seturl("t=$t","Back");		  
-		}	
-		else {
-			$ret .= seturl("t=cpremotelogout","Logout");  
-		}			  
-	  }  
-	  else {
-		$ret .= "<hr>";
-		$ret .= seturl("t=senticodes","Send invitation codes");
-		$ret .= "<br>";
-		$ret .= seturl("t=exportdb","Export database schema");
-		$ret .= "<br>";
-		$ret .= seturl("t=crackermail","Web mail");	
-		$ret .= "<br>";	
-	  	
-		//$ret .= seturl("t=cplogout","Logout"); 
-		if ($gr=GetReq('group')) {
-			$t = GetReq('t'); 
-			$ret .= seturl("t=$t","Back");		  
-		}	
-		else {
-			$ret .= seturl("t=cpremotelogout","Logout");  
-		}			   	
-	  }  
-	
-	  return ($ret);
-    }
-  
-  
-    function show_directory_icons($type=0) {
-	  $t = GetReq('t');  
-      $mygroup = GetReq('group');  
-      $cpfile = @file_get_contents($this->prpath.'cpmenu.txt');
-      $menu_direct_file = explode(',',$cpfile);  
-  
-      if (is_array($this->cmds)) {
-		$actions = GetGlobal('__ACTIONS');	//print_r($actions); 
-	
-		foreach ($this->cmds as $id=>$name) {
-	
-			$parts = explode(".",$name);
-
-			if (isset($parts[1])) {//it means it is a file '.php'		
-			  $obj = strtoupper(str_replace("cp","rc",$parts[0])."_DPC");
-			  $obj2 = strtolower($obj);
-		  
-			  if (defined($obj)) {
-				$cmd = $actions[$obj][0];
-				$url = ($mygroup ? $mygroup.'/'.$name:$name); //as php file			
-				$title = localize($obj,getlocal());
-	
-				if (in_array($parts[0],$menu_direct_file)) 
-					$ret .= icon2("/icons/$obj2.gif",$url,$title,$type);  
-				else 
-					$ret .= icon("/icons/$obj2.gif","t=".$cmd,$title,$type); 
-				 
-			  }
-			}
-			else {//it is a dir with other .php files
-		      $group = $parts[0];
-		      $title = substr($group,2); //exclude cp chars
-		      if ($this->ajaxgraph) {
-				$goto = seturl('t=cpmenushow&group='.$group.'&ai=1&statsid=');
-				$js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-				$ret .= "<a href=\"#\">". loadicon('/icons/'.$group.'.gif',$title,$js)."<br>$title</a>"; 			  
-			  }			   
-		      else 		   
-				$ret .= icon("/icons/$group.gif","t=$t&group=".$group,$title,$type);
-			}		  
-		}
-	  }
-	
-	  //$ret .= icon("/icons/cplogout.gif","t=cplogout","Logout",$type);	
-	  if (GetSessionParam('REMOTELOGIN')) {
-	    //$ret .= icon("/icons/cplogout.gif","t=cpremotelogout","Logout",$type);	
-	    if ($gr=GetReq('group')) {
-		  if ($this->ajaxgraph) {
-		    $goto = seturl('t=cpmenushow&group=&ai=1&&statsid=');
-   	        $js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-		    $items[] = "<a href=\"#\">". loadicon('/icons/cplogout.gif',localize('_BACKCP',getlocal()),$js)."<br>".localize('_BACKCP',getlocal())."</a>"; 			  
-		  }			   
-		  else
-            $ret .= icon("/icons/cplogout.gif","t=$t",localize('_BACKCP',getlocal()),$type);		  
-	    }	
-	    else {
-          $ret .= icon("/icons/cplogout.gif","t=cpremotelogout","Logout",$type);	  
-	    }		
-	  }  
-	  else {
-	
-	    $ret .= "<hr>";
-	    $ret .= icon("/icons/rcsenticodes_dpc.gif","t=senticodes","Send invitation codes",$type);
-	    $ret .= icon("/icons/rcexportdb_dpc.gif","t=exportdb","Export database schema",$type);
-	    //$ret .= icon("/icons/rcmailcracker_dpc.gif","t=crackermail","Web mail",$type);	    
-	
-	    //$ret .= icon("/icons/cplogout.gif","t=cplogout","Logout",$type);		
-	    if ($gr=GetReq('group')) { 
-		  if ($this->ajaxgraph) {
-		    $goto = seturl('t=cpmenushow&group=&ai=1&&statsid=');
-   	        $js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-		    $items[] = "<a href=\"#\">". loadicon('/icons/cplogout.gif',localize('_BACKCP',getlocal()),$js)."<br>".localize('_BACKCP',getlocal())."</a>"; 			  
-		  }			   
-		  else		
-            $ret .= icon("/icons/cplogout.gif","t=$t",localize('_BACKCP',getlocal()),$type);		  
-	    }	
-	    else {
-          $ret .= icon("/icons/cplogout.gif","t=cplogout","Logout",$type);	  
-	    }			  
-	  }  
-	
-	  return ($ret);	
-    }
-
-    protected function icon($iconpath='',$url,$title,$vtype=0,$ssl=0) {
-        $comment = null;
-		$jscript = null;
-	    $loadicon = $out = "<img src=\"$iconpath\" border=\"0\" alt=\"$comment\" $jscript>";
-		$iconimg = $url ? "<a href='$url'>". $loadicon . '</a>' : $loadicon; 
-		$icontitle = $title;
-	
-        //icon image and title at bottom
-	    if ($iconpath) {
-	        $iwin1 = new window('',$iconimg);
-	        $out = $iwin1->render("center::100%::0::group_icons::center::0::0::");
-	        unset ($iwin1);
-	    }
-	    $iwin2 = new window('',$icontitle);
-	    $out .= $iwin2->render("center::100%::0::group_icons::center::0::0::");
-	    unset ($iwin2);
-		
-		return ($out);
-    }				
-	
-	protected function show_iconstable($items=null,$title=null,$linemax=4) {
-	  if (empty($items)) return;
-	
-	  $itemscount = count($items);
-	  $timestoloop = floor($itemscount/$linemax)+1;
-	  $meter = 0;
-	  for ($i=0;$i<$timestoloop;$i++) {
-		//echo $i,"---<br>";
-		for ($j=0;$j<$linemax;$j++) {
-			//echo $i*$j,"<br>";
-			
-			//$viewdata[] = (isset($items[$meter])? $items[$meter] : "&nbsp");
-			$item = array_shift($items);//get first from list
-			$viewdata[] = (isset($item)? $item : "&nbsp");
-			$viewattr[] = "center;10%";	
-			$meter+=1;	 
-	    }
-	  
-	    $myrec = new window('',$viewdata,$viewattr);
-	    $ret .= $myrec->render("center::100%::0::group_article_selected::left::0::0::");
-	    unset ($viewdata);
-	    unset ($viewattr);		  
-	  }
-	  
-	  if ($ret) {
-	    $mytitle = $title ? $title  : '';
-		if ($mytitle) {
-			$myrec = new window2($mytitle,$ret,null,1,null,'HIDE',null,1);
-			$winret = $myrec->render();
-		}
-		else
-		    $winret = $ret;
-	  }
-
-	  return ($winret);	
-	}
-  
-    function show_directory_iconstable($type=0,$linemax=4,$cmds=null) {
-      $t = GetReq('t');     
-      $mygroup = GetReq('group');
-      $cpfile = @file_get_contents($this->prpath.'cpmenu.txt');
-      $menu_direct_file = explode(',',$cpfile);
-      //print_r($menu_direct_file);
-
-      if ($cmds)
-	    $this->cmds = unserialize($cmds);     
-  
-      if (is_array($this->cmds)) {
-	
-	    $actions = GetGlobal('__ACTIONS');	//print_r($actions); 
-	
-        foreach ($this->cmds as $id=>$name) {	
-			$parts = explode(".",$name);
-		
-			if (isset($parts[1])) {//it means it is a file '.php'				
-				$obj = strtoupper(str_replace("cp","rc",$parts[0])."_DPC");
-				$obj2 = strtolower($obj);
-				//echo $obj,"<br>";
-				if (defined($obj)) {
-					$cmd = $actions[$obj][0];//from cp as t=xxx
-					$url = ($mygroup ? $mygroup.'/'.$name:$name); //as php file
-					$title = localize($obj,getlocal());// . "|<a href=\"#\" onclick=\"remove()\">X</a>";
-	
-					if (in_array($parts[0],$menu_direct_file)) {
-
-						if ($this->ajaxgraph) {		  			  
-							$items[] = icon2("/icons/$obj2.gif",$url,$title,$type); 
-						} 
-						else 			
-							$items[] = icon2("/icons/$obj2.gif",$url,$title,$type); 
-					}  
-					else {
-			
-						if ($this->ajaxgraph) {
-							$items[] = icon("/icons/$obj2.gif","t=".$cmd,$title,$type); 			  
-						}			   
-						else 			
-							$items[] = icon("/icons/$obj2.gif","t=".$cmd,$title,$type); 	
-					}  
-				}
-			}
-			else {//it is a dir with other .php files
-				$group = $parts[0];
-				$title = substr($group,2); //exclude cp chars
-		   
-				if ($this->ajaxgraph) {
-					$goto = seturl('t=cpmenushow&group='.$group.'&ai=1&statsid=');
-					$js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-					$items[] = "<a href=\"#\">". loadicon('/icons/'.$group.'.gif',$title,$js)."<br>$title</a>"; 			  
-				}			   
-				else 		   
-					$items[] = icon("/icons/$group.gif","t=$t&group=".$group,$title,$type);
-			}		  
-		}
-	  }
-	
-	
-	  if (GetSessionParam('REMOTELOGIN')) {
-		//$items[] = icon("/icons/cplogout.gif","t=cpremotelogout","Logout",$type);		
-		if ($gr=GetReq('group')) {
-			if ($this->ajaxgraph) {
-				$goto = seturl('t=cpmenushow&group=&ai=1&statsid=');
-				$js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-				$items[] = "<a href=\"#\">". loadicon('/icons/cplogout.gif',localize('_BACKCP',getlocal()),$js)."<br>".localize('_BACKCP',getlocal())."</a>"; 			  
-			}			   
-			else
-				$items[] = icon("/icons/cplogout.gif","t=$t",localize('_BACKCP',getlocal()),$type);		  
-		}	
-		else {
-			$items[] = icon("/icons/cplogout.gif","t=cpremotelogout","Logout",$type);	  
-		}			  
-	  }  
-	  else {
-		//$items[] = icon("/icons/rcsenticodes_dpc.gif","t=senticodes","Send invitation codes",$type);
-		//$items[] = icon("/icons/rcexportdb_dpc.gif","t=exportdb","Export database schema",$type);
-		//$items[] = icon("/icons/rcmailcracker_dpc.gif","t=crackermail","Web mail",$type);	    	
-	
-		//$items[] = icon("/icons/cplogout.gif","t=cplogout","Logout",$type);		
-	    if ($gr=GetReq('group')) {
-			if ($this->ajaxgraph) {
-				$goto = seturl('t=cpmenushow&group=&ai=1&statsid=');
-				$js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-				$items[] = "<a href=\"#\">". loadicon('/icons/cplogout.gif',localize('_BACKCP',getlocal()),$js)."<br>".localize('_BACKCP',getlocal())."</a>"; 			  
-			}			   
-			else 
-				$items[] = icon("/icons/cplogout.gif","t=$t",localize('_BACKCP',getlocal()),$type);		  
-		}	
-		else {
-			$items[] = icon("/icons/cplogout.gif","t=cplogout","Logout",$type);	  
-		}			  
-	  }
-	
-	  $itemscount = count($items);
-	  $timestoloop = floor($itemscount/$linemax)+1;
-	  $meter = 0;
-	  for ($i=0;$i<$timestoloop;$i++) {
-		//echo $i,"---<br>";
-		for ($j=0;$j<$linemax;$j++) {
-			//echo $i*$j,"<br>";
-			$viewdata[] = (isset($items[$meter])? $items[$meter] : "&nbsp");
-			$viewattr[] = "center;10%";	
-			$meter+=1;	 
-	    }
-	  
-	    $myrec = new window('',$viewdata,$viewattr);
-	    $ret .= $myrec->render("center::100%::0::group_article_selected::left::0::0::");
-	    unset ($viewdata);
-	    unset ($viewattr);		  
-	  }
-
-	  return ($ret);	
-    } 
-  
-    function ajax_menu($type=0,$linemax=4,$cmds=null,$xmlout=null) {
-	  $t = GetReq('t');     
-      $mygroup = GetReq('group');
-      $cpfile = @file_get_contents($this->prpath.'cpmenu.txt');
-      $menu_direct_file = explode(',',$cpfile);
-      //print_r($menu_direct_file);
-
-      if ($cmds)
-	    $this->cmds = unserialize($cmds);     
-  
-      if (is_array($this->cmds)) {
-	
-	   $actions = GetGlobal('__ACTIONS');	//print_r($actions); 
-	
-       foreach ($this->cmds as $id=>$name) {	
-	    $parts = explode(".",$name);
-		
-		if (isset($parts[1])) {//it means it is a file '.php'				
-		    $obj = strtoupper(str_replace("cp","rc",$parts[0])."_DPC");
-		    $obj2 = strtolower($obj);
-		    //echo $obj,"<br>";
-		    if (defined($obj)) {
-				$cmd = $actions[$obj][0];//from cp as t=xxx
-				$url = ($mygroup ? $mygroup.'/'.$name:$name); //as php file
-				$title = localize($obj,getlocal());// . "|<a href=\"#\" onclick=\"remove()\">X</a>";
-	
-				//if (in_array($parts[0],$menu_direct_file)) {	//disable CPMENU.TXT	  			  
-				if (is_readable($this->path.'/'.$url)) {
-					//echo $this->path . '/'. $url,'<br>';			
-					$items[] = icon2("/icons/$obj2.gif",$url,$title,$type); 
-				}  
-				else {
-					//echo $cmd,'<br>';
-					$items[] = icon("/icons/$obj2.gif","t=".$cmd,$title,$type); 			  
-				}  
-			}
-	    }
-		else {//it is a dir with other .php files
-		   $group = $parts[0];
-		   $title = substr($group,2); //exclude cp chars
-		   $goto = seturl('t=cpmenushow&group='.$group.'&ai=1&statsid=');
-		   $js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-		   $items[] = "<a href=\"#\">". loadicon('/icons/'.$group.'.gif',$title,$js)."<br>$title</a>"; 			  
-		}		  
-	   }
-	  }
-	
-	  if (GetSessionParam('REMOTELOGIN')) {
-		//$items[] = icon("/icons/cplogout.gif","t=cpremotelogout","Logout",$type);		
-		if ($gr=GetReq('group')) {
-			$goto = seturl('t=cpmenushow&group=&ai=1&statsid=');
-			$js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-			$items[] = "<a href=\"#\">". loadicon('/icons/cplogout.gif',localize('_BACKCP',getlocal()),$js)."<br>".localize('_BACKCP',getlocal())."</a>"; 			  
-		}	
-		else {
-			$items[] = icon("/icons/cplogout.gif","t=cpremotelogout","Logout",$type);	  
-		}			  
-	  }  
-	  else {	
-		if ($gr=GetReq('group')) {
-			$goto = seturl('t=cpmenushow&group=&ai=1&statsid=');
-			$js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-			$items[] = "<a href=\"#\">". loadicon('/icons/cplogout.gif',localize('_BACKCP',getlocal()),$js)."<br>".localize('_BACKCP',getlocal())."</a>"; 			  		  
-		}	
-		else {
-			$items[] = icon("/icons/cplogout.gif","t=cplogout","Logout",$type);	  
-		}			  
-	  }
-	
-	  if ($xmlout) {
-		$xml = new pxml(null,$this->charset);//'test');
-		$xml->encoding = $this->charset;  
-		$xml->addtag('menu',null,null,"version=2.0");
-	  
-		foreach ($items as $i=>$item)
-			$xml->addtag($i,'menu',$item,null);
-		
-		$ret = $xml->getxml(1);	
-	  }
-	  else {
-		$itemscount = count($items);
-		$timestoloop = floor($itemscount/$linemax)+1;
-		$meter = 0;
-		for ($i=0;$i<$timestoloop;$i++) {
-			//echo $i,"---<br>";
-			for ($j=0;$j<$linemax;$j++) {
-				//echo $i*$j,"<br>";
-				$viewdata[] = (isset($items[$meter])? $items[$meter] : "&nbsp");
-				$viewattr[] = "center;10%";	
-				$meter+=1;	 
-			}
-	  
-			$myrec = new window('',$viewdata,$viewattr);
-			$ret .= $myrec->render("center::100%::0::group_article_selected::left::0::0::");
-			unset ($viewdata);
-			unset ($viewattr);		  
-		}
-	  }
-	
-	  return ($ret);	
-    }   
-
-  
-    function nitobi_menu($cp=0,$cs=0,$linemax=null,$cmds=null) {
-      $linemax = $linemax?$linemax:4;
-      $mygroup = GetReq('group');
-      $cpfile = str_replace('\r\n','',@file_get_contents($this->path.'/cpmenu.txt'));
-      $cdetail = @parse_ini_file($this->path.'/control_details.ini',1);
-      $menu_group_file = explode(',',trim($cpfile));
-	
-	  foreach ($menu_group_file as $i=>$args) {
-		//echo $args,'<br>';
-		$x = explode(':',trim(str_replace('\r\n','',$args)));
-		//[dpc]=group
-		//echo $x[0],'>',$x[1],'<br>';
-		$g[strtoupper($x[0]).'_DPC'] = $x[1];
-	  }  
-	  $a = count(g);
-      //print_r($g);
-	  //echo $a;
-	
-	  //VIEW BY LOCALES (DPC LOADED)
-	  $l = GetGlobal('__LOCALE'); //print_r($l);
-	  foreach ($l as $dpc=>$dpcdata) {
-	   //echo $dpcdata[0],'<br>';
-	   if ((substr($dpc,0,2)=='RC') && (substr($dpc,-4)=='_DPC')) {
-	    //echo $dpc,'<br>';
-		if ($group = $g[$dpc])
-		  $menu[$group][] = $dpc;
-		else    
-          $menu[] = $dpc; 
-	   } 	
-	  }  
-	  //echo '<pre>';
-      //print_r($menu);
-	  //echo '</pre>';
-	  $actions = GetGlobal('__ACTIONS');
-      //$details = $cdetail[$titles[$id]]['detail'];//???			
-	
-	  if (is_array($menu)) {
-        foreach ($menu as $id=>$dpcname) {
-  	     if (is_array($dpcname)) {
-		   foreach ($dpcname as $i=>$dpcn) {
-		     $items[$id][] = $this->make_icon($dpcn,$actions,$details);
-		   }	 
-		   $items[$id][] = $this->make_icon('back');	 		   
-		 }
-		 else {
-		   $items[] = $this->make_icon($dpcname,$actions,$details);
-		 }
-        } 
-	    $items[] = $this->make_icon('logout');				
-	  }
-	
-	  //print_r($items);
-	
-	  foreach ($items as $it=>$item) {
-  	     if (is_array($item)) {
-		   $mgroup = null; 
-		   foreach ($item as $i=>$groupicon) {		 
-		     $mgroup .= $groupicon; 
-		   }
-	       //$win = new window2($it,$mgroup,null,1,null,'SHOW',null,1);
-	       //$ret .= $win->render("center::100%::0::group_article_selected::left::0::0::");
-	       //unset ($win);
-		   $ret .= '<br>'.$it.'<hr>'.$mgroup;		   
-		 }
-		 else {
-           $mroot.= $item;		 
-		 }		 		  	
-	  }
-	  //$win = new window2('Menu',$mroot,null,1,null,'SHOW',null,1);
-	  //$ret .= $win->render("center::100%::0::group_article_selected::left::0::0::");
-	  //unset ($win);
-	  $ret .= '<br>'.'<hr>'.$mroot;		
-	
-	  return ($ret);
-    }
-  
-    function make_icon($dpcname,$actions=null,$details=null) {
-  
-	    if ($dpcname=='back') { 
-		  $js = "onclick=\"add('".$title."','cp.php?t=".$cmd."')\""; 
-		  $ret = "<a href=\"#\">".loadicon('/icons/cplogout.gif',localize('_BACKCP',getlocal()),$js)."</img>".localize('_BACKCP',getlocal())."</a>";		  		  
-	    }	
-	    elseif ($dpcname=='logout') { 
-		  $js = "onclick=\"add('".$title."','cp.php?t=cplogout')\""; 
-		  $ret = "<a href=\"cp.php?t=cplogout\">".loadicon('/icons/cplogout.gif','Logout')."</img>Logout</a>";		  	  
-	    }  
-		elseif (defined($dpcname)) {
-
-		  $title = localize($dpcname,getlocal());			
-	      $parts = explode("_",$dpcname);
-		  $obj = strtolower($dpcname);		  
-						
-		  $file = strtolower(str_replace("RC","CP",$parts[0]).".php");
-		  $cmdfile = $this->path .'/'. $file; //echo $cmdfile,'<br>';
-		  
-		  if (is_readable($cmdfile)) {//.php exist
-		      $url = $file;
-
-		      $js = "onclick=\"add('".$title."','".$url."')\""; 
-			  $ret = "<a href=\"#\" alt=\"$title\">".loadicon('/icons/'.$obj.'.gif',$title,$js)."</img>$title</a>";
-			  //echo $js."<br>";
-
-		  }  
-		  else {//.php doesn.t exist
-			    $cmd = $actions[$dpcname][0];
-			    //$nurl = seturl("t=".$cmd);
-			    $js = "onclick=\"add('".$title."','cp.php?t=".$cmd."')\""; 
-			    $ret = "<a href=\"#\">".loadicon('/icons/'.$obj.'.gif',$title,$js)."</img>$title</a>";
-			    //echo $js."<br>";	
-		  } 
-		}  
-
-		return ($ret);  
-    }
-  	    
-    function show_directory_details($type=2,$cmds=null) {
-		$t = GetReq('t');   
-		$mygroup = GetReq('group');  
-		$cpfile = @file_get_contents($this->prpath.'cpmenu.txt');
-		$menu_direct_file = explode(',',$cpfile);
-	  
-		if ($cmds)
-			$this->cmds = unserialize($cmds);
-  
-		$type=2;
-		$cdetail = @parse_ini_file($this->prpath.'control_details.ini',1);	
-		//echo $this->prpath;
-		//print_r($cdetail);  
-  
-		if (is_array($this->cmds)) {
-	  
-			$actions = GetGlobal('__ACTIONS');	//print_r($actions); 
-	
-			foreach ($this->cmds as $id=>$name) {
-	
-				$parts = explode(".",$name);
-		
-				if (isset($parts[1])) {//it means it is a file '.php'
-					$obj = strtoupper(str_replace("cp","rc",$parts[0])."_DPC");
-					$obj2 = strtolower($obj);
-					//echo $obj,"<br>";
-					if (defined($obj)) {
-						$cmd = $actions[$obj][0]; //from cp as t=xxx
-						$url = $url = ($mygroup ? $mygroup.'/'.$name:$name);  //as php file			
-						$title = localize($obj,getlocal());
-						$titles[] = localize($obj,getlocal());
-						$cmds[] = seturl("t=".$cmd,$title);
-	
-						if (in_array($parts[0],$menu_direct_file)) {	
-		
-							$items[] = icon2("/icons/$obj2.gif",$url,$title,$type); 						
-						}  
-						else {  			
-							$items[] = icon("/icons/$obj2.gif","t=".$cmd,$title,$type); 
-						}  
-					}
-				}
-				else {//it is a dir with other .php files
-					$group = $parts[0];
-					$title = substr($group,2); //exclude cp chars
-					$titles[] = $title;
-					$cmds[] = seturl("t=$t&group=".$group,$title);		
-					if ($this->ajaxgraph) {
-						$goto = seturl('t=cpmenushow&group='.$group.'&ai=1&statsid=');
-						$js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-						$items[] = "<a href=\"#\">". loadicon('/icons/'.$group.'.gif',$title,$js)."<br>$title</a>"; 			  
-					}			   
-					else		   
-						$items[] = icon("/icons/$group.gif","t=cp&group=".$group,$title,$type);
-				}		  
-			}
-		}
-	
-		if (GetSessionParam('REMOTELOGIN')) {
-			$items[] = icon("/icons/cplogout.gif","t=cpremotelogout","Logout",$type);		
-	  
-		  if ($gr=GetReq('group')) {
-			$title = localize('_BACKCP',getlocal());
-			$titles[] = localize('_BACKCP',getlocal());
-			if ($this->ajaxgraph) {
-				$goto = seturl('t=cpmenushow&group=&ai=1&statsid=');
-				$js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-				$cmds[] = "<a href=\"#\">". loadicon('/icons/cplogout.gif',localize('_BACKCP',getlocal()),$js)."<br>".localize('_BACKCP',getlocal())."</a>"; 			  
-			}			   
-			else				
-				$cmds[] = seturl("t=$t",$title);	  
-		  }	
-		  else {
-			$title = "Exit";
-			$titles[] = "Exit";	  
-			$cmds[] = seturl("t=cpremotelogout",$title);	  
-		  }	
-		}  
-		else {
-	
-		  $items[] = icon("/icons/rcsenticodes_dpc.gif","t=senticodes","Send invitation codes",$type);
-		  $items[] = icon("/icons/rcexportdb_dpc.gif","t=exportdb","Export database schema",$type);
-	      //$items[] = icon("/icons/rcmailcracker_dpc.gif","t=crackermail","Web mail",$type);	  //...IMPORETD AS REGULAR RC component
-	
-	      //$items[] = icon("/icons/cplogout.gif","t=cplogout","Logout",$type);		
-	      if ($gr=GetReq('group')) {
-		    if ($this->ajaxgraph) {
-				$goto = seturl('t=cpmenushow&group=&ai=1&statsid=');
-				$js = "onclick=\"sndReqArg('".$goto."'+statsid.value,'menu')\""; 
-				$items[] = "<a href=\"#\">". loadicon('/icons/cplogout.gif',localize('_BACKCP',getlocal()),$js)."<br>".localize('_BACKCP',getlocal())."</a>"; 			  
-			}			   
-			else 
-				$items[] = icon("/icons/cplogout.gif","t=$t",localize('_BACKCP',getlocal()),$type);		  
-		  }	
-		  else {
-			$items[] = icon("/icons/cplogout.gif","t=cplogout","Logout",$type);	  
-		  }			
-		} 
-		
-		//print_r($items);
-		foreach ($items as $id=>$myitem) {
-	
-			$details = $cdetail[$titles[$id]]['detail'];
-	
-			$viewdata[] = $myitem;
-			$viewattr[] = "center;10%";
-	  
-			$viewdata[] = "<B>" . $cmds[$id] . "</B><br>" . $details;
-			$viewattr[] = "left;90%";	  
-	
-			$myrec = new window('',$viewdata,$viewattr);
-			$ret .= $myrec->render("center::100%::0::group_article_selected::left::0::0::");
-			unset ($viewdata);
-			unset ($viewattr);		  
-		}	
-	
-		return ($ret);
-    }     
-  
-    function logincp_form($nav_off=null,$tokens=null) {
+   /* function logincp_form($nav_off=null,$tokens=null) {
 	
 	    if (!$nav_off) 
 		  $out = setNavigator($this->title);
@@ -2266,91 +1288,18 @@ EOF;
 			}	
 		}	
 		return false;
-    } 
+    } */
   
-	function get_user_name($nopro=0) {
-	
-	  //return (GetSessionParam('USER'));
-	  if (!$nopro)
-	    $pro = "User:";
+	public function get_user_name($nopro=0) {
+	  if ((GetSessionParam('LOGIN')) && ($user=GetSessionParam('USER')))
+	    return ($user);	
 	  
-	  if (GetSessionParam('LOGIN')) {
-	  
-	    if ($user=GetSessionParam('USER'))
-	      $ret = $pro . $user;
-	    else
-	      $ret = null;
-		
-	    //echo $ret;		
-	  }
-	  
-	  return $ret;	  
+	  return false;	  
 	}
 
-    function show_tree($param=null) {
   
-          ////////////////////////////////////////////////////////////////// tree test			
-	      $out .= $this->_ctree->set_tree('sthandler.php?key='.GetReq('key'),'folders',300,100);
-		  
-		  return ('a'.$out);  
-    }	  
-	
-    function sidewin() {
-	  if (GetSessionParam('LOGIN')=='yes') {          
-
-          $ret = GetGlobal('controller')->calldpc_method('rcsidewin.set_show_calldpc use rccontrolpanel.show_tree PARAMS cpitems');		  
-		  
-		  return ($ret);
-	  }	  
-    }
-	
-	function select_template($tfile=null, $path=null) {
-		if (!$tfile) return;
-		$cppath = $path ? $path : $this->cptemplate;
-	  
-		$template = $tfile . '.htm';	
-		$t = $this->prpath . 'html/'. $cppath .'/'. str_replace('.',getlocal().'.',$template) ;   
-		if (is_readable($t)) 
-			$mytemplate = file_get_contents($t);
-
-		return ($mytemplate);	 
-    }		
-  
-	//tokens method	
-	function combine_tokens($template, $tokens, $execafter=null) {
-	    if (!is_array($tokens)) return;		
-
-		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template);
-		  unset ($fp);		  		
-		}		  		
-		else
-		  $ret = $template;
-		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
-		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
-		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
+    protected function autoupdate() {
 		
-		//execute after replace tokens
-		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          
-		  return ($retout);
-		}		
-		
-		return ($ret);
-	} 
-  
-    function autoupdate() {
      //echo $_SERVER['PHP_SELF'];
 	 /*$rf = file_get_contents('http://www.stereobit.com/cp/cp.php');
 	 $hf = file_get_contents($this->path .'/cp.php');
@@ -2360,25 +1309,256 @@ EOF;
     }
   
 	
-    function getencoding() {
-
+    public function getencoding() {
 	  return ($this->charset);
     }
   
-    function logout() {
+    protected function logout() {
   
 		SetSessionParam('LOGIN',null);
 		SetSessionParam('USER',null);
+		SetSessionParam('env',null);
 		//SetSessionParam('ADMIN',null); //to not propagated!?just close navigator window
+		
+		SetSessionParam('turl', null);		
+		SetSessionParam('turldecoded', null);
+		SetSessionParam('cpGet', null);		
     }
   
+  
+  
+  
+ 	protected function sqlDateRange($fieldname, $istimestamp=false, $and=false) {
+		$sqland = $and ? ' AND' : null;
+		if ($daterange = GetParam('rdate')) {//post
+			$range = explode('-',$daterange);
+			$dstart = str_replace('/','-',trim($range[0]));
+			$dend = str_replace('/','-',trim($range[1]));
+			if ($istimestamp)
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";
+			else			
+				$dateSQL = $sqland . " $fieldname BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";
+			
+			//$this->messages[] = 'Range selection:'.$daterange;			
+		}				
+		elseif ($y = GetReq('year')) {
+			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12';}
+				
+			if ($istimestamp)
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+			else
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+			
+			//$this->messages[] = 'Combo selection:'.$m.'-'.$y;
+		}	
+        else
+			$dateSQL = null;
+		
+		return ($dateSQL);
+	} 
+  
+    protected function site_stats() {
+		$db = GetGlobal('db'); 	
+		$path = $this->application_path;
+        $year = GetParam('year') ? GetParam('year') : date('Y'); 
+	    $month = GetParam('month') ? GetParam('month') : date('m');		
+			
+		$fs = $this->free_space();
+		//if $total_size<0 ...goto upgrade.....		
+		if ($fs < 0)
+			$this->setMessage('warning|Upgrade your hosting plan');		
+		
+
+		
+        if (defined('RCKATEGORIES_DPC')) { //	//SHUSERS / SHCUSTOMERS
+	
+            $sSQL = "select count(id) from users";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Users']['value'] = $res->fields[0];			
+			
+            $sSQL = "select count(id) from users where subscribe=1"; /** default label in ulist **/
+			$res = $db->Execute($sSQL,2);	
+            $this->stats['Users']['Subscribers'] = $res->fields[0];
+			
+            $sSQL = "select count(id) from customers";
+			$res = $db->Execute($sSQL,2);	
+            $this->stats['Users']['customers'] = $res->fields[0];			
+			
+            $sSQL = "select count(id) from ulists";
+			$res = $db->Execute($sSQL,2);	
+            $this->stats['Mail']['maillist'] = $res->fields[0];			
+
+            $sSQL = "select count(id) from pphotos where stype='SMALL'";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Items']['DbPicSmall'] = $res->fields[0];			
+			
+            $sSQL = "select count(id) from pphotos where stype='MEDIUM'";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Items']['DbPicMedium'] = $res->fields[0];			
+			
+            $sSQL = "select count(id) from pphotos where stype='LARGE'";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Items']['DbPicLarge'] = $res->fields[0];
+			
+            $sSQL = "select count(id) from pattachments";
+			$res = $db->Execute($sSQL,2);	
+            $this->stats['Items']['Attachments'] = $res->fields[0];			
+			
+		}  
+        if (defined('RCITEMS_DPC')) {
+            $timeins = $this->sqlDateRange('sysins', false, false);	
+			$where = $timeins ? ' where ' : null;
+		    //$sSQL = "select id,substr(sysins,1,4) as year,substr(sysins,6,2) as month from products where substr(sysins,1,4)='$year' and substr(sysins,6,2)='$month'";
+			$sSQL = "select count(id) from products where" . $where .  $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Items']['insert'] = $res->fields[0];			
+					
+			$timeupd = $this->sqlDateRange('sysupd', false, false);			 
+			$where = $timeupd ? ' where ' : null;
+		    //$sSQL = "select id,substr(sysupd,1,4) as year,substr(sysupd,6,2) as month from products where substr(sysupd,1,4)='$year' and substr(sysupd,6,2)='$month'";
+			$sSQL = "select count(id) from products" . $where . $timeupd;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Items']['update'] = $res->fields[0];			
+								
+            $sSQL = "select count(id) from products where itmactive=1 and active=101";
+			$res = $db->Execute($sSQL,2);	
+            $this->stats['Items']['active'] = $res->fields[0];			
+						
+            $sSQL = "select count(id) from products where (itmactive=0 and active=0) or (itmactive is null and active is null)";//or...
+			$res = $db->Execute($sSQL,2);	
+            $this->stats['Items']['inactive'] = $res->fields[0];			
+						
+            $sSQL = "select count(id) from products";
+			$res = $db->Execute($sSQL,2);	
+            $this->stats['Items']['value'] = $res->fields[0];			
+		} 
+        if (defined('RCITEMS_DPC')) {//???????SYNC DPC
+		    /*$sSQL = "select id,status,sqlres,sqlquery,substr(date,1,4) as year,substr(date,6,2) as month from syncsql where substr(date,1,4)='$year' and substr(date,6,2)='$month'";
+			$res = $db->Execute($sSQL,2);
+			$i=0;
+			$chars_send = 0;
+			$noexec_syncs = 0;
+			if (!empty($res)) { 
+				foreach ($res as $n=>$rec) {
+				    $i+=1;
+                    $chars_send += strlen($rec['sqlquery']);
+                    if (!$rec['status']) 
+                        $noexec_syncs+=1;					
+				}
+			}*/
+			$timein = $this->sqlDateRange('time', true, false);			 
+			$where = $timein ? ' where ' : null;
+			$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql" . $where . $timein;
+			$res = $db->Execute($sSQL,2);
+			
+            $this->stats['Sync']['value'] = $res->fields[0]; //$i;			
+			$this->stats['Sync']['bytes'] = $this->bytesToSize1024($res->fields[1],1); //$chars_send,1);
+			
+			$timein = $this->sqlDateRange('time', true, true);			 
+			$sSQL = "select count(id) from syncsql where status IS NOT NULL " . $timein;
+			$res = $db->Execute($sSQL,2);			
+			$this->stats['Sync']['noexec'] = $res->fields[0]; //$noexec_syncs;			
+			
+		    /*$sSQL = "select count(id) from syncsql where substr(date,1,4)='$year'";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Sync']['value'] = $res->fields[0];*/	
+		}  		
+        if (defined('RCBULKMAIL_DPC')) {
+		    /*$sSQL = "select id,body,active,status,mailstatus,sender,receiver,substr(timeout,1,4) as year,substr(timeout,6,2) as month from mailqueue where substr(timeout,1,4)='$year' and substr(timeout,6,2)='$month'";
+			$sSQL .= " and active=0";
+			$res = $db->Execute($sSQL,2);
+			$i=0;
+			$chars_send = 0;
+			if (!empty($res)) { 
+				foreach ($res as $n=>$rec) {
+				    $i+=1;
+                    $chars_send += strlen($rec['body']);				
+				}
+			}*/
+			$timein = $this->sqlDateRange('timein', true, false);
+            $where = $timein ? ' where ' : null;			
+			$sSQL = "select count(id), sum(CHAR_LENGTH(body)) from mailqueue" . $where . $timein;
+			//echo $sSQL;
+			$res = $db->Execute($sSQL,2);
+			
+			$this->stats['Mail']['value'] = $res->fields[0]; //$i;
+			$this->stats['Mail']['bytes'] = $this->bytesToSize1024($res->fields[1],1); //$chars_send,1);
+			
+		    $sSQL = "select count(id) from mailqueue where active=0";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Mail']['sent'] = $res->fields[0];			
+
+		    $sSQL = "select count(id) from mailqueue where active=1";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Mail']['value'] = $res->fields[0];
+					
+			$timein = $this->sqlDateRange('timein', true, true);				
+		    //$sSQL = "select count(id) from mailqueue where substr(timeout,1,4)='$year' and active=0";
+			$sSQL = "select count(id) from mailqueue where active=0 " . $timein;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Mail']['send'] = $res->fields[0];
+			
+		    $sSQL = "select count(id) from mailcamp where active=1";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Mail']['campaigns'] = $res->fields[0];				
+		}  
+		if (defined('RCTRANSACTIONS_DPC')) { //!!!! to be implemented as cp call
+		    $tbl_g = array();
+            //trans list, last 5 		
+			$ret_g = GetGlobal('controller')->calldpc_method("rctransactions.getTransactionsList use 5");
+			//more...
+			//$tbutton = seturl('t=cptransview&editmode=1',localize("_moretrans",getlocal()));  
+			//$tbutton = seturl('t=cptransactions&editmode=1',localize("_moretrans",getlocal()));  
+			//if (!$tok) {			
+				$tbutton = "<a href='cptransactions.php'>".localize("_moretrans",getlocal())."</a>"; //error in jqgid.lib ..output strarted...!!!
+				/*$wint = new window(localize(null,getlocal()),$tbutton);
+				$ret_g .= $wint->render();
+				unset ($wint);
+				$tbl_g[] = $this->icon("images/file_icon.png",'cptransactions.php',localize("_moretrans",getlocal()),4);
+				*/
+			//}
+            //summary per month 		
+		    /*$sSQL = "select tid,cid,tstatus,cost,costpt,payway,roadway,substr(tdate,1,4) as year,substr(tdate,6,2) as month from transactions where substr(tdate,1,4)='$year' and substr(tdate,6,2)='$month'";
+			$res = $db->Execute($sSQL,2);
+			$i=0;
+			$pay_send = 0;
+			$paynet_send = 0;
+			if (!empty($res)) { 
+				foreach ($res as $n=>$rec) {
+				    $i+=1;
+                    $paynet_send += floatval($rec['cost']);
+                    $pay_send += floatval($rec['costpt']);					
+				}
+			}	
+			$this->stats['Transactions']['subtotal'] = $i;
+			$this->stats['Transactions']['revenue'] = sprintf("%01.2f", $pay_send);
+			$this->stats['Transactions']['revenuenet'] = sprintf("%01.2f", $paynet_send);	*/		
+			
+			$timein = $this->sqlDateRange('tdate', false, false);
+			$where = $timein ? ' where ' : null;
+			//$sSQL = "select count(recid) from transactions where substr(tdate,1,4)='$year'";
+			$sSQL = "select count(id) from transactions" . $where . $timein;
+			$res = $db->Execute($sSQL,2);
+			$this->stats['Transactions']['value'] = $res->fields[0] ? $res->fields[0] : 0;			
+			
+		    //$sSQL = "select sum(cost),sum(costpt) from transactions where substr(tdate,1,4)='$year'";
+		    $sSQL = "select sum(cost),sum(costpt) from transactions" . $where . $timein;	
+			$res = $db->Execute($sSQL,2);
+			$this->stats['Transactions']['revenuenet'] = sprintf("%01.2f", $res->fields[0]);
+			$this->stats['Transactions']['revenue'] = sprintf("%01.2f", $res->fields[1]);			
+			$this->stats['Transactions']['tax'] = sprintf("%01.2f", floatval($res->fields[1]) - floatval($res->fields[0]));
+		}  
+
+        return ($ret);     	
+    }
+	
     protected function bytesToSize1024($bytes, $precision = 2) {
         $unit = array('B','KB','MB','GB');
         return @round($bytes / pow(1024, ($i = floor(log($bytes, 1024)))), $precision).' '.$unit[$i];
     }  
  
  
-    function filesize_r($path){
+    protected function filesize_r($path){
 		if (!file_exists($path)) 
 			return 0;
 		
@@ -2397,9 +1577,9 @@ EOF;
 
     } 
 	
-    function cached_mail_size($year=null, $month=null) {
+    protected function cached_mail_size($year=null, $month=null) {
 	   // /home/stereobi/mail/domain
-	   $path = '/home/stereobi/mail/' . str_replace('www.','',$this->url);
+	   $path = '/home/'.$this->rootapp_path.'/mail/' . str_replace('www.','',$this->url);
   	   //$path = $this->prpath . '../../../../mail/' . str_replace('www.','',$this->url); // ./mail/domainname
 	   //echo $path,'>>>';
        $name = strval(date('Ymd'));
@@ -2427,8 +1607,9 @@ EOF;
 	   
 	   return ($size);
     }	
-  
-    function cached_disk_size($year=null, $month=null) {
+  	
+	
+    protected function cached_disk_size($year=null, $month=null) {
   	   $path = $this->application_path; 
        $name = strval(date('Ymd'));
        $tsize = $this->prpath . $name . '-tsize.size';
@@ -2454,9 +1635,9 @@ EOF;
 	   }
 	   
 	   return ($size);
-    }
-  
-    function cached_database_filesize($year=null, $month=null) {
+    }	
+	
+    protected function cached_database_filesize($year=null, $month=null) {
       $db = GetGlobal('db'); 
       $name = strval(date('Ymd'));
       $dsize = $this->prpath . $name . '-dsize.size';	
@@ -2493,573 +1674,125 @@ EOF;
 	  }	
 		
 	  return ($size);
-    }
-  
-    public function select_timeline($year=null,$month=null,$nodropdown=false,$template=false) {
-	
-	  if ($template) {
-	  
-		for ($y=2010;$y<=intval(date('Y'));$y++) {
-		    $yearsli .= '<li>'. seturl('t=cp&month='.$month.'&year='.$y.'&editmode=1&turl='.GetReq('turl'),$y) .'</li>';
-		}
-		
-		for ($m=1;$m<=12;$m++) {
-		    $mm = sprintf('%02d',$m);
-		    $monthsli .= '<li>' . seturl('t=cp&month='.$mm.'&year='.$year.'&editmode=1&turl='.GetReq('turl'),$mm) .'</li>';
-		}	  
-	  
-	    $_dashboard = localize('_dashboard',getlocal()); 
-		$_year = localize('_year',getlocal());
-		$_month = localize('_month',getlocal());
-	    $navbar = ' <div class="bs-docs-example">
-                                <h4>'.$_dashboard.'</h4>
-                                <div class="navbar">
-                                    <div class="navbar-inner">
-                                        <div class="container">
-                                            <a data-target=".navbar-responsive-collapse" data-toggle="collapse" class="btn btn-navbar">
-                                                <span class="icon-bar"></span>
-                                                <span class="icon-bar"></span>
-                                                <span class="icon-bar"></span>
-                                            </a>
-                                            <a href="#" class="brand">'.$year.' '.$month.'</a>
-                                            <div class="nav-collapse collapse navbar-responsive-collapse">
-                                                <ul class="nav">
-                                                    <!--li class="active"><a href="#">Home</a></li>
-                                                    <li><a href="#">Link</a></li>
-                                                    <li><a href="#">Link</a></li-->													
-                                                </ul>
-                                                <!--form action="" class="navbar-search pull-left">
-                                                    <input type="text" placeholder="Search" class="search-query input-medium">
-                                                </form-->
-                                                <ul class="nav pull-right">
-                                                    <li class="dropdown">
-                                                        <a data-toggle="dropdown" class="dropdown-toggle" href="#">'.$_year.' <b class="caret"></b></a>
-                                                        <ul class="dropdown-menu">'.
-                                                            $yearsli .
-                                                        '</ul>
-                                                    </li>
-													<li class="divider-vertical"></li>
-                                                    <li class="dropdown">
-                                                        <a data-toggle="dropdown" class="dropdown-toggle" href="#">'.$_month.' <b class="caret"></b></a>
-                                                        <ul class="dropdown-menu">'.
-                                                            $monthsli .
-                                                        '</ul>
-                                                    </li>												
-                                                    <!--li><a href="#">Link</a></li-->
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>';
-		$this->stats['Timeline']['value'] = $navbar;					
-		return true;
-	  }
-	  else {
-	  if ($nodropdown) {
-        $ret = "<p><b>Year ($year):|";
-		
-		for ($y=2010;$y<=intval(date('Y'));$y++) {
-		    $ret .= seturl('t=cp&month='.$month.'&year='.$y.'&editmode=1',$y) .'|';
-		}
-		$ret .= "<hr>Month ($month):|";	
-		
-		for ($m=1;$m<=12;$m++) {
-		    $mm = sprintf('%02d',$m);
-		    $ret .= seturl('t=cp&month='.$mm.'&year='.$year.'&editmode=1',$mm) .'|';
-		}
-		$ret .= "</b>";
-		$ret .= '</p>';
-        return ($ret);		
-	  }
-	
-	  for ($mo=1;$mo<=12;$mo++) {
-	    $id = sprintf('%02d',$mo);
-        $s{$id} = ($id==$month) ? "selected=\"true\"" : null;
-	    //echo "<br>s$id",'-',$mo,'-',$month,'>',$id,'>',$s{$id};
-	  }
-  
-      $form = "Selected period:
-<form method=POST action=\"cp.php?t=cp&editmode=1\">
-<select name=\"month\">
-<option $s01 value=\"01\">Jan</option>
-<option $s02 value=\"02\">Feb</option>
-<option $s03 value=\"03\">Mar</option>
-<option $s04 value=\"04\">Apr</option>
-<option $s05 value=\"05\">May</option>
-<option $s06 value=\"06\">Jun</option>
-<option $s07 value=\"07\">Jul</option>
-<option $s08 value=\"08\">Aug</option>
-<option $s09 value=\"09\">Sep</option>
-<option $s10 value=\"10\">Oct</option>
-<option $s11 value=\"11\">Nov</option>
-<option $s12 value=\"12\">Dec</option>
-</select>
-<select name=\"year\">
-";
-
-      for ($y=2010;$y<=intval(date('Y'));$y++) {
-
-	   if ($year==$y)
-	      $form .= "<option selected=\"true\" value=\"$y\">$y</option>";
-	   else
-		  $form .= "<option value=\"$y\">$y</option>";
-      }
-      $form .= "
-</select>	
-<!--input type=\"hidden\" name=\"FormAction\" value=\"cp\" /-->
-<input type=\"submit\" value=\" OK \" />
-</form>
-";	
-  
-      return ($form);
-	  }
-    }
-  
-    function site_stats($tokensout=false) {
-		$db = GetGlobal('db'); 
-        $year = GetParam('year') ? GetParam('year') : date('Y'); //null;
-	    $month = GetParam('month') ? GetParam('month') : date('m');//null;		
-		$path = $this->application_path;
-				
-		$tok = $tokensout ? true : ($this->cptemplate ? true : false); 
-		
-		if (GetReq('id')) //item selected..bypass ????
-		    return null; 
-		
-        if (!$tok)		
-			$ret .= $this->select_timeline($year,$month,1);
-        else 
-		    $this->select_timeline($year,$month,1,true);
-			
-		if (!$tok) {
-			$ret_a = $this->free_space(true, $year, $month);
-			$win1 = new window2(localize("_MENU1",getlocal()),$ret_a,null,1,null,'HIDE',null,1);
-			$ret .= $win1->render();
-			unset ($win1);				
-		}	
-		else	
-			$this->free_space(true, $year, $month, true);	
-		
-		//if $total_size > ..50MB ...goto upgrade.....
-		
-        if (defined('RCKATEGORIES_DPC')) { //???	
-		    $tbl_b = array();
-            $sSQL = "select count(id) from users";
-			$res = $db->Execute($sSQL,2);
-            if (!$tok) {			
-				$ret_b .= '<br>Total users:'.$res->fields[0];
-				$tbl_b[] = $this->icon("images/file_icon.png",'cpuser.php','Users:'.$res->fields[0],4);			
-			}	
-			else
-                $this->stats['Users']['value'] = $res->fields[0];			
-			
-            $sSQL = "select count(id) from users where subscribe=1";
-			$res = $db->Execute($sSQL,2);	
-			if (!$tok) {			
-				$ret_b .= '<br>Total subscribers:'.$res->fields[0];	
-				$tbl_b[] = $this->icon("images/file_icon.png",'cpsubscribers.php','Subscribers:'.$res->fields[0],4);				
-			}	
-			else
-                $this->stats['Users']['Subscribers'] = $res->fields[0];
-			
-            $sSQL = "select count(id) from customers";
-			$res = $db->Execute($sSQL,2);	
-			if (!$tok) {			
-				$ret_b .= '<br>Total customers:'.$res->fields[0];
-				$tbl_b[] = $this->icon("images/file_icon.png",'cpcustomers.php','Customers:'.$res->fields[0],4);				
-            }
-			else
-                $this->stats['Users']['custromers'] = $res->fields[0];			
-			
-            $sSQL = "select count(id) from ulists";
-			$res = $db->Execute($sSQL,2);	
-			if (!$tok) {			
-				$ret_b .= '<br>Total mails in lists:'.$res->fields[0];
-				$tbl_b[] = $this->icon("images/file_icon.png",'cpsubscibers.php?t=cpviewsubsqueue','Mail queue:'.$res->fields[0],4);				
-			}
-			else
-                $this->stats['Mail']['maillist'] = $res->fields[0];			
-			
-			if (!$tok) {
-				if (!empty($tbl_b)) 
-					$ret_b = $this->show_iconstable($tbl_b,null,4);
-			
-				$win1 = new window2(localize("_MENU2",getlocal()),$ret_b,null,1,null,'HIDE',null,1);
-				$ret .= $win1->render();
-				unset ($win1);				
-			}
-			
-			$tbl_c = array();
-            $sSQL = "select count(id) from pphotos where stype='SMALL'";
-			$res = $db->Execute($sSQL,2);
-			if (!$tok) {			
-				$ret_c .= '<br>Total photos in database (small):'.$res->fields[0];	
-				$tbl_c[] = $this->icon("images/file_icon.png",'#','Photos in DB (small):'. $res->fields[0],4);					
-			}
-			else
-                $this->stats['Items']['DbPicSmall'] = $res->fields[0];			
-			
-            $sSQL = "select count(id) from pphotos where stype='MEDIUM'";
-			$res = $db->Execute($sSQL,2);
-			if (!$tok) {			
-				$ret_c .= '<br>Total photos in database (medium):'.$res->fields[0];
-				$tbl_c[] = $this->icon("images/file_icon.png",'#','Photos in DB (medium):'. $res->fields[0],4);
-			}
-			else
-                $this->stats['Items']['DbPicMedium'] = $res->fields[0];			
-			
-            $sSQL = "select count(id) from pphotos where stype='LARGE'";
-			$res = $db->Execute($sSQL,2);
-			if (!$tok) {			
-				$ret_c .= '<br>Total photos in database (large):'.$res->fields[0];
-				$tbl_c[] = $this->icon("images/file_icon.png",'#','Photos in DB (large):'. $res->fields[0],4);
-			}
-			else
-                $this->stats['Items']['DbPicLarge'] = $res->fields[0];
-			
-            $sSQL = "select count(id) from pattachments";
-			$res = $db->Execute($sSQL,2);	
-			if (!$tok) {			
-				$ret_c .= '<br>Total item attachments:'.$res->fields[0];			
-				$tbl_c[] = $this->icon("images/file_icon.png",'#','Files in DB '. $res->fields[0],4);
-			}
-			else
-                $this->stats['Items']['Attachments'] = $res->fields[0];			
-			
-			if (!$tok) {
-				if (!empty($tbl_c)) 
-					$ret_c = $this->show_iconstable($tbl_c,null,4);
-			
-				$win1 = new window2(localize("_MENU3",getlocal()),$ret_c,null,1,null,'HIDE',null,1);
-				$ret .= $win1->render();
-				unset ($win1);				
-			}	
-		}  
-        if (defined('RCITEMS_DPC')) {
-            $tbl_d = array();		
-		    $sSQL = "select id,substr(sysins,1,4) as year,substr(sysins,6,2) as month from products where substr(sysins,1,4)='$year' and substr(sysins,6,2)='$month'";
-			$res = $db->Execute($sSQL,2);
-			$i=0;
-			if (!empty($res)) { 
-				foreach ($res as $n=>$rec) {
-				    $i+=1;					
-				}
-			}
-
-			if (!$tok) {			
-				$ret_d .= '<br>Items inserted this month:'.$i;
-				$tbl_d[] = $this->icon("images/file_icon.png",'#','Inserts:'.$i,4);
-			}
-			else
-                $this->stats['Items']['insert'] = $res->fields[0];			
-						
-		    $sSQL = "select id,substr(sysupd,1,4) as year,substr(sysupd,6,2) as month from products where substr(sysupd,1,4)='$year' and substr(sysupd,6,2)='$month'";
-			$res = $db->Execute($sSQL,2);
-			$i=0;
-			if (!empty($res)) { 
-				foreach ($res as $n=>$rec) {
-				    $i+=1;				
-				}
-			}
-			
-			if (!$tok) {			
-				$ret_d .= '<br>Items updated this month:'.$i;
-				$tbl_d[] = $this->icon("images/file_icon.png",'cpitems.php','Updates:'.$i,4);
-			}
-			else
-                $this->stats['Items']['update'] = $res->fields[0];			
-						
-            $sSQL = "select count(id) from products where itmactive=1 and active=101";
-			$res = $db->Execute($sSQL,2);	
-			if (!$tok) {			
-				$ret_d .= '<br>Total active items:'.$res->fields[0];	
-				$tbl_d[] = $this->icon("images/file_icon.png",'cpitems.php','Active:'.$res->fields[0],4);
-			}
-			else
-                $this->stats['Items']['active'] = $res->fields[0];			
-						
-            $sSQL = "select count(id) from products where (itmactive=0 and active=0) or (itmactive is null and active is null)";//or...
-			$res = $db->Execute($sSQL,2);	
-			if (!$tok) {			
-				$ret_d .= '<br>Total inactive items:'.$res->fields[0];	
-				$tbl_d[] = $this->icon("images/file_icon.png",'cpitems.php','Inactive:'.$res->fields[0],4);
- 			}
-			else
-                $this->stats['Items']['inactive'] = $res->fields[0];			
-						
-            $sSQL = "select count(id) from products";
-			$res = $db->Execute($sSQL,2);	
-			if (!$tok) {			
-				$ret_d .= '<br>Total items:'.$res->fields[0];
-				$tbl_d[] = $this->icon("images/file_icon.png",'cpitems.php','Total:'.$res->fields[0],4);
-			}
-			else
-                $this->stats['Items']['value'] = $res->fields[0];			
-						
-			if (!$tok) {
-				if (!empty($tbl_d)) 
-					$ret_d = $this->show_iconstable($tbl_d,null,4);
-				
-				$win1 = new window2(localize("_MENU4",getlocal()),$ret_d,null,1,null,'HIDE',null,1);
-				$ret .= $win1->render();
-				unset ($win1);				
-			}	
-		} 
-        if (defined('RCITEMS_DPC')) {//???????SYNC DPC
-		    $tbl_e = array();
-		    $sSQL = "select id,status,sqlres,sqlquery,substr(date,1,4) as year,substr(date,6,2) as month from syncsql where substr(date,1,4)='$year' and substr(date,6,2)='$month'";
-			$res = $db->Execute($sSQL,2);
-			$i=0;
-			$chars_send = 0;
-			$noexec_syncs = 0;
-			if (!empty($res)) { 
-				foreach ($res as $n=>$rec) {
-				    $i+=1;
-                    $chars_send += strlen($rec['sqlquery']);
-                    if (!$rec['status']) 
-                        $noexec_syncs+=1;					
-				}
-			}
-			
-			if (!$tok) {			
-				$ret_e .= '<br>Syncs send this month:'.$i;
-				$tbl_e[] = $this->icon("images/file_icon.png",'cpitems.php','Syncs:'.$i,4);
-				$ret_e .= '<br>Syncs not executed this month:'.$noexec_syncs;
-				$tbl_e[] = $this->icon("images/file_icon.png",'cpitems.php','Sync errors:'.$noexec_syncs,4);			
-				$ret_e .= '<br>Syncs data send this month:'.$this->bytesToSize1024($chars_send,1);
-				$tbl_e[] = $this->icon("images/file_icon.png",'cpitems.php','Traffic:'.$this->bytesToSize1024($chars_send,1),4);
-			}
-			else {
-                $this->stats['Sync']['subtotal'] = $i;			
-				$this->stats['Sync']['noexec'] = $noexec_syncs;
-				$this->stats['Sync']['bytes'] = $this->bytesToSize1024($chars_send,1);
-			}	
-			
-		    $sSQL = "select count(id) from syncsql where substr(date,1,4)='$year'";
-			$res = $db->Execute($sSQL,2);
-			if (!$tok) {			
-				$ret_e .= '<br>Total syncs :'.$res->fields[0]; 	
-				$tbl_e[] = $this->icon("images/file_icon.png",'cpitems.php','Total syncs:'.$res->fields[0],4);			
-            }
-			else
-                $this->stats['Sync']['value'] = $res->fields[0];
-			
-			if (!$tok) {
-				if (!empty($tbl_e)) 
-					$ret_e = $this->show_iconstable($tbl_e,null,4);
-				
-				$win1 = new window2(localize("_MENU5",getlocal()),$ret_e,null,1,null,'HIDE',null,1);
-				$ret .= $win1->render();
-				unset ($win1);				
-			}	
-		}  		
-        if (defined('RCMAILDBQUEUE_DPC')) {
-		    $tbl_f = array();
-		    $sSQL = "select id,body,active,status,mailstatus,sender,receiver,substr(timeout,1,4) as year,substr(timeout,6,2) as month from mailqueue where substr(timeout,1,4)='$year' and substr(timeout,6,2)='$month'";
-			$sSQL .= " and active=0";
-			$res = $db->Execute($sSQL,2);
-			$i=0;
-			$chars_send = 0;
-			if (!empty($res)) { 
-				foreach ($res as $n=>$rec) {
-				    $i+=1;
-                    $chars_send += strlen($rec['body']);				
-				}
-			}
-			if (!$tok) {			
-				$ret_f .= '<br>Mails sent this month:'.$i;
-				$tbl_f[] = $this->icon("images/file_icon.png",'cpsubscribers.php?t=cpviewsubsqueue','Mails sent:'.$i,4);
-				$ret_f .= '<br>Mails data sent this month:'.$this->bytesToSize1024($chars_send,1);
-				$tbl_f[] = $this->icon("images/file_icon.png",'cpsubscribers.php?t=cpviewsubsqueue','Traffic sent:'.$this->bytesToSize1024($chars_send,1),4);
-			}
-			else {
-				$this->stats['Mail']['subtotal'] = $i;
-				$this->stats['Mail']['bytes'] = $this->bytesToSize1024($chars_send,1);
-			}	
-			
-		    $sSQL = "select count(id) from mailqueue where active=1";
-			$res = $db->Execute($sSQL,2);
-			if (!$tok) {
-				$ret_f .= '<br>Total mails in queue:'.$res->fields[0]; 
-				$tbl_f[] = $this->icon("images/file_icon.png",'cpsubscribers.php?t=cpviewsubsqueue','Active mails:'.$res->fields[0],4);			
-			}
-			else
-                $this->stats['Mail']['value'] = $res->fields[0];
-						
-		    $sSQL = "select count(id) from mailqueue where substr(timeout,1,4)='$year' and active=0";
-			$res = $db->Execute($sSQL,2);
-			if (!$tok) {			
-				$ret_f .= '<br>Total mails send:'.$res->fields[0]; 	          				
-				$tbl_f[] = $this->icon("images/file_icon.png",'cpsubscribers.php?t=cpviewsubsqueue','Total mails:'.$res->fields[0],4);
-			}
-			else
-                $this->stats['Mail']['send'] = $res->fields[0];
-						
-			if (!$tok) {
-				if (!empty($tbl_f)) 
-					$ret_f = $this->show_iconstable($tbl_f,null,4);
-				
-				$win1 = new window2(localize("_MENU6",getlocal()),$ret_f,null,1,null,'HIDE',null,1);
-				$ret .= $win1->render();
-				unset ($win1);				
-			}	
-		}  
-		if (defined('RCTRANSACTIONS_DPC')) {
-		    $tbl_g = array();
-            //trans list, last 5 		
-			$ret_g = GetGlobal('controller')->calldpc_method("rctransactions.getTransactionsList use 5");
-			//more...
-			//$tbutton = seturl('t=cptransview&editmode=1',localize("_moretrans",getlocal()));  
-			//$tbutton = seturl('t=cptransactions&editmode=1',localize("_moretrans",getlocal()));  
-			if (!$tok) {			
-				$tbutton = "<a href='cptransactions.php'>".localize("_moretrans",getlocal())."</a>"; //error in jqgid.lib ..output strarted...!!!
-				$wint = new window(localize(null,getlocal()),$tbutton);
-				$ret_g .= $wint->render();
-				unset ($wint);
-				$tbl_g[] = $this->icon("images/file_icon.png",'cptransactions.php',localize("_moretrans",getlocal()),4);
-			}
-            //summary per month 		
-		    $sSQL = "select tid,cid,tstatus,cost,costpt,payway,roadway,substr(tdate,1,4) as year,substr(tdate,6,2) as month from transactions where substr(tdate,1,4)='$year' and substr(tdate,6,2)='$month'";
-			$res = $db->Execute($sSQL,2);
-			$i=0;
-			$pay_send = 0;
-			$paynet_send = 0;
-			if (!empty($res)) { 
-				foreach ($res as $n=>$rec) {
-				    $i+=1;
-                    $paynet_send += floatval($rec['cost']);
-                    $pay_send += floatval($rec['costpt']);					
-				}
-			}	
-			
-			if (!$tok) {			
-				$ret_g .= '<br>Transactions this month:'.$i;
-				$tbl_g[] = $this->icon("images/file_icon.png",'cptransactions.php','Transactions:'.$i,4);
-				$ret_g .= '<br>Monthly revenue (net):'.sprintf("%01.2f", $paynet_send); 	          
-				$tbl_g[] = $this->icon("images/file_icon.png",'cptransactions.php','Revenue (net):'.sprintf("%01.2f", $paynet_send),4);
-				$ret_g .= '<br>Monthly revenue:'.sprintf("%01.2f", $pay_send);
-				$tbl_g[] = $this->icon("images/file_icon.png",'cptransactions.php','Revenue:'.sprintf("%01.2f", $pay_send),4);			
-			}
-			else {
-				$this->stats['Transactions']['subtotal'] = $i;
-				$this->stats['Transactions']['revenue'] = sprintf("%01.2f", $pay_send);
-				$this->stats['Transactions']['revenuenet'] = sprintf("%01.2f", $paynet_send);
-			}				
-			
-		    $sSQL = "select sum(cost),sum(costpt) from transactions where substr(tdate,1,4)='$year'";
-			$res = $db->Execute($sSQL,2);
-			if (!$tok) {			
-				$ret_g .= '<br>Total revenue (net):'.sprintf("%01.2f", $res->fields[0]); 	          
-				$tbl_g[] = $this->icon("images/file_icon.png",'cptransactions.php','Total (net):'.sprintf("%01.2f", $res->fields[0]),4);
-				$ret_g .= '<br>Total revenue (taxes included):'.sprintf("%01.2f", $res->fields[1]);			
-				$tbl_g[] = $this->icon("images/file_icon.png",'cptransactions.php','Total:'.sprintf("%01.2f", $res->fields[1]),4);
-			}
-			else {
-				$this->stats['Transactions']['value'] = sprintf("%01.2f", $res->fields[0]);
-				$this->stats['Transactions']['taxvalue'] = sprintf("%01.2f", $res->fields[1]);
-			}				
-			
-			if (!$tok) {
-				if (!empty($tbl_g)) 
-					$ret_g = $this->show_iconstable($tbl_g,null,4);
-			
-				$win1 = new window2(localize("_MENU7",getlocal()),$ret_g,null,1,null,'HIDE',null,1);
-				$ret .= $win1->render();
-				unset ($win1);				
-			}	
-		}  
-        if (defined('RCSAPPVIEW_DPC')) {		  
-            //....
-		}
-
-        return ($ret);     	
-    }
+    }	
 	
 	//get the free space
-	protected function free_space($verbose=false, $year=null, $month=null, $template=false) {
-	    $ret = '';
-		$tbl = array();
+	protected function free_space() {
+        $year = GetParam('year') ? GetParam('year') : date('Y'); 
+	    $month = GetParam('month') ? GetParam('month') : date('m');			
 		
 		$msize = $this->cached_mail_size($year, $month);
 		$msize2 = $this->bytesToSize1024($msize,1);
-		if (!$template) {		
-			$ret .= "<br>Mailbox size ". $msize2;
-			$tbl[] = $this->icon("images/file_icon.png",'#','Mailbox size '. $msize2,4);							
-	    }
-		else
-			$this->stats['Diskspace']['mailbox'] = $msize2;	
+
+		$this->stats['Diskspace']['mailbox'] = $msize2;	
 				
 		$tsize = $this->cached_disk_size($year, $month);
 		$tsize2 = $this->bytesToSize1024($tsize,1);
-		if (!$template) {		
-			$ret .= "<br>Folder size ". $tsize2;
-			$tbl[] = $this->icon("images/file_icon.png",'#','Folder size '. $tsize2,4);					
-        }
-		else
-			$this->stats['Diskspace']['value'] = $tsize2;
+		
+		$this->stats['Diskspace']['hd'] = $tsize2;
 			
         $dsize = $this->cached_database_filesize($year, $month);	
 		$dsize2 = $this->bytesToSize1024($dsize,1);	
-		if (!$template) {
-			$ret .= "<br>Database size ". $dsize2;
-			$tbl[] = $this->icon("images/file_icon.png",'#','Database size '. $dsize2,4);					
-        }
-		else
-			$this->stats['Diskspace']['database'] = $dsize2;
+
+		$this->stats['Diskspace']['db'] = $dsize2;
 			
 		$total_size = $tsize + $dsize + $msize;
-		//echo "Size total ($tsize + $dsize + $msize):",$total_size;
 		$stotal = $this->bytesToSize1024($total_size,1);
-		if (!$template) {		
-			$ret .= "<br>Total used size ". $stotal;
-			$tbl[] = $this->icon("images/file_icon.png",'#','Size used '. $stotal,4);					
-        }
-		else
-			$this->stats['Diskspace']['value'] = $stotal;
+
+		$this->stats['Diskspace']['value'] = $stotal;
 			
 		//alowed size
-		$rtotal = intval(@file_get_contents($this->prpath .'maxsize.conf.php'));
+		$rtotal = intval(@file_get_contents($this->prpath .'maxsize.conf.php')); //????????????????????????
 		//echo 'Size allowed:',$rtotal;
 		$allowed_size = $this->bytesToSize1024($rtotal,1);
-		if (!$template) {
-			$ret .= "<br>Total alowed size ". $allowed_size;
-			$tbl[] = $this->icon("images/file_icon.png",'#','Allowed size '. $allowed_size,4);					
-		}
-		else
-			$this->stats['Diskspace']['size'] = $allowed_size;
+		
+		$this->stats['Diskspace']['size'] = $allowed_size;
 			
 		//remaind size
 		$remain_size = intval($rtotal - $total_size);
 		$rmtotal = $this->bytesToSize1024($remain_size,1);
-		if (!$template) {
-			$ret .= "<br>Remaining size ". $rmtotal;
-			$tbl[] = $this->icon("images/file_icon.png",'#','Remaining size '. $rmtotal,4);					
-		}
-		else
-			$this->stats['Diskspace']['remain'] = $rmtotal;		
+
+		$this->stats['Diskspace']['remain'] = $rmtotal;		
 		//echo 'Size remain:',$remain_size;
 		
-		if (!$template) {
-			if ($verbose) {
-				if (!empty($tbl)) 
-					$ret = $this->show_iconstable($tbl,null,4);	
-				
-				return ($ret); 			
-			}
-			else
-				return ($remain_size);
+		//% remaining total size / space allowed
+		$this->stats['Diskspace']['remainsizepercent'] = round($total_size*100/$rtotal);
+		//% db size / space used
+		$this->stats['Diskspace']['remaindbpercent'] = round($dsize*100/$total_size);
+		//% mailbox size / used
+		$this->stats['Diskspace']['remainmxpercent'] = round($msize*100/$total_size);
+		//% hd size /space used
+		$this->stats['Diskspace']['remainhdpercent'] = round($tsize*100/$total_size);	
+
+		/*size % used check */
+		if ($this->stats['Diskspace']['remainsizepercent'] > 90) 
+			$this->setMessage('warning|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size remain');	
+		elseif ($this->stats['Diskspace']['remainsizepercent'] > 80) 
+			$this->setMessage('important|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size remain');	
+		elseif ($this->stats['Diskspace']['remainsizepercent'] > 70) 
+			$this->setMessage('info|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size remain');			
+
+		return ($remain_size);	
+	}
+	
+	protected function cpinfo($s=null) {
+
+		switch ($s) {
+			case 'users'        : $ret = "<h2>Users</h2>"; 
+								  $ret .= '<p>Total users:'.$this->getStats('Users');  
+								  $ret .= '</p>';	
+			                      break;
+			case 'customers'    : $ret = "<h2>Customers</h2>"; 
+								  $ret .= '<p>Total customers:'.$this->getStats('Users','customers');  
+								  $ret .= '</p>';
+			                      break;
+			case 'ulists'       : $ret = "<h2>Mailing Lists</h2>";
+								  $ret .= '<p>Total subscribers:'.$this->getStats('Mail','maillist');  
+								  $ret .= '</p>';		
+			                      break;
+			case 'mails'        : $ret = "<h2>Mails</h2>"; 
+								  $ret .= '<p><br>Total mails:'.$this->getStats('Mail');  
+								  $ret .= '<br>Mails to send:'.$this->getStats('Mail','send'); 
+			                      $ret .= '<br>Mails sent:'.$this->getStats('Mail','sent');
+								  $ret .= '<br>Data sent:'.$this->getStats('Mail','bytes') .'</p>';
+			                      break;
+			case 'camps'        : $ret = "<h2>Campaigns</h2>";
+								  $ret .= '<p>Total campaigns:'.$this->getStats('Mail','campaigns');  
+								  $ret .= '</p>';			
+			                      break;
+			case 'items'        : $ret = "<h2>Items</h2>";
+			                      $ret .= '<p>Total items:'.$this->getStats('Items');  
+								  $ret .= '<br>Active items:'.$this->getStats('Items','active'); 
+			                      $ret .= '<br>Inactive items:'.$this->getStats('Items','inactive'); 
+								  $ret .= '<br>Inactive items:'.$this->getStats('Items','insert');
+								  $ret .= '<br>Inactive items:'.$this->getStats('Items','update') . '<hr/>';
+								  $ret .= 'Syncs:'.$this->getStats('Sync');  
+								  $ret .= '<br>Errors:'.$this->getStats('Sync','noexec'); 
+			                      $ret .= '<br>Traffic:'.$this->getStats('Sync','bytes') .'</p>';
+			                      break;
+			case 'transactions' : $ret = "<h2>Transactions</h2>";
+			                      $ret .= '<p>Transactions:'.$this->getStats('Transactions');  
+								  $ret .= '<br>Revenue (net):'.$this->getStats('Transactions', 'revenuenet'); 
+			                      $ret .= '<br>Revenue:'.$this->getStats('Transactions','revenue');
+								  $ret .= '<br>Tax:'.$this->getStats('Transactions','tax') .'</p>';  
+			                      break;
+			default             : $ret = "<h2>Info</h2>";
+								  $ret .= '<p>Disk space used:'.$this->getStats('Diskspace');  
+								  $ret .= '<br>HD size:'.$this->getStats('Diskspace','hd'); 
+								  $ret .= '<br>DB size:'.$this->getStats('Diskspace','db'); 
+								  $ret .= '<br>MX size:'.$this->getStats('Diskspace','mailbox') . '<hr>'; 
+			                      $ret .= 'Max space:'.$this->getStats('Diskspace','size') ;
+								  $ret .= '<br>Free space:'.$this->getStats('Diskspace','remain') .'</p>';	
 		}
-        else
-			return true;
-        //return ($verbose ? $ret : $remain_size); 		
+		
+		return ("cpinfo|".$ret);
 	}
 	
 	protected function set_space($space_in_mb) {
 	    $spacefile = $this->prpath . '/maxsize.conf.php';
 	    
 	    $space = intval($space_in_mb * 1024 * 1024);
-		$ok = file_put_contents($spacefile ,$space);
+		$ok = @file_put_contents($spacefile ,$space);
 		
 		return ($ok);
 	}
@@ -3193,122 +1926,192 @@ EOF;
 			
 	}  
   
-    function parse_environment() {
-		$myenvfile = $this->prpath . 'cp.ini';
-		$ini = @parse_ini_file($myenvfile,false, INI_SCANNER_RAW);	
-		//$ini = @parse_ini_file("cp.ini");
-		if (!$ini) die('Environment error!');
-		//print_r($ini);
-		$adminsecid = GetSessionParam('ADMINSecID');
-		//session sec level not defined at first login...???	
-		$seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;//9; //test
-		//echo GetSessionParam('ADMINSecID'),'>',$adminsecid,':', $seclevid;	
 
-		foreach ($ini as $env=>$val) {
-			if (stristr($val,',')) {
-				$uenv = explode(',',$val);
-				$ret[$env] = $uenv[$seclevid];  
-			}
-			else
-				$ret[$env] = $val;
-		}
+   protected function parse_environment($save_session=false) {	   
+	$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
+	$this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;
+	//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$adminsecid.':'.$this->seclevid;
+	
+    if ($ret = $_SESSION['env']) {
+	    //echo 'insession';
 		//print_r($ret);
-		return ($ret);
-    }  
+		$GLOBALS['ADMINSecID'] = null; // for securuty erase the global leave the sessionid
+	    return ($ret);
+	}    
+
+	//$myenvfile = /*$this->prpath .*/ 'cp.ini';
+	//$ini = @parse_ini_file($myenvfile ,false, INI_SCANNER_RAW);	
+    $ini = @parse_ini_file("cp.ini");
+	if (!$ini) die('Environment error!');	
+	
+	//print_r($ini); 
+	foreach ($ini as $env=>$val) {
+	    if (stristr($val,',')) {
+		    $uenv = explode(',',$val);
+			$ret[$env] = $uenv[$this->seclevid];  
+		}
+		else
+		    $ret[$env] = $val;
+	}
+
+	if (($save_session) && (!$_SESSION['env'])) 
+		SetSessionParam('env', $ret); 		
+	
+	//print_r($ret);
+	return ($ret);
+   }   	
 
 	//read environment cp file
 	protected function read_env_file($save_session=false) {
-		$myenvfile = $this->prpath . 'cp.ini';
-		$ret = $this->parse_environment();//@parse_ini_file($myenvfile ,false, INI_SCANNER_RAW);	
 
-		if ($save_session)
-		    SetSessionParam('env', $ret); 
-		
+		$ret = $this->parse_environment($save_session);	
 		return ($ret);
     } 
-
-    protected function edit_html_files($cke4=false, $uselan=false, $table=false) {
-	    $tbl = $table ? (GetSessionParam('editfiles') ? 
-		                 unserialize(GetSessionParam('editfiles')) : null) : //no session tbl..read dir 
-						 true;//in case of no table just get in..//null; 
-						 
-		if (!$tbl) {				 
-			$lan = getlocal();
-			$filter = $uselan ? ($lan ? $lan.'.htm' : '0.htm') : null;
-			$sourcedir = $this->prpath . '/'.$this->htmlfolder.'/';
-			$encoding = $this->charset;	
-		
-			if (!is_dir($sourcedir)) 
-				return (false);		 
-
-			//$ret .= 'Filter:'.$filter;  
-			//echo $sourcedir;
-			$mydir = dir($sourcedir);
-			while ($fileread = $mydir->read ()) { 
 	
-				if (($fileread!='.') && ($fileread!='..') && (!is_dir($sourcedir.'/'.$fileread)) ) { 
-					if ((stristr($fileread,'.htm')) && 
-					    (substr($fileread,0,2)!='cp') && //<<cpfilename restiction
-						(substr($fileread,0,1)!='_'))  {//<<manual backup files
-
-						if ($filter) { 
-							if (stristr($fileread,$filter))
-								$weditfiles[] = $fileread;	//per lan			
-						}	
-						else //all	
-							$weditfiles[] = $fileread;				
-					}
-				}
-			}
-			$mydir->close ();
-		
-			if (!empty($weditfiles)) {
-		
-				foreach ($weditfiles as $i=>$file) {
-
-					$plainfile	= (stristr($file,'.html')) ? 
-			                      ($filter ? str_replace($filter.'l','', $file) : str_replace('.html','', $file)):
-                                  ($filter ? str_replace($filter,'', $file) : str_replace('.htm','', $file));						   
-					$phpfile = str_replace('.html','.php', $file);
-					$htmlfile = urlencode(base64_encode($file));
-		
-					$flink = "cpmhtmleditor.php?cke4=$cke4&encoding=$encoding&editmode=1&htmlfile=$htmlfile";
-					$htmleditlink = "<a href='$flink' target='mainFrame'>".
-			                        $plainfile .
-							        "</a>";
-					if ($table)							
-						$tbl[$plainfile] = $this->icon("images/file_icon.png",$flink,$htmleditlink,4);//$flink;
-					else	
-						$ret .= '<br/>Edit:' . $htmleditlink;
+	
+    public function select_timeline($template=null, $year=null, $month=null) {
+		$year = GetParam('year') ? GetParam('year') : date('Y'); 
+	    $month = GetParam('month') ? GetParam('month') : date('m');
+		$daterange = GetParam('rdate');
 			
-				}
+	    if ($template) {
+			
+			$tdata = $this->select_template($template);
+			
+			for ($y=2015;$y<=intval(date('Y'));$y++) {
+				$yearsli .= '<li>'. seturl('t=cp&month='.$month.'&year='.$y, $y) .'</li>';
 			}
-			//else
-				//$ret = 'no files to edit...';
-			if (($table) && (!empty($tbl))) {//save 4 faster load			
-                SetSessionParam('editfiles', serialize($tbl));
-			}	
+		
+			for ($m=1;$m<=12;$m++) {
+				$mm = sprintf('%02d',$m);
+				$monthsli .= '<li>' . seturl('t=cp&month='.$mm.'&year='.$year, $mm) .'</li>';
+			}	  
+	  
+	        $posteddaterange = $daterange ? ' > ' . $daterange : ($year ? ' > ' . $month . ' ' . $year : null) ;
+	  
+			$tokens[] = localize('RCCONTROLPANEL_DPC',getlocal()) . $posteddaterange; 
+			$tokens[] = $year;
+			$tokens[] = $month;
+			$tokens[] = localize('_year',getlocal());
+			$tokens[] = $yearsli;
+			$tokens[] = localize('_month',getlocal());			
+			$tokens[] = $monthsli;	
+            $tokens[] = $daterange;			
+		
+			$ret = $this->combine_tokens($tdata, $tokens); 				
+     
+			return ($ret);
+		}
+		
+		return null;	
+    }
+
+	
+	//load graphs urls to call
+	protected function load_graph_objects() {
+		
+        if (defined('RCKATEGORIES_DPC'))		  
+			$this->objcall['statisticscat'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=statisticscat&statsid=');
+		
+        if (defined('RCITEMS_DPC'))		  
+			$this->objcall['statistics'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=statistics&statsid=');
+		
+		if (defined('RCTRANSACTIONS_DPC')) {
+			$this->objcall['transactions'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=transactions&statsid=');  		  
+			//$this->objcall['users'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=users&statsid=');  		  
+			//$this->objcall['subscribers'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=subscribers&statsid=');  		  
 		}  
 		
-		if (($table) && (!empty($tbl)))  {
-		    ksort($tbl);
-			$ret = $this->show_iconstable($tbl,null,4);
-			//$ret .= GetSessionParam('editfiles');//test
+		if (defined('RCUSERS_DPC')) {
+			$this->objcall['users'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=users&statsid=');  		  
+			$this->objcall['subscribers'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=subscribers&statsid='); 		
+		}
+		
+		if (defined('RCBULKMAIL_DPC'))	  
+			$this->objcall['mailqueue'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=mailqueue&statsid=');
+
+	}	
+	/*
+    protected function _show_charts() {
+		//$stats = $this->_show_addon_tools(); //tools to enable
+	    if (!empty($this->objcall)) {  
+		 
+ 		    foreach ($this->objcall as $report=>$goto) {//goto not used in this case
+                $title = localize("_$report",getlocal()); //title
+		        if ($this->ajaxgraph)  {//ajax
+			        $ts = GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use $report");
+			    }
+		        elseif ($transtats = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use transactions")) {
+			        $ts = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use $report+500+240+$this->goto");
+			    }						
+			    $win1 = new window2($title,$ts,null,1,null,'SHOW',null,1);
+	            $stats .= $win1->render();
+		        unset ($win1);								 	   
+			}
 		}
 
-		return ($ret);  		
+		return ($stats);		 
+    }
+  
+	*/
+	
+	/* all charts together */
+    public function _show_charts() {
+
+	    if (!empty($this->objcall)) {  
+		 
+ 		    foreach ($this->objcall as $report=>$goto) {//goto not used in this case
+                $title = localize("_$report",getlocal()); //title							 	   
+				$ts = '
+					<!-- BEGIN CHART PORTLET-->
+                    <div class="widget ">
+                        <div class="widget-title">
+                            <h4><i class="icon-reorder"></i> '.$title.'</h4>
+                            <span class="tools">
+                                <a href="javascript:;" class="icon-chevron-down"></a>
+                                <a href="javascript:;" class="icon-remove"></a>
+                            </span>
+                        </div>
+                        <div class="widget-body">
+                            <div class="text-center">
+                                <div id="'.$report.'"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END CHART PORTLET-->
+';		
+			}
+		}
+		return ($ts);//stats);		 
     }	
 	
-	public function templatepanel($init=false) {
-		//echo 'z';
-		if ($init)
-			$this->_show_update_tools(true);		
-		else {	
-			$this->site_stats(true);
-			//$this->_show_update_tools(true);
-			$this->_show_addon_tools(1, true);		
+	/* chart one by one */
+    public function showChart($report=null) {
+
+	    if ($this->objcall[$report]) {  
+		 
+            $title = localize("_$report",getlocal()); //title							 	   
+			$ts = '
+					<!-- BEGIN CHART PORTLET-->
+                    <div class="widget ">
+                        <div class="widget-title">
+                            <h4><i class="icon-reorder"></i> '.$title.'</h4>
+                            <span class="tools">
+                                <a href="javascript:;" class="icon-chevron-down"></a>
+                                <a href="javascript:;" class="icon-remove"></a>
+                            </span>
+                        </div>
+                        <div class="widget-body">
+                            <div class="text-center">
+                                <div id="'.$report.'"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END CHART PORTLET-->
+';		
 		}
-	}
+		return ($ts);//stats);		 
+    }	
 	
 	public function getStats($section=null, $subsection=null) {
 		if (!$section) return 0;
@@ -3323,10 +2126,12 @@ EOF;
 	}
 	
 	public function getMessagesTotal() {
-		$ret = is_array($this->messages) ? count($this->messages) : 0;
-		return count($ret);		
+		//print_r($this->messages);
+		$ret = (empty($this->messages)) ? null : count($this->messages);
+		return $ret;		
 	}		
 
+	/* cp header */ 
 	public function getMessages($template=null, $limit=null) {
 		if (empty($this->messages)) return null;
 		$tokens = array(); 
@@ -3365,6 +2170,68 @@ EOF;
 		}
 		return false;	
 	}
+	
+	public function viewMessages($template=null) {
+		if (empty($this->messages)) return;
+	    $t = ($template!=null) ? $this->select_template($template) : null;
+		//$msgs = array_reverse($this->messages, true);
+
+		foreach ($this->messages as $m=>$message) {
+			$tokens = explode('|', $message); 
+			$message = $tokens[1];
+			if ($t) 	
+				$ret .= $this->combine_tokens($t, array(0=>$message));
+			else
+				$ret .= "<option value=\"$m\">$message</option>";
+		}
+		return ($ret);
+	}	
+	
+	function select_template($tfile=null, $path=null) {
+		if (!$tfile) return;
+		$cppath = $path ? $path : $this->cptemplate;
+	  
+		$template = $tfile . '.htm';	
+		$t = $this->prpath . 'html/'. $cppath .'/'. str_replace('.',getlocal().'.',$template) ;   
+		if (is_readable($t)) 
+			$mytemplate = file_get_contents($t);
+
+		return ($mytemplate);	 
+    }		
+  
+	//tokens method	
+	protected function combine_tokens($template, $tokens, $execafter=null) {
+	    if (!is_array($tokens)) return;		
+
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template;
+		  
+		//echo $ret;
+	    foreach ($tokens as $i=>$tok) {
+            //echo $tok,'<br>';
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<30;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);
+		//echo $ret;
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	} 	
 	
 };
 }

@@ -31,6 +31,7 @@ $__EVENTS['RCBULKMAIL_DPC'][13]='cpviewcamp';
 $__EVENTS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
 $__EVENTS['RCBULKMAIL_DPC'][15]='cpmailstats';
 $__EVENTS['RCBULKMAIL_DPC'][16]='cpviewclicks';
+$__EVENTS['RCBULKMAIL_DPC'][17]='cpviewtrace';
 
 $__ACTIONS['RCBULKMAIL_DPC'][0]='cpbulkmail';
 $__ACTIONS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
@@ -49,6 +50,7 @@ $__ACTIONS['RCBULKMAIL_DPC'][13]='cpviewcamp';
 $__ACTIONS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
 $__ACTIONS['RCBULKMAIL_DPC'][15]='cpmailstats';
 $__ACTIONS['RCBULKMAIL_DPC'][16]='cpviewclicks';
+$__ACTIONS['RCBULKMAIL_DPC'][17]='cpviewtrace';
 
 $__LOCALE['RCBULKMAIL_DPC'][0]='RCBULKMAIL_DPC;Mail queue;Mail queue';
 $__LOCALE['RCBULKMAIL_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
@@ -84,6 +86,9 @@ $__LOCALE['RCBULKMAIL_DPC'][30]='_MAILCLICKS;Responses;Ανταπόκριση';
 $__LOCALE['RCBULKMAIL_DPC'][31]='_dashboard;Dashboard;Στατιστικά';
 $__LOCALE['RCBULKMAIL_DPC'][32]='_year;Year;Έτος';
 $__LOCALE['RCBULKMAIL_DPC'][33]='_month;Month;Μήνας';
+$__LOCALE['RCBULKMAIL_DPC'][34]='_here;here;εδώ';
+$__LOCALE['RCBULKMAIL_DPC'][35]='_cid;Campaign;Καμπάνια';
+$__LOCALE['RCBULKMAIL_DPC'][36]='_MAILTRACE;Actions;Ενέργειες';
 
 $__LOCALE['RCBULKMAIL_DPC'][40]='_statisticscat;Category Viewed/Month;Επισκεψιμότητα κατηγοριών';
 $__LOCALE['RCBULKMAIL_DPC'][41]='_statistics;Items Viewed/Month;Επισκεψιμότητα ειδών';
@@ -196,7 +201,7 @@ class rcbulkmail {
 									$this->hasgraph = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use $report");
 									$this->goto = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 								  }
-								  break;	
+								  break;									  
 
             case 'cpmailstats'     : $this->_js();
 			                         $this->load_graph_objects();
@@ -225,12 +230,12 @@ class rcbulkmail {
 		    case 'cpunsubscribe'  : $this->dounsubscribe();				
 	                                break;		 
 			 
-			case 'cpactivatequeuerec': $this->activate_queue_rec(); 
-		                               //$this->grid_javascript();
+			case 'cpactivatequeuerec': $this->activate_queue_rec(); //ajax call
+		                               die('mailbody|<h1>Enabled</h1>');
 		                               break;
 									   
-			case 'cpdeactivatequeuerec': $this->deactivate_queue_rec(); 
-		                                 //$this->grid_javascript();
+			case 'cpdeactivatequeuerec': $this->deactivate_queue_rec(); //ajax call
+		                                 die('mailbody|<h1>Disabled</h1>');
 		                                 break;			 
 			 
 	        case 'cpmailbodyshow' : die($this->show_mailbody());
@@ -240,7 +245,11 @@ class rcbulkmail {
 								    die();
 		                            break;
 									
-			case 'cpadvsubscribe' : break; 									
+			case 'cpadvsubscribe' : break; 
+
+	        case 'cpviewtrace'     : //echo $this->viewTrace($_GET['m'], $_GET['cid']); //ajax call
+			                         //die();
+			                         break;					
 			
 			case 'cpviewclicks'        :
             case 'cpviewsubsqueueactiv':
@@ -294,7 +303,9 @@ class rcbulkmail {
 			 
 		    case 'cpviewclicks'  	   : $out = $this->viewClicks(); 				
 	                                     break;			 
-			 
+			
+			case 'cpviewtrace'         : $out = $this->viewTrace($_GET['m'], $_GET['cid']);
+                                         break; 			
 			case 'cpactivatequeuerec'  :
 			case 'cpdeactivatequeuerec':			 
 		    case 'cpviewsubsqueue'	   : $out = $this->viewMails(); 				
@@ -600,23 +611,25 @@ function show_body() {
 		if ((!$active) && (!$isajax_window) && (defined('MYGRID_DPC'))) {
 		    $title = str_replace(' ','_',localize('_MAILQUEUE',getlocal()));//NO SPACES !!!//localize('_MAILQUEUE',getlocal());
 		   
-	        $sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus from mailqueue";
+	        $sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue";
             $sSQL.= ') as o';  				
 		   		   
 		    //echo $sSQL;
-
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
+            //seturl('t=cpactivatequeuerec&editmode=1&rec={id}')
+			
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal())."|boolean|1|ACTIVE:NOT ACTIVE");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal()).'|link|2|'.seturl('t=cpdeactivatequeuerec&editmode=1&rec={id}').'||');			
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal()).'|link|2|'."javascript:disable({id});".'||');			
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+timeout|".localize('_date',getlocal())."|link|5|"."javascript:enable({id});".'||'); //.'|date|1');				
             //GetGlobal('controller')->calldpc_method("mygrid.column use grid9+receiver|".localize('_receiver',getlocal()).'|10|1');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+receiver|".localize('_receiver',getlocal())."|link|10|"."javascript:show_body({id});".'||');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+timeout|".localize('_date',getlocal()).'|date|1');		   
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+receiver|".localize('_receiver',getlocal())."|link|5|".seturl('t=cpviewtrace&m={receiver}&cid={cid}&editmode=1').'||');	   
             //GetGlobal('controller')->calldpc_method("mygrid.column use grid9+subject|".localize('_subject',getlocal()).'|20|1');	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+subject|".localize('_subject',getlocal())."|link|20|".seturl('t=cpactivatequeuerec&editmode=1&rec={id}').'||');
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+subject|".localize('_subject',getlocal())."|link|15|"."javascript:show_body({id});".'||'); //.seturl('t=cpactivatequeuerec&editmode=1&rec={id}').'||');
 		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal()).'|boolean|1');	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+reply|".localize('_reply',getlocal()).'|5|1|||||right');	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+status|".localize('_status',getlocal()).'|5|1|||||right');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+mailstatus|".localize('_mailstatus',getlocal()).'|10|1');			
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+reply|".localize('_reply',getlocal()).'|2|1|||||right');	
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+status|".localize('_status',getlocal()).'|2|1|||||right');
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+mailstatus|".localize('_mailstatus',getlocal()).'|2|1');	
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+cid|".localize('_cid',getlocal())."|link|5|"); 
 			
 		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
 			
@@ -629,6 +642,40 @@ function show_body() {
 		
 	    return ($out);	
 	}
+	
+	protected function viewTrace($mail=null, $cid=null) {
+		if (!$mail) return null;
+		$email = urldecode($mail);
+		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;
+		   	
+	    //in case of preview in ajax win mygrid is not working so render browser
+		//when paging goto fullscreesn and ajax req is not exist so can render mygid
+		//also when active is 1 because sql can't select using where
+		if ((!$isajax_window) && (defined('MYGRID_DPC'))) {
+		    $title = str_replace(' ','_',localize('_MAILTRACE',getlocal()));
+		   
+			if ($cid) $cID = " and ref='$cid'";		   
+	        $sSQL = "select * from (select id,date,tid,attr1 from stats where attr3='$email' $cID order by id";
+            $sSQL.= ') as o';  				
+		   		   
+		    //echo $sSQL;
+
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|date|5');				
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|10|1');
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_attr1',getlocal()).'|30|1');			
+			
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
+			
+			//mail body ajax renderer
+			$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
+		}
+        else  
+			$out .= null;
+   		
+		
+	    return ($out);	
+	}	
 	
 	protected function ulistform($ulistname) {
         $db = GetGlobal('db');	
@@ -803,7 +850,7 @@ function show_body() {
 	function show_select_files($name, $taction=null, $ext=null, $class=null) {
 		$tmpl = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');
 	
-		$url = ($taction) ? seturl('t='.$taction.'&stemplate=1',null,null,null,null) : 
+		$url = ($taction) ? seturl('t='.$taction.'&stemplate=',null,null,null,null) : 
 		                    seturl('t=cpsubloadhtmlmail&stemplate=',null,null,null,null);
 		
 		if (defined('RCFS_DPC')) {
@@ -897,12 +944,12 @@ function show_body() {
         else*/		
 			$data = @file_get_contents($path . $template); 
 		
-		$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
+		/*$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
 		           $this->encUrl($this->savehtmlurl . $cid . '.html');
 		$tokens[] = "[<a href='$pageurl'>".localize('_viewasweb',getlocal())."</a>]";
         $tokens[] = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";		
 			
-		$data = $this->combine_tokens($data, $tokens, true);				
+		$data = $this->combine_tokens($data, $tokens, true);*/				
 			 
 		$sub_template = str_replace($this->template_ext,$this->template_subext,$template);
 		//echo $path.$sub_template,'>';
@@ -913,12 +960,6 @@ function show_body() {
 		    //echo $sub_data,'>';
 			$data = str_replace('<!--?'.$sub_template.'?-->',$sub_data,$data);	/**changed the subtemplate mask **/	   
 		}
-		/*else {//as is..
-		    //$data = $this->get_mail_body();
-			
-			// only when no template...
-			$data .= $this->spam_conditions_text(null,0,$this->ishtml);				
-		}*/
 		
 		return ($data);		
 	}		
@@ -956,12 +997,12 @@ function show_body() {
 			else*/		
 				$data = @file_get_contents($path . $template); 
 			
-		    $pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
+		    /*$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
 		               $this->encUrl($this->savehtmlurl . $cid . '.html');
 			$tokens[] = "[<a href='$pageurl'>".localize('_viewasweb',getlocal())."</a>]";
 			$tokens[] = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";
 			
-			$body = $this->combine_tokens($data, $tokens, true);			
+			$body = $this->combine_tokens($data, $tokens, true);*/			
 		}	
 		$this->mailbody = $body;
 		
@@ -973,15 +1014,16 @@ function show_body() {
 	
 	public function viewCampaigns() {
 		$db = GetGlobal('db');
+        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');		
 		
-		$sSQL = 'select cdate,cid,title,timein from mailcamp where ';		   
+		$sSQL = 'select cdate,cid,title,timein from mailcamp where owner=' . $db->qstr($owner);		   
 		if ($text = GetParam('mail_text')) {
 			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail'));
-			$sSQL .= " cid = " . $db->qstr($cid);	
+			$sSQL .= " and cid = " . $db->qstr($cid);	
 			$sSQL .= GetParam('savecmp') ?  ' and active=1' : null; //temp camps without multiple selection
 		}
         else		
-			$sSQL .= " active=1";
+			$sSQL .= " and active=1";
 		$sSQL .= " ORDER BY timein desc";	
 
 		//echo $sSQL;	
@@ -998,16 +1040,17 @@ function show_body() {
 	
 	function show_select_camp($name, $taction=null, $class=null) {
 		$db = GetGlobal('db');
-			
-		$sSQL = 'select cdate,cid,title from mailcamp where ';
+        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');			
+		//echo $owner;	
+		$sSQL = 'select cdate,cid,title from mailcamp where owner=' . $db->qstr($owner);
 		if ($text = GetParam('mail_text')) {
 			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail')); //when new post
-			$sSQL .= " cid = " . $db->qstr($cid);	
+			$sSQL .= " and cid = " . $db->qstr($cid);	
 			$sSQL .= GetParam('savecmp') ?  ' and active=1' : null; //temp camps without multiple selection
 		}
         else {		
 		    $choose = "<option value=\"\">Select...</option>";
-			$sSQL .= " active=1";
+			$sSQL .= " and active=1";
 		}	
 		$sSQL .= " ORDER BY cdate desc";
 
@@ -1040,27 +1083,33 @@ function show_body() {
 	
 	protected function load_campaign() {
 		$db = GetGlobal('db');
+        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');			
         if (!$this->cid) return false;
 		
-		$sSQL = 'select title,cdate,ulists from mailcamp where cid=';
+		$sSQL = 'select title,cdate,ulists,cc,user,pass,server from mailcamp where owner='.$db->qstr($owner).' and cid=';
         $sSQL .= $db->qstr($this->cid);	
         //echo $sSQL;		
 		$resultset = $db->Execute($sSQL,2);
 		//$rec = array_pop($resultset);
 		foreach ($resultset as $n=>$rec) {
 			SetParam('subject', $rec[0]); //make it global to used be html form
-			SetParam('ulists', $rec[2]); //make it global to used be html form
+			SetParam('ulists', $rec[2]); //
+			SetParam('from', $rec[3]); // from cc
+			SetParam('user', $rec[4]); //alternative mail user
+			SetParam('pass', $rec[5]); //alternative mail pass
+			SetParam('server', $rec[6]); //alternative mail server
 		}	
-		SetParam('from', $this->mailuser);//make it global to used be html form
+		//SetParam('from', $this->mailuser);//make it global to used be html form (is the ini setting)
 		
 		return ($rec[0]); //one rec
 	}	
 	
 	protected function preview_campaign() {
 		$db = GetGlobal('db');
+        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');		
         if (!$this->cid) die("");
 		
-		$sSQL = 'select body from mailcamp where cid=';
+		$sSQL = 'select body from mailcamp where owner='.$db->qstr($owner).' and cid=';
         $sSQL .= $db->qstr($this->cid);	
         //echo $sSQL;		
 		$resultset = $db->Execute($sSQL,2);
@@ -1073,6 +1122,11 @@ function show_body() {
     /*type : 0 save text as mail body /1 save collections as text to reproduce (offers, katalogs) */	
     protected function save_campaign($type=null) {
         $db = GetGlobal('db'); 
+        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');	
+		$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
+		                            $this->encUrl($this->savehtmlurl . $cid . '.html');
+		$plink = "[<a href='$pageurl'>".localize('_here',getlocal())."</a>]";
+		
 		//print_r($_POST);
         /*foreach ($_POST as $p=>$pp) {
 			if ($p == 'mail_text')
@@ -1092,40 +1146,47 @@ function show_body() {
 		$to = GetParam('submail'); //to origin
 		$bcc = $this->getmails($to); //fetch mails plus 'to' origin
 		
+		$m_user = GetParam('user') ? GetParam('user') : $this->mailuser; //user origin
+		$m_pass = GetParam('pass') ? GetParam('pass') : $this->mailpass;//pass origin
+		$m_server = GetParam('server') ? GetParam('server') : $this->mailserver; //server origin
+		SetParam('user', $m_user); //make it global to used be html form
+		SetParam('pass', $m_pass);
+		SetParam('server', $m_server); 
+		
 		$body = GetParam('mail_text');
-
-	    $text = base64_encode($body);
 		$title = GetParam('subject') ? GetParam('subject') : 'Campaign ' . $r;
 		
 		$date = date('Y-m-d h:m:s');
 		$cid = md5(GetParam('mail_text') .'|'. GetParam('subject') .'|'. $to);
         $active = GetParam('savecmp') ? 1 : 0;	
-
 		
-		//arg / BECAME TOKEN..not for pattern method
-		//add view as web page (not saved yet due to cid md5 creation on data in body)
 		if (GetParam('webpagelink')) {
-			
-			$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
-			                            $this->encUrl($this->savehtmlurl . $cid . '.html');
-			$plink = "[<a href='$pageurl'>".localize('_viewasweb',getlocal())."</a>]";
-			$body = str_replace('</body>', $plink.'</body>', $body);						   	
+			$wptext = GetParam('webpagetext');	
+			$text = str_replace(array('_UNSUBSCRIBE_','_MAILSENDER','_WEBLINK_'),array($unlink, $cc, $plink), $wptext);			
+			$rtext = $this->add_remarks_to_hide($text);
+			if (GetParam('usetokens'))
+				$rtoken[0] = $this->add_remarks_to_hide($text); 
+			else
+				$body = str_replace('</body>',$rtext .'</body>', $body);							   	
 		}
+		else
+			$rtoken[0] = null;	
 
-		//sign text /POSTED PARAM
-		if ($sign_text = GetParam('sign')) 
-			$body = str_replace('</body>',$sign_text .'</body>', $body);		
-		
-		//arg /sign mail at foot ..BECAME TOKEN..not for pattern method
-		//if (GetParam('dosign')) { 
 		if ($unlink = GetParam('unsubscribelink')) {
-			//$un = localize('_unsubscribe',getlocal());
-			//$sign_text = GetParam('sign');
-			//$sign = $this->spam_conditions_text($sign_text, $un, $cid);
-			//$body = str_replace('</body>',$sign .'</body>', $body);	
-			$un = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";			
-			$body = str_replace('</body>',$un .'</body>', $body);		
-		}		
+			$untext = GetParam('unsubscribetext');	
+			$unlink = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_here',getlocal())."</a>";			
+			$text = str_replace(array('_UNSUBSCRIBE_','_MAILSENDER','_WEBLINK_'),array($unlink, $cc, $plink), $untext);			
+			$rtext = $this->add_remarks_to_hide($text);
+			if (GetParam('usetokens'))
+				$rtoken[1] = $this->add_remarks_to_hide($text);
+			else 
+				$body = str_replace('</body>',$rtext .'</body>', $body);		
+		}
+		else
+			$rtoken[1] = null;
+		
+		$cbody =  $this->combine_tokens($body, $rtoken); //in case of tokens
+        $encodedbody = base64_encode($cbody);		
 					
 		if (is_array($_POST['ulistname'])) {
 		    $altl = implode(',', $_POST['ulistname']);  	
@@ -1143,7 +1204,7 @@ function show_body() {
 		else
 			$collection = '';	
   
-        $sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,bcc,template,body,collection) values (";
+        $sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,bcc,template,body,collection,owner,user,pass,server) values (";
 	    $sSQL .= $db->qstr($cid).",".
 		         $ctype .",". 
 				 $db->qstr($date).",$active,".
@@ -1152,8 +1213,12 @@ function show_body() {
 				 $db->qstr($cc).",".
 				 $db->qstr($bcc).",".
 				 $db->qstr($this->template).",".
-				 $db->qstr($text).",".
-				 $db->qstr($collection).
+				 $db->qstr($cbody).",".
+				 $db->qstr($collection).",".
+				 $db->qstr($owner).",".
+				 $db->qstr($m_user).",".
+				 $db->qstr($m_pass).",".
+				 $db->qstr($m_server).				 
 				 ")"; 
 
 		$result = $db->Execute($sSQL,1);
@@ -1163,7 +1228,7 @@ function show_body() {
 			
 			//save the file
 			if ($p = $this->savehtmlpath) {
-				$s = @file_put_contents($p .'/'. $cid . '.html' , $body);	
+				$s = @file_put_contents($p .'/'. $cid . '.html' , $cbody);	
 				
 				if ($s) 
 					$this->messages[] = 'Saved as ' . $this->savehtmlurl . $cid . '.html';
@@ -1408,9 +1473,9 @@ function show_body() {
 				$subs = implode(';',$_POST['include']);
 				//print_r($_POST['include']);
 				$qty = count($subs) + 1;
-				//$this->messages[] = 'Mail(s) to send :' . $qty;		
+				
 				$res = $this->sendit($from,$to,$subject,$body,$subs); 
-				//print_r($this->messages);
+				
 				if (!$res)  
 					$this->messages[] = "Sent failed";				
 				
@@ -1433,6 +1498,12 @@ function show_body() {
 		
 		 $i = 0;
 		 $meter = 0;
+		 $mailuser = GetParam('user') ? GetParam('user') : $this->mailuser;
+		 $mailpass = GetParam('pass') ? GetParam('pass') : $this->mailpass;
+		 $mailserver = GetParam('server') ? GetParam('server') : $this->mailserver;
+		 $mailname = $this->mailname; //not a user submit (realm)
+		 
+		 $from = $mailuser ? $mailuser : $from; //replace sender when another server settings
 
 		 //$one_receipinet = $this->sendmail_inqueue($from,$to,$subject,$mail_text,$this->ishtml,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);  
 		 //also send an instand mail copy...
@@ -1443,7 +1514,8 @@ function show_body() {
 			$mails = explode(";",$cc);//$mlist);
 
 			foreach ($mails as $z=>$m) {
-			  $meter += $this->sendmail_inqueue($from,$m,$subject,$mail_text,$this->ishtml,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);
+			  $text = str_replace('_SUBSCRIBER_', $m, $mail_text); 	
+			  $meter += $this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
 			  $i+=1;
 			}
 			
@@ -1483,7 +1555,7 @@ function show_body() {
 		 
 			if (!$ishtml) {
 				$ishtml = 1;
-				$html_mail_text = '<HTML><BODY>' . $mail_text . '</BODY></HTML>';
+				$html_mail_text = '<html><body>' . $mail_text . '</body></html>';
 				$body = $this->add_tracker_to_mailbody($html_mail_text,$trackid,$to,$ishtml);
 			}
 			else //already html body ...leave it as is		 
@@ -1686,25 +1758,10 @@ function show_body() {
 	   return (false);	  	   
     } 	
 	
-	protected function spam_conditions_text($text=null, $say=null, $cid) {
-		$lan = getlocal();
-		
-		$unsubscribe_link = $say ? "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".$say."</a>" : null; 
-		/*
-		$text0 = "<p>This e-mail can not be considered spam as long as we include: Contact information & remove instructions. 
-If you have somehow gotten on this list in error, or for any other reason would like to be removed,  please click here $unsubscribe_link. 
-This email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed. Any unauthorized disclosure, use of dissemination, either whole or partial, is prohibited.
-(Relative as A5-270/2001 of European Council). $text</p>";
-	  
-		$text1 = "<p>Αυτο το e-mail δεν μπορει να θεωρηθεί spam εφόσον αναγράφονται τα στοιχεία του αποστολέα και διαδικασίες διαγραφής απο την λίστα παραληπτών.  
-Αν είσαστε σε αυτή τη λίστα κατα λάθος ή για οποιονδήποτε άλλο λογο θέλετε να διαγραφεί το e-mail απο αυτή τη λίστα παραληπτών e-mail απλά πατήστε εδώ $unsubscribe_link.   
-Το μήνυμα πληρεί τις προυποθέσεις της Ευρωπαικής Νομοθεσίας περί διαφημιστικών μηνυμάτων. Κάθε μήνυμα θα πρέπει να φέρει τα πλήρη στοιχεια του αποστολέα ευκρινώς και θα πρέπει να δίνει στο δέκτη τη δυνατότητα διαγραφής. 
-(Directiva 2002/31/CE του Ευρωπαικού Κοινοβουλίου). $text</p>";	
-        
-        $ret = $lan ?  $text0 . $unsubscribe_link : $text1 . $unsubscribe_link;	
-		*/
+	/*when web view hide texts */
+	protected function add_remarks_to_hide($text=null) {
 		//remark used to rename when webview (not to show as web page)
-		$ret = "<!--REMARK--><p>" . $text .'&nbsp;'. $unsubscribe_link . "</p><!--REMARK-->";
+		$ret = "<!--REMARK--><p>" . $text. "</p><!--REMARK-->";
 		return ($ret);
     }		
 	
@@ -2048,6 +2105,31 @@ This email and any files transmitted with it are confidential and intended solel
 		return ($ret);	
 	}	
 
+	
+	public function getViews($template=null, $limit=null) {
+		$db = GetGlobal('db');	
+		$l = $limit ? $limit : 5;
+		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
+		$t = ($template!=null) ? $this->select_template($template) : null;
+		$tokens = array();
+		
+		//$timein = $this->sqlDateRange('timein', true, false);
+		//if ($timein) return null; //no current tasks when time range
+		//$refsql = $cid ? "and ref='$cid'" : null;
+		
+		$sSQL = "SELECT mailqueue.id,timeout,receiver,title FROM mailqueue,mailcamp where mailqueue.cid=mailcamp.cid $refsql and status=1 order by id desc LIMIT " . $l;
+		//echo $sSQL;
+		$resultset = $db->Execute($sSQL,2);
+		
+		foreach ($resultset as $n=>$rec) {
+			$tokens[] = $rec[1] . ' '. $rec[3];
+			$tokens[] = $rec[2];
+			$ret .= $this->combine_tokens($t, $tokens);
+			unset($tokens);	
+		}
+
+		return ($ret);			
+	}	
 	
 	public function getClicks($template=null, $limit=null) {
 		$db = GetGlobal('db');	

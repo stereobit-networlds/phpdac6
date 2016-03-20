@@ -284,7 +284,7 @@ class rcxmlfeeds {
 			$tokens[] = $rec['itemurl'];
 			$tokens[] = $rec['itemimg'];
 			$tokens[] = $rec['itemcat']; /** <<<<<<<<<<<<<<<<<<<<<<<<<<< also add **/
-			if ($n==0) print_r($tokens);
+			//if ($n==0) print_r($tokens);
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);
             unset($tokens);						
 		}	
