@@ -1164,7 +1164,7 @@ EOF;
   
     function cached_disk_size($path=null) {
   	   $path = $path ? $path : $this->urlpath; 
-       $name = strval(date('Ymd'));
+       $name = 'a';//strval(date('Ymd'));
        $tsize = $this->prpath . $name . '-tsize.size';
 	   $size = 0;
 
@@ -1186,7 +1186,7 @@ EOF;
 	$size = 0;
 	
 	  if ($db) {
-		$name = strval(date('Ymd'));
+		$name = 'a';//strval(date('Ymd'));
 		$dsize = $this->prpath . $name . '-dsize.size';	
     
 		if (is_readable($dsize)) {

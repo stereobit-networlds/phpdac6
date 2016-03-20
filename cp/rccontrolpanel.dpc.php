@@ -1577,24 +1577,15 @@ window.setTimeout(\"neu()\",$mytimeout);
 
     } 
 	
-    protected function cached_mail_size($year=null, $month=null) {
+    protected function cached_mail_size() {
 	   // /home/stereobi/mail/domain
 	   $path = '/home/'.$this->rootapp_path.'/mail/' . str_replace('www.','',$this->url);
   	   //$path = $this->prpath . '../../../../mail/' . str_replace('www.','',$this->url); // ./mail/domainname
 	   //echo $path,'>>>';
-       $name = strval(date('Ymd'));
+       $name = 'a';//strval(date('Ymd'));
        $msize = $this->prpath . $name . '-msize.size';
 	   $size = 0;
 	   
-	   if (($year) && ($month)) {
-			$selected_name = sprintf('%04d',$year) . sprintf('%02d',$month);
-			for ($d=31;$d>0;$d--) {
-				$search_selected_name = $selected_name . sprintf('%02d',$d);
-				if (is_readable($this->prpath . $search_selected_name . '-msize.size'))
-					$msize = $this->prpath . $search_selected_name . '-msize.size';
-			}
-	   }
-	   //else msize of today...
        if (is_readable($msize)) {
 	        //echo $msize;
 			$size = @file_get_contents($msize);
@@ -1609,21 +1600,12 @@ window.setTimeout(\"neu()\",$mytimeout);
     }	
   	
 	
-    protected function cached_disk_size($year=null, $month=null) {
+    protected function cached_disk_size() {
   	   $path = $this->application_path; 
-       $name = strval(date('Ymd'));
+       $name = 'a';//strval(date('Ymd'));
        $tsize = $this->prpath . $name . '-tsize.size';
 	   $size = 0;
 	   
-	   if (($year) && ($month)) {	
-			$selected_name = sprintf('%04d',$year) . sprintf('%02d',$month);
-			for ($d=31;$d>0;$d--) {
-				$search_selected_name = $selected_name . sprintf('%02d',$d);
-				if (is_readable($this->prpath . $search_selected_name . '-tsize.size'))
-						$tsize = $this->prpath . $search_selected_name . '-tsize.size';
-			}
-	   }		
-	   //else tsize of today...
        if (is_readable($tsize)) {
 	        //echo $tsize;
 			$size = @file_get_contents($tsize);
@@ -1637,20 +1619,11 @@ window.setTimeout(\"neu()\",$mytimeout);
 	   return ($size);
     }	
 	
-    protected function cached_database_filesize($year=null, $month=null) {
+    protected function cached_database_filesize() {
       $db = GetGlobal('db'); 
-      $name = strval(date('Ymd'));
+      $name = 'a'; //strval(date('Ymd'));
       $dsize = $this->prpath . $name . '-dsize.size';	
 	
-	  if (($year) && ($month)) {
-			$selected_name = sprintf('%04d',$year) . sprintf('%02d',$month);
-			for ($d=1;$d<31;$d++) {
-				$search_selected_name = $selected_name . sprintf('%02d',$d);
-				if (is_readable($this->prpath . $search_selected_name . '-dsize.size'))
-					$tsize = $this->prpath . $search_selected_name . '-dsize.size';
-			}	
-      }
-	  //else tsize of today...
       if (is_readable($dsize)) {
 	    //echo $dsize;
 		$size = @file_get_contents($dsize);
@@ -1681,17 +1654,17 @@ window.setTimeout(\"neu()\",$mytimeout);
         $year = GetParam('year') ? GetParam('year') : date('Y'); 
 	    $month = GetParam('month') ? GetParam('month') : date('m');			
 		
-		$msize = $this->cached_mail_size($year, $month);
+		$msize = $this->cached_mail_size();
 		$msize2 = $this->bytesToSize1024($msize,1);
 
 		$this->stats['Diskspace']['mailbox'] = $msize2;	
 				
-		$tsize = $this->cached_disk_size($year, $month);
+		$tsize = $this->cached_disk_size();
 		$tsize2 = $this->bytesToSize1024($tsize,1);
 		
 		$this->stats['Diskspace']['hd'] = $tsize2;
 			
-        $dsize = $this->cached_database_filesize($year, $month);	
+        $dsize = $this->cached_database_filesize();	
 		$dsize2 = $this->bytesToSize1024($dsize,1);	
 
 		$this->stats['Diskspace']['db'] = $dsize2;
