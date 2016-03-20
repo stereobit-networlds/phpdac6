@@ -913,7 +913,7 @@ function show_body() {
 			//echo 'RCCOLLECTIONS_DPC';	
 		    if ($template) {
 				$template_file = $this->templatepath . $template;
-				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page use ".$template_file.'+++'.$this->templatepath);
+				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page use ".$template_file.'+'.$this->templatepath);
 			}
 			else
 				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page");
@@ -1340,7 +1340,7 @@ function show_body() {
 		$mails = $mail ? $mail : null;
 		
 		/*combo with reload func*/
-	    if ($selectedlist = GetParam('myulistselector')) {
+	    if ($selectedlist = $_POST['myulistselector']) {
 			$q = $mails ? ';' : null;
 			$this->messages[] = 'Call mail list ' . $this->ulistselect;
 			
@@ -1860,11 +1860,10 @@ function show_body() {
 			   );
 			   CKEDITOR.config.fullPage = true;
                CKEDITOR.config.entities = false;
-               CKEDITOR.config.entities_greek = false;
-               CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;			   		
+               CKEDITOR.config.entities_greek = false;			   		
 		       </script>		
 ";
-		
+		//     CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
 		return ($ret);
 	}	
 			   //CKEDITOR.config.basicEntities = false;

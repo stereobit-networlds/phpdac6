@@ -227,11 +227,9 @@ class rccollections {
 		return($ret);		
 	}
 	
-	public function create_page($template=null, $imgw=null,$imgh=null,$tmplpath=null) {
-	    $imgxval = $imgw ? $imgw : $this->imgxval; 
-		$imgyval = $imgh ? $imgh : $this->imgyval;	
-		
+	public function create_page($template=null, $tmplpath=null) {
 		$pattern_method = false;
+		
 		$p = $this->readPattern($template);
 		if (is_array($p)) {
 			//print_r($p);
@@ -264,18 +262,15 @@ class rccollections {
 		else
 			return null;
 
-        $this->selected_items = $this->get_selected_items(500,$imgxval,$imgyval);	
+        $this->selected_items = $this->get_selected_items();	
 		
 		if (!empty($this->selected_items)) {
 			$tokens = array();
 			$items = array();		
 			//..order array by key
-			ksort($this->selected_items);
+			//ksort($this->selected_items);
 					
 			foreach ($this->selected_items as $n=>$rec) {
-		
-		      //is not out of rendering list
-		      if ($rec['disabled']===false) {
 		        
 			    //$ret.= $rec['itmname'].'<BR/>'; 
 			    $tokens[] = $rec['code'];
@@ -319,8 +314,7 @@ class rccollections {
 					$items[] = $this->combine_tokens($template_data, $tokens, true);
 				
 				unset($tokens);		
- 
-		      }//disabled item		
+ 	
 			}//foreach
 		 
 			/** pattern method **/
@@ -635,7 +629,7 @@ class rccollections {
 		foreach ($resultset as $n=>$rec) {
 		
 		    $id = $rec[$codefield];
-			
+			/*
 		    //read posted data per item..
 		    $out_of_list = GetParam($id) ? true : false;//remove from rendering list
 			//if (GetParam($id)) continue;
@@ -643,7 +637,7 @@ class rccollections {
 		    $img_height = GetParam('imagey_'.$id) ? GetParam('imagey_'.$id) : $img_height;		
             $width = $img_width ? "width=\"$img_width\" " : null;
 		    $height = $img_height ? "height=\"$img_height\" " : null;				
-			
+			*/
 			
 			$cat = $rec['cat0'] ? str_replace(' ','_',$rec['cat0']) : null;
 			$cat .= $rec['cat1'] ? $this->cseparator . str_replace(' ','_',$rec['cat1']) : null;
@@ -651,8 +645,8 @@ class rccollections {
 			$cat .= $rec['cat3'] ? $this->cseparator . str_replace(' ','_',$rec['cat3']) : null;
 			$cat .= $rec['cat4'] ? $this->cseparator . str_replace(' ','_',$rec['cat4']) : null;
 			
-			$item_url = /*'http://' .*/ $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$id,null,null,null,null,1);
-			$item_name_url = seturl('t=kshow&cat='.$cat.'&id='.$id,$rec['itmname'],null,null,null,1);//$this->rewrite);			   
+			$item_url = $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$id,null,null,null,null,1);
+			$item_name_url = seturl('t=kshow&cat='.$cat.'&id='.$id,$rec['itmname'],null,null,null,1);			   
 		    $item_name_url_base = "<a href='$item_url'>".$rec['itmname']."</a>";
 			
             /*if ($this->has_photo2db($id,$this->restype,'LARGE')) {
@@ -664,9 +658,9 @@ class rccollections {
 			$imgfile = $this->urlpath . $this->image_size_path . '/' . $id . $this->restype;
 			//echo '<br/>', $imgfile;
 			if (file_exists($imgfile)) { 	 
-				$item_photo_url = /*'http://' .*/ $this->url . $this->image_size_path . '/' . $id . $this->restype;
-				$item_photo_html = "<img src=\"" . $item_photo_url . "\" $width $height>";
-				$item_photo_link = "<a href='$item_url'><img src=\"" . $item_photo_url . "\" $width $height></a>";
+				$item_photo_url = $this->url . $this->image_size_path . '/' . $id . $this->restype;
+				$item_photo_html = "<img src=\"" . $item_photo_url . "\">";
+				$item_photo_link = "<a href='$item_url'><img src=\"" . $item_photo_url . "\"></a>";
 		    }
 
 			//fetch extra html code 
@@ -677,10 +671,11 @@ class rccollections {
                 $attachment = str_replace('src="images/','src="'.$this->url.'/images/');   			
 		    */
 			$attachment = null;
-		    $order_id = 'order_'.$id;
-		    $i = GetParam($order_id) ? GetParam($order_id) : $ix++;
+		    //$order_id = 'order_'.$id;
+		    //$i = GetParam($order_id) ? GetParam($order_id) : $ix++;
+			$i = $ix++;
 			$ret_array[$i] = array(
-			                'disabled'=>$out_of_list,
+			                /*'disabled'=>$out_of_list,*/
 			                'code'=>$id,
 			                'itmname'=>$rec[$itmname],
 							'itmdescr'=>$rec[$itmdescr],
@@ -704,63 +699,6 @@ class rccollections {
 		
 		return ($ret_array);
 	}		
-
-	//redesign form
-	/*function show_selected_items($submitname=null,$submitaction,$taction=null, $template=null, $xval=null, $yval=null) {
-	    $submitname = localize("_reselect",getlocal());;//override
-	    $xval = $xval ? $xval : $this->imgxval; 
-		$yval = $yval ? $yval : $this->imgyval;
-	    $myact = $taction ? $taction : 'cptedititems';
-	    $myaction = seturl("t=$myact");
-        $submitaction = $submitaction ? $submitaction :	'cptedititems';	
-		//print_r($_POST);
-		
-		if (!empty($this->selected_items)) {		
-			$ret = "<form method=\"post\" name=\"RCTEDITITEMS\" action=\"$myaction\">";
-            
-			foreach ($this->selected_items as $n=>$rec) {
-			    $order = $n;//+1;
-			    $id = $rec['code'];
-			    //read posted data per item..
-				$is_disbaled = $rec['disabled'];//is out of rendering list
-
-				$selected = ($is_disbaled) ? 'checked':null;//remove from rendering list
-			    $setxval = GetParam('imagex_'.$id) ? GetParam('imagex_'.$id) : $xval;
-			    $setyval = GetParam('imagey_'.$id) ? GetParam('imagey_'.$id) : $yval;
-				
-				$recdata[] = "<input type=\"checkbox\" name=\"$id\" $selected>";
-				$recdata[] = "<INPUT type=\"text\" name=order_$id value=\"$order\" maxlenght=\"3\" size=3>";
-			    $recdata[] = "<INPUT type=\"text\" name=imagex_$id value=\"$setxval\" maxlenght=\"3\" size=3>";
-			    $recdata[] = "<INPUT type=\"text\" name=imagey_$id value=\"$setyval\" maxlenght=\"3\" size=3>";
-			    //$x = intval(100/count($recdata)); echo $x;
-			    foreach ($rec as $i=>$recname) {
-				    $recdata[] = $recname;
-				    $recattr[] = "left;10%";
-                }			
-				$linewin = new window('',$recdata, $recattr);
-				$ret .= $linewin->render("center::100%::0::group_article_selected::left::0::0::");	
-				unset ($linewin);
-                unset ($recdata);
-                unset ($recattr); 				
-	        }
-			$ret .= "<hr><input type=submit value=\"$submitname\">";
-	        $ret .= "<input type=\"hidden\" name=\"FormAction\" value=\"$submitaction\">"; 
-			
-            //save rcshsubsqueue mail params
-            if ($template) 			
-			    $ret .= "<input type=\"hidden\" name=\"template\" value=\"$template\">"; 
-            //if ($images=GetSessionParam('images')) 			
-			  //  $ret .= "<input type=\"hidden\" name=\"template\" value=\"$images\">"; 				
-            //if ($attachments=GetSessionParam('attachments')) 			
-			  //  $ret .= "<input type=\"hidden\" name=\"template\" value=\"$attachments\">";
-				
-            $ret .= "</form>";  
-        }			
-	    else
-		    $ret = 'None';
-			
-	    return ($ret);		
-	}*/
 	
 	protected function show_select_collections($name, $taction=null, $ext=null, $class=null) {
 		$col = GetReq('collection') ;
@@ -852,7 +790,7 @@ class rccollections {
 	}	
 	
 	protected function load_xml_file($file=null, $returnkeys=false) {
-		if (!$file) $file = $this->prpath . 'temp.xml';//return null;
+		if (!$file) $file = $this->prpath . 'temp.xml';//read cached file when no file submited (first time read)
 		
 		if (($response_xml_data = file_get_contents($file))===false){
 			echo "Error fetching XML\n";
@@ -955,6 +893,11 @@ class rccollections {
 		foreach ($r as $f=>$field) {
 			if (is_array($field)) {
 				$a = $this->proccedXMLKeys($field, $keys, $id+1);
+				/*if ($id<2) {//test
+					echo '<pre>';
+					print_r(unserialize($a));
+					echo '</pre>';
+				}*/
 				$rec .= (!empty($a)) ? serialize($a) . '<@>' : null;
 			}	
 			else {
@@ -998,11 +941,12 @@ class rccollections {
 	protected function save_xml_file() {
 		$dbf = $_POST['dbfield'];
 		$xmlf = $_POST['xmlfield'];
-		$go = $_POST['goxml'];
-		
+		//fire up when check is on after fields connection or xlx preset selection
+		$go = $_POST['goxml'] ? true : ($_GET['xlx'] ? true : false);
+
 		if ($file = $_POST['xmlfile']) { 
 		    $filename = $file . '.xlx';
-			copy($this->prpath . 'temp.xlx', $this->prpath . $filename);
+			@copy($this->prpath . 'temp.xlx', $this->prpath . $filename);
 			@unlink ('temp.xlx'); //reset xlx
 		}	
 		else	
@@ -1015,9 +959,9 @@ class rccollections {
 		}	
 		
 		if ($go) {
-			$xlxfile = $_POST['xmlfile'] ? $_POST['xmlfile'].'.xlx' : 'temp.xlx'; 
+			$xlxfile = $_POST['xmlfile'] ? $_POST['xmlfile'].'.xlx' : ($_GET['xlx'] ? $_GET['xlx'] : 'temp.xlx'); 
 			$xmlfile = $_POST['xmlfile'] ? $_POST['xmlfile'].'.xml' : 'temp.xml';
-			//echo 'proceed:';// . @file_get_contents($this->prpath . $xlxfile);
+			//echo 'proceed:' . @file_get_contents($this->prpath . $xlxfile);
 			
 			$ret = $this->proceedXML(file($this->prpath . $xlxfile), /*array*/
 			                         @file_get_contents($this->prpath . $xmlfile)); /*raw xml data*/
@@ -1043,7 +987,7 @@ class rccollections {
 	}	
 	
 	protected function show_select_presets($name, $taction=null, $ext=null, $class=null) {
-		$xlx = GetReq('xlx') ;
+		$xlx = $_GET['xlx'] ;
 	
 		$url = ($taction) ? seturl('t='.$taction.'&xlx=',null,null,null,null) : 
 		                    seturl('t=cpsavexml&xlx=',null,null,null,null);
