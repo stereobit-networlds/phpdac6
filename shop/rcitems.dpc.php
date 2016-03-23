@@ -359,8 +359,8 @@ class rcitems {
 			                       break;									   
 		    case 'cpvphoto'    :   break;
 		   
-		    case 'cpeditframe':    //echo $this->loadframe('edtem');
-								   //die();
+		    case 'cpeditframe':    echo $this->loadframe('edtem');
+								   die();
 								   
 		                           break;
 								   
@@ -408,7 +408,7 @@ class rcitems {
 		 		 
 	     switch ($action) {	
 		 
-		    case 'cpeditframe':    $out = $this->loadframe();
+		    case 'cpeditframe':    //$out = $this->loadframe();
 								   break;		 
 
 		    case 'cpvaddattach' :$out .= $this->add_attachment(1);
@@ -450,76 +450,20 @@ class rcitems {
 	
 	function grid_javascript() {
 	
-      if (iniload('JAVASCRIPT'))  {
-	  
-		   //$template = $this->set_template();   		      
+      if (iniload('JAVASCRIPT'))  {		      
 		   
 	       $code = $this->init_grids();	     		
 
-		   //$code .= $this->_grids[0]->OnClick(17,'ItemDetails',$template);//,'VehicleCustomers','id',17);
-	   
-		   $js = new jscript;
-		   //$js->setloadparams("init()");
-           //$js->load_js('nitobi.grid.js');//javascript folder	 
-           //$js->load_js('nitobi.grid.js',null,null,null,1); //local			   
+		   $js = new jscript;		   
            $js->load_js($code,"",1);			   
 		   unset ($js);
 	  }		
 	}
-	
-	/*function set_template() {
-	       $x = $this->previewx?$this->previewx:160;
-		   $y = $this->previewy?$this->previewy:120;
-	
-			
-	       $edit = seturl("t=cpvmodify&cat=".GetReq('cat')."&rec=");
-		   $add =  seturl("t=cpvinput&cat=".GetReq('cat')."&sel=".GetReq('sel'));
-		   $off =  seturl("t=cpvoffer&cat=".GetReq('cat')."&rec=");	   
-		   $del =  seturl("t=cpvdelete&rec=");	
-		   $mail = seturl("t=cpvmail&rec=");
-		   	   		   
-		   $template .= "<A href=\"$edit'+i16+'\">".$this->edit_item."</A>". $this->sep;
-		   $template .= "<A href=\"$add\">".$this->add_item."</A>". $this->sep;		   
-		   $template .= "<A href=\"$del'+i16+'\">".$this->delete_item."</A>". $this->sep;		   		   		   			   
-		   $template .= "<A href=\"$off'+i16+'\">".$this->offer_item."</A>". $this->sep;			   
-		   $template .= "<A href=\"$mail'+i16+'\">".$this->mail_item."</A>". $this->sep;			   
-		   $template .= "<br>";
-		   
-		   $template .= "<h4>'+update_stats_id(i0,i0,i3)+'</h4>";		   
-	  						   			   
-		   $template .= "<table width=\"100%\" class=\"group_win_body\">";	   
-		   $template .= "<tr><td>".localize('_code',getlocal()).":</td><td><b>'+i0+'</b></td></tr>";	
-		   $template .= "<tr><td>".localize('_sysins',getlocal()).":</td><td><b>'+i2+'</b></td></tr>";		
-		   $template .= "<tr><td>".localize('_itmname',getlocal()).":</td><td><b>'+i3+'</b></td></tr>";
-		   $template .= "<tr><td>".localize('_uniname1',getlocal()).":</td><td><b>'+i4+'</b></td></tr>";				   		   
-		   $template .= "<tr><td>".localize('_uniname2',getlocal()).":</td><td><b>'+i5+'</b></td></tr>";		   		   
-		   $template .= "<tr><td>".localize('_axia1',getlocal()).":</td><td><b>'+i6+'</b></td></tr>";		
-		   $template .= "<tr><td>".localize('_cat0',getlocal()).":</td><td><b>'+i11+'</b></td></tr>";		
-		   $template .= "<tr><td>".localize('_cat1',getlocal()).":</td><td><b>'+i12+'</b></td></tr>";				   		   
-		   $template .= "<tr><td>".localize('_cat2',getlocal()).":</td><td><b>'+i13+'</b></td></tr>";	
-		   $template .= "<tr><td>".localize('_cat3',getlocal()).":</td><td><b>'+i14+'</b></td></tr>";
-		   $template .= "<tr><td>".localize('_cat4',getlocal()).":</td><td><b>'+i15+'</b></td></tr>";
-		   		   		   
-		   $template .= "<tr><td><A href=\"?t=cpvphoto&id='+i0+'\"><img src=\"$this->publicthubpath'+photo_name(i0)+'$this->restype\" width=$x height=$y></A>";	
-
-		   $template .= "</td><td>'+i10+'</td></tr></table>";	     
-		   //$template .= "'+i10+'"; //sxolia out of array
-		   //$template .= "<h4>'+update_stats_id(i0,i0,i3)+'</h4>";		   
-		   
-		   return ($template);	
-	}*/			
+		
 
 	function title() {
        $sFormErr = GetGlobal('sFormErr');
 
-       //navigation status 
-	   /*if (!GetReq('editmode')) {
-          
-	     if (GetSessionParam('REMOTELOGIN')) 
-	       $out = setNavigator(seturl("t=cpremotepanel","Remote Panel"),$this->title); 	 
-	     else  
-           $out = setNavigator(seturl("t=cp","Control Panel"),$this->title); 	
-       }*/
        //error message
 	   $out .= setError($sFormErr);
 	   
@@ -842,7 +786,7 @@ class rcitems {
 		   unset ($wina);		
 
 		   //edit text shortcut
-		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
+		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
 		   $tout = '<iframe src ="'.$edittexturl.'" width="100%" height="550px"><p>Your browser does not support iframes</p></iframe>'; 
            $wina = new window(localize('_EDITTEXT',getlocal()),$tout);
 		   $winout .= $wina->render("center::100%::0::group_dir_body::left::0::0::");
@@ -893,7 +837,7 @@ class rcitems {
 		   unset ($wina);	
 
 		   //edit text shortcut
-		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
+		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
 		   $tout = '<iframe src ="'.$edittexturl.'" width="100%" height="550px"><p>Your browser does not support iframes</p></iframe>'; 
            $wina = new window(localize('_EDITTEXT',getlocal()),$tout);
 		   $winout .= $wina->render("center::100%::0::group_dir_body::left::0::0::");
@@ -940,7 +884,7 @@ class rcitems {
 		   unset ($wina);	
 
            //edit text shortcut
-		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
+		   $edittexturl = $this->urlbase.'cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&encoding='.GetReq('encoding').'&id='.GetReq('id').'&type=.html&editmode=1'; 
 		   $tout = '<iframe src ="'.$edittexturl.'" width="100%" height="550px"><p>Your browser does not support iframes</p></iframe>'; 
            $wina = new window(localize('_EDITTEXT',getlocal()),$tout);
 		   $winout .= $wina->render("center::100%::0::group_dir_body::left::0::0::");
@@ -2455,32 +2399,15 @@ class rcitems {
 	}
    
 	function list_items() {
-	   $mycat = GetReq('cat');
-	   
-	   //$toprint .= $this->show_categories();
-	   
-	   /*if ($this->msg) $toprint .= $this->msg;	
-	   if (GetReq('cat')) {
-		  if (defined("RCCATEGORIES_DPC"))//text based cats
-		    $toprint .= GetGlobal('controller')->calldpc_method('rccategories.show_categories use cpitems+1');		
-          elseif (defined("RCKATEGORIES_DPC"))	   //ERROR!!!!
-		    $toprint .= GetGlobal('controller')->calldpc_method('rckategories.show_menu use cpitems');		  
-	     //$toprint .= $this->show_categories('cpitems',1);
-       }*/		 
+	   $mycat = GetReq('cat'); 
 	   	   
-	   $toprint .= $this->show_grids();
+	   $out = $this->show_grids();
 	   
 	   //HIDDEN FIELD TO HOLD STATS ID FOR AJAX HANDLE
 	   $out .= "<INPUT TYPE= \"hidden\" ID= \"statsid\" VALUE=\"0\" >";	
 	   
-	   /*$toprint .= $this->alphabetical();	
-	   
-	   $dater = new datepicker("/MDYT");	
-	   $toprint .= $dater->renderspace(seturl("t=cpitems"),"cpitems");		 
-	   unset($dater);*/		
-	   
-       $mywin = new window(null/*$this->title*/,$toprint);
-       $out .= $mywin->render();
+       //$mywin = new window(null/*$this->title*/,$toprint);
+       //$out .= $mywin->render();
 
 	   return ($out);	
 	} 
@@ -2683,26 +2610,16 @@ CREATE TABLE `products` (
 	    //$editurl = seturl("t=cpvmodify&editmode=1&id=").GetReq('id');
 		//$editurl = seturl("t=cpvphoto&editmode=1&id=").$ret->fields[0];//$id;
 		
-		if ($this->cptemplate) {
-			$editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$ret->fields[0];
-			$frame = "<iframe src =\"$editurl\" width=\"100%\" height=\"450px\"><p>Your browser does not support iframes</p></iframe>";    
-            return ($frame);
-			
-			//no-frame mode
-			//$frame = GetGlobal('controller')->calldpc_method("cpmhtmleditor.editor use ".$ret->fields[0]);
-			//die('xxx'); //die at pcntl page (ajax call)
-			   			
+
+		$editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&editmode=1&id=".$ret->fields[0];
+		$frame = "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
+
+		
+		if ($ajaxdiv)
+			return $ajaxdiv.'|'.$frame;
+		else
 			return ($frame);
-		}
-		else {
-			$editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$ret->fields[0];
-			$frame = "<iframe src =\"$editurl\" width=\"100%\" height=\"750px\"><p>Your browser does not support iframes</p></iframe>";    
-       
-			if ($ajaxdiv)
-				return $ajaxdiv.'|'.$frame;
-			else
-				return ($frame);
-		}		
+		
 	}	
 	
 	function loadframe2($ajaxdiv=null) {
@@ -2778,46 +2695,21 @@ function photo_item() {
 	   //..photo_item({".$id."});
 	   $editlink = "javascript:edit_item({".$id."});";//seturl('t=cpvmodify&id={'.$id.'}');		   	   	   
 	   
-	   $rd = $this->form_insert2(800,440,20, $editlink, 'e', true);
-	   $rd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use stats");
-       if ($this->hasgraph) {	   
-		  $rd .= $this->show_graph('statistics',null,seturl('t=cpitems&cat='.$cat.'&id='.$item_id));
-	   }	  
-	   else
-	      $rd .= "<h3>".localize('_GNAVAL',0)."</h3>";	   
-	   
-	   $datattr[] = $rd;
-	   $viewattr[] = "left;50%";	   
+	   $rd = $this->form_insert2(null,440,20, $editlink, 'e', true);
+
 	   
 	   if ($item_id) {//preselected item
 		 //$editurl = $editurl = seturl("t=cpvphoto&editmode=1&id=").$item_id;
-		 $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$item_id;
-		 $init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"750px\"><p>Your browser does not support iframes</p></iframe>";    
+		 $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&editmode=1&id=".$item_id;
+		 $init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
 	   }
 	   else
 	     $init_content = null; 
 		 
-       $wd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use edtem+".$init_content);	    	   
+       //$rd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use edtem+".$init_content);
+	   $rd .= "<div id='edtem'>".$init_content . "</div>";		   
 
-	   $datattr[] = $wd;
-	   $viewattr[] = "left;50%";
-	   
-	   $myw = new window('',$datattr,$viewattr);
-	   $ret = $myw->render();//"center::100%::0::group_article_selected::left::3::3::");
-	   unset ($datattr);
-	   unset ($viewattr);
-
-	   /*..second call disable the first..
-	   if ($item_id) {//preselected item
-		 $editurl = $editurl = seturl("t=cpvphoto&editmode=1&id=").$item_id;
-		 //$editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$item_id;
-		 $init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"750px\"><p>Your browser does not support iframes</p></iframe>";    
-	   }
-	   else
-	     $init_content = null; 	   
-       $ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use phtem+".$init_content);	   
-       */
-	   return ($ret);	
+	   return ($rd);	
 	}
 	
 	function show_mail() {
@@ -2973,18 +2865,7 @@ function photo_item() {
 	  
 	  $db->Execute($sSQL,1);	
 	  $affected = $db->Affected_Rows();
-	  //echo $affected;
-	  if ($affected) {
-		echo localize('_ATTACHED',getlocal());//"Attached!";
-	  }
-	  else {
-	    //echo $sSQL,'<br>';
-		echo localize('_NOTATTACHED',getlocal());//"Unable to attach!";
-	  }//if
-	  
-	  /*if (GetReq('editmode')) {
-	    die($msg);
-	  }*/	  
+	  //echo $affected;  
 
 	  return ($affected);  	  
 	}	

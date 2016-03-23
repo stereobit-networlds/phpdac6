@@ -91,19 +91,6 @@ class rckategories extends shkategories {
 	  
 	  $this->urlbase = paramload('SHELL','urlbase').'/';	  
 	  
-	  if (!$this->editmode) {
-	  //$this->browser = null;
-	   $db = GetGlobal('db');
-	   $this->browser = new rcbrowser('vertical',$db,'Kategories','cpkategories','categories','id','id;ctgid;ctgoutline;ctgoutlnorder;active;view;search;cat1;cat2;cat3;cat4;cat5;id',1);	 
-	   
-	   //$this->browser = new rcbrowser($db,'Sqltrans','','syncsql','id','id;fid;time;date;execdate;status;sqlquery;sqlres;reference;id',1);
-	   
-	  /* $this->browser4 = new rcbrowser($db,'Customers','cpcustomers','customers','mail','id;code2;name;afm;address;area;attr1;voice1;voice2;fax;mail;prfdescr;attr1',0);
-	   $this->browser3 = new rcbrowser($db,'Users','cpusers','users','code2','id;code2;email;fname;startdate;subscribe;username;password',0,$this->browser4,'mail',1);
-	   $this->browser2 = new rcbrowser($db,'Stats','cpkategories','stats','tid','id;date;day;month;year;tid;attr1;attr2;vid;id',0,$this->browser3,'code2',7);
-	   $this->browser = new rcbrowser($db,'Items','cpkategories','products','id','code5;active;sysins;itmname;uniname1;uniname2;price0;price1;price2;pricepc;itmdescr;cat0;cat1;cat2;cat3;cat4;id',1,$this->browser2,'tid',0);	  */
-	  }  
-	  
 	  //overrite csep...?
       $csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
       $this->cseparator = $csep ? $csep : '^';	
@@ -118,13 +105,7 @@ class rckategories extends shkategories {
 	function event($event=null) {
 	
 	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') {//die("Not logged in!");//	
-	     if (!GetReq('editmode'))		 
-	       die("Not logged in!");//	
-		 else
-     	   //header("Location: cp.php?editmode=1&encoding=" . GetReq('encoding'));  
-   	       die("Not logged in! <A href='../cp.php?editmode=1&encoding=".GetReq('encoding')."'>LOGIN</A>");//
-	   }		
+	   if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
 	   /////////////////////////////////////////////////////////////		
 	
 	    switch ($event) {
@@ -155,42 +136,28 @@ class rckategories extends shkategories {
 		                        break;								
           case 'editcats' : 
 		                        break;
-		  case 'cpread'  :     //$this->browser->get_records(); 
-		                        rcbrowser::getgrid_records();														
+		  case 'cpread'  :     													
 								break;
-		  case 'cpwrite' :     //$this->browser->set_records(); 
-		                        rcbrowser::setgrid_records();
+		  case 'cpwrite' :     
 		                        break;
 		  case 'cpeditframe':   echo $this->loadframe('editcat');
 								die();
 		                        break;								
           case 'cpkategories' :
-		  default             : //$this->browser->event($event);
-		                       //if (!$this->editmode)
-		                        //$this->browser->nitobi_javascript();
-                               //else
-							    $this->hasgraph = $this->charts->create_chart_data('statisticscat',"where year >=2000 and attr1='".urldecode(GetReq('cat'))."'");
-                                $this->grid_javascript();							   
-        }			
+		  default             : 
+		  
+		}  
+		                       
     }
 	
 	function action($action=null) {	
-	
-	   /*if (!$this->editmode) {
-	     if (GetSessionParam('REMOTELOGIN')) 
-	       $winout = setNavigator(seturl("t=cpremotepanel","Remote Panel"),$this->title); 	 
-	     else  
-           $winout = setNavigator(seturl("t=cp","Control Panel"),$this->title);		
-	   }*/	 		 
+			 
 	
 	    switch ($action) {	
-		  case 'cpaddcat'  :	$out .= $this->add_category2(null,null,null,null,'d',true); break;
-		  case 'cpeditcat' :	$out .= $this->edit_category();break;			
-		
-		  //rcbrowser hacks
-          case 'cpbradd'      : $out .= rcbrowser::add_record(); break;
-          case 'cpbredit'     : $out .= rcbrowser::edit_record(); break;		  							
-          case 'cpbrdel'      : $out .= rcbrowser::del_record('rckategories.toggle_category'); break;		
+		  case 'cpaddcat'  :	$out .= $this->add_category2(null,null,null,null,'d',true); 
+								break;
+		  case 'cpeditcat' :	$out .= $this->edit_category(); 
+								break;				
 		  		
 		  case "delcats" :      $title = $this->title;
 		                        $out .= 'delete';
@@ -214,69 +181,19 @@ class rckategories extends shkategories {
 		                        break;									
           case 'disablecat'   :  								
           case 'cpkategories' : 
-		  default             :	//$title = $this->title;
-								//$out = $this->menu();		  
-		                        //$out .= $this->show_menu('cpkategories',3,$this->treeview,'ITEMS','',1);
-								//if (!$this->editmode)
-								  //$out .= $this->browser->render();	
-                                //else
-                                  $out .= $this->edit_kategories();								  
+		  default             :	$out = $this->edit_kategories();								  
         }
 		
-        
-		$win2 = new window(null/*$title*/,$out);
-		$winout .= $win2->render();//"center::100%::0::group_dir_headtitle::left::0::0::");
-		unset ($win2);
-		  					
 		
-		return ($winout);
+		return ($out);
     }	
 	
-	
-	function grid_javascript() {
-	
-      if (iniload('JAVASCRIPT'))  {  		      
-		   
-	       $code = $this->init_grids();	     		
-
-		   $js = new jscript;			   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }		
+	//call from html
+	public function javascript() {
+		$editurl = seturl("t=cpeditframe&id=");
+		$out = "function edit_cat() { var str = arguments[0]; sndReqArg('$editurl'+str,'editcat');}";		
+		return ($out);
 	}
-
-	function init_grids() {
-	    $editurl = seturl("t=cpeditframe&id=");
-  		
-		$out = "
-function update_stats_id() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];
-  
-  
-  statsid.value = str;
-  //alert(statsid.value);
-  sndReqArg('$this->ajaxLink'+statsid.value,'stats');
-  
-  return str1+' '+str2;
-}
-
-function edit_cat() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];  
-  var taskid;
-  var custid;
-  
-  taskid = str;  
-  custid = str1;
-  sndReqArg('$editurl'+taskid,'editcat');
-}
-";
-        $out .= "\r\n";
-        return ($out);
-	}	
 	
     function set_viewable() {
      
@@ -887,8 +804,8 @@ function edit_cat() {
 		foreach ($cats as $c) {
 		   if (trim($c)) {//$cat = str_replace(' ','_',$c);
 		       $cat = str_replace(' ','_',$c);
-		       $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$cat;
-               $frame .= "<iframe src =\"$editurl\" width=\"100%\" height=\"450px\"><p>Your browser does not support iframes</p></iframe>";    		   
+		       $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&editmode=1&id=".$cat;
+               $frame .= "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    		   
 		   }
 		}   
 		//$editurl = $this->urlbase . "cp/cpmhtmleditor.php?htmlfile=&type=.html&editmode=1&id=".$cat;
@@ -914,45 +831,20 @@ function edit_cat() {
 	   $id = 'id';//$this->getmapf('code');
 	   $editlink = "javascript:edit_cat({".$id."})";
 	   
-	   $rd = $this->add_category2(800,440,20, $editlink, 'e', true);
-	   $rd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use stats");
-       if ($this->hasgraph) {	   
-		  $rd .= $this->show_graph('statisticscat',null,seturl('t=cpkategories&cat='.$cat.'&p='.$p));
-	   }	  
-	   else
-	      $rd .= "<h3>".localize('_GNAVAL',0)."</h3>";		   
-	   
-	   $datattr[] = $rd;
-	   $viewattr[] = "left;50%";
+	   $rd = $this->add_category2(null,440,18, $editlink, 'e', true);
 
 	   if ($cat) {//preselected cat
 		 //$editurl = seturl("t=cpeditcat&editmode=1&cat=".$cat);//$id;
-		 $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&ajax=1&htmlfile=&type=.html&editmode=1&id=".$cat;
-		 $init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"450px\"><p>Your browser does not support iframes</p></iframe>";    
+		 $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&editmode=1&id=".$cat;
+		 $init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
 	   }
 	   else
 	     $init_content = null; 
-	   $wd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use editcat+".$init_content);	   	   
-	   
-	   /*$wd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use stats");
-       if ($this->hasgraph) {	   
-		  $wd .= $this->show_graph('statisticscat','Category statistics',seturl('t=cpkategories&cat='.$cat.'&p='.$p));
-	   }	  
-	   else
-	      $wd .= "<h3>".localize('_GNAVAL',0)."</h3>";*/
-		  
-	   $datattr[] = $wd;
-	   $viewattr[] = "left;50%";		  
-
-	   $myw = new window('',$datattr,$viewattr);
-	   $ret = $myw->render();//"center::100%::0::group_article_selected::left::3::3::");
-	   unset ($datattr);
-	   unset ($viewattr);	
-
-	   //moved aside 
-       //$ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use editcat");	   	   
+	 
+	   //$rd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use editcat+".$init_content);	   	   
+	   $rd .= "<div id='editcat'>".$init_content . "</div>";	   	   
 	   		
-	   return ($ret);			  
+	   return ($rd);			  
 	   
 	}
 	

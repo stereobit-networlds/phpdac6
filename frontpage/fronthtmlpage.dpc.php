@@ -1543,6 +1543,13 @@ EOF;
 		    $GLOBALS[$param] = $val;
 	}	
 	
+    public function getParam($param) {
+		if ($_POST[$param]) 
+			return ($_POST[$param]);
+  
+		return ($_GET[$param]);
+    }		
+	
 	public function serverSTR($str=null) {
 	    $server_str = $str ? $str : 'REQUEST_URI';
 	    return htmlspecialchars($_SERVER[$str]);
@@ -1904,7 +1911,8 @@ EOF;
 	}
 	
     public function cpUsername() {
-		$username = decode(GetSessionParam('UserName')) ? GetSessionParam('UserName') : $_POST['cpuser'];
+		//$username = GetSessionParam('UserName') ? decode(GetSessionParam('UserName')) : $_POST['cpuser'];
+		$username = GetSessionParam('LoginName') ? GetSessionParam('LoginName') : $_POST['cpuser'];
 		$p = explode('@', $username);
 		$name =  $p[0];	
 		

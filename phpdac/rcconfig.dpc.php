@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['RCCONFIG_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCCONFIG_DPC']='1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCCONFIG_DPC")) && (seclevel('RCCONFIG_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCCONFIG_DPC",true);
@@ -69,19 +69,9 @@ class rcconfig {
 	
     function event($event=null) {	
 	
-	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') {//die("Not logged in!");//	
-	     if (!GetReq('editmode'))		 
-	       die("Not logged in!");//	
-		 else
-     	   //header("Location: cp.php?editmode=1&encoding=" . GetReq('encoding'));  
-   	       die("Not logged in! <A href='cp.php?editmode=1&encoding=".GetReq('encoding')."'>LOGIN</A>");//
-	   }	   		   
-	   /////////////////////////////////////////////////////////////		
+	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	   if ($login!='yes') return null;	
 	
-       $sFormErr = GetGlobal('sFormErr');	    	    		  			    
-  
-       if (!$sFormErr) {   
   
 	   switch ($event) {
 
@@ -102,7 +92,6 @@ class rcconfig {
 		default               :
 		                          
 		                         break;								 
-       }
       }
 	  
 	  if (GetReq('save')==1) {
@@ -137,13 +126,8 @@ class rcconfig {
   
     function action($action=null) {
 	   $cpart = GetReq('cpart')?GetReq('cpart'):null;
-	
-	   /*if (!GetReq('editmode')) {	
-	     if (GetSessionParam('REMOTELOGIN')) 
-	       $out = setNavigator(seturl("t=cpremotepanel","Remote Panel"),$this->title); 	 
-	     else  
-           $out = setNavigator(seturl("t=cp","Control Panel"),$this->title);	
-	   }*/	 
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;	   
 
 	   switch ($action) {	
 	   
@@ -225,7 +209,7 @@ class rcconfig {
 			 $this->tabheaders[] = $this->setTabHeader(strtolower($section), $tabname, true);       
 			 $b = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
 	         foreach ($data as $var=>$val) {
-			   $b .= $this->setTabInput($var, ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
+			   $b .= $this->setTabInput(localize($var,getlocal()), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
 		     }		 
 		     $b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
 		     $ret = $this->setTabBody(strtolower($section), $b, true);			 
@@ -240,7 +224,7 @@ class rcconfig {
 		   $this->tabheaders[] = $this->setTabHeader(strtolower($section), $tabname, ($i==0 ? true : false)); 
 		   $b = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
 	       foreach ($data as $var=>$val) {
-			 $b .= $this->setTabInput($var, ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
+			 $b .= $this->setTabInput(localize($var,getlocal()), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
 		   }
 		   $b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
 		   $ret .= $this->setTabBody(strtolower($section), $b, ($i==0 ? true : false));

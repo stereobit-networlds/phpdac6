@@ -1,8 +1,8 @@
 <?php
 
-$__DPCSEC['RCCONTROLPANEL_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCCONTROLPANEL_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ((!defined("RCCONTROLPANEL_DPC")) && (seclevel('RCCONTROLPANEL_DPC',decode(GetSessionParam('UserSecID')))) ) {
+if (!defined("RCCONTROLPANEL_DPC")) { // && (seclevel('RCCONTROLPANEL_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCCONTROLPANEL_DPC",true);
 
 $__DPC['RCCONTROLPANEL_DPC'] = 'rccontrolpanel';
@@ -15,8 +15,8 @@ $__EVENTS['RCCONTROLPANEL_DPC'][1]='cplogout';
 $__EVENTS['RCCONTROLPANEL_DPC'][2]='cplogin';
 $__EVENTS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__EVENTS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
-$__EVENTS['RCCONTROLPANEL_DPC'][5]='cpmenushow';
-$__EVENTS['RCCONTROLPANEL_DPC'][6]='cpgaugeshow';
+$__EVENTS['RCCONTROLPANEL_DPC'][5]='cptasks';
+$__EVENTS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
@@ -24,11 +24,11 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
 $__ACTIONS['RCCONTROLPANEL_DPC'][2]='cplogin';
 $__ACTIONS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__ACTIONS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
-$__ACTIONS['RCCONTROLPANEL_DPC'][5]='cpmenushow';
-$__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpgaugeshow';
+$__ACTIONS['RCCONTROLPANEL_DPC'][5]='cptasks';
+$__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 
-$__DPCATTR['RCCONTROLPANEL_DPC']['cp'] = 'cp,1,0,0,0,0,0,0,0,0,0,0,1';
+//$__DPCATTR['RCCONTROLPANEL_DPC']['cp'] = 'cp,1,0,0,0,0,0,0,0,0,0,0,1';
 
 $__LOCALE['RCCONTROLPANEL_DPC'][0]='RCCONTROLPANEL_DPC;Control Panel;Control Panel';
 $__LOCALE['RCCONTROLPANEL_DPC'][1]='_BACKCP;Back;Επιστροφή';
@@ -134,8 +134,8 @@ $__LOCALE['RCCONTROLPANEL_DPC'][96]='_syncsql;Sync data;Συγχρονισμός
 $__LOCALE['RCCONTROLPANEL_DPC'][97]='_dbphoto;Image in DB;Εικόνα στην βάση δεδομένων';
 $__LOCALE['RCCONTROLPANEL_DPC'][98]='_editctag;Category Tags;Tags κατηγορίας';
 $__LOCALE['RCCONTROLPANEL_DPC'][99]='_edititag;Item Tags;Tags είδους';
-$__LOCALE['RCCONTROLPANEL_DPC'][100]='_menu;Menu;Επιλογές';
-$__LOCALE['RCCONTROLPANEL_DPC'][101]='_slideshow;Slideshow;Επιλογές Slideshow';
+$__LOCALE['RCCONTROLPANEL_DPC'][100]='_menu;Menu;Ρυθμίσεις Μενού';
+$__LOCALE['RCCONTROLPANEL_DPC'][101]='_slideshow;Slideshow;Ρυθμίσεις Slideshow';
 $__LOCALE['RCCONTROLPANEL_DPC'][102]='_ckfinder;Upload files;Upload αρχείων';
 $__LOCALE['RCCONTROLPANEL_DPC'][103]='_webmail;Web Mail;Web Mail';
 $__LOCALE['RCCONTROLPANEL_DPC'][104]='_editpage;Edit Page;Επεξεργασία σελίδας';
@@ -187,9 +187,9 @@ class rccontrolpanel {
 	var $dhtml, $tools, $has_eshop;
 	var $appkey, $awstats_url;
 	var $cptemplate, $stats, $cpStats;
-	var $turl, $cpGet, $turldecoded, $messages;
+	var $turl, $cpGet, $turldecoded, $messages, $tasks;
 	
-	var $rootapp_path;
+	var $rootapp_path, $tool_path;
 		
 	function rccontrolpanel() {
 		
@@ -218,20 +218,16 @@ class rccontrolpanel {
 	      $this->charset = $char_set[getlocal()]; 		
 		
 		
-		$au = remote_paramload('RCCONTROLPANEL','autoupdate',$this->prpath);
-        $this->autoupdate = $au?$au:3600;
-		$this->dashboard = null;
+		//$au = remote_paramload('RCCONTROLPANEL','autoupdate',$this->prpath);
+        //$this->autoupdate = $au?$au:3600;
+		//$this->dashboard = null;
 		
-		$this->ajaxgraph=1;
-		$this->refresh = GetReq('refresh')?GetReq('refresh'):60;//0
 		$this->goto = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
 		
         //READ ENVIRONMENT ATTR
 		if ($_SESSION['LOGIN']=='yes')
 			$this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);		
 		//print_r($this->environment);
-		
-		//$this->load_graph_objects();
 		
 		//awstats cp window
         //$url = "cgi-bin/awstats.pl?config=".str_replace('www.','',$_ENV["HTTP_HOST"])."&framename=mainright#top";			   
@@ -241,36 +237,29 @@ class rccontrolpanel {
 		                     ((!empty($this->murl)) ? array_pop($this->murl) : str_replace('www.','',$_ENV["HTTP_HOST"]));		
 		
 		$this->appkey = new appkey();	
-		$this->rootapp_path = 'stereobi'; //XIX !!!!
+		$this->rootapp_path = remote_paramload('RCCONTROLPANEL','rootpath',$this->prpath); //'stereobi'; //XIX !!!!
+		$toolp = remote_paramload('RCCONTROLPANEL','toolpath',$this->prpath);
+		$this->tool_path = $toolp ? $toolp : '../../cp/'; //ususaly 2 leveles back from apps (root app must set to /)
 		
 		$this->messages = GetSessionParam('cpMessages') ? GetSessionParam('cpMessages') : array();
+		$this->tasks = GetSessionParam('cpTasks') ? GetSessionParam('cpTasks') : array();
+		
 		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath); //metro !!!!
 		
 		$this->stats = array();
 		$this->cpStats = false;
-		/*if ($this->cptemplate) {
-			//***$this->templatepanel(true); //always
-			//$this->_show_update_tools();
-			//$this->cpStats = $this->isStats();
-		}*/		
 	}
 	 	
     function event($sAction) {    	  
 	
-	   /////////////////////////////////////////////////////////////
-	   //if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	//re-login //!!!!
-	   /////////////////////////////////////////////////////////////		
+	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	   if ($login!='yes') return null;	
 	   
-	   //if (GetGlobal('login') || (GetSessionParam('LOGIN')=='yes')) {
-		   
 	   $this->autoupdate();	  //!!!!! 	  		  			      
   
 	   switch ($sAction) {
 	   
 	     case 'cpzbackup' : break;
-	   
-		 /*case 'cpmenushow':  $this->hasmenu = $this->read_directory($this->path);
-							 break; */
 							 
 		 case 'cpchartshow': if ($report = GetReq('report')) {//ajax call
 		                       $this->hasgraph = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use $report");
@@ -278,110 +267,76 @@ class rccontrolpanel {
 							 }
 							 break;
 							 							 	   
-		 /*case 'cpgaugeshow': if ($report = GetReq('report')) {//ajax call
-		                       //$this->load_graph_objects();
-		                       $this->hasgauge = GetGlobal('controller')->calldpc_method("swfcharts.create_gauge_data use $report+where cid=0++1+400+300+meter");
-							   $this->goto = seturl('t=cpgaugeshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
-							 }
-							 break;	*/   
+		 case 'cptasks'    : //ajax call
+		                     $tsk = $this->getTasks();
+							 die('cptasks|'.$tsk);
+							 break;	   
+							 
+		 case 'cpmessages' : //ajax call
+		                     $msgs = $this->getMessages();
+							 die('cpmessages|'.$msgs);
+							 break;	   
 	   	
          case "cplogout"    : $this->logout();
 		                     break;
 		 case "cplogin"     :$valid = $this->verify_login();
 		                     //$this->javascript();							  
 							
-		 case "cpinfo"      :if (GetSessionParam('LOGIN')=='yes') {//ajax call
-								$this->site_stats();  //run stats
-								echo $this->cpinfo($_GET['s']);// .'>>>'. $_GET['s']; 
-								die();
-							 }
+		 case "cpinfo"      ://ajax call
+							 $this->site_stats();  //run stats
+							 echo $this->cpinfo($_GET['s']);
+							 die();
 		                     break;
 							 
 		 case "cp"          :
-		 default         	://if ($this->cptemplate) {
-								$this->set_addons_list();
-								$this->load_graph_objects();
-		                     /*}
-                             elseif (GetSessionParam('LOGIN')=='yes') { 
-								//$this->javascript();	
-								$this->read_directory($this->path);//echo $this->path;
-							  
-								//$this->load_graph_objects();
-								$this->set_addons_list();
-							 }*/
-		                     break;				 
-       } 
-	   //}//if
+		 default         	:
+		                     
+       }  
+
     }
   
     function action($sAction) {
-		   
+
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;
+	   
 	    switch ($sAction) {
 		    
-			case 'cpzbackup' : $out = $this->zip_directory(GetReq('zname'),GetReq('zpath'));
-			                   break;
+			case 'cpzbackup'   : $out = $this->zip_directory(GetReq('zname'),GetReq('zpath'));
+			                     break;
 		  
-		    /*case 'cpmenushow': if ($this->hasmenu) //ajax call
-		                          //$out = $this->show_directory_iconstable(4,3);
-								  $out = $this->ajax_menu(4,3);//,null,1); //xmlout
-							    else
-							      $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
-
-							    die('menu|'.$out); //ajax return
-								break;	*/	  
-		  
-		    case 'cpchartshow': if ($this->hasgraph) {//ajax call
-		                          $out = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");								  
-								}  
-							    else
-							      $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
-
-							    die(GetReq('report').'|'.$out); //ajax return
-								break;
-								
-		    /*case 'cpgaugeshow': if ($this->hasgauge) {//ajax call
-		                          $out = GetGlobal('controller')->calldpc_method("swfcharts.show_gauge use ". GetReq('report') ."+400+300");								  
-								}  
-							    else
-							      $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
-
-							    die(GetReq('report').'|'.$out); //ajax return
-								break;*/										  
+		    case 'cpchartshow' : if ($this->hasgraph)//ajax call
+		                           $out = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");								  
+							     else
+							       $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
+							     die(GetReq('report').'|'.$out); //ajax return
+								 break;
+			case 'cptasks'     : break;						
+		    case 'cpmessages'  : break;										  
 		  	case "cpinfo"      : break;    
 			case "cp"          :	
 			default            : $this->getTURL(); //save param for use by metro cp
 			
-                      			 //if ($this->cptemplate) {
-			                        //echo 'a'; //not always executed but ony ehwn in dashboard
-									//if ((GetReq('t')=='cp')||(!GetReq('t'))) 
-										//$this->templatepanel(); 
-									$this->site_stats();
-									$this->_show_update_tools();
-									$this->_show_addon_tools();
-									$this->cpStats = $this->isStats();
-								 //}	
-			                    /* else
-									$out .= $this->controlpanel(4,3,$this->editmode); */
+								 $this->site_stats();
+		 
+							     $this->set_addons_list();
+							     $this->load_graph_objects();
+			
+							 	 $this->_show_update_tools();
+							 	 $this->_show_addon_tools();
 			  
 		} 		 		  
-	  //}  
-	
-	  return ($out);
+
+		$this->cpStats = $this->isStats(); 	 
+				
+	    return ($out);
     } 
 	
 	//save param for use by metro cp
 	protected function getTURL() {
 		$postedTURL = $_POST['turl'] ? $_POST['turl'] : $_GET['turl']; 
 		
-		if ($turl = $_SESSION['turl']) {//GetSessionParam('turl')) {
-			$this->turl = $turl;
-			$this->turldecoded = GetSessionParam('turldecoded');
-			$this->cpGet = unserialize(base64_decode($_SESSION['cpGet']));			
-			//echo 'insession:',print_r($_POST); print_r($this->cpGet);
-			return true;
-		} 
-        //elseif ($_GET['turl']) { //for the first time in cp
-		elseif ($postedTURL) {//a post from login screen
+		if ($postedTURL) {//a post from login screen
 		    $this->turl = $postedTURL ;
 			$this->turldecoded = str_replace('_&_', '_%26_', base64_decode($postedTURL)); 	
 			$urlquery = parse_url($this->turldecoded); 
@@ -398,79 +353,43 @@ class rccontrolpanel {
 			
 			return true;	
 	    }
-		else {
-			
-		}
+		elseif ($turl = $_SESSION['turl']) {//GetSessionParam('turl')) {
+			$this->turl = $turl;
+			$this->turldecoded = GetSessionParam('turldecoded');
+			$this->cpGet = unserialize(base64_decode($_SESSION['cpGet']));			
+			//echo 'insession:',print_r($_POST); print_r($this->cpGet);
+			return true;
+		} 
 		
 		return false;
 	}
-	/*
-	function javascript() {
-      if (iniload('JAVASCRIPT')) {
-	  
-		   $js = new jscript;	  
-	        
-		   //auto refresh
-	       if ($refresh = $this->refresh)
-             $code = $this->javascript_refresh(seturl('t=cp&refresh='.$refresh),$refresh*1000);  
-
-           if ($this->ajaxgraph) {		   
-	         $code .= $this->ajaxinitjscall();
-		     $js->setloadparams("init();");//call menu ajax		   		   		   		   
-		   }
-		   
-           $js->load_js($code,"",1);			   
-		   unset ($js);		   
-	  }	
-	}
 	
-	function ajaxinitjscall() {
-        $gotomenu = seturl('t=cpmenushow&group='.GetReq('group').'&ai=1&&statsid=');				
-	
-		$out = "
-function init()
-{		 
-  sndReqArg('$gotomenu'+statsid.value,'menu'); 		
-}		
-";					
-        return ($out);
-	}
-	
-    function javascript_refresh($page,$timeout=null) {	 
-	  
-     $mytimeout=$timeout?$timeout:5000;//5 sec
-     $mytimeout2=$timeout?$timeout+2000:7000;//5 sec
-     
-     if ($this->ajaxgraph) {
-	   
-	   if (!empty($this->objcall)) {
-	     $i = 0;
-	     foreach ($this->objcall as $report=>$goto) {
-	       $timeout = $mytimeout + (++$i*1000); //set delay 
-           $ret .= "window.setInterval(\"sndReqArg('$goto'+statsid.value,'$report')\",$timeout);
-";	 
-         }
-	   }
-	   if (!empty($this->objgauge)) {
-	     $j = 0;
-	     foreach ($this->objgauge as $report=>$goto) {
-	       $timeout = $mytimeout + (++$j*1500); //set delay 
-           $ret .= "window.setInterval(\"sndReqArg('$goto'+statsid.value,'$report')\",$timeout);
-";	 
-         }	 
-	   }  
-	 }
-	 else {
-       $ret = "
-function neu()
-{	
-	top.frames.location.href = \"$page\"
-}
-window.setTimeout(\"neu()\",$mytimeout);
+	//called by footer html
+	public function javascript() {
+        $js = "
+function createRequestObject() {var ro; var browser = navigator.appName;
+    if(browser == \"Microsoft Internet Explorer\"){ro = new ActiveXObject(\"Microsoft.XMLHTTP\");
+    }else{ro = new XMLHttpRequest();} return ro;}
+var http = createRequestObject();
+function sndReqArg(url) { var params = url+'&ajax=1'; http.open('post', params, true); http.setRequestHeader(\"Content-Type\", \"text/html; charset=utf-8\");
+    http.setRequestHeader(\"encoding\", \"utf-8\");	 http.onreadystatechange = handleResponse;	http.send(null);}
+function handleResponse() {if(http.readyState == 4){
+	    var response = http.responseText;
+        var update = new Array();
+        response = response.replace( /^\s+/g, \"\" ); // strip leading 
+        response = response.replace( /\s+$/g, \"\" ); // strip trailing		
+        if(response.indexOf('|' != -1)) {
+			//alert(response); 	
+            update = response.split('|');
+            document.getElementById(update[0]).innerHTML = update[1];
+        }}}  		
+		function init(){ sndReqArg('cp.php?t=cptasks','cptasks');} 
+		window.setInterval(\"sndReqArg('cp.php?t=cptasks','cptasks')\",63000);
+		window.setInterval(\"sndReqArg('cp.php?t=cpmessages','cpmessages')\",61200);
 ";
-	 }
-	 return ($ret);
-    }	*/			  
+
+		return $js;
+	}	  
 	  
     protected function controlpanel($type=4,$linemax=3,$nav_off=null,$win_off=null) {
 	 
@@ -690,7 +609,7 @@ window.setTimeout(\"neu()\",$mytimeout);
                case 'jqgrid'  :         $text = "JQgrid installed"; break;
 			   case 'awstats' :         $text = "AWStats installed"; break;	
 			   
-			   case 'edit_htmlfiles':   $text = $this->edit_html_files(false, true, true);
+			   case 'edit_htmlfiles':   //$text = $this->edit_html_files(false, true, true);
 			                            break; 
                case 'addkey'        :  	//always repeat...
 			                            if ($e1 = $this->call_wizard_url('addkey')) 
@@ -721,7 +640,7 @@ window.setTimeout(\"neu()\",$mytimeout);
 		   }
 		}
 		//elseif (($ison>0) && (array_key_exists(strtoupper($tool),$this->environment))) {//($this->environment[strtoupper($tool)]==0)) {
-		elseif ((array_key_exists(strtoupper($tool),$this->environment)) && 
+		elseif ((!empty($this->environment)) && (array_key_exists(strtoupper($tool),$this->environment)) && 
 		        ($this->environment[strtoupper($tool)]==0)) {//installed tool no privilege
 		   //no priviledge
 		   //do nothing...
@@ -1094,15 +1013,15 @@ window.setTimeout(\"neu()\",$mytimeout);
     protected function call_wizard_url($addon=null,$isupdate=false) {
         if (!$addon) return false;
 		
-		$upgrade_root_path = $this->prpath . '/../../cp/upgrade-app/';	
-		$update_root_path = $this->prpath . '/../../cp/update-app/'; 
+		$upgrade_root_path = $this->prpath . $this->tool_path . 'upgrade-app/';	
+		$update_root_path = $this->prpath . $this->tool_path . 'update-app/'; 
 		
 		$r_path = $isupdate ? $update_root_path : $upgrade_root_path;
 		
-	    $inifile = $r_path . "/cpwizard-".$addon.".ini";
-		$target_inifile = $this->prpath . "/cpwizard-".$addon.".ini";
+	    $inifile = $r_path . "cpwizard-".$addon.".ini";
+		$target_inifile = $this->prpath . "cpwizard-".$addon.".ini";
 		$installed_inifile = str_replace('.ini','._ni',$target_inifile);
-		//echo $inifile;
+		//echo $inifile,'<br/>';
 		
 		if ((is_readable($target_inifile)) || ((is_readable($inifile)))){//already copied or fetch from root app
 
@@ -1120,7 +1039,7 @@ window.setTimeout(\"neu()\",$mytimeout);
     //read update ini files
     function read_update_directory() {
   
-		$dirname = $this->prpath . '/../../cp/update-app/';
+		$dirname = $this->prpath . $this->tool_path . 'update-app/';
   
         //echo $dirname;
 	    if (is_dir($dirname)) {
@@ -1366,7 +1285,7 @@ window.setTimeout(\"neu()\",$mytimeout);
 		$fs = $this->free_space();
 		//if $total_size<0 ...goto upgrade.....		
 		if ($fs < 0)
-			$this->setMessage('warning|Upgrade your hosting plan');		
+			$this->setTask('danger|Upgrade your hosting plan|99');		
 		
 
 		
@@ -1578,10 +1497,7 @@ window.setTimeout(\"neu()\",$mytimeout);
     } 
 	
     protected function cached_mail_size() {
-	   // /home/stereobi/mail/domain
 	   $path = '/home/'.$this->rootapp_path.'/mail/' . str_replace('www.','',$this->url);
-  	   //$path = $this->prpath . '../../../../mail/' . str_replace('www.','',$this->url); // ./mail/domainname
-	   //echo $path,'>>>';
        $name = 'a';//strval(date('Ymd'));
        $msize = $this->prpath . $name . '-msize.size';
 	   $size = 0;
@@ -1699,11 +1615,11 @@ window.setTimeout(\"neu()\",$mytimeout);
 
 		/*size % used check */
 		if ($this->stats['Diskspace']['remainsizepercent'] > 90) 
-			$this->setMessage('warning|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size remain');	
+			$this->setTask('danger|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size in use|'.$this->stats['Diskspace']['remainsizepercent'].'|#');	
 		elseif ($this->stats['Diskspace']['remainsizepercent'] > 80) 
-			$this->setMessage('important|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size remain');	
+			$this->setTask('warning|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size in use|'.$this->stats['Diskspace']['remainsizepercent'].'|#');	
 		elseif ($this->stats['Diskspace']['remainsizepercent'] > 70) 
-			$this->setMessage('info|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size remain');			
+			$this->setTask('info|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size in use|'.$this->stats['Diskspace']['remainsizepercent'].'|#');			
 
 		return ($remain_size);	
 	}
@@ -1776,7 +1692,7 @@ window.setTimeout(\"neu()\",$mytimeout);
 		//compare with root dir
 		//return array of newer
 		$dirname = $this->urlpath . '/cgi-bin/shop/';
-		$diffdir = $this->prpath . '/../../cp/upgrade-app/cgi-bin/shop/';
+		$diffdir = $this->prpath . $this->tool_path . 'upgrade-app/cgi-bin/shop/';
 		
 		if (is_dir($dirname)) {
 			$mydir = dir($dirname);
@@ -1807,7 +1723,7 @@ window.setTimeout(\"neu()\",$mytimeout);
 		//compare with root dir
 		//return array of newer
 		$dirname = $this->prpath . '/';
-		$diffdir = $this->prpath . '/../../cp/upgrade-app/cp/';
+		$diffdir = $this->prpath . $this->tool_path . 'upgrade-app/cp/';
 		
 		if (is_dir($dirname)) {
 			$mydir = dir($dirname);
@@ -1902,8 +1818,8 @@ window.setTimeout(\"neu()\",$mytimeout);
 
    protected function parse_environment($save_session=false) {	   
 	$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
-	$this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;
-	//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$adminsecid.':'.$this->seclevid;
+	$seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;
+	//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$adminsecid.':'.$seclevid;
 	
     if ($ret = $_SESSION['env']) {
 	    //echo 'insession';
@@ -1914,14 +1830,14 @@ window.setTimeout(\"neu()\",$mytimeout);
 
 	//$myenvfile = /*$this->prpath .*/ 'cp.ini';
 	//$ini = @parse_ini_file($myenvfile ,false, INI_SCANNER_RAW);	
-    $ini = @parse_ini_file("cp.ini");
+    $ini = @parse_ini_file($this->prpath . "cp.ini");
 	if (!$ini) die('Environment error!');	
 	
 	//print_r($ini); 
 	foreach ($ini as $env=>$val) {
 	    if (stristr($val,',')) {
 		    $uenv = explode(',',$val);
-			$ret[$env] = $uenv[$this->seclevid];  
+			$ret[$env] = $uenv[$seclevid];  
 		}
 		else
 		    $ret[$env] = $val;
@@ -2097,34 +2013,36 @@ window.setTimeout(\"neu()\",$mytimeout);
 	public function isStats() {
 		return (!empty($this->stats) ? true : false);
 	}
-	
+
+	/* cp header messages and tasks */ 	
 	public function getMessagesTotal() {
 		//print_r($this->messages);
-		$ret = (empty($this->messages)) ? null : count($this->messages);
+		$ret = (empty($this->messages)) ? 0 : count($this->messages);
 		return $ret;		
 	}		
 
-	/* cp header */ 
-	public function getMessages($template=null, $limit=null) {
+	public function getMessages($limit=null) {
 		if (empty($this->messages)) return null;
+		//print_r($this->messages);
 		$tokens = array(); 
+		$lim = $limit ? $limit : 6;
 		$msgs = array_reverse($this->messages, true);
 		$i = 0;
 		foreach ($msgs as $n=>$m) {
 			$tokens = explode('|', $m); 
 			switch (array_shift($tokens)) {
-				case 'important' : $tmpl = 'dropdown-task-progress-active'; break;
-				case 'success'   : $tmpl = 'dropdown-task-progress-active'; break;
-				case 'warning'   : $tmpl = 'dropdown-task-progress-danger'; break;
+				case 'important' : $tmpl = 'dropdown-notification-important'; break;
+				case 'success'   : $tmpl = 'dropdown-notification-success'; break;
+				case 'warning'   : $tmpl = 'dropdown-notification-warning'; break;
 				case 'info'      :
-				default          : $tmpl = 'dropdown-task-progress-danger';
+				default          : $tmpl = 'dropdown-notification-info';
 				
 			}
 			$tdata = $this->select_template($tmpl, 'metro');  //<<<<<<<<<<<<<<<<<<<<<<< !!clear when became default skin
 			$ret .= $this->combine_tokens($tdata, $tokens, true);
 			unset($tokens);	
 			$i+=1;
-			if ($i>10) break;
+			if ($i>$lim) break;
 		}
 		
 		return ($ret);			
@@ -2151,14 +2069,81 @@ window.setTimeout(\"neu()\",$mytimeout);
 
 		foreach ($this->messages as $m=>$message) {
 			$tokens = explode('|', $message); 
-			$message = $tokens[1];
+			$msg = $tokens[1];
 			if ($t) 	
-				$ret .= $this->combine_tokens($t, array(0=>$message));
+				$ret .= $this->combine_tokens($t, array_shift($tokens));//array(0=>$msg));
 			else
-				$ret .= "<option value=\"$m\">$message</option>";
+				$ret .= "<option value=\"$m\">$msg</option>";
 		}
 		return ($ret);
 	}	
+	
+	
+	
+	public function getTasksTotal() {
+		//print_r($this->tasks);
+		$ret = (empty($this->tasks)) ? 0 : count($this->tasks);
+		return $ret;		
+	}		
+
+	public function getTasks($limit=null) {
+		if (empty($this->tasks)) return null;
+		//print_r($this->tasks);
+		$tokens = array(); 
+		$lim = $limit ? $limit : 6;
+		$msgs = array_reverse($this->tasks, true);
+		$i = 0;
+		foreach ($msgs as $n=>$m) {
+			$tokens = explode('|', $m); 
+			switch (array_shift($tokens)) {
+				case 'active'    : $tmpl = 'dropdown-task-progress-active'; break;
+				case 'success'   : $tmpl = 'dropdown-task-progress-success'; break;
+				case 'warning'   : $tmpl = 'dropdown-task-progress-warning'; break;
+				case 'danger'    : $tmpl = 'dropdown-task-progress-danger'; break;
+				case 'info'      :
+				default          : $tmpl = 'dropdown-task-progress-info';
+				
+			}
+			$tdata = $this->select_template($tmpl);
+			$ret .= $this->combine_tokens($tdata, $tokens, true);
+			unset($tokens);	
+			$i+=1;
+			if ($i>$lim) break;
+		}
+		
+		return ($ret);			
+	}	
+	
+	public function setTask($task=null) {
+		if (!$task) return false;
+		$id = explode('|',$task);
+		$hash = md5($id[0].$id[1]);
+		
+		if (array_key_exists($hash, $this->task)) {}
+		else {
+			$this->tasks[$hash] = $task;
+			SetSessionParam('cpTasks', $this->tasks);
+			return true;
+		}
+		return false;	
+	}
+	
+	public function viewTasks($template=null) {
+		if (empty($this->tasks)) return;
+	    $t = ($template!=null) ? $this->select_template($template) : null;
+		//$msgs = array_reverse($this->tasks, true);
+
+		foreach ($this->tasks as $t=>$task) {
+			$tokens = explode('|', $task); 
+			//$tsk = $tokens[1];
+			if ($t) 	
+				$ret .= $this->combine_tokens($t, array_shift($tokens)); //array(0=>$tsk));
+			else
+				$ret .= "<option value=\"$t\">$tsk</option>";
+		}
+		return ($ret);
+	}		
+	
 	
 	function select_template($tfile=null, $path=null) {
 		if (!$tfile) return;

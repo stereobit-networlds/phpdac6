@@ -56,6 +56,7 @@ class rctrackurl  {
 
 	     case 'mtrack'      :
 		 default            : //$this->javascript();
+		                      $this->insert_into_local_ulist();	
 		                      $this->urlTracker();
 	   }
 		
@@ -97,7 +98,7 @@ class rctrackurl  {
         return ($ret);	
 	}
 	
-	public function urlTracker() {
+	protected function urlTracker() {
 		//print_r($_GET);
 		$u = $_GET['u'];     //url to go
 		$cid = $_GET['cid']; //mail campaign id
@@ -110,14 +111,41 @@ class rctrackurl  {
 			$hosted_path = $this->prpath . '../' . $a . '/cp/' ;
 			$appurl  = remote_paramload('SHELL','urlbase',$hosted_path,1);
 		
-			$url = $appurl .'/'. $u . '#' . $cid.'|'.$r;
+			$url = $appurl .'/'. $u . '#' . $cid.'|'. urlencode($r);
 			//$url = $appurl .'/'. str_replace('-','/',$u) . '#' . $cid.'|'.$r; //htaccess / problem
 			$this->location = $url;
-			$this->javascript();
+			
 			//$link = "<a href='$url'>".$url."</a>";
 			//echo $link;
-		}  
+		}
+		else { //not a handled www
+		
+		    $url = 'http://'. $u . '#' . $cid.'|'. urlencode($r);
+		    $this->location = $url;
+		}	
+		
+		$this->javascript();
+		
+		return true;		
 	}	
+	
+	protected function insert_into_local_ulist() {
+		$db = GetGlobal('db');
+		$dtime = date('Y-m-d h:i:s');
+		$cmail = base64_decode($_GET['r']);
+		$cid = $_GET['cid']; //mail campaign id
+		$a = $_GET['a'];     //app name		
+		
+		$listname = $a ? $a : 'urltarck';
+		$name = $cid ? $cid : 'unknown';
+		
+		$sSQL = "insert into ulists (startdate,active,lid,listname,name,email) values (".
+				$db->qstr($dtime). ",1,1," . $db->qstr($listname). ",". $db->qstr($name) .",".$db->qstr($cmail).")";
+		//echo $sSQL;
+		$db->Execute($sSQL,1);			
+		
+		return true;
+	}
 };
 }
 ?>	

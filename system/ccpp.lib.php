@@ -225,6 +225,16 @@ class CCPP
 	    }
 		if (!empty($post_macros))
 			$this->macros += $post_macros;		
+		
+	    //login (special vars)
+		if ($GLOBALS['UserName'] || $_SESSION['UserName'])
+		$special_macros['USERLOGIN'] = 1 ;
+	    if ($GLOBALS['ADMIN'] || $_SESSION['ADMIN'])
+		$special_macros['ISADMIN'] = 1 ;
+	    if ($GLOBALS['AdminSecID'] || $_SESSION['AdminSecID'])
+		$special_macros['ADMINSECID'] = $GLOBALS['AdminSecID'] ? $GLOBALS['AdminSecID'] : $_SESSION['AdminSecID'];
+		if (!empty($special_macros))
+			$this->macros += $special_macros;		
 	}
 	
     // Options getters and setters

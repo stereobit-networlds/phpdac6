@@ -386,7 +386,7 @@ document.addEventListener('keydown', function (event) {
 			$tags = GetParam('tags') ;//as come from post ...str_replace(' ',',',GetParam('tags'));
 			$text = GetParam('htmltext');
 			$descr = substr(trim(strip_tags($text)),0,250).'...';
-		    $category = $id;
+		    $category = str_replace('_',' ',$id);
 			
 			$save_attachment = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code."+". $type."+".$text."+1");		
 			$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
@@ -798,7 +798,7 @@ document.addEventListener('keydown', function (event) {
 	
 	//handle dropzone js form for pic uploading
 	protected function dropzone($accepted_filetypes=null) {
-	    $title = GetParam('title') ? str_replace(' ','-',GetParam('title')) : 'title'; //posted item code
+	    $title = $_GET['title'] ? str_replace(' ','-',$_GET['title']) : 'title'; //posted item code
 		$ds = DIRECTORY_SEPARATOR;  
 		//$storeFolder = 'uploads'; 
 
@@ -858,6 +858,7 @@ document.addEventListener('keydown', function (event) {
 				}
 			}
 		}
+		//file_put_contents($this->prpath.'dropzone.txt' ,$targetName);
 		die();
 	}
 	

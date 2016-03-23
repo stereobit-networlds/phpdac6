@@ -225,24 +225,27 @@ class rcpmenu {
     protected function getTURL() {
 		$postedTURL = $_POST['turl'] ? $_POST['turl'] : $_GET['turl'];
 	   
-	    if ($turl = $_SESSION['turl']) { //GetSessionParam('turl')) {
-			$this->turl = $turl;
-			$this->turldecoded = GetSessionParam('turldecoded');
-			$this->cpGet = unserialize(base64_decode($_SESSION['cpGet']));
-			//echo 'insession:',print_r($_POST); print_r($this->cpGet);
-	    }
-        //elseif ($_GET['turl']) { //for the first time in cp
-	    elseif ($postedTURL) {//a post from login screen
+	    if ($postedTURL) {//a post from login screen
 			$this->turl = $postedTURL;
 			$this->turldecoded = str_replace('_&_', '_%26_', base64_decode($postedTURL));
 			$urlquery = parse_url($this->turldecoded); 
 			parse_str($urlquery['query'], $getp); 	
 			$this->cpGet = $getp;
+			//echo 'inpost:';
+			//print_r($this->cpGet);
 			
 			SetSessionParam('turl', $postedTURL);
 			SetSessionParam('turldecoded', $this->turldecoded);		
 			SetSessionParam('cpGet', base64_encode(serialize($this->cpGet)));
 	    }		   
+	    elseif ($turl = $_SESSION['turl']) { //GetSessionParam('turl')) {
+			$this->turl = $turl;
+			$this->turldecoded = GetSessionParam('turldecoded');
+			$this->cpGet = unserialize(base64_decode($_SESSION['cpGet']));
+			//echo 'insession:';
+			//print_r($_GET);
+			//print_r($this->cpGet);
+	    }   
 	   
 	    return ($this->turldecoded);
    }  
@@ -274,7 +277,7 @@ class rcpmenu {
 
 	//$myenvfile = /*$this->prpath .*/ 'cp.ini';
 	//$ini = @parse_ini_file($myenvfile ,false, INI_SCANNER_RAW);	
-    $ini = @parse_ini_file("cp.ini");
+    $ini = @parse_ini_file($this->path . "cp.ini");
 	if (!$ini) die('Environment error!');	
 	
 	//print_r($ini); 

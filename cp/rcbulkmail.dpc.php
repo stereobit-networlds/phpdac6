@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['RCBULKMAIL_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCBULKMAIL_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ( (!defined("RCBULKMAIL_DPC")) && (seclevel('RCBULKMAIL_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCBULKMAIL_DPC",true);
@@ -32,6 +32,7 @@ $__EVENTS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
 $__EVENTS['RCBULKMAIL_DPC'][15]='cpmailstats';
 $__EVENTS['RCBULKMAIL_DPC'][16]='cpviewclicks';
 $__EVENTS['RCBULKMAIL_DPC'][17]='cpviewtrace';
+$__EVENTS['RCBULKMAIL_DPC'][18]='cp'; //cp when fist page
 
 $__ACTIONS['RCBULKMAIL_DPC'][0]='cpbulkmail';
 $__ACTIONS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
@@ -51,6 +52,7 @@ $__ACTIONS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
 $__ACTIONS['RCBULKMAIL_DPC'][15]='cpmailstats';
 $__ACTIONS['RCBULKMAIL_DPC'][16]='cpviewclicks';
 $__ACTIONS['RCBULKMAIL_DPC'][17]='cpviewtrace';
+$__ACTIONS['RCBULKMAIL_DPC'][18]='cp'; //cp when first page
 
 $__LOCALE['RCBULKMAIL_DPC'][0]='RCBULKMAIL_DPC;Mail queue;Mail queue';
 $__LOCALE['RCBULKMAIL_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
@@ -108,9 +110,10 @@ class rcbulkmail {
 	var $ishtml, $mailbody, $template_ext, $template_images_path, $template;
 	var $ulistselect, $messages, $cid, $savehtmlpath, $savehtmlurl;
 	var $stats, $cpStats, $hasgraph, $goto, $refresh, $ajaxgraph, $objcall;
-	var $sendOk, $iscollection;
+	var $sendOk, $iscollection, $disable_settings, $user_realm;
 	
 	var $appname, $appkey, $cptemplate, $urlRedir, $urlRedir2, $webview, $nsPage;
+	var $owner, $seclevid;
 		
     function __construct() {
 	  
@@ -164,48 +167,54 @@ class rcbulkmail {
 		$this->appname = paramload('ID','instancename');
 		$this->appkey = new appkey();			
 		
-		$this->messages = array(); //reset messages any time page reload		
+		$this->messages = array(); //reset messages any time page reload - local msg system
 		$this->stats = array();
 		$this->cpStats = false;			
 		
-		//$this->ajaxgraph = 1;
-		$this->refresh = GetReq('refresh')?GetReq('refresh'):60;//0
-		$this->goto = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
+		//$this->refresh = GetReq('refresh')?GetReq('refresh'):60;//0
+		$this->gotourl = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
 		$this->objcall = array();
 		
 		$this->urlRedir = remote_paramload('RCBULKMAIL','urlredir', $this->prpath);
 		$this->urlRedir2 = remote_paramload('RCBULKMAIL','urlredir2', $this->prpath);
 		
 		$tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
-	    $this->cptemplate = $tmpl ? $tmpl : 'metro';		
+	    $this->cptemplate = $tmpl ? $tmpl : 'metro';	
 
+		$settings = remote_paramload('RCBULKMAIL','settingsdisable', $this->prpath);		
+		$this->disable_settings = $settings ? true : false; //form disable
+		$this->user_realm = remote_paramload('RCBULKMAIL','userrealm', $this->prpath);
+		
+		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName'); //decode(GetSessionParam('UserName'));	
+		$this->seclevid = GetSessionParam('ADMINSecID');			
+
+		//echo '>', GetSessionParam('LoginName').'<br/>'.GetSessionParam('UserName').'<br/>'.decode(GetSessionParam('UserName'));
 		//$timeZone = 'Europe/Athens';  // +2 hours !!! (cron must run at the same timezone)
 	}
 	
     function event($event=null) {
 	
-	    /////////////////////////////////////////////////////////////
-	    if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
-	    /////////////////////////////////////////////////////////////			
-  
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;
+		
 		if (defined('RCCOLLECTIONS_DPC')) //used by wizard html page !!
-			$this->iscollection = GetGlobal('controller')->calldpc_method('rccollection.isCollection');  
+			$this->iscollection = GetGlobal('controller')->calldpc_method('rccollection.isCollection');  		
 			
-		//set message 
-		//GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use warning|test 123|1|#");						
-		$this->percentofCamps();
+		//set message (in actions, dpc call error)
+		//GetGlobal('controller')->calldpc_method("rccontrolpanel.setTask use info|test 123|1|#");						
+		$this->percentofCamps();		//<<<<<<<<<<<<<<<<<<<<<<<<<<<??? use with new rccontrolpanel		
   
 	    switch ($event) {
 			
 		    case 'cpchartshow'	: if ($report = GetReq('report')) {//ajax call
 									$this->hasgraph = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use $report");
-									$this->goto = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
+									$this->gotourl = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 								  }
 								  break;									  
 
-            case 'cpmailstats'     : $this->_js();
-			                         $this->load_graph_objects();
-									 $this->runstats();		
+            case 'cpmailstats'     : //as first tme loged in stats must be calced at action
+			                         //$this->load_graph_objects();
+									 //$this->runstats();		
                                      break;			
 			
 	        case 'cpviewcamp'      : $this->load_campaign();
@@ -258,12 +267,14 @@ class rcbulkmail {
 										 
 			case "cpsubsend"      :	$this->sendOk = $this->send_mails();
 									SetSessionParam('messages',$this->messages);
-									$this->runstats();
+									//$this->runstats();
 				                    break; 									 
 			
 	        case 'cpsavemailadv'  : $this->save_campaign();
 									SetSessionParam('messages',$this->messages); //save messages
 			                        break;
+									
+			case 'cp'             :	//$this->runstats(); //when first page and need to run stats					
 			case 'cpbulkmail'     :
 			default               :	if ($this->template) {
 				                        //also when returns in cp and template is selected
@@ -271,27 +282,29 @@ class rcbulkmail {
 											$this->loadTemplate2(); //subtemp						  
 										else
 											$this->loadTemplate();						  
-			                        }	
-        }
-		
-		//when stats run (used by timeline fun call into breadcrumb)
-		$this->cpStats = $this->isStats();		
+			                        }									
+        }			
+			
     }	
 
-    function action($action=null)  { 
+    function action($action=null)  { 	
 
-	     switch ($action) {
+        $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;
+		
+	    switch ($action) {
 			 
-		    case 'cpchartshow': if ($this->hasgraph) {//ajax call
-		                          $out = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");								  
-								}  
-							    else
-							      $out = localize('_GNAVAL',0);	
+		    case 'cpchartshow'         : if ($this->hasgraph) //ajax call
+											$out = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");
+										 else
+											$out = localize('_GNAVAL',0);	
 
-							    die(GetReq('report').'|'.$out); //ajax return
-								break;	
+										 die(GetReq('report').'|'.$out); //ajax return
+										 break;	
 
-            case 'cpmailstats'         :								
+            case 'cpmailstats'         : $this->load_graph_objects();
+			                             $this->runstats();	
+                                         break;			
 			 
 			case 'cppreviewcamp'       : 
 			case 'cpviewcamp'          : $out = null; 
@@ -317,40 +330,25 @@ class rcbulkmail {
 			case 'cpmailbodyshow' : break; 
 			case 'cploadframe'    : break; 									 
 			
-			case 'cpsubloadhtmlmail':
-	        case 'cpsubsend'      :	
-            case 'cpsavemailadv'  :			
-			case 'cpbulkmail'     :
+			case 'cpsubloadhtmlmail':break;
+            case 'cpsavemailadv'  :	break;
+	        case 'cpsubsend'      :	$this->runstats();	break;	
+			case 'cp'             : $this->runstats();  break;		
+			case 'cpbulkmail'     : break;
 		    default               : $out .= null;
-		 }			 
+		}	
 
-	     return ($out);
+		//when stats run (used by timeline fun call into breadcrumb)
+		$this->cpStats = $this->isStats();		
+		
+        return ($out);
 	}
 	
-	/*disabled due to js on page*/
-	protected function grid_javascript() {
-	  //mygrid must be loaded to have sense (link on grid)
-      if ((iniload('JAVASCRIPT')) && (defined('MYGRID_DPC'))) {
-
-	       $code = $this->init_grids();			
-		   $js = new jscript;
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }		
-	}	
-
-	protected function init_grids() {
-
-		$bodyurl = seturl("t=cploadframe&id=");
-			
-		$out = "
-function show_body() {
-  var taskid = arguments[0];
-  var custid = arguments[1];  
-  sndReqArg('$bodyurl'+taskid,'mailbody');
-}		
-";
-        return ($out);
+	/*disable settings in form*/
+	public function disableSettings() {
+		
+		$ret = $this->disable_settings ? 'disabled' : null; //form disable
+		return ($ret);
 	}
 	
 	protected function dosubscribe($mail=null,$notell=null,$name=null) {
@@ -723,34 +721,6 @@ function show_body() {
 			
 
     protected function subscribeform()  { 		
-       /*
-       $filename = seturl("t=cpsubscribe&editmode=".GetReq('editmode'));      
-    
-       $toprint  = "<FORM action=". "$filename" . " method=post>"; 
-	   $toprint .= "<STRONG>E-mail:</STRONG><INPUT type=\"text\" name=\"submail\" maxlenght=\"64\" size=25>";	   
-	   $toprint .= "<STRONG>UList name:</STRONG><input type=\"text\" name=\"ulistname\" maxlenght=\"80\" value=\"\">";
-	   $toprint .= "<STRONG>Separator:</STRONG><INPUT type=\"text\" name=\"separator\" maxlenght=\"3\" size=3><br>";	   
-	   
-       $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"csvmails\" ROWS=18 cols=60 wrap=\"virtual\">";
-	   $toprint .=  GetParam('csvmails');		 
-       $toprint .= "</TEXTAREA></DIV><br>";	   
-	   
-
-	   //$toprint .= "<input type=\"submit\" name=\"FormAction\" value=\"cpsubscribe\">&nbsp;"; 
-       //$toprint .= "<input type=\"submit\" name=\"FormAction\" value=\"cpunsubscribe\">";	  
-       $toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"cpsubscribe\">"; 
-       $toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_SUBSCR',getlocal()) . "\">&nbsp;";  
-       $toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpsubscribe" . "\">";	 	   
-	   	    
-       $toprint .= "</FONT></FORM>";
-	   
-	   $data2[] = $toprint; 
-  	   $attr2[] = "left";
-
-	   $swin = new window(localize('_SUBSCR',getlocal()),$data2,$attr2);
-	   $out .= $swin->render("center::100%::0::group_dir_body::left::0::0::");	
-	   unset ($swin);	
-	   REPLACED BY CP HTML PAGE FORM ELEMENTS*/
 
 	   //ulist form
        $out .= $this->ulistform(GetParam('ulistname'));	   
@@ -960,7 +930,7 @@ function show_body() {
 		    //echo $sub_data,'>';
 			$data = str_replace('<!--?'.$sub_template.'?-->',$sub_data,$data);	/**changed the subtemplate mask **/	   
 		}
-		
+
 		return ($data);		
 	}		
 	
@@ -996,6 +966,8 @@ function show_body() {
 			}
 			else*/		
 				$data = @file_get_contents($path . $template); 
+			//echo $path . $template; 
+			//echo $data;
 			
 		    /*$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
 		               $this->encUrl($this->savehtmlurl . $cid . '.html');
@@ -1003,27 +975,44 @@ function show_body() {
 			$tokens[] = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";
 			
 			$body = $this->combine_tokens($data, $tokens, true);*/			
-		}	
-		$this->mailbody = $body;
+			
+			$this->mailbody = $body;
 		
-		return true;
+			return true;			
+		}	
+		return false;
 	}	
 	
 	
 	
+	public function userRealm() {
+       $db = GetGlobal('db');	
+	
+	   if ($UserName) {
+		    $sSQL = 'select fname from users where username=' . $db->qstr($this->owner);
+			//echo $sSQL;
+			$result = $db->Execute($sSQL,2);
+			return ($result->fields[0]);
+	   }
+	   return false;
+	}
+	
+	
 	
 	public function viewCampaigns() {
-		$db = GetGlobal('db');
-        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');		
+		$db = GetGlobal('db');	
 		
-		$sSQL = 'select cdate,cid,title,timein from mailcamp where owner=' . $db->qstr($owner);		   
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);		
+		
+		$sSQL = 'select cdate,cid,title,timein from mailcamp where ' . $ownerSQL . ' and ';		   
 		if ($text = GetParam('mail_text')) {
 			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail'));
-			$sSQL .= " and cid = " . $db->qstr($cid);	
+			$sSQL .= "cid = " . $db->qstr($cid);	
 			$sSQL .= GetParam('savecmp') ?  ' and active=1' : null; //temp camps without multiple selection
 		}
         else		
-			$sSQL .= " and active=1";
+			$sSQL .= "active=1";
 		$sSQL .= " ORDER BY timein desc";	
 
 		//echo $sSQL;	
@@ -1039,18 +1028,20 @@ function show_body() {
 	}	
 	
 	function show_select_camp($name, $taction=null, $class=null) {
-		$db = GetGlobal('db');
-        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');			
-		//echo $owner;	
-		$sSQL = 'select cdate,cid,title from mailcamp where owner=' . $db->qstr($owner);
+		$db = GetGlobal('db');		
+
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner) . ' and ';			
+
+		$sSQL = 'select cdate,cid,title from mailcamp where ' . $ownerSQL ;
 		if ($text = GetParam('mail_text')) {
 			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail')); //when new post
-			$sSQL .= " and cid = " . $db->qstr($cid);	
+			$sSQL .= " cid = " . $db->qstr($cid);	
 			$sSQL .= GetParam('savecmp') ?  ' and active=1' : null; //temp camps without multiple selection
 		}
         else {		
 		    $choose = "<option value=\"\">Select...</option>";
-			$sSQL .= " and active=1";
+			$sSQL .= " active=1";
 		}	
 		$sSQL .= " ORDER BY cdate desc";
 
@@ -1066,6 +1057,8 @@ function show_body() {
 		$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
 		$ret .= $choose ? $choose : null; //"<option value=\"\">Select...</option>";
 		//print_r($resultset);
+		
+		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 			$selection = ($rec[1] == $mycid) ? " selected" : null;
 			$ret .= "<option value='".$url . $rec[1]."' $selection >". $rec[2]."</option>" ;
@@ -1082,36 +1075,46 @@ function show_body() {
 	}	
 	
 	protected function load_campaign() {
-		$db = GetGlobal('db');
-        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');			
+		$db = GetGlobal('db');		
         if (!$this->cid) return false;
 		
-		$sSQL = 'select title,cdate,ulists,cc,user,pass,server from mailcamp where owner='.$db->qstr($owner).' and cid=';
-        $sSQL .= $db->qstr($this->cid);	
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);	
+		$cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
+		
+		$sSQL = 'select title,cdate,ulists,cc,user,pass,server from mailcamp where '. $ownerSQL . $cidSQL;
         //echo $sSQL;		
+		
 		$resultset = $db->Execute($sSQL,2);
 		//$rec = array_pop($resultset);
 		foreach ($resultset as $n=>$rec) {
 			SetParam('subject', $rec[0]); //make it global to used be html form
 			SetParam('ulists', $rec[2]); //
 			SetParam('from', $rec[3]); // from cc
-			SetParam('user', $rec[4]); //alternative mail user
-			SetParam('pass', $rec[5]); //alternative mail pass
-			SetParam('server', $rec[6]); //alternative mail server
+			//make it global to used be html form (hide default settings)
+			if ($rec[4]!=$this->mailuser) SetParam('user', $rec[4]); //alternative mail user
+			if ($rec[5]!=$this->mailpass) SetParam('pass', $rec[5]); //alternative mail pass
+			if ($rec[6]!=$this->mailserver) SetParam('server', $rec[6]); //alternative mail server
+			//fetch user realm from users
+			$realm = $this->userRealm();		
+			$m_realm = $realm ? $realm : $this->mailname; 
+			SetParam('realm', $m_realm);			
 		}	
-		//SetParam('from', $this->mailuser);//make it global to used be html form (is the ini setting)
-		
+
 		return ($rec[0]); //one rec
 	}	
 	
 	protected function preview_campaign() {
-		$db = GetGlobal('db');
-        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');		
-        if (!$this->cid) die("");
+		$db = GetGlobal('db');	
+        if (!$this->cid) die("CID error");
 		
-		$sSQL = 'select body from mailcamp where owner='.$db->qstr($owner).' and cid=';
-        $sSQL .= $db->qstr($this->cid);	
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
+        $cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
+		
+		$sSQL = 'select body from mailcamp where '. $ownerSQL . $cidSQL;
         //echo $sSQL;		
+		
 		$resultset = $db->Execute($sSQL,2);
 		foreach ($resultset as $n=>$rec) 
 			$text = base64_decode($rec[0]); 
@@ -1121,11 +1124,10 @@ function show_body() {
 	
     /*type : 0 save text as mail body /1 save collections as text to reproduce (offers, katalogs) */	
     protected function save_campaign($type=null) {
-        $db = GetGlobal('db'); 
-        $owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('UserName');	
+        $db = GetGlobal('db'); 	
 		$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
 		                            $this->encUrl($this->savehtmlurl . $cid . '.html');
-		$plink = "[<a href='$pageurl'>".localize('_here',getlocal())."</a>]";
+		$plink = "<a href='$pageurl'>".localize('_here',getlocal())."</a>";
 		
 		//print_r($_POST);
         /*foreach ($_POST as $p=>$pp) {
@@ -1144,14 +1146,25 @@ function show_body() {
 				
         $cc = GetParam('from'); //from origin		
 		$to = GetParam('submail'); //to origin
+		
 		$bcc = $this->getmails($to); //fetch mails plus 'to' origin
+		//echo $bcc;
+		if (!$bcc) {
+			$this->messages[] = 'Campaign NOT saved (no receipients)';
+			return false;
+		}		
 		
 		$m_user = GetParam('user') ? GetParam('user') : $this->mailuser; //user origin
 		$m_pass = GetParam('pass') ? GetParam('pass') : $this->mailpass;//pass origin
 		$m_server = GetParam('server') ? GetParam('server') : $this->mailserver; //server origin
-		SetParam('user', $m_user); //make it global to used be html form
-		SetParam('pass', $m_pass);
-		SetParam('server', $m_server); 
+		//make it global to used be html form (hide default settings)
+		if ($m_user!=$this->mailuser) SetParam('user', $m_user); 
+		if ($m_pass!=$this->mailpass) SetParam('pass', $m_pass);
+		if ($m_server!=$this->mailserver) SetParam('server', $m_server);
+        //fetch user realm from users
+        $realm = $this->userRealm();		
+		$m_realm = $realm ? $realm : $this->mailname; 
+		SetParam('realm', $m_realm);
 		
 		$body = GetParam('mail_text');
 		$title = GetParam('subject') ? GetParam('subject') : 'Campaign ' . $r;
@@ -1187,40 +1200,39 @@ function show_body() {
 		
 		$cbody =  $this->combine_tokens($body, $rtoken); //in case of tokens
         $encodedbody = base64_encode($cbody);		
-					
+
+		if (is_array($_POST['csv'])) 
+		    $mycsvlist = 'csv';  	
 		if (is_array($_POST['ulistname'])) {
-		    $altl = implode(',', $_POST['ulistname']);  	
-		}
-		$lists = $this->ulistselect ? $this->ulistselect . ',' . $altl : $altl;
-		SetParam('lists',$lists); //used by form
-		
-		if ($lists==null) {
-			$this->messages[] = 'Campaign NOT saved (no receipients)';
-			return false;
-		}
+			$multi_ulists = implode(',', $_POST['ulistname']);
+		    $multitags = $mycsvlist ? $mycsvlist . ',' . $multi_ulists : $multi_ulists;  	
+		}	
+		$ulists = $this->ulistselect ? $this->ulistselect . ',' . $multitags : $multitags;
+		SetParam('taglists',$taglists); //used by form
 		
 		if (defined('RCCOLLECTIONS_DPC')) 
 			$collection = GetGlobal('controller')->calldpc_var("rccollections.savedlist");
 		else
 			$collection = '';	
   
-        $sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,bcc,template,body,collection,owner,user,pass,server) values (";
+        $sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,bcc,template,body,collection,owner,user,pass,name,server) values (";
 	    $sSQL .= $db->qstr($cid).",".
 		         $ctype .",". 
 				 $db->qstr($date).",$active,".
 	             $db->qstr($title).",".
-				 $db->qstr($lists).",".
+				 $db->qstr($ulists).",".
 				 $db->qstr($cc).",".
 				 $db->qstr($bcc).",".
 				 $db->qstr($this->template).",".
-				 $db->qstr($cbody).",".
+				 $db->qstr($encodedbody).",".
 				 $db->qstr($collection).",".
-				 $db->qstr($owner).",".
+				 $db->qstr($this->owner).",".
 				 $db->qstr($m_user).",".
 				 $db->qstr($m_pass).",".
+				 $db->qstr($m_realm).",".
 				 $db->qstr($m_server).				 
 				 ")"; 
-
+        //echo $sSQL;
 		$result = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
@@ -1336,56 +1348,57 @@ function show_body() {
 	protected function getmails($mail=null) {
         $db = GetGlobal('db');	
 		$this->messages[] = 'Get mails...'; 
+		$ret = null;
 		
 		$mails = $mail ? $mail : null;
 		
 		/*combo with reload func*/
 	    if ($selectedlist = $_POST['myulistselector']) {
-			$q = $mails ? ';' : null;
+			//$q = $mails ? ';' : null;
 			$this->messages[] = 'Call mail list ' . $this->ulistselect;
 			
-			$mails .= $q . $this->get_mails_from_lists($this->ulistselect);	   
+			$mails .= ';' . $this->get_mails_from_lists($this->ulistselect);	   
 		}	
 		
 		/*multiple combo as alternatives */
 		if ($altlist = $_POST['ulistname']) {
-			$q = $mails ? ';' : null;
+			//$q = $mails ? ';' : null;
 			if (is_array($altlist)) {
 				$lm = null;
 				foreach ($altlist as $i=>$list) {
 				   $this->messages[] = 'Call mail list ' . $list; 	
-				   $lm .= $q . $this->get_mails_from_lists($list);	//not mails ; check inside loop
+				   $lm .= ';' . $this->get_mails_from_lists($list);	//not mails ; check inside loop
 				}   
 				$mails .= $lm;
 			}
 			else {
 				$this->messages[] = 'Call mail list ' . $altlist; 
-				$mails .= $q . $this->get_mails_from_lists($altlist);			
+				$mails .= ';' . $this->get_mails_from_lists($altlist);			
 			}	
 		}
 		
 		/*csv addons */
-		if ($csvlist = GetParam('csv')) { 
-		    $q = $mails ? ';' : null;
+		if ($csvlist = $_POST['csv']) { 
+		    //$q = $mails ? ';' : null;
 		    $this->messages[] = 'Call csv mail list '; 
 			
 		    $m = explode(',', $csvlist);
 			if (is_array($m)) {
 				foreach ($m as $csvmail) {
                     if ($m = $this->checkmail($csvmail)) 					
-						$mails .= $q . $m;
+						$mails .= ';' . $m;
 				}				
 			}
 			else {
 			    $m = $this->checkmail($csvlist);	
-				$mails .= $m  ? $q . $m : '';
+				$mails .= $m  ? ';' . $m : '';
 			}			
 		}
 	   
 	    /*app users checkbox*/
 	    if ($users = $_POST['siteusers']) {
-		    $q = $mails ? ';' : null;			
-			$seclevid = 1;//GetParam('level'); //???
+		    //$q = $mails ? ';' : null;			
+			$seclevid = 1;
 			$this->messages[] = 'Call user mail list ' . $seclevid;			
 			 
 			$sSQL .="SELECT email FROM users where";	
@@ -1401,13 +1414,13 @@ function show_body() {
 				}
 			} 
 			if (!empty($ret)) {  
-				$mails .= $q . implode(';',$ret); 
+				$mails .= ';' . implode(';',$ret); 
 			}
 	    }
 		
 	    /*app customers checkbox*/
 	    if ($users = $_POST['sitecusts']) {
-		    $q = $mails ? ';' : null;			
+		    //$q = $mails ? ';' : null;			
 			$this->messages[] = 'Call customers mail list ';			
 			  
 			$sSQL .="SELECT mail FROM customers ";	 
@@ -1421,7 +1434,7 @@ function show_body() {
 				}
 			}
 			if (!empty($ret)) {  
-				$mails .= $q . implode(';',$ret); 
+				$mails .= ';' . implode(';',$ret); 
 			}
 	    }
 		
@@ -1436,7 +1449,7 @@ function show_body() {
 			$this->messages[] = 'Extract duplicate mails';
 			$ret = implode(';', $uret);
 		}	
-	     
+	    //echo $ret,'>'; 
 	    return $ret;	
 	}			
 	
@@ -1445,110 +1458,85 @@ function show_body() {
         if ($this->appkey->isdefined('RCBULKMAIL')==false) {
 	        $this->messages[] = "Failed, module expired.";
 		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
-	    }		 
-
+	    }
+		if (!$cid = $_POST['cid']) {
+			$this->messages[] = 'CID form error!';
+			return false;		
+        }
+		if (!$from = $_POST['from']) {
+			$this->messages[] = 'From field missing!';
+			return false;
+		}		
+		if (!$subject = $_POST['subject']) {
+			$this->messages[] = 'Subject field missing!';
+			return false;
+		}				
 		
 		if (!empty($_POST['include'])) {
 			
-			if (!$_POST['cid']) {
-				$this->messages[] = 'CID form error!';
-				return false;
-			}
-			elseif (!$_POST['from']) {
-				$this->messages[] = 'From mail field missing!';
-				return false;
-			}			
+			if (is_readable($this->savehtmlpath .'/'. $cid.'.html')) {
 				
-			
-			$from = GetParam('from');
-			//$to = GetParam('submail');	//not exist anymore   
-			$subject = GetParam('subject');	
-			
-			if (is_readable($this->savehtmlpath .'/'. $_POST['cid'].'.html')) {
-				
-				$rawtext = @file_get_contents($this->savehtmlpath .'/'. $_POST['cid'].'.html'); //$this->mailbody; //not exist in this post			
+				$rawtext = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html'); //$this->mailbody; //not exist in this post			
 				
 				$body = $this->combine_tokens($rawtext, array('0'=>'dummy'), true); //no need in this stage !!!
 				
-				$subs = implode(';',$_POST['include']);
-				//print_r($_POST['include']);
-				$qty = count($subs) + 1;
+				$include_recipients = $_POST['include'];
+				$cc = implode(';',$include_recipients);
+				//print_r($_POST);//['include']);
 				
-				$res = $this->sendit($from,$to,$subject,$body,$subs); 
-				
-				if (!$res)  
-					$this->messages[] = "Sent failed";				
-				
-			    return ($res); 
+				$qty = count($cc) + 1;
+				if ($cc) {
+					$res = $this->sendit($from,$cc,$subject,$body); 
+					if (!$res) $this->messages[] = "Sent failed";				
+					return ($res); 
+				}
+				else $this->messages[] =  'Send failed: NO receipients (cc)';
 			}
-			else	
-				$this->messages[] = 'File not exist ('. $this->savehtmlpath .'/'. $_POST['cid'] . '.html)';			
+			else $this->messages[] = 'File not exist ('. $this->savehtmlpath .'/'. $cid . '.html)';			
 		}
-		else		
-		    $this->messages[] = "No receipients, send failed";
+		else $this->messages[] = "No recipients, send failed";
 		
 	    return false;   
 	}	
 	
-	protected function sendit($from,$to,$subject,$mail_text='',$cc=null) {
-	     if (!$mail_text) {
-			 $this->messages[] = 'Failed: Empty content';	
-			 return 0; 
-		 }	 
+	protected function sendit($from,$cc,$subject,$mail_text='') {
+	    if (!$mail_text) {
+		    $this->messages[] = 'Failed: Empty content';	
+			return 0; 
+		}	 
 		
-		 $i = 0;
-		 $meter = 0;
-		 $mailuser = GetParam('user') ? GetParam('user') : $this->mailuser;
-		 $mailpass = GetParam('pass') ? GetParam('pass') : $this->mailpass;
-		 $mailserver = GetParam('server') ? GetParam('server') : $this->mailserver;
-		 $mailname = $this->mailname; //not a user submit (realm)
-		 
-		 $from = $mailuser ? $mailuser : $from; //replace sender when another server settings
-
-		 //$one_receipinet = $this->sendmail_inqueue($from,$to,$subject,$mail_text,$this->ishtml,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);  
-		 //also send an instand mail copy...
-		 //$one_receipinet2 = $this->sendmail($from,$to,$subject,$mail_text,$this->ishtml); //!! disabled (not a 'to')
-		 
-		 if ($cc) {
-
-			$mails = explode(";",$cc);//$mlist);
-
-			foreach ($mails as $z=>$m) {
-			  $text = str_replace('_SUBSCRIBER_', $m, $mail_text); 	
-			  $meter += $this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
-			  $i+=1;
-			}
+		$i = 0;
+		$meter = 0;
+		$mailuser = GetParam('user') ? GetParam('user') : $this->mailuser;
+		$mailpass = GetParam('pass') ? GetParam('pass') : $this->mailpass;
+		$mailserver = GetParam('server') ? GetParam('server') : $this->mailserver;
+		$mailname = GetParam('realm') ? GetParam('realm') : $this->mailname; //a per user submit (realm)
+		$from = $mailuser ? $mailuser : $from; //replace sender when another server settings ? 
+		
+		$mails = explode(";",$cc);//$mlist);
+		foreach ($mails as $z=>$m) {
+			$text = str_replace('_SUBSCRIBER_', $m, $mail_text); 	
+			$meter += $this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
+			$i+=1;
+		}
 			
-			$mtr = $meter ? $meter : 0;
-			$this->messages[] = $mtr . ' mail(s) sent';// from ' . ($i) . ' mail(s) in queue';
-			return ($i);	
-		 }
-		 /*else {
-			$rcp = $one_receipinet ? $one_receipinet : 0;  
-	        $this->messages[] = $rcp . ' mail sent from 1 mail in queue';		 
-			 
-		    $i = $one_receipinet;
-		 } */ 
-		 $this->messages[] = 'Send failed: NO receipients (cc)';
-		 return (false);	
+		$mtr = $meter ? $meter : 0;
+		$this->messages[] = $mtr . ' mail(s) sent';// from ' . ($i) . ' mail(s) in queue';
+		return ($i);				
     }	
 	
 	//send mail to db queue
 	protected function sendmail_inqueue($from,$to,$subject,$mail_text='',$is_html=false,$user=null,$pass=null,$name=null,$server=null) {
 		$db = GetGlobal('db');		
 		$ishtml = $is_html?$is_html:0;
-		//$ccs = GetParam('cc'); //echo $ccs;		 	      
-		//$bccs = GetParam('bcc');	//echo $bccs;	
-		$altbody = GetParam('alttext'); 
+		$altbody = null;
 		$origin = $this->prpath; 
 		$encoding = $this->overwrite_encoding ? $this->overwrite_encoding : $this->encoding;
+		$datetime = date('Y-m-d h:s:m');
+		$active = 1;		
+		$cid = $_POST['cid']; //cid mark 
 	   
-		$cid = $_POST['cid']; //cid mark
-		if (!$cid) {
-		   $this->messages[] = 'CID Error.';	//error
-		}	   
-	   
-		//client side (app depended) tracking var
+		//tracking var
 		if ($this->trackmail) {
 	     		 
 			$trackid = $this->get_trackid($from,$to);
@@ -1567,45 +1555,37 @@ function show_body() {
 			$body = $mail_text;	   
 			$trackid = '';
 		}	 
-	   
-		//echo 'z';
-		if ((checkmail($to)) && ($subject)) {//echo $to,'<br>';
-	   
-			//add to db...local table
-			$datetime = date('Y-m-d h:s:m');
-			$active = 1;
-		 
-			$sSQL = "insert into mailqueue (timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server,trackid,cid) ";
-			$sSQL .=  "values (" .
-				 $db->qstr($datetime) . "," . $active . "," .
-		 	     $db->qstr(strtolower($from)) . "," . $db->qstr(strtolower($to)) . "," .
-			     $db->qstr($subject) . "," . 
-				 $db->qstr($body) . "," .
-				 $db->qstr($altbody) . "," .				 
-				 $db->qstr($ccs) . "," .
-				 $db->qstr($bccs) . "," .
-				 $ishtml . "," .
-				 $db->qstr($encoding) . "," .
-				 $db->qstr($origin) . "," .			 
-				 $db->qstr($user) . "," .
-				 $db->qstr($pass) .	"," .	
-				 $db->qstr($name) . "," .
-				 $db->qstr($server) . "," .
-				 $db->qstr($trackid) . "," .
-				 $db->qstr($cid) . ")";
-	   
-			//echo $sSQL,'<br>';			
-			$result = $db->Execute($sSQL,1);			 
-			$ret = $db->Affected_Rows();
+	    
+		$sSQL = "insert into mailqueue (timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server,trackid,cid,owner) ";
+		$sSQL .=  "values (" .
+			 $db->qstr($datetime) . "," . 
+			 $active . "," .
+		     $db->qstr(strtolower($from)) . "," . 
+			 $db->qstr(strtolower($to)) . "," .
+		     $db->qstr($subject) . "," . 
+			 $db->qstr($body) . "," .
+			 $db->qstr($altbody) . "," .				 
+			 $db->qstr($ccs) . "," .
+			 $db->qstr($bccs) . "," .
+			 $ishtml . "," .
+			 $db->qstr($encoding) . "," .
+			 $db->qstr($origin) . "," .			 
+			 $db->qstr($user) . "," .
+			 $db->qstr($pass) .	"," .	
+			 $db->qstr($name) . "," .
+			 $db->qstr($server) . "," .
+			 $db->qstr($trackid) . "," .
+			 $db->qstr($cid) . "," .
+			 $db->qstr($this->owner) . ")";
+			 
+		//echo $sSQL,'<br>';			
+		$result = $db->Execute($sSQL,1);			 
+		$ret = $db->Affected_Rows();
 					     	  	
-			if ($ret) 
-				return true;      
-			else 
-				$this->messages[] = '_MLS9' . localize('_MLS9',getlocal());	//error
-
-		}
-		else 
-			$this->messages[] = "_MLS4: $subject : $to " . localize('_MLS4',getlocal());
+		if ($ret) 
+			return true;      
+		//else //DB ERROR
+			//$this->messages[] = '_MLS9' . localize('_MLS9',getlocal());	//error
  
 		return false;			 
 	}	
@@ -1873,6 +1853,8 @@ function show_body() {
 		$db = GetGlobal('db');			
 		if (!$sql) return 0;
 		$resultset = $db->Execute($sql,2);
+		if (empty($resulset)) return null;
+		
 		foreach ($resultset as $n=>$rec) {
 			if (n==0) {
 				if ($retasis===false) { //save in stats and return int
@@ -1919,6 +1901,9 @@ function show_body() {
 	protected function runstats() {
 		$db = GetGlobal('db');
 		
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);		
+		
 		if ($this->cid) $sSQLcid = " and cid=" . $db->qstr($this->cid); 
 		else $sSQLcid=null;
 		
@@ -1931,30 +1916,33 @@ function show_body() {
 		$sSQL = "select count(id) from ulists";	
 		$ts = $this->runSql('totalSubscribers', $sSQL);		
 		
-		$sSQL = "select count(id) from mailqueue where active=1" . $sSQLcid ;		
+		$sSQL = "select count(id) from mailqueue where active=1" . $ownerSQL .$sSQLcid ;		
 		$this->runSql('activeQueue', $sSQL);		
-		$sSQL = "select count(id) from mailqueue where active=0" . $timein . $sSQLcid ;		
+		$sSQL = "select count(id) from mailqueue where active=0" . $ownerSQL . $timein . $sSQLcid ;		
 		$this->runSql('inactiveQueue', $sSQL);
 		
 		$sSQL = "select count(id) from mailqueue";	
-		//$tq = $this->runSql('totalQueue', $sSQL); //all		
+		//$tq = $this->runSql('totalQueue', $sSQL); //all			
 		if ($timein) $sSQL .= " where " . $this->sqlDateRange('timein', true); //where
 		if ($this->cid) $sSQL .= ($timein) ? " and cid=" . $db->qstr($this->cid) :
 		   							         " where cid=" . $db->qstr($this->cid);//where			
+		if ($ownerSQL) $sSQL .= ($timein) ? $ownerSQL : ($this->cid ? $ownerSQL : str_replace('and','where',$ownerSQL));									 
 		$tq = $this->runSql('totalQueue', $sSQL); //		
 		
-		$sSQL = "select sum(reply) from mailqueue where active=0" . $timein . $sSQLcid ;	
+		$sSQL = "select sum(reply) from mailqueue where active=0" . $ownerSQL . $timein . $sSQLcid ;	
 		$this->runSql('repliedQueue', $sSQL);			
-		$sSQL = "select count(id) from mailqueue where status IS NOT NULL and active=0" . $timein . $sSQLcid;  //on sent mails (active=0)	
+		$sSQL = "select count(id) from mailqueue where status IS NOT NULL and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)	
 		$sc = $this->runSql('succeed', $sSQL);
-		$sSQL = "select count(id) from mailqueue where status IS NULL and active=0" . $timein . $sSQLcid;  //on sent mails (active=0)		
+		$sSQL = "select count(id) from mailqueue where status IS NULL and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)		
 		$fl = $this->runSql('failed', $sSQL);	
 				
 		$sSQL = "SELECT COUNT(id) FROM mailcamp";	
+		$sSQL.= $ownerSQL ? str_replace('and','where',$ownerSQL) : null;
 		$this->runSql('campaigns', $sSQL);		
-		$sSQL = "SELECT COUNT( DISTINCT (subject) ) FROM mailqueue";	
+		$sSQL = "SELECT COUNT( DISTINCT (subject) ) FROM mailqueue";
+		$sSQL.= $ownerSQL ? str_replace('and','where',$ownerSQL) : null;	
 		$this->runSql('usedCampaigns', $sSQL);		
-		$sSQL = "SELECT COUNT( DISTINCT (subject) ) FROM mailqueue where active=1";	
+		$sSQL = "SELECT COUNT( DISTINCT (subject) ) FROM mailqueue where active=1" . $ownerSQL;	
 		$this->runSql('runningCampaigns', $sSQL);
 		
 		//percents on max values (directives)
@@ -1976,7 +1964,7 @@ function show_body() {
 		$this->stats['percentFailed']['value'] = intval($fpercent);	
 
 		if ($this->cid) {
-			$sSQL = "SELECT bcc FROM mailcamp WHERE cid=" . $db->qstr($this->cid);	
+			$sSQL = "SELECT bcc FROM mailcamp WHERE cid=" . $db->qstr($this->cid) . $ownerSQL;	
 			$bcc = $this->runSql(null, $sSQL, true);	
             $subs = explode(';', $bcc);
    			$this->stats['totalSubscribers']['value'] = count($subs);  //overwrite after calc if cid
@@ -2004,16 +1992,23 @@ function show_body() {
 		$db = GetGlobal('db');			
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
+		//get params also here due to fp call for rccontrol panel (login 1st)
+		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName'); //decode(GetSessionParam('UserName'));	
+		$this->seclevid = GetSessionParam('ADMINSecID');			
+		
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner);		
 		
 		$timein = $this->sqlDateRange('timein', true, false);
 		if ($timein) return null; //no current tasks when time range
 		
-		$sSQL = "SELECT cid,subject,AVG(active),MIN(timein),MAX(timein) AS a FROM mailqueue group by cid,subject order by a desc";
+		$sSQL = "SELECT cid,subject,AVG(active),MIN(timein),MAX(timein) AS a FROM mailqueue $ownerSQL group by cid,subject order by a desc";
 		$resultset = $db->Execute($sSQL,2);
+		//echo $sSQL, $rec[2];
 		
+		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 		    if ($rec[2] > 0) { //float avg of actives (else must be 0)
-				//if ($t) {
 					
 					$percent = (100-intval($rec[2]*100));
 					
@@ -2029,11 +2024,8 @@ function show_body() {
 					else { 
 						//send message 
 						$mt = seturl('t=cppreviewcamp&cid='.$rec[0]);
-						GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use warning|$rec[1]|$percent|$mt");
+						GetGlobal('controller')->calldpc_method("rccontrolpanel.setTask use danger|$rec[1]|$percent|$mt");
 					}	
-				/*}
-				else
-					$ret[] = $rec[1]; //?? no mean*/
 			}	
 		}
 
@@ -2042,19 +2034,28 @@ function show_body() {
 	
 	/* % of process of last deactived camps*/
 	public function lastCamps($template=null, $limit=null) {
-		$db = GetGlobal('db');			
+		$db = GetGlobal('db');		
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
+		//get params also here due to fp call for rccontrol panel (login 1st)
+		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName'); 
+		$this->seclevid = GetSessionParam('ADMINSecID');			
 		
-		$timein = $this->sqlDateRange('timein', true, false);
-		$dateRangeSQL = $timein ? ' WHERE ' . $timein : null;
+		//all as 9 user or only owned	
+		$ownerSQL = ($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner); 
+		
+		$timein = ($ownerSQL) ? $this->sqlDateRange('timein', true, true) : 
+							    $this->sqlDateRange('timein', true, false);
+		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : 'WHERE ' . $timein) : null;
 		
 		$l = $limit ? $limit : 3;	
         $limitSQL = $timein ? ' LIMIT 30' : ($limit ? 'LIMIT '.$l : 'LIMIT 3'); 	
 		
-		$sSQL = "SELECT cid,subject,AVG(active),MIN(timeout),MAX(timeout) AS a FROM  mailqueue $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
+		$sSQL = "SELECT cid,subject,AVG(active),MIN(timeout),MAX(timeout) AS a FROM  mailqueue $ownerSQL $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
+		
+		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 		    if ($rec[2] == 0) { //float avg of actives (must be 0)
 				if ($t) {
@@ -2116,10 +2117,14 @@ function show_body() {
 		//if ($timein) return null; //no current tasks when time range
 		//$refsql = $cid ? "and ref='$cid'" : null;
 		
-		$sSQL = "SELECT mailqueue.id,timeout,receiver,title FROM mailqueue,mailcamp where mailqueue.cid=mailcamp.cid $refsql and status=1 order by id desc LIMIT " . $l;
+		//all as 9 user or only owned
+		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
+		
+		$sSQL = "SELECT mailqueue.id,timeout,receiver,title FROM mailqueue,mailcamp where mailqueue.cid=mailcamp.cid $refsql $ownerSQL and status=1 order by id desc LIMIT " . $l;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
+		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 			$tokens[] = $rec[1] . ' '. $rec[3];
 			$tokens[] = $rec[2];
@@ -2141,11 +2146,15 @@ function show_body() {
 		//if ($timein) return null; //no current tasks when time range
 		$refsql = $cid ? "and ref='$cid'" : null;
 		
+		//all as 9 user or only owned	
+		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
+		
 		//$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql order by date desc LIMIT " . $l;
-		$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql order by id desc LIMIT " . $l;
+		$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql $ownerSQL order by id desc LIMIT " . $l;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
+		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 			$tokens[] = $rec[1] . ' '. $rec[3];
 			$tokens[] = $rec[2];
@@ -2166,6 +2175,7 @@ function show_body() {
 		$sSQL = "SELECT stats.id,date,attr3,title,ref FROM stats,mailcamp where stats.ref=mailcamp.cid group by ref order by date desc LIMIT " . $l;
 		$resultset = $db->Execute($sSQL,2);
 		
+		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 			$tokens[] = $rec[1] . ' '. $rec[3];
 			$tokens[] = $rec[2];
@@ -2177,17 +2187,19 @@ function show_body() {
 	}
 	
 	public function viewClicks() {
+		$db = GetGlobal('db');	
 		$active = $active?$active:GetReq('active');
 		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;
 		$cid = $_GET['cid'] ? $_GET['cid'] : null;	
 
-		$refsql = $cid ? "and ref='$cid'" : null;		
+		$refsql = $cid ? "and ref='$cid'" : null;
+		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
 		   	
 		if ((!$active) && (!$isajax_window) && (defined('MYGRID_DPC'))) {
 		    $title = str_replace(' ','_',localize('_MAILCLICKS',getlocal()));//NO SPACES !!!//localize('_MAILQUEUE',getlocal());
 		   
 	        //$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus from mailqueue";
-			$sSQL = "select * from (SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql order by date desc";
+			$sSQL = "select * from (SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql $ownerSQL order by date desc";
             $sSQL.= ') as o';  				
 		   		   
 		    //echo $sSQL;
@@ -2282,39 +2294,8 @@ function show_body() {
 		return null;	
     }	  
 	
-	//JS ON PAGE
-    protected function javascript_refresh($page,$timeout=null) {	 
-	  /*
-		$mytimeout = $timeout ? $timeout : 5000;//5 sec
-        $mytimeout2= $timeout ? $timeout +2000 : 7000;//5 sec
-	   
-	    if (!empty($this->objcall)) {
-	     $i = 0;
-	     foreach ($this->objcall as $report=>$goto) {
-	       $timeout = $mytimeout + (++$i*1000); //set delay 
-           $ret .= "window.setInterval(\"sndReqArg('$goto'+statsid.value,'$report')\",$timeout);
-";	 
-         }
-	    } 
-	    return ($ret);*/
-    }
-
-    //JS ON PAGE
-	protected function _js() {
-        /*if (iniload('JAVASCRIPT')) {
-	  
-		   $js = new jscript;	  
-		   //auto refresh
-	       if ($refresh = $this->refresh)
-             $code = $this->javascript_refresh(seturl('t=cpmailstats&refresh='.$refresh),$refresh*1000);  
-		   
-           $js->load_js($code,"",1);			   
-		   unset ($js);		   
-	    }*/	
-	}
 	
-	
-	function select_template($tfile=null) {
+	protected function select_template($tfile=null) {
 		if (!$tfile) return;
 	  
 		$template = $tfile . '.htm';	
@@ -2326,7 +2307,7 @@ function show_body() {
     }	
 	
 	//tokens method	
-	function combine_tokens($template, $tokens, $execafter=null) {
+	protected function combine_tokens($template, $tokens, $execafter=null) {
 	    if (!is_array($tokens)) return;		
 
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
