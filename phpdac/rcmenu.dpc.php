@@ -126,13 +126,6 @@ class rcmenu extends shmenu {
     }
   
     function action($action=null) {
-	
-	   if (!GetReq('editmode')) {	
-	     if (GetSessionParam('REMOTELOGIN')) 
-	       $out = setNavigator(seturl("t=cpremotepanel","Remote Panel"),$this->title); 	 
-	     else  
-           $out = setNavigator(seturl("t=cp","Control Panel"),$this->title);	
-	   }	 
 
 	   switch ($action) {	
 	   
@@ -540,6 +533,9 @@ class rcmenu extends shmenu {
 			$conf = $this->t_config;//$tvar;		
 	
 		if (!$conf) return;
+		
+		
+		return null; ///<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		
 		$n = null;
 		

@@ -63,8 +63,7 @@ class rcupload {
 	var $todirectory;
 	var $MAXSIZE;
 	var $uploadres, $allowed_filetypes;
-	var $urlbase;	
-	var $dhtml;
+	var $urlbase, $encodeimageid, $restype;	
 
     function rcupload($path=null,$maxsize=null) {
 	
@@ -91,8 +90,7 @@ class rcupload {
           $this->urlpath = paramload('SHELL','urlpath') . '/' . $this->subdir;
 		  $this->urlbase = paramload('SHELL','urlbase'). '/' . $this->subdir;		  
         }
-		//echo $this->path;  
-		//$this->tpath = $this->path . $path;  	 	
+	 	
 		if ($p=GetSessionParam("upload_subdir"))
 		  $this->tpath = $this->urlpath . $p;
 		else  
@@ -103,10 +101,12 @@ class rcupload {
 		$this->uploadres = null;
         $this->allowed_filetypes = array('.pdf','.doc','.xls'.'.pps','.txt','.zip','.rar','.gif','.png','.jpg');
 
-	    //dynamic html loader
-	    $this->dhtml = paramload('FRONTHTMLPAGE','dhtml');
-	    //if ($this->dhtml)
-          // $this->js = new jscript; 			
+
+		$this->encodeimageid = remote_paramload('SHKATEGORIES','encodeimageid',$this->path);
+		$this->restype = remote_paramload('SHKATEGORIES',"restype",$this->path);
+		
+	    $sep = remote_paramload('SHKATEGORIES','csep', $this->path); 
+		$this->separator = $sep ? $sep : '^';
     }
 	
     function event($event=null) {
@@ -126,33 +126,10 @@ class rcupload {
   
     function action($action=null) {
 
-	   if (!GetReq('editmode')) {
-	     if (GetSessionParam('REMOTELOGIN')) 
-	       $out = setNavigator(seturl("t=cpremotepanel","Remote Panel"),$this->title); 	 
-	     else  
-           $out = setNavigator(seturl("t=cp","Control Panel"),$this->title); 	 	
-	   
-	   
-	     $out  .= $this->uploadform(null,null,"Upload files...",1);
-	   }
-	   else {//edit mode
-	     //$out  = $this->uploadform(null,GetReq('path'));//null,null,"Upload files...",1);
-		 
-		 $out  = $this->show_cmd_line();
-		 $out .= $this->editmode_upload_files();
-	   }	 
-	  
+	   $out .= $this->editmode_upload_files();	  
 	   return ($out);
 	}  
-	
-	function dhtml_javascript($code) {
-      if (iniload('JAVASCRIPT')) {
-
-		   $js = new jscript;		   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }		
-	}			
+		
 	
     function uploadform($action=null,$path=null,$title=null,$list=null,$maxsize=null) {  
 	      if ($id = GetParam('id'))
@@ -268,30 +245,6 @@ class rcupload {
 		   
 		return ($this->msg);  
 	} 
-	
-	/*function read_dir_list() {
-	
-	    if (is_dir($this->path)) {
-		
-	      $toprint = "To directory :"; 
-	      $toprint .= "<select name=\"todir\">";	
-		  $toprint .= "<option value=\"\">---Select a directory---</option>";		
-		
-          $mydir = dir($this->path);
-		  //echo $this->path;
-          while ($fileread = $mydir->read ()) {
-		     //echo $fileread;
-		     if (($fileread!='.') && ($fileread!='..')) {
-			   //echo $fileread;	   
-			   if (is_dir($this->path.$fileread))
-			     $toprint .= "<option value=\"$fileread\">$fileread</option>";
-		     }	
-		  }	
-		  
-	      $toprint .= "</select>";		   
-		}
-		return ($toprint);  
-	}	*/
 	
 	function read_dir_list() {
 	
@@ -798,12 +751,17 @@ function advanced_uploadform($title=null,$upfiles=null,$atoz=null,$path=null,$pr
 	  return ($res); 
 	} 	
 	
-	function editmode_upload_files() {  
-	  $id = GetReq('id');//item	
+	function editmode_upload_files() {
+	  $cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+      //print_r($cpGet); echo '>';	  
+	  if (!$cat = GetReq('cat')) $cat = $cpGet['cat']; //stored cat for cp
+	  if (!$id = GetReq('id')) $id = $cpGet['id']; //stored id for cp
+	
+	  //$id = GetReq('id');//item	
 	  $ufiles = array('headimg01.jpg','headimg02.jpg','headimg03.jpg','headimg04.jpg','headimg05.jpg');	//frontpage slider images	  
 	  $files = array('aaa.jpg','bbb.gif','ccc.png');//test	  
-	  $cat = GetReq('cat');//category..//use to save image category file
-	  $pcat = explode('^',$cat); 
+	  //$cat = GetReq('cat');//category..//use to save image category file
+	  $pcat = explode($this->separator,$cat); 
 	  if ($mycat=array_pop($pcat))
 	    $mycurcat = $mycat;
 	  else
@@ -811,15 +769,16 @@ function advanced_uploadform($title=null,$upfiles=null,$atoz=null,$path=null,$pr
 	  
 	  if ($cat) {
 	     if (defined('RCKATEGORIES_DPC')) {
-		   $restype = GetGlobal('controller')->calldpc_var("rckategories.restype");
-		   $e_cat = GetGlobal('controller')->calldpc_method("rckategories.encode_image_id use ".$cat);
+		   //$restype = GetGlobal('controller')->calldpc_var("rckategories.restype");
+		   //$e_cat = GetGlobal('controller')->calldpc_method("rckategories.encode_image_id use ".$cat);
+		   $e_cat = $this->encode_image_id($cat);
 		   
 		   if ($catimage = GetGlobal('controller')->calldpc_var("rckategories.showcatimagepath")) { 
-             $out .= $this->advanced_uploadform(localize('_uploadcatimage',$lan),/*$mycurcat*/$e_cat.$restype,null,$catimage,0,null,true); //category image
+             $out .= $this->advanced_uploadform(localize('_uploadcatimage',$lan),$e_cat.$restype,null,$catimage,0,null,true); //category image
              $out .= '<hr>'; 		 
 		   }		   
 		   if ($catbanner = GetGlobal('controller')->calldpc_var("rckategories.showcatbannerpath")) {
-             $out .= $this->advanced_uploadform(localize('_uploadbannerhtml',$lan),/*$mycurcat*/$e_cat.'.htm',null,$catbanner,0,null,true); //category html
+             $out .= $this->advanced_uploadform(localize('_uploadbannerhtml',$lan),$e_cat.'.htm',null,$catbanner,0,null,true); //category html
              $out .= '<hr>'; 		 
 		   }		   
 		 }
@@ -828,28 +787,29 @@ function advanced_uploadform($title=null,$upfiles=null,$atoz=null,$path=null,$pr
 	  }
 	  elseif ($id) {	
          if (defined('RCITEMS_DPC')) {
-		   $restype = GetGlobal('controller')->calldpc_var("rcitems.restype");
-		   $e_id = GetGlobal('controller')->calldpc_method("rcitems.encode_image_id use ".$id);
+		   //$restype = GetGlobal('controller')->calldpc_var("rcitems.restype");
+		   //$e_id = GetGlobal('controller')->calldpc_method("rcitems.encode_image_id use ".$id);
+		   $e_id = $this->encode_image_id($id);
 		   
            if ($img_small = GetGlobal('controller')->calldpc_var("rcitems.img_small")) {//small sized photo
-             $out .= $this->advanced_uploadform(localize('_uploaditemimages_small',$lan),$e_id.$restype,null,$img_small,0,null,true); 			 
+             $out .= $this->advanced_uploadform(localize('_uploaditemimages_small',$lan),$e_id.$this->restype,null,$img_small,0,null,true); 			 
              $out .= '<hr>'; 	
 		   }	 
 		   if ($img_medium= GetGlobal('controller')->calldpc_var("rcitems.img_medium")) {//medium sized photo	 
-             $out .= $this->advanced_uploadform(localize('_uploaditemimages_medium',$lan),$e_id.$restype,null,$img_medium,0,null,true); 			 
+             $out .= $this->advanced_uploadform(localize('_uploaditemimages_medium',$lan),$e_id.$this->restype,null,$img_medium,0,null,true); 			 
              $out .= '<hr>'; 
 		   }	 
 		   if ($img_large = GetGlobal('controller')->calldpc_var("rcitems.img_large")) {//large sized photo	 
-             $out .= $this->advanced_uploadform(localize('_uploaditemimages_large',$lan),$e_id.$restype,null,$img_large,0,null,true); 			 
+             $out .= $this->advanced_uploadform(localize('_uploaditemimages_large',$lan),$e_id.$this->restype,null,$img_large,0,null,true); 			 
              $out .= '<hr>'; 		   
            }
 		   //in case of no large..no 3type of img ..one img..thub
            elseif ($res_path = GetGlobal('controller')->calldpc_var("rcitems.ptp")) {//one photo
-             $out .= $this->advanced_uploadform(localize('_uploaditemimages_thub',$lan),$e_id.$restype,null,$res_path,0,null,true); //thub			 
+             $out .= $this->advanced_uploadform(localize('_uploaditemimages_thub',$lan),$e_id.$this->restype,null,$res_path,0,null,true); //thub			 
              $out .= '<hr>'; 	  
 		   }
 			 		 
-           $out .= $this->advanced_uploadform(localize('_uploaditemgallery',$lan),$e_id.$restype,'Y','images/uphotos',0); //gallery A to Z		 
+           $out .= $this->advanced_uploadform(localize('_uploaditemgallery',$lan),$e_id.$this->restype,'Y','images/uphotos',0); //gallery A to Z		 
            $out .= '<hr>'; 		   
            $out .= $this->advanced_uploadform(localize('_uploaditemresources',$lan),$e_id/*.$restype*/,'D','images/uphotos',0,'cp/html'); //html folder in cp	 
            $out .= '<hr>'; 		   
@@ -864,89 +824,36 @@ function advanced_uploadform($title=null,$upfiles=null,$atoz=null,$path=null,$pr
          $out .= '<hr>'; 		 
          $out .= $this->advanced_uploadform(localize('_uploadimages',$lan),null,6,'images',0);		 
          $out .= '<hr>'; 		 
-         $out .= $this->advanced_uploadform(localize('_uploadresources',$lan),null,6,null,1);	//cp/uploads
-	 
-		 //$out .= $this->advanced_uploadform('TEST',$ufiles,null,null,1);
-
-		 //$out .= $this->advanced_uploadform('TEST 1',$files,null,null,1);
-		 //$out .= $this->advanced_uploadform('TEST 2',null,3,null,1);	  
+         $out .= $this->advanced_uploadform(localize('_uploadresources',$lan),null,6,null,1);	//cp/uploads  
 	  }	 
 	  
 	  return ($out); 
 	}
 	
-	function show_cmd_line() {
-	
-	    if (is_readable($this->path .'ckfinder/ckfinder.html'))
-	      $ckfinder = "<a href=\"ckfinder/ckfinder.html\" target=\"_blanc\">Ckfinder</a>";
-	
-	    //$commands = $ckfinder;
-	
-	   	//goto ckfinder.....
-        //$ckfinder = "http://yoki1.stereobit.gr/cp/ckfinder/ckfinder.html";//?type=Images&CKEditor=mail_text&CKEditorFuncNum=2&langCode=el";		
-	   
-	    if ($this->dhtml) {
-		   if ($ckfinder) {
-				$link1 = 'ckfinder/ckfinder.html';//seturl("t=cpviewsubsqueue&editmode=".GetReq('editmode'));
-				$title1 = localize('_CKFINDER',getlocal());	   
-	   
-				$this->dhtml_javascript("function openlink1(){ 
-ajaxwin=dhtmlwindow.open(\"ckfinder\", \"iframe\", \"$link1\", \"$title1\", \"width=640px,height=480px,left=300px,top=100px,resize=1,scrolling=1\")
-//ajaxwin.onclose=function(){return window.confirm(\"Close window ?\")} 
-}");
 
-				$commands.= '&nbsp;|&nbsp;';
-				$commands .= "<a href=\"#\" onClick=\"openlink1(); return false\">".$title1."</a>";
-		   
-		   }
-		   /*
-		   $ajaxlink2 = seturl("t=cpadvsubscribe&editmode=".GetReq('editmode'));			   
-           $title2 = localize('_MASSSUBSCRIBE',getlocal());		
-		   
-		  $this->dhtml_javascript("function openlink2(){ 
-ajaxwin2=dhtmlwindow.open(\"ajaxbox2\", \"ajax\", \"$ajaxlink2\", \"$title2\", \"width=450px,height=300px,left=300px,top=100px,resize=1,scrolling=1\")
-//ajaxwin2.onclose=function(){return window.confirm(\"Close window ?\")} 
-}");
-		   
-		   //$commands.= "<a href=\"#\" onClick=\"openlink2(); return false\">".$title2."</a>";
-		   
-		   //DIV....
-		   
-		   $this->dhtml_javascript("function openlink3(){
-divwin=dhtmlwindow.open('divbox', 'div', 'sitems', 'Select Items', 'width=450px,height=300px,left=200px,top=150px,resize=1,scrolling=1'); 
-divwin.onclose=function(){return window.confirm(\"Close window ?\")} 
-}");		
-           $commands.= '&nbsp;|&nbsp;';  
-           $commands.= "<a href=\"#\" onClick=\"openlink3(); return false\">"."Select Items"."</a>";
+	//for utf strings as products code..encode to digits for saving image
+	public function encode_image_id($id=null) {
+	    if (!$id) return null;
 
-		   $this->dhtml_javascript("function openlink4(){
-divwin2=dhtmlwindow.open('divbox2', 'div', 'mailqueue', 'Mail queue', 'width=450px,height=300px,left=200px,top=150px,resize=1,scrolling=1'); 
-divwin2.onclose=function(){return window.confirm(\"Close window ?\")} 
-}");		
-           $commands.= '&nbsp;|&nbsp;';  
-           $commands.= "<a href=\"#\" onClick=\"openlink4(); return false\">"."Mail Queue"."</a>";			   
-		   
-		   $this->dhtml_javascript("function openlink5(){
-divwin2=dhtmlwindow.open('divbox3', 'div', 'foptions', 'Options', 'width=450px,height=300px,left=200px,top=150px,resize=1,scrolling=1'); 
-divwin2.onclose=function(){return window.confirm(\"Close window ?\")} 
-}");		
-           $commands.= '&nbsp;|&nbsp;';  
-           $commands.= "<a href=\"#\" onClick=\"openlink5(); return false\">"."Options"."</a>";
-        */   		   
-	    }
-	    /*else
-	       $commands = seturl("t=cpviewsubsqueue&editmode=".GetReq('editmode'),localize('_MAILCAMPAIGNS',getlocal())) . '|'.  
-	                   seturl("t=cpadvsubscribe&editmode=".GetReq('editmode'),localize('_MASSSUBSCRIBE',getlocal()));
-	    
-	    */
-	    if ($commands) {
-	      $myadd = new window('',$commands);
-	      $out .= $myadd->render("center::100%::0::group_article_selected::right::0::0::");	   
-	      unset ($myadd); 
-        }	   
-	   
-	    return ($out);
-    }	
+		if ($this->encodeimageid) 
+			$out = md5($id);//join(array_map(function ($n) { return sprintf('%03d', $n); }, unpack('C*', $id)));		
+		else
+		    $out = $id;
+			
+        return $out;
+	}	
+    /*	
+    public function decode_image_id($id=null) {	
+	    if (!$id) return null;
+
+		//encode 
+		if ($this->encodeimageid) {
+			//decode
+			$out = join(array_map('chr', str_split($numbers, 3)));		
+		}
+		else
+		   $out = $id;	
+	}*/	
   
 };
 }

@@ -176,8 +176,8 @@ EOF;
 			return false;
 			
 		$nsContents = @file_get_contents($sourcename);
-		$newContent = str_replace(array('_CID_', '_TRACK_','<!--REMARK--><p>','</p><!--REMARK-->'), 
-		                          array($this->cid, $this->mc, '<!--p>', '</p-->'), $nsContents);
+		$newContent = str_replace(array('_CID_', '_TRACK_','_AMP_','<!--REMARK--><p>','</p><!--REMARK-->'), 
+		                          array($this->cid, $this->mc, "&", '<!--p>', '</p-->'), $nsContents);
 		
 		//create a copy 
 		$filename = $this->nspath . '/' . $this->mc . '.html';
@@ -197,8 +197,8 @@ EOF;
 			return ('nocfile');
 			
 		$nsContents = @file_get_contents($sourcename);
-		$newContent = str_replace(array('_CID_', '_TRACK_','<!--REMARK--><p>','</p><!--REMARK-->'), 
-		                          array($this->cid, $this->mc, '<!--p>', '</p-->'), $nsContents);
+		$newContent = str_replace(array('_CID_', '_TRACK_', '_AMP_','<!--REMARK--><p>','</p><!--REMARK-->'), 
+		                          array($this->cid, $this->mc, "&", '<!--p>', '</p-->'), $nsContents);
 								  
 		//create a copy 
 		$filename = $this->nspath . '/' . $this->mc . '.html';

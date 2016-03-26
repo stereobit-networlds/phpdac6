@@ -22,7 +22,7 @@ $__ACTIONS['RCDYNSQL_DPC'][5]='cploadframe';
 
 $__DPCATTR['RCDYNSQL_DPC']['cpdynsql'] = 'cpdynsql,1,0,0,0,0,0,0,0,0,0,0,1';
 
-$__LOCALE['RCDYNSQL_DPC'][0]='RCDYNSQL_DPC;Sync SQL;Συγχρονισμός';
+$__LOCALE['RCDYNSQL_DPC'][0]='RCDYNSQL_DPC;SyncSQL;Συγχρονισμός';
 $__LOCALE['RCDYNSQL_DPC'][1]='_date;Date;Ημερ.';
 $__LOCALE['RCDYNSQL_DPC'][2]='_time;Time;Ώρα';
 $__LOCALE['RCDYNSQL_DPC'][3]='_status;Status;Φάση';
@@ -73,7 +73,7 @@ class rcdynsql {
 	   switch ($event) {
 	     case 'cpsqlsave'  : $this->save_sql_file(); 
 		                     break;	   
-		 case 'cpdynview'  : 
+		 case 'cpdynview'  : echo $this->form(GetReq('tid')); die();
 		                     break;		   
 		 case 'cploadframe': echo $this->loadframe('trans');
 		                     die();
@@ -84,7 +84,7 @@ class rcdynsql {
 		                      $this->hasgraph = $this->charts->create_chart_data('transcust','where cid='.$cvid);
 							  break; 	   
 	     case 'cpdynsql'    :
-		 default            : $this->grid_javascript();	   
+		 default            : //$this->grid_javascript();	   
 		                      $this->charts = new swfcharts;	
 		                      $this->hasgraph = $this->charts->create_chart_data('transactions',"");
 							  $this->hasgauge = $this->charts->create_gauge_data('income',"where cid=0",null,1,400,300,'meter');
@@ -95,11 +95,9 @@ class rcdynsql {
     function action($action=null) {
 	 
 	  switch ($action) {	  
-	     case 'cpsqlsave': die($this->save_sql()); 
-		                   break;
-		 case 'cpdynview': $tid = GetReq('tid');
-		                   $out = $this->form($tid);
+	     case 'cpsqlsave'  : die($this->save_sql()); 
 		                     break;
+		 case 'cpdynview'  : break;
 							 	  
 		 case 'cpsqlshow': if ($this->hasgraph)
 		                        $out = $this->show_graph('transcust','Customer Transactions',$this->ajaxLink,'stats');
@@ -115,18 +113,16 @@ class rcdynsql {
 	  return ($out);
     }
 	
-	function grid_javascript() {
+	/*function grid_javascript() {
       if (iniload('JAVASCRIPT')) {
 		      		   
 	       $code = $this->init_grids();			
 
-		   $js = new jscript;
-		   //$js->setloadparams("init()");
-           //$js->load_js('nitobi.grid.js');		   
+		   $js = new jscript;	   
            $js->load_js($code,"",1);			   
 		   unset ($js);
 	  }		
-	}
+	}*/
 
 	function show_graph($xmlfile,$title,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
 	  $gx = $this->graphx?$this->graphx:$xmax?$xmax:550;
@@ -148,7 +144,7 @@ class rcdynsql {
 	  
 	   return ($out);		   
 	}		
-	
+	/*
 	function init_grids() {
 
 	    //$bodyurl = seturl("t=cptranslink&tid=");	
@@ -186,7 +182,7 @@ function show_body() {
 ";
         $out .= "\r\n";
         return ($out);
-	}
+	}*/
 	
 	function show_grid($x=null,$y=null,$filter=null,$bfilter=null) {
 
@@ -233,44 +229,8 @@ function show_body() {
 	function show_grids() {
 		
 	   $ret = $this->show_grid();	
-		
-       /* DISABLED METERS/GAUGES		
-       $vd = $this->show_grid();//550,440,null,$filter);		   
-		   
-	    
-	   if ($this->hasgraph)
-		   $wd = $this->show_graph('transactions',null,seturl('t=cptransactions'));
-	   else
-		   $wd = "<h3>".localize('_GNAVAL',0)."</h3>";	   
-	   
-	   if ($this->hasgauge)
-		   $wd .= $this->charts->show_gauge('income',400,300,seturl('t=cptransactions'));
-	   else
-		   $wd .= "<h3>".localize('_GNAVAL',0)."</h3>";	   		   	   
-	   		   		   		   	   
-	   
-	   //grid 0 
-	   $datattr[] = $vd;
-	  //GetGlobal('controller')->calldpc_method("rcitems.show_grid use 400+440+1");							  
-	   $viewattr[] = "left;50%";	   	   
-
-
-	   $datattr[] = $wd;
-	   $viewattr[] = "left;50%";
-	   
-	   $myw = new window('',$datattr,$viewattr);
-	   $ret = $myw->render();//"center::100%::0::group_article_selected::left::3::3::");
-	   unset ($datattr);
-	   unset ($viewattr);
-	   */
-	   
-       /*$ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use stats");	   
-       if ($this->hasgraph)
-		   $ret .= $this->show_graph('transactions','Customer transactions',$this->ajaxLink,'stats');
-	   else
-		   $ret .= "<h3>".localize('_GNAVAL',0)."</h3>";	   
-	   */
-       $ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use trans");	   
+       //$ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use trans");
+	   $ret .= "<div id='trans'></div>";
 	   return ($ret);	
 	}	
 	
@@ -288,7 +248,7 @@ function show_body() {
 		if (!$id) return;
 		$sql = "UPDATE syncsql SET sqlquery=" . $db->qstr(GetParam('sqlcmd')) . "where id=".GetParam('tid');
 		//$result = $db->Execute($sql,2);
-		echo $sql; ///Cannot modify header information - headers already sent by (output started at /home/stereobi/public_html/cp/dpc/jqgrid/jqgrid.lib.php:180) in ...
+		//echo $sql; ///Cannot modify header information - headers already sent by (output started at /home/stereobi/public_html/cp/dpc/jqgrid/jqgrid.lib.php:180) in ...
 		return (true);
 	}
 
@@ -320,19 +280,9 @@ function show_body() {
        $toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_savesql',getlocal()) . "\">&nbsp;";  
        $toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpsavesql" . "\">";	 	   
 	   	    
-       $toprint .= "</FONT></FORM>";
-	   
-	   $data2[] = $toprint; 
-  	   $attr2[] = "left";
+       $toprint .= "</FONT></FORM>"; 
 
-	   $wtitle = localize('_SQL',getlocal());
-       $wtitle .= "-". $id;		   
-		
-	   $swin = new window($wtitle,$data2,$attr2);
-	   $out .= $swin->render("center::100%::0::group_dir_body::left::0::0::");	
-	   unset ($swin);	 
-
-       return ($out);
+       return ($toprint);
     }		
 	
 	

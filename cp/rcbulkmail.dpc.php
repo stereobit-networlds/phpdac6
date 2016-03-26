@@ -113,7 +113,7 @@ class rcbulkmail {
 	var $sendOk, $iscollection, $disable_settings, $user_realm;
 	
 	var $appname, $appkey, $cptemplate, $urlRedir, $urlRedir2, $webview, $nsPage;
-	var $owner, $seclevid;
+	var $owner, $seclevid, $isHostedApp;
 		
     function __construct() {
 	  
@@ -188,6 +188,7 @@ class rcbulkmail {
 		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName'); //decode(GetSessionParam('UserName'));	
 		$this->seclevid = GetSessionParam('ADMINSecID');			
 
+		$this->isHostedApp = remote_paramload('RCBULKMAIL','hostedapp', $this->prpath);
 		//echo '>', GetSessionParam('LoginName').'<br/>'.GetSessionParam('UserName').'<br/>'.decode(GetSessionParam('UserName'));
 		//$timeZone = 'Europe/Athens';  // +2 hours !!! (cron must run at the same timezone)
 	}
@@ -968,15 +969,16 @@ class rcbulkmail {
 				$data = @file_get_contents($path . $template); 
 			//echo $path . $template; 
 			//echo $data;
+			$this->mailbody = $data;
 			
 		    /*$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
 		               $this->encUrl($this->savehtmlurl . $cid . '.html');
 			$tokens[] = "[<a href='$pageurl'>".localize('_viewasweb',getlocal())."</a>]";
 			$tokens[] = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";
 			
-			$body = $this->combine_tokens($data, $tokens, true);*/			
+			$body = $this->combine_tokens($data, $tokens, true);			
 			
-			$this->mailbody = $body;
+			$this->mailbody = $body;*/
 		
 			return true;			
 		}	
@@ -1125,10 +1127,7 @@ class rcbulkmail {
     /*type : 0 save text as mail body /1 save collections as text to reproduce (offers, katalogs) */	
     protected function save_campaign($type=null) {
         $db = GetGlobal('db'); 	
-		$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
-		                            $this->encUrl($this->savehtmlurl . $cid . '.html');
-		$plink = "<a href='$pageurl'>".localize('_here',getlocal())."</a>";
-		
+		$rtokens= null;
 		//print_r($_POST);
         /*foreach ($_POST as $p=>$pp) {
 			if ($p == 'mail_text')
@@ -1173,33 +1172,37 @@ class rcbulkmail {
 		$cid = md5(GetParam('mail_text') .'|'. GetParam('subject') .'|'. $to);
         $active = GetParam('savecmp') ? 1 : 0;	
 		
-		if (GetParam('webpagelink')) {
-			$wptext = GetParam('webpagetext');	
-			$text = str_replace(array('_UNSUBSCRIBE_','_MAILSENDER','_WEBLINK_'),array($unlink, $cc, $plink), $wptext);			
-			$rtext = $this->add_remarks_to_hide($text);
-			if (GetParam('usetokens'))
-				$rtoken[0] = $this->add_remarks_to_hide($text); 
-			else
+		if ($viewashtml = GetParam('webviewlink')) {
+			$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
+										$this->encUrl($this->savehtmlurl . $cid . '.html');
+			$plink = "<a href='$pageurl'>".localize('_here',getlocal())."</a>";	
+			
+			$text = str_replace('_WEBLINK_',$plink, GetParam('webviewtext'));	//replace special words		
+			$rtext = $this->add_remarks_to_hide($text); //add remark to easilly remove 
+			//if use tokens place at atoken
+			if ($hastokens = GetParam('usetokens')) 
+				$rtokens[0] = $this->add_remarks_to_hide($text); 
+			else  //else at end of body
 				$body = str_replace('</body>',$rtext .'</body>', $body);							   	
 		}
 		else
-			$rtoken[0] = null;	
-
-		if ($unlink = GetParam('unsubscribelink')) {
-			$untext = GetParam('unsubscribetext');	
+			$rtokens[0] = ''; //dummy token to replace if $0$ exist in page
+		
+		if ($unsublink = GetParam('unsubscribelink')) {
 			$unlink = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_here',getlocal())."</a>";			
-			$text = str_replace(array('_UNSUBSCRIBE_','_MAILSENDER','_WEBLINK_'),array($unlink, $cc, $plink), $untext);			
+			
+			$text = str_replace(array('_UNSUBSCRIBE_','_MAILSENDER'),array($unlink, $cc), GetParam('unsubscribetext'));			
 			$rtext = $this->add_remarks_to_hide($text);
-			if (GetParam('usetokens'))
-				$rtoken[1] = $this->add_remarks_to_hide($text);
-			else 
+			//if use tokens place at atoken
+			if ($hastokens = GetParam('usetokens'))
+				$rtokens[1] = $this->add_remarks_to_hide($text);
+			else //else at end of body
 				$body = str_replace('</body>',$rtext .'</body>', $body);		
 		}
 		else
-			$rtoken[1] = null;
+			$rtokens[1] = ''; //dummy token to replace if $1$ exist in page
 		
-		$cbody =  $this->combine_tokens($body, $rtoken); //in case of tokens
-        $encodedbody = base64_encode($cbody);		
+		$body =  $this->combine_tokens($body, $rtokens); //in case of tokens	
 
 		if (is_array($_POST['csv'])) 
 		    $mycsvlist = 'csv';  	
@@ -1224,7 +1227,7 @@ class rcbulkmail {
 				 $db->qstr($cc).",".
 				 $db->qstr($bcc).",".
 				 $db->qstr($this->template).",".
-				 $db->qstr($encodedbody).",".
+				 $db->qstr(base64_encode($body)).",".
 				 $db->qstr($collection).",".
 				 $db->qstr($this->owner).",".
 				 $db->qstr($m_user).",".
@@ -1240,7 +1243,7 @@ class rcbulkmail {
 			
 			//save the file
 			if ($p = $this->savehtmlpath) {
-				$s = @file_put_contents($p .'/'. $cid . '.html' , $cbody);	
+				$s = @file_put_contents($p .'/'. $cid . '.html' , $body);	
 				
 				if ($s) 
 					$this->messages[] = 'Saved as ' . $this->savehtmlurl . $cid . '.html';
@@ -1478,7 +1481,7 @@ class rcbulkmail {
 				
 				$rawtext = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html'); //$this->mailbody; //not exist in this post			
 				
-				$body = $this->combine_tokens($rawtext, array('0'=>'dummy'), true); //no need in this stage !!!
+				//$body = $this->combine_tokens($rawtext, array('0'=>''), true); //no need in this stage !!!
 				
 				$include_recipients = $_POST['include'];
 				$cc = implode(';',$include_recipients);
@@ -1486,7 +1489,7 @@ class rcbulkmail {
 				
 				$qty = count($cc) + 1;
 				if ($cc) {
-					$res = $this->sendit($from,$cc,$subject,$body); 
+					$res = $this->sendit($from,$cc,$subject,$rawtext); //$body); 
 					if (!$res) $this->messages[] = "Sent failed";				
 					return ($res); 
 				}
@@ -1580,14 +1583,9 @@ class rcbulkmail {
 			 
 		//echo $sSQL,'<br>';			
 		$result = $db->Execute($sSQL,1);			 
-		$ret = $db->Affected_Rows();
-					     	  	
-		if ($ret) 
-			return true;      
-		//else //DB ERROR
-			//$this->messages[] = '_MLS9' . localize('_MLS9',getlocal());	//error
+		$ret = $db->Affected_Rows();    
  
-		return false;			 
+		return ($ret);			 
 	}	
 	
     protected function sendmail($from,$to,$subject,$mail_text='',$is_html=false) {
@@ -1790,24 +1788,24 @@ class rcbulkmail {
 	public function encUrl($url) {
 		if ($url) {
 			
-			//$key = '1234567890'; //hex2bin('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f');
-			//$mycurl = $url."::".$cid."::".$this->baseurl;
-			//$c = new cipherSaber();
-			//$_url = $c->encrypt($mycurl, $key);
+			if ($this->isHostedApp) {
+				$burl = explode('/', $url);
+				array_shift($burl); //shift http
+				array_shift($burl); //shift //
+				array_shift($burl); //www //
+				$xurl = implode('/',$burl);
+			}
+			else
+				$xurl = $burl; //as is
 			
-			$burl = explode('/', $url);
-			array_shift($burl); //shift http
-			array_shift($burl); //shift //
-			array_shift($burl); //www //
-			$xurl = implode('/',$burl);
-			
-			$qry = 'a='.$this->appname.'&u=' . $xurl . '&cid=_CID_' . '&r=_TRACK_';
+			//$qry = 'a='.$this->appname.'&u=' . $xurl . '&cid=_CID_' . '&r=_TRACK_';
+			$qry = 'a='.$this->appname.'_AMP_u=' . $xurl . '_AMP_cid=_CID_' . '_AMP_r=_TRACK_'; //CKEditor &amp; issue
 			$uredir = $this->urlRedir .'?'. $qry; //'?turl=' . $encoded_qry;
 			
 			/*RewriteRule ^m/([^/]*)/([^/]*)/([^/]*)/([^/]*)/$ /mtrackurl.php?t=mtrack&a=$1&u=$2&cid=$3&r=$4 [L] */
 			//$uredir = $this->urlRedir2 .'/'. $this->appname .'/'. str_replace('/','-', $xurl) . '/_CID_/_TRACK_/' ; // htaccess / problem
 			
-			return ($uredir);
+			return ($uredir); 
 		}
 		else
 			return ('#');
@@ -1815,12 +1813,15 @@ class rcbulkmail {
 	
 	protected function add_urltracker_to_mailbody($mailbody=null,$id=null,$cid=null) {
 
-		$ret = str_replace(array('_TRACK_','_CID_'), array(base64_encode($id), $cid), $mailbody);
+		$ret = str_replace(array('_TRACK_','_CID_','_AMP_'), array(base64_encode($id), $cid, "&"), $mailbody);
 		return ($ret);
 	}
 	
 
     public function ckeditorjs() {
+		
+		$minmax = $_GET['stemplate'] ? 'maximize' : 'minimize' ;
+		//echo $minmax;
 		$ret = "
 				<script type='text/javascript'>
 	           CKEDITOR.replace('mail_text',
@@ -1838,9 +1839,21 @@ class rcbulkmail {
  	           filebrowserWindowHeight : '700'			   
 			   }		   
 			   );
+			   CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
 			   CKEDITOR.config.fullPage = true;
                CKEDITOR.config.entities = false;
-               CKEDITOR.config.entities_greek = false;			   		
+			   CKEDITOR.config.basicEntities = false;
+			   CKEDITOR.config.entities_greek = false;
+			   CKEDITOR.config.entities_latin = false;
+			   CKEDITOR.config.entities_additional = '';
+			   CKEDITOR.config.htmlEncodeOutput = false; 
+			   CKEDITOR.config.protectedSource.push( /<phpdac[\s\S]*?\/phpdac>/g );
+			   CKEDITOR.on('instanceReady',
+               function( evt )
+               {
+                  var editor = evt.editor;
+                  editor.execCommand('$minmax');
+               });			   
 		       </script>		
 ";
 		//     CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
@@ -1853,20 +1866,13 @@ class rcbulkmail {
 		$db = GetGlobal('db');			
 		if (!$sql) return 0;
 		$resultset = $db->Execute($sql,2);
-		if (empty($resulset)) return null;
 		
-		foreach ($resultset as $n=>$rec) {
-			if (n==0) {
-				if ($retasis===false) { //save in stats and return int
-					$this->stats[$name]['value'] = $rec[0]; 	 
-					return intval($rec[0]); //must one rec	
-				}
-				else
-					return ($rec[0]);
-			}	
-		}	
+		if ($retasis==false) { //save in stats and return int
+			$this->stats[$name]['value'] = $resultset->fields[0];	
+			return intval($resultset->fields[0]); 	
+		}
 		
-		return 0;
+		return ($resultset->fields[0]);
 	}	
 	
 	protected function sqlDateRange($fieldname, $istimestamp=false, $and=false) {
@@ -1892,8 +1898,18 @@ class rcbulkmail {
 			
 			//$this->messages[] = 'Combo selection:'.$m.'-'.$y;
 		}	
-        else
-			$dateSQL = null;
+        else {
+			//$dateSQL = null; 
+			
+			//always this year by default
+			$mstart = '01'; $mend = '12';
+			$y = date('Y');
+			if ($istimestamp)
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+			else
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";	
+            //echo $dateSQL;			
+		}	
 		
 		return ($dateSQL);
 	}
@@ -1914,8 +1930,9 @@ class rcbulkmail {
 		$sSQL = "select count(id) from ulists where active=0";		
 		$this->runSql('inactiveSubscribers', $sSQL);	
 		$sSQL = "select count(id) from ulists";	
+		//echo $sSQL;
 		$ts = $this->runSql('totalSubscribers', $sSQL);		
-		
+		//echo $ts;
 		$sSQL = "select count(id) from mailqueue where active=1" . $ownerSQL .$sSQLcid ;		
 		$this->runSql('activeQueue', $sSQL);		
 		$sSQL = "select count(id) from mailqueue where active=0" . $ownerSQL . $timein . $sSQLcid ;		
@@ -2000,7 +2017,7 @@ class rcbulkmail {
 		$ownerSQL = ($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner);		
 		
 		$timein = $this->sqlDateRange('timein', true, false);
-		if ($timein) return null; //no current tasks when time range
+		//if ($timein) return null; //no current tasks when time range (NOT ANYMORE, CURR YEAR DEFAULT TIMERANGE)
 		
 		$sSQL = "SELECT cid,subject,AVG(active),MIN(timein),MAX(timein) AS a FROM mailqueue $ownerSQL group by cid,subject order by a desc";
 		$resultset = $db->Execute($sSQL,2);
@@ -2294,6 +2311,9 @@ class rcbulkmail {
 		return null;	
     }	  
 	
+	protected function nformat($n, $dec=0) {
+		return (number_format($n,$dec,',','.'));
+	}	
 	
 	protected function select_template($tfile=null) {
 		if (!$tfile) return;

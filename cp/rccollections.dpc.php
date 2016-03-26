@@ -61,11 +61,13 @@ class rccollections {
 		$ia = remote_paramload('RCCOLLECTIONS','imageabs',$this->prpath);
 		if (!$ia) {
 			$pt = remote_paramload('RCITEMS','phototype',$this->prpath);	
-			$phototype = $pt ? $pt : 0; 		
+			$csize = remote_paramload('RCCOLLECTIONS','itemphotosize',$this->prpath);
+			$phototype = $csize ? $csize : ( $pt ? $pt : 0); 		
 			switch ($phototype) {
 				case 3  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photobgpath',$this->prpath); break;
 				case 2  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photomdpath',$this->prpath); break;
 				case 1  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photosmpath',$this->prpath); break;
+				case 0  :
 				default : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photobgpath',$this->prpath);
 			}
         }
@@ -233,12 +235,14 @@ class rccollections {
 		$p = $this->readPattern($template);
 		if (is_array($p)) {
 			//print_r($p);
+			//echo 'pattern:',$template;
 			$pattern = (array) $p[0];
 			$join = (array) $p[1];				
 			$pattern_method = true;
+			$template_data = @file_get_contents($template);
 	    }
 	    elseif (($template) && (is_readable($template)))  {
-			
+			//echo 'sub>',$template;
 			/* //*** beware of twing file path of the instance ***
 			if (defined('TWIGENGINE_DPC')) {
 				$date = date('m.d.y');
@@ -263,6 +267,7 @@ class rccollections {
 			return null;
 
         $this->selected_items = $this->get_selected_items();	
+		//echo 'selected items:';
 		
 		if (!empty($this->selected_items)) {
 			$tokens = array();
@@ -308,7 +313,7 @@ class rccollections {
 					unset($preprocessor);
 				}*/			
 				
-				if ($pattern_method) /** pattern method **/
+				if ($pattern_method==true) /** pattern method **/
 					$items[] = $tokens;
 				else                   /** standart method **/
 					$items[] = $this->combine_tokens($template_data, $tokens, true);
@@ -318,10 +323,11 @@ class rccollections {
 			}//foreach
 		 
 			/** pattern method **/
-			if ($pattern_method) {
+			if ($pattern_method==true) {
 				$out = null;
 				$tts = array();
-				$gr= array();
+				$gr = array();
+				$itms = array();
 				$cc = array_chunk($items, count($pattern));//, true);
 				foreach ($cc as $i=>$group) {
 					foreach ($group as $j=>$child) {
@@ -340,12 +346,18 @@ class rccollections {
 					unset($tts);
 					$out = null;
 				}
-				$ret = implode('',$gr);
-                $ret = $this->ct($template, array(0=>$ret), true);	
+				$itms[] = implode('',$gr);
+                //$ret = $this->ct($template, $itms, true);	
+				$ret = $this->combine_tokens($template_data, $itms, true); 
+			    unset($itms);
+				unset($gr);
+				unset($tts);
 			}
-			else
+			else {
 				$ret = implode('',$items);			 
-		} 			
+				unset($items);
+			}	
+		} 		
 		return ($ret);
 	}
 	
@@ -511,7 +523,7 @@ class rccollections {
 		if ($plist)
 			$sSQL .= ' and id not in (' . $plist . ')';
 		$sSQL .= " and itmactive>0 and active>0";			   
-		$sSQL .= " ORDER BY " . $itmname;		
+		$sSQL .= " ORDER BY " . $itmname;	//order unselected list by name	
 		
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
@@ -541,7 +553,7 @@ class rccollections {
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		$sSQL .= ' id in (' . $this->savedlist . ')';
 		$sSQL .= " and itmactive>0 and active>0";			   
-		$sSQL .= " ORDER BY " . $itmname;	
+		//$sSQL .= " ORDER BY " . $itmname;	 //no order
 
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
@@ -564,7 +576,7 @@ class rccollections {
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		$sSQL .= ' id in (' . GetSessionParam($this->listName) . ')';
 		$sSQL .= " and itmactive>0 and active>0";			   
-		$sSQL .= " ORDER BY " . $itmname;	
+		//$sSQL .= " ORDER BY " . $itmname;	 // no order
 
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
@@ -617,7 +629,7 @@ class rccollections {
 
 		$sSQL .= /*$codefield .*/ "id in (" . GetSessionParam($this->listName) .")";
 	    $sSQL .= " and itmactive>0 and active>0";	
-		$sSQL .= " ORDER BY orderid";
+		//$sSQL .= " ORDER BY orderid";
         $sSQL .= " limit " . $items;		
 		
 		//echo $sSQL;	
@@ -629,15 +641,6 @@ class rccollections {
 		foreach ($resultset as $n=>$rec) {
 		
 		    $id = $rec[$codefield];
-			/*
-		    //read posted data per item..
-		    $out_of_list = GetParam($id) ? true : false;//remove from rendering list
-			//if (GetParam($id)) continue;
-		    $img_width = GetParam('imagex_'.$id) ? GetParam('imagex_'.$id) : $img_width;
-		    $img_height = GetParam('imagey_'.$id) ? GetParam('imagey_'.$id) : $img_height;		
-            $width = $img_width ? "width=\"$img_width\" " : null;
-		    $height = $img_height ? "height=\"$img_height\" " : null;				
-			*/
 			
 			$cat = $rec['cat0'] ? str_replace(' ','_',$rec['cat0']) : null;
 			$cat .= $rec['cat1'] ? $this->cseparator . str_replace(' ','_',$rec['cat1']) : null;
@@ -649,12 +652,6 @@ class rccollections {
 			$item_name_url = seturl('t=kshow&cat='.$cat.'&id='.$id,$rec['itmname'],null,null,null,1);			   
 		    $item_name_url_base = "<a href='$item_url'>".$rec['itmname']."</a>";
 			
-            /*if ($this->has_photo2db($id,$this->restype,'LARGE')) {
-				$item_photo_url = 'http://' . $this->url . '/showphoto.php?id='.$id.'&type=LARGE';
-				$item_photo_html = "<img src=\"" . $item_photo_url . "\" $width $height>";
-				$item_photo_link = "<a href='$item_url'><img src=\"" . $item_photo_url . "\" $width $height></a>";
-            }  		 
-			else*/ 
 			$imgfile = $this->urlpath . $this->image_size_path . '/' . $id . $this->restype;
 			//echo '<br/>', $imgfile;
 			if (file_exists($imgfile)) { 	 
@@ -663,19 +660,9 @@ class rccollections {
 				$item_photo_link = "<a href='$item_url'><img src=\"" . $item_photo_url . "\"></a>";
 		    }
 
-			//fetch extra html code 
-            /*
-			$attachment = $this->has_attachment2db($id,'.html', true);
-            //replace relative path image/files with absolute path = url
-            if (stristr($attachment,'src="images/'))
-                $attachment = str_replace('src="images/','src="'.$this->url.'/images/');   			
-		    */
 			$attachment = null;
-		    //$order_id = 'order_'.$id;
-		    //$i = GetParam($order_id) ? GetParam($order_id) : $ix++;
 			$i = $ix++;
 			$ret_array[$i] = array(
-			                /*'disabled'=>$out_of_list,*/
 			                'code'=>$id,
 			                'itmname'=>$rec[$itmname],
 							'itmdescr'=>$rec[$itmdescr],

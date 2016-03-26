@@ -150,9 +150,13 @@ class rcxmlfeeds {
 	   }  
 	   $opt .= "</option>";	
 	
-       $filename = seturl("t=cpxmlfeeds&editmode=".GetReq('editmode'));      
+       $filename = seturl("t=cpxmlfeeds&editmode=".GetReq('editmode'));
+
+	   $toprint = '<h2>'. localize('RCXMLFEEDS_DPC',getlocal());
+       $toprint .= $file ? ' - ' . $file . '.xml' : '';		   
+	   $toprint .=  '</h2>';
     
-       $toprint  = "<FORM action=". "$filename" . " method=post>";
+       $toprint .= "<FORM action=". "$filename" . " method=post>";
        $toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1><STRONG>";
 	   $toprint .= localize('_XMLFILE',getlocal());
 	   $toprint .= "</STRONG><br>";
@@ -160,30 +164,18 @@ class rcxmlfeeds {
 	   $toprint .= "<select name='xmlfeed' onChange='location=this.options[this.selectedIndex].value'>" .
 				   $opt . "</select>";
 	   
-       $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"csvmails\" ROWS=20 cols=60 wrap=\"virtual\" readonly>";
+       $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"csvmails\" ROWS=10 cols=60 wrap=\"virtual\" readonly>";
 	   $toprint .=  $this->load_xml_file();		 
        $toprint .= "</TEXTAREA></DIV><br>";	   
 	   
-
-	   //$toprint .= "<input type=\"submit\" name=\"FormAction\" value=\"cpsubscribe\">&nbsp;"; 
-       //$toprint .= "<input type=\"submit\" name=\"FormAction\" value=\"cpunsubscribe\">";	  
+ 
        $toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"xmlcreate\">"; 
        $toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_xmlcreate',getlocal()) . "\">&nbsp;";  
        $toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpxmlcreate" . "\">";	 	   
 	   	    
-       $toprint .= "</FONT></FORM>";
-	   
-	   $data2[] = $toprint; 
-  	   $attr2[] = "left";
+       $toprint .= "</FONT></FORM>";	    
 
-	   $wtitle = localize('RCXMLFEEDS_DPC',getlocal());
-       $wtitle .= $file ? ' - ' . $file . '.xml' : '';		   
-		
-	   $swin = new window($wtitle,$data2,$attr2);
-	   $out .= $swin->render("center::100%::0::group_dir_body::left::0::0::");	
-	   unset ($swin);	 
-
-       return ($out);
+       return ($toprint);
     }		
 	
 	

@@ -153,6 +153,8 @@ $__LOCALE['RCPMENU_DPC'][141]='_alltasks;See all notifications;Όλες οι ε�
 $__LOCALE['RCPMENU_DPC'][142]='_youhave;You have;Υπάρχουν';
 $__LOCALE['RCPMENU_DPC'][143]='_newnotifications;new notifications;μηνύματα';
 $__LOCALE['RCPMENU_DPC'][144]='_pendingtasks;pending tasks;εργασίες';
+$__LOCALE['RCPMENU_DPC'][145]='_itemrelation;Relationships;Σύνδεσμοι';
+$__LOCALE['RCPMENU_DPC'][146]='_itemrel;Relations;Συσχετισμοί';
 	   
 class rcpmenu {
 
@@ -517,7 +519,7 @@ class rcpmenu {
 		                   array('?t=',$this->cseparator,'http://www.','?',$cat, $id, $selected_cat),$link);
 						   
 		//$out = str_replace('^',$this->cseparator,$ret);		
-		return ($ret . '&editmode=1'); //editmode added for backward compatibility
+		return ($ret);// . '&editmode=1'); //editmode added for backward compatibility
 	}
 	
 	function select_template($tfile=null) {

@@ -29,6 +29,7 @@ class rctrackurl  {
 	var $graphx, $graphy;
 	
 	var $prpath, $location;
+	var $appstring, $urlstring, $hashstring;
 		
 	function __construct() {
 		
@@ -43,6 +44,9 @@ class rctrackurl  {
 	  $this->graphx = remote_paramload('RCTRACKURL','graphx',$this->path);
 	  $this->graphy = remote_paramload('RCTRACKURL','graphy',$this->path);
 
+	  $this->appstring = null;
+	  $this->urlstring = null; 
+	  $this->hashstring = null;
 	}
 
 	
@@ -93,7 +97,11 @@ class rctrackurl  {
 	}
 	
 	protected function redirect_js($location) {
-		$ret ="window.location = '$this->location';";
+		
+		//$location = $this->appstring . $this->urlstring .  $this->hashstring;
+		//$jlocation = "'".$this->appstring."'+encodeURIComponent('".$this->urlstring ."')+'".$this->hashstring."'";
+		//echo $location;
+		$ret ="window.location = '".$this->location."';"; 
 	
         return ($ret);	
 	}
@@ -115,13 +123,21 @@ class rctrackurl  {
 			//$url = $appurl .'/'. str_replace('-','/',$u) . '#' . $cid.'|'.$r; //htaccess / problem
 			$this->location = $url;
 			
+			$this->appstring = $appurl .'/';
+			$this->urlstring = $u;
+			$this->hashstring = '#' . $cid.'|'. urlencode($r);
+			
 			//$link = "<a href='$url'>".$url."</a>";
 			//echo $link;
 		}
 		else { //not a handled www
 		
-		    $url = 'http://'. $u . '#' . $cid.'|'. urlencode($r);
+		    $url = /*'http://'.????*/ $u . '#' . $cid.'|'. urlencode($r);
 		    $this->location = $url;
+			
+			$this->appstring = null;
+			$this->urlstring = $u;
+			$this->hashstring = '#' . $cid.'|'. urlencode($r);			
 		}	
 		
 		$this->javascript();

@@ -195,9 +195,7 @@ class rcitems {
 	var $eshop, $cptemplate;
 	
 	function rcitems() {
-	  $GRX = GetGlobal('GRX');		
-	  
-      //shcategories::shcategories();	  
+	  $GRX = GetGlobal('GRX');		 
 	
 	  $this->debug_sql = true;	
 	
@@ -304,17 +302,9 @@ class rcitems {
 	}
 	
     function event($sAction) {
-       $db = GetGlobal('db');	
 	   
-	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') {//die("Not logged in!");//	
-	     if (!GetReq('editmode'))		 
-	       die("Not logged in!");//	
-		 else
-     	   //header("Location: cp.php?editmode=1&encoding=" . GetReq('encoding'));  
-   	       die("Not logged in! <A href='cp.php?editmode=1&encoding=".GetReq('encoding')."'>LOGIN</A>");//
-	   }		
-	   /////////////////////////////////////////////////////////////		   		
+	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	   if ($login!='yes') return null;			   		
 
        if (!$this->msg) {
   
@@ -336,7 +326,6 @@ class rcitems {
 		                      break;
 	       case 'cpvmsend'  : $this->send_mail();
                               $this->grid_javascript();
-		                      //$this->read_list();
 		                      break;	   
 	       case 'cpvmail'   :
 		                      break;		 	 
@@ -354,8 +343,7 @@ class rcitems {
 			                       break;								   
 		    case 'cpvrestorephoto' : //in case of cp only forms needs id in post//GetReq('id'); 
 			                       $this->item_sync_photo(GetParam('id'),GetParam('cat'),GetParam('notexisted'));
-								   // if ((!GetReq('cat')) && (!GetReq('id'))) //when all codes
-			                       //$this->directory_sync_photo();//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<all dir
+
 			                       break;									   
 		    case 'cpvphoto'    :   break;
 		   
@@ -372,25 +360,18 @@ class rcitems {
 		    case 'cpvmodify'   :   break;			
 		    case 'cpvdelete'   :   $this->delete_from_list(); 
 			                       $this->grid_javascript(); 
-			                       //$this->sidewin(); 
-			                       //$this->read_list();
 			                       break;
 								   
 		    case 'cpvoffer'    :   $this->import_to_offers(); 
 			                       $this->grid_javascript();   
-			                       //$this->read_list();
 			                       break;	
 								   
 		    case 'cpvactive'   :   $this->activate_list(); 
-			                       //$this->read_list();
 			                       break;									   							   
 			
             case 'openfolder'  :			
 	        case 'cpitems'     :   
 			default :              $this->grid_javascript(); 
-			                       //$this->sidewin(); 
-			                       //$this->read_list(); 
-                                   //$this->charts = new swfcharts;	
 		                           $this->hasgraph = $this->charts->create_chart_data('statisticscat',"where year >=2000 and attr1='".urldecode(GetReq('cat'))."'");
 								   break;	
 													
@@ -400,11 +381,9 @@ class rcitems {
     }	
 
     function action($action)  {
-         $db = GetGlobal('db');		 
 
-	     //$this->reset_db();
-		 
-		 $out = $this->title();
+		 $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	     if ($login!='yes') return null;	
 		 		 
 	     switch ($action) {	
 		 
@@ -1254,8 +1233,8 @@ class rcitems {
 
 		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$t|".$title."|$type|$edit|$options|$link_option|$search|$hidden|$align");
 		} 
-	   
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode++id+$noctrl+1+$rows+$height+$width");
+	    $ititle = localize('RCITEMS_DPC',getlocal());
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode+$ititle+id+$noctrl+1+$rows+$height+$width");
 		
 		return ($out);
 	}
@@ -2695,7 +2674,7 @@ function photo_item() {
 	   //..photo_item({".$id."});
 	   $editlink = "javascript:edit_item({".$id."});";//seturl('t=cpvmodify&id={'.$id.'}');		   	   	   
 	   
-	   $rd = $this->form_insert2(null,440,20, $editlink, 'e', true);
+	   $rd = $this->form_insert2(null,380,16, $editlink, 'e', true);
 
 	   
 	   if ($item_id) {//preselected item

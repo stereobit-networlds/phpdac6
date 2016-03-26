@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['RCKATEGORIES_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCKATEGORIES_DPC']='1;1;1;1;1;1;1;1;1;1';
 
 if ( (!defined("RCKATEGORIES_DPC")) && (seclevel('RCKATEGORIES_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCKATEGORIES_DPC",true);
@@ -48,19 +48,19 @@ $__ACTIONS['RCKATEGORIES_DPC'][14]='cpaddcat';
 $__ACTIONS['RCKATEGORIES_DPC'][15]='cpeditcat';
 $__ACTIONS['RCKATEGORIES_DPC'][16]='cpeditframe';
 
-$__LOCALE['RCKATEGORIES_DPC'][0]='RCKATEGORIES_DPC;SQL Kategories;Κατηγορίες SQL';
+$__LOCALE['RCKATEGORIES_DPC'][0]='RCKATEGORIES_DPC;Categories;Κατηγορίες';
 $__LOCALE['RCKATEGORIES_DPC'][1]='_LEVEL1;Category 1;Κατηγορία 1';
 $__LOCALE['RCKATEGORIES_DPC'][2]='_LEVEL2;Category 2;Κατηγορία 2';
 $__LOCALE['RCKATEGORIES_DPC'][3]='_LEVEL3;Category 3;Κατηγορία 3';
 $__LOCALE['RCKATEGORIES_DPC'][4]='_LEVEL4;Category 4;Κατηγορία 4';
 $__LOCALE['RCKATEGORIES_DPC'][5]='_LEVEL5;Category 5;Κατηγορία 5';
-$__LOCALE['RCKATEGORIES_DPC'][6]='_NEWLEVEL;<b>New category</b>;<b>Νέα κατηγορία</b>';
+$__LOCALE['RCKATEGORIES_DPC'][6]='_NEWLEVEL;New category;Νέα κατηγορία';
 $__LOCALE['RCKATEGORIES_DPC'][7]='_FLEVEL1;Foreign Alias Level 1;Κατηγορία 1 (Ξενόγλωσση)';
 $__LOCALE['RCKATEGORIES_DPC'][8]='_FLEVEL2;Foreign Alias Level 2;Κατηγορία 2 (Ξενόγλωσση)';
 $__LOCALE['RCKATEGORIES_DPC'][9]='_FLEVEL3;Foreign Alias Level 3;Κατηγορία 3 (Ξενόγλωσση)';
 $__LOCALE['RCKATEGORIES_DPC'][10]='_FLEVEL4;Foreign Alias Level 4;Κατηγορία 4 (Ξενόγλωσση)';
 $__LOCALE['RCKATEGORIES_DPC'][11]='_FLEVEL5;Foreign Alias Level 5;Κατηγορία 5 (Ξενόγλωσση)';
-$__LOCALE['RCKATEGORIES_DPC'][12]='_FNEWLEVEL;<b>New category alias</b>;<b>Νέα κατηγορία (Ξενόγλωσση)</b>';
+$__LOCALE['RCKATEGORIES_DPC'][12]='_FNEWLEVEL;New category alias;Νέα κατηγορία (Ξενόγλωσση)';
 $__LOCALE['RCKATEGORIES_DPC'][13]='_ctgid;Id;A/A';
 $__LOCALE['RCKATEGORIES_DPC'][14]='_ctgoutline;Branch;Κλαδί';
 $__LOCALE['RCKATEGORIES_DPC'][15]='_ctgoutlnorder;Branch order;Ταξινόμηση';
@@ -68,6 +68,12 @@ $__LOCALE['RCKATEGORIES_DPC'][16]='_search;Search;Αναζητήσιμο';
 $__LOCALE['RCKATEGORIES_DPC'][17]='_active;Active;Ενεργό';
 $__LOCALE['RCKATEGORIES_DPC'][18]='_view;Show;Εμφανές';
 $__LOCALE['RCKATEGORIES_DPC'][19]='_OK;Success;Επιτυχώς';
+$__LOCALE['RCKATEGORIES_DPC'][20]='_cat0;Category 1;Κατηγορία 1';
+$__LOCALE['RCKATEGORIES_DPC'][21]='_cat1;Category 2;Κατηγορία 2';
+$__LOCALE['RCKATEGORIES_DPC'][22]='_cat2;Category 3;Κατηγορία 3';
+$__LOCALE['RCKATEGORIES_DPC'][23]='_cat3;Category 4;Κατηγορία 4';
+$__LOCALE['RCKATEGORIES_DPC'][24]='_cat4;Category 5;Κατηγορία 5';
+$__LOCALE['RCKATEGORIES_DPC'][25]='_id;ID;ID';
 
 class rckategories extends shkategories {
   
@@ -104,9 +110,8 @@ class rckategories extends shkategories {
 	
 	function event($event=null) {
 	
-	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
-	   /////////////////////////////////////////////////////////////		
+	  $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	  if ($login!='yes') return null;		
 	
 	    switch ($event) {
 		  case 'cpaddcat'  :	break;
@@ -151,6 +156,9 @@ class rckategories extends shkategories {
     }
 	
 	function action($action=null) {	
+	
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;
 			 
 	
 	    switch ($action) {	
@@ -384,15 +392,13 @@ class rckategories extends shkategories {
     }
   
     function add_category2($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
-	    $height = $height ? $height : 800;
-        $rows = $rows ? $rows : 36;
+	    $height = $height ? $height : 440;
+        $rows = $rows ? $rows : 18;
         $width = $width ? $width : null; //wide
         $mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;
-        $editlink = $editlink ?
-		            $editlink :
-		            seturl("t=cpeditcat&editmode=1&cat={cat2}");
-							
+        $editlink = $editlink ? $editlink : seturl("t=cpeditcat&cat={cat2}");
+		$title = $this->title;						
 	
 	    if (!defined('MYGRID_DPC')) 
 		   return ($this->add_category()); 
@@ -405,70 +411,26 @@ class rckategories extends shkategories {
 	    else
 	     $cats[] = $selected_cat; 
 
-		$myfields = 'id,ctgid,';//ctgoutline,ctgoutlnorder,';
-		$mytitles = localize('id',getlocal()) . ',' . localize('_ctgid',getlocal()) . ',';// . localize('_ctgoutline',getlocal()) . ',' . localize('_ctgoutlnorder',getlocal()) . ',';				 		
-		$myfields .= 'active,view,search,';
-		$mytitles .= localize('_active',getlocal()) . ',' . localize('_view',getlocal()) . ',' . localize('_search',getlocal()) . ',';
-        $myfields .= "cat1,cat2,cat3,cat4,cat5,cat{$lan}1,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5";
-        $mytitles .= localize('_LEVEL1',getlocal()).','.localize('_LEVEL2',getlocal()) .','.
-		             localize('_LEVEL3',getlocal()) .','.localize('_LEVEL4',getlocal()).','.localize('_LEVEL5',getlocal()).','.
-					 localize('_LEVEL1',getlocal()).','.localize('_LEVEL2',getlocal()) .','.
-					 localize('_LEVEL3',getlocal()).','.localize('_LEVEL4',getlocal()).','.localize('_LEVEL5',getlocal());			
-						 		 
-		
-		$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
-        //$xsSQL = "select id,ctgid,ctgoutline,ctgoutlnorder,cat1,cat2,cat3,cat4,cat5,cat01,cat02,cat03,cat04,cat05,cat11,cat12,cat13,cat14,cat15 from categories ";
+		$myfields = 'id,ctgid,';
+		$mytitles = localize('id',getlocal()) . ',' . localize('_ctgid',getlocal()) . ',';
+        $myfields .= /*"cat{$lan}1,*/"cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5,";
+        $mytitles .= /*localize('_cat0',$lan).','.*/localize('_cat1',getlocal()) .','.
+					 localize('_cat2',$lan).','.localize('_cat3',$lan).','.localize('_cat4',$lan).',';		
+		$myfields .= 'active,view,search';
+		$mytitles .= localize('_active',getlocal()) . ',' . localize('_view',getlocal()) . ',' . localize('_search',getlocal());
 
-		$farr = explode(',',$myfields);
-		$tarr = explode(',',$mytitles);
-	    foreach ($farr as $i=>$t) {
-		   if ($t=='id') {
-		      $type = 6;
-			  $edit = null;	
-              $options = null;					    
-		   }
-		   elseif ($t=='ctgid') {
-		      if ((($mode=='e')||($mode=='r')) &&($editlink)) {//only edit/read mode
-				$type = 'link';
-				$edit = 6;			  
-				$options = $editlink ;
-			  }
-			  else {
-		        $type = 6;
-			    $edit = 1;	
-                $options = null;	
-              }				
-		   }		   
-		   elseif (stristr($t,'active') || stristr($t,'search') || stristr($t,'view')) {
-		      $type = 'boolean';
-			  $edit = 1;
-			  $options = "1:0";
-		   }
-		   elseif (stristr($t,'cat')) {
-		      $type = 10;//'select';//if jqgrid is not paid, not applicable
-			  $edit = 1;
-			  /*switch ($t) {
-			    case 'cat4'  : $options = str_replace('_',' ',$cats[4]);break;////$options = $cats[3] ? $cats[3].":".$cats[3] :null; break;
-				case 'cat3'  : $options = str_replace('_',' ',$cats[3]);break;////$options = $cats[2] ? $cats[2].":".$cats[2] :null; break;
-			    case 'cat2'  : $options = str_replace('_',' ',$cats[2]);break;////$options = $cats[1] ? $cats[1].":".$cats[1] :null; break;
-			    case 'cat1'  : //$options = $cat1.':Male;F:Female;D:'.str_replace('_',' ',$cats[1]);break;
-				               //$options = $cats[0] ? $cats[0].":".$cats[0] :null; break;
-				               $options = GetGlobal('controller')->calldpc_method("mygrid.mylookup use select distinct cat3 from categories");
-				               break;
-			    case 'cat0'  : $options = str_replace('_',' ',$cats[0]);break;////break;
-                default      : $options = null;			  
-			  }*/
-		   }
-		   else {
-		      $type = 20;
-			  $edit = 1;
-			  $options = null; 
-		   }
-	       $title = $tarr[$i];//localize('_'.$t,getlocal());
-		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$t|".$title."|$type|$edit|$options");
-		} 		
-			
-		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+categories+$xsSQL+$mode++id+$noctrl+1+$rows+$height+$width");
+		$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
+
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|link|5|".$editlink.'||');		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|10|1|");
+	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|10|1|");				
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|10|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|10|1|");
+	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
+		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 	    return ($out);
 	
     }
@@ -535,7 +497,6 @@ class rckategories extends shkategories {
 		 //echo $resultset->fields['ctgid'];
          //SQL...................			 
   
-	     if ($editmode = GetReq('editmode')) {//default form colors	
 		    global $config;
 			$config['FORM']['element_bgcolor1'] = 'EEEEEE';
 			$config['FORM']['element_bgcolor2'] = 'DDDDDD';				
@@ -629,7 +590,6 @@ class rckategories extends shkategories {
 			SetParam('search',1);
 			//echo $myfields,'-',$mytitles;
 			
-	     } //editmode
 		 
 	   
 	     $gocat = GetReq('cat'); 
@@ -683,8 +643,7 @@ class rckategories extends shkategories {
 	   //print_r($resultset->fields);
 	   $id = $resultset->fields['id']	; 	   
 	   
-	   
-	   if ($editmode = GetReq('editmode')) {//default form colors	
+	   	
 		    global $config;
 			$config['FORM']['element_bgcolor1'] = 'EEEEEE';
 			$config['FORM']['element_bgcolor2'] = 'DDDDDD';	
@@ -760,7 +719,7 @@ class rckategories extends shkategories {
 			$mytitles .= ','. localize('_active',getlocal()) . ',' . localize('_view',getlocal()) . ',' . localize('_search',getlocal());	
 
             //echo $myfields,'-',$mytitles;			
-	   }	   
+ 
 	    
 	   $gocat = GetReq('cat');
 	   
@@ -812,7 +771,7 @@ class rckategories extends shkategories {
 		//$frame = "<iframe src =\"$editurl\" width=\"100%\" height=\"750px\"><p>Your browser does not support iframes</p></iframe>";    
 
 		if ($ajaxdiv)
-			return $ajaxdiv.'|'.$frame;
+			return ($ajaxdiv.'|'.$frame);
 		else
 			return ($frame);
 	}	
@@ -827,7 +786,9 @@ class rckategories extends shkategories {
 	}	
 	
 	function edit_kategories() {
-	   $cat = rawurlencode(GetReq('cat'));
+	   $cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+       //print_r($cpGet); echo '>';	  
+	   $cat = $cpGet['cat']; //stored cat for cp
 	   $id = 'id';//$this->getmapf('code');
 	   $editlink = "javascript:edit_cat({".$id."})";
 	   
@@ -842,7 +803,7 @@ class rckategories extends shkategories {
 	     $init_content = null; 
 	 
 	   //$rd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use editcat+".$init_content);	   	   
-	   $rd .= "<div id='editcat'>".$init_content . "</div>";	   	   
+	   $rd .= "<div id=\"editcat\">".$init_content . "</div>";	   	   
 	   		
 	   return ($rd);			  
 	   

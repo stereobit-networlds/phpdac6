@@ -1,13 +1,10 @@
 <?php
-$__DPCSEC['RCTRANSACTIONS_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCTRANSACTIONS_DPC']='1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCTRANSACTIONS_DPC")) && (seclevel('RCTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCTRANSACTIONS_DPC",true);
 
 $__DPC['RCTRANSACTIONS_DPC'] = 'rctransactions';
-
-//$a = GetGlobal('controller')->require_dpc('nitobi/nitobi.lib.php');
-//require_once($a);
 
 $d = GetGlobal('controller')->require_dpc('shop/shtransactions.dpc.php');
 require_once($d);
@@ -56,8 +53,8 @@ $__LOCALE['RCTRANSACTIONS_DPC'][39]='CustomerDelivery;Self Service;Παραλα�
 
 class rctransactions extends shtransactions {
 
-    var $reset_db, $title;
-	var $_grids, $charts;
+    var $title, $path;
+	var $charts;
 	var $ajaxLink;
 	var $hasgraph, $hasgauge;
     var $status_sid, $status_sidexp;
@@ -65,16 +62,11 @@ class rctransactions extends shtransactions {
 	function rctransactions() {
 	
        shtransactions::shtransactions();
-	   //override if exist
+
 	   if ($tpath = paramload('RCTRANSACTIONS','path'))
 	     $this->path = paramload('SHELL','prpath') . $tpath;
      	 
-	
 	  $this->title = localize('RCTRANSACTIONS_DPC',getlocal());		
-	  $this->reset_db = false;
-	  
-	  //$this->_grids[] = new nitobi("Transactions");	
-      //$this->_grids[] = new nitobi("Customertrans");		
 	  
 	  $this->ajaxLink = seturl('t=cptransshow&statsid='); //for use with...	      
 	  
@@ -91,10 +83,8 @@ class rctransactions extends shtransactions {
 	
     function event($event=null) {
 	
-	   //ALLOW EXPRIRED APPS
-	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
-	   /////////////////////////////////////////////////////////////		 
+	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
 	     case 'cptransviewhtml' : echo $this->viewTransactionHtml();
@@ -112,8 +102,8 @@ class rctransactions extends shtransactions {
 		                      $this->charts = new swfcharts;	
 		                      $this->hasgraph = $this->charts->create_chart_data('transcust','where cid='.$cvid);
 							  break; 	   
-	     case 'cptransactions'    :
-		 default            : $this->grid_javascript();	   
+	     case 'cptransactions':
+		 default            :    
 		                      $this->charts = new swfcharts;	
 		                      $this->hasgraph = $this->charts->create_chart_data('transactions',"");
 							  $this->hasgauge = $this->charts->create_gauge_data('income',"where cid=0",null,1,400,300,'meter');
@@ -122,12 +112,10 @@ class rctransactions extends shtransactions {
     }   
 	
     function action($action=null) {
+		
+	  $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	  if ($login!='yes') return null;	
 	 
-	  /*if (GetSessionParam('REMOTELOGIN')) 
-	    $out = setNavigator(seturl("t=cpremotepanel","Remote Panel"),$this->title); 	 
-	  else  
-        $out = setNavigator(seturl("t=cp","Control Panel"),$this->title);	 	 
-	  */
 	  switch ($action) {
 	     case 'cptransviewhtml' : //$out = $this->viewTransactionHtml();
 		                        break;		  
@@ -147,25 +135,8 @@ class rctransactions extends shtransactions {
 
 	  return ($out);
     }
-	
-	function grid_javascript() {
-      if (iniload('JAVASCRIPT')) {
 
-		   //$template = $this->set_template();   		      
-		   
-	       $code = $this->init_grids();			
-
-		   //$code .= $this->_grids[0]->OnClick(10,'TransactionDetails',$template);//,'Customertrans','vid',2);
-	   
-		   $js = new jscript;
-		   //$js->setloadparams("init()");
-           //$js->load_js('nitobi.grid.js');		   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }		
-	}
-
-	function show_graph($xmlfile,$title,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
+	protected function show_graph($xmlfile,$title,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
 	  $gx = $this->graphx?$this->graphx:$xmax?$xmax:550;
 	  $gy = $this->graphy?$this->graphy:$ymax?$ymax:250;	
 	
@@ -174,7 +145,7 @@ class rctransactions extends shtransactions {
 	  return ($ret);
 	}
 	
-	function show_transactions() {
+	protected function show_transactions() {
 	
 	   if ($this->msg) $out = $this->msg;
 
@@ -186,51 +157,7 @@ class rctransactions extends shtransactions {
 	   return ($out);		   
 	}		
 	
-	function init_grids() {
-
-	    //$bodyurl = seturl("t=cptranslink&tid=");	
-		$bodyurl = seturl("t=cploadframe&tid=");
-	
-        //disable alert !!!!!!!!!!!!		
-		$out = "
-function alert() {}\r\n 
-
-function update_stats_id() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];
-  
-  
-  statsid.value = str;
-  //alert(statsid.value);
-  sndReqArg('$this->ajaxLink'+statsid.value,'stats');
-  
-  return str1+' '+str2;
-}
-
-function show_body() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];  
-  var taskid;
-  var custid;
-  
-  taskid = str;  
-  custid = str1;
-  /*bodyurl = '$bodyurl'+taskid+'&cid='+custid;
-  
-  ifr = '<iframe src =\"'+bodyurl+'\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes ('+str2+').</p>'+str1+'</iframe>';  
-  return ifr;*/
-  sndReqArg('$bodyurl'+taskid,'trans');
-}
-			
-";
-        $out .= "\r\n";
-        return ($out);
-	}
-	
-	function show_grid($x=null,$y=null,$filter=null,$bfilter=null) {
-	    //$db = GetGlobal('db');
+	public function show_grid($x=null,$y=null,$filter=null,$bfilter=null) {
 	    $selected_cus = urldecode(GetReq('cusmail'));
 	
 	    if (defined('MYGRID_DPC')) {
@@ -293,52 +220,16 @@ function show_body() {
   	
 	}
 	
-	function show_grids() {
+	protected function show_grids() {
 		
 	   $ret = $this->show_grid();	
-		
-       /* DISABLED METERS/GAUGES		
-       $vd = $this->show_grid();//550,440,null,$filter);		   
-		   
-	    
-	   if ($this->hasgraph)
-		   $wd = $this->show_graph('transactions',null,seturl('t=cptransactions'));
-	   else
-		   $wd = "<h3>".localize('_GNAVAL',0)."</h3>";	   
-	   
-	   if ($this->hasgauge)
-		   $wd .= $this->charts->show_gauge('income',400,300,seturl('t=cptransactions'));
-	   else
-		   $wd .= "<h3>".localize('_GNAVAL',0)."</h3>";	   		   	   
-	   		   		   		   	   
-	   
-	   //grid 0 
-	   $datattr[] = $vd;
-	  //GetGlobal('controller')->calldpc_method("rcitems.show_grid use 400+440+1");							  
-	   $viewattr[] = "left;50%";	   	   
-
-
-	   $datattr[] = $wd;
-	   $viewattr[] = "left;50%";
-	   
-	   $myw = new window('',$datattr,$viewattr);
-	   $ret = $myw->render();//"center::100%::0::group_article_selected::left::3::3::");
-	   unset ($datattr);
-	   unset ($viewattr);
-	   */
-	   
-       /*$ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use stats");	   
-       if ($this->hasgraph)
-		   $ret .= $this->show_graph('transactions','Customer transactions',$this->ajaxLink,'stats');
-	   else
-		   $ret .= "<h3>".localize('_GNAVAL',0)."</h3>";	   
-	   */
-       $ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use trans");	   
+       //$ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use trans");	   
+	   $ret .= "<div id='trans'></div>";
 	   return ($ret);	
 	}	
 	
 	
-	function show_transaction_data() {//$ajaxdiv=null) {
+	protected function show_transaction_data() {//$ajaxdiv=null) {
       $db = GetGlobal('db'); 	
 	  $tid = GetReq('tid');
 	  $cid = GetReq('cid');
@@ -375,7 +266,7 @@ function show_body() {
 	     return ($out);
 	}
 	
-	function loadframe($ajaxdiv=null) {
+	protected function loadframe($ajaxdiv=null) {
 	    $bodyurl = seturl("t=cptranslink&tid=").GetReq('tid');
 	
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
@@ -386,7 +277,7 @@ function show_body() {
 			return ($frame);
 	}
 	
-	function loadTransactionHtml($id) {
+	protected function loadTransactionHtml($id) {
 	
         $file = $this->path . $id . ".html"; 
 	    //echo $file;
@@ -403,7 +294,7 @@ function show_body() {
 	} 		
 		
 	
-	function viewTransactionHtml($id=null) {
+	public function viewTransactionHtml($id=null) {
 	    $id = $id?$id:GetReq('tid');
 	
         $file = $this->path . $id . ".html"; 

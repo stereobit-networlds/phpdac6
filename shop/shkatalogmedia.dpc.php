@@ -2590,8 +2590,8 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';				
 		$pz = $photosize?$photosize:1;	
 		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;		
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
+	                                                                             
+        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 				$this->getmapf('code').
 				$lastprice .
@@ -2627,12 +2627,12 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';
-		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
+		$mycat = $category ? $category : GetReq('cat');	   
 		$cat = explode($this->cseparator,$mycat);			
 		$pz = $photosize?$photosize:1;	
 		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;		
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
+	                                                                             
+        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 				$this->getmapf('code').
 				$lastprice .
@@ -3184,7 +3184,7 @@ callbackFn (JavaScript function, optional) can be used to define a callback func
           $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,1,1,"shkatalogmedia.show_kategory_items use $category,$items"); 
 		  
 		return ($out);	
-	}	
+	}		
 	
 	//for sitemap call
 	function show_sitemap_items($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {

@@ -28,7 +28,7 @@ $__LOCALE['RCSLIDESHOW_DPC'][4]='link;Url;Δεσμός Url;';
 
 class rcslideshow extends shslideshow {
 
-    var $crlf, $path, $title;
+    var $crlf, $path, $title, $urlpath, $url;
 	var $t_config, $t_config0, $t_config1, $t_config2;
 	var $edit_per_lan;
 	var $cptemplate, $tabheaders;	
@@ -43,10 +43,9 @@ class rcslideshow extends shslideshow {
           $info = strtolower($os);// $_SERVER['HTTP_USER_AGENT'] );   
           $this->crlf = ( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
 		  
-          if ($remoteuser=GetSessionParam('REMOTELOGIN')) 
-		    $this->path = paramload('SHELL','prpath')."instances/$remoteuser/";	
-		  else 
-		    $this->path = paramload('SHELL','prpath');		
+		  $this->path = paramload('SHELL','prpath');		
+		  $this->urlpath = paramload('SHELL','urlpath');		
+		  $this->url = paramload('SHELL','urlbase');		
 	
 	      $this->edit_per_lan = true; //false;
 	
@@ -194,7 +193,9 @@ class rcslideshow extends shslideshow {
 			 $b = null; //'<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
 	         foreach ($data as $var=>$val) {
 			   $b .= $this->setTabInput(localize($var,getlocal()), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
-		     }		 
+			   if (($var=='image') && is_readable($this->urlpath . $val))
+				    $b .= "<img src='".$this->url. '/' . $val  . "' width='500'/>"; 
+		     }				 
 		     $b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
 		     $ret = $this->setTabBody(strtolower($section), $b, true);			 
 		   }
@@ -209,6 +210,8 @@ class rcslideshow extends shslideshow {
 		   $b = null;//'<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
 	       foreach ($data as $var=>$val) {
 			 $b .= $this->setTabInput(localize($var,getlocal()), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
+			 if (($var=='image') && is_readable($this->urlpath . $val))
+			    $b .= "<img src='".$this->url. '/' . $val  . "' width='500'/>"; 
 		   }
 		   $b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
 		   $ret .= $this->setTabBody(strtolower($section), $b, ($i==0 ? true : false));

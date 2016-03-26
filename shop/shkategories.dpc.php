@@ -46,10 +46,7 @@ class shkategories {
 	  $this->title = localize('SHKATEGORIES_DPC',getlocal());	
 	  $this->title2 = localize('SHSUBKATEGORIES_',getlocal());	  
 	  
-	  if ($remoteuser=GetSessionParam('REMOTELOGIN')) 
-		  $this->path = paramload('SHELL','prpath')."instances/$remoteuser/";	
-	  else
-		  $this->path = paramload('SHELL','prpath');	
+	  $this->path = paramload('SHELL','prpath');	
 	  
 	  $this->urlpath = paramload('SHELL','urlpath');
 	  $this->inpath = paramload('ID','hostinpath');			  
@@ -160,37 +157,17 @@ class shkategories {
 	public function encode_image_id($id=null) {
 	    if (!$id) return null;
 
-		if ($this->encodeimageid) {
-			//encode 
-			$out = join(array_map(function ($n) { return sprintf('%03d', $n); }, unpack('C*', $id)));
-			//decode
-			//$id = join(array_map('chr', str_split($numbers, 3)));		
-		}
+		if ($this->encodeimageid) 
+			$out = md5($id);	
 		else
 		    $out = $id;
 			
         return $out;
 	}	
 	
-    public function decode_image_id($id=null) {	
-	    if (!$id) return null;
-
-		//encode 
-		if ($this->encodeimageid) {
-			//decode
-			$out = join(array_map('chr', str_split($numbers, 3)));		
-		}
-		else
-		   $out = $id;	
-	}	
-	
 	function show_category_banner($template=null) {
        $db = GetGlobal('db');	
 	   $cat = GetReq('cat');
-	   /*if ($this->one_attachment)//????
-		 $lan = null;
-	   else
-		 $lan = $lan?$lan:'0';	   */
 	   $lan = getlocal()?getlocal():'0';
 	   
 	   $mytemplate = $template ? $this->select_template($template) : 
@@ -2686,6 +2663,53 @@ function gocatsearch(url)
 	   }	  
 	   return ($ret);
 	}
+	
+	//phpdac func
+	//fetch names of categories based on proposal field (resources) - updated by rcitemrel (relatives)
+	public function show_item_categories($rs, $template) {
+		$db = GetGlobal('db');
+		$id = GetReq('id');
+		$lan = getlocal();   
+	    $f = $lan ? $lan : '0';
+		
+		$fpath = $this->urlpath . '/' . $this->showcatimagepath;
+		$tdata = $this->select_template($template,null,true); //echo $tdata,'>',$template;
+
+		if ($rs) {
+			$rscats = explode(',',$rs);
+			$sSQL = "select cat2,cat{$f}2,cat3,cat{$f}3,cat4,cat{$f}4,cat5,cat{$f}5 from categories where ctgid in (" . $rs . ")";
+			//echo $sSQL;
+		    $res = $db->Execute($sSQL,2);
+			foreach ($res as $i=>$rec) {
+				$icat = array();
+				if ($rec['cat2']) $icat[] = $rec['cat2'];
+				if ($rec['cat3']) $icat[] = $rec['cat3'];
+				if ($rec['cat4']) $icat[] = $rec['cat4'];
+				if ($rec['cat5']) $icat[] = $rec['cat5'];
+				$id = str_replace(' ', '_', implode($this->cseparator, $icat));
+				$link = 'klist/' . $id .'/';
+				//$title = $rec["cat{$f}5"] ? $rec["cat{$f}5"] :($rec["cat{$f}4"] ? $rec["cat{$f}4"] : ($rec["cat{$f}3"] ? $rec["cat{$f}3"] : ($rec["cat{$f}2"] ? $rec["cat{$f}2"] : null)));
+				$tcat = array();
+				if ($rec["cat{$f}2"]) $tcat[] = $rec["cat{$f}2"];
+				if ($rec["cat{$f}3"]) $tcat[] = $rec["cat{$f}3"];
+				if ($rec["cat{$f}4"]) $tcat[] = $rec["cat{$f}4"];
+				if ($rec["cat{$f}5"]) $tcat[] = $rec["cat{$f}5"];
+				$title = implode($this->cseparator, $tcat);				
+				if ($title) {
+					$tokens[] = "<a href='$link'>$title</a>";
+					$tokens[] = $link;	
+					$tokens[] = is_readable($fpath . $id . $this->restype) ? 
+					            $this->showcatimagepath . $this->encode_image_id($id) . $this->restype : null;
+					$ret .= $this->combine_tokens($tdata, $tokens);
+					unset($tokens);
+				}	
+			}
+			//print_r($tokens);
+            //echo $ret;			
+			return ($ret);			
+		}
+		return false;
+	}	
 	
 	//tokens method	
 	function combine_tokens($template_contents,$tokens, $execafter=null) {

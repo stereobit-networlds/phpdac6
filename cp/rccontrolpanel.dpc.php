@@ -173,6 +173,8 @@ $__LOCALE['RCCONTROLPANEL_DPC'][135]='_bmailstats;Statistics;Στατιστικ�
 $__LOCALE['RCCONTROLPANEL_DPC'][136]='_bmailcamp;Campaigns;Θέματα';
 $__LOCALE['RCCONTROLPANEL_DPC'][137]='_ITEMCOLLECTION;Select items;Επιλογή ειδών';
 $__LOCALE['RCCONTROLPANEL_DPC'][138]='_GNAVAL;Empty;Μη διαθέσιμο';
+$__LOCALE['RCCONTROLPANEL_DPC'][139]='_caddress;Addresses;Διευθύνσεις';
+$__LOCALE['RCCONTROLPANEL_DPC'][140]='_susers;Superusers;Διαχειριστές';
 
 class rccontrolpanel {
 
@@ -378,9 +380,7 @@ function handleResponse() {if(http.readyState == 4){
         var update = new Array();
         response = response.replace( /^\s+/g, \"\" ); // strip leading 
         response = response.replace( /\s+$/g, \"\" ); // strip trailing		
-        if(response.indexOf('|' != -1)) {
-			//alert(response); 	
-            update = response.split('|');
+        if(response.indexOf('|' != -1)) { /*alert(response); */ update = response.split('|');
             document.getElementById(update[0]).innerHTML = update[1];
         }}}  		
 		function init(){ sndReqArg('cp.php?t=cptasks','cptasks');} 
@@ -1270,8 +1270,18 @@ function handleResponse() {if(http.readyState == 4){
 			
 			//$this->messages[] = 'Combo selection:'.$m.'-'.$y;
 		}	
-        else
-			$dateSQL = null;
+        else {
+			//$dateSQL = null; 
+			
+			//always this year by default
+			$mstart = '01'; $mend = '12';
+			$y = date('Y');
+			if ($istimestamp)
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+			else
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";	
+            //echo $dateSQL;			
+		}	
 		
 		return ($dateSQL);
 	} 
@@ -1293,35 +1303,35 @@ function handleResponse() {if(http.readyState == 4){
 	
             $sSQL = "select count(id) from users";
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Users']['value'] = $res->fields[0];			
+            $this->stats['Users']['value'] = $this->nformat($res->fields[0]);			
 			
             $sSQL = "select count(id) from users where subscribe=1"; /** default label in ulist **/
 			$res = $db->Execute($sSQL,2);	
-            $this->stats['Users']['Subscribers'] = $res->fields[0];
+            $this->stats['Users']['Subscribers'] = $this->nformat($res->fields[0]);
 			
             $sSQL = "select count(id) from customers";
 			$res = $db->Execute($sSQL,2);	
-            $this->stats['Users']['customers'] = $res->fields[0];			
+            $this->stats['Users']['customers'] = $this->nformat($res->fields[0]);			
 			
             $sSQL = "select count(id) from ulists";
 			$res = $db->Execute($sSQL,2);	
-            $this->stats['Mail']['maillist'] = $res->fields[0];			
+            $this->stats['Mail']['maillist'] = $this->nformat($res->fields[0]);			
 
             $sSQL = "select count(id) from pphotos where stype='SMALL'";
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Items']['DbPicSmall'] = $res->fields[0];			
+            $this->stats['Items']['DbPicSmall'] = $this->nformat($res->fields[0]);			
 			
             $sSQL = "select count(id) from pphotos where stype='MEDIUM'";
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Items']['DbPicMedium'] = $res->fields[0];			
+            $this->stats['Items']['DbPicMedium'] = $this->nformat($res->fields[0]);			
 			
             $sSQL = "select count(id) from pphotos where stype='LARGE'";
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Items']['DbPicLarge'] = $res->fields[0];
+            $this->stats['Items']['DbPicLarge'] = $this->nformat($res->fields[0]);
 			
             $sSQL = "select count(id) from pattachments";
 			$res = $db->Execute($sSQL,2);	
-            $this->stats['Items']['Attachments'] = $res->fields[0];			
+            $this->stats['Items']['Attachments'] = $this->nformat($res->fields[0]);			
 			
 		}  
         if (defined('RCITEMS_DPC')) {
@@ -1330,146 +1340,97 @@ function handleResponse() {if(http.readyState == 4){
 		    //$sSQL = "select id,substr(sysins,1,4) as year,substr(sysins,6,2) as month from products where substr(sysins,1,4)='$year' and substr(sysins,6,2)='$month'";
 			$sSQL = "select count(id) from products where" . $where .  $timeins;
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Items']['insert'] = $res->fields[0];			
+            $this->stats['Items']['insert'] = $this->nformat($res->fields[0]);			
 					
 			$timeupd = $this->sqlDateRange('sysupd', false, false);			 
 			$where = $timeupd ? ' where ' : null;
 		    //$sSQL = "select id,substr(sysupd,1,4) as year,substr(sysupd,6,2) as month from products where substr(sysupd,1,4)='$year' and substr(sysupd,6,2)='$month'";
 			$sSQL = "select count(id) from products" . $where . $timeupd;
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Items']['update'] = $res->fields[0];			
+            $this->stats['Items']['update'] = $this->nformat($res->fields[0]);			
 								
             $sSQL = "select count(id) from products where itmactive=1 and active=101";
 			$res = $db->Execute($sSQL,2);	
-            $this->stats['Items']['active'] = $res->fields[0];			
+            $this->stats['Items']['active'] = $this->nformat($res->fields[0]);			
 						
             $sSQL = "select count(id) from products where (itmactive=0 and active=0) or (itmactive is null and active is null)";//or...
 			$res = $db->Execute($sSQL,2);	
-            $this->stats['Items']['inactive'] = $res->fields[0];			
+            $this->stats['Items']['inactive'] = $this->nformat($res->fields[0]);			
 						
             $sSQL = "select count(id) from products";
 			$res = $db->Execute($sSQL,2);	
-            $this->stats['Items']['value'] = $res->fields[0];			
+            $this->stats['Items']['value'] = $this->nformat($res->fields[0]);			
 		} 
         if (defined('RCITEMS_DPC')) {//???????SYNC DPC
-		    /*$sSQL = "select id,status,sqlres,sqlquery,substr(date,1,4) as year,substr(date,6,2) as month from syncsql where substr(date,1,4)='$year' and substr(date,6,2)='$month'";
-			$res = $db->Execute($sSQL,2);
-			$i=0;
-			$chars_send = 0;
-			$noexec_syncs = 0;
-			if (!empty($res)) { 
-				foreach ($res as $n=>$rec) {
-				    $i+=1;
-                    $chars_send += strlen($rec['sqlquery']);
-                    if (!$rec['status']) 
-                        $noexec_syncs+=1;					
-				}
-			}*/
 			$timein = $this->sqlDateRange('time', true, false);			 
 			$where = $timein ? ' where ' : null;
 			$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql" . $where . $timein;
 			$res = $db->Execute($sSQL,2);
 			
-            $this->stats['Sync']['value'] = $res->fields[0]; //$i;			
+            $this->stats['Sync']['value'] = $this->nformat($res->fields[0]);		
 			$this->stats['Sync']['bytes'] = $this->bytesToSize1024($res->fields[1],1); //$chars_send,1);
 			
 			$timein = $this->sqlDateRange('time', true, true);			 
 			$sSQL = "select count(id) from syncsql where status IS NOT NULL " . $timein;
 			$res = $db->Execute($sSQL,2);			
-			$this->stats['Sync']['noexec'] = $res->fields[0]; //$noexec_syncs;			
+			$this->stats['Sync']['noexec'] = $this->nformat($res->fields[0]); 			
 			
 		    /*$sSQL = "select count(id) from syncsql where substr(date,1,4)='$year'";
 			$res = $db->Execute($sSQL,2);
             $this->stats['Sync']['value'] = $res->fields[0];*/	
 		}  		
         if (defined('RCBULKMAIL_DPC')) {
-		    /*$sSQL = "select id,body,active,status,mailstatus,sender,receiver,substr(timeout,1,4) as year,substr(timeout,6,2) as month from mailqueue where substr(timeout,1,4)='$year' and substr(timeout,6,2)='$month'";
-			$sSQL .= " and active=0";
-			$res = $db->Execute($sSQL,2);
-			$i=0;
-			$chars_send = 0;
-			if (!empty($res)) { 
-				foreach ($res as $n=>$rec) {
-				    $i+=1;
-                    $chars_send += strlen($rec['body']);				
-				}
-			}*/
 			$timein = $this->sqlDateRange('timein', true, false);
             $where = $timein ? ' where ' : null;			
 			$sSQL = "select count(id), sum(CHAR_LENGTH(body)) from mailqueue" . $where . $timein;
 			//echo $sSQL;
 			$res = $db->Execute($sSQL,2);
 			
-			$this->stats['Mail']['value'] = $res->fields[0]; //$i;
+			$this->stats['Mail']['value'] = $this->nformat($res->fields[0]); 
 			$this->stats['Mail']['bytes'] = $this->bytesToSize1024($res->fields[1],1); //$chars_send,1);
 			
 		    $sSQL = "select count(id) from mailqueue where active=0";
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Mail']['sent'] = $res->fields[0];			
+            $this->stats['Mail']['sent'] = $this->nformat($res->fields[0]);			
 
-		    $sSQL = "select count(id) from mailqueue where active=1";
+		    $sSQL = "select count(id) from mailqueue " . $where . $timein;;
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Mail']['value'] = $res->fields[0];
+            $this->stats['Mail']['value'] = $this->nformat($res->fields[0]);
 					
 			$timein = $this->sqlDateRange('timein', true, true);				
 		    //$sSQL = "select count(id) from mailqueue where substr(timeout,1,4)='$year' and active=0";
-			$sSQL = "select count(id) from mailqueue where active=0 " . $timein;
+			$sSQL = "select count(id) from mailqueue where active=1 " . $timein;
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Mail']['send'] = $res->fields[0];
+            $this->stats['Mail']['send'] = $this->nformat($res->fields[0]);
 			
 		    $sSQL = "select count(id) from mailcamp where active=1";
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Mail']['campaigns'] = $res->fields[0];				
+            $this->stats['Mail']['campaigns'] = $this->nformat($res->fields[0]);				
 		}  
-		if (defined('RCTRANSACTIONS_DPC')) { //!!!! to be implemented as cp call
-		    $tbl_g = array();
-            //trans list, last 5 		
-			$ret_g = GetGlobal('controller')->calldpc_method("rctransactions.getTransactionsList use 5");
-			//more...
-			//$tbutton = seturl('t=cptransview&editmode=1',localize("_moretrans",getlocal()));  
-			//$tbutton = seturl('t=cptransactions&editmode=1',localize("_moretrans",getlocal()));  
-			//if (!$tok) {			
-				$tbutton = "<a href='cptransactions.php'>".localize("_moretrans",getlocal())."</a>"; //error in jqgid.lib ..output strarted...!!!
-				/*$wint = new window(localize(null,getlocal()),$tbutton);
-				$ret_g .= $wint->render();
-				unset ($wint);
-				$tbl_g[] = $this->icon("images/file_icon.png",'cptransactions.php',localize("_moretrans",getlocal()),4);
-				*/
-			//}
-            //summary per month 		
-		    /*$sSQL = "select tid,cid,tstatus,cost,costpt,payway,roadway,substr(tdate,1,4) as year,substr(tdate,6,2) as month from transactions where substr(tdate,1,4)='$year' and substr(tdate,6,2)='$month'";
-			$res = $db->Execute($sSQL,2);
-			$i=0;
-			$pay_send = 0;
-			$paynet_send = 0;
-			if (!empty($res)) { 
-				foreach ($res as $n=>$rec) {
-				    $i+=1;
-                    $paynet_send += floatval($rec['cost']);
-                    $pay_send += floatval($rec['costpt']);					
-				}
-			}	
-			$this->stats['Transactions']['subtotal'] = $i;
-			$this->stats['Transactions']['revenue'] = sprintf("%01.2f", $pay_send);
-			$this->stats['Transactions']['revenuenet'] = sprintf("%01.2f", $paynet_send);	*/		
-			
+		if (defined('RCTRANSACTIONS_DPC')) { //!!!! to be implemented as cp call			
 			$timein = $this->sqlDateRange('tdate', false, false);
 			$where = $timein ? ' where ' : null;
 			//$sSQL = "select count(recid) from transactions where substr(tdate,1,4)='$year'";
-			$sSQL = "select count(id) from transactions" . $where . $timein;
+			$sSQL = "select count(recid) from transactions" . $where . $timein;
+			//echo $sSQL;
 			$res = $db->Execute($sSQL,2);
-			$this->stats['Transactions']['value'] = $res->fields[0] ? $res->fields[0] : 0;			
+			$this->stats['Transactions']['value'] = $res->fields[0] ? $this->nformat($res->fields[0]) : 0;			
 			
 		    //$sSQL = "select sum(cost),sum(costpt) from transactions where substr(tdate,1,4)='$year'";
-		    $sSQL = "select sum(cost),sum(costpt) from transactions" . $where . $timein;	
+		    $sSQL = "select sum(cost),sum(costpt) from transactions" . $where . $timein;
+			//echo $sSQL;	
 			$res = $db->Execute($sSQL,2);
-			$this->stats['Transactions']['revenuenet'] = sprintf("%01.2f", $res->fields[0]);
-			$this->stats['Transactions']['revenue'] = sprintf("%01.2f", $res->fields[1]);			
-			$this->stats['Transactions']['tax'] = sprintf("%01.2f", floatval($res->fields[1]) - floatval($res->fields[0]));
+			$this->stats['Transactions']['revenuenet'] = $this->nformat($res->fields[0],2);
+			$this->stats['Transactions']['revenue'] = $this->nformat($res->fields[1],2);			
+			$this->stats['Transactions']['tax'] = $this->nformat((floatval($res->fields[1]) - floatval($res->fields[0])),2);
 		}  
 
         return ($ret);     	
     }
+	
+	protected function nformat($n, $dec=0) {
+		return (number_format($n,$dec,',','.'));
+	}
 	
     protected function bytesToSize1024($bytes, $precision = 2) {
         $unit = array('B','KB','MB','GB');
@@ -2119,7 +2080,7 @@ function handleResponse() {if(http.readyState == 4){
 		$id = explode('|',$task);
 		$hash = md5($id[0].$id[1]);
 		
-		if (array_key_exists($hash, $this->task)) {}
+		if (array_key_exists($hash, $this->tasks)) {}
 		else {
 			$this->tasks[$hash] = $task;
 			SetSessionParam('cpTasks', $this->tasks);
