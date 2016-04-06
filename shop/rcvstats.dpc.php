@@ -51,12 +51,7 @@ class rcvstats  {
 	}
 	
 
-    function event($event=null) {
-
-	   //ALLOW EXPRIRED APPS
-	   /////////////////////////////////////////////////////////////
-	   //if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	moved per event
-	   /////////////////////////////////////////////////////////////		 
+    function event($event=null) {		 
 
 	   switch ($event) {
 		   
@@ -190,20 +185,9 @@ EOF;
 	function graph_javascript() {
 
       if (iniload('JAVASCRIPT')) {
-
-		   //$template = $this->set_template();   		      
+ 		      
 	       $code = $this->update_stats();			
-		   
-		   //$code .= $this->_grids[0]->OnClick(20,'StatisticDetails',$template,'VehicleStats','vid',19);
-		   //REMOTE GRID ARRAY CALLED TO ENABLE onclick !!!!!
-		   /*$vgrids = GetGlobal('controller')->calldpc_var('rcitems._grids');
-		   $code .= $vgrids[0]->OnClick(17,'StatisticDetails',$template,'ItemsStats','tid',0);
-            */ 
-			
-		   $js = new jscript;
-		   //$js->setloadparams("init()");
-           //$js->load_js('nitobi.grid.js');		   
-		   
+		   $js = new jscript;	   
            $js->load_js($code,"",1);			   
 		   unset ($js);
 
@@ -231,25 +215,9 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 	
 	function show_statistics() {
 
-	   /*if ($this->msg) $out = $this->msg;
-
-	   
-	   if (GetReq('cat')) {
-		  if (defined("RCCATEGORIES_DPC"))//text based cats
-		    $toprint .= GetGlobal('controller')->calldpc_method('rccategories.show_categories use cpvstats+1');		
-          elseif (defined("RCKATEGORIES_DPC"))	   //ERROR!!!!
-		    $toprint .= GetGlobal('controller')->calldpc_method('rckategories.show_menu use cpvstats');		  
-	     //$toprint .= $this->show_categories('cpitems',1);
-       }
-
-	   $toprint .= $this->show_grids();	
-	   */
-       $mywin = new window($this->title,$toprint);
-       $out .= $mywin->render();	
 	   //HIDDEN FIELD TO HOLD STATS ID FOR AJAX HANDLE
 	   $out .= "<INPUT TYPE= \"hidden\" ID= \"statsid\" VALUE=\"0\" >";	   	    
 	   return ($out);		   
-
 	}		
 	
 	//hash can't fetched for first time by php (not yet saved in cookies)
@@ -287,7 +255,7 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 	    $myyear = date('Y',$currentdate);
 
 		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : '');
-		$cmail = $this->mc ? base64_decode($this->mc) : 'NULL';		
+		$cmail = $this->mc ? base64_decode($this->mc) : '';		
 						
 		$sSQL = "insert into stats (date,day,month,year,tid,attr2,attr3,ref) values (";
 		$sSQL.= $mydate . ",";

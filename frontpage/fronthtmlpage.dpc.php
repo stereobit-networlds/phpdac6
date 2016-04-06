@@ -717,6 +717,37 @@ class fronthtmlpage {
 	    //echo 'modify';
 	}
 	
+	//demo admin
+	function get_admin_demo_link($editmode_point=null) {
+
+	    //if (GetSessionParam('ADMIN')) return null;
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;
+       	
+		if (is_array($_GET)) {
+		  foreach ($_GET as $i=>$t) {
+		    if ( ($i!='action') && ($i!='turl') ) 
+		      $newquery .= '&'.$i.'='.urlencode($t);
+	      }
+		}
+		else 
+		  $newquery = '&t=';		
+		  
+		$mynewquery = $newquery ? $newquery : null;  
+			
+		$current_page = pathinfo($_SERVER['PHP_SELF']);//parse_url($_SERVER['PHP_SELF'],PHP_URL_PAGE);				
+		$target_url = urlencode(base64_encode($current_page['basename'] . "?".$mynewquery));		
+
+		if ($editmode_point) {
+			$img = "<img src='$editmode_point' />";
+			$ret = "<a href='cp.php?turl=".$target_url ."'>".$editmode_point."</a>"; 	
+		}	
+		else
+            $ret = "cp.php?turl=".$target_url; 	
+		
+		return ($ret);
+	}	
+	
 	function frameset($query=null) {
 		//fetch current size
 		$is_oversized = $this->app_is_oversized();

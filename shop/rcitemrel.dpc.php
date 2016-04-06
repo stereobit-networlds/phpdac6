@@ -186,7 +186,7 @@ class rcitemrel  {
 		$xsSQL = 'select * from (select '.$myfields . ' from products) as o';
 		  
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|link|5|"."javascript:relateitm({id});".'||');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$active_code|".localize('_code',getlocal())."|link|5|"."javascript:relatecat({".$active_code."});".'||');		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$active_code|".localize('_code',getlocal())."|link|5|"."javascript:relatecat(\"{".$active_code."}\");".'||');		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|10|1|");
 	    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|10|1|");				
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|10|1|");
@@ -232,7 +232,7 @@ class rcitemrel  {
 		$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
 
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|link|5|"."javascript:joincat($item,{ctgid});".'||');		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|link|5|"."javascript:joincat(\"$item\",{ctgid});".'||');		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}2|".localize('_icat1',getlocal())."|10|1|");
 	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}3|".localize('_icat2',getlocal())."|10|1|");				
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}4|".localize('_icat3',getlocal())."|10|1|");
@@ -262,7 +262,7 @@ class rcitemrel  {
 		$xsSQL = "select * from (select id,$active_code,cat0,cat1,cat2,cat3,$name_active,itmactive,active from products) as o";
 
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+$active_code|".localize('_code',getlocal())."|link|5|"."javascript:joinitem($id,{".$active_code."});".'||');		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+$active_code|".localize('_code',getlocal())."|link|5|"."javascript:joinitem($id,\"{".$active_code."}\");".'||');		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat0|".localize('_cat0',getlocal())."|10|1|");
 	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat1|".localize('_cat1',getlocal())."|10|1|");				
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat2|".localize('_cat2',getlocal())."|10|1|");

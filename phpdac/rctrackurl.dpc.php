@@ -12,9 +12,11 @@ $__DPC['RCTRACKURL_DPC'] = 'rctrackurl';
 
 $__EVENTS['RCTRACKURL_DPC'][0]='mtrackurl';
 $__EVENTS['RCTRACKURL_DPC'][1]='cptrackurl';
+$__EVENTS['RCTRACKURL_DPC'][2]='mt';
 
 $__ACTIONS['RCTRACKURL_DPC'][0]='mtrackurl';
 $__ACTIONS['RCTRACKURL_DPC'][1]='cptrackurl';
+$__ACTIONS['RCTRACKURL_DPC'][2]='mt';
 
 $__DPCATTR['RCTRACKURL_DPC']['cptrackurl'] = 'cptrackurl,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -59,9 +61,11 @@ class rctrackurl  {
 							  break; 	   
 
 	     case 'mtrack'      :
-		 default            : //$this->javascript();
+		 case 'mt'          :
+		 default            : 
 		                      $this->insert_into_local_ulist();	
 		                      $this->urlTracker();
+							  $this->javascript();
 	   }
 		
     }   
@@ -77,7 +81,7 @@ class rctrackurl  {
 							  die('stats|'.$out); //ajax return*/
 							  break; 
 	     case 'mtrack  '    :
-
+         case 'mt'          :
 		 default            : //$out .= $this->show_statistics();
 
 	  }	 
@@ -96,7 +100,7 @@ class rctrackurl  {
      	}	  
 	}
 	
-	protected function redirect_js($location) {
+	protected function redirect_js($location=null) {
 		
 		//$location = $this->appstring . $this->urlstring .  $this->hashstring;
 		//$jlocation = "'".$this->appstring."'+encodeURIComponent('".$this->urlstring ."')+'".$this->hashstring."'";
@@ -139,8 +143,6 @@ class rctrackurl  {
 			$this->urlstring = $u;
 			$this->hashstring = '#' . $cid.'|'. urlencode($r);			
 		}	
-		
-		$this->javascript();
 		
 		return true;		
 	}	

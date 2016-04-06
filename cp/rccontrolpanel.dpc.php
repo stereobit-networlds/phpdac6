@@ -18,6 +18,7 @@ $__EVENTS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
 $__EVENTS['RCCONTROLPANEL_DPC'][5]='cptasks';
 $__EVENTS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
+$__EVENTS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
@@ -27,6 +28,7 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
 $__ACTIONS['RCCONTROLPANEL_DPC'][5]='cptasks';
 $__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
+$__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
 
 //$__DPCATTR['RCCONTROLPANEL_DPC']['cp'] = 'cp,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -165,12 +167,12 @@ $__LOCALE['RCCONTROLPANEL_DPC'][127]='_items;Items;Αντικείμενα';
 $__LOCALE['RCCONTROLPANEL_DPC'][128]='_configmenu;Config menu;Ρυθμίσεις menu';
 $__LOCALE['RCCONTROLPANEL_DPC'][129]='_xmlfeeds;XML feeds;XML feeds';
 $__LOCALE['RCCONTROLPANEL_DPC'][130]='_dynsql;SQL Syncs;Συγχρονισμοί';
-$__LOCALE['RCCONTROLPANEL_DPC'][131]='_bmailqueue;Mail queue;Διανομές';
-$__LOCALE['RCCONTROLPANEL_DPC'][132]='_bmailqueueadd;Subscribers;Εισαγωγή';
+$__LOCALE['RCCONTROLPANEL_DPC'][131]='_bmailqueue;Responds;Απαντήσεις';
+$__LOCALE['RCCONTROLPANEL_DPC'][132]='_bmailqueueadd;Subscribers;Λίστες';
 $__LOCALE['RCCONTROLPANEL_DPC'][133]='_bmailsend;Send;Αποστολή';
 $__LOCALE['RCCONTROLPANEL_DPC'][134]='_bmail;e-Mail;e-Mail';
 $__LOCALE['RCCONTROLPANEL_DPC'][135]='_bmailstats;Statistics;Στατιστική';
-$__LOCALE['RCCONTROLPANEL_DPC'][136]='_bmailcamp;Campaigns;Θέματα';
+$__LOCALE['RCCONTROLPANEL_DPC'][136]='_bmailcamp;Campaigns;Καμπάνιες';
 $__LOCALE['RCCONTROLPANEL_DPC'][137]='_ITEMCOLLECTION;Select items;Επιλογή ειδών';
 $__LOCALE['RCCONTROLPANEL_DPC'][138]='_GNAVAL;Empty;Μη διαθέσιμο';
 $__LOCALE['RCCONTROLPANEL_DPC'][139]='_caddress;Addresses;Διευθύνσεις';
@@ -277,7 +279,12 @@ class rccontrolpanel {
 		 case 'cpmessages' : //ajax call
 		                     $msgs = $this->getMessages();
 							 die('cpmessages|'.$msgs);
-							 break;	   
+							 break;	 
+
+		 case 'cpdelMessage': //ajax call
+		                     $msgs = $this->delMessage();
+							 die('cpmessages|'.$msgs);
+							 break;								 
 	   	
          case "cplogout"    : $this->logout();
 		                     break;
@@ -315,6 +322,7 @@ class rccontrolpanel {
 								 break;
 			case 'cptasks'     : break;						
 		    case 'cpmessages'  : break;										  
+		    case 'cpdelMessage': break;				
 		  	case "cpinfo"      : break;    
 			case "cp"          :	
 			default            : $this->getTURL(); //save param for use by metro cp
@@ -531,7 +539,7 @@ function handleResponse() {if(http.readyState == 4){
 							   			<H3>iframe is not suported in your browser!</H3>
 										</IFRAME>";									
 			                             break;	
-			   case 'add_categories':   if (defined('RCIMPORTDB_DPC')) {
+			   /*case 'add_categories':   if (defined('RCIMPORTDB_DPC')) {
 			                                $text = GetGlobal('controller')->calldpc_method('rcimportdb.upload_database_form use +++1');
 										}	
 			                            else
@@ -550,7 +558,7 @@ function handleResponse() {if(http.readyState == 4){
 										}	
 			                            else
 											$text = "<a href='cpupload.php?editmode=1&encoding=utf-8'><img src='../images/logo.png'/></a>"; 
-			                            break;	
+			                            break;*/	
                case 'add_recaptcha' :  	//$text = "<a href='cpupload.php?editmode=1&encoding=utf-8'>reCAPTCHA ON!</a>";
 			                            $text = "Recaptcha feature installed";
                                         break;			   
@@ -591,12 +599,6 @@ function handleResponse() {if(http.readyState == 4){
 											else
  										      $text = "Unknown tool.";
 										}
-                                        /*else {//re-install
-											if ($e1 = $this->call_wizard_url('eshop')) 
-											  $text = "<a href='$e1'>".localize('_installeshop',getlocal())."</a>"; 	
-											else
- 										      $text = "Unknown tool.";										
-                                        }*/
                                         else {//uninstall
 										    if ($e1 = $this->call_wizard_url('uninstalleshop')) 
 											  $text = "<a href='$e1'>".$message."</a>"; 	
@@ -606,7 +608,7 @@ function handleResponse() {if(http.readyState == 4){
                                         break;
                case 'ckfinder':         $text = "CKfinder installed"; break;
                case 'ieditor' :         $text = "IEditor installed"; break;
-               case 'jqgrid'  :         $text = "JQgrid installed"; break;
+               /*case 'jqgrid'  :         $text = "JQgrid installed"; break;*/
 			   case 'awstats' :         $text = "AWStats installed"; break;	
 			   
 			   case 'edit_htmlfiles':   //$text = $this->edit_html_files(false, true, true);
@@ -661,7 +663,7 @@ function handleResponse() {if(http.readyState == 4){
  										    $text = "Unknown tool.";
 			                             break;
 			   							 
-			   case 'add_categories':    if ($e1 = $this->call_wizard_url('add_categories'))
+			   /*case 'add_categories':    if ($e1 = $this->call_wizard_url('add_categories'))
 											$text = "<a href='$e1'>Upload categories</a>"; 
 										 else
  										    $text = "Unknown tool.";
@@ -677,7 +679,7 @@ function handleResponse() {if(http.readyState == 4){
 										 }	
 										 else
  										    $text = "Unknown tool.";
-			                             break;									
+			                             break;	*/								
                case 'add_recaptcha'  :	 if ($e1 = $this->call_wizard_url('add_recaptcha')) 
 											$text = "<a href='$e1'>Add recaptcha entry feature</a>"; 	
 										 else
@@ -715,13 +717,13 @@ function handleResponse() {if(http.readyState == 4){
 										 else
  										    $text = null;									 
 										 break;	
-               case 'jqgrid'  :          //echo $this->urlpath.'/javascripts/jqgrid';
+               /*case 'jqgrid'  :          //echo $this->urlpath.'/javascripts/jqgrid';
 			                             if ((!is_dir($this->urlpath.'/javascripts/jqgrid')) &&
 			                                ($e1 = $this->call_wizard_url('jqgrid'))) 
 											$text = "<a href='$e1'>".localize('_install',getlocal())."</a>"; 	
 										 else
  										    $text = null;									 
-										 break;	
+										 break;	*/
                case 'awstats' :          if ($e1 = $this->call_wizard_url('awstats')) 
 											$text = "<a href='$e1'>Enable AWStats</a>"; 	
 										 else
@@ -1106,108 +1108,6 @@ function handleResponse() {if(http.readyState == 4){
 
 		return ($ret);
     }    			
-  
-   /* function logincp_form($nav_off=null,$tokens=null) {
-	
-	    if (!$nav_off) 
-		  $out = setNavigator($this->title);
-	 
-	    if ($this->editmode)
-		  $filename = seturl("t=cp&editmode=1",0,1);
-		else
-          $filename = seturl("t=cp",0,1);
-	  	
-		if ($tokens) {
-		  $token[] = "<FORM action=". $filename . " method=post class=\"thin\">" . 
-                      "<input type=\"text\" name=\"cpuser\" value=\"\" size=\"32\" maxlength=\"128\">";		  
-		}  
-		else {
-          $toprint  = "<FORM action=". $filename . " method=post class=\"thin\">";
-	      $toprint .= "<STRONG>Username:</STRONG>"; 
-          $toprint .= "<input type=\"text\" name=\"cpuser\" value=\"\" size=\"32\" maxlength=\"128\"><br>";  		
-		}
-		
-		if ($tokens) {
-          $token[] = "<input type=\"password\" name=\"cppass\" value=\"\" size=\"32\" maxlength=\"128\">";		
-		}
-		else {
-          $toprint .= "<STRONG>Password:</STRONG>"; 
-	      $toprint .= "<input type=\"password\" name=\"cppass\" value=\"\" size=\"32\" maxlength=\"128\"><br>";
-        }
-		
-		if ($tokens) {
-	      $token[] = "<input type=\"submit\" name=\"Submit\" value=\"Ok\">" .
-                     "<input type=\"hidden\" name=\"FormAction\" value=\"cplogin\">" .
-		             "<input type=\"hidden\" name=\"AUTHENTICATE\" value=\"Login\">" .	
-                     "</FORM>";	
-				   
-		  return ($token);		   		
-		}
-		else {
-	      $toprint .= "<input type=\"submit\" name=\"Submit\" value=\"Ok\">"; 
-          $toprint .= "<input type=\"hidden\" name=\"FormAction\" value=\"cplogin\">";
-		
-		  //enable AUTH
-		  $toprint .= "<input type=\"hidden\" name=\"AUTHENTICATE\" value=\"Login\">";
-				
-          $toprint .= "</FORM>";	   
-		
-		
-	      $swin = new window("Login",$toprint);
-	      $out .= $swin->render("center::50%::0::group_dir_body::left::0::0::");	
-	      unset ($swin);
-
-          return ($out);
-		}
-    } 
-  
-    function verify_login() {
-		//in case of instance app login goto root db
-		$mydb = & GetGlobal('controller')->calldpc_method('database.switch_db use +1+1');  
-	
-		$db = GetGlobal('db');  
-  
-		if (($user=GetParam('cpuser')) && ($pwd=GetParam('cppass'))) {
-	
-			//get running application info
-			$is_instance_app = paramload('ID','isinstance');
-			//echo $is_instance_app; 
-			$appname = paramload('ID','instancename');
-			//echo '>',$appname;
-	  
-			//INSERT ROOT USER
-			//$sins = "insert into dpcmodules (user,pwd,appname) values ('root','rootvk7dp','root')";
-			//$result = $db->Execute($sins,1);	  
-	   
-			$sSQL .= "select user,pwd,appname from dpcmodules where user='$user' and pwd='$pwd' and active=1";
-			$result = $mydb->Execute($sSQL,2);	
-			//echo $sSQL;
-			//print_r($result);
-	  
-			//if username & password exists
-			if (($result->fields[0]==$user) && ($result->fields[1]==$pwd)) {
-	  
-				//restore app db
-				GetGlobal('controller')->calldpc_method('database.switch_db');//null = this app// use '.$appname); 	  
-
-				//must be instance and appname be correct
-				if (($is_instance_app) && ($result->fields[2]==$appname)) {
-				  SetSessionParam('LOGIN','yes');	
-				  SetSessionParam('USER',$user);	
-				  return true;
-				}//else is no instance (root app) appname=root  
-				elseif ((!$is_instance_app) && ($result->fields[2]=='root')) {
-				  SetSessionParam('LOGIN','yes');	
-				  SetSessionParam('USER',$user);	
-				  SetSessionParam('ADMIN','yes');
-				  return true;
-				}  
-				else
-				  return false;
-			}	
-		}	
-		return false;
-    } */
   
 	public function get_user_name($nopro=0) {
 	  if ((GetSessionParam('LOGIN')) && ($user=GetSessionParam('USER')))
@@ -1999,7 +1899,47 @@ function handleResponse() {if(http.readyState == 4){
 				default          : $tmpl = 'dropdown-notification-info';
 				
 			}
-			$tdata = $this->select_template($tmpl, 'metro');  //<<<<<<<<<<<<<<<<<<<<<<< !!clear when became default skin
+			$tdata = $this->select_template($tmpl);
+			$ret .= $this->combine_tokens($tdata, $tokens, true);
+			unset($tokens);	
+			$i+=1;
+			if ($i>$lim) break;
+		}
+		
+		return ($ret);			
+	}	
+	
+	/*delete msg from queu return rest-ajax*/
+	public function delMessage($limit=null) {
+		if (empty($this->messages)) return null;
+		if (!$h = $_GET['hash']) return null;
+		//print_r($this->messages);
+		$tokens = array(); 
+		$lim = $limit ? $limit : 6;
+		
+		//delete msg
+		$nm = array();
+		foreach ($this->messages as $hash=>$message) {
+			if ($h!=$hash) $nm[$hash] = $message;
+		}
+		$this->messages = (empty($nm)) ? null : $nm;
+		SetSessionParam('cpMessages', $nm);
+		if (empty($nm)) return null;
+		
+		//send out rest queue
+		$msgs = array_reverse($nm, true);
+		$i = 0;
+		foreach ($msgs as $n=>$m) {
+			$tokens = explode('|', $m); 
+			switch (array_shift($tokens)) {
+				case 'important' : $tmpl = 'dropdown-notification-important'; break;
+				case 'success'   : $tmpl = 'dropdown-notification-success'; break;
+				case 'warning'   : $tmpl = 'dropdown-notification-warning'; break;
+				case 'info'      :
+				default          : $tmpl = 'dropdown-notification-info';
+				
+			}
+			$tdata = $this->select_template($tmpl);
 			$ret .= $this->combine_tokens($tdata, $tokens, true);
 			unset($tokens);	
 			$i+=1;
@@ -2028,14 +1968,17 @@ function handleResponse() {if(http.readyState == 4){
 	    $t = ($template!=null) ? $this->select_template($template) : null;
 		//$msgs = array_reverse($this->messages, true);
 
-		foreach ($this->messages as $m=>$message) {
+		foreach ($this->messages as $hash=>$message) {
+			//echo $message;
 			$tokens = explode('|', $message); 
+			$status = $tokens[0]; //not used here
 			$msg = $tokens[1];
 			if ($t) 	
-				$ret .= $this->combine_tokens($t, array_shift($tokens));//array(0=>$msg));
+				$ret .= $this->combine_tokens($t, array(0=>$msg,1=>$hash));
 			else
-				$ret .= "<option value=\"$m\">$msg</option>";
+				$ret .= "<option value=\"$hash\">".$tokens[1]."</option>";
 		}
+		//echo $ret;
 		return ($ret);
 	}	
 	

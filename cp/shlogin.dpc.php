@@ -6,9 +6,6 @@ define("SHLOGIN_DPC",true);
 
 $__DPC['SHLOGIN_DPC'] = 'shlogin';
 
-//$a = GetGlobal('controller')->require_dpc('nitobi/nitobi.lib.php');
-//require_once($a);
-
 $__EVENTS['SHLOGIN_DPC'][0]='shlogin';
 $__EVENTS['SHLOGIN_DPC'][1]='dologin';
 $__EVENTS['SHLOGIN_DPC'][2]='dologout';
@@ -64,6 +61,7 @@ $__LOCALE['SHLOGIN_DPC'][27]='_ERRSECTOKEN;Invalid token;Λάνθασμένο σ
 $__LOCALE['SHLOGIN_DPC'][28]='_NOTAFFECTED;Record not affected;Δεν έγινε η αλλαγή';
 $__LOCALE['SHLOGIN_DPC'][29]='_PLEASETEXT;Please fill out the information bellow and proceed;Παρακαλώ εισάγετε τα στοιχεία που ειναι απαραίτητα για την εισαγωγή στο σύστημα';
 $__LOCALE['SHLOGIN_DPC'][30]='_WELCOME2GO;Press here to proceed;Πατήστε εδώ για να συνεχίσετε την περιηγησή σας';
+$__LOCALE['SHLOGIN_DPC'][31]='_back;Back;Επιστροφή';
 
 //cpmdbrec commands
 $__LOCALE['SHLOGIN_DPC'][80]='_exit;Exit;Έξοδος';
@@ -108,6 +106,7 @@ $__LOCALE['SHLOGIN_DPC'][122]='_editctag;Category Tags;Tags κατηγορίας
 $__LOCALE['SHLOGIN_DPC'][123]='_edititag;Item Tags;Tags είδους';
 $__LOCALE['SHLOGIN_DPC'][124]='_menu;Menu;Επιλογές Menu';
 $__LOCALE['SHLOGIN_DPC'][125]='_slideshow;Slideshow;Επιλογές Slideshow';
+$__LOCALE['SHLOGIN_DPC'][126]='_inactiveuser;Inactive user:;Απενεργοποιημένος χρήστης:';
 
 class shlogin {
 
@@ -203,7 +202,7 @@ class shlogin {
 	   $param2 = GetGlobal('param2');
 	   
 
-       if (!$this->msg) {
+       //if (!$this->msg) {
 
          switch($sAction)   {
 		    case 'rempwd'        : break;
@@ -263,7 +262,7 @@ class shlogin {
 			                 break;
 							 					 
           }
-       }
+       //}
 	}
 
     function action($action=null)  {
@@ -545,57 +544,16 @@ window.setTimeout(\"neu()\",10);
 	       return (localize('_WELLCOME',getlocal()) .' '. decode(GetSessionParam('UserName')));
 	   }	 
 
-       //if ((!$this->userid)) {// && (!$this->username)) {//!!!!!!!!!!!!!!!!!!???
-	   //if ($uid=="") {
-	   //if (!$uid) {
-       //DO NOT RESTICTY HERE HTML FORM HAS LOGOUT..
-	      switch ($agent) {
+	   switch ($agent) {
 	         case 'HTML' : //template form
 			               //$toprint = $this->title();
 			 default     :			   
 			               $toprint .= $this->html_form();
 		                   break;
-/*
-		     case 'XML'  : $xml = new pxml();
-			               $xml->addtag('TEXT',null,'/',"value=$sFormErr");
-					       $xml->addtag('FORM',null,null,"action=".$xml->xstr($logonurl)."|method=POST|class=thin");
-					       $xml->addtag('LABEL','FORM','/',"for=cmd|accesskey=C");
-					       $xml->addtag('INPUT','FORM','/',"type=text|name=docomm|maxlength=255|value=|size=15|id=cmd");
-					       $xml->addtag('INPUT','FORM','/',"type=submit|value=Ok");
-					       $xml->addtag('HIDDEN','FORM','/',"name=FormAction|value=command");
-					       $toprint = $xml->getxml();
-					       unset($xml);
-			               break;
-			 case 'XUL'  :
-		     case 'GTK'  : $xml = new pxml('XUL');
-			               $xml->addtag('GTKDIALOG',null,null,'id=dialog1|label=Login|modal=true|winx=400|winy=150|border=10');
-						   $xml->addtag('GTKLABEL','GTKDIALOG','/',"value=".$sFormErr);
-						   $xml->addtag('GTKFORM','GTKDIALOG',null,null);
-						   //$xml->addtag('description','GTKFORM','/',"value=".$sFormErr);
-			               $xml->addtag('label','GTKFORM','/',"control=usr|value=".localize('_USERNAME',getlocal()));
-					       $xml->addtag('textbox','GTKFORM','/',"id=Username|maxlength=64");
-			               $xml->addtag('label','GTKFORM','/',"control=pwd|value=".localize('_PASSWORD',getlocal()));
-					       $xml->addtag('textbox','GTKFORM','/',"id=Password|type=password|maxlength=64");
-					       $xml->addtag('hidden','GTKFORM','/',"id=action|value=login");
-					       $toprint = $xml->getxml();
-					       unset($xml);
-						   //die($toprint)
-			               break;*/
-		   }
-        /*}
-		else {
 
-          //never in here ???????
-		  if ($goto = GetPreSessionParam('afterlogingoto')) {
-			 $mydpc = explode('.',$goto);//check security
-			 $mydpcname = strtoupper($mydpc[0]).'_DPC';				 
-			 if (seclevel($mydpcname,$this->userLevelID)) 	  
-		       $toprint .= GetGlobal('controller')->calldpc_method($goto);
-		  }
-		}*/
+       }
 
-
-        return ($toprint);
+       return ($toprint);
     }
 
     function quickform($attr=null,$after_goto=null,$dpc_after_goto=null,$param_name=null,$param=null) {
@@ -783,6 +741,15 @@ window.setTimeout(\"neu()\",10);
 	  
 	  return ($ret);
 	}
+	
+	public function recaptcha() {
+		if (defined('RECAPTCHA_DPC')) {
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+			return $recaptcha;
+	    }	
+		return false;
+	}
+		
 
     function do_reenter_pasword($myusername=null) {
 	   $db = GetGlobal('db');
@@ -795,13 +762,13 @@ window.setTimeout(\"neu()\",10);
 	   } 			   
 	   else
 	       $currentuser = $myusername ? $myusername : decode($UserName);
-	   
+
 	   if (!$currentuser) return false;
-	   
+
 	   $pwd = GetParam("Password");
 	   $pwd2 = GetParam("vPassword");
-       
-	   if ($this->valid_recaptcha()) {
+
+	   //if ($this->valid_recaptcha()) {
 	   if (($pwd!=null) && ($pwd2!=null)) {
 
 	     if  ((strcmp($pwd,$pwd2)==0)) {
@@ -814,10 +781,7 @@ window.setTimeout(\"neu()\",10);
                   "vpass='" . md5(addslashes($pwd2))  . "'," .
 				  "clogon=0";
 
-	        if (!$a) 
-		     $sSQL .= " WHERE username ='" . $currentuser . "'";
-	        else 
-		     $sSQL .= " WHERE ".$this->actcode." =" . $a;
+		    $sSQL .= " WHERE username ='" . $currentuser . "'";
 
 	        //echo $sSQL;
 
@@ -839,7 +803,7 @@ window.setTimeout(\"neu()\",10);
 		   SetGlobal('sFormErr',$this->formerror);
 		 }  
 	   }
-	   }//recaptcha
+	   //}//recaptcha
 	}
 	
     function form_reset_pass($tokensout=null,$username=null) {
@@ -981,24 +945,11 @@ window.setTimeout(\"neu()\",10);
 	function loadSession($uname) {
 	 $db = GetGlobal('db');
 
-
 	   $sSQL = "select sesdata from users where username='" . $uname ."'" ;
        $res = $db->Execute($sSQL,2);//null,1);
-	   //print_r($res->fields);
-	   //echo $sSQL;
-	   //echo '<',$db->model,'>';
 
-	  /* if ($db->model=='ADODB')
-	     $ret = $res->fields[0];
-	   else
-	     $ret = $res[0];	*/
-
-	 //if ($ret) {
-	   //echo '>',$res->fields[0];
 	   session_decode(str_replace("<@>","\"",$res->fields[0]));
-	 //}
-     //echo '>';
-     //print_r(GetSessionParam('storebuffer'));
+
     }
 
 	function is_reseller($leeid=null) {
@@ -1107,21 +1058,6 @@ window.setTimeout(\"neu()\",10);
 	     //echo 'OK';
 		 if (defined(_CAPTCHA_)) {
 
-           /*if (iniload('JAVASCRIPT')) {
-  	            $plink = "<A href=\"" . seturl("t=slogin",'',1) . "\"";
-	            //call javascript for opening a new browser win for the img
-	            $params = seturl("t=sencaptcha&c=".encode($this->result),0,1) . ";captcha;scrollbars=yes,width=320,height=340;";
-				$js = new jscript;
-	            $plink .= calldpc_method('javascript.JS_function use js_openwin+'.$params);
-                unset ($js);
-
-	            $plink .= ">";
-	       }
-	       else
-              $plink = "<A href=\"" . seturl("t=sencaptcha&c=".encode($this->result)) . ">";
-
-		   $winout = $plink . localize('_PRESSHERE',getlocal()) . "</A>";
-		   */
 		   //no press here...just showit in the page.
 		   //call the image
 		   $uc = seturl("t=sencaptcha&c=".encode($this->result));
@@ -1194,44 +1130,25 @@ window.setTimeout(\"neu()\",10);
 	   $u = GetParam("myusername");
 	   $m = GetParam("myemail");  
 	   
-       if ($this->valid_recaptcha($norecaptcha)) {	 
+       //if ($this->valid_recaptcha($norecaptcha)) {	  //<<<
 
-		if (($m)) {// && (!$u)) {//mail only -> send username and password
+		if ($m) {// && (!$u)) {//mail only -> send username and password
 	       $sSQL = "SELECT username, password, notes FROM users WHERE " .
-		           "email='" . addslashes($m) . "' and username is not null";//not for subscribers// and seclevid>0";
+		           "email='" . addslashes($m) . "'";
 
 	       //echo "remember:",$sSQL;
-
            $result = $db->Execute($sSQL,2);
-		   //print_r($result->fields);
-           if (($u=$result->fields['username']) && ($p=$result->fields['password'])
-		   /* &&
-		       (strcmp(trim($result->fields['notes']),"DELETED")!=0)*/) {
 
-	           //if ($this->tellit) {
-			   $tokens[] = $u;
-			   /*if ($this->isoldpass($u)) //(strlen($sPassword)<=10) //old way
-				$tokens[] = $p;
-			   else	
-				$tokens[] = base64_decode($p);*/
-			   //md5 pass can't decoded, just send link to reset
+           if (($u=$result->fields['username']) && ($p=$result->fields['password'])) {
+ 
                $tokens[] = null; 
-			  
 			   $timestamp = time(); 
 			   $sectoken = urlencode(base64_encode($u.'|'.$timestamp));
 	           $reset_url = seturl('t=chpass&sectoken='.$sectoken);
                $tokens[] = $reset_url;			  
 				
 		       $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		       if (!$mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userremind.htm+".$sd."+1")) {
-		
-			   
-	             $mailcontent = "Account info:<br>" . $u . '/' . $p;
-
-		         $template = paramload('SHELL','prpath') . "insertusrusr.tpl";
-		         $mailbody = str_replace("##_LINK_##",$mailcontent,file_get_contents($template));
-				 $this->result = $mailbody;
-               }
+		       $mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userremind.htm+".$sd."+1");
 			   
 		       $from = $this->accountmailfrom;
 	           $this->mailto($from,$m,localize('_UMAILREMSUBC',getlocal()),$mailbody);
@@ -1252,7 +1169,7 @@ window.setTimeout(\"neu()\",10);
 		   SetGlobal('sFormErr',"OKREMINDER");////$msg);
 		 }
 		 
-	   }//recaptcha	    
+	   //}//recaptcha	    
 		   
 	}
 
@@ -1405,6 +1322,24 @@ window.setTimeout(\"neu()\",10);
 		  return ($ret);												
 									 
      }     
+	 
+	//last month check 
+	public function check_inactive_users() {
+		if (!defined('RCCONTROLPANEL_DPC')) return false;
+		$db = GetGlobal('db');
+		$text = localize('_inactiveuser',getlocal());
+		$lastmonth = mktime(0, 0, 0, date("m")-1, date("d"),   date("Y"));
+		$sSQL = "select username,timein from users where notes='DELETED' and timein>" . $lastmonth;
+		//echo $sSQL;
+		$result = $db->Execute($sSQL,2);
+		
+		foreach ($result as $i=>$rec) {
+			$msg = "important|" . $text .' '. $rec[0] . " (" .date("d-m-Y G:i", strtotime($rec[1])). ")";
+			//echo $msg;
+			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
+		}
+		return null;
+	} 
    
 	function combine_tokens($template_contents,$tokens) {
 	
@@ -1432,10 +1367,7 @@ window.setTimeout(\"neu()\",10);
 	}   
 
 	public static function myf_button($title,$link=null,$image=null) {
-	   //$browser = get_browser(null, true);
-       //print_r($browser);	
-       //echo $_SERVER['HTTP_USER_AGENT']; 
-	   //echo '1';
+
 	   $path = self::$staticpath;//$this->urlpath;//
 	   
 	   if (($image) && (is_readable($path."/images/".$image.".png"))) {

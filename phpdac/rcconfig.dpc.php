@@ -19,6 +19,44 @@ $__ACTIONS['RCCONFIG_DPC'][3]='cpconfadd';
 $__ACTIONS['RCCONFIG_DPC'][4]='cpconfmod';
 
 $__LOCALE['RCCONFIG_DPC'][0]='RCCONFIG_DPC;Configuration;Configuration;';
+$__LOCALE['RCCONFIG_DPC'][1]='SHFORM;Contact Form;Φόρμα επικοινωνίας;';
+$__LOCALE['RCCONFIG_DPC'][2]='RCXMLFEEDS;Xml Feeds;Xml αρχεία;';
+$__LOCALE['RCCONFIG_DPC'][3]='SHSUBSCRIBE;Subscription;Συνδρομές;';
+$__LOCALE['RCCONFIG_DPC'][4]='SHKATALOG;Page view;Προβολή σελίδας;';
+$__LOCALE['RCCONFIG_DPC'][5]='SHKATALOGMEDIA;Page view (ext.);Προβολή σελίδας (ext.);';
+$__LOCALE['RCCONFIG_DPC'][6]='RCITEMREL;Item relations;Συσχετισμοί ειδών;';
+$__LOCALE['RCCONFIG_DPC'][7]='RCSYNCSQL;SQL Syncs;Συγχρονισμοί SQL;';
+$__LOCALE['RCCONFIG_DPC'][8]='RCTRANSSQL;Dynamic SQL;Δυναμική SQL;';
+$__LOCALE['RCCONFIG_DPC'][9]='SHCART;Cart;Καλάθι;';
+$__LOCALE['RCCONFIG_DPC'][10]='SHEUROBANK;Eurobank;Eurobank;';
+$__LOCALE['RCCONFIG_DPC'][11]='SHPAYPAL;Paypal;Paypal;';
+$__LOCALE['RCCONFIG_DPC'][12]='RCITEMS;Items (cp);Είδη (cp);';
+$__LOCALE['RCCONFIG_DPC'][13]='SHLOGIN;Login;Login;';
+$__LOCALE['RCCONFIG_DPC'][14]='SHUSERS;Users;Χρήστες;';
+$__LOCALE['RCCONFIG_DPC'][15]='SHCUSTOMERS;Customers;Πελάτες;';
+$__LOCALE['RCCONFIG_DPC'][16]='SHTRANSACTIONS;Transactions;Συναλλαγές;';
+$__LOCALE['RCCONFIG_DPC'][17]='RCCUSTOMERS;Customers (cp);Πελάτες (cp);';
+$__LOCALE['RCCONFIG_DPC'][18]='SHKATEGORIES;Categories;Κατηγορίες;';
+$__LOCALE['RCCONFIG_DPC'][19]='SHMENU;Menu;Μενού;';
+$__LOCALE['RCCONFIG_DPC'][20]='SHLANGS;Languages;Γλώσσες;';
+$__LOCALE['RCCONFIG_DPC'][21]='RECAPTCHA;Recaptcha;Recaptcha;';
+$__LOCALE['RCCONFIG_DPC'][22]='SHNSEARCH;Search;Αναζήτηση;';
+$__LOCALE['RCCONFIG_DPC'][23]='SHDOWNLOAD;Downloads;Μεταφορτώσεις;';
+$__LOCALE['RCCONFIG_DPC'][24]='RCSHSUBSCRIBERS;Subscribers (cp);Συνδρομητές (cp);';
+$__LOCALE['RCCONFIG_DPC'][25]='RCSHSUBSQUEUE;Mail queue (cp);Αποστολές email(cp);';
+$__LOCALE['RCCONFIG_DPC'][26]='RCBULKMAIL;Bulk mail (cp);Μαζικές αποστολές (cp);';
+$__LOCALE['RCCONFIG_DPC'][27]='RCCOLLECTIONS;Collections;Συλλογές;';
+$__LOCALE['RCCONFIG_DPC'][28]='SHTAGS;Tags;Tags;';
+$__LOCALE['RCCONFIG_DPC'][29]='RCUSERS;Users (cp);Χρήστες (cp);';
+$__LOCALE['RCCONFIG_DPC'][30]='FRONTHTMLPAGE;Page options;Ρυθμίσεις σελίδας;';
+$__LOCALE['RCCONFIG_DPC'][31]='MEDIA-CENTER;Theme options;Ρυθμίσεις θέματος;';
+$__LOCALE['RCCONFIG_DPC'][32]='CKEDITOR;CK Editor;Κειμενογράφος;';
+$__LOCALE['RCCONFIG_DPC'][33]='SLIDESHOW;Slide show;Slide show;';
+$__LOCALE['RCCONFIG_DPC'][34]='RCAWSTATS;AW stats;Στατιστικά aw;';
+$__LOCALE['RCCONFIG_DPC'][35]='RCCONTROLPANEL;Control panel;Πίνακας ελέγχου;';
+$__LOCALE['RCCONFIG_DPC'][36]='INDEX;My configuration;Οι ρυθμίσεις μου;';
+$__LOCALE['RCCONFIG_DPC'][37]='ESHOP;e-shop;e-shop;';
+$__LOCALE['RCCONFIG_DPC'][38]='RCSHSUBSQUEUE;Mail queue;Αποστολές email;';
 
 //**************************************************************************
 //WARNING :TO OVERWRITE CONFIG VALUES USE THIS CLASS AS SUPER IN PHP FILES
@@ -33,6 +71,7 @@ class rcconfig {
 	var $config; //merged 
 	
 	var $cptemplate, $tabheaders;
+	var $seclevid;
 	
     function __construct() {
 	
@@ -42,8 +81,8 @@ class rcconfig {
           $info = strtolower($os);// $_SERVER['HTTP_USER_AGENT'] );  
           $this->crlf = ( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
 		  
-		  
 		  $this->path = paramload('SHELL','prpath');		
+		  $this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] :GetSessionParam('ADMINSecID');
 	
 	      //get global config
           $this->g_config = GetGlobal('config');	
@@ -195,23 +234,36 @@ class rcconfig {
 		return ($out);
 	}	
 	
+	protected function editButton($section) {
+        $url = "cpconfig.php?t=cpconfedit&cpart=".$section;
+		
+		if (($section=='INDEX')&&($this->seclevid>=8))
+			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
+		elseif ($this->seclevid==9)
+			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
+		else
+			$ret = null;
+
+		return ($ret);	
+	}
 	
 	function show_configuration($button_title,$action,$editable=false,$cpart=null) {
-
 	   $myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
-       //$form = new form(localize('RCCONFIG_DPC',getlocal()), "RCCONFIG", FORM_METHOD_POST, $myaction);	
+       $lan = getlocal();
 	   
 	   if ($cpart) {//partial config
 	     foreach ($this->t_config as $section=>$data) {
 	       if ($section==$cpart) { 
-		     $url = "cpconfig.php?t=cpconfedit&cpart=".$section;
-			 $tabname = ucfirst(strtolower($section)); //localize($section.'_DPC', getlocal());
+		     //$url = "cpconfig.php?t=cpconfedit&cpart=".$section;
+			 $tabname = ucfirst(localize($section, $lan));
 			 $this->tabheaders[] = $this->setTabHeader(strtolower($section), $tabname, true);       
-			 $b = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
+			 //$b = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
+			 $b = $this->editButton($section);
 	         foreach ($data as $var=>$val) {
-			   $b .= $this->setTabInput(localize($var,getlocal()), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
+			   $b .= $this->setTabInput(localize($var,$lan), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
 		     }		 
-		     $b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
+		     //$b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
+			 $b .= $this->editButton($section);
 		     $ret = $this->setTabBody(strtolower($section), $b, true);			 
 		   }
 	     }		 
@@ -219,47 +271,34 @@ class rcconfig {
 	   else {//all config
 	     $i=0; 
 	     foreach ($this->t_config as $section=>$data) {
-		   $url = "cpconfig.php?t=cpconfedit&cpart=".$section;
-		   $tabname = ucfirst(strtolower($section)); //localize($section.'_DPC', getlocal());
+		   //$url = "cpconfig.php?t=cpconfedit&cpart=".$section;
+		   $tabname = ucfirst(localize($section, $lan));
 		   $this->tabheaders[] = $this->setTabHeader(strtolower($section), $tabname, ($i==0 ? true : false)); 
-		   $b = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
+		   //$b = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
+		   $b = $this->editButton($section);
 	       foreach ($data as $var=>$val) {
-			 $b .= $this->setTabInput(localize($var,getlocal()), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
+			 $b .= $this->setTabInput(localize($var,$lan), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
 		   }
-		   $b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
+		   //$b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
+		   $b .= $this->editButton($section);
 		   $ret .= $this->setTabBody(strtolower($section), $b, ($i==0 ? true : false));
 		   $i+=1;
 	     }
 	   }
 	   
-	   $formStart = '';/*'<form id="tForm" method="post" action="'.$myaction.'" class="form-horizontal">
-					<input type="hidden" name="FormName" value="'.$action.'" />
-					<input type="hidden" name="FormAction" value="'.$action.'" />"';*/
-	   
-	   $formEnd = '';//'<div class="form-actions"><button type="submit" class="btn btn-danger">Submit</button></div></form>';
-	   
-	   $submit = '<button type="submit" onClick="javascript:alert(\'123\')" class="btn btn-danger">Submit</button>';
-	   
-	   return ($formStart . $ret . $formEnd);
-	   // Adding a hidden field
-       //$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
- 
-	   // Showing the form
-	   //$fout = $form->getform(0,0,$button_title);	
-	   
-	   //return ($fout);	   
+	   return ($ret);   
 	}
 
 	
 	function edit_configuration($button_title,$action,$editable=false,$cpart=null) {
-	
+	   $lan = getlocal();
 	   $myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
        $form = new form(localize('RCCONFIG_DPC',getlocal()), "RCCONFIG", FORM_METHOD_POST, $myaction);	
 	   
 	   if ($cpart) {//partial config
 	     foreach ($this->t_config as $section=>$data) {
 	       if ($section==$cpart) { 
-		     $form->addGroup($section,ucfirst(strtolower($section)));
+		     $form->addGroup($section,ucfirst(localize($section, $lan)));
 		  	   
 	         foreach ($data as $var=>$val) {
                $form->addElement($section,new form_element_text($var,strtolower($section).$var,$val,"span11",60,255,$editable));
@@ -271,7 +310,7 @@ class rcconfig {
 	   else {//all config
 	     foreach ($this->t_config as $section=>$data) {
 	       if ($section) 
-		     $form->addGroup($section,ucfirst(strtolower($section)));
+		     $form->addGroup($section,ucfirst(localize($section, $lan)));
 		  	   
 	       foreach ($data as $var=>$val) {
              $form->addElement($section,new form_element_text($var,strtolower($section).$var,$val,"span11",60,255,$editable));
@@ -293,9 +332,9 @@ class rcconfig {
 	function add_configuration($button_title,$action,$cpart=null) {
 	   $myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
        $form = new form(localize('RCCONFIG_DPC',getlocal()), "RCCONFIG", FORM_METHOD_POST, $myaction);	
-		
+	   $lan = getlocal();	
 	   if ($section=GetReq('section')) {
-	     $form->addGroup($section,ucfirst(strtolower($section)));		
+	     $form->addGroup($section,ucfirst(localize($section, $lan)));		
 		 
 		 $data = $this->t_config[$section];
 	     foreach ($data as $var=>$val) {

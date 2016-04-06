@@ -139,12 +139,12 @@ $__LOCALE['RCPMENU_DPC'][127]='_items;Items;Αντικείμενα';
 $__LOCALE['RCPMENU_DPC'][128]='_configmenu;Config menu;Ρυθμίσεις menu';
 $__LOCALE['RCPMENU_DPC'][129]='_xmlfeeds;XML feeds;XML feeds';
 $__LOCALE['RCPMENU_DPC'][130]='_dynsql;SQL Syncs;Συγχρονισμοί';
-$__LOCALE['RCPMENU_DPC'][131]='_bmailqueue;Mail queue;Διανομές';
-$__LOCALE['RCPMENU_DPC'][132]='_bmailqueueadd;Subscribers;Εισαγωγή';
+$__LOCALE['RCPMENU_DPC'][131]='_bmailqueue;Responds;Απαντήσεις';
+$__LOCALE['RCPMENU_DPC'][132]='_bmailqueueadd;Subscribers;Λίστες';
 $__LOCALE['RCPMENU_DPC'][133]='_bmailsend;Send;Αποστολή';
 $__LOCALE['RCPMENU_DPC'][134]='_bmail;e-Mail;e-Mail';
 $__LOCALE['RCPMENU_DPC'][135]='_bmailstats;Statistics;Στατιστική';
-$__LOCALE['RCPMENU_DPC'][136]='_bmailcamp;Campaigns;Θέματα';
+$__LOCALE['RCPMENU_DPC'][136]='_bmailcamp;Campaigns;Καμπάνιες';
 $__LOCALE['RCPMENU_DPC'][137]='_ITEMCOLLECTION;Collect;Συλλογή';
 $__LOCALE['RCPMENU_DPC'][138]='_myprofile;My profile;Οι ρυθμίσεις μου';
 $__LOCALE['RCPMENU_DPC'][139]='_allnotifications;See all notifications;Όλα τα μηνύματα';
@@ -155,6 +155,8 @@ $__LOCALE['RCPMENU_DPC'][143]='_newnotifications;new notifications;μηνύμα�
 $__LOCALE['RCPMENU_DPC'][144]='_pendingtasks;pending tasks;εργασίες';
 $__LOCALE['RCPMENU_DPC'][145]='_itemrelation;Relationships;Σύνδεσμοι';
 $__LOCALE['RCPMENU_DPC'][146]='_itemrel;Relations;Συσχετισμοί';
+$__LOCALE['RCPMENU_DPC'][147]='_bmailcreate;Build;Κατασκευή';
+$__LOCALE['RCPMENU_DPC'][148]='_COLLECT;Collect;Επιλογή';
 	   
 class rcpmenu {
 

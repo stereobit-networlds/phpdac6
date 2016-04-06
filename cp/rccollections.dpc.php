@@ -29,14 +29,18 @@ class rccollections {
 	var $imgxval, $imgyval, $image_size_path;
 	var $selected_items, $autoresize, $restype, $odd;	
 	
-	var $filename, $fields;
+	var $filename, $fields, $photodb, $sizeDB;
+	var $owner, $savecolpath;
 
     function __construct() {
 	  
 		$this->prpath = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');	
 		$this->url = paramload('SHELL','urlbase');
-		$this->title = localize('RCCOLLECTIONS_DPC',getlocal());	
+		$this->title = localize('RCCOLLECTIONS_DPC',getlocal());
+
+		$this->owner = GetSessionParam('LoginName');
+        $this->savecolpath = remote_paramload('RCCOLLECTIONS','savecolpath',$this->prpath);		
 		
 		$this->cat = GetParam('cat'); //GetReq('cat');	    
 		$this->item = GetParam('id'); //GetReq('id');
@@ -56,6 +60,8 @@ class rccollections {
 		$this->imgxval = $image_def_xsize ? $image_def_xsize : ((!empty($this->autoresize)) ? $this->autoresize[0] : 0);//90;//as it is
 		$this->imgyval = $image_def_ysize ? $image_def_ysize : 0;//90; //as it is	
 		
+		$this->photodb = remote_paramload('RCITEMS','photodb',$this->prpath);
+		
 		$ip = remote_paramload('RCCOLLECTIONS','imagepath',$this->prpath);
 		$ipath = $ip ? $ip : '/images/';
 		$ia = remote_paramload('RCCOLLECTIONS','imageabs',$this->prpath);
@@ -64,11 +70,11 @@ class rccollections {
 			$csize = remote_paramload('RCCOLLECTIONS','itemphotosize',$this->prpath);
 			$phototype = $csize ? $csize : ( $pt ? $pt : 0); 		
 			switch ($phototype) {
-				case 3  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photobgpath',$this->prpath); break;
-				case 2  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photomdpath',$this->prpath); break;
-				case 1  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photosmpath',$this->prpath); break;
+				case 3  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photobgpath',$this->prpath); $this->sizeDB = 'LARGE'; break;
+				case 2  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photomdpath',$this->prpath); $this->sizeDB = 'MEDIUM'; break;
+				case 1  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photosmpath',$this->prpath); $this->sizeDB = 'SMALL'; break;
 				case 0  :
-				default : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photobgpath',$this->prpath);
+				default : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photobgpath',$this->prpath); $this->sizeDB = 'LARGE';
 			}
         }
 		else
@@ -78,7 +84,7 @@ class rccollections {
 		
         $this->listName = 'mylist';
         $this->savedlist = GetSessionParam($this->listName) ? GetSessionParam($this->listName) : null;
-		$this->filename = $this->prpath . $_POST['cname'] . '.col';
+		$this->filename = $this->prpath . $this->savecolpath . '/' . $_POST['cname'] . '.' . base64_encode($this->owner) . '.col';
 		
 		$this->fields = array('code','itmname','itmdescr','itmremark','uniname1','price0','price1','cat','item_name_url','item_url','photo_url');
 		$this->xmlfile = $_POST['xmlfile'];
@@ -417,6 +423,9 @@ class rccollections {
 	protected function saveListInFile($data=null) {
 		
 		if ($_POST['cname']) { 
+		    if (!is_dir($this->prpath . $this->savecolpath))
+				@mkdir($this->prpath . $this->savecolpath);
+		
 			$ret = @file_put_contents($this->filename, $data);
 			return $ret;
 		}
@@ -654,11 +663,13 @@ class rccollections {
 			
 			$imgfile = $this->urlpath . $this->image_size_path . '/' . $id . $this->restype;
 			//echo '<br/>', $imgfile;
-			if (file_exists($imgfile)) { 	 
+			if (file_exists($imgfile)) 	 
 				$item_photo_url = $this->url . $this->image_size_path . '/' . $id . $this->restype;
-				$item_photo_html = "<img src=\"" . $item_photo_url . "\">";
-				$item_photo_link = "<a href='$item_url'><img src=\"" . $item_photo_url . "\"></a>";
-		    }
+			else 
+				$item_photo_url = $this->url .'/'. $this->photodb . '?id='.$id.'&stype='.$this->sizeDB;
+
+			$item_photo_html = "<img src=\"" . $item_photo_url . "\">";
+			$item_photo_link = "<a href='$item_url'><img src=\"" . $item_photo_url . "\"></a>";			
 
 			$attachment = null;
 			$i = $ix++;
@@ -694,9 +705,10 @@ class rccollections {
 		                    seturl('t=cploadcol&collection=',null,null,null,null);
 		
 		if (defined('RCFS_DPC')) {
-			$path = $this->prpath;
+			$path = $this->prpath . $this->savecolpath . '/';
 			$myext = explode(',',$ext);
 			$extensions = is_array($myext) ? $myext : array(0=>".png",1=>".gif",2=>".jpg");
+			//echo '>', print_r($extensions);
 			
 			if (is_dir($path)) {
 		
@@ -729,14 +741,14 @@ class rccollections {
 	}	
 	
 	public function viewCollectionsSelect() {
-		
-		$ret = $this->show_select_collections('mycollection', null, '.col', null);
+		$colext = '.' . base64_encode($this->owner) . '.col';
+		$ret = $this->show_select_collections('mycollection', null, $colext, null);
 		return ($ret);
 	}		
 	
 	protected function loadList() {
 		$colfile = $_GET['collection'];
-		$list = @file_get_contents($this->prpath . $colfile);
+		$list = @file_get_contents($this->prpath . $this->savecolpath . '/'. $colfile);
 		
 		SetSessionParam($this->listName, $list);
 		return $list;
