@@ -1640,10 +1640,10 @@ function handleResponse() {if(http.readyState == 4){
 	
 		$this->tools['google_analytics'] = '0,0,0,0,0,0,0,1,1';
 		$this->tools['add_recaptcha'] = '0,0,0,0,0,0,0,1,1';
-		$this->tools['upload_logo'] = '0,0,0,0,0,0,0,1,1';
-		$this->tools['add_domainname'] = '0,0,0,0,0,0,0,1,1';
+		//$this->tools['upload_logo'] = '0,0,0,0,0,0,0,1,1';
+		$this->tools['add_domainname'] = '0,0,0,0,0,0,0,0,1';
 		$this->tools['maildbqueue'] = '0,0,0,0,0,0,0,0,1';
-		$this->tools['item_photo'] = '0,0,0,0,0,0,0,1,1';
+		$this->tools['item_photo'] = '0,0,0,0,0,0,0,0,1';
 		//$this->tools['uninstall_maildbqueue'] = '0,0,0,0,0,0,0,1,1';
 		//$this->tools['add_addwords'] = '0,0,0,0,0,0,0,1,1';					 
 		if ($this->environment['IMPORTDB']>0) {					 
@@ -1652,7 +1652,7 @@ function handleResponse() {if(http.readyState == 4){
 			//print_r($this->tools);
 		}
 		
-		$this->tools['jqgrid'] = '0,0,0,0,0,0,0,0,1';//priv for setup
+		//$this->tools['jqgrid'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 		$this->tools['ieditor'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 		$this->tools['ckfinder'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 
