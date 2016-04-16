@@ -1,15 +1,13 @@
 <?php
-$__DPCSEC['RCTAGS_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCTAGS_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("RCTAGS_DPC")) && (seclevel('RCTAGS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCTAGS_DPC",true);
 
 $__DPC['RCTAGS_DPC'] = 'rctags';
 
-//$a = GetGlobal('controller')->require_dpc('rc/rcbrowser.lib.php');
-//require_once($a);
 
-$d = GetGlobal('controller')->require_dpc('shop/shtags.dpc.php');
+$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shtags.dpc.php', paramload('SHELL','urlpath'));
 require_once($d);
 
 $__EVENTS['RCTAGS_DPC'][0]='cptags';
@@ -443,7 +441,7 @@ class rctags extends shtags {
 				GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$t|".$title."|$type|$edit|$options");
 			} 
 
-			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ptags+$xsSQL+$mode++id+$noctrl+1+$rows+$height+$width");			
+			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ptags+$xsSQL+$mode+".localize('_tagtag',getlocal())."+id+$noctrl+1+$rows+$height+$width");			
 		}  
 		return ($out);
   }  

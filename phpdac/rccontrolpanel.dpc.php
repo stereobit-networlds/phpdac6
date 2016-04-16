@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['RCCONTROLPANEL_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCCONTROLPANEL_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCCONTROLPANEL_DPC")) && (seclevel('RCCONTROLPANEL_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCCONTROLPANEL_DPC",true);

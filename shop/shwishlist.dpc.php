@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['SHWISHLIST_DPC']='1;1;1;2;2;2;2;2;9';
+$__DPCSEC['SHWISHLIST_DPC']='1;1;1;2;2;2;2;2;9;9;9';
 
 if ((!defined("SHWISHLIST_DPC")) && (seclevel('SHWISHLIST_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHWISHLIST_DPC",true);

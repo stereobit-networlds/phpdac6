@@ -1,12 +1,12 @@
 <?php
-$__DPCSEC['STLOGIN_DPC']='1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['STLOGIN_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if (!defined("STLOGIN_DPC"))  {
 define("STLOGIN_DPC",true);
 
 $__DPC['STLOGIN_DPC'] = 'stlogin';
 
-$a = GetGlobal('controller')->require_dpc('shop/shlogin.dpc.php');
+$a = GetGlobal('controller')->require_dpc('cgi-bin/stereobit/shlogin.dpc.php', getcwd());
 require_once($a);
 
 GetGlobal('controller')->get_parent('SHLOGIN_DPC','STLOGIN_DPC');

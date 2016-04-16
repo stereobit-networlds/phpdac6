@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['RCVSTATS_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCVSTATS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCVSTATS_DPC")) && (seclevel('RCVSTATS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 

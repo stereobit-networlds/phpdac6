@@ -1,8 +1,8 @@
 <?php
 
-$__DPCSEC['RCPMENU_DPC']='1;1;1;2;2;2;2;2;9';
+$__DPCSEC['RCPMENU_DPC']='1;1;1;2;2;2;2;2;6;9';
 
-if ((!defined("RCPMENU_DPC")) && (seclevel('RCPMENU_DPC',decode(GetSessionParam('UserSecID')))) ) {
+if (!defined("RCPMENU_DPC")) {
 define("RCPMENU_DPC",true);
 
 $__DPC['RCPMENU_DPC'] = 'rcpmenu';
@@ -157,6 +157,8 @@ $__LOCALE['RCPMENU_DPC'][145]='_itemrelation;Relationships;Σύνδεσμοι';
 $__LOCALE['RCPMENU_DPC'][146]='_itemrel;Relations;Συσχετισμοί';
 $__LOCALE['RCPMENU_DPC'][147]='_bmailcreate;Build;Κατασκευή';
 $__LOCALE['RCPMENU_DPC'][148]='_COLLECT;Collect;Επιλογή';
+$__LOCALE['RCPMENU_DPC'][149]='_help;Help;Βοήθεια';
+$__LOCALE['RCPMENU_DPC'][150]='_tour;Guided tour;Βοήθεια';
 	   
 class rcpmenu {
 

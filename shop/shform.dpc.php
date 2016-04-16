@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['SHFORM_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['SHFORM_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("SHFORM_DPC")) && (seclevel('SHFORM_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHFORM_DPC",true);

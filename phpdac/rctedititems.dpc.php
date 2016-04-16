@@ -1,13 +1,10 @@
 <?php
-$__DPCSEC['RCTEDITITEMS_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCTEDITITEMS_DPC']='1;1;1;1;1;1;1;1;1;2;2';
 
 if ((!defined("RCTEDITITEMS_DPC")) && (seclevel('RCTEDITITEMS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCTEDITITEMS_DPC",true);
 
 $__DPC['RCTEDITITEMS_DPC'] = 'rctedititems';
-
-//$d = GetGlobal('controller')->require_dpc('shop/rcitems.dpc.php');
-/*require_once($d);..moved inside dac file ***************/
 
 $__EVENTS['RCTEDITITEMS_DPC'][0]='cptedititems';
 $__EVENTS['RCTEDITITEMS_DPC'][1]='cptsaveitems';

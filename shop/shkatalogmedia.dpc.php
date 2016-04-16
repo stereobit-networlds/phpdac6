@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['SHKATALOGMEDIA_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['SHKATALOGMEDIA_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("SHKATALOGMEDIA_DPC")) && (seclevel('SHKATALOGMEDIA_DPC',decode(GetSessionParam('UserSecID')))) ) {
 
@@ -7,7 +7,7 @@ define("SHKATALOGMEDIA_DPC",true);
 
 $__DPC['SHKATALOGMEDIA_DPC'] = 'shkatalogmedia';
 
-$d = GetGlobal('controller')->require_dpc('shop/shkatalog.dpc.php');
+$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shkatalog.dpc.php', paramload('SHELL','urlpath'));
 require_once($d);
 
 $e = GetGlobal('controller')->require_dpc('shell/pxml.lib.php');

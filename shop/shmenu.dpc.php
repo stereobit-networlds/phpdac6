@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['SHMENU_DPC']='1;1;1;2;2;2;2;2;9';
+$__DPCSEC['SHMENU_DPC']='1;1;1;2;2;2;2;2;9;9;9';
 
 if ((!defined("SHMENU_DPC")) && (seclevel('SHMENU_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHMENU_DPC",true);

@@ -1,24 +1,20 @@
 <?php
 
-$__DPCSEC['SHTRANSACTIONS_DPC']='1;1;1;2;2;2;2;2;9';
+$__DPCSEC['SHTRANSACTIONS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("SHTRANSACTIONS_DPC")) && (seclevel('SHTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHTRANSACTIONS_DPC",true);
 
 $__DPC['SHTRANSACTIONS_DPC'] = 'shtransactions';
 
-//require_once("transactions.dpc.php");
-//GetGlobal('controller')->include_dpc('transactions/transactions.dpc.php');
+
 $d = GetGlobal('controller')->require_dpc('transactions/transactions.dpc.php');
 require_once($d);
 
 //in case of page cntrl pxml not exist so load
 $d = GetGlobal('controller')->require_dpc('shell/pxml.lib.php');
 require_once($d);
-/*$e = GetGlobal('controller')->require_dpc('gui/datepick.dpc.php');
-require_once($e);
-$f = GetGlobal('controller')->require_dpc('libs/browserSQL.lib.php');
-require_once($f);*/
+
 
 //this transfer all actions,commands,attr from parent to child and parent disabled(=null)
 //it is important for inherit to still procced the commands of parent

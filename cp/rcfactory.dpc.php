@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['RCFACTORY_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCFACTORY_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("RCFACTORY_DPC")) && (seclevel('RCFACTORY_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCFACTORY_DPC",true);
@@ -34,9 +34,8 @@ class rcfactory {
 	
     function event($event=null) {
 	
-	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
-	   /////////////////////////////////////////////////////////////			
+	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	   if ($login!='yes') return null;			
 
        if (!$this->msg) {
   
@@ -54,6 +53,9 @@ class rcfactory {
     }	
 
     function action($action=null)  { 
+	
+	     $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	     if ($login!='yes') return null;
 
 	     switch ($action) {
 		   case 'cpadvsubscribe' : break;

@@ -1,12 +1,12 @@
 <?php
-$__DPCSEC['RCTRANSACTIONS_DPC']='1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCTRANSACTIONS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCTRANSACTIONS_DPC")) && (seclevel('RCTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCTRANSACTIONS_DPC",true);
 
 $__DPC['RCTRANSACTIONS_DPC'] = 'rctransactions';
 
-$d = GetGlobal('controller')->require_dpc('shop/shtransactions.dpc.php');
+$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shtransactions.dpc.php', paramload('SHELL','urlpath'));
 require_once($d);
  
 $__EVENTS['RCTRANSACTIONS_DPC'][0]='cptransactions';

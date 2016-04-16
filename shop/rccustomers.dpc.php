@@ -1,13 +1,13 @@
 <?php
 
-$__DPCSEC['RCCUSTOMERS_DPC']='1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCCUSTOMERS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCCUSTOMERS_DPC")) && (seclevel('RCCUSTOMERS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCCUSTOMERS_DPC",true);
 
 $__DPC['RCCUSTOMERS_DPC'] = 'rccustomers';
 
-$b = GetGlobal('controller')->require_dpc('phpdac/shcustomers.dpc.php');
+$b = GetGlobal('controller')->require_dpc('cgi-bin/shop/shcustomers.dpc.php', paramload('SHELL','urlpath'));
 require_once($b);
 
 $__EVENTS['RCCUSTOMERS_DPC'][0]='cpcustomers';
@@ -65,6 +65,8 @@ $__LOCALE['RCCUSTOMERS_DPC'][25]='_attr2;P2;P2';
 $__LOCALE['RCCUSTOMERS_DPC'][26]='_attr3;P3;P3';
 $__LOCALE['RCCUSTOMERS_DPC'][27]='_attr4;P4;P4';
 $__LOCALE['RCCUSTOMERS_DPC'][28]='_custaddress;Addresses;Διευθύνσεις';
+$__LOCALE['RCCUSTOMERS_DPC'][29]='_active;Active;Ενεργός';
+$__LOCALE['RCCUSTOMERS_DPC'][30]='_code2;Code;Κωδικός';
 
 class rccustomers extends shcustomers {
 
@@ -294,7 +296,7 @@ function show_body() {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr2|".localize('_attr2',getlocal())."|5|1|");							
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr3|".localize('_attr3',getlocal())."|5|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr4|".localize('_attr4',getlocal())."|5|1|");			
-			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+customers+$xsSQL2+d+".localize('RCCUSTOMERS_DPC',getlocal())."+id+1+1+36+600");
+			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+customers+$xsSQL2+d+".localize('RCCUSTOMERS_DPC',getlocal())."+id+0+1+36+600");
 
 	    }
 		else 
@@ -321,7 +323,7 @@ function show_body() {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+voice2|".localize('_tel',getlocal())."|10|1|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+fax|".localize('_fax',getlocal())."|10|1|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+mail|".localize('_mail',getlocal())."|20|1|");			
-			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+custaddress+$xsSQL2+d+".localize('_custaddress',getlocal())."+id+1+1+36+600");
+			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+custaddress+$xsSQL2+d+".localize('_custaddress',getlocal())."+id+0+1+36+600");
 
 	    }
 		else 

@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['CPMHTMLEDITOR_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['CPMHTMLEDITOR_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("CPMHTMLEDITOR_DPC")) && (seclevel('CPMHTMLEDITOR_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("CPMHTMLEDITOR_DPC",true);

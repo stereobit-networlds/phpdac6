@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['RCXMLFEEDS_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCXMLFEEDS_DPC']='1;1;1;1;1;1;1;6;7;8;9';
 
 if (!defined("RCXMLFEEDS_DPC")) {
 define("RCXMLFEEDS_DPC",true);

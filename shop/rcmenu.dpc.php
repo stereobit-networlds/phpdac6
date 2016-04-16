@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['RCMENU_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCMENU_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCMENU_DPC")) && (seclevel('RCMENU_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCMENU_DPC",true);

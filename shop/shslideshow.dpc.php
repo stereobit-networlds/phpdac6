@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['SHSLIDESHOW_DPC']='1;1;1;2;2;2;2;2;9';
+$__DPCSEC['SHSLIDESHOW_DPC']='1;1;1;2;2;2;2;2;7;8;9';
 
 if ((!defined("SHSLIDESHOW_DPC")) && (seclevel('SHSLIDESHOW_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHSLIDESHOW_DPC",true);

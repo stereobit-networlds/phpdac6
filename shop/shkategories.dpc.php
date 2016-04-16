@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['SHKATEGORIES_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['SHKATEGORIES_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("SHKATEGORIES_DPC")) && (seclevel('SHKATEGORIES_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHKATEGORIES_DPC",true);

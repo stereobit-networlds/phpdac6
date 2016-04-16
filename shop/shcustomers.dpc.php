@@ -1,10 +1,10 @@
 <?php
-$__DPCSEC['SHCUSTOMERS_DPC']='2;2;2;2;2;2;2;2;9';
-$__DPCSEC['CUSTOMERSMNG_']='2;1;2;2;2;2;2;2;9';
-$__DPCSEC['DELETECUSTOMER_']='2;1;1;1;1;1;1;2;9';
-$__DPCSEC['UPDATECUSTOMER_']='2;1;2;2;2;2;2;2;9';
-$__DPCSEC['INSERTCUSTOMER_']='1;1;1;1;1;1;2;2;9';//allow insert after user register
-$__DPCSEC['SEARCHCUSTOMER_']='2;1;1;1;1;1;2;2;9';
+$__DPCSEC['SHCUSTOMERS_DPC']='2;2;2;2;2;2;2;2;9;9;9';
+$__DPCSEC['CUSTOMERSMNG_']='2;1;2;2;2;2;2;2;9;9;9';
+$__DPCSEC['DELETECUSTOMER_']='2;1;1;1;1;1;1;2;9;9;9';
+$__DPCSEC['UPDATECUSTOMER_']='2;1;2;2;2;2;2;2;9;9;9';
+$__DPCSEC['INSERTCUSTOMER_']='1;1;1;1;1;1;2;2;9;9;9';//allow insert after user register
+$__DPCSEC['SEARCHCUSTOMER_']='2;1;1;1;1;1;2;2;9;9;9';
 
 if ((!defined("SHCUSTOMERS_DPC")) && (seclevel('SHCUSTOMERS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHCUSTOMERS_DPC",true);

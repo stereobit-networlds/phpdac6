@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['RCITEMS_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCITEMS_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("RCITEMS_DPC")) && (seclevel('RCITEMS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCITEMS_DPC",true);
@@ -7,7 +7,7 @@ define("RCITEMS_DPC",true);
 $__DPC['RCITEMS_DPC'] = 'rcitems';
 
 
-$d = GetGlobal('controller')->require_dpc('shop/shcategories.dpc.php');
+$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shkategories.dpc.php', paramload('SHELL','urlpath'));
 require_once($d);
 
 $e = GetGlobal('controller')->require_dpc('images/wateresize.lib.php');
@@ -233,7 +233,7 @@ class rcitems {
 	  $this->reset_on_import =  paramload('RCITEMS','resetonimport');  
 	  
       //$this->_grids[] = new nitobi("Items");	  
-	  $this->charts = new swfcharts;	
+	  //$this->charts = new swfcharts;	
 	  $this->ajaxLink = seturl('t=cpvstatsshow&statsid=');	  
 	  
 	  
@@ -371,8 +371,8 @@ class rcitems {
 			
             case 'openfolder'  :			
 	        case 'cpitems'     :   
-			default :              $this->grid_javascript(); 
-		                           $this->hasgraph = $this->charts->create_chart_data('statisticscat',"where year >=2000 and attr1='".urldecode(GetReq('cat'))."'");
+			default :              //$this->grid_javascript(); 
+		                           //$this->hasgraph = $this->charts->create_chart_data('statisticscat',"where year >=2000 and attr1='".urldecode(GetReq('cat'))."'");
 								   break;	
 													
 										  
@@ -2787,14 +2787,14 @@ function photo_item() {
 	  return ($ret);
 	}	
 	
-	function show_graph($xmlfile,$title,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
+	/*function show_graph($xmlfile,$title,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
 	  $gx = $this->graphx?$this->graphx:$xmax?$xmax:550;
 	  $gy = $this->graphy?$this->graphy:$ymax?$ymax:250;	
 	  
 	  $ret = $title; 
 	  $ret .= $this->charts->show_chart($xmlfile,$gx,$gy,$url,$ajaxid);
 	  return ($ret);
-	}	
+	}*/	
 	
 	function add_attachment_data($itmcode,$type=null,$data=null, $forceisid=null) {
       $db = GetGlobal('db');	

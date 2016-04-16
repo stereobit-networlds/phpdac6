@@ -1,13 +1,13 @@
 <?php
 
-$__DPCSEC['RCUSERS_DPC']='1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCUSERS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCUSERS_DPC")) && (seclevel('RCUSERS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCUSERS_DPC",true);
 
 $__DPC['RCUSERS_DPC'] = 'rcusers';
 
-$b = GetGlobal('controller')->require_dpc('phpdac/shusers.dpc.php');
+$b = GetGlobal('controller')->require_dpc('cgi-bin/shop/shusers.dpc.php', paramload('SHELL','urlpath'));
 require_once($b);
 
 
@@ -388,8 +388,8 @@ class rcusers extends shusers {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|0|".seturl('t=cptransactions&cusmail={username}').'||');	   
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|link|0|".seturl('t=cpusractiv&rec={id}').'||');
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|20|0|");						
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|30|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|30|1|");
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|20|1|");
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|20|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");
@@ -422,8 +422,8 @@ class rcusers extends shusers {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|1|".seturl('t=cptransactions&cusmail={username}').'||');	   
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|link|1|".seturl('t=cpusractiv&rec={id}').'||');
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|20|1|");						
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|30|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|30|1|");
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|20|1|");
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|20|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");

@@ -1,6 +1,6 @@
 <?php
-$__DPCSEC['SHKATALOG_DPC']='1;1;1;1;1;1;2;2;9';
-$__DPCSEC['SHKATALOG_CART']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['SHKATALOG_DPC']='1;1;1;1;1;1;2;2;9;9;9';
+$__DPCSEC['SHKATALOG_CART']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("SHKATALOG_DPC")) && (seclevel('SHKATALOG_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHKATALOG_DPC",true);

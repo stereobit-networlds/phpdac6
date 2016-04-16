@@ -247,8 +247,16 @@ class rcbulkmail {
 			case 'cpcampcontent'   : die($this->preview_campaign());
 			                         break;							 
 			 
-			case 'cpsubloadhtmlmail': if ($this->iscollection>0)
-										$this->loadTemplate2(); 					  
+			case 'cpsubloadhtmlmail': if ($this->iscollection>0) {
+                                        //print_r($_POST);
+				                        //check for sort post
+										if (!empty($_POST['colsort'])) { 
+											$slist = implode(',', $_POST['colsort']);	
+											GetGlobal('controller')->calldpc_method("rccollections.saveSortedlist use " . $slist);
+										}
+										
+										$this->loadTemplate2(); 	
+			                          }										
 									  else
 										$this->loadTemplate();	
 									  
@@ -2248,7 +2256,7 @@ This email and any files transmitted with it are confidential and intended solel
 		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : 'WHERE ' . $timein) : null;
 		
 		$l = $limit ? $limit : 3;	
-        $limitSQL = $timein ? ' LIMIT 30' : ($limit ? 'LIMIT '.$l : 'LIMIT 3'); 	
+        $limitSQL = $limit ? 'LIMIT '.$l : 'LIMIT 3'; 	
 		
 		$sSQL = "SELECT cid,subject,AVG(active),MIN(timeout),MAX(timeout) AS a FROM  mailqueue $ownerSQL $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
 		//echo $sSQL;

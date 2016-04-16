@@ -1,10 +1,10 @@
 <?php
-$__DPCSEC['SHUSERS_DPC']='1;1;1;1;1;1;1;1;1';
-$__DPCSEC['SIGNUP_']='2;2;1;1;1;2;2;2;9';
-$__DPCSEC['USERSMNG_']='7;1;1;1;1;1;1;7;9';
-$__DPCSEC['DELETEUSR_']='2;1;1;1;1;1;1;1;9';
-$__DPCSEC['UPDATEUSR_']='1;1;2;2;2;2;2;2;9';
-$__DPCSEC['ACCOUNTMNG_']='2;1;2;2;2;2;2;2;9';
+$__DPCSEC['SHUSERS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['SIGNUP_']='2;2;1;1;1;2;2;2;9;9;9';
+$__DPCSEC['USERSMNG_']='7;1;1;1;1;1;1;7;9;9;9';
+$__DPCSEC['DELETEUSR_']='2;1;1;1;1;1;1;1;9;9;9';
+$__DPCSEC['UPDATEUSR_']='1;1;2;2;2;2;2;2;9;9;9';
+$__DPCSEC['ACCOUNTMNG_']='2;1;2;2;2;2;2;2;9;9;9';
 
 if ((!defined("SHUSERS_DPC")) && (seclevel('SHUSERS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHUSERS_DPC",true);
@@ -1031,7 +1031,8 @@ class shusers  {
       $db = GetGlobal('db');
 	  $g = GetReq('g');
 
-      if (seclevel('USERSMNG_',$this->userLevelID)) {
+	  //DISABLED !!!
+      /*if (seclevel('USERSMNG_',$this->userLevelID)) {
 
          $sSQL = "SELECT CODE2,FNAME,LNAME,USERNAME FROM users ";
 		 //echo $sSQL;
@@ -1043,7 +1044,7 @@ class shusers  {
 		 $out .= $this->searchform();
 
 		 return ($out);
-	  }
+	  }*/
 	}
 
 	function register($myuser=null,$myfkey=null,$selectid=null,$cmd=null) {

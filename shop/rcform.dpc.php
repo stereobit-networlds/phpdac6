@@ -1,13 +1,13 @@
 <?php
 
-$__DPCSEC['RCFORM_DPC']='1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCFORM_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCFORM_DPC")) && (seclevel('RCFORM_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCFORM_DPC",true);
 
 $__DPC['RCFORM_DPC'] = 'rcform';
 
-$b = GetGlobal('controller')->require_dpc('shop/shform.dpc.php');
+$b = GetGlobal('controller')->require_dpc('cgi-bin/shop/shform.dpc.php', paramload('SHELL','urlpath'));
 require_once($b);
 
 
@@ -27,6 +27,7 @@ $__LOCALE['RCFORM_DPC'][0]='RCFORM_DPC;Form data;Form data';
 $__LOCALE['RCFORM_DPC'][1]='_id;Id;Id';
 $__LOCALE['RCFORM_DPC'][2]='_date;Date;Ημ/νία';
 $__LOCALE['RCFORM_DPC'][3]='_email;e-mail;e-mail';
+$__LOCALE['RCFORM_DPC'][4]='_forms;Contact_forms;Φόρμες_επικοινωνίας';
 
 
 class rcform extends shform {
@@ -131,7 +132,7 @@ class rcform extends shform {
 		else
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|15");
 			
-		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+cform+$xsSQL+$mode++id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+cform+$xsSQL+$mode+".localize('_forms',getlocal())."+id+$noctrl+1+$rows+$height+$width+0+1+1");
 	    return ($out);
 	
     }

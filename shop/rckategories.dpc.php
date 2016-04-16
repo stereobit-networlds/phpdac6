@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['RCKATEGORIES_DPC']='1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCKATEGORIES_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ( (!defined("RCKATEGORIES_DPC")) && (seclevel('RCKATEGORIES_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCKATEGORIES_DPC",true);
@@ -9,7 +9,7 @@ $__DPC['RCKATEGORIES_DPC'] = 'rckategories';
 $a = GetGlobal('controller')->require_dpc('rc/rcbrowser.lib.php');
 require_once($a);
 
-$d = GetGlobal('controller')->require_dpc('shop/shkategories.dpc.php');
+$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shkategories.dpc.php', paramload('SHELL','urlpath'));
 require_once($d);
 
 $__EVENTS['RCKATEGORIES_DPC'][0]='cpkategories';
@@ -81,7 +81,6 @@ class rckategories extends shkategories {
 	var $post, $msg;
 	var $browser;
 	var $editmode;
-	var $charts;
 	var $ajaxLink, $hasgraph, $urlbase;	
 	var $cptemplate;
 
@@ -100,8 +99,7 @@ class rckategories extends shkategories {
 	  //overrite csep...?
       $csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
       $this->cseparator = $csep ? $csep : '^';	
-	  
-	  $this->charts = new swfcharts;	
+	
 	  $this->ajaxLink = seturl('t=cpvstatsshow&statsid=');
 
 	  $this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);	  
@@ -774,15 +772,6 @@ class rckategories extends shkategories {
 			return ($ajaxdiv.'|'.$frame);
 		else
 			return ($frame);
-	}	
-	
-	function show_graph($xmlfile,$title,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
-	  $gx = $this->graphx?$this->graphx:$xmax?$xmax:550;
-	  $gy = $this->graphy?$this->graphy:$ymax?$ymax:250;	
-	  
-	  $ret = $title; 
-	  $ret .= $this->charts->show_chart($xmlfile,$gx,$gy,$url,$ajaxid);
-	  return ($ret);
 	}	
 	
 	function edit_kategories() {

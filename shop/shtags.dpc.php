@@ -1,7 +1,7 @@
 <?php
-$__DPCSEC['SHTAGS_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['SHTAGS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ((!defined("SHTAGS_DPC")) && (seclevel('SHTAGS_DPC',decode(GetSessionParam('UserSecID')))) ) {
+if (!defined("SHTAGS_DPC")) {
 define("SHTAGS_DPC",true);
 
 $__DPC['SHTAGS_DPC'] = 'shtags';
@@ -16,7 +16,7 @@ $__ACTIONS['SHTAGS_DPC'][2]='klist';
 
 //GetGlobal('controller')->get_parent('SHKATALOGMEDIA_DPC','SHTAGS_DPC');
 
-$__DPCATTR['SHTAGS_DPC']['cpshtags'] = 'cpshtags,1,0,0,0,0,0,0,0,0,0,0,1';
+$__DPCATTR['SHTAGS_DPC']['cpshtags'] = 'cpshtags,1,0,0,0,0,0,0,0,1,1,1,1';
 
 $__LOCALE['SHTAGS_DPC'][0]='SHTAGS_DPC;Tags;Tags';
 $__LOCALE['SHTAGS_DPC'][1]='_TAG;Tag;Tag';
@@ -143,9 +143,9 @@ class shtags {
 		                    ',' . $thetree;
 		}
 		elseif ($cat) {//echo 'z'; print_r($mytree);
-		
-		  $this->item = (!empty($mytree))? array_pop($mytree):
-		                                   str_replace('_',' ',array_pop(explode($this->cseparator, $cat)));
+		  $cc = explode($this->cseparator, $cat);
+		  $xcat = array_pop($cc);
+		  $this->item = (!empty($mytree))? array_pop($mytree) : str_replace('_',' ', $xcat);
 		  $this->descr = $this->item .',' . $thetree;
 		  $this->price = null;
 		  $this->keywords = $this->item .',' . $thetree;		

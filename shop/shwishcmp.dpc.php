@@ -1,17 +1,11 @@
 <?php
 if (defined("SHKATALOGMEDIA_DPC")) {
-$__DPCSEC['SHWISHCMP_DPC']='1;1;1;2;2;2;2;2;9';
+$__DPCSEC['SHWISHCMP_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ((!defined("SHWISHCMP")) /*&& (seclevel('SHWISHCMPC',decode(GetSessionParam('UserSecID'))))*/ ) {
+if (!defined("SHWISHCMP")) {
 define("SHWISHCMP_DPC",true);
 
 $__DPC['SHWISHCMP_DPC'] = 'shwishcmp';
-
-
-//$d = GetGlobal('controller')->require_dpc('shop/shwishlist.dpc.php');
-//require_once($d);
-
-//GetGlobal('controller')->get_parent('SHWISHLIST_DPC','SHWISHLIST2_DPC');
 
 $__EVENTS['SHWISHCMP_DPC'][0]='wishcmp';
 $__EVENTS['SHWISHCMP_DPC'][1]='wishview';
@@ -463,5 +457,5 @@ class shwishcmp extends shkatalogmedia {
 };
 }
 }
-else die("SHKATALOGMEDIA DPC REQUIRED!");
+//else die("SHKATALOGMEDIA DPC REQUIRED!");
 ?>

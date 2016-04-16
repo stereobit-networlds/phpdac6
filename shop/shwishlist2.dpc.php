@@ -1,16 +1,14 @@
 <?php
 
-$__DPCSEC['SHWISHLIST2_DPC']='1;1;1;2;2;2;2;2;9';
+$__DPCSEC['SHWISHLIST2_DPC']='1;1;1;2;2;2;2;2;9;9;9';
 
 if ((!defined("SHWISHLIST2_DPC")) && (seclevel('SHWISHLIST2_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHWISHLIST2_DPC",true);
 
 $__DPC['SHWISHLIST2_DPC'] = 'shwishlist2';
 
-
-$d = GetGlobal('controller')->require_dpc('shop/shwishlist.dpc.php');
+$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shwishlist.dpc.php', paramload('SHELL', 'urlpath'));
 require_once($d);
-
 
 GetGlobal('controller')->get_parent('SHWISHLIST_DPC','SHWISHLIST2_DPC');
 

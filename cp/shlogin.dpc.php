@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['SHLOGIN_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['SHLOGIN_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("SHLOGIN_DPC")) && (seclevel('SHLOGIN_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHLOGIN_DPC",true);
@@ -106,7 +106,9 @@ $__LOCALE['SHLOGIN_DPC'][122]='_editctag;Category Tags;Tags κατηγορίας
 $__LOCALE['SHLOGIN_DPC'][123]='_edititag;Item Tags;Tags είδους';
 $__LOCALE['SHLOGIN_DPC'][124]='_menu;Menu;Επιλογές Menu';
 $__LOCALE['SHLOGIN_DPC'][125]='_slideshow;Slideshow;Επιλογές Slideshow';
-$__LOCALE['SHLOGIN_DPC'][126]='_inactiveuser;Inactive user:;Απενεργοποιημένος χρήστης:';
+$__LOCALE['SHLOGIN_DPC'][126]='_inactiveuser;Inactive user;Μη ενεργός χρήστης';
+$__LOCALE['SHLOGIN_DPC'][127]='_newactiveuser;New user;Νέος χρήστης';
+$__LOCALE['SHLOGIN_DPC'][128]='_formsubmit;Message from;Μηνυμα απο';
 
 class shlogin {
 
@@ -705,10 +707,10 @@ window.setTimeout(\"neu()\",10);
   		            setInfo(localize('_WELLCOME',getlocal()) . " " . $sUsername);
                 
 				//set cookie
-				if (paramload('SHELL','cookies')) {
+				/*if (paramload('SHELL','cookies')) {
 				    setcookie("cuser",$UserName,time()+$this->time_of_session);//,time()+3600,"","panikidis.gr",0);
 					setcookie("csess",session_id(),time()+$this->time_of_session);
-				}
+				}*/
 				return true;
            }
            else 
@@ -1328,18 +1330,49 @@ window.setTimeout(\"neu()\",10);
 		if (!defined('RCCONTROLPANEL_DPC')) return false;
 		$db = GetGlobal('db');
 		$text = localize('_inactiveuser',getlocal());
-		$lastmonth = mktime(0, 0, 0, date("m")-1, date("d"),   date("Y"));
-		$sSQL = "select username,timein from users where notes='DELETED' and timein>" . $lastmonth;
-		//echo $sSQL;
+		$sSQL = "select username,timein from users where notes='DELETED' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
 		$result = $db->Execute($sSQL,2);
 		
 		foreach ($result as $i=>$rec) {
-			$msg = "important|" . $text .' '. $rec[0] . " (" .date("d-m-Y G:i", strtotime($rec[1])). ")";
-			//echo $msg;
+			$saytime = GetGlobal('controller')->calldpc_method("rccontrolpanel.timeSayWhen use ".strtotime($rec[1]));
+			//" (" .date("d-m-Y G:i", strtotime($rec[1])). 
+			$msg = "warning|" . $text .' '. $rec[0] . "|$saytime|cpusers.php";
 			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
 		}
 		return null;
 	} 
+	
+	//last month check 
+	public function check_newactive_users() {
+		if (!defined('RCCONTROLPANEL_DPC')) return false;
+		$db = GetGlobal('db');
+		$text = localize('_newactiveuser',getlocal());
+		$sSQL = "select username,timein from users where notes='ACTIVE' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
+		$result = $db->Execute($sSQL,2);
+		
+		foreach ($result as $i=>$rec) {
+			$saytime = GetGlobal('controller')->calldpc_method("rccontrolpanel.timeSayWhen use ".strtotime($rec[1]));
+			$msg = "success|" . $text .' '. $rec[0] . "|$saytime|cpusers.php";
+			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
+		}
+		return null;
+	} 
+
+	//last month check 
+	public function check_form_submitions() {
+		if (!defined('RCCONTROLPANEL_DPC')) return false;
+		$db = GetGlobal('db');
+		$text = localize('_formsubmit',getlocal());
+		$sSQL = "select email,date from cform where DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(date) desc";
+		$result = $db->Execute($sSQL,2);
+		//echo $sSQL;
+		foreach ($result as $i=>$rec) {
+			$saytime = GetGlobal('controller')->calldpc_method("rccontrolpanel.timeSayWhen use ".strtotime($rec[1]));
+			$msg = "info|" . $text .' '. $rec[0] . "|$saytime|cpform.php";
+			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
+		}
+		return null;
+	} 	
    
 	function combine_tokens($template_contents,$tokens) {
 	

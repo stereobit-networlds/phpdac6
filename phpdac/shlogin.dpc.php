@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['SHLOGIN_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['SHLOGIN_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("SHLOGIN_DPC")) && (seclevel('SHLOGIN_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHLOGIN_DPC",true);

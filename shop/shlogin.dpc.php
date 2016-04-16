@@ -1,13 +1,10 @@
 <?php
-$__DPCSEC['SHLOGIN_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['SHLOGIN_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("SHLOGIN_DPC")) && (seclevel('SHLOGIN_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHLOGIN_DPC",true);
 
 $__DPC['SHLOGIN_DPC'] = 'shlogin';
-
-//$a = GetGlobal('controller')->require_dpc('nitobi/nitobi.lib.php');
-//require_once($a);
 
 $__EVENTS['SHLOGIN_DPC'][0]='shlogin';
 $__EVENTS['SHLOGIN_DPC'][1]='dologin';

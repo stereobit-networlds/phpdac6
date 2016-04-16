@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['RCDYNSQL_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCDYNSQL_DPC']='1;1;1;1;1;1;1;7;7;8;9';
 
 if ((!defined("RCDYNSQL_DPC")) && (seclevel('RCDYNSQL_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCDYNSQL_DPC",true);
@@ -65,13 +65,12 @@ class rcdynsql {
 	
     function event($event=null) {
 	
-	   //ALLOW EXPRIRED APPS
-	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
-	   /////////////////////////////////////////////////////////////		 
+	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
 	     case 'cpsqlsave'  : $this->save_sql_file(); 
+					         echo $this->form(GetParam('tid')); die();
 		                     break;	   
 		 case 'cpdynview'  : echo $this->form(GetReq('tid')); die();
 		                     break;		   
@@ -93,9 +92,12 @@ class rcdynsql {
     }   
 	
     function action($action=null) {
+		
+	  $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	  if ($login!='yes') return null;	
 	 
 	  switch ($action) {	  
-	     case 'cpsqlsave'  : die($this->save_sql()); 
+	     case 'cpsqlsave'  : //die($this->save_sql()); 
 		                     break;
 		 case 'cpdynview'  : break;
 							 	  
@@ -144,46 +146,7 @@ class rcdynsql {
 	  
 	   return ($out);		   
 	}		
-	/*
-	function init_grids() {
 
-	    //$bodyurl = seturl("t=cptranslink&tid=");	
-		$bodyurl = seturl("t=cploadframe&tid=");
-	
-        //disable alert !!!!!!!!!!!!		
-		$out = "
-function alert() {}\r\n 
-
-function update_stats_id() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];
-  
-  
-  statsid.value = str;
-  //alert(statsid.value);
-  sndReqArg('$this->ajaxLink'+statsid.value,'stats');
-  
-  return str1+' '+str2;
-}
-
-function show_body() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];  
-  var taskid;
-  var custid;
-  
-  taskid = str;  
-  custid = str1;
-  sndReqArg('$bodyurl'+taskid,'trans');
-}
-			
-";
-        $out .= "\r\n";
-        return ($out);
-	}*/
-	
 	function show_grid($x=null,$y=null,$filter=null,$bfilter=null) {
 
 	
@@ -216,7 +179,7 @@ function show_body() {
 	        //GetGlobal('controller')->calldpc_method("mygrid.column use grid2+qty|".localize('_qty',getlocal())."|5|0|||||right");				
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cost|".localize('_cost',getlocal())."|5|0|||||right");
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+syncsql+$xsSQL2+r+".localize('RCDYNSQL_DPC',getlocal())."+id+1+1+20+400+$x+0+1+1");
+			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+syncsql+$xsSQL2+r+".localize('RCDYNSQL_DPC',getlocal())."+id+1+1+17+400+$x+0+1+1");
 
 	    }
 		else 
@@ -245,10 +208,10 @@ function show_body() {
 	
 	protected function save_sql_file() {
 		$db = GetGlobal('db'); 
-		if (!$id) return;
-		$sql = "UPDATE syncsql SET sqlquery=" . $db->qstr(GetParam('sqlcmd')) . "where id=".GetParam('tid');
-		//$result = $db->Execute($sql,2);
-		//echo $sql; ///Cannot modify header information - headers already sent by (output started at /home/stereobi/public_html/cp/dpc/jqgrid/jqgrid.lib.php:180) in ...
+		if (!$id=GetParam('tid')) return;
+		$sql = "UPDATE syncsql SET sqlquery=" . $db->qstr(GetParam('sqlcmd')) . "where id=".$id;
+		$result = $db->Execute($sql,2);
+
 		return (true);
 	}
 
@@ -278,7 +241,7 @@ function show_body() {
        $toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"savesql\">"; 
 	   $toprint .= "<input type=\"hidden\" name=\"tid\" value=\"".$id."\">";
        $toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_savesql',getlocal()) . "\">&nbsp;";  
-       $toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpsavesql" . "\">";	 	   
+       $toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpsqlsave" . "\">";	 	   
 	   	    
        $toprint .= "</FONT></FORM>"; 
 

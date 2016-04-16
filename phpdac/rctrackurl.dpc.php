@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['RCTRACKURL_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCTRACKURL_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 
 if ((!defined("RCTRACKURL_DPC")) && (seclevel('RCTRACKURL_DPC',decode(GetSessionParam('UserSecID')))) ) {

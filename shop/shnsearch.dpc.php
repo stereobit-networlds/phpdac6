@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['SHNSEARCH_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['SHNSEARCH_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("SHNSEARCH_DPC")) && (seclevel('SHNSEARCH_DPC',decode(GetSessionParam('UserSecID')))) ) {
 

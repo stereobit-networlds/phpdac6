@@ -1,12 +1,12 @@
 <?php
-$__DPCSEC['RCSLIDESHOW_DPC']='1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCSLIDESHOW_DPC']='5;1;1;1;1;1;5;6;7;8;9';
 
 if ((!defined("RCSLIDESHOW_DPC")) && (seclevel('RCSLIDESHOW_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCSLIDESHOW_DPC",true);
 
 $__DPC['RCSLIDESHOW_DPC'] = 'rcslideshow';
 
-$d = GetGlobal('controller')->require_dpc('shop/shslideshow.dpc.php');
+$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shslideshow.dpc.php', paramload('SHELL','urlpath'));
 require_once($d);
 
 $__EVENTS['RCSLIDESHOW_DPC'][0]='cpsconfig';

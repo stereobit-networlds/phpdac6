@@ -19,6 +19,7 @@ $__EVENTS['RCCONTROLPANEL_DPC'][5]='cptasks';
 $__EVENTS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 $__EVENTS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
+$__EVENTS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
@@ -29,6 +30,7 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][5]='cptasks';
 $__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 $__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
+$__ACTIONS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
 
 //$__DPCATTR['RCCONTROLPANEL_DPC']['cp'] = 'cp,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -141,7 +143,7 @@ $__LOCALE['RCCONTROLPANEL_DPC'][101]='_slideshow;Slideshow;Ρυθμίσεις Sl
 $__LOCALE['RCCONTROLPANEL_DPC'][102]='_ckfinder;Upload files;Upload αρχείων';
 $__LOCALE['RCCONTROLPANEL_DPC'][103]='_webmail;Web Mail;Web Mail';
 $__LOCALE['RCCONTROLPANEL_DPC'][104]='_editpage;Edit Page;Επεξεργασία σελίδας';
-$__LOCALE['RCCONTROLPANEL_DPC'][105]='_rempass;Forgotten password;Υπενθύμιση κωδικού';
+$__LOCALE['RCCONTROLPANEL_DPC'][105]='_rempass;Forgotten password;Ανάκτηση κωδικού';
 $__LOCALE['RCCONTROLPANEL_DPC'][106]='_chpass;Change password;Αλλαγή κωδικού';
 $__LOCALE['RCCONTROLPANEL_DPC'][107]='_cphelp;Ηelp;Βοήθεια';
 $__LOCALE['RCCONTROLPANEL_DPC'][108]='_cpupgrade;Upgrade;Αναβάθμιση';
@@ -177,6 +179,22 @@ $__LOCALE['RCCONTROLPANEL_DPC'][137]='_ITEMCOLLECTION;Select items;Επιλογ�
 $__LOCALE['RCCONTROLPANEL_DPC'][138]='_GNAVAL;Empty;Μη διαθέσιμο';
 $__LOCALE['RCCONTROLPANEL_DPC'][139]='_caddress;Addresses;Διευθύνσεις';
 $__LOCALE['RCCONTROLPANEL_DPC'][140]='_susers;Superusers;Διαχειριστές';
+$__LOCALE['RCCONTROLPANEL_DPC'][141]='_min;minutes;λεπτά';
+$__LOCALE['RCCONTROLPANEL_DPC'][142]='_hrs;hours;ώρες';
+$__LOCALE['RCCONTROLPANEL_DPC'][143]='_days;days;ημέρες';
+$__LOCALE['RCCONTROLPANEL_DPC'][144]='_ago;ago;πριν';
+$__LOCALE['RCCONTROLPANEL_DPC'][145]='_error;Error;Λάθος';
+$__LOCALE['RCCONTROLPANEL_DPC'][146]='_warning;Warning;Προειδοποίηση';
+$__LOCALE['RCCONTROLPANEL_DPC'][147]='_important;Important;Σημαντικό';
+$__LOCALE['RCCONTROLPANEL_DPC'][148]='_info;Info;Πληροφορία';
+$__LOCALE['RCCONTROLPANEL_DPC'][149]='_success;Success;Επιτυχία';
+$__LOCALE['RCCONTROLPANEL_DPC'][150]='_message;Message;Μήνυμα';
+$__LOCALE['RCCONTROLPANEL_DPC'][151]='_messages;Messages;Μηνύματα';
+$__LOCALE['RCCONTROLPANEL_DPC'][152]='_viewallmessages;All messages;Όλα τα μηνύματα';
+$__LOCALE['RCCONTROLPANEL_DPC'][153]='_sec;Sec;δευτερόλεπτα';
+$__LOCALE['RCCONTROLPANEL_DPC'][154]='_date;Date;Ημερομηνία';
+$__LOCALE['RCCONTROLPANEL_DPC'][155]='_type;Type;Τύπος';
+$__LOCALE['RCCONTROLPANEL_DPC'][156]='_sale;Invoice created;Παραστατικό πώλησης';
 
 class rccontrolpanel {
 
@@ -192,6 +210,8 @@ class rccontrolpanel {
 	var $appkey, $awstats_url;
 	var $cptemplate, $stats, $cpStats;
 	var $turl, $cpGet, $turldecoded, $messages, $tasks;
+	var $owner, $seclevid;
+	var $userDemoIds;
 	
 	var $rootapp_path, $tool_path;
 		
@@ -221,10 +241,8 @@ class rccontrolpanel {
 		else  
 	      $this->charset = $char_set[getlocal()]; 		
 		
-		
-		//$au = remote_paramload('RCCONTROLPANEL','autoupdate',$this->prpath);
-        //$this->autoupdate = $au?$au:3600;
-		//$this->dashboard = null;
+		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName');
+		$this->seclevid = GetSessionParam('ADMINSecID') ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
 		
 		$this->goto = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
 		
@@ -234,8 +252,6 @@ class rccontrolpanel {
 		//print_r($this->environment);
 		
 		//awstats cp window
-        //$url = "cgi-bin/awstats.pl?config=".str_replace('www.','',$_ENV["HTTP_HOST"])."&framename=mainright#top";			   
-		//get last murl element = site.stereobit.gr 
 		$awurl = remote_paramload('RCAWSTATS','file',$this->prpath);
 		$this->awstats_url = $awurl ? $awurl :
 		                     ((!empty($this->murl)) ? array_pop($this->murl) : str_replace('www.','',$_ENV["HTTP_HOST"]));		
@@ -252,6 +268,8 @@ class rccontrolpanel {
 		
 		$this->stats = array();
 		$this->cpStats = false;
+		
+		$this->userDemoIds = array(6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 	}
 	 	
     function event($sAction) {    	  
@@ -284,7 +302,9 @@ class rccontrolpanel {
 		 case 'cpdelMessage': //ajax call
 		                     $msgs = $this->delMessage();
 							 die('cpmessages|'.$msgs);
-							 break;								 
+							 break;	
+
+         case 'cpshowMessages' : break;							 
 	   	
          case "cplogout"    : $this->logout();
 		                     break;
@@ -322,7 +342,8 @@ class rccontrolpanel {
 								 break;
 			case 'cptasks'     : break;						
 		    case 'cpmessages'  : break;										  
-		    case 'cpdelMessage': break;				
+		    case 'cpdelMessage': break;	
+			case 'cpshowMessages' : $out = $this->viewPastMessages(); break;				
 		  	case "cpinfo"      : break;    
 			case "cp"          :	
 			default            : $this->getTURL(); //save param for use by metro cp
@@ -341,6 +362,10 @@ class rccontrolpanel {
 				
 	    return ($out);
     } 
+	
+	public function isDemoUser() {
+		return (in_array($this->seclevid, $this->userDemoIds));
+	}	
 	
 	//save param for use by metro cp
 	protected function getTURL() {
@@ -388,10 +413,10 @@ function handleResponse() {if(http.readyState == 4){
         var update = new Array();
         response = response.replace( /^\s+/g, \"\" ); // strip leading 
         response = response.replace( /\s+$/g, \"\" ); // strip trailing		
-        if(response.indexOf('|' != -1)) { /*alert(response); */ update = response.split('|');
+        if(response.indexOf('|' != -1)) { /*alert(response);*/  update = response.split('|');
             document.getElementById(update[0]).innerHTML = update[1];
         }}}  		
-		function init(){ sndReqArg('cp.php?t=cptasks','cptasks');} 
+		function init(){ sndReqArg('cp.php?t=cpmessages','cpmessages');} 
 		window.setInterval(\"sndReqArg('cp.php?t=cptasks','cptasks')\",63000);
 		window.setInterval(\"sndReqArg('cp.php?t=cpmessages','cpmessages')\",61200);
 ";
@@ -646,7 +671,7 @@ function handleResponse() {if(http.readyState == 4){
 		        ($this->environment[strtoupper($tool)]==0)) {//installed tool no privilege
 		   //no priviledge
 		   //do nothing...
-		   //echo '<br/>',$tool,$seclevid,'>';
+		   //echo '<br/>',$tool,$this->seclevid,'>';
 		}
         elseif ($ison>0) {//disabled tool..enable it, if local privilege is on
 		   //echo $mytool.'<br/>';
@@ -1199,7 +1224,7 @@ function handleResponse() {if(http.readyState == 4){
 		
 
 		
-        if (defined('RCKATEGORIES_DPC')) { //	//SHUSERS / SHCUSTOMERS
+        //if (defined('RCKATEGORIES_DPC')) { //	//SHUSERS / SHCUSTOMERS
 	
             $sSQL = "select count(id) from users";
 			$res = $db->Execute($sSQL,2);
@@ -1233,8 +1258,8 @@ function handleResponse() {if(http.readyState == 4){
 			$res = $db->Execute($sSQL,2);	
             $this->stats['Items']['Attachments'] = $this->nformat($res->fields[0]);			
 			
-		}  
-        if (defined('RCITEMS_DPC')) {
+		//}  
+        //if (defined('RCITEMS_DPC')) {
             $timeins = $this->sqlDateRange('sysins', false, false);	
 			$where = $timeins ? ' where ' : null;
 		    //$sSQL = "select id,substr(sysins,1,4) as year,substr(sysins,6,2) as month from products where substr(sysins,1,4)='$year' and substr(sysins,6,2)='$month'";
@@ -1260,8 +1285,8 @@ function handleResponse() {if(http.readyState == 4){
             $sSQL = "select count(id) from products";
 			$res = $db->Execute($sSQL,2);	
             $this->stats['Items']['value'] = $this->nformat($res->fields[0]);			
-		} 
-        if (defined('RCITEMS_DPC')) {//???????SYNC DPC
+		//} 
+        //if (defined('RCITEMS_DPC')) {//???????SYNC DPC
 			$timein = $this->sqlDateRange('time', true, false);			 
 			$where = $timein ? ' where ' : null;
 			$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql" . $where . $timein;
@@ -1278,8 +1303,8 @@ function handleResponse() {if(http.readyState == 4){
 		    /*$sSQL = "select count(id) from syncsql where substr(date,1,4)='$year'";
 			$res = $db->Execute($sSQL,2);
             $this->stats['Sync']['value'] = $res->fields[0];*/	
-		}  		
-        if (defined('RCBULKMAIL_DPC')) {
+		//}  		
+        //if (defined('RCBULKMAIL_DPC')) {
 			$timein = $this->sqlDateRange('timein', true, false);
             $where = $timein ? ' where ' : null;			
 			$sSQL = "select count(id), sum(CHAR_LENGTH(body)) from mailqueue" . $where . $timein;
@@ -1306,8 +1331,8 @@ function handleResponse() {if(http.readyState == 4){
 		    $sSQL = "select count(id) from mailcamp where active=1";
 			$res = $db->Execute($sSQL,2);
             $this->stats['Mail']['campaigns'] = $this->nformat($res->fields[0]);				
-		}  
-		if (defined('RCTRANSACTIONS_DPC')) { //!!!! to be implemented as cp call			
+		//}  
+		//if (defined('RCTRANSACTIONS_DPC')) { //!!!! to be implemented as cp call			
 			$timein = $this->sqlDateRange('tdate', false, false);
 			$where = $timein ? ' where ' : null;
 			//$sSQL = "select count(recid) from transactions where substr(tdate,1,4)='$year'";
@@ -1323,7 +1348,7 @@ function handleResponse() {if(http.readyState == 4){
 			$this->stats['Transactions']['revenuenet'] = $this->nformat($res->fields[0],2);
 			$this->stats['Transactions']['revenue'] = $this->nformat($res->fields[1],2);			
 			$this->stats['Transactions']['tax'] = $this->nformat((floatval($res->fields[1]) - floatval($res->fields[0])),2);
-		}  
+		//}  
 
         return ($ret);     	
     }
@@ -1678,9 +1703,9 @@ function handleResponse() {if(http.readyState == 4){
   
 
    protected function parse_environment($save_session=false) {	   
-	$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
-	$seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;
-	//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$adminsecid.':'.$seclevid;
+	//$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
+	$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
+	//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$this->seclevid.':'.$sl;
 	
     if ($ret = $_SESSION['env']) {
 	    //echo 'insession';
@@ -1698,7 +1723,7 @@ function handleResponse() {if(http.readyState == 4){
 	foreach ($ini as $env=>$val) {
 	    if (stristr($val,',')) {
 		    $uenv = explode(',',$val);
-			$ret[$env] = $uenv[$seclevid];  
+			$ret[$env] = $uenv[$sl];  
 		}
 		else
 		    $ret[$env] = $val;
@@ -1890,11 +1915,15 @@ function handleResponse() {if(http.readyState == 4){
 		$msgs = array_reverse($this->messages, true);
 		$i = 0;
 		foreach ($msgs as $n=>$m) {
+			
 			$tokens = explode('|', $m); 
-			switch (array_shift($tokens)) {
+			$tokens[] = $n; //add hash (for future deletes of msg)
+			
+			switch (array_shift($tokens)) { //rest is msg|time|action + hash of msg
 				case 'important' : $tmpl = 'dropdown-notification-important'; break;
 				case 'success'   : $tmpl = 'dropdown-notification-success'; break;
 				case 'warning'   : $tmpl = 'dropdown-notification-warning'; break;
+				case 'error'     : $tmpl = 'dropdown-notification-error'; break;
 				case 'info'      :
 				default          : $tmpl = 'dropdown-notification-info';
 				
@@ -1909,32 +1938,47 @@ function handleResponse() {if(http.readyState == 4){
 		return ($ret);			
 	}	
 	
-	/*delete msg from queu return rest-ajax*/
+	/*delete msg from queue return rest-ajax*/
 	public function delMessage($limit=null) {
+		$db = GetGlobal('db');	
 		if (empty($this->messages)) return null;
-		if (!$h = $_GET['hash']) return null;
+		if (!$h = GetReq('hash')) return null;
 		//print_r($this->messages);
 		$tokens = array(); 
 		$lim = $limit ? $limit : 6;
 		
-		//delete msg
-		$nm = array();
-		foreach ($this->messages as $hash=>$message) {
-			if ($h!=$hash) $nm[$hash] = $message;
-		}
-		$this->messages = (empty($nm)) ? null : $nm;
-		SetSessionParam('cpMessages', $nm);
-		if (empty($nm)) return null;
+		//insert message into db
+		$sSQL = "insert into cpmessages (hash, msg, type, owner) values (";
+		$sSQL.= $db->qstr($h) . ",";
+		$sSQL.= $db->qstr(GetReq('msg')) . ",";
+		$sSQL.= $db->qstr(GetReq('type')) . ",";
+		$sSQL.= $db->qstr($this->owner);
+		$sSQL.= ")";
+		echo $sSQL;
+		$result = $db->Execute($sSQL,1);			 
+		$ret = $db->Affected_Rows(); 
 		
-		//send out rest queue
-		$msgs = array_reverse($nm, true);
-		$i = 0;
-		foreach ($msgs as $n=>$m) {
+		if ($ret) {
+		
+		  //delete msg from session
+		  $nm = array();
+		  foreach ($this->messages as $hash=>$message) {
+			if ($h!=$hash) $nm[$hash] = $message;
+		  }
+		  $this->messages = (empty($nm)) ? null : $nm;
+		  SetSessionParam('cpMessages', $nm);
+		  if (empty($nm)) return null;
+		
+		  //send out rest queue
+		  $msgs = array_reverse($nm, true);
+		  $i = 0;
+		  foreach ($msgs as $n=>$m) {
 			$tokens = explode('|', $m); 
 			switch (array_shift($tokens)) {
 				case 'important' : $tmpl = 'dropdown-notification-important'; break;
 				case 'success'   : $tmpl = 'dropdown-notification-success'; break;
 				case 'warning'   : $tmpl = 'dropdown-notification-warning'; break;
+				case 'error'     : $tmpl = 'dropdown-notification-error'; break;
 				case 'info'      :
 				default          : $tmpl = 'dropdown-notification-info';
 				
@@ -1944,17 +1988,32 @@ function handleResponse() {if(http.readyState == 4){
 			unset($tokens);	
 			$i+=1;
 			if ($i>$lim) break;
-		}
+		  }
+		
+		}//insert to db
 		
 		return ($ret);			
 	}	
 	
 	public function setMessage($message=null) {
+		$db = GetGlobal('db');
 		if (!$message) return false;
+		
 		$id = explode('|',$message);
 		$hash = md5($id[0].$id[1]);
 		
-		if (array_key_exists($hash, $this->messages)) {}
+		//search in db for deleted msg
+		$sSQL = "select hash from cpmessages where hash=" . $db->qstr($hash) . ' and owner=' . $db->qstr($this->owner);
+		//of last 3 month
+		$sSQl.= " and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 90 DAY ) ) AND DATE ( NOW() )";// order by DATE(date) desc";
+		$result = $db->Execute($sSQL,1);			 
+		//$ret = $db->Affected_Rows(); 
+		//if ($result->fields[0]) echo $sSQL;
+		//if message has viewed (isin db) return
+        if ($result->fields[0]) return false;
+		
+		//add the message if not already in session		
+		if (array_key_exists($hash, $this->messages)) { /* in session */}
 		else {
 			$this->messages[$hash] = $message;
 			SetSessionParam('cpMessages', $this->messages);
@@ -1965,21 +2024,61 @@ function handleResponse() {if(http.readyState == 4){
 	
 	public function viewMessages($template=null) {
 		if (empty($this->messages)) return;
-	    $t = ($template!=null) ? $this->select_template($template) : null;
+		$rtokens = array();
 		//$msgs = array_reverse($this->messages, true);
-
+        
 		foreach ($this->messages as $hash=>$message) {
 			//echo $message;
 			$tokens = explode('|', $message); 
-			$status = $tokens[0]; //not used here
-			$msg = $tokens[1];
+			$status = $tokens[0]; //used as template (important|error...)
+			$rtokens[] = $tokens[1]; //msg
+			$rtokens[] = $tokens[2]; //time
+			$rtokens[] = $tokens[3] ? $tokens[3] : '#'; //link
+			$rtokens[] = $hash; //hash when link to delete
+			
+			$st = $status ? '-' . $status : null;
+			$statusTmpl = str_replace($template, $template.$st ,$template);
+			$t = ($template!=null) ? $this->select_template($statusTmpl) : null;
+			
 			if ($t) 	
-				$ret .= $this->combine_tokens($t, array(0=>$msg,1=>$hash));
+				$ret .= $this->combine_tokens($t, $rtokens);//array(0=>$hash,1=>$msg,2=>$when,3=>$action));
 			else
-				$ret .= "<option value=\"$hash\">".$tokens[1]."</option>";
+				$ret .= "<option value=\"$hash\">".$rtokens[0]."</option>";
+			
+			unset($rtokens);
 		}
 		//echo $ret;
 		return ($ret);
+	}	
+	
+	protected function viewPastMessages() {
+		$db = GetGlobal('db');	
+		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;	
+		$ownerSQL = ($this->seclevid==9) ? null : 'where owner=' . $db->qstr($this->owner); 		
+		   	
+		if (defined('MYGRID_DPC')) {
+		    $title = str_replace(' ','_',localize('_messages',getlocal()));
+		   
+			$sSQL = "select * from (SELECT id,date,type,msg FROM cpmessages $ownerSQL order by date desc";
+            $sSQL.= ') as o';  				
+		   		   
+		    //echo $sSQL;
+
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|date|1');		   
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
+
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
+			
+			//mail body ajax renderer
+			//$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
+		}
+        else  
+			$out .= null;
+   		
+		
+	    return ($out);	
 	}	
 	
 	
@@ -2046,8 +2145,84 @@ function handleResponse() {if(http.readyState == 4){
 				$ret .= "<option value=\"$t\">$tsk</option>";
 		}
 		return ($ret);
+	}	
+
+	/*sales today as cp messages (3 days back)*/
+	public function getSalesToday($template=null, $limit=null) {
+		$db = GetGlobal('db');	
+		$l = $limit ? $limit : 5;
+		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
+		$t = ($template!=null) ? $this->select_template($template) : null;
+		$tokens = array();
+		$text = localize('_sale',getlocal());
+		
+		$sSQL = "SELECT tdate,ttime,cid FROM transactions where tdate BETWEEN DATE_SUB( NOW() , INTERVAL 3 DAY ) AND NOW() order by tdate desc LIMIT " . $l;
+
+		//echo $sSQL;
+		$resultset = $db->Execute($sSQL,2);
+		
+		if (empty($resultset)) return null;
+		foreach ($resultset as $n=>$rec) {
+			$saytime = $this->timeSayWhen(strtotime($rec[0].' '.$rec[1]));
+			$msg = "success|" . $rec[2] .", ". $text .' '. $rec[0] . " " .$rec[1] . "|$saytime|cptransactions.php";
+			//echo $msg;
+			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
+		}
+
+		return ($ret);			
 	}		
 	
+	public function timeSayWhen($ts=null) {
+		$when = $ts ? $ts : time();
+		$now = time();
+		$diff = ($now-$when);
+
+		if ($diff<60) 
+			$saytime = date('s',$diff) . ' ' . localize('_sec',getlocal());		
+		elseif ($diff<3600) 
+			$saytime = date('i',$diff) . ' ' . localize('_min',getlocal());
+		elseif ($diff<86400) 
+			$saytime = date('G',$diff) . ' ' . localize('_hrs',getlocal());
+		else 
+			$saytime = date('d',$diff) . ' ' . localize('_days',getlocal());		
+		
+		return ($saytime);
+	}	
+	
+	//called by page as json array...(NOT USED)
+	public function jsTour($elements=null, $pos=null) {
+		
+		$el = explode(',',$elements);
+		$ps = explode(',',$pos);
+		
+		foreach ($el as $i=>$e) {
+			$tt[] = array('element'=>$e,
+			              'tooltip'=>localize('_tooltip-'.$e,getlocal()),
+						  'position'=>$ps[$i],
+						  'text'=>localize('_text-'.$e,getlocal()),
+						  );
+		}
+		//print_r($tt);
+		//echo json_encode($tt);
+		
+		$ret = "[
+		      { element : '.metro-nav', 'tooltip' : 'Metro style buttons', 'position' : 'T', 'text' : '<h3>Metro</h3><p>View all critial data in one view summarized by category. Every button is clickable and shows details about its data category</p>'  },
+              { element : '.metro-nav-block.nav-light-blue', 'tooltip' : 'Star reading this first', 'position' : 'TL', 'text' : '<h3>jSON structure</h3><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vitae mattis mi, quis imperdiet arcu. Nulla egestas mauris id velit ullamcorper aliquam. Proin faucibus volutpat justo, non faucibus massa dapibus ut. Sed mauris neque, aliquam vitae convallis eget, feugiat quis tortor. Suspendisse eleifend, nisl quis consequat tincidunt, erat nisi fringilla nisl, adipiscing venenatis arcu nibh in magna. Mauris sit amet lectus adipiscing, mattis augue a, adipiscing felis. Fusce tellus orci, venenatis in libero ac, molestie aliquam tortor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>' },
+              { element : '.widget.purple', 'tooltip' : 'This can be used inside the body or head', 'position' : 'TR', 'text' : '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vitae mattis mi, quis imperdiet arcu. Nulla egestas mauris id velit ullamcorper aliquam. Proin faucibus volutpat justo, non faucibus massa dapibus ut. Sed mauris neque, aliquam vitae convallis eget, feugiat quis tortor. Suspendisse eleifend, nisl quis consequat tincidunt, erat nisi fringilla nisl, adipiscing venenatis arcu nibh in magna. Mauris sit amet lectus adipiscing, mattis augue a, adipiscing felis. Fusce tellus orci, venenatis in libero ac, molestie aliquam tortor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>' },
+              { element : '.controls', 'tooltip' : 'Or can be used into a click event', 'position' : 'BL' },
+              { element : '.easy-pie-chart', 'tooltip' : 'The data section it is very important', 'position' : 'B', 'text' : '<h3>Data</h3><p>It is a attribute that contains every the texts and configurations that the plugin use</p>' },
+              { element : '.update-btn', 'tooltip' : 'Use a selector!', 'position' : 'L', 'controlsPosition' : 'BR' },
+              { element : '.icon-download', 'tooltip' : 'Like this', 'position' : 'T' },
+              { element : '.widget.orange', 'tooltip' : 'This can be HTML! (be standard, pls)', 'position' : 'R' },
+              { element : '#reservation', 'tooltip' : 'Oops! I just forgot myself configuration!', 'position' : 'R' },
+              { element : '.divider-vertical', 'tooltip' : 'Backgrounds and more!', 'position' : 'B', 'text' : '<p>Use rgba() because it looks really nice</p>' },
+              { element : '.nav.top-menu', 'tooltip' : 'Very soon...', 'position' : 'B', 'text' : '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vitae mattis mi, quis imperdiet arcu. Nulla egestas mauris id velit ullamcorper aliquam. Proin faucibus volutpat justo, non faucibus massa dapibus ut. Sed mauris neque, aliquam vitae convallis eget, feugiat quis tortor. Suspendisse eleifend, nisl quis consequat tincidunt, erat nisi fringilla nisl, adipiscing venenatis arcu nibh in magna. Mauris sit amet lectus adipiscing, mattis augue a, adipiscing felis. Fusce tellus orci, venenatis in libero ac, molestie aliquam tortor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>' },
+              { element : '.sidebar-menu', 'tooltip' : 'Please use it', 'position' : 'R' },
+              { element : '.dropdown-toggle.element', 'tooltip' : 'fork it', 'position' : 'B', 'text' : '<h1>That\'s all!</h1><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vitae mattis mi, quis imperdiet arcu. Nulla egestas mauris id velit ullamcorper aliquam. Proin faucibus volutpat justo, non faucibus massa dapibus ut. Sed mauris neque, aliquam vitae convallis eget, feugiat quis tortor. Suspendisse eleifend, nisl quis consequat tincidunt, erat nisi fringilla nisl, adipiscing venenatis arcu nibh in magna. Mauris sit amet lectus adipiscing, mattis augue a, adipiscing felis. Fusce tellus orci, venenatis in libero ac, molestie aliquam tortor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>' }	
+			 ] 
+		";
+		return ($ret);
+	}
 	
 	function select_template($tfile=null, $path=null) {
 		if (!$tfile) return;

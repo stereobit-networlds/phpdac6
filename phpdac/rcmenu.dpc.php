@@ -1,12 +1,12 @@
 <?php
-$__DPCSEC['RCMENU_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCMENU_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCMENU_DPC")) && (seclevel('RCMENU_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCMENU_DPC",true);
 
 $__DPC['RCMENU_DPC'] = 'rcmenu';
 
-$d = GetGlobal('controller')->require_dpc('shop/shmenu.dpc.php');
+$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shmenu.dpc.php', paramload('SHELL','urlpath'));
 require_once($d);
 
 $__EVENTS['RCMENU_DPC'][0]='cpmconfig';

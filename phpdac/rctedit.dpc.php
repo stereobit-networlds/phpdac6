@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['RCTEDIT_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCTEDIT_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCTEDIT_DPC")) && (seclevel('RCTEDIT_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCTEDIT_DPC",true);

@@ -1,7 +1,7 @@
 <?php
 if (defined("DATABASE_DPC")) {
 
-$__DPCSEC['RCIMPORTDB_DPC']='1;1;1;1;1;1;1;8;9';
+$__DPCSEC['RCIMPORTDB_DPC']='1;1;1;1;1;1;1;8;9;9;9';
 
 if ((!defined("RCIMPORTDB_DPC")) && (seclevel('RCIMPORTDB_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCIMPORTDB_DPC",true);

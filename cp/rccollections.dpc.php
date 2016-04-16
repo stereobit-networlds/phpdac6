@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['RCCOLLECTIONS_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCCOLLECTIONS_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("RCCOLLECTIONS_DPC")) && (seclevel('RCCOLLECTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCCOLLECTIONS_DPC",true);
@@ -463,7 +463,7 @@ class rccollections {
 		  if (!empty($_POST[$this->listName])) { 
 			$plist = implode(',', $_POST[$this->listName]);
 		
-			$list = GetSessionParam($this->listName) ? GetSessionParam($this->listName) .','.$plist : $plist;
+			$list = GetSessionParam($this->listName) ? GetSessionParam($this->listName) . ',' . $plist : $plist;
 			SetSessionParam($this->listName, $list);
 			
 			$this->saveListInFile($list);
@@ -480,6 +480,13 @@ class rccollections {
 		return false;	
 	}
 	
+	//called from rcbulmail
+	public function saveSortedList($csvlist=null) {
+		//echo $csvlist;
+		$this->savedlist = $csvlist;
+		SetSessionParam($this->listName, $csvlist);
+		return true;
+	}
 	
 	/************************ db item handler **********************/
 	
@@ -498,7 +505,7 @@ class rccollections {
 		elseif ($this->cat) {
 			
 			$cat_tree = explode($this->cseparator,str_replace('_',' ',$this->cat));
-			
+			/////////////////////////////////// $db->qstr($this->replace_spchars($cat_tree[0],1))...
 			if ($cat_tree[0])
 				$whereClause .= ' cat0=' . $db->qstr(str_replace('_',' ',$cat_tree[0]));		
 			elseif ($this->onlyincategory)
@@ -562,7 +569,7 @@ class rccollections {
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		$sSQL .= ' id in (' . $this->savedlist . ')';
 		$sSQL .= " and itmactive>0 and active>0";			   
-		//$sSQL .= " ORDER BY " . $itmname;	 //no order
+		$sSQL .= " ORDER BY FIELD(id,".  $this->savedlist .")";
 
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
@@ -585,7 +592,7 @@ class rccollections {
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		$sSQL .= ' id in (' . GetSessionParam($this->listName) . ')';
 		$sSQL .= " and itmactive>0 and active>0";			   
-		//$sSQL .= " ORDER BY " . $itmname;	 // no order
+		$sSQL .= " ORDER BY FIELD(id,".  GetSessionParam($this->listName) .")";
 
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
@@ -636,9 +643,9 @@ class rccollections {
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->getmapf('code').
 				" from products WHERE ";
 
-		$sSQL .= /*$codefield .*/ "id in (" . GetSessionParam($this->listName) .")";
+		$sSQL .= "id in (" . GetSessionParam($this->listName) .")";
 	    $sSQL .= " and itmactive>0 and active>0";	
-		//$sSQL .= " ORDER BY orderid";
+		$sSQL .= " ORDER BY FIELD(id,".  GetSessionParam($this->listName) .")";
         $sSQL .= " limit " . $items;		
 		
 		//echo $sSQL;	
@@ -1033,6 +1040,21 @@ class rccollections {
 	}		
 	
 	
+	protected function replace_spchars($string, $reverse=false) {
+	
+	  if ($reverse) {
+	     $g1 = array("'",',','"','+','/',' ',' & ');
+	     $g2 = array('_','~',"*","plus",":",'-',' n ');		  
+		 $ret = str_replace($g2,$g1,$string);
+	  }	 
+	  else {
+	    $g1 = array("'",',','"','+','/',' ','-&-');
+	    $g2 = array('_','~',"*","plus",":",'-','-n-');		  
+		$ret = str_replace($g1,$g2,$string);
+	  }	
+	
+	  return ($ret);
+	}	
 
 	//tokens method	
 	protected function combine_tokens($template_contents, $tokens, $execafter=null) {

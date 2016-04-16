@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['SHLANGS_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['SHLANGS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("SHLANGS_DPC")) && (seclevel('SHLANGS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHLANGS_DPC",true);

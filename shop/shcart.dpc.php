@@ -1,7 +1,7 @@
 <?php
 //if (defined("SENTRANSACTIONS_DPC")) {
 
-$__DPCSEC['SHCART_DPC']='2;1;1;2;2;2;2;2;9';
+$__DPCSEC['SHCART_DPC']='2;1;1;2;2;2;2;2;9;9;9';
 
 if ((!defined("SHCART_DPC")) && (seclevel('SHCART_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHCART_DPC",true);

@@ -1,7 +1,7 @@
 <?php
 if ((defined("DATABASE_DPC")) && (defined("SMTPMAIL_DPC"))) {
 
-$__DPCSEC['RCSHSUBSQUEUE_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCSHSUBSQUEUE_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("RCSHSUBSQUEUE_DPC")) && (seclevel('RCSHSUBSQUEUE_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCSHSUBSQUEUE_DPC",true);

@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['RCUPLOAD_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCUPLOAD_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ((!defined("RCUPLOAD_DPC")) && (seclevel('RCUPLOAD_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCUPLOAD_DPC",true);

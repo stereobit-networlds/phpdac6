@@ -1,13 +1,10 @@
 <?php
-$__DPCSEC['SHLOGIN_DPC']='1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['SHLOGIN_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ((!defined("SHLOGIN_DPC")) && (seclevel('SHLOGIN_DPC',decode(GetSessionParam('UserSecID')))) ) {
+if (!defined("SHLOGIN_DPC")) {
 define("SHLOGIN_DPC",true);
 
 $__DPC['SHLOGIN_DPC'] = 'shlogin';
-
-$a = GetGlobal('controller')->require_dpc('shop/shlogin.dpc.php');
-require_once($a);
 
 GetGlobal('controller')->get_parent('SHLOGIN_DPC','STLOGIN_DPC');
 
