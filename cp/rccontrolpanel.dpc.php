@@ -195,6 +195,7 @@ $__LOCALE['RCCONTROLPANEL_DPC'][153]='_sec;Sec;δευτερόλεπτα';
 $__LOCALE['RCCONTROLPANEL_DPC'][154]='_date;Date;Ημερομηνία';
 $__LOCALE['RCCONTROLPANEL_DPC'][155]='_type;Type;Τύπος';
 $__LOCALE['RCCONTROLPANEL_DPC'][156]='_sale;Invoice created;Παραστατικό πώλησης';
+$__LOCALE['RCCONTROLPANEL_DPC'][157]='_installprinter;Install printer;Εγκατάσταση printer';
 
 class rccontrolpanel {
 
@@ -242,12 +243,12 @@ class rccontrolpanel {
 	      $this->charset = $char_set[getlocal()]; 		
 		
 		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName');
-		$this->seclevid = GetSessionParam('ADMINSecID') ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
+		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		
 		$this->goto = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
 		
         //READ ENVIRONMENT ATTR
-		if ($_SESSION['LOGIN']=='yes')
+		if ($_SESSION['LOGIN']=='yes') //first time logged in session is not set and constructy has executed!!!!
 			$this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);		
 		//print_r($this->environment);
 		
@@ -257,7 +258,9 @@ class rccontrolpanel {
 		                     ((!empty($this->murl)) ? array_pop($this->murl) : str_replace('www.','',$_ENV["HTTP_HOST"]));		
 		
 		$this->appkey = new appkey();	
+		
 		$this->rootapp_path = remote_paramload('RCCONTROLPANEL','rootpath',$this->prpath); //'stereobi'; //XIX !!!!
+		
 		$toolp = remote_paramload('RCCONTROLPANEL','toolpath',$this->prpath);
 		$this->tool_path = $toolp ? $toolp : '../../cp/'; //ususaly 2 leveles back from apps (root app must set to /)
 		
@@ -270,6 +273,7 @@ class rccontrolpanel {
 		$this->cpStats = false;
 		
 		$this->userDemoIds = array(6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
+		//ini_set('max_input_vars', '3000'); //NOT ALLOWED ADD IT TO .HTACCESS
 	}
 	 	
     function event($sAction) {    	  
@@ -423,61 +427,9 @@ function handleResponse() {if(http.readyState == 4){
 
 		return $js;
 	}	  
-	  
-    protected function controlpanel($type=4,$linemax=3,$nav_off=null,$win_off=null) {
-	 
-		 $site_panel = $this->site_stats();
-		   
-		 $win1 = new window2(localize("_MENU",getlocal()),$site_panel,null,1,null,'SHOW',null,1);
-	     $panel = $win1->render();
-		 unset ($win1);		   
 
-
-		 //multicolumn view	
-		 
-         //middle panel	..if dhtml show middle column else add in left panel					
-		 $middle_panel =  ($this->dhtml) ?
-		                  $this->_show_charts() . 
-		                  $this->_show_gauges() :
-						  null;
-		 
-		 //right panel
-         $right_panel = $this->_show_addon_tools(true);
-		 $right_panel .= ($this->dhtml) ? null : $this->_show_charts() . $this->_show_gauges();			   				
-		 
-		 //left panel
-		 $left_panel = $this->_show_update_tools() . $panel;
-		 //$left_panel .= ($this->dhtml) ? null : $this->_show_charts() . $this->_show_gauges();			   
-		 $left_panel .= $this->_show_addons();
-		 //$left_panel .= $this->_show_tweets_rss();
-		 
-	     $data1[] = $left_panel;
-         $attr1[] = isset($right_panel) ? (isset($middle_panel) ? "left;35%" : "left;50%") : "left;100%";	    
-		
-		 if (isset($middle_panel)) { 
-			$data1[] = $middle_panel;
-			$attr1[] = isset($right_panel) ? "left;30%" : "left;50%";
-		 }
-		
-		 if (isset($right_panel)) { 
-			$data1[] = $right_panel;//$stats;//ts			
-			$attr1[] = isset($middle_panel) ? "left;35%" : "left;50%";
-		 }
-		 
-	     $swin = new window(localize("_DASHBOARD",getlocal()),$data1,$attr1);
-	     $out .= $swin->render("center::100%::0::::center::0::2::");		 
-	     //$swin = new window("Control Panel",$panel);
-	     //$out .= $swin->render("center::50%::0::group_win_body::center::0::0::");	
-	     unset ($swin);
-		 
-	     //HIDDEN FIELD TO HOLD STATS ID FOR AJAX HANDLE
-	     $out .= "<INPUT TYPE= \"hidden\" ID= \"statsid\" VALUE=\"0\" >";	  		 			   		 
-	 
-         return ($out);	 
-    } 
   
-  
-    protected function _show_addons($template=false) {  //?????
+    protected function _show_addons() {//$template=false) { 
       $winh = 'SHOW';
 	
       if (!empty($this->environment)) {    
@@ -489,8 +441,8 @@ function handleResponse() {if(http.readyState == 4){
 		       case 'dashboard' : $text=null; break; //bypass
 			   case 'ckfinder'  : $text=null; break; //bypass
 			   
-			   case 'edithtml'  : $text = $this->edit_html_files(false);//true); //cke4
-			                      $winh = 'HIDE';
+			   case 'edithtml'  : //$text = $this->edit_html_files(false);//true); //cke4
+			                      //$winh = 'HIDE';
 			                      break; 
 			   
 			   case 'menu'      : $text=null; break; //bypass
@@ -502,7 +454,7 @@ function handleResponse() {if(http.readyState == 4){
 										<H2>Awstats</H2>
 										<H3>iframe is not suported in your browser!</H3>
 										</IFRAME>";	
-                               $winh = 'SHOW';										
+                               //$winh = 'SHOW';										
 			                   break;			   
 		       case 'siwapp' : $text = "<a href='../siwapp/'>Siwapp</a>"; 
 			                   /*$url = "http://".str_replace('www.','',$_ENV["HTTP_HOST"])."/siwapp/";			   
@@ -511,18 +463,31 @@ function handleResponse() {if(http.readyState == 4){
 										<H2>Siwapp</H2>
 										<H3>iframe is not suported in your browser!</H3>
 										</IFRAME>";	*/
-							   $winh = 'SHOW';			
+							   //$winh = 'SHOW';			
 			                   break;
-		       default       : $text = null;//$val;
-			                   $winh = 'SHOW';
+		       default       : $text = null;
+			                   //$winh = 'SHOW';
 		   }
 		  
 		   if ($text) {
-		     $mtitle = localize('_'.$module, getlocal());
-		     $win1 = new window2($mtitle,$text,null,1,null,$winh,null,1);
-             $addons .= $win1->render();
-             unset ($win1);
-		   }
+		    //echo $text,'<br/>';
+			$mtitle = localize('_'.$module, getlocal());
+		    $tool_url = "help/$module/";
+			$this->stats['Addons']['url'][] = $tool_url;
+			$this->stats['Addons']['href'][] = $text;
+			$_more = localize('_more',getlocal());
+		    $ao = '<div class="msg-time-chat">
+                        <a class="message-img" href="'.$tool_url.'"><img alt="" src="images/'.$module.'.png" class="avatar"></a>
+                        <div class="message-body msg-in">
+                            <span class="arrow"></span>
+                            <div class="text">
+                                <p>'.$text.'</p>
+								<!--p class="attribution"><a href="/help/'.$module.'/">'.$_more.'</a> at 1:55pm, 13th April 2013</p-->
+                            </div>
+                        </div>
+                   </div>';
+			$this->stats['Addons']['html'] .= $ao;
+		   }		   
 		}  
       }		
 	  }//if
@@ -531,15 +496,16 @@ function handleResponse() {if(http.readyState == 4){
     }
   
     protected function _show_addon_tools() {
-
-      $seclevid = GetSessionParam('ADMINSecID');   
+	  $sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
+	  //$sl = $this->seclevid;
+	  //echo $sl;
       //print_r($this->environment);
       //print_r($this->tools);echo $seclevelid;
 	
       if (!empty($this->tools)) {    
       foreach ($this->tools as $tool=>$u_ison) {
 	    $peruser_ison = explode(',',$u_ison);
-		$ison = $peruser_ison[$seclevid-1];
+		$ison = $peruser_ison[$sl];
 		
         $text = null;
 		$mytool = strtolower($tool);
@@ -564,26 +530,6 @@ function handleResponse() {if(http.readyState == 4){
 							   			<H3>iframe is not suported in your browser!</H3>
 										</IFRAME>";									
 			                             break;	
-			   /*case 'add_categories':   if (defined('RCIMPORTDB_DPC')) {
-			                                $text = GetGlobal('controller')->calldpc_method('rcimportdb.upload_database_form use +++1');
-										}	
-			                            else
-											$text = "<a href='cpimportdb.php?editmode=1&encoding=".$this->charset."'>Upload categories</a>"; 
-			                            break;
-               case 'add_products'  :	if (defined('RCIMPORTDB_DPC')) {
-			                                $text = GetGlobal('controller')->calldpc_method('rcimportdb.upload_database_form use +++1');
-										}	
-			                            else
-											$text = "<a href='cpimportdb.php?editmode=1&encoding=".$this->charset."'>Upload products</a>"; 
-			                            break;	
-			   case 'upload_logo'   :	if (defined('RCUPLOAD_DPC')) {
-			                                $text = GetGlobal('controller')->calldpc_method('rcupload.advanced_uploadform use +logo.png++images+');
-											$text .= GetGlobal('controller')->calldpc_method('rcupload.advanced_uploadform use +pointer.png++images+');
-											$text .= GetGlobal('controller')->calldpc_method('rcupload.advanced_uploadform use +favicon.ico');
-										}	
-			                            else
-											$text = "<a href='cpupload.php?editmode=1&encoding=utf-8'><img src='../images/logo.png'/></a>"; 
-			                            break;*/	
                case 'add_recaptcha' :  	//$text = "<a href='cpupload.php?editmode=1&encoding=utf-8'>reCAPTCHA ON!</a>";
 			                            $text = "Recaptcha feature installed";
                                         break;			   
@@ -633,7 +579,7 @@ function handleResponse() {if(http.readyState == 4){
                                         break;
                case 'ckfinder':         $text = "CKfinder installed"; break;
                case 'ieditor' :         $text = "IEditor installed"; break;
-               /*case 'jqgrid'  :         $text = "JQgrid installed"; break;*/
+			   case 'printer' :         $text = "Printer installed"; break;
 			   case 'awstats' :         $text = "AWStats installed"; break;	
 			   
 			   case 'edit_htmlfiles':   //$text = $this->edit_html_files(false, true, true);
@@ -668,10 +614,9 @@ function handleResponse() {if(http.readyState == 4){
 		}
 		//elseif (($ison>0) && (array_key_exists(strtoupper($tool),$this->environment))) {//($this->environment[strtoupper($tool)]==0)) {
 		elseif ((!empty($this->environment)) && (array_key_exists(strtoupper($tool),$this->environment)) && 
-		        ($this->environment[strtoupper($tool)]==0)) {//installed tool no privilege
-		   //no priviledge
-		   //do nothing...
-		   //echo '<br/>',$tool,$this->seclevid,'>';
+		        ($this->environment[strtoupper($tool)]==0)) {
+					
+			//installed tool no privilege
 		}
         elseif ($ison>0) {//disabled tool..enable it, if local privilege is on
 		   //echo $mytool.'<br/>';
@@ -687,24 +632,7 @@ function handleResponse() {if(http.readyState == 4){
 										 else
  										    $text = "Unknown tool.";
 			                             break;
-			   							 
-			   /*case 'add_categories':    if ($e1 = $this->call_wizard_url('add_categories'))
-											$text = "<a href='$e1'>Upload categories</a>"; 
-										 else
- 										    $text = "Unknown tool.";
-			                             break;
-               case 'add_products'  :    if ($e1 = $this->call_wizard_url('add_products'))
-											$text = "<a href='$e1'>Upload products</a>"; 
-										 else
- 										    $text = "Unknown tool.";
-			                             break;
-               case 'upload_logo'   :    if ($e1 = $this->call_wizard_url('upload_logo')) {
-											//$text = "<a href='$e1'>Change logo</a>"; 
-											$text = "<a href='$e1'>Upload logo</a>";//<img src='../images/logo.png'/></a>"; 												
-										 }	
-										 else
- 										    $text = "Unknown tool.";
-			                             break;	*/								
+			   							 								
                case 'add_recaptcha'  :	 if ($e1 = $this->call_wizard_url('add_recaptcha')) 
 											$text = "<a href='$e1'>Add recaptcha entry feature</a>"; 	
 										 else
@@ -742,13 +670,12 @@ function handleResponse() {if(http.readyState == 4){
 										 else
  										    $text = null;									 
 										 break;	
-               /*case 'jqgrid'  :          //echo $this->urlpath.'/javascripts/jqgrid';
-			                             if ((!is_dir($this->urlpath.'/javascripts/jqgrid')) &&
-			                                ($e1 = $this->call_wizard_url('jqgrid'))) 
-											$text = "<a href='$e1'>".localize('_install',getlocal())."</a>"; 	
+               case 'printer' :          if ((!is_dir($this->prpath.'/printer')) &&
+			                                ($e1 = $this->call_wizard_url('printer'))) 
+											$text = "<a href='$e1'>".localize('_installprinter',getlocal())."</a>"; 	
 										 else
  										    $text = null;									 
-										 break;	*/
+										 break;											 
                case 'awstats' :          if ($e1 = $this->call_wizard_url('awstats')) 
 											$text = "<a href='$e1'>Enable AWStats</a>"; 	
 										 else
@@ -1055,7 +982,7 @@ function handleResponse() {if(http.readyState == 4){
             /*$url = $isupdate ? seturl('t=cpwupdate&wf='.$addon) : 
 			                   seturl('t=cpupgrade&wf='.$addon);*/
 			//in case of update url is the same...as upgrade
-            $url = seturl('t=cpupgrade&wf='.$addon);			
+            $url = 'cpupgrade.php?wf='.$addon; //seturl('t=cpupgrade&wf='.$addon);			
 		}
         else
             $url = false; 		
@@ -1679,6 +1606,7 @@ function handleResponse() {if(http.readyState == 4){
 		
 		//$this->tools['jqgrid'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 		$this->tools['ieditor'] = '0,0,0,0,0,0,0,0,1';//priv for setup
+		$this->tools['printer'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 		$this->tools['ckfinder'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 
 		$this->tools['edit_htmlfiles'] = '0,0,0,0,0,0,0,0,1';//priv for setup
@@ -1701,16 +1629,14 @@ function handleResponse() {if(http.readyState == 4){
 			
 	}  
   
-
-   protected function parse_environment($save_session=false) {	   
-	//$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
+   //public::(called also from wizards)
+   public function parse_environment($save_session=false) {	   
 	$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
-	//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$this->seclevid.':'.$sl;
 	
     if ($ret = $_SESSION['env']) {
 	    //echo 'insession';
 		//print_r($ret);
-		$GLOBALS['ADMINSecID'] = null; // for securuty erase the global leave the sessionid
+		$GLOBALS['ADMINSecID'] = null; // for security erase the global leave the sessionid
 	    return ($ret);
 	}    
 

@@ -1,5 +1,5 @@
 <?php
-$__DPCSEC['RCUWIZARD_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCUWIZARD_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("RCUWIZARD_DPC")) && (seclevel('RCUWIZARD_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCUWIZARD_DPC",true);
@@ -9,7 +9,7 @@ $__DPC['RCUWIZARD_DPC'] = 'rcuwizard';
 $x = GetGlobal('controller')->require_dpc('libs/cpanelx3.lib.php');
 require_once($x);
 
-$a = GetGlobal('controller')->require_dpc('phpdac/rcwizard.dpc.php');
+$a = GetGlobal('controller')->require_dpc('cgi-bin/phpdac/rcwizard.dpc.php', paramload('SHELL', 'urlpath'));
 require_once($a);
 
 $b = GetGlobal('controller')->require_dpc('libs/htaccess.lib.php');
@@ -45,11 +45,13 @@ define('DS', DIRECTORY_SEPARATOR);
 
 class rcuwizard extends rcwizard {
   
-    var $upgrade_root_path;
+    var $upgrade_root_path, $update_root_path;
 	var $log, $wf, $error;
 	var $instaled, $installit, $reinstall_question;
 	var $url, $murl, $prpath;
 	var $appkey;
+	
+	var $isrootapp, $cpanel_user, $cpanel_pass;
 
 	function __construct() {
 
@@ -59,7 +61,13 @@ class rcuwizard extends rcwizard {
         $this->url = $this->murl[0];
 		$this->prpath = paramload('SHELL','prpath');	
 		
-		$this->upgrade_root_path = $this->prpath . '../../cp/upgrade-app/';	
+		$this->isrootapp = remote_paramload('RCCONTROLPANEL', 'isrootapp', $this->prpath) ? true : false;
+		
+		$upgpath = $this->isrootapp ? 'upgrade-app/' : '../../cp/upgrade-app/';
+		$this->upgrade_root_path = $this->prpath . $upgpath;	
+		
+		$updpath = $this->isrootapp ? 'update-app/' : '../../cp/update-app/';
+		$this->update_root_path = $this->prpath . $updpath;		
 		
         $this_log = null;	
 		$this->error = false;
@@ -90,10 +98,16 @@ class rcuwizard extends rcwizard {
 	    $this->wstep = $_SESSION['wstep'] ? $_SESSION['wstep'] : 0;
 		
 		$this->appkey = new appkey();
+		
+		$this->cpanel_user = remote_paramload('RCCONTROLPANEL', 'cpaneluser', $this->prpath);
+		$this->cpanel_pass = remote_paramload('RCCONTROLPANEL', 'cpanelpass', $this->prpath);		
 	}
 	
 	function event($event=null) {
 	
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;
+		
 	    //$this->pre_check_installation();
 	
 	    switch ($event) {
@@ -115,7 +129,7 @@ class rcuwizard extends rcwizard {
 										@unlink($this->prpath . $this->wizardfile);
 								}	   
 							   //echo 'return to dashboard!'; //<<<<<<
-							   header('location:cp.php?editmode=1'); //return to dashboard...
+							   header('location:cp.php'); //return to dashboard...
 		                     break; 	  
 
 		  case 'cpwizexit' : //if app installed reredirect to app
@@ -133,7 +147,7 @@ class rcuwizard extends rcwizard {
 							 else {
 							    //just exit if procedure canceled
 								//echo 'return to dashboard!'; //<<<<<<
-								header('location:cp.php?editmode=1'); //return to dashboard...
+								header('location:cp.php'); //return to dashboard...
 							 }*/	
 		                     break; 
 							 
@@ -162,6 +176,9 @@ class rcuwizard extends rcwizard {
 	
 	function action($action=null) {	
 	    //echo $this->wstep;	
+		
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;
 	
 	    switch ($action) {	
 		
@@ -211,7 +228,7 @@ class rcuwizard extends rcwizard {
 										
 										//addon screen
 										//$cb = base64_encode($_ENV["HTTP_HOST"]);//str_replace('www.','',$_ENV["HTTP_HOST"]));
-										//header('location:http://stereobit.com/netpanel.php?t=modapp&cb='.$cb);
+										//header('location:http://stereobit.gr/netpanel.php?t=modapp&cb='.$cb);
 										
 										$out = $this->update_page();//true);
 									}	
@@ -234,7 +251,7 @@ class rcuwizard extends rcwizard {
 	   if ($gotourl) {
 	    //addon screen
         $cb = base64_encode($_ENV["HTTP_HOST"]);//str_replace('www.','',$_ENV["HTTP_HOST"]));
-		header('location:http://stereobit.com/netpanel.php?t=modapp&cb='.$cb);
+		header('location:http://stereobit.gr/netpanel.php?t=modapp&cb='.$cb); //......??????????????
 		return;
 	   }
 	
@@ -436,6 +453,8 @@ class rcuwizard extends rcwizard {
 	});
 </script>							
 EOF;
+
+        $ret = $this->callForm("wizdefstep", $message . $cancel, 'Next', null, null, array('FormAction'=>$cmd,));
 		
  	    return ($ret);
 	}	
@@ -468,6 +487,11 @@ EOF;
 										</input>
 								    </div>
 							</form>';	
+				
+		$message = '<br><br>Install:<strong>'. str_replace('_','&nbsp;',$addon) . '</strong>';
+		$message .= '<br>Press '.seturl('t=cpwizcancel','here').' to cancel this installation';
+						
+		$ret = $this->callForm("wizwelcomestep", $message,'Start', null, null, array('FormAction'=>$cmd,'wf'=>$addon,));					
 							
 		return ($ret);	
 	}	
@@ -482,7 +506,7 @@ EOF;
 		$onclick = $this->instaled ? "onClick=\"$goto\"" : null;
 	    $completed = '<br>Installation completed.'; //. $goto;		
 		
-		$ret .= '<form name="wizcompletestep" method="post" class="sign-up-form" action="">
+		$ret .= '<form name="wizcompletestep" method="post" class="sign-up-form" action="cp.php">
 		                        '.$message.' 
 								<br/><br/>
 								'.$completed.'		
@@ -494,8 +518,14 @@ EOF;
 											name="Submit" value="Exit" '.$onclick.'>
 										</input>
 								    </div>
-							</form>';			
-		
+							</form>';	
+
+		/*if ($this->instaled)
+			$ret = $this->callForm("wizcompletestep", $message . $completed, null, 'Exit', $goto, array('FormAction'=>'cpwizexit'));
+		else
+			$ret = $this->callForm("wizcompletestep", $message . $completed, 'Exit', null, $goto, array('FormAction'=>'cpwizexit'));										
+		*/
+		$ret = $this->callForm("wizcompletestep", $message . $completed, 'Exit', null, 'cp.php', array('FormAction'=>'cpwizexit'));
 		return ($ret);	
 	}	
 	
@@ -503,12 +533,14 @@ EOF;
 	protected function final_step($finished=false, $goto=null) {
 	
 	    if ($finished) {//installed ok..gor save step...	
-			$formaction = 'cpwizsave' ? '<input type="hidden" name="FormAction" value="cpwizsave" />' : null;
+			//$formaction = 'cpwizsave' ? '<input type="hidden" name="FormAction" value="cpwizsave" />' : null;
+			$hf = array('FormAction'=>'cpwizsave');
 			$action = null;
 		}	
 		else {//cancel procedure return...
-			$formaction = null;
-            $action = $goto ? $goto : 'cp.php?editmode=1';
+			//$formaction = null;
+			$hf = null;
+            $action = $goto ? $goto : 'cp.php';
 		}	
 
 		/*
@@ -526,7 +558,9 @@ EOF;
 											name="Submit" value="Finish">
 										</input>
 								    </div>
-							</form>';			
+							</form>';	
+
+		$ret = $this->callForm("wizlaststep", $message . $completed, 'Finish', null, $action, $hf);						
 		
 		return ($ret);
 	}
@@ -538,7 +572,7 @@ EOF;
 		$this->error = true; //toggge error var
 		
 		if (!$addon) {
-		    session_destroy();//kill session 		
+		    //session_destroy();//kill session 		
 		    return ($message . "<br>Addon ($addon) not defined!");
 		}	
 		
@@ -564,7 +598,9 @@ EOF;
 											name="Submit" value="Yes">
 										</input>										
 								    </div>
-							</form>';		
+							</form>';
+							
+			$ret = $this->callForm("wizreinstallquestion", $message . $cancel, 'Yes', 'No', seturl('t=cpwizcancel'), array('FormAction'=>'cpupgrade', 'wf'=>$addon,));										
 		}
 		else {
 		    $ret .= '<form name="wizerror" method="post" class="sign-up-form" action="">
@@ -578,6 +614,7 @@ EOF;
 										</input>
 								    </div>
 							</form>';
+			$ret = $this->callForm("wizerror", $message . $cancel, 'Retry', null, null, array('FormAction'=>'cpupgrade', 'wf'=>$addon,));														
         }							
 		
 		return ($ret);	
@@ -600,7 +637,9 @@ EOF;
 											name="Submit" value="Cancel">
 										</input>
 								    </div>
-							</form>';			
+							</form>';	
+        							
+		$ret = $this->callForm("wizcancel", $message . $continue, 'Cancel', null, null, array('FormAction'=>'cpupgcancel',));														
 		
 		return ($ret);	
 	}	
@@ -620,7 +659,7 @@ EOF;
 			case 'google_analytics' :
 			                $kill_session=false; //override to not kill the session 
 			
-                            $go = 'ganalytics.html';//'cp.php?editmode=1'; //return to cp
+                            $go = 'ganalytics.html';//'cp.php'; //return to cp
 			                $onclick = "location.href='$go'";
 							if ($retonclick) //not.. top.location
 								$ret = "location.href='" . $go . "'";
@@ -651,7 +690,7 @@ EOF;
 			case 'uninstalleshop' :
 			                $kill_session=false; //override to not kill the session 
 			
-                            $go = 'cp.php?editmode=1'; //return to cp
+                            $go = 'cp.php'; //return to cp
 			                $onclick = "location.href='$go'";
 							if ($retonclick) //not.. top.location
 								$ret = "location.href='" . $go . "'";
@@ -681,11 +720,11 @@ EOF;
 	protected function call_upgrade_ini($addon) {
 	   // $addon = GetParam('wf') ? : $this->wf;
 	    if (!$addon) return false;
-	    $inifile = $this->upgrade_root_path . "/cpwizard-".$addon.".ini";
-		$target_inifile = $this->prpath . "/cpwizard-".$addon.".ini";
+	    $inifile = $this->upgrade_root_path . "cpwizard-".$addon.".ini";
+		$target_inifile = $this->prpath . "cpwizard-".$addon.".ini";
 		$installed_inifile = str_replace('.ini','._ni',$target_inifile);
 		$reinstall_answered_yes = (GetParam('Submit')=='Yes') ? true : false;
-
+        //print_r($_POST);
 		if (is_readable($target_inifile)) {//already copied
 		    //..answer has submited..
 			//echo 'z';
@@ -960,13 +999,10 @@ EOF;
     protected function call_wizard_url($addon=null,$isupdate=false) {
         if (!$addon) return false;
 		
-		$upgrade_root_path = $this->prpath . '/../../cp/upgrade-app/';	
-		$update_root_path = $this->prpath . '/../../cp/update-app/'; 
+		$r_path = $isupdate ? $this->update_root_path : $this->upgrade_root_path;
 		
-		$r_path = $isupdate ? $update_root_path : $upgrade_root_path;
-		
-	    $inifile = $r_path . "/cpwizard-".$addon.".ini";
-		$target_inifile = $this->prpath . "/cpwizard-".$addon.".ini";
+	    $inifile = $r_path . "cpwizard-".$addon.".ini";
+		$target_inifile = $this->prpath . "cpwizard-".$addon.".ini";
 		$installed_inifile = str_replace('.ini','._ni',$target_inifile);
 		//echo $inifile;
 		
@@ -984,11 +1020,9 @@ EOF;
     }		
 	
 	protected function cpanel_login(&$cp) {
-		$cpanel_user = 'stereobi';
-		$cpanel_pass = 'tCW}3aDN}3';//'Yi>~O,h/';	
         //$this->db_prefix = GetParam('dbprefix') ? GetParam('dbprefix') : 'stereobi_';		
 		
-        $cp = new cpanelx3($cpanel_user , $cpanel_pass);
+        $cp = new cpanelx3($this->cpanel_user , $this->cpanel_pass);
 	}
 	
 	//RECURSIVE COPY...
@@ -1067,7 +1101,7 @@ EOF;
     public function put_ua_code_inhtml_dir($uacode=null) {
 	    $ua = $uacode ? $uacode : 'UA-XXXXXXXX'; 
 	
-		$sourcedir = $this->prpath . '/html/';// . $dirname;
+		$sourcedir = $this->prpath . 'html/';// . $dirname;
         $uascript = "
 <script type=\"text/javascript\">
   var _gaq = _gaq || [];
@@ -1146,10 +1180,10 @@ s.parentNode.insertBefore(ga, s);
 	    if ((!$infile) || (!$gatable))
 			return false;
 	
-	    if (is_readable($this->prpath . '/' . $infile)) {
-		   $fdata = @file_get_contents($this->prpath . '/' . $infile);
+	    if (is_readable($this->prpath . $infile)) {
+		   $fdata = @file_get_contents($this->prpath . $infile);
 		   $ndata = str_replace('@GA-TABLE@',$gatable,$fdata);
-		   $x = @file_put_contents($this->prpath . '/' . $infile, $ndata);
+		   $x = @file_put_contents($this->prpath . $infile, $ndata);
 		   
 		   $ret = $x ? true : false;
 		   return ($ret);
@@ -1175,7 +1209,7 @@ s.parentNode.insertBefore(ga, s);
           $mydir = dir($dirname);
 		  
 		  $zip = new ZipArchive();
-		  $zfilename = $this->prpath . "/uploads/" . $zname; //to save into
+		  $zfilename = $this->prpath . "uploads/" . $zname; //to save into
          
 		  if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
               return "cannot open $zfilename";//false;
@@ -1221,7 +1255,7 @@ s.parentNode.insertBefore(ga, s);
 		
         $d = date('Ymd-Hi');
         $zname = $name ? $d.'-'.$name : $d.'-'.'backup.zip';			
-		$zfilename = $this->prpath . "/uploads/" . $zname; //to save into
+		$zfilename = $this->prpath . "uploads/" . $zname; //to save into
          
 		if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
             die("cannot open $zfilename");//false;
@@ -1286,7 +1320,7 @@ s.parentNode.insertBefore(ga, s);
 		if ($con) {	
 
   	      $zip = new ZipArchive();		
-		  $zfilename = $this->prpath . "/uploads/" . $zname; //to save into
+		  $zfilename = $this->prpath . "uploads/" . $zname; //to save into
          
 		  if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
               $download=false;//die("cannot open $zfilename");//false;
@@ -1304,7 +1338,7 @@ s.parentNode.insertBefore(ga, s);
 			$tables[] = $table; //one table
 
           foreach ($tables as $t=>$tbl) {	
-            $ztablename = $this->prpath . "/uploads/" . $d.'-'.$tbl . '.csv';		
+            $ztablename = $this->prpath . "uploads/" . $d.'-'.$tbl . '.csv';		
             
 			$result = mysql_query("SELECT * FROM " . $tbl);
             if ($result) {	
@@ -1375,7 +1409,7 @@ s.parentNode.insertBefore(ga, s);
 	//enable maildbqueue for app
 	public function install_maildbqueue($dummy=true, $timekey=null) {
 	    $app_path = $this->prpath;
-	    $root_app_path = $this->prpath . "/../../cp/";
+	    $root_app_path = $this->upgrade_root_path . "cp/";
 		$mailappfile = 'mailqueue-apps.ini';
 		$app_name = paramload('ID','instancename');//,$this->prpath);
 		
@@ -1409,7 +1443,7 @@ s.parentNode.insertBefore(ga, s);
 	//disable maildbqueue for app
 	public function uninstall_maildbqueue($cpinikey=null) {//, $newcpinikey=null) {
 	    $app_path = $this->prpath;
-	    $root_app_path = $this->prpath . "/../../cp/";
+	    $root_app_path = $this->upgrade_root_path . "cp/";
 		$mailappfile = 'mailqueue-apps.ini';
 		$app_name = paramload('ID','instancename');//,$this->prpath);
 		
@@ -1509,8 +1543,9 @@ s.parentNode.insertBefore(ga, s);
     }	
 	
 	function modify_awstats_config() {
-	
-	    $awstats_source_file = '/home/stereobi/tmp/awstats/awstats.' . str_replace('www.','',$this->url) . '.conf';
+	    $rootpath = remote_paramload('RCCONTROLPANEL', 'rootpath', $this->prpath);
+	     
+		$awstats_source_file = "/home/$rootpath/tmp/awstats/awstats." . str_replace('www.','',$this->url) . '.conf';
 		$awstats_target_file = $this->prpath.'/cgi-bin/awstats.'.str_replace('www.','',$this->url).'.conf';
 	    $awstats_altsource_file = $this->upgrade_root_path.'/awstats/awstats.app.stereobit.gr.conf';
 		
@@ -1534,7 +1569,7 @@ s.parentNode.insertBefore(ga, s);
 	
 	function modify_ckfinder_config() {
 	
-	    $ckfinder_conf_file = $this->prpath.'/ckfinder/config.php';
+	    $ckfinder_conf_file = $this->prpath.'ckfinder/config.php';
 	
 	    if (is_readable($ckfinder_conf_file)) {
 			$ck_appurl_path = '/';
@@ -1584,7 +1619,7 @@ s.parentNode.insertBefore(ga, s);
 						         1=>'private shop.shusers',
 								 2=>'private shop.shcustomers',
 								 3=>'private shop.shtransactions',
-								 4=>'twig.twigengine',
+								 4=>'public twig.twigengine',
 								 );
 		//plus ..
 		//security CART_DPC 1 0:0:0:0:0:0:0:0;
@@ -1607,8 +1642,8 @@ s.parentNode.insertBefore(ga, s);
 			$pdata = file_get_contents($this->urlpath.$mypath.$file);
 			
 			//security
-			$sln_on = '1:1:1:1:1:1:1:1'; 
-			$sln_off= '0:0:0:0:0:0:0:0';
+			$sln_on = '1:1:1:1:1:1:1:1:1:1'; 
+			$sln_off= '0:0:0:0:0:0:0:0:0:0';
 			foreach ($secs as $i=>$s) {
 			  
 			  $sline_on = 'security ' . strtoupper($s).'_DPC 1 '. $sln_on;
@@ -1631,10 +1666,10 @@ s.parentNode.insertBefore(ga, s);
 			  if (stristr($pdata, $m)) { 
 			    if ($rollback)
 					//comment mods
-					$pdata = str_replace($m, '#'.$m, $pdata);
+					$pdata = str_replace($m, '/'.$m, $pdata);
 				else
 					//uncomment mods
-					$pdata = str_replace('#'.$m, $m, $pdata);
+					$pdata = str_replace('/'.$m, $m, $pdata);
 			  }		
 			}
 			
@@ -1972,7 +2007,7 @@ s.parentNode.insertBefore(ga, s);
 	public function addspace($add=false, $space_in_mb=null) {
 	    $payment = true;//check payment...in session
 		$free_space = 200;
-	    $spacefile = $this->prpath . '/maxsize.conf.php';
+	    $spacefile = $this->prpath . 'maxsize.conf.php';
 		$spacenow = @file_get_contents($spacefile);		
 	
 	    $myaddspace = is_numeric($space_in_mb) ? ($space_in_mb*1024*1024) : null;
@@ -2004,9 +2039,9 @@ s.parentNode.insertBefore(ga, s);
 	protected function free_space() {
 	    $date = strval(date('Ymd'));
 		//read size files of today...must exist!!!!!
-		$msize = intval(@file_get_contents($this->prpath . $date . '-msize.size'));
-		$tsize = intval(@file_get_contents($this->prpath . $date . '-tsize.size'));
-        $dsize = intval(@file_get_contents($this->prpath . $date . '-dsize.size'));	
+		$msize = intval(@file_get_contents($this->prpath . 'a-msize.size'));
+		$tsize = intval(@file_get_contents($this->prpath . 'a-tsize.size'));
+        $dsize = intval(@file_get_contents($this->prpath . 'a-dsize.size'));	
 		$total_size = $tsize + $dsize + $msize;
 		//echo "Size total ($tsize + $dsize + $msize):",$total_size;
 		//alowed size
@@ -2077,7 +2112,7 @@ s.parentNode.insertBefore(ga, s);
 		//compare with root dir
 		//return array of newer
 		$dirname = $this->urlpath . '/cgi-bin/shop/';
-		$diffdir = $this->prpath . '/../../cp/upgrade-app/cgi-bin/shop/';
+		$diffdir = $this->upgrade_root_path . 'cgi-bin/shop/';
 		
 		if (is_dir($dirname)) {
 			$mydir = dir($dirname);
@@ -2105,7 +2140,7 @@ s.parentNode.insertBefore(ga, s);
 	public function update_dpc_module($dummy=true, $module=null) {
 	    if (!$module) return false;
 		$dirname = $this->urlpath . '/cgi-bin/shop/';
-		$diffdir = $this->prpath . '/../../cp/upgrade-app/cgi-bin/shop/';
+		$diffdir = $this->upgrade_root_path . 'cgi-bin/shop/';
 		
 		//backup and copy
 		if (@copy($dirname.$module, $dirname.'_'.$module))
@@ -2119,8 +2154,8 @@ s.parentNode.insertBefore(ga, s);
 	    //read priv dpc dir
 		//compare with root dir
 		//return array of newer
-		$dirname = $this->prpath . '/';
-		$diffdir = $this->prpath . '/../../cp/upgrade-app/cp/';
+		$dirname = $this->prpath;
+		$diffdir = $this->upgrade_root_path . 'cp/';
 		
 		if (is_dir($dirname)) {
 			$mydir = dir($dirname);
@@ -2130,7 +2165,7 @@ s.parentNode.insertBefore(ga, s);
 				    $sourcetime = @filemtime($dirname.$fileread);
 					$targettime = @filemtime($diffdir.$fileread);
 					
-					if ((is_readable($diffdir.$fileread)) && 
+					if ((is_readable($diffdir . $fileread)) && 
 					    ($sourcetime<$targettime)) {
 						
 						$datemod = date('Y-m-d H:i', $targettime);
@@ -2147,8 +2182,8 @@ s.parentNode.insertBefore(ga, s);
 	
 	public function update_phpdac_page($dummy=true, $dacpage=null) {
 	    if (!$dacpage) return false;
-		$dirname = $this->prpath . '/';
-		$diffdir = $this->prpath . '/../../cp/upgrade-app/cp/';
+		$dirname = $this->prpath; 
+		$diffdir = $this->upgrade_root_path . 'cp/';
 		
 		//backup and copy
 		if (@copy($dirname.$dacpage, $dirname.'_'.$dacpage))
@@ -2187,7 +2222,7 @@ s.parentNode.insertBefore(ga, s);
     //read update ini files
     function read_update_directory() {
   
-		$dirname = $this->prpath . '/../../cp/update-app/';
+		$dirname = $this->upgrade_root_path;
   
         //echo $dirname;
 	    if (is_dir($dirname)) {
@@ -2201,7 +2236,7 @@ s.parentNode.insertBefore(ga, s);
 	             //read cpwizard- files
   	             if ((stristr ($fileread,".ini")) &&
 				     ((substr($fileread,0,9))=='cpwizard-') && //not already updated  	   
-					 (!is_readable($this->prpath.'/'.str_replace('.ini','._ni',$fileread)))) { 
+					 (!is_readable($this->prpath . str_replace('.ini','._ni',$fileread)))) { 
                       
 					  $p = explode('-',$fileread);
 					  $update_name = str_replace('.ini','',$p[1]);
@@ -2251,7 +2286,7 @@ s.parentNode.insertBefore(ga, s);
 		
 		$confini = @file_get_contents($this->prpath . "config.ini");
 		//backup conf file
-		$c1 = @copy($this->prpath ."config.ini",$this->prpath ."_config-".$this->url.".ini");
+		$c1 = @copy($this->prpath ."config.ini", $this->prpath ."_config-".$this->url.".ini");
 		if ($c1) {
 		    //email first
 			if (($email) && ($oldmail))
@@ -2269,7 +2304,7 @@ s.parentNode.insertBefore(ga, s);
 			//$x = GetGlobal('controller')->calldpc_method('rcconfig.setconf use shell.ip+'.$murl);
 			$ret_c = str_replace('ip='.$dname,'ip='.$murl,$ret_b);
 
-			$out1 = @file_put_contents($this->prpath ."config.ini", $ret_c);
+			$out1 = @file_put_contents($this->prpath . "config.ini", $ret_c);
 			$log .= $out1 ? "<br/>Config modified, ($murl) added." : "<br/>Config failed.";			
 		}	
 		
@@ -2285,7 +2320,7 @@ s.parentNode.insertBefore(ga, s);
 			    $ret_a = $confmy;
 				
 			$ret_b = str_replace($this->url,$dname,$ret_a);
-			$out2 = @file_put_contents($this->prpath ."myconfig.txt", $ret_b);
+			$out2 = @file_put_contents($this->prpath . "myconfig.txt", $ret_b);
 			$log .= $out2 ? "<br/>myConfig modified." : "<br/>myConfig failed.";
 		
 		}	
@@ -2322,7 +2357,7 @@ s.parentNode.insertBefore(ga, s);
 				//LAST beware instant re-login	
 				//$ht = new htaccess($this->prpath. '.htaccess', '../../cp/htpasswd-'.$instance_name);
 				//new file with -extension name...
-				$ht = new htaccess($this->prpath. '.htaccess', '../../cp/htpasswd-'.str_replace('.','-',$dname));
+				$ht = new htaccess($this->prpath . '.htaccess', $this->upgrade_root_path . 'cp/htpasswd-' . str_replace('.','-',$dname));
 				$ht->addUser($email, $password);					
 					
 				$log .= "<br/>CP user installed.";				
@@ -2397,11 +2432,9 @@ s.parentNode.insertBefore(ga, s);
         @file_put_contents($siwapp_path.'/index.php', $new_index_contents); 		
 		*/
 		//create db for siwapp
-		$cpanel_user = 'stereobi';
-		$cpanel_pass = 'tCW}3aDN}3';//'Yi>~O,h/';	
         //$this->db_prefix = GetParam('dbprefix') ? GetParam('dbprefix') : 'stereobi_';		
 		
-        $cp = new cpanelx3($cpanel_user , $cpanel_pass);
+        $cp = new cpanelx3($this->cpanel_user , $this->cpanel_pass);
 
 		if ($cp) {
 		    //read local config
@@ -2442,6 +2475,35 @@ s.parentNode.insertBefore(ga, s);
 		    $this->log .= "Can't access cp!";
 		
 		return true;
+	}
+
+	//overwriten
+	protected function callForm($formname=null, $content=null,$submit=null, $cancel=null, $action=null, $hidden=null) {
+		$fm = $formname ? $formname : 'form1';
+		$act = $action ? $action : '#';
+		if (!empty($hidden)) {
+			foreach ($hidden as $hf=>$hv)
+				$hidden_values .= "<input type=\"hidden\" name=\"$hf\" id=\"$hf\" value=\"$hv\" />";
+		}
+		
+		$b1 = $submit ? "<button type=\"submit\" name=\"Submit\" value=\"$submit\" class=\"btn blue\"><i class=\"icon-ok\"></i> $submit</button>" : null;
+        $b2 = $cancel ? "<button type=\"button\" onClick=\"javascript:location.href='$action';\" class=\"btn\"><i class=\" icon-remove\"></i> $cancel</button>" : null;
+		
+		$faction = $cancel ? null : $action; //when no cancel button use action as form action else as cancel's action
+		$ret = "<form name=\"$fm\" method=\"post\" action=\"$action\" id=\"form1\">
+                                <div>
+                                    <input type=\"hidden\" name=\"__VIEWSTATE\" id=\"__VIEWSTATE\" value=\"/wEPDwUKMTk5MjI0ODUwOWRkJySmk0TGHOhSY+d9BU9NHeCKW6o=\" />
+									$hidden_values
+                                </div>
+								
+                                $content
+
+								<div class=\"form-actions\">
+                                    $b1
+                                    $b2
+                                </div>
+                </form>";
+		return ($ret);					
 	}	
   
 };
