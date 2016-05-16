@@ -1,6 +1,8 @@
 <?php
 
-
+//http://stackoverflow.com/questions/9058158/using-php-preg-replace-to-change-html-links-href-attribute
+//href preplace
+echo preg_replace('/<a(.*)href="([^"]*)"(.*)>/','<a$1href="javascript:alert(\'Test\');"$3>',$string_of_text);
 
 
 //http://www.damnsemicolon.com/php/parse-emails-in-php-with-email-piping-part-2

@@ -159,6 +159,8 @@ $__LOCALE['RCPMENU_DPC'][147]='_bmailcreate;Build;Κατασκευή';
 $__LOCALE['RCPMENU_DPC'][148]='_COLLECT;Collect;Επιλογή';
 $__LOCALE['RCPMENU_DPC'][149]='_help;Help;Βοήθεια';
 $__LOCALE['RCPMENU_DPC'][150]='_tour;Guided tour;Βοήθεια';
+$__LOCALE['RCPMENU_DPC'][151]='_analyze;Analyse;Ανάλυση';
+$__LOCALE['RCPMENU_DPC'][152]='_sync;Synchronize;Συγχρονισμός';
 	   
 class rcpmenu {
 

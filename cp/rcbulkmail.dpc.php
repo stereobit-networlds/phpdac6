@@ -35,6 +35,8 @@ $__EVENTS['RCBULKMAIL_DPC'][17]='cpviewtrace';
 $__EVENTS['RCBULKMAIL_DPC'][18]='cp'; //cp when fist page
 $__EVENTS['RCBULKMAIL_DPC'][19]='cpcampcontent';
 $__EVENTS['RCBULKMAIL_DPC'][20]='cpdeletecamp';
+$__EVENTS['RCBULKMAIL_DPC'][21]='cptemplatenew';
+$__EVENTS['RCBULKMAIL_DPC'][22]='cptemplatesav';
 
 $__ACTIONS['RCBULKMAIL_DPC'][0]='cpbulkmail';
 $__ACTIONS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
@@ -57,6 +59,8 @@ $__ACTIONS['RCBULKMAIL_DPC'][17]='cpviewtrace';
 $__ACTIONS['RCBULKMAIL_DPC'][18]='cp'; //cp when first page
 $__ACTIONS['RCBULKMAIL_DPC'][19]='cpcampcontent';
 $__ACTIONS['RCBULKMAIL_DPC'][20]='cpdeletecamp';
+$__ACTIONS['RCBULKMAIL_DPC'][21]='cptemplatenew';
+$__ACTIONS['RCBULKMAIL_DPC'][22]='cptemplatesav';
 
 $__LOCALE['RCBULKMAIL_DPC'][0]='RCBULKMAIL_DPC;Mail queue;Mail queue';
 $__LOCALE['RCBULKMAIL_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
@@ -113,6 +117,7 @@ $__LOCALE['RCBULKMAIL_DPC'][50]='_campaign;Campaign;Καμπάνια';
 $__LOCALE['RCBULKMAIL_DPC'][51]='_code;Item;Κωδικός';
 $__LOCALE['RCBULKMAIL_DPC'][52]='_category;Category;Κατηγορία';
 $__LOCALE['RCBULKMAIL_DPC'][53]='_outoflist;out of list;εξήχθει απο';
+$__LOCALE['RCBULKMAIL_DPC'][54]='_FAILED;Bounce;Bounce';
 
 class rcbulkmail {
 	
@@ -127,7 +132,8 @@ class rcbulkmail {
 	var $appname, $appkey, $cptemplate, $urlRedir, $urlRedir2, $webview, $nsPage;
 	var $owner, $seclevid, $isHostedApp;
 	
-	var $userDemoIds, $maxinpvars, $batchid;
+	var $userDemoIds, $maxinpvars, $batchid, $ckeditver;
+	var $newtemplatebody, $saved, $savedname, $newsubtemplatebody, $newpatternbody;
 		
     function __construct() {
 	  
@@ -211,6 +217,18 @@ class rcbulkmail {
 		
 		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 		$this->maxinpvars = ini_get('max_input_vars') - 50; //DEPEND ON SRV AND DEFINES THE BATCH OUTPUT
+		
+		$ckeditorVersion = remote_paramload('RCBULKMAIL','ckeditor',$this->prpath);		
+		$this->ckeditver = $ckeditorVersion ? $ckeditorVersion : 4; //default version 4
+		//override ckeditver
+		$this->ckeditver = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 3 : 4; //depends on select or edit/new template
+				
+		
+		$this->newtemplatebody = null;	
+		$this->newsubtemplatebody = null;
+		$this->newpatternbody = null;
+		$this->saved = false;
+        $this->savedname = null;		
 	}
 	
     function event($event=null) {
@@ -226,6 +244,13 @@ class rcbulkmail {
 		$this->percentofCamps();		//<<<<<<<<<<<<<<<<<<<<<<<<<<<??? use with new rccontrolpanel		
   
 	    switch ($event) {
+			
+			case 'cptemplatenew': $this->newcopyTemplate(); 
+			                      break;
+								  
+			case 'cptemplatesav': $this->saved = $this->saveTemplate(); 
+								  $this->newcopyTemplate();	//load
+								  break;
 			
 		    case 'cpchartshow'	: if ($report = GetReq('report')) {//ajax call
 									$this->hasgraph = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use $report");
@@ -328,6 +353,9 @@ class rcbulkmail {
 	    if ($login!='yes') return null;
 		
 	    switch ($action) {
+			
+			case 'cptemplatesav'       :  $out = ($this->saved==true) ? "Saved" : null; break;
+			case 'cptemplatenew'       :  break;
 			 
 		    case 'cpchartshow'         : if ($this->hasgraph) //ajax call
 											$out = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");
@@ -729,7 +757,7 @@ class rcbulkmail {
 		
 		if (defined('MYGRID_DPC')) { 
 		   $sSQL = "select * from (";
-		   $sSQL.= "SELECT id,startdate,active,name,email,listname FROM ulists";
+		   $sSQL.= "SELECT id,startdate,active,failed,name,email,listname FROM ulists";
 		   
 		   //not selectable by typing listname...just search in grid
 		   //$sSQL .= " where listname=" . $db->qstr($ulistname);
@@ -747,6 +775,7 @@ class rcbulkmail {
            GetGlobal('controller')->calldpc_method("mygrid.column use grid1+startdate|".localize('_SUBDATE',getlocal()).'|date|0');		   
            GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_FNAME',getlocal()).'|20|1');	
 		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_ACTIVE',getlocal()).'|boolean|1');	
+		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+failed|".localize('_FAILED',getlocal()).'|5|1');	
 		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+listname|".localize('_LISTNAME',getlocal()).'|20|1');	
 		   $out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ulists+$sSQL+d+$ulistname+id+0+1+20+400++0+1+1");
 
@@ -869,7 +898,8 @@ class rcbulkmail {
 	}
 	
 	function show_select_files($name, $taction=null, $ext=null, $class=null) {
-		$tmpl = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');
+		$tmpl = $this->savedname ? $this->savedname :
+				(GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate'));
 	
 		$url = ($taction) ? seturl('t='.$taction.'&stemplate=',null,null,null,null) : 
 		                    seturl('t=cpsubloadhtmlmail&stemplate=',null,null,null,null);
@@ -889,7 +919,7 @@ class rcbulkmail {
 					sort($ddir);	 
 					
 					$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
-					$ret .= "<option value=\"\">Select...</option>";
+					$ret .= "<option value=\"$url\">Select...</option>";
 					
 					foreach ($ddir as $id=>$fname) {
 						$parts = explode(".",$fname);
@@ -897,9 +927,6 @@ class rcbulkmail {
 						$parts2 = explode(".",$tmpl);
 						$template = $parts2[0];
 						$selection = ($title == $template) ? " selected" : null;
-						
-						//reload template because alreaded selected
-						//$this->mailbody = $this->loadData($tmpl);
 						
 						$ret .= "<option value=\"". $url . $fname. "\"". $selection .">$title</option>";		
 					}	
@@ -917,6 +944,12 @@ class rcbulkmail {
 		$ret = $this->show_select_files('mytemplate', null, $this->template_ext, null);
 		return ($ret);
 	}	
+	
+	public function viewTemplateCopy() {
+		
+		$ret = $this->show_select_files('mytemplate', 'cptemplatenew', $this->template_ext, null);
+		return ($ret);
+	}		
 	
 	public function templateLoaded() {
 		
@@ -957,25 +990,12 @@ class rcbulkmail {
 		$path = $this->templatepath;	
 		$data = null;	
 		
-		/*if (defined('CCPP_VERSION')) {
-			$config = null;
-			$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); //new CCPP($config);
-			$data = $preprocessor->execute($path . $template, 0, false, true);
-        }
-        else*/		
-			$data = @file_get_contents($path . $template); 
-		
-		/*$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
-		           $this->encUrl($this->savehtmlurl . $cid . '.html');
-		$tokens[] = "[<a href='$pageurl'>".localize('_viewasweb',getlocal())."</a>]";
-        $tokens[] = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";		
-			
-		$data = $this->combine_tokens($data, $tokens, true);*/				
-			 
+		$data = @file_get_contents($path . $template); 
+						 
 		$sub_template = str_replace($this->template_ext,$this->template_subext,$template);
 		//echo $path.$sub_template,'>';
 			 
-		//if sub template exist !!!!!!!!!!!!!!!!!!
+		//if sub template exist 
 		if (is_readable($path . $sub_template)) { 
 		    $sub_data = $this->get_mail_body($sub_template);//<<selected items sub-template !!!!!!!!!!!!!!!!!!!!!!!!
 		    //echo $sub_data,'>';
@@ -1003,39 +1023,192 @@ class rcbulkmail {
 	
 	protected function loadTemplate() {
 		$path = $this->templatepath;
-		$body = null;
 		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');
 		
-		if (is_readable($path . $template)) {
+		if (($template) && (is_readable($path . $template))) {
 		  
 			SetSessionParam('stemplate', $template); //save tmpl 
 			
-			/*if (defined('CCPP_VERSION')) {
-				$config = null;
-				$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); //new CCPP($config);
-				$data = $preprocessor->execute($path . $template, 0, false, true);
-			}
-			else*/		
-				$data = @file_get_contents($path . $template); 
-			//echo $path . $template; 
-			//echo $data;
-			$this->mailbody = $data;
-			
-		    /*$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
-		               $this->encUrl($this->savehtmlurl . $cid . '.html');
-			$tokens[] = "[<a href='$pageurl'>".localize('_viewasweb',getlocal())."</a>]";
-			$tokens[] = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_unsubscribe',getlocal())."</a>";
-			
-			$body = $this->combine_tokens($data, $tokens, true);			
-			
-			$this->mailbody = $body;*/
-		
+			$this->mailbody = @file_get_contents($path . $template); 			
 			return true;			
 		}	
 		return false;
 	}	
 	
+	/*copied or new template design*/
+	protected function newcopyTemplate() {
+		$path = $this->templatepath;
+		$template = $this->savedname ? $this->savedname : GetReq('stemplate');
+
+		if (($template) && (is_readable($path . $template))) {
+
+			$this->newtemplatebody = @file_get_contents($path . $template); 
+
+            //subtemplate loading
+			$sub_template = str_replace($this->template_ext, $this->template_subext, $template);
+			if (is_readable($path . $sub_template))
+				$this->newsubtemplatebody = @file_get_contents($path . $sub_template);
+			
+			//pattern loading
+			$pattern_file = str_replace($this->template_subext, '', $sub_template) . '.pattern.txt';
+			if (is_readable($path . $sub_template))
+				$this->newpatternbody = @file_get_contents($path . $pattern_file);
+			
+			return true;			
+		}	
+		//else (not a selected template -ignore session name when create new template)
+		//reset template name
+		SetSessionParam('stemplate', '');
+		$this->template=null;		
+		
+		return false;
+	}	
+
+	public function renderTemplate() {
+		$path = $this->templatepath;
+		$template = GetReq('stemplate');
+		$file = str_replace($this->template_ext, '', $template) . '.pattern.txt';
+		//echo $file;
+		
+		if (is_readable($path . $file))  {
+			$pf = file($path . $file);
+			//search last edited line
+			foreach ($pf as $line) {
+				if (trim($line)) {
+					$joins = explode(',', array_pop($pf)); 
+					break;
+				}
+			}
+			//rest lines
+			foreach ($pf as $line) {
+				$subtemplates .= trim($line);
+			}
+			$_pattern[0] = explode(',', $subtemplates);
+			$_pattern[1] = (array) $joins;
+			//print_r($_pattern);
+			//return ($_pattern);
+			
+			//render pattern
+			if (is_array($_pattern)) {
+				$pattern = (array) $_pattern[0];
+				$join = (array) $_pattern[1];				
+				
+				//make pseudo-items arrray
+				$maxitm = count($pattern);
+				for($i=1;$i<=$maxitm;$i++)
+					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');
+				//print_r($items);
+				
+				//render
+				$out = null;
+				$tts = array();
+				$gr = array();
+				$itms = array();
+				$cc = array_chunk($items, count($pattern));//, true);
+
+				foreach ($cc as $i=>$group) {
+					foreach ($group as $j=>$child) {
+						//echo $path . $pattern[$j] . '<br>';
+						$tts[] = $this->ct($path . $pattern[$j], $child, true);
+						if ($cmd = $join[$j]) {
+							//echo $path . $join[$j] . '<br>';
+							switch ($cmd) {
+							    case '_break' : $out .= implode('', $tts); break;
+								default       : $out .= $this->ct($path . $cmd, $tts, true);		
+							} 
+							unset($tts);
+						}
+					}
+					$gr[] = (empty($tts)) ? $out : $out . implode('', $tts) ;
+					unset($tts);
+					$out = null;
+				}
+			}//has pattern data
+		}//has pattern
+		
+		$subtemplate = str_replace($this->template_ext, $this->template_subext, $template);
+		if ($subtemplatedata = @file_get_contents($path . $subtemplate)) {
+			
+			$itms[] = (!empty($gr)) ? implode('',$gr) : null;
+			if (!empty($itms))
+				$ret = $this->combine_tokens($subtemplatedata, $itms, true);				
+		}	
+		else
+			$ret = (!empty($gr)) ? implode('',$gr) : null;
+						
+		$templatedata = @file_get_contents($path . $template);
+		$data = ($ret) ? str_replace('<!--?'.$subtemplate.'?-->', $ret, $templatedata) : $templatedata;
+					
+		if ($data) {				
+			$path2save = ($this->isDemoUser()) ? $this->urlpath . '/' : $this->prpath;
+			@file_put_contents($path2save . '_pview.html', $data, LOCK_EX);
+
+			$frame = "<iframe src =\"_pview.html\" width=\"100%\" height=\"540px\"><p>Your browser does not support iframes</p></iframe>";    	
+			return ($frame);	
+		}
+
+		return null;
+	}	
 	
+	protected function saveTemplate() {
+		$path = $this->templatepath;
+		$template_name = GetParam('tmplname');
+		if (!$template_name) return false;
+		
+		$this->savedname = stristr($template_name, '.html') ? $template_name : $template_name . '.html';
+		
+		$preghref = '/<a(.*)href="([^"]*)"(.*)>/';
+		$pregCallback = function ($m) { 
+			if (stristr($m[2], 'phpdac'))	
+				return "<a{$m[1]}href=\"{$m[2]}\"{$m[3]}>"; //as is
+			else
+				return	"<a{$m[1]}href=\"<phpdac>rcbulkmail.encUrl use {$m[2]}+1</phpdac>\"{$m[3]}>";
+		};		
+
+		//if (is_readable($path . $this->savedname)) {
+		if ($template = GetParam('template_text')) {	
+
+			if ($this->isDemoUser()) {	
+				//$hrefurl = '<a$1href="<phpdac>rcbulkmail.encUrl use $2+1</phpdac>"$3>';
+				//$text = preg_replace($preghref, $hrefurl, GetParam('template_text')) ;	
+				$text = preg_replace_callback($preghref, $pregCallback, $template);
+			}
+			else {
+				//$hrefurl_isapp = '<a$1href="<phpdac>rcbulkmail.encUrl use $2</phpdac>"$3>';
+				//$hrefurl = '<a$1href="<phpdac>rcbulkmail.encUrl use $2+1</phpdac>"$3>';
+				/*if it is hosted app dont use +1 at encUrl*/
+				/*$text = GetParam('hrefapp') ? preg_replace($preghref, $hrefurl_isapp, GetParam('template_text')) : 
+				  							    preg_replace($preghref, $hrefurl, GetParam('template_text')) ;
+				*/							  
+				$text = preg_replace_callback($preghref, $pregCallback, $template);
+				//}
+				//else
+					//$text = GetParam('template_text'); //as is
+			}	
+		
+		    //save pattern
+			$pattern_file = str_replace($this->template_ext, '', $this->savedname) . '.pattern.txt';
+			if ($pattern = GetParam('pattern_text'))
+				$ret = @file_put_contents($path . $pattern_file, $pattern, LOCK_EX);
+			
+			//save subtemplate
+			$subtemplate_file = str_replace($this->template_ext, $this->template_subext, $this->savedname);
+			if ($subtemplate = GetParam('subtemplate_text'))
+				$ret = @file_put_contents($path . $subtemplate_file, $subtemplate, LOCK_EX);			
+		
+		    //save template
+			if ($template_copy = GetParam('stemplate')) //as stored in html form
+				$subtemplate_copy = str_replace($this->template_ext, $this->template_subext, $template_copy);
+			
+			//in case of copy, replace subtemplate name
+			$this->newtemplatebody = str_replace('<!--?'.$subtemplate_copy.'?-->', '<!--?'.$subtemplate_file.'?-->', $text); 
+			$ret = @file_put_contents($path . $this->savedname, $this->newtemplatebody, LOCK_EX); 
+
+			return ($ret);			
+		}	
+		
+		return false;
+	}		
 	
 	public function userRealm() {
        $db = GetGlobal('db');	
@@ -1048,8 +1221,6 @@ class rcbulkmail {
 	   }
 	   return false;
 	}
-	
-	
 	
 	public function viewCampaigns() {
 		$db = GetGlobal('db');	
@@ -1184,6 +1355,11 @@ class rcbulkmail {
 	protected function delete_campaign() {
 		$db = GetGlobal('db');	
         if (!$this->cid) die("CID error");
+		
+		if ($this->isDemoUser()) {
+			$this->messages[] = "Campaign NOT deleted (demo user).";//localize('_delcamp', getlocal());
+			return true;
+		}	
 		
 		//all as 9 user or only owned		
 		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
@@ -1328,7 +1504,7 @@ class rcbulkmail {
 			
 			//save the file
 			if ($p = $this->savehtmlpath) {
-				$s = @file_put_contents($p .'/'. $cid . '.html' , $body);	
+				$s = @file_put_contents($p .'/'. $cid . '.html' , $body, LOCK_EX);	
 				
 				if ($s) 
 					$this->messages[] = 'Saved as ' . $this->savehtmlurl . $cid . '.html';
@@ -1336,7 +1512,7 @@ class rcbulkmail {
 					$this->messages[] = $this->savehtmlurl . $cid . '.html NOT saved!';				
 			}
 			
-			//reset camaign
+			//reset campaign
 			SetSessionParam('stemplate', '');
 			$this->template=null;
 			SetSessionParam('ulistselect', '');
@@ -1985,9 +2161,6 @@ class rcbulkmail {
 		else
 			$out = $mailbody . $ret;	 	 
 		 
-		//echo '>',$is_html,$out;	 
-		//@file_put_contents($this->prpath.'/trackcode.txt',$out);
-		 
 		return ($out);	 
 	}	
 	
@@ -2059,50 +2232,72 @@ This email and any files transmitted with it are confidential and intended solel
 	}
 	
 
-    public function ckeditorjs() {
+    public function ckeditorjs($element=null, $maxmininit=false, $disable=false) {
+		//CKEDITOR.config.basicEntities = false;
+		//CKEDITOR.config.htmlEncodeOutput = false;	
+	    //...		
+		//ckeditor attributes depend on template edit new / mail text
+		//$readonly = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 0 : 1;  
+		$readonly = $disable ? 1 : 0;  
+	
+        //$element_name = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 'template_text' : 'mail_text';	
+		$element_name = $element ? $element : ((($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 'template_text' : 'mail_text');
 		
-		$minmax = $_GET['stemplate'] ? 'maximize' : 'minimize' ;
-		//echo $minmax;
-		$ret = "
-				<script type='text/javascript'>
-	           CKEDITOR.replace('mail_text',
-			   {
-	           //skin : 'office2003', 
+		//minmax only when select for new/edit not when select for mail sent
+		//$minmax = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? ($_GET['stemplate'] ? 'maximize' : 'minimize') : 'minimize' ;
+		$minmax = $maxmininit ? $maxmininit : ($_GET['stemplate'] ? 'maximize' : 'minimize') ;
+		//echo $minmax;	
+		
+	    $ckattr = ($this->ckeditver==4) ?
+	           "fullpage : true,"	  
+	           : 
+	           "skin : 'v2', 
 			   fullpage : true, 
-			   //extraPlugins :'docprops',
-               filebrowserBrowseUrl : '/cp/ckfinder/ckfinder.html',
-	           filebrowserImageBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Images',
-	           filebrowserFlashBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Flash',
-	           filebrowserUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
-	           filebrowserImageUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
-	           filebrowserFlashUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash',
-	           filebrowserWindowWidth : '1000',
- 	           filebrowserWindowHeight : '700'			   
+			   extraPlugins :'docprops',";		
+		
+		$ret = "
+			<script type='text/javascript'>
+	           CKEDITOR.replace('$element_name',
+			   {
+				$ckattr	
+				filebrowserBrowseUrl : '/cp/ckfinder/ckfinder.html',
+	            filebrowserImageBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Images',
+	            filebrowserFlashBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Flash',
+	            filebrowserUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
+	            filebrowserImageUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
+	            filebrowserFlashUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash',
+	            filebrowserWindowWidth : '1000',
+ 	            filebrowserWindowHeight : '700'				
 			   }		   
 			   );
 			   CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
+			   CKEDITOR.config.forcePasteAsPlainText = false; // default so content won't be manipulated on load
 			   CKEDITOR.config.fullPage = true;
                CKEDITOR.config.entities = false;
 			   CKEDITOR.config.basicEntities = false;
 			   CKEDITOR.config.entities_greek = false;
 			   CKEDITOR.config.entities_latin = false;
 			   CKEDITOR.config.entities_additional = '';
-			   CKEDITOR.config.htmlEncodeOutput = false; 
+			   CKEDITOR.config.htmlEncodeOutput = false;
+			   CKEDITOR.config.entities_processNumerical = false;
+			   CKEDITOR.config.fillEmptyBlocks = function (element) {
+				return true; // DON'T DO ANYTHING!!!!!
+               };
+			   CKEDITOR.config.allowedContent = true; // don't filter my data	
 			   CKEDITOR.config.protectedSource.push( /<phpdac[\s\S]*?\/phpdac>/g );
 			   CKEDITOR.on('instanceReady',
                function( evt )
                {
                   var editor = evt.editor;
                   editor.execCommand('$minmax');
+				  editor.setReadOnly($readonly);
                });			   
-		       </script>		
+		    </script>		
 ";
 		//     CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
 		return ($ret);
 	}	
-			   //CKEDITOR.config.basicEntities = false;
-			   //CKEDITOR.config.htmlEncodeOutput = false;	
-	//...
+
 	public function runSql($name, $sql, $retasis=false) {
 		$db = GetGlobal('db');			
 		if (!$sql) return 0;
@@ -2187,12 +2382,18 @@ This email and any files transmitted with it are confidential and intended solel
 		if ($ownerSQL) $sSQL .= ($timein) ? $ownerSQL : ($this->cid ? $ownerSQL : str_replace('and','where',$ownerSQL));									 
 		$tq = $this->runSql('totalQueue', $sSQL); 		
 		
-		$sSQL = "select sum(reply) from mailqueue where active=0" . $ownerSQL . $timein . $sSQLcid ;	
+		$sSQL = "select sum(reply) from mailqueue where status>0 and active=0" . $ownerSQL . $timein . $sSQLcid ;	
 		$this->runSql('repliedQueue', $sSQL);			
-		$sSQL = "select count(id) from mailqueue where status IS NOT NULL and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)	
+		$sSQL = "select count(id) from mailqueue where status>0 and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)	
 		$sc = $this->runSql('succeed', $sSQL);
 		$sSQL = "select count(id) from mailqueue where status IS NULL and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)		
-		$fl = $this->runSql('failed', $sSQL);	
+		$ul = $this->runSql('unread', $sSQL);	
+		$sSQL = "select count(id) from mailqueue where status=-1 and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)		
+		$bl = $this->runSql('badmail', $sSQL);			
+		$sSQL = "select count(id) from mailqueue where status=-2 and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)		
+		$fl = $this->runSql('bounced', $sSQL);			
+		$sSQL = "select count(id) from mailqueue where active=1" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)		
+		$sl = $this->runSql('notsentyet', $sSQL);			
 				
 		$sSQL = "SELECT COUNT(id) FROM mailcamp";	
 		$sSQL.= $ownerSQL ? str_replace('and','where',$ownerSQL) : null;
@@ -2202,24 +2403,23 @@ This email and any files transmitted with it are confidential and intended solel
 		$this->runSql('usedCampaigns', $sSQL);		
 		$sSQL = "SELECT COUNT( DISTINCT (subject) ) FROM mailqueue where active=1" . $ownerSQL;	
 		$this->runSql('runningCampaigns', $sSQL);
-		
-		//percents on max values (directives)
-		$max = 10000; //ulist max users
-		//$ts = $this->getStats['totalSubscribers']; 
-		$upercent = ($ts/$max)*100;
-		$this->stats['percentSubscribersLeft']['value'] = intval($upercent);		
-		
-		$max = 599999; //mails remain to send
-		$mpercent = round($tq*100/$max);
-		$this->stats['percentMailsLeft']['value'] = intval($mpercent);		
-		
+
 		//percent of sends and replies (uniques=status)
 		$rpercent = round($sc*100/$tq);
 		$this->stats['percentSucceed']['value'] = intval($rpercent);
 
+		//percent of unread sents
+		$upercent = round($ul*100/$tq);
+		$this->stats['percentUnread']['value'] = intval($upercent);	
+		
 		//percent of failed sents
-		$fpercent = round($fl*100/$tq);
-		$this->stats['percentFailed']['value'] = intval($fpercent);	
+		$this->stats['failed']['value'] = $bl + $fl;	
+		$fpercent = round(($bl+$fl)*100/$tq);
+		$this->stats['percentFailed']['value'] = intval($fpercent);		
+
+		//percent of have to sent
+		$spercent = round($sl*100/$tq);
+		$this->stats['percentUnsend']['value'] = intval($spercent);			
 
 		if ($this->cid) {
 			$sSQL = "SELECT bcc FROM mailcamp WHERE cid=" . $db->qstr($this->cid) . $ownerSQL;	
@@ -2372,14 +2572,39 @@ This email and any files transmitted with it are confidential and intended solel
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
-		//$timein = $this->sqlDateRange('timein', true, false);
-		//if ($timein) return null; //no current tasks when time range
-		//$refsql = $cid ? "and ref='$cid'" : null;
+		$refsql = $cid ? "and mailqueue.cid='$cid'" : null;		
 		
 		//all as 9 user or only owned
 		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
 		
-		$sSQL = "SELECT mailqueue.id,timeout,receiver,title FROM mailqueue,mailcamp where mailqueue.cid=mailcamp.cid $refsql $ownerSQL and status=1 order by id desc LIMIT " . $l;
+		$sSQL = "SELECT mailqueue.id,timeout,receiver,title FROM mailqueue,mailcamp where mailqueue.cid=mailcamp.cid $refsql $ownerSQL and mailqueue.active=0 and status=1 order by mailqueue.id desc LIMIT " . $l;
+		//echo $sSQL;
+		$resultset = $db->Execute($sSQL,2);
+		
+		if (empty($resultset)) return null;
+		foreach ($resultset as $n=>$rec) {
+			$tokens[] = $rec[1] . ' '. $rec[3];
+			$tokens[] = $rec[2];
+			$ret .= $this->combine_tokens($t, $tokens);
+			unset($tokens);	
+		}
+
+		return ($ret);			
+	}	
+	
+	public function getMailBounce($template=null, $limit=null) {
+		$db = GetGlobal('db');	
+		$l = $limit ? $limit : 5;
+		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
+		$t = ($template!=null) ? $this->select_template($template) : null;
+		$tokens = array();
+		
+		$refsql = $cid ? "and mailqueue.cid='$cid'" : null;
+				
+		//all as 9 user or only owned
+		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
+		
+		$sSQL = "SELECT mailqueue.id,timeout,receiver,title FROM mailqueue,mailcamp where mailqueue.cid=mailcamp.cid $refsql $ownerSQL and mailqueue.active=0 and status<0 order by mailqueue.id desc LIMIT " . $l;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
@@ -2409,7 +2634,7 @@ This email and any files transmitted with it are confidential and intended solel
 		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
 		
 		//$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql order by date desc LIMIT " . $l;
-		$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql $ownerSQL order by id desc LIMIT " . $l;
+		$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql $ownerSQL order by stats.id desc LIMIT " . $l;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
@@ -2670,8 +2895,41 @@ This email and any files transmitted with it are confidential and intended solel
 		
 		return ($ret);
 	}
+	
+    //combine tokens with load tmpl data inside	
+	public function ct($template, $tokens, $execafter=null) {
+	    //if (!is_array($tokens)) return;
+		$template_contents = @file_get_contents($template);
 		
-					
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template_contents);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template_contents; 
+		  
+		//echo $ret;
+	    foreach ($tokens as $i=>$tok) {
+            //echo $tok,'<br>';
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<30;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);
+		//echo $ret;		
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	}						
 };
 }
 ?>

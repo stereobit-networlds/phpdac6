@@ -304,7 +304,7 @@ class rccontrolpanel {
 							 break;	 
 
 		 case 'cpdelMessage': //ajax call
-		                     $msgs = $this->delMessage();
+		                     $msgs = $this->storeMessage();
 							 die('cpmessages|'.$msgs);
 							 break;	
 
@@ -559,11 +559,11 @@ function handleResponse() {if(http.readyState == 4){
 
 			   //case 'uninstalleshop'   :							
                case 'eshop'   :         //$text = "e-shop feature installed"; break;
+										$message = localize('_uninstalleshop',getlocal());
 			                            if ($valid = $this->is_valid_eshop()) {//uninstall
 										 
-										    $message = localize('_uninstalleshop',getlocal());
 											$message .= ' ('.$valid.')';
-											
+									
 										    //you can unistall before expired
 											if ($e1 = $this->call_wizard_url('uninstalleshop')) 
 											  $text = "<a href='$e1'>".$message."</a>"; 	
@@ -1309,18 +1309,21 @@ function handleResponse() {if(http.readyState == 4){
 
     } 
 	
-    protected function cached_mail_size() {
+    protected function cached_mail_size($cahcetime=null) {
 	   $path = '/home/'.$this->rootapp_path.'/mail/' . str_replace('www.','',$this->url);
        $name = 'a';//strval(date('Ymd'));
        $msize = $this->prpath . $name . '-msize.size';
 	   $size = 0;
 	   
-       if (is_readable($msize)) {
+	   $filemtime = @filemtime($msize);
+	   $cache_life = $cahcetime ? $cahcetime : 86400; //1 day
+	   
+       if ((is_readable($msize)) && (time() - $filemtime <= $cache_life)) {
 	        //echo $msize;
 			$size = @file_get_contents($msize);
 
 	   }
-	   else {
+	   else { 
             $size = $this->filesize_r($path);
 			@file_put_contents($msize, $size);
 	   }
@@ -1329,13 +1332,16 @@ function handleResponse() {if(http.readyState == 4){
     }	
   	
 	
-    protected function cached_disk_size() {
+    protected function cached_disk_size($cahcetime=null) {
   	   $path = $this->application_path; 
        $name = 'a';//strval(date('Ymd'));
        $tsize = $this->prpath . $name . '-tsize.size';
 	   $size = 0;
 	   
-       if (is_readable($tsize)) {
+	   $filemtime = @filemtime($tsize);
+	   $cache_life = $cahcetime ? $cahcetime : 86400; //1 day
+	   
+       if ((is_readable($tsize)) && (time() - $filemtime <= $cache_life)) {	   
 	        //echo $tsize;
 			$size = @file_get_contents($tsize);
 
@@ -1348,12 +1354,15 @@ function handleResponse() {if(http.readyState == 4){
 	   return ($size);
     }	
 	
-    protected function cached_database_filesize() {
+    protected function cached_database_filesize($cahcetime=null) {
       $db = GetGlobal('db'); 
       $name = 'a'; //strval(date('Ymd'));
       $dsize = $this->prpath . $name . '-dsize.size';	
 	
-      if (is_readable($dsize)) {
+	  $filemtime = @filemtime($dsize);
+	  $cache_life = $cahcetime ? $cahcetime : 86400; //1 day
+	   
+      if ((is_readable($dsize)) && (time() - $filemtime <= $cache_life)) {
 	    //echo $dsize;
 		$size = @file_get_contents($dsize);
 
@@ -1592,18 +1601,11 @@ function handleResponse() {if(http.readyState == 4){
 	
 		$this->tools['google_analytics'] = '0,0,0,0,0,0,0,1,1';
 		$this->tools['add_recaptcha'] = '0,0,0,0,0,0,0,1,1';
-		//$this->tools['upload_logo'] = '0,0,0,0,0,0,0,1,1';
 		$this->tools['add_domainname'] = '0,0,0,0,0,0,0,0,1';
 		$this->tools['maildbqueue'] = '0,0,0,0,0,0,0,0,1';
 		$this->tools['item_photo'] = '0,0,0,0,0,0,0,0,1';
 		//$this->tools['uninstall_maildbqueue'] = '0,0,0,0,0,0,0,1,1';
-		//$this->tools['add_addwords'] = '0,0,0,0,0,0,0,1,1';					 
-		if ($this->environment['IMPORTDB']>0) {					 
-			$this->tools['add_categories']='0,0,0,0,0,0,0,1,1';
-			$this->tools['add_products']='0,0,0,0,0,0,0,1,1';
-			//print_r($this->tools);
-		}
-		
+		//$this->tools['add_addwords'] = '0,0,0,0,0,0,0,1,1';					 		
 		//$this->tools['jqgrid'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 		$this->tools['ieditor'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 		$this->tools['printer'] = '0,0,0,0,0,0,0,0,1';//priv for setup
@@ -1617,13 +1619,7 @@ function handleResponse() {if(http.readyState == 4){
 		$this->tools['addkey'] = '0,0,0,0,0,0,0,1,1';//no priv for setup
 		$this->tools['genkey'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 		$this->tools['validatekey'] = '0,0,0,0,0,0,0,0,1';//priv for setup
-		
-		/*if ($this->environment['BACKUP']) //has been installed..read string cp.ini???
-		  $this->tools['backup'] = '0,0,0,0,0,0,1,1,1'; 
-		else //when has no installed the right to install is up to 9 secid*/
-		//handled by installed secid if installed
 		$this->tools['backup'] = '0,0,0,0,0,0,0,0,1';//priv for setup
-		
 		$this->tools['eshop'] = '0,0,0,0,0,0,0,0,1';//priv for setup
 		//$this->tools['uninstalleshop'] = '0,0,0,0,0,0,0,0,1';//priv for setup		
 			
@@ -1865,7 +1861,7 @@ function handleResponse() {if(http.readyState == 4){
 	}	
 	
 	/*delete msg from queue return rest-ajax*/
-	public function delMessage($limit=null) {
+	public function storeMessage($limit=null) {
 		$db = GetGlobal('db');	
 		if (empty($this->messages)) return null;
 		if (!$h = GetReq('hash')) return null;
@@ -1880,7 +1876,7 @@ function handleResponse() {if(http.readyState == 4){
 		$sSQL.= $db->qstr(GetReq('type')) . ",";
 		$sSQL.= $db->qstr($this->owner);
 		$sSQL.= ")";
-		echo $sSQL;
+		//echo $sSQL;
 		$result = $db->Execute($sSQL,1);			 
 		$ret = $db->Affected_Rows(); 
 		
@@ -1921,17 +1917,18 @@ function handleResponse() {if(http.readyState == 4){
 		return ($ret);			
 	}	
 	
-	public function setMessage($message=null) {
+	public function setMessage($message=null, $daysback=null) {
 		$db = GetGlobal('db');
 		if (!$message) return false;
 		
+		$interval = $daysback ? $daysback : 90;
 		$id = explode('|',$message);
 		$hash = md5($id[0].$id[1]);
 		
 		//search in db for deleted msg
 		$sSQL = "select hash from cpmessages where hash=" . $db->qstr($hash) . ' and owner=' . $db->qstr($this->owner);
 		//of last 3 month
-		$sSQl.= " and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 90 DAY ) ) AND DATE ( NOW() )";// order by DATE(date) desc";
+		$sSQl.= " and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL $interval DAY ) ) AND DATE ( NOW() )";// order by DATE(date) desc";
 		$result = $db->Execute($sSQL,1);			 
 		//$ret = $db->Affected_Rows(); 
 		//if ($result->fields[0]) echo $sSQL;
@@ -2091,8 +2088,7 @@ function handleResponse() {if(http.readyState == 4){
 		foreach ($resultset as $n=>$rec) {
 			$saytime = $this->timeSayWhen(strtotime($rec[0].' '.$rec[1]));
 			$msg = "success|" . $rec[2] .", ". $text .' '. $rec[0] . " " .$rec[1] . "|$saytime|cptransactions.php";
-			//echo $msg;
-			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
+			$this->setMessage($msg);
 		}
 
 		return ($ret);			

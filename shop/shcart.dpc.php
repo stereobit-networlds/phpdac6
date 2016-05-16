@@ -786,6 +786,10 @@ function addtocart(id,cartdetails)
              $error = $this->goto_mailer($this->transaction_id, false,$this->twig_invoice_template_name);//true);
 
              if (!$this->mailerror) {
+				 
+			   /** stats records ***/	 
+			   $this->logcart();
+				 
 			   //print action]
 			   $this->goto_printer();
                //finaly clear cart
@@ -1798,6 +1802,20 @@ function addtocart(id,cartdetails)
 	  //return ($result);
 	}	
 	
+	/**** add log records to stats ****/
+	protected function logcart() {
+		
+		foreach ($this->buffer as $prod_id => $product) {
+			if (($product) && ($product!='x')) {
+				//log 
+				$cartstr = explode(';', $product);
+				$item = $cartstr[0];
+				GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use $item+checkout");				
+			}	
+		}		 		
+		return true;
+	}
+	
 	//override
 	function loadcart($transid=null) {
 	    $a = $transid?$transid:GetReq('tid');
@@ -1815,8 +1833,15 @@ function addtocart(id,cartdetails)
 			  //replace cart buffer
 			  //$this->buffer = $decodetrans;//array_merge($this->buffer, $decodetrans);
 			  
-			  foreach ($decodetrans as $i=>$trcartrec)
+			  foreach ($decodetrans as $i=>$trcartrec) {
+				  
+				/**** add log records to stats ****/ 
+				$cartstr = explode(';', GetReq('a'));
+		        $item = $cartstr[0];
+		        GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use $item+cartin");				
+				  
 			    $this->buffer[] = $trcartrec;
+			  }	
 			  
 			  $this->setStore();
 			  

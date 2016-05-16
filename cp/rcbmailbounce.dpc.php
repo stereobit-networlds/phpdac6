@@ -34,9 +34,10 @@ class rcbmailbounce {
 
 	  $rootpath = paramload('RCCONTROLPANEL','rootpath', $this->prpath);
       $this->cpanelmailpath = $rootpath ? '/home/'.$rootpath.'/mail/' : '/home/stereobi/mail/';	 
-	  $sender = remote_paramload('RCBULKMAIL','user',$this->prpath); //'b.alexiou@stereobit.gr';//
-	  $this->sendermailfolder = '.' . str_replace('.','_',$sender) . '/cur/'; //.link to folder cur
-	  $this->folder = $this->cpanelmailpath . $this->sendermailfolder;
+	  $sender = remote_paramload('RCBULKMAIL','user',$this->prpath); //default
+	  $mp = explode('@',$sender);
+	  $this->sendermailfolder = $mp[1] . '/' . str_replace('.','_',$mp[0]) . '/cur/';
+	  $this->folder = $this->cpanelmailpath . $this->sendermailfolder; 
 	}
 	
     function event($event=null) {
@@ -68,10 +69,51 @@ class rcbmailbounce {
 		   case 'cpbnbtrack'     : 
 		   case 'cpbouncedel'    : 
 		   case 'cpbmailbounce'  :		   
-		   default               : $out = $this->mails_indir_bounce_only();
+		   default               : $out = $this->fetchmails(); //mails_indir_bounce_only();
 		 }			 
 
 	     return ($out);
+	}
+	
+	protected function fetchmails() {
+		$maxf = 800; //100 * 24
+		$ret = null;		
+		
+		$mfiles = scandir($this->folder, 1); //desc
+		if (empty($mfiles)) return ($this->folder . " : Empty<br/>");	
+		
+		$c = count($mfiles);
+		$max = ($c<$maxf) ? $c : $maxf;
+		
+		$ret = "<h3>Mails ($max):</h3>";
+		$bouncehandler = new Bouncehandler();
+		
+		//set_time_limit(120);
+		for ($f=0;$f<=$max;$f++) {
+			
+			$file = $mfiles[$f];
+			$fsize = filesize($this->folder . $file);
+			
+			if ($file=='.' || $file=='..' || $fsize>(1024*20)) continue; //20kb max
+			
+			echo $f .'-'. $file . "<br/>";
+			$bounce = @file_get_contents($this->folder . $file);
+			$rep = $bouncehandler->parse_email($bounce); 
+			if ($a = $bouncehandler->is_a_bounce()) { 
+				$to = $rep[0]['recipient'];
+
+				$ret .= "<a href=\"".$_SERVER['PHP_SELF']."?t=cpbounceview&eml=".urlencode($file)."\">$file</a>";
+				$ret .= " was last modified: " . date ("d m Y H:i:s.", filemtime($this->folder . $file)) . "<br/>\n";
+				$ret .= " Send to: " . seturl('t=cpbmbtrack&to='.urlencode($to),$to) . "<br/>\n";
+				$ret .= seturl('t=cpbouncedel&eml='.urlencode($file),'Delete') . "<br/>\n";				
+				
+				echo $ret;
+			    $ret = null;
+			}
+		}
+		//set_time_limit(ini_get('max_execution_time'));	
+		
+		return ($ret);
 	}
 
 	protected function mails_indir() {
@@ -106,17 +148,21 @@ class rcbmailbounce {
 	protected function mails_indir_bounce_only() {
 		$lastmonth = mktime(0, 0, 0, date("m")-1, date("d"),   date("Y"));
 		$lastweek = mktime(0, 0, 0, date("m"), date("d")-7,   date("Y"));
+		$lastday = mktime(0, 0, 0, date("m"), date("d")-1,   date("Y"));
+		$today = mktime(0, 0, 0, date("m"), date("d")-1,   date("Y"));
 		$ret = null;
 
 		if ($handle = opendir($this->folder)) {
 			$ret = "<h3>Mails:</h3>\n";
             $bouncehandler = new Bouncehandler();
 			
-			while (false !== ($file = readdir($handle))) {
+			set_time_limit(120);
+			$i=0;
+			while (($i<1000) && (false !== ($file = readdir($handle)))) {
 				if($file=='.' || $file=='..') continue;
 				
 				$t = filemtime($this->folder . $file);	
-				if ($t > $lastweek) {
+				if ($t >= $today) { //$lastweek) {
 					$bounce = @file_get_contents($this->folder . $file);
 					$rep = $bouncehandler->parse_email($bounce); 
 					if ($a = $bouncehandler->is_a_bounce()) { 
@@ -131,7 +177,10 @@ class rcbmailbounce {
 						$l[$t] = $rep[0]['recipient'];//$head_hash['to'];
 					}	
 				}
+				$i+=1;
 			}
+			
+			set_time_limit(ini_get('max_execution_time'));
 
 			closedir($handle);
 		}
@@ -262,63 +311,75 @@ class rcbmailbounce {
 	
 	//can be used by cron
 	public function cleanBounce($app=null,$days=1,$delete=false) {
-		if ($app) {
-			$sender = remote_paramload('RCBULKMAIL','user', str_replace('/cp', '/'.$app.'/cp', $this->prpath));
-			if (!$sender) return ('conf error.');
-			$this->sendermailfolder = '.' . str_replace('.','_',$sender) . '/cur/'; //.link to folder cur
-			$this->folder = $this->cpanelmailpath . $this->sendermailfolder;		
-		}
-		
-		$daysback = mktime(0, 0, 0, date("m"), date("d")-$days,   date("Y"));
+		$db = GetGlobal('db'); 
+		$maxf = 800; //100 * 24
 		$ret = null;
-
-		if ($handle = opendir($this->folder)) {
-			$ret = $app . " ($sender)" . "\n";
-            $bouncehandler = new Bouncehandler();
+		
+		if ($app) {
+			$appprpath = str_replace('/cp', '/'.$app.'/cp', $this->prpath);
+			//echo $appprpath;
+			//$sender = remote_paramload('RCBULKMAIL','user', $appprpath);
+			$appconfig = @parse_ini_file($appprpath . "myconfig.txt", 1, INI_SCANNER_NORMAL);	
+			$sender = $appconfig['RCBULKMAIL']['user'];
+			//echo $sender;
+			if (!$sender) return ('conf error:'.$app);
+			//$this->sendermailfolder = '.' . str_replace('.','_',$sender) . '/cur/'; //.link to folder cur
+			$mp = explode('@',$sender);
+			$this->sendermailfolder = $mp[1] . '/' . str_replace('.','_',$mp[0]) . '/cur/';
+			$this->folder = $this->cpanelmailpath . $this->sendermailfolder;		
+			//echo '>App:', $this->folder;
 			
-			while (false !== ($file = readdir($handle))) {
-				if($file=='.' || $file=='..') continue;
-				
-				$t = filemtime($this->folder . $file);	
-				if ($t > $daysback) {
-					$bounce = @file_get_contents($this->folder . $file);
-					$rep = $bouncehandler->parse_email($bounce); 
-					if ($a = $bouncehandler->is_a_bounce()) { 
-					    
-						$f[$t] = $file;
-						
-						$to = $rep[0]['recipient'];
-						$l[$t] = $to;
-						
-						//direct call to db for ulists update
-						GetGlobal('controller')->calldpc_method('database.switch_db use '.$app);		 
-						$db = GetGlobal('db'); 	
-						
-						$sSQL = "select failed from ulists where email=" . $db->qstr($to);
-						$result = $db->Execute($sSQL,2);
-		
-						$xtimes = $result->fields[0] ? intval($result->fields[0])+1 : 1;
-		
-						$sSQL = 'update ulists set failed=' . $xtimes . " where email=" . $db->qstr($to);
-						$result = $db->Execute($sSQL,1);						
-					}	
-				}
-			}
-
-			closedir($handle);
+			//direct call to db for ulists update
+			GetGlobal('controller')->calldpc_method('database.switch_db use '.$app);		 
+			$db = GetGlobal('db'); 				
 		}
 		
-		if (empty($f)) return ("Empty\n");		
+		$mfiles = scandir($this->folder, SCANDIR_SORT_DESCENDING); //1/ //desc
+		if (empty($mfiles)) return ($this->folder . " : Empty\n");	
+		
+		$c = count($mfiles);
+		$max = ($c<$maxf) ? $c : $maxf;		
+		
+		$bouncehandler = new Bouncehandler();
+		
+		for ($f=0;$f<=$max;$f++) {
+			
+			$file = $mfiles[$f];
+			$fsize = @filesize($this->folder . $file);
+			
+			if ($file=='.' || $file=='..' || $fsize>(1024*20)) continue; //20kb max
+			
+			//echo $file . "\r\n";
+			$bounce = @file_get_contents($this->folder . $file);
+			$rep = $bouncehandler->parse_email($bounce); 
+			if ($a = $bouncehandler->is_a_bounce()) { 
+				$to = $rep[0]['recipient'];
+				
+				$sSQL = "select failed from ulists where email=" . $db->qstr($to);
+				$result = $db->Execute($sSQL,2);
+		
+				$xtimes = $result->fields[0] ? intval($result->fields[0])+1 : 1;
+		
+				$sSQL = 'update ulists set failed=' . $xtimes . " where email=" . $db->qstr($to);
+				$result = $db->Execute($sSQL,1);
 
-		foreach ($f as $ft=>$file) {
-			$ret .= $file;
-			$ret .= " was last modified: " . date ("d m Y H:i:s.", $ft);
-			$ret .= " Send to: " . $l[$ft] ."\n";
-			if ($delete==true) {
-				$ret .= "Deleted\n";
-				unlink($this->folder . $file);
+				//also update mailqueue (last sending mail)		
+				$sSQL = "select id from mailqueue where active=0 and receiver=" . $db->qstr($to) . " order by id desc LIMIT 1";
+				$result = $db->Execute($sSQL,2);
+						
+				$sSQL = "update mailqueue set status=-2, mailstatus='BOUNCE' where id=" . $result->fields[0];
+				$result = $db->Execute($sSQL,1);
+
+				$ret .= $file;
+				$ret .= " was last modified: " . date ("d m Y H:i:s.", filemtime($this->folder . $file));
+				$ret .= " Send to: " . $to ."\n";
+				if ($delete==true) {
+					$ret .= "Deleted\r\n";
+					unlink($this->folder . $file);
+				}				
 			}
-		}	
+		}		
+		
 		return $ret;			
 	}
 					

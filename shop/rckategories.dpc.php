@@ -389,7 +389,7 @@ class rckategories extends shkategories {
 	}	
     }
   
-    function add_category2($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
+    function add_category1($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 440;
         $rows = $rows ? $rows : 18;
         $width = $width ? $width : null; //wide
@@ -432,6 +432,79 @@ class rckategories extends shkategories {
 	    return ($out);
 	
     }
+	
+    function add_category2($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 440;
+        $rows = $rows ? $rows : 18;
+        $width = $width ? $width : null; //wide
+        $mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;
+        $editlink = $editlink ? $editlink : seturl("t=cpeditcat&cat={cat2}");
+		$title = $this->title;						
+	
+	    if (!defined('MYGRID_DPC')) 
+		   return ($this->add_category()); 
+		   
+        $lan = getlocal()?getlocal():0;
+	
+	    if (GetReq('cat')) {
+			$myfields = 'id,ctgid,';
+			$mytitles = localize('id',getlocal()) . ',' . localize('_ctgid',getlocal()) . ',';
+			$myfields .= /*"cat{$lan}1,*/"cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5,";
+			$mytitles .= /*localize('_cat0',$lan).','.*/localize('_cat1',getlocal()) .','.
+					 localize('_cat2',$lan).','.localize('_cat3',$lan).','.localize('_cat4',$lan).',';		
+			$myfields .= 'active,view,search';
+			$mytitles .= localize('_active',getlocal()) . ',' . localize('_view',getlocal()) . ',' . localize('_search',getlocal());
+
+			$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
+
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|link|5|".$editlink.'||');		
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|10|1|");				
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
+			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+			return ($out);
+		} 
+		else {
+
+			$myfields = 'id,ctgid,';
+			$mytitles = localize('id',getlocal()) . ',' . localize('_ctgid',getlocal()) . ',';
+			$myfields .= "cat1,cat2,cat3,cat4,cat{$lan}1,";
+			$myfields .= "cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5,";
+			$mytitles .= localize('_cat0',$lan).','.localize('_cat1',$lan).','.localize('_cat2',$lan).','.localize('_cat3',$lan).','.localize('_cat4',$lan).','.localize('_cat0',$lan).',';
+			$mytitles .= localize('_cat1',getlocal()) .','.localize('_cat2',$lan).','.localize('_cat3',$lan).','.localize('_cat4',$lan).',';		
+		
+			$myfields .= 'active,view,search';
+			$mytitles .= localize('_active',getlocal()) . ',' . localize('_view',getlocal()) . ',' . localize('_search',getlocal());
+
+			$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
+
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|1|");	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|5|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat1|".localize('_cat0',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat2|".localize('_cat1',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat3|".localize('_cat2',getlocal())."|10|1|");				
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat4|".localize('_cat3',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat5|".localize('_cat4',getlocal())."|10|1|");			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}1|".localize('_cat0',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|10|1|");				
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
+			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+			return ($out);
+		}
+	
+    }
+  	
   
     function add_category($category=null) {
        $db = GetGlobal('db'); 

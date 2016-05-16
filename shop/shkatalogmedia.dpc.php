@@ -156,13 +156,21 @@ class shkatalogmedia extends shkatalog {
 								 die($xml);	//xml output
 		                         break;
 		  //cart override
-	      case 'addtocart'     : 
-		  case 'removefromcart': 	                         
+	      case 'addtocart'     : $cartstr = explode(';', GetReq('a')); 
+		                         $item = array_shift($cartstr); 
+		                         GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use $item+cartin");
+		                         break; 
+		  case 'removefromcart': $cartstr = explode(';', GetReq('a'));
+		                         $item = array_shift($cartstr);
+		                         GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use $item+cartout");	                         
 		                         break;		
 		
 		  case 'showimage'    : $this->show_photodb(GetReq('id'), GetReq('type'));
 
-		  case 'kfilter'      : $this->my_one_item = $this->fread_list(GetReq('input')); 
+		  case 'kfilter'      : $filter = GetReq('input');
+		                        $this->my_one_item = $this->fread_list($filter); 
+								$_filter = $this->replace_spchars($filter,1);
+								GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use $_filter+filter");		  
 		                        break;		
 		  case 'klist'        : $this->my_one_item = $this->read_list(); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1 moved in func
 		                        GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use ".GetReq('cat'));		  
@@ -321,6 +329,8 @@ class shkatalogmedia extends shkatalog {
 		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;	
 		
 		if ($text2find) {
+			
+		  GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use $text2find+search");				
 		
 		  $parts = explode(" ",$text2find);//get special words in text like code:  
 	

@@ -1,17 +1,11 @@
 <?php
-$__DPCSEC['RCTRANSSQL2_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCTRANSSQL2_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if (!defined("RCTRANSSQL2_DPC"))  {
 define("RCTRANSSQL2_DPC",true);
 
 $__DPC['RCTRANSSQL2_DPC'] = 'rctranssql2';
-/*
-$a = GetGlobal('controller')->require_dpc('nitobi/nitobi.lib.php');
-require_once($a);
 
-$b = GetGlobal('controller')->require_dpc('nitobi/nhandler.lib.php');
-require_once($b);
-*/
 $d = GetGlobal('controller')->require_dpc('shop/rcsyncsql.dpc.php');
 require_once($d);
  
@@ -210,8 +204,8 @@ class rctranssql2 extends rcsyncsql {
        $link = GetGlobal('db');
 	   $dstyle = $this->datestyle?$this->datestyle:'dmY';
 	   
-	   if (($encfrom!=null) && ($encto!=null)) 
-	     echo "Encoding:" . $encfrom . "->" . $encto;
+	   //if (($encfrom!=null) && ($encto!=null)) 
+	     //echo "Encoding:" . $encfrom . "->" . $encto;
 	 
 	   if ($localexec!=null) {//bin file get in
 	     //html out to mail
@@ -241,7 +235,7 @@ class rctranssql2 extends rcsyncsql {
 	   else*/
 	   	 $steplimit = GetReq('endto')?GetReq('endto'):0;//get req for manual set
 		 
-	   echo 'LAST_TIME>',$lasttime;	 
+	   //echo 'LAST_TIME>',$lasttime;	 
 	   //print_r($this->syncfiles);
 	   
        if (is_array($this->syncfiles)) {
@@ -359,7 +353,7 @@ class rctranssql2 extends rcsyncsql {
 	   
       $result = $db->Execute($sSQL,2);
 	  $ret = $result->fields[0];//$na[0]?$na[0]:0;
-	  echo 'LAST_EXEC>',$ret;
+	  //echo 'LAST_EXEC>',$ret;
       if ($ret>0) {	  
 	  
 	   if ($returndiff) {
@@ -369,7 +363,7 @@ class rctranssql2 extends rcsyncsql {
 	                $today = date('d-m-Y');		  
 	                $lastrun = convert_date($ret,'-YMD');
 	                $expres = $this->date_diff($lastrun,$today);	 			
-	                echo 'DIFF>',$lastrun,'.',$today,'.',$expres,'<br>';			
+	                //echo 'DIFF>',$lastrun,'.',$today,'.',$expres,'<br>';			
 			
 			        return ($expres-1);
 		}//switch
@@ -789,7 +783,7 @@ function date_diff($start_date, $end_date, $returntype="d") {
 	   
 	   
        $difference = round(($end_date_stamp-$start_date_stamp)/$calc);
-	   echo 'DIFF-FUNC>',$difference;
+	   //echo 'DIFF-FUNC>',$difference;
 		  
 	   return $difference;  
    }

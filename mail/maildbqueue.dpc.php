@@ -51,6 +51,8 @@ class maildbqueue  {
 	var $mail_encoding;
 	
 	var $thisapp;
+	
+	var $cpanelmailpath;
 
 	function maildbqueue() {
 	  $UserSecID = GetGlobal('UserSecID'); 	
@@ -110,6 +112,9 @@ class maildbqueue  {
 	  $this->trackapp = remote_arrayload('MAILDBQUEUE','apptrack',$this->path);	  
 	  
 	  $this->thisapp = paramload('ID','instancename');	
+	  
+	  $rootpath = paramload('RCCONTROLPANEL','rootpath', $this->prpath);
+      $this->cpanelmailpath = $rootpath ? '/home/'.$rootpath.'/mail/' : '/home/stereobi/mail/';	 
 	}
 	
 	function event($event=null) {		
@@ -353,11 +358,11 @@ function init()
 		
     //excuted every hour sending mails to limit		
 	function sendmail_daemon($limit=null,$forcelimits=null) {
-         $db = GetGlobal('db'); 		
-		 //$limit = 2;//$limit?$limit:$this->batch;//batch in an hour or limit=3 in min		 
-		 $sumi = 0;
+        $db = GetGlobal('db'); 		
+		//$limit = 2;//$limit?$limit:$this->batch;//batch in an hour or limit=3 in min		 
+		$sumi = 0;
 		 
-		 if ($forcelimits) {//calibrate mail send queue
+		if ($forcelimits) {//calibrate mail send queue
 		 
 		   $boostlimits = $this->force_mail_limits($limit,$forcelimits);
 		   echo 'BOOST LIMITS ARRAY:';
@@ -367,23 +372,23 @@ function init()
 		       $mylimit  = array_shift($boostlimits);//root app always 1st
 		   else	   
                $mylimit = $limit;
-		 }
-         else
+		}
+        else
            $mylimit = $limit;		 
 		 
 		 
-		 echo "\r\nROOTAPP=",$mylimit,"\r\n";
+		echo "\r\nROOTAPP=",$mylimit,"\r\n";
 		 
-		 //first this db
-		 $sSQL = "select id,timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server from mailqueue where active=1 order by id ";
-		 if ($limit>0)
+		//first this db
+		$sSQL = "select id,timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server from mailqueue where active=1 order by id ";
+		if ($limit>0)
 		   $sSQL .= "limit " . $mylimit;//$limit
-		 else
+		else
 		   $sSQL .= "limit " . $this->batch; //max batch if 0  
 			 
-	     //echo $sSQL . '<br>';			
-	     $result = $db->Execute($sSQL,2);
-	     if (!empty($result)) {		   
+	    //echo $sSQL . '<br>';			
+	    $result = $db->Execute($sSQL,2);
+	    if (!empty($result)) {		   
 	       foreach ($result as $n=>$rec) {
 		       $id = $rec['id'];	     
 			   $from = $rec['sender'];//$user . '@' . $domain;
@@ -423,19 +428,25 @@ function init()
 		   }
 		   $sumi+=$i; //sum of messages of all app
 		   $ret .= '[mailqueue]'.$i.' message(s) send from root application!';
-	     }
-		 else {
+	    }
+		else {
 		   $ret .= '[mailqueue]...no messages to send from root application!';		 		 
 		   //in case of no message of prev app increase limit
 		   $limit+=$limit;
-		 }  
+		}  
+		
+        //SCAN FOR BOUNCED MAILS (this app)
+        $ret .= $this->scanBounce($from, false, $mylimit);		
+		
 		 
-		 echo 'DAEMON LOOP:<pre>';		 
-		 print_r($this->app_pool);
-		 echo '</pre>';	  
-		 //after all other apps
-		 if (!empty($this->app_pool)) {
-         foreach ($this->app_pool as $aid=>$ap) {
+		echo 'DAEMON LOOP:<pre>';		 
+		print_r($this->app_pool);
+		echo '</pre>';	  
+		
+		//after all other apps
+		if (empty($this->app_pool)) return;
+		
+        foreach ($this->app_pool as $aid=>$ap) {
 		 
 		   //$this->switch_db($ap);
 		   GetGlobal('controller')->calldpc_method('database.switch_db use '.$ap);		 
@@ -451,7 +462,7 @@ function init()
 		   if ($forcelimits) {
 		     $force_limit = $boostlimits[$ap];
 		     $mylimit = $force_limit; 
-		     echo "\r\nFORCE LIMITS:".$ap.'='.$mylimit."\r\n";
+		     echo "\r\nFORCE LIMITS:".$ap.'='.$mylimit;
 		   }
            else
              $mylimit = $limit;		   
@@ -522,7 +533,7 @@ function init()
 			   }
 			   else {//invalid email address...disable it
 			        //echo $to,"\r\n";   
-					$sSQL = "update mailqueue set timeout=".$db->qstr($datetime).
+					$sSQL = "update mailqueue set status=-1,timeout=".$db->qstr($datetime).
 			           ",mailstatus=".$db->qstr('Invalid email address').
 			  		   ",active=" . $active .
 					   " where id=" . $id;
@@ -532,15 +543,18 @@ function init()
 			   $result = $db->Execute($sSQL,1);
 		     }
 		     $sumi+=$i; //sum of messages of all app
-		     $ret .= '[mailqueue]'.$i.' message(s) send from application '. $ap .'!';
+		     $ret .= "\r\n[mailqueue]".$i.' message(s) send from application '. $ap ."!";
 	       }		   	 
 		   else {
-		     $ret .= '[mailqueue]...no messages to send from application '. $ap .'!';
+		     $ret .= "\r\n[mailqueue]...no messages to send from application ". $ap .'!';
 		     //in case of no message of prev app increase limit
 		     $limit+=$limit;			 	
-		   }	 
+		   }	
+
+           //SCAN FOR BOUNCED MAILS
+           $ret .= $this->scanBounce($from, false, $mylimit);
+		   
 		}//app loop
-		}//if
 		
 		return ($ret);   
     }	
@@ -991,7 +1005,75 @@ function init()
 		 $tid = date('YmdHms') . $i . 'a@' . $this->appname;		 
 		 
 		 return ($tid);	
-	}			
+	}	
+
+
+	public function scanBounce($sender, $delete=false, $maxfiles=null) {
+		$maxf = $maxfiles ? $maxfiles : $this->batch;
+		//$maxbatch = 2400; //100*24
+		$db = GetGlobal('db'); //for every app in cycle or def(this) app
+		
+		if (!$sender) return ("Scan bounce sender not exists \r\n");
+		$mp = explode('@',$sender);
+		$app_sendermailfolder = $mp[1] . '/' . str_replace('.','_',$mp[0]) . '/cur/';
+		$senderfolder = $this->cpanelmailpath . $app_sendermailfolder;		
+		$folder = is_dir($senderfolder) ? $senderfolder : null;
+		echo "\r\nSender folder:" . $folder;
+		if (!$folder) return false;
+		
+		//$daysback = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
+		$ret = null;
+		
+		$mfiles = scandir($folder, SCANDIR_SORT_DESCENDING); //desc
+		if (empty($mfiles)) return ($folder . " : Empty\n");	
+		
+		$c = count($mfiles);
+		$max = ($c<$maxf) ? $c : $maxf;		
+		
+		$bouncehandler = new Bouncehandler();
+		
+		for ($f=0;$f<=$max;$f++) {
+			
+			$file = $mfiles[$f];
+			
+			if ($file=='.' || $file=='..') continue; 
+			
+			$fsize = filesize($folder . $file);
+			if  ($fsize<(1024*20)) { //20kb max
+			
+			  echo "\r\n" . $folder . ' : ' . $file;
+			  $bounce = @file_get_contents($folder . $file);
+			  $rep = $bouncehandler->parse_email($bounce); 
+			  if ($a = $bouncehandler->is_a_bounce()) { 
+				$to = $rep[0]['recipient'];
+				
+				$sSQL = "select failed from ulists where email=" . $db->qstr($to);
+				$result = $db->Execute($sSQL,2);
+		
+				$xtimes = $result->fields[0] ? intval($result->fields[0])+1 : 1;
+		
+				$sSQL = 'update ulists set failed=' . $xtimes . " where email=" . $db->qstr($to);
+				$result = $db->Execute($sSQL,1);
+
+				//also update mailqueue (last sending mail)		
+				$sSQL = "select id from mailqueue where active=0 and receiver=" . $db->qstr($to) . " order by id desc LIMIT 1";
+				$result = $db->Execute($sSQL,2);
+						
+				$sSQL = "update mailqueue set status=-2, mailstatus='BOUNCE' where id=" . $result->fields[0];
+				$result = $db->Execute($sSQL,1);
+
+				$ret .= "\r\n" . $file;
+				$ret .= " was last modified: " . date ("d m Y H:i:s.", filemtime($folder . $file));
+				$ret .= " Send to: " . $to ."\r\n";
+				if ($delete==true) {
+					$ret .= "Deleted\r\n";
+					unlink($folder . $mfiles[$f]);
+				}				
+			  }//is bounce
+			}//filesize
+		}
+		return $ret;			
+	}	
 
 };
 }	

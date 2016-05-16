@@ -243,7 +243,7 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 		return false;			
 	}	
 
-	public function update_item_statistics($id) {
+	public function update_item_statistics($id, $attr1=null, $iref=null) {
         $db = GetGlobal('db'); 
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
@@ -254,18 +254,22 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 	    $mymonth= date('m',$currentdate);	
 	    $myyear = date('Y',$currentdate);
 
-		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : '');
+		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : ($iref ? $iref : ''));
 		$cmail = $this->mc ? base64_decode($this->mc) : '';		
 						
-		$sSQL = "insert into stats (date,day,month,year,tid,attr2,attr3,ref) values (";
-		$sSQL.= $mydate . ",";
+		//$sSQL = "insert into stats (date,day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
+		$sSQL = "insert into stats (day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
+		//$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
 		$sSQL.= $myyear . ",";						
 		$sSQL.= $db->qstr($id) . ',';
         $sSQL.= $db->qstr($name) . ','; 
 		$sSQL.= $db->qstr($cmail) . ',';
-		$sSQL.= $db->qstr($ref) . ")";
+		$sSQL.= $db->qstr($ref) . ",";		
+		$sSQL.= $db->qstr($attr1) . ",";
+		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
+		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ")";			
 		//echo $sSQL;
 		$db->Execute($sSQL,1);	 		
 		if ($db->Affected_Rows()) 
@@ -274,7 +278,7 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 		  return false;		
 	}
 
-	public function update_category_statistics($cat) {
+	public function update_category_statistics($cat, $tid=null, $iref=null) {
         $db = GetGlobal('db'); 
 
         $UserName = GetGlobal('UserName');		
@@ -285,18 +289,22 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 	    $mymonth= date('m',$currentdate);	
 	    $myyear = date('Y',$currentdate);	
 		
-		$ref = $this->cid ? $this->cid : '';
-		$cmail = $this->mc ? base64_decode($this->mc) : ($this->hashtag ? $this->hashtag : '');
+		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : ($iref ? $iref : ''));
+		$cmail = $this->mc ? base64_decode($this->mc) : '';
 
-		$sSQL = "insert into stats (date,day,month,year,attr1,attr2,attr3, ref) values (";
-		$sSQL.= $mydate . ",";
+		//$sSQL = "insert into stats (date,day,month,year,attr1,attr2,attr3,ref,tid,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
+		$sSQL = "insert into stats (day,month,year,attr1,attr2,attr3,ref,tid,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
+		//$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
 		$sSQL.= $myyear . ",";						
 		$sSQL.= $db->qstr($cat) . ",";		
 		$sSQL.= $db->qstr($name) . ","; 
 		$sSQL.= $db->qstr($cmail) . ",";
-		$sSQL.= $db->qstr($ref) . ")";
+		$sSQL.= $db->qstr($ref) . ",";		
+		$sSQL.= $db->qstr($tid) . ",";
+		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
+		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ")";		
 		//echo $sSQL;		
 		$db->Execute($sSQL,1);	 		
 
