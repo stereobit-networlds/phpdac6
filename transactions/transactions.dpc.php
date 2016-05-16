@@ -231,7 +231,7 @@ class transactions {
 		  $myid = $this->initial_word . $id;  
 	      //$mydate = date('d/m/Y');//get_date("d/m/y");
           $mydate = date('Y/m/d'); //mysql...
-	      $mytime = date('h:i:s A');//get_date("h:n");
+	      $mytime = date('H:i:s');//get_date("h:n");
 	      $mydata = $data;
 		  
 	      if ($this->storetype=='DB') { 
