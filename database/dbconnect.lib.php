@@ -14,7 +14,7 @@ class dbconnect {
    var $sql_buffer;
    var $sql_depth;
    
-   var $saveSql, $excludeTables;
+   var $saveSql, $excludeTables, $replicateSql, $repServer;
 
    function __construct($type=null,$model=null,$errorid=null) {
    
@@ -28,6 +28,8 @@ class dbconnect {
 	 $this->sql_depth = 0;
 	 
      $this->saveSql = false;
+	 $this->replicateSql = false;
+	 $this->repServer = null;
      $this->excludeTables = array('mailqueue', 'panalyze', 'pphotos', 'stats', 'syncsql');	  	 
    }
    

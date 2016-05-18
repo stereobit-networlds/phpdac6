@@ -33,6 +33,8 @@
 	Latest Download at http://adodb.sourceforge.net/
 
  */
+ 
+static $_PHPDAC_SQL_BUFFER = array(); //<<<
 
 if (!defined('_ADODB_LAYER')) {
 	define('_ADODB_LAYER',1);
@@ -47,7 +49,10 @@ if (!defined('_ADODB_LAYER')) {
 	 * This constant was formerly called $ADODB_RootPath
 	 */
 	if (!defined('ADODB_DIR')) {
-		
+	  //////////////////////////////////////////////SHARED MEMORY
+	  /*if (GetGlobal('Contoller')->shm) 
+	    define('ADODB_DIR',"phpdac://system/extensions/adodb");
+	  else*/		
 		define('ADODB_DIR',dirname(__FILE__));
 	}
 
@@ -1213,7 +1218,25 @@ if (!defined('_ADODB_LAYER')) {
 			}
 		} else {
 			$ret = $this->_Execute($sql,false);
-		}	
+		}
+		
+		static $_PHPDAC_SQL_BUFFER = array();
+
+        //sql buffer
+		//print_r($ret);
+		//if (!empty($ret->fields)) {//no matter if result is empty
+		  $data = $ret->fields;
+		  $sql = $ret->sql;
+		  $cclass = null;//>php5.3.0 get_called_class();
+		  $brec = array('data'=>$data,'query'=>$sql,'class'=>$cclass);
+		
+		  array_push($_PHPDAC_SQL_BUFFER,$brec);
+		  //echo '<pre>';
+		  //print_r($_PHPDAC_SQL_BUFFER);
+		  //echo '</pre>';		  
+		  
+		  SetGlobal('_sqlbuffer',$_PHPDAC_SQL_BUFFER);
+		//}  		
 
 		return $ret;
 	}
