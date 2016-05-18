@@ -280,7 +280,7 @@ class rctranssql2 extends rcsyncsql {
 	  //echo '>>>>'.$path.','.$rpath.','.$this->urlpath;
       $myfile = @file_get_contents($rpath . $file); //path can be used only when stand alone call 
 	  
-      $today = date("Y-m-d h:m:s");	  
+      $today = date("Y-m-d H:m:s");	  
 	  $sqldate = $sourcedate?$sourcedate:$today;
 	  
       if ($myfile) {
@@ -411,7 +411,7 @@ class rctranssql2 extends rcsyncsql {
 	
 	function run_sql($recid=null,$localexec=null) {
       $db = GetGlobal('db');
-      $now = date("Y-m-d h:m:s");
+      $now = date("Y-m-d H:m:s");
       $br = "\r\n";	  
 	  
 	   if ($localexec!=null) {//bin file get in
@@ -479,7 +479,7 @@ class rctranssql2 extends rcsyncsql {
 	
 	function rerun_sql() {
       $db = GetGlobal('db');
-      $now = date("Y-m-d");	  	
+      $now = date("Y-m-d H:m:s");	  	
 	  
 	  if ($recid = GetReq('id')) {
 	    $sSQL = "select id,sqlquery from syncsql where status<=0";

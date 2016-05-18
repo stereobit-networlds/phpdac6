@@ -1,22 +1,16 @@
 <?php
 
-$__DPCSEC['ADMDBUSER_']='8;1;1;1;1;1;1;8;9'; //combine webos users with db sys or common users
+$__DPCSEC['ADMDBUSER_']='8;1;1;1;1;1;1;8;9;9;9'; 
 
 if (!defined("DATABASE_DPC"))  {
 define("DATABASE_DPC",true);
 
 $__DPC['DATABASE_DPC'] = 'database';
 
-$__PRIORITY['DATABASE_DPC'] = 1; //under construction
+$__PRIORITY['DATABASE_DPC'] = 1;
 
-
-//require_once ("adodb/adodb.inc.php"); //LOADED AS EXTENSION
-//include_once("adodb/adodb-pager.inc.php"); adodb pager system
-
-//require_once("dbconnect.lib.php");
-//GetGlobal('controller')->include_dpc('database/dbconnect.lib.php');
 $d = GetGlobal('controller')->require_dpc('database/dbconnect.lib.php');
-require_once($d);//GetGlobal('controller')->require_dpc('database/dbconnect.lib.php'));
+require_once($d);
 
 class database {
 
@@ -29,7 +23,7 @@ class database {
 	  $db = GetGlobal('db');
 	  
       $this->path = paramload('SHELL','prpath');  
-	  $this->hosted_path = $this->path;	 	  	  
+	  $this->hosted_path = $this->path;	 
 	  
 	  //echo '>>>>>>>>>>>>>',paramload('DATABASE','dbhost');
 	  $this->dbp = &$db;
@@ -84,20 +78,19 @@ class database {
 
         //$result = $db->Execute($sSQL);
         //print_r($result->GetRows());
- /*     $i=0;
+        /*
+		$i=0;
         while(!$result->EOF) {
          $i+=1;
          print "$i>" . $result->fields[0] ."\n";
 	     $result->MoveNext();
 	    }
-	    print "Êשהיךüע";
-*/
+        */
      }
    }
    
 	function switch_db($appname=null,$rootdb=null,$returnpointer=null, $check_object=false) {
       if ($appname) {
-		 //$this->hosted_path = $this->path . 'instances/' . $appname . '/' ;
 		 $this->hosted_path = $this->path . '../' . $appname . '/cp/' ;
 	  }
 	  //else

@@ -13,6 +13,8 @@ class dbconnect {
    
    var $sql_buffer;
    var $sql_depth;
+   
+   var $saveSql, $excludeTables;
 
    function __construct($type=null,$model=null,$errorid=null) {
    
@@ -24,6 +26,32 @@ class dbconnect {
 	 
 	 $this->sql_buffer = array();
 	 $this->sql_depth = 0;
+	 
+     $this->saveSql = false;
+     $this->excludeTables = array('mailqueue', 'panalyze', 'pphotos', 'stats', 'syncsql');	  	 
+   }
+   
+   protected function SaveSqlQuery($sql=null) {
+	    if ((!$sql) || ($this->saveSql==false)) return false;
+		
+		$today = date("Y-m-d H:m:s");	
+	   
+	    //check for (insert) excludes
+		foreach ($this->excludeTables as $t=>$table) {	
+			if (stristr($sql, 'insert into ' . $table))
+				return false;
+		}
+		
+		//check fro ins/upd/del sql query (1/2 execute param deprecated)
+		if ((stristr($sql, 'insert ')) || (stristr($sql, 'update ')) || (stristr($sql, 'delete '))) {
+			$qry = str_replace('"','\"',trim($sql));
+			$sSQL = "insert into syncsql (fid,date,execdate,status,reference,sqlquery) values (1,\"$today\",\"$today\",1,\"system\",\"" . $qry . "\")";
+			$res = $this->db->query($sSQL);
+     
+			return (true);
+		}
+
+		return false;	
    }
    
    public function Connect($host,$user,$password,$name) {
@@ -41,13 +69,6 @@ class dbconnect {
 	 } 
 	 else { //sqlite = default
 	   //echo $name;
-       /*if ($this->db = sqlite_open($name, 0666, $sqliteerror)) { 
-         echo extension_loaded('sqlite'),'xxx';
-	     $a = get_loaded_extensions();
-	     print_r($a);
-	     echo $name,'>';
-	   }*/
-	 
 	   try {
 	     $this->db = new SQLiteDatabase($name, 0666, $sqliteerror); //OBJECT
 	   
@@ -110,6 +131,10 @@ class dbconnect {
 	 if (($this->model=='ADODB') && (defined(_ADODB_))) {
 	 
 	      $ret = $this->db->Execute($sql);
+		  
+		  /***** SAVE SQL *****/
+		  //if ($execute==1) //insert update delete
+		    $s = $this->SaveSqlQuery($sql);	
 	 } 
 	 elseif (($this->model=='IORADRV') && (defined(_IORADRV_))) {
 
@@ -118,22 +143,26 @@ class dbconnect {
              $ret = new OracleRecordset($this->db->execute($sql));		  
 		  }
 		  elseif ($debug)
-		     echo "iOracleDriver:Connection error!!!";  
+		     echo "iOracleDriver:Connection error!!!";
+
+		  /***** SAVE SQL *****/
+		  //if ($execute==1) //insert update delete
+			$s = $this->SaveSqlQuery($sql);				 
 	 } 	 
 	 else { //sqlite = default
-          if ($execute==1)//resultless
-			  //$ret = sqlite_exec($this->db, $sql);
-			  //$ret = $this->db->exec($sql);!!!!!!!!error
-			  //echo $sql;
+          if ($execute==1)
 			  $ret = $this->db->query($sql);
 		  elseif ($execute==2) 
-			  //$ret = sqlite_query($this->db, $sql);	//buffered
 			  $ret = $this->db->query($sql);
 		  elseif ($execute==3) //multiple ; sql
 		  	  $ret = $this->db->queryExec($sql);		  
 		  else 
 			  //$ret = sqlite_unbuffered_query($this->db, $sql);	
 			  $ret = $this->db->unbufferedQuery($sql);
+			  
+		  /***** SAVE SQL *****/
+		  //if ($execute==1) //insert update delete
+			$s = $this->SaveSqlQuery($sql);			  
 		  
 		  //echo $this->db->lastError(),'>>>>>>>>>>>>>>';
 		  if ($debug) {
@@ -412,26 +441,8 @@ class dbconnect {
          $ret = $this->db->getNCols();
 	 }	 
 	 else {   
-	    /* $sql = 'select * from ' . $table . "where rowid=1";
-		 //$result = sqlite_exec($sql);
-		 $result = $this->db->query($sql);
-		 
-         //$ret = sqlite_num_fields($result); //test
-		 $ret = $this->sql_num_fields($result);*/
-		 //echo $table;
-		 
          $q = $this->db->query("PRAGMA table_info('$table')");
 		 $ret = $q->fetchAll();	 
-		 
-         //$result = $this->db->query("SELECT * FROM sqlite_master WHERE type='table'");// AND name='$table'");
-         //$ret = $result->numRows();		 
-		 //echo '>>>>>>>>>>>>>>>>>>',$ret;
-		 //print_r($result);
-		 
-		 //$ret2 = $result->fetchAll();
-		 //echo "<pre>";
-		 //print_r($ret2);
-		 //echo "</pre>";
 	 }
    
      return ($ret);   
