@@ -398,7 +398,7 @@ class rcanalyzer {
 		
 		foreach ($result as $z=>$rec) {
 
-			$ip = $rec['$HTTP_X_FORWARDED_FOR'] ? $rec['$HTTP_X_FORWARDED_FOR'] : $rec['REMOTE_ADDR'];
+			$ip = $rec['HTTP_X_FORWARDED_FOR'] ? $rec['HTTP_X_FORWARDED_FOR'] : $rec['REMOTE_ADDR'];
 			
 			/*if ((stristr($rec[0], 'select')) || (stristr($rec[0], 'union')) || (stristr($rec[0], 'name_const')) ||
 				(stristr($rec[0], 'from')) || (stristr($rec[0], 'hex')) || (stristr($rec[0], 'unhex')) ||			

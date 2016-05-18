@@ -721,15 +721,14 @@ window.setTimeout(\"neu()\",$mytimeout);
 			  $datasqltype[] = trim($fd);
 		 }  
 								 
-		 foreach ($field_names as $fn=>$name) {
-								 
-		   $sqlupadate[] = $name.'='.$datasqltype[$fn];
-		 }
+		 foreach ($field_names as $fn=>$name) {				 
+		   $sqlupdate[] = $name.'='.$datasqltype[$fn];
+
          $sSQL.= implode(',',$sqlupdate);
 								 
 		 foreach ($extra_field_names as $fne=>$namee) {
 		   $value = $this->replace_params($extra_field_values[$fne]);
-		   $sqlupadate2[] = $namee.'='.$value;
+		   $sqlupdate2[] = $namee.'='.$value;
 		 }
 								 
          $sSQL.= implode(',',$sqlupdate2); 								  
