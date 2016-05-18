@@ -1105,7 +1105,8 @@ if (!defined('_ADODB_LAYER')) {
 				return $ret;
 			}
 		}
-		if ($inputarr !== false) {
+		//if ($inputarr !== false) {
+		if (($inputarr !== false) && (!is_numeric($inputarr))) { //<<<<<<<<<<<<<<<<< 1,2 execute param (compatibility issue)
 			if (!is_array($inputarr)) {
 				$inputarr = array($inputarr);
 			}
