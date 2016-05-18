@@ -1,29 +1,34 @@
 <?php
 
-$__DPCSEC['ADMDBUSER_']='8;1;1;1;1;1;1;8;9;9;9'; 
+$__DPCSEC['ADMDBUSER_']='8;1;1;1;1;1;1;8;9'; //combine webos users with db sys or common users
 
 if (!defined("DATABASE_DPC"))  {
 define("DATABASE_DPC",true);
 
 $__DPC['DATABASE_DPC'] = 'database';
 
-$__PRIORITY['DATABASE_DPC'] = 1;
+$__PRIORITY['DATABASE_DPC'] = 1;//under construction
 
 $d = GetGlobal('controller')->require_dpc('database/dbconnect.lib.php');
 require_once($d);
 
 class database {
 
-   var $userLevelID;
-   var $dbp;
-   var $path, $hosted_path;
+    var $userLevelID;
+    var $dbp;
+    var $path, $hosted_path;
+	
+	var $serviceMode;
 
-   function database() {
+    function __construct() {
       static $i;
 	  $db = GetGlobal('db');
 	  
       $this->path = paramload('SHELL','prpath');  
 	  $this->hosted_path = $this->path;	 
+	  
+	  $smode = paramload('SHELL','servicemode'); 
+	  $this->serviceMode = $smode ? true : false;
 	  
 	  //echo '>>>>>>>>>>>>>',paramload('DATABASE','dbhost');
 	  $this->dbp = &$db;
@@ -86,8 +91,36 @@ class database {
 	     $result->MoveNext();
 	    }
         */
+		
+		
+		///////////////////////////////////////// check service mode
+		if ($this->serviceMode==true)
+			die('Temporary unavailable. (service mode)');
+		
+		///////////////////////////////////////// check blacklist ip
+		$this->checkBlackListIP();
      }
-   }
+    }
+   
+    protected function checkBlackListIP() {
+		$db = GetGlobal('db');
+		$clientip = $_SERVER['REMOTE_ADDR']; //$_SERVER['HTTP_X_FORWARDED_FOR']
+		//echo $clientip;
+		
+		$sSQL = "select REMOTE_ADDR from blacklistip where status=1 and REMOTE_ADDR=" . $db->qstr($clientip);
+		//echo $sSQL;
+		$result = $db->Execute($sSQL);
+		
+		if ($result->fields[0]) 
+			die("IP blocked. ($clientip)");
+		
+		$i=0;
+		while(!$result->EOF) {
+         $i+=1;
+         print "$i>" . $result->fields[0] ."\n";
+	     $result->MoveNext();
+	    }
+	}
    
 	function switch_db($appname=null,$rootdb=null,$returnpointer=null, $check_object=false) {
       if ($appname) {

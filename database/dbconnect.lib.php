@@ -27,7 +27,7 @@ class dbconnect {
 	 $this->sql_buffer = array();
 	 $this->sql_depth = 0;
 	 
-     $this->saveSql = false;
+     $this->saveSql = true; //false;
 	 $this->replicateSql = false;
 	 $this->repServer = null;
      $this->excludeTables = array('mailqueue', 'panalyze', 'pphotos', 'stats', 'syncsql');	  	 

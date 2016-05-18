@@ -721,7 +721,7 @@ window.setTimeout(\"neu()\",$mytimeout);
 			  $datasqltype[] = trim($fd);
 		 }  
 								 
-		 foreach ($field_names as $fn=>$name) {				 
+		 foreach ($field_names as $fn=>$name) 			 
 		   $sqlupdate[] = $name.'='.$datasqltype[$fn];
 
          $sSQL.= implode(',',$sqlupdate);

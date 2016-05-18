@@ -426,10 +426,16 @@ class rcanalyzer {
 			if ($point > $pm) {
 				$blacklist[] = $ipaddr;
 				
-				//write to db
-				$sSQL = "insert into blacklistip (REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values ('$ipaddr','$ipaddr')";
-				$result = $db->Execute($sSQL,1); 					
+				$sSQL = "select REMOTE_ADDR from blacklistip where REMOTE_ADDR=" . $db->qstr($ipaddr);
+				$result = $db->Execute($sSQL,2); 
 				
+				//write to db
+				if ($result->fields[0]) 
+					$sSQL = "update blacklistip set status=1 WHERE REMOTE_ADDR=" . $db->qstr($ipaddr);
+				else 
+					$sSQL = "insert into blacklistip (REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values ('$ipaddr','$ipaddr')";					
+				
+				$result = $db->Execute($sSQL,1); 
 				$this->storeMessage('Security alert ip blocked ('. $ipaddr . ')', true, 'warning');
 			}	
 		}
