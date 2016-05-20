@@ -36,8 +36,7 @@ class AuthIPP {
             list($this->name, $this->pass) = explode(':', base64_decode($matches[1]));
             $_SERVER['PHP_AUTH_USER'] = strip_tags($this->name);
             $_SERVER['PHP_AUTH_PW'] = strip_tags($this->pass);
-		    //self::write2disk('prompt.log',$_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW']."\r\n");
-		
+		    //self::write2disk('auth.log',$_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW']."\r\n");
 		}		
 	
 		if ($this->auth_type==='OAUTH') {
@@ -70,10 +69,7 @@ class AuthIPP {
     public function http_auth() {
 	
 	    switch ($this->auth_type) {
-			
-		    case 'PHPDAC': $username = self::phpdac_http();
-			               return ($username);
-                           break;			
+					
 		    case 'OAUTH' : $username = self::oAuth_http();
 			               return ($username);
                            break;
@@ -155,43 +151,9 @@ class AuthIPP {
     }
 
 	protected function http_basic() {
-	    /*
-		if (isset($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/Basic\s+(.*)$/i', $_SERVER['HTTP_AUTHORIZATION'], $matches)) {
-          list($name, $password) = explode(':', base64_decode($matches[1]));
-          $_SERVER['PHP_AUTH_USER'] = strip_tags($name);
-          $_SERVER['PHP_AUTH_PW'] = strip_tags($password);	  
-		}//BASIC AUTH MY DEVMD _SERVER PARAM
-	    //.htaccess for cgi php last rule = RewriteRule .* - [E=DEVMD_AUTHORIZATION:%{HTTP:Authorization}] 
-		elseif (isset($_SERVER['DEVMD_AUTHORIZATION']) && preg_match('/Basic\s+(.*)$/i', $_SERVER['DEVMD_AUTHORIZATION'], $matches)) {
-          list($name, $password) = explode(':', base64_decode($matches[1]));
-          $_SERVER['PHP_AUTH_USER'] = strip_tags($name);
-          $_SERVER['PHP_AUTH_PW'] = strip_tags($password);
-        }	
-	    */
 		
-		if ($this->hash_schema)
-		    $p_pass = hash($this->hash_schema,$this->pass); //hash comparison
-		else
-            $p_pass = $this->pass; 		
-		
-		if ((array_key_exists($this->name, $this->allowed_users)) &&
-		    ($this->allowed_users[$this->name]== $p_pass)) {
-          
-		  //ipp access
-          $username = $this->name; 
-		
-		  //http access...save user/pass
-		  $_SESSION['user'] = $this->name;
-		  //$_SESSION['pass'] = $_SERVER['PHP_AUTH_PW']; //no need
-          		  
-		  return ($username);
-		} 	
-		return false;
-	}
-	
-	protected function phpdac_http() {
-		
-		if (class_exists('pcntl', true)) {
+		if (class_exists('pcntl', true)) { //PHPDAC db
+			
 			$page = &new pcntl('
 super rcserver.rcssystem;
 load_extension adodb refby _ADODB_; 
@@ -200,27 +162,54 @@ super database;
 ',1);	
 
 			$db = GetGlobal('db');
-			$sSQL = "SHOW TABLE STATUS";
-			$result = $db->Execute($sSQL,2);	
+			$sSQL = "SELECT username, notes FROM users"; 
+			$sSQL .= " WHERE username ='" . $this->name . "' AND password='" . md5($this->pass) . "'";
+			$sSQL .= " and seclevid>5";	// 7 or higher
+			$result = $db->Execute($sSQL,2);
+
+			self::write2disk('auth.log',"PHPDAC db auth\r\n");	
 			
 			if (!empty($result)) { 
-			    $res = null;
-				foreach ($result as $t=>$rec) {
-					$res .= $rec['Name'] . ',';
-					$sSQL = "select count(id) from " . $rec['Name'];
-					$tableresult = $db->Execute($sSQL,2);
-					@file_put_contents($this->admin_path . $rec['Name'] . '.log', $tableresult->fields[0]);	
+			
+			    if (($result->fields['username']) && (strcmp(trim($result->fields['notes']),"DELETED")!=0)) {
+										
+					//ipp access
+					$username = $this->name; 
+					//http access...save user/pass
+					$_SESSION['user'] = $this->name;					
+					
+					$username = $result->fields['username'];
+					self::write2disk('auth.log',"$username : login\r\n");					
+					
+					return ($username);
 				}
-				$ret = @file_put_contents($this->admin_path . 'result.log', $res);	
-				
-				//...
 			}
+			else
+				self::write2disk('auth.log',"$this->name : login failed.\r\n");
 		}
-		else
-			$username = $this->http_basic();
+		else { //BASIC		
+		
+			if ($this->hash_schema)
+				$p_pass = hash($this->hash_schema,$this->pass); //hash comparison
+			else
+				$p_pass = $this->pass; 		
+		
+			if ((array_key_exists($this->name, $this->allowed_users)) &&
+				($this->allowed_users[$this->name]== $p_pass)) {
+          
+				//ipp access
+				$username = $this->name; 
+		
+				//http access...save user/pass
+				$_SESSION['user'] = $this->name;
+				//$_SESSION['pass'] = $_SERVER['PHP_AUTH_PW']; //no need
+          		  
+				return ($username);
+			}
 
-		return ($username);	
-	}	
+        }		
+		return false;
+	}
 	
 	protected function http_simple() {
 	    //based only on names
