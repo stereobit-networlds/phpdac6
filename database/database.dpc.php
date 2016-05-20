@@ -113,13 +113,15 @@ class database {
 		
 		if ($result->fields[0]) 
 			die("IP blocked. ($clientip)");
-		
+		/*
 		$i=0;
 		while(!$result->EOF) {
          $i+=1;
-         print "$i>" . $result->fields[0] ."\n";
+         //print "$i>" . $result->fields[0] ."\n";
 	     $result->MoveNext();
-	    }
+	    }*/
+		
+		return true;
 	}
    
 	function switch_db($appname=null,$rootdb=null,$returnpointer=null, $check_object=false) {

@@ -8,7 +8,7 @@ define(_APPNAME_,$environment['appname']);
 define(_APPPATH_,$environment['apppath']);
 define(_DPCTYPE_,$environment['dpctype']);
 define(_PRJPATH_,$environment['prjpath']);
-define(_DPCPATH_,_APPPATH_.$environment['dpcpath']);//echo _DPCPATH_;
+define(_DPCPATH_,_APPPATH_.$environment['dpcpath']);//echo _APPPATH_;
 define(_ISAPP_,$environment['app']);
 
 //echo _DPCPATH_; print_r($environment); echo getcwd();
@@ -23,7 +23,7 @@ require_once(_DPCPATH_."/system/system.lib.php");
 require_once(_DPCPATH_."/system/client.lib.php");
 require_once(_DPCPATH_."/system/ccpp.lib.php");
 
-require_once(_DPCPATH_."/shell/phtml.lib.php");//HTML OUTPUT MUST BE ENABLED !!!!
+//require_once(_DPCPATH_."/shell/phtml.lib.php");//HTML OUTPUT MUST BE ENABLED !!!!------------------------
 
 require_once("controller.lib.php");
 
@@ -32,8 +32,6 @@ $__DPC['PCNTL_DPC'] = 'pcntl'; //must exist to communicate with others dpcs as c
 
 $__ACTIONS['PCNTL_DPC'][1]='index';//dummy
 $__ACTIONS['PCNTL_DPC'][2]='default';//dummy
-
-$__DPCSEC['_PCNTLADMIN']='9;1;1;1;1;1;1;9;9';
 
 class pcntl extends controller {
 
@@ -55,25 +53,23 @@ class pcntl extends controller {
    var $map;
    var $sysauth;
    var $local_security;
-   var $preprocessor, $preprocess;   
+   var $preprocessor, $preprocess;    
 
    function __construct($code=null,$preprocess=null,$locales=null,$css=null,$page=null) { 
 
       // CACHE CONTROL 
       //session.cache_limiter specifies cache control method to use for session pages (none/nocache/private/private_no_expire/public). 
       //session_cache_limiter('nocache'); //private_no_expire//'nocache');
-  
  
-      session_start(); 
 	  
 	  $this->local_security = array();
    
       //echo ">>",$_SERVER['QUERY_STRING'];
 	  $this->remoteapp = null;   
 	  $this->map = null;	
-		 
-	  $this->_loadinifiles(); 
 	 
+	  $this->_loadinifiles(); 
+
 	  if (paramload('SHELL','rewrite')) 
 	   $this->rewrite();
    
@@ -83,21 +79,14 @@ class pcntl extends controller {
 	  controller::__construct('ON');//yes dac,no dacpost...
 	  
 	  $this->root_page = paramload('SHELL','filename');
-	  
-	  if ($editmode = GetReq('editmode')) {
-	    if ($editmode>0) {
-	      SetSessionParam('__EDITMODE',$editmode);
-		  define('__EDITMODE',true);
-		}
-		elseif ($editmode<0) {
-          SetSessionParam('__EDITMODE',null);
-		  define('__EDITMODE',null);		
-		}
-	  }
-	  else
-	    $editmode = GetSessionParam('__EDITMODE');
-	  
 	  $this->debug = paramload('SHELL','debug');	
+	  
+      //set path to save sessions
+      /*  session_save_path(paramload('SHELL','sespath'));
+        //$sespath = session_save_path();
+        //print "$sespath";	  
+        session_start(); 	  */
+	  //}
 	  
 	  //register self as global controller and dispatcher
       SetGlobal('controller',$this);
@@ -106,25 +95,7 @@ class pcntl extends controller {
       $__DPCMEM = GetGlobal('__DPCMEM');		    	 
       $__DPCMEM['PCNTL_DPC'] =  &$this; 
 	  SetGlobal('__DPCMEM',$__DPCMEM);
-	  		  
-	  
-	  //check if encoded url query
-	  $encURL = paramload('SHELL','encodeurl');
-	  if (isset($encURL)) decode_url($encURL); 
-
-	  if (GetSessionParam('REMOTEAPPSITE'))//remote app
-	    $this->inpath = null;//no path needed
-	  else	
-	    $this->inpath = paramload('ID','hostinpath');
-
-	  //client preselection
-      //SetGlobal('__USERAGENT','HTML');	  
-	  $client = new client;	 
-	  $this->agent = $client->getClient();
-	  unset ($client);	
-	  SetGlobal('__USERAGENT',$this->agent);
-	  
-	  
+	  		 
 	  //get file info (default=php_self else $page)
 	  if ($page) {
 	    $this->file_info = $page;
@@ -151,20 +122,23 @@ class pcntl extends controller {
 	  //$this->css = $this->getCSS();		  	  
 	  //echo $this->theme;
 	  //languange pre-selection
-      $this->languange = $locales ? $locales :(getlocal() ? getlocal() : 0);//paramload('SHELL','dlang'));
-	  if ($this->languange) //manual set
-	    setlocal($this->languange);	 
+      $this->languange = (getlocal() ? getlocal() : 0);//paramload('SHELL','dlang'));
+	  if ($this->languange) setlocal($this->languange);	 //0 LANGUNAGE CNANGE NOT CORECTLY
 	        
       if ($this->debug) 
 	    echo "\nconstruct elapsed: ",$this->getthemicrotime() - $xtime, " seconds<br>"; 	   	  
 	  
 	  //CCPP preprocessor
-	  $this->preprocess = $preprocess;   	  
+	  $this->preprocess = $preprocess;   
 	 
       //dispacth or redirect...
 	  //$this->myaction = $this->_getqueue(); 	//moved in init after compile!!!!
+
       $this->_loadapp($code);
-	  
+
+	  /*if ($this->auto) {
+	    $this->headers();
+	  } */ 	  
    }
 
    
@@ -174,7 +148,7 @@ class pcntl extends controller {
 	    $initst = GetGlobal('initst'); //print_r($initst);
 		$prj = $initst['project']; //echo $prj,'>';
 		$this->map = $initst['map']; //echo $this->map,';';
-		
+	
 		//save real app name
 		(isset($this->map)? SetSessionParam('REALREMOTEAPPSITE',$this->map):SetSessionParam('REALREMOTEAPPSITE',$this->remoteapp));
 		//echo '>',GetSessionParam('REALREMOTEAPPSITE');
@@ -192,6 +166,7 @@ class pcntl extends controller {
 		  $this->lan = $params['lan'];
 		  $this->cl = $params['cl'];
 		  $this->theme = $params['theme'];	//echo $this->theme;		  
+		  $this->auto = $params['auto']; //echo $this->auto,'>>>';
 
 	      if ($this->my_excluded_action)
 	        $this->event($this->my_excluded_action);	 
@@ -201,12 +176,13 @@ class pcntl extends controller {
 		else die("[".$this->remoteapp."]Invalid configuration!"); 	
 	  }
 	  elseif (isset($code)) { //if code isset
+
 	    $this->code = $code;		  
 	    $this->myaction = null;
 	    $this->my_excluded_action = null;	
 	    //initalize (compile ...)  
 	    $this->init($this->code);  
-	  
+
 	    //pre-defined in page locales
 	    if (isset($locales)) $this->localize($locales);	  
 
@@ -221,24 +197,25 @@ class pcntl extends controller {
 	    $initst = GetGlobal('initst');
 		$prj = $initst['project'];
 	    $codefile = _APPPATH_."/"._PRJPATH_."/" . $prj ."/scripts/". $this->file_name . ".prj";
-	    $this->code = file_get_contents($codefile); 
+	    $this->code = file_get_contents($codefile); 	
         $this->init($this->code);
 	  }   
    }
   
    protected function _loadinifiles() {
 	  
+	  
       if (is_readable("config.ini")) {//in root	   
-	    $config = @parse_ini_file("config.ini", 1, INI_SCANNER_NORMAL); //RAW ???
-	    $myconfig = @parse_ini_file("myconfig.txt", 1, INI_SCANNER_NORMAL);			
+	    $config = @parse_ini_file("config.ini",1);
+	    $myconfig = @parse_ini_file("myconfig.txt",1);			
 	  }	
 	  elseif (is_readable("cp/config.ini")) {//in cp
-        $config = @parse_ini_file("cp/config.ini", 1, INI_SCANNER_NORMAL);  
-	    $myconfig = @parse_ini_file("cp/myconfig.txt", 1, INI_SCANNER_NORMAL);		
+        $config = @parse_ini_file("cp/config.ini",1);  
+	    $myconfig = @parse_ini_file("cp/myconfig.txt",1);		
 	  }	
 	  elseif (is_readable("../config.ini")) {//in subdir in cp
-        $config = @parse_ini_file("../config.ini", 1, INI_SCANNER_NORMAL);  	
-	    $myconfig = @parse_ini_file("../myconfig.txt", 1, INI_SCANNER_NORMAL);	
+        $config = @parse_ini_file("../config.ini",1);  	
+	    $myconfig = @parse_ini_file("../myconfig.txt",1);	
 	
 	  }	
 	  else
@@ -249,26 +226,22 @@ class pcntl extends controller {
         $config = array_merge($config, $myconfig); 			
 		
       if (is_readable("maptheme.ini")) //in root	  
-	    $theme = @parse_ini_file("maptheme.ini", 1, INI_SCANNER_NORMAL); 
+	    $theme = @parse_ini_file("maptheme.ini",1); 
 	  elseif (is_readable("cp/maptheme.ini")) //in cp
-        $theme = @parse_ini_file("cp/maptheme.ini", 1, INI_SCANNER_NORMAL);  
+        $theme = @parse_ini_file("cp/maptheme.ini",1);  
 	  elseif (is_readable("../maptheme.ini")) //in subdir in cp
-        $theme = @parse_ini_file("../maptheme.ini", 1, INI_SCANNER_NORMAL);  	
+        $theme = @parse_ini_file("../maptheme.ini",1);  	
 	  else
         die("Configuration error, maptheme.ini not exist!");		
 
 		
       SetGlobal('config',$config);
-      SetGlobal('theme',$theme);   
-	  
-	  //echo '<pre>';
-	  //print_r($config);
-	  //echo '</pre>';
-	  
-	  $this->preprocessor = new CCPP($config);
+      SetGlobal('theme',$theme); 
+
+	  $this->preprocessor = new CCPP($config); 	  
    }   
    
-   public function render($theme=null,$lan=null,$cl=null,$fp=null) {      
+   public function render($theme=null,$lan=null,$cl=null,$fp=null,$xmlns=null) {      
    
       $atime = $this->getthemicrotime();  
 	  
@@ -292,7 +265,11 @@ class pcntl extends controller {
 	  $this->pre_render($theme,$lan,$cl,$fp);
 	  
 	  
-	  //RENDER......	  	  
+	  //RENDER......
+
+	  if ($this->auto) {//after action to handle js loaded in action
+	    $this->headers($xmlns);
+	  } 		  	  
 	  
 	  if ((defined('FRONTPAGE_DPC')) && (isset($fp))) {//call theme xgi page
 	  	  
@@ -313,10 +290,12 @@ class pcntl extends controller {
 		   SetSessionParam('SPLASH','yes');
 		   //echo 'splash!';
 		   
+		   if (!$this->auto) $this->headers();//anyway show header
 	       $sfp = new splash($fp,null,$appi);
 	       //$ret = $sfp->render();
 		   echo $sfp->render();
-	       unset($sfp);		   		   
+	       unset($sfp);		   
+		   if (!$this->auto) $this->footers();//anyway show footer		   
 		   //die();
 	    }	  
 	    else {
@@ -334,12 +313,17 @@ class pcntl extends controller {
 	      unset($hfp);
 		}
 	  }
+	  
+	  //footers moved here for other type (xml) returning
+	  //not by default printit at destruct
+	  //NOT NEED && (!$GLOBALS['DIE']))
+	  if ($this->auto)  $this->footers();
 
 	  if ($this->debug) 
 	    echo "\naction elapsed: ",$this->getthemicrotime() - $atime, " seconds<br>"; 	    
 	  
 	  //echo $_SERVER["HTTP_AUTHORIZATION"];
-	  //echo '|',GetSessionParam('authmethod'),':',GetSessionParam('authverify'),'>';  
+	  //echo '|',GetSessionParam('authmethod'),':',GetSessionParam('authverify'),'>';
 	  
 	  return ($ret); //for supercache reasons	   
    }
@@ -414,7 +398,7 @@ class pcntl extends controller {
    
    //overwrite..
    private function compile($code='', $preprocess=0) {   
-        //echo $this->preprocess,$preprocess,'>';
+   
         if ($preprocess==true) {
 			//PREPROCESSOR TASKS
 			$code = $this->preprocessor->execute($code, 0, true);
@@ -552,7 +536,7 @@ class pcntl extends controller {
 		}
 		
 	    return ($dpcmods); //return the array of included dpcs 
-   }    
+   }   
    
    function execute_dpc_code($code) {
    
@@ -589,9 +573,9 @@ class pcntl extends controller {
 	  /*$t->start('postcode',1);	  
       $this->read_post_code(); //get batch readed post code as array to call after...
 	  $t->stop('postcode');	  
-	  echo "postcode " , $t->value('postcode');	  */
-	  
+	  echo "postcode " , $t->value('postcode');	  */ 
 	  //INCLUDE FIRST
+	  if (!empty($modules)) {
 	  $t->start('include');		  
 	  foreach  ($modules as $id=>$dpc) {
 	  
@@ -611,7 +595,7 @@ class pcntl extends controller {
 	  }
 	  $t->stop('include');
 	  if ($this->debug) echo "include " , $t->value('include');	 	   	 
-   
+      }
        //ACCELERATE attributes reading...NO REASON.....
 	 /*
 	  $t->start('attr');	  
@@ -624,9 +608,9 @@ class pcntl extends controller {
 	  $is_instance = paramload('ID','isinstance');
 	  if ($is_instance) //must be include the clientdpc module
  	    $cdpc = new clientdpc;		  
-
+ 
       //dispacth or redirect...after include!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	  $this->myaction = $this->_getqueue(); 	
+	 // $this->myaction = $this->_getqueue(); 	------------------------------------------------------
 
 	  /*NO REASON...
 	  //SOME DPCS MUST EXECUTE THEIR COMMANDS BEFORE OTHER DPCS CONSTRUCTION
@@ -645,7 +629,8 @@ class pcntl extends controller {
 		}
 	    //echo '.';
 	  }
-	  */	 
+	  */	
+
 	  if (is_array($modules_to_start)) {
 	  $t->start('new');			  
 	  //NEW AFTER (one by one as it writed in script)	 
@@ -658,9 +643,9 @@ class pcntl extends controller {
 		     if ($cdpc->is_client_dpc($dpc))
 		       $this->_new($dpc,'dpc');   
 		     else {
-			   session_start();
-			   session_unset();
-			   session_destroy();//kill the session
+			   //session_start(); -----------------------------------------------------
+			   //session_unset();
+			   //session_destroy();//kill the session
 		       die("$dpc not supported or expired!");
 			 }  
 		   }
@@ -674,9 +659,9 @@ class pcntl extends controller {
    }
    
    //overwrite
-   public function event($event=null, $dpc_init=null) {
+   public function event($event=null) {
 
-     controller::event($event, $dpc_init);
+     controller::event($event);
    }
    //overwrite
    public function action($action=null) {
@@ -891,17 +876,73 @@ class pcntl extends controller {
    
      list($usec,$sec) = explode(" ",microtime());
      return ((float)$usec + (float)$sec);
-   }    
-  
+   }  
+   
+   protected function headers($xmlns=null) {
+   
+	 //header info
+     $char_set  = arrayload('SHELL','char_set');	  
+	 $charset = $char_set[getlocal()]; 	  
+	 header('Content-Type: text/html; charset=' . $charset);   
+     //css info
+     $mycss = $this->inpath . "/themes/" . $this->theme . ".theme/" . $this->theme . ".css";
+	 //echo $mycss,'>';
+     $css = ((isset($this->theme)) ? $mycss : paramload('SHELL','css'));   
+     //gen html
+     echo "<!-- generated by phpdac5 " . paramload('SHELL','version') . " (c)2001-2005 all rights reserved. -->\n";
+     echo "\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n";	 
+	 if ($xmlns)
+	   echo "\n<HTML xmlns:$xmlns>";
+	 else
+       echo "\n<HTML>";
+     echo "\n<HEAD>";
+     echo "\n<TITLE>";
+     echo paramload('SHELL','urltitle');
+     echo  "</TITLE>";
+	  
+	 
+     echo  "\n<LINK REL=StyleSheet HREF=\"" . $css ."\">"; 
+	 
+	 //call javascript 
+     if (iniload('JAVASCRIPT')) {	
+		   $js = new jscript;
+		   
+		   if ((defined('SPLASH_DPC'))) {// && ($this->myaction=='index') && (!GetSessionParam('SPLASH'))) {
+		     $goto = $_SERVER['PHP_SELF'];
+			 $delay = paramload('SPLASH','delay');
+		     $code = "\nfunction neu() { top.frames.location.href=\"$goto\" } window.setTimeout(\"neu()\",$delay);\n";
+		     $js->load_js($code,null,1);
+		   }	 
+			 		   
+		   $onload = $js->onLoad();
+		   $ret .= $js->callJavaS();	 
+		   unset ($js);		 
+	 }		
+	 echo $ret;
+	 echo "</HEAD>"; 
+	 echo "\n<BODY bgcolor=\"#" . paramload('HTML','h_bkgc') . 
+	            "\" text=\"#" . paramload('HTML','h_txtc') . 
+		        "\" link=\"#" . paramload('HTML','h_lnkc') . 
+		        "\" vlink=\"#" . paramload('HTML','h_vlnc') . 
+		        "\" alink=\"#" . paramload('HTML','h_alnc') . 
+		        "\" leftmargin=\"0\" topmargin=\"0\" marginwidth=\"0\" marginheight=\"0\" " . 
+		        $onload .">";		    
+		 
+	  	 
+   }       
+   
+   protected function footers() {
+     echo   "\n</BODY>\n</HTML>";
+   }
+   
    protected function redirect($url) {
    
 	 //save virtual post (if any)
-	 $_SESSION['dacpost'] = $_POST;
+	// $_SESSION['dacpost'] = $_POST; ---------------------------------------------
 	 
-	 /************** DISABLED (headers send error)***********/
 	 //echo 'REDIRECT:' . $url; die();
-	 //header("Location: http://".$url); 
-     //exit;  // seems to affect redirection to inpath directive!!!!!!!
+	 //header("Location: http://".$url); ---------------------------------------------
+     exit;  // seems to affect redirection to inpath directive!!!!!!!
    }
    
    //in case of apache webserver _SERVER attr changes 
@@ -1098,64 +1139,7 @@ class pcntl extends controller {
 	   }
 	   //die();
 	 }
-   }
-   
-	//override to load dpc from priv dirs
-	protected function set_include($dpc,$type,$myargdpc=null) {
-      global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
-             $__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
-
-	  global $activeDPC,$info,$xerror,$GRX,$argdpc; 	//IMPORTANT GLOBALS!!!  
-	
-	  //echo $dpc,"\n";
-      $argdpc = _DPCPATH_;//paramload('DIRECTIVES','dpc_type');
-	  	 
-	  if ($this->shm) {
-	    if (GetGlobal('__USERAGENT')=='HTML')
-	      $includer = "phpdac5://127.0.0.1:19123/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
-		else
-		  $includer = "phpdac://" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";  
-	  }	
-	  else {
-	    $_argdpc = $myargdpc?paramload('SHELL','urlpath').$myargdpc:$argdpc;
-		//echo $_argdpc,'<>';
-	    $includer = $_argdpc . "/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
-	  }	
-	  
-	  try {
-	    require($includer);	//REQUIRE NOT REQUIRE ONCE DUE TO RE-INIT DPC	
-	  }
-	  catch (Exception $e) {
-         echo 'Caught exception: ',  $e->getMessage(), "\n";
-      }
-	  
-	  //update local table
-      $parts = explode(".",trim($dpc)); 
-	  $class = strtoupper($parts[1]).'_DPC';	  
-      $this->make_local_table($class);	  
-	} 
-
-   //override
-   public function require_dpc($dpc, $cgipath=null) {
-
-      //NO problem with scope....called as require_once(controler->require_dpc($dpc))
-	  //problem calling directly as above
-	  //no problem with call of type $x = controller->require(..)/require_once(x)
-   
-      if ($this->shm) {
-	    if (GetGlobal('__USERAGENT')=='HTML')
-	      $ret = "phpdac5://127.0.0.1:19123/".$dpc;
-		else	  
-	      $ret = "phpdac://".$dpc;
-	  }	
-	  else {
-		$path = $cgipath ? $cgipath : _DPCPATH_;  
-	    $ret = $path . "/" . $dpc;
-	  }	
-		
-	  //echo '>',$ret,'<br>';	
-	  return $ret;	
-   } 	
+   }   
    
    protected function create_log() {
 
@@ -1178,7 +1162,11 @@ class pcntl extends controller {
    
    function __destruct() {
    
-
+      //echo $GLOBALS['DIE'],'zzz';
+	  //use die or exit call __destruct remians so...
+      //in case of xml output we don't need to show footers
+	  //if (($this->auto) && (!$GLOBALS['DIE'])) $this->footers(); //MOVED TO RENDER
+	  
 	  //////////////////////////////////////////////////////////////////////
 	  //update log files
 	  if (((defined('LOG_DPC')) && (seclevel('LOG_DPC',$this->userLevelID)))) {
@@ -1188,10 +1176,10 @@ class pcntl extends controller {
 	  
 	  if (paramload('SHELL','debug')) 
 	    echo "\nTime elapsed: ",$this->getthemicrotime() - $this->mytime, " seconds<br>"; 	  
-		
+	   
 	  //error on ajax
       //echo "<!-- phpdac5 :" .($this->getthemicrotime() - $this->mytime) . "-->";	  
-	  
+	     
 	  controller::__destruct();   
    }
    
