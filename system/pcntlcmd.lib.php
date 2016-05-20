@@ -488,11 +488,16 @@ class pcntl extends controller {
 								  break;								  
 							  
 				 default      : //only include and save dpc modules to load th objects by shell			  
-			  		            if ($part[0]) {
-								  $this->set_include($part[0],'dpc');
-								//  calldpc_include($part[0],'dpc');	
-					              $dpcmods[] = $part[0]; //hold dpc names												 
-								} 
+			  		            if ($part[0]) { 
+				                     if (substr($part[0], -1)==';') {
+									    eval('?><?php;'.$tcmd.'?><?php ');
+										//echo '<br/>EVAL:'.$tcmd;	
+									  }	
+									  else {
+										eval('?><?php;'.$tcmd.'; ?><?php ');
+									    //echo '<br/>EVAL:'.$tcmd.";";	
+									  }	
+                                } 
 				                
 			   }//switch
 			   $i+=1; 

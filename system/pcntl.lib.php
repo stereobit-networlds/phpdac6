@@ -84,19 +84,6 @@ class pcntl extends controller {
 	  
 	  $this->root_page = paramload('SHELL','filename');
 	  
-	  if ($editmode = GetReq('editmode')) {
-	    if ($editmode>0) {
-	      SetSessionParam('__EDITMODE',$editmode);
-		  define('__EDITMODE',true);
-		}
-		elseif ($editmode<0) {
-          SetSessionParam('__EDITMODE',null);
-		  define('__EDITMODE',null);		
-		}
-	  }
-	  else
-	    $editmode = GetSessionParam('__EDITMODE');
-	  
 	  $this->debug = paramload('SHELL','debug');	
 	  
 	  //register self as global controller and dispatcher
