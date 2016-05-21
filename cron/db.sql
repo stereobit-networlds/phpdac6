@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `cronJob` (
   `pid` int(11) NOT NULL default '0',
   PRIMARY KEY  (`id`),
   KEY `startTimestamp` (`startTimestamp`),
-  KEY `crontabId` (`crontabId`),
+  KEY `crontabId` (`crontabId`)
 ) TYPE=InnoDB AUTO_INCREMENT=1 ;
 
 DROP TABLE IF EXISTS `crontab`;

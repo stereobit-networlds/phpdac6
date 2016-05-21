@@ -38,13 +38,21 @@ class sqlparser extends skeleton {
 	//return true;
 	if (!$this->import_data) return true; //always true	
 	
-	//if (substr($this->import_data,0,4)=='%!PS') //zipped
-		//$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');
-	//else
-		$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');	
 	
+	if (stristr($this->jf, '.jpg')) { //jpg file
 	
-	if (stristr($this->jf, '.csv')) { //csv file
+		//full path csv file (print from win editor)
+		if (stristr($jobfile_parts[4], "\\")) { 
+			$pathfile = explode("\\", $jobfile_parts[4]);
+		    $filename = array_pop($pathfile);
+		}
+		else
+			$filename = $jobfile_parts[4]; //as is	
+		
+		$this->istextJPG($filename);
+	
+	}
+	elseif (stristr($this->jf, '.csv')) { //csv file
 	
 	    $jobfile_parts = explode('-', $this->jf);
 		
@@ -62,9 +70,29 @@ class sqlparser extends skeleton {
 		$this->istextSQL();
 	
 	//$this->export_data = $sqltext;
-	return (true);	
+	return true;	
  }
  
+   protected function istextJPG($name=null) {
+	   
+	    $lines = file($this->jf);
+		foreach ($lines as $l=>$line)
+			$data[] = trim($line);
+			
+		$this->export_data = implode('', $data);
+		
+		self::write2disk('sqlparser.log',"\r\n$name\r\n");
+		//self::write2disk('sqlparser.log',$this->export_data);
+		//return true;
+		
+		$bytes = self::_write($this->export_data);
+		return ($bytes);
+		
+		/*$binary = pack("H*", $this->export_data); //hex //hex2bin
+		$bytes = self::_write($binary);
+		
+		return true;*/
+   }	   
  
    protected function istextCSV($name=null) {
 	
@@ -80,6 +108,12 @@ super database;
 	  self::write2disk('sqlparser.log', $scenario . "\r\n");
       
       if (file_exists($this->admin_path . '/' . $scenario)) {
+		  
+		 //CONVERT import data to utf-8  
+		 //if (substr($this->import_data,0,4)=='%!PS') //zipped
+			//$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');
+		 //else
+			$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');		  
 	   
 	     //READ SCENARIO  	   
          $sc = parse_ini_file($this->admin_path . '/' .  $scenario);
@@ -320,6 +354,13 @@ super database;
     $i=0;
     $ix=0;
 	$now = date("Y-m-d h:m:s");	
+	
+	//CONVERT import data to utf-8  
+	//if (substr($this->import_data,0,4)=='%!PS') //zipped
+		//$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');
+	//else
+		$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');		  
+	   	
 
 	$page = &new pcntl('
 super rcserver.rcssystem;

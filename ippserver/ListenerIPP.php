@@ -2200,7 +2200,6 @@ class IPPlistener extends ServerIPP {
 		//@unlink($this->admin_path.'pragent.log');
 		@unlink($this->admin_path.$this->printer_name . '.log');
 		//@unlink('error_log');//system error log<<<<<<<<
-		
 	    
 		if (class_exists('AgentIPP', true)) {
 		    $auth = 'dummyref';
@@ -2209,34 +2208,11 @@ class IPPlistener extends ServerIPP {
 			
 		}	
 		
-		if (class_exists('pcntl', true)) {
-			$page = &new pcntl('
-super rcserver.rcssystem;
-load_extension adodb refby _ADODB_; 
-super database;
-public cp.rcanalyzer;
-',1);	
-            //analyze stats table -> (create rec for panalyze table)
-			$res = GetGlobal('controller')->calldpc_method("rcanalyzer.analyze use 1");
-			$ret = @file_put_contents($this->admin_path . 'analyze.log', str_replace('<br/>', "\r\n", $res));	
-
-			//analyze tables one by one based on new records (exec cmd per record)
-			$db = GetGlobal('db');
-			//$sSQL = "select count(id) from ulists";
-			$sSQL = "SHOW TABLE STATUS";
-			$result = $db->Execute($sSQL,2);	
-			
-			if (!empty($result)) { 
-			    $res = null;
-				foreach ($result as $t=>$rec) {
-					$res .= $rec['Name'] . ',';
-					$sSQL = "select count(id) from " . $rec['Name'];
-					$tableresult = $db->Execute($sSQL,2);
-					@file_put_contents($this->admin_path . $rec['Name'] . '.log', $tableresult->fields[0]);	
-				}
-				$ret = @file_put_contents($this->admin_path . 'result.log', $res);	
-			}
-		}
+		//PCNTL JOBS - ANALYZE / CRON
+		
+		$ret = $this->cron();
+		
+		$ret = $this->analyze();
 		
 		return $ret ? $ret : false;
 	}
@@ -2405,6 +2381,68 @@ public cp.rcanalyzer;
 						
 	    return ($ret);					
     }	
+	
+	
+	//periodically executed funcs
+	
+	protected function analyze() {
+		
+		$ret = null;
+		
+		if (class_exists('pcntl', true)) {
+			$page = &new pcntl('
+super rcserver.rcssystem;
+load_extension adodb refby _ADODB_; 
+super database;
+public cp.rcanalyzer;
+',1);	
+            //analyze stats table -> (create rec for panalyze table)
+			$res = GetGlobal('controller')->calldpc_method("rcanalyzer.analyze use 1");
+			$ret = @file_put_contents($this->admin_path . 'analyze.log', str_replace('<br/>', "\r\n", $res));	
+
+			//analyze tables one by one based on new records (exec cmd per record)
+			$db = GetGlobal('db');
+			//$sSQL = "select count(id) from ulists";
+			$sSQL = "SHOW TABLE STATUS";
+			$result = $db->Execute($sSQL,2);	
+			
+			if (!empty($result)) { 
+			    $res = null;
+				foreach ($result as $t=>$rec) {
+					$res .= $rec['Name'] . ',';
+					$sSQL = "select count(id) from " . $rec['Name'];
+					$tableresult = $db->Execute($sSQL,2);
+					$cid = ($tableresult) ? $tableresult->fields[0] : '0';
+					@file_put_contents($this->admin_path . $rec['Name'] . '.log', $cid);	
+				}
+				$ret = @file_put_contents($this->admin_path . 'result.log', $res);	
+			}
+		}
+		
+		return $ret ? $ret : false;		
+	}
+	
+	protected function cron() {	
+		$ret = null;
+		
+		if (class_exists('pcntl', true)) {
+			$page = &new pcntl('
+super rcserver.rcssystem;
+load_extension adodb refby _ADODB_; 
+super database;
+include cron.cronparser;
+include cron.cronjob;
+include cron.crontab;
+include cron.crondaemon;
+',1);	
+			$cron = new crondaemon();
+			$cron->run();
+		}
+		return $ret ? $ret : false;
+	}
+
+
+	
 	
 	//override
 	public function write2disk($file,$data=null) {

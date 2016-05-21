@@ -134,7 +134,7 @@ class rcanalyzer {
 			$username = $rec['attr3'];
 			$reference = $rec['ref'];
 			$REMOTE_ADDR = $rec['REMOTE_ADDR'];
-			$HTTP_X_FORWARDED_FOR = $rec['$HTTP_X_FORWARDED_FOR'];
+			$HTTP_X_FORWARDED_FOR = $rec['HTTP_X_FORWARDED_FOR'];
 			
 			$ip = $HTTP_X_FORWARDED_FOR ? $HTTP_X_FORWARDED_FOR : ($REMOTE_ADDR ? $REMOTE_ADDR : '0.0.0.0');
 			$user = (trim($username)!='') ? $username : ($sessionuser ? $sessionuser : 'unknown'); 
