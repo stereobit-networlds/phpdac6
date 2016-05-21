@@ -55,17 +55,19 @@ class crondaemon {
 			
     	
 	    	if (!empty($job->code)) {
-				ob_start();
+				/*ob_start();
 				eval($job->code);
 				$results = ob_get_contents();
-				ob_end_clean();
+				ob_end_clean();*/
+				
+				$script = new cronscript();
+				$script->run($job->code);
 			}
-			//$job =& new cronjob($job->id);
+
 			$job->endTimestamp = time();
 			if (!empty($results)) $job->results = $results;
 			else $job->results = 'results were empty';
 			$job->update();
-			//$this->setFinished();
    		}
     }
 	

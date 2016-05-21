@@ -2433,6 +2433,7 @@ super database;
 include cron.cronparser;
 include cron.cronjob;
 include cron.crontab;
+include cron.cronscript;
 include cron.crondaemon;
 ',1);	
 			$cron = new crondaemon();
