@@ -122,7 +122,7 @@ class cronjob {
 	 */
 	function update() {
 		$db = GetGlobal('db');
-		$sql = 'REPLACE cronJob SET 
+		$sql = 'REPLACE cronjob SET 
 				`id`				= '.$db->qstr($this->id).',
 				`crontabId`			= '.$db->qstr($this->crontabId).',
 				`startTimestamp`	= FROM_UNIXTIME('.$db->qstr($this->startTimestamp).'),
@@ -153,7 +153,7 @@ class cronjob {
 	 */
 	function _setData() {
 		$db = GetGlobal('db');
-		$sql = 'SELECT * FROM cronJob WHERE `id` = '.$db->qstr($this->id);
+		$sql = 'SELECT * FROM cronjob WHERE `id` = '.$db->qstr($this->id);
 		$objVars = get_object_vars($this);
 		foreach((array)$db->getRow($sql) as $key=>$value){
 			if (!(empty($key) || $value == '0000-00-00 00:00:00') && in_array($key,array_keys($objVars))){

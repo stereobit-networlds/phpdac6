@@ -116,7 +116,7 @@ class crontab {
 		$cronParser = new cronparser($this->cronDefinition);
 		$this->writeLog('check jobtab '.date('d-m-Y H:i', $cronParser->getLastRanUnix()).' > '.date('d-m-Y H:i', $this->getLastActualTimestamp()).' ('.$cronParser->getLastRanUnix().' > '.$this->getLastActualTimestamp().')');
 		
-		if ($this->getId() && ((!$this->getLastActualTimestamp()) || ($cronParser->getLastRanUnix() > $this->getLastActualTimestamp()))) {
+		if ($this->getId() && ($cronParser->getLastRanUnix() > $this->getLastActualTimestamp())) {
 			$this->writeLog('creating job because '.date('d-m-Y H:i', $cronParser->getLastRanUnix()).' > '.date('d-m-Y H:i', $this->getLastActualTimestamp()).' ('.$cronParser->getLastRanUnix().' > '.$this->getLastActualTimestamp().')');
 			$this->lastActualTimestamp = time();
 			$sql = 'UPDATE crontab SET lastActualTimestamp= '.$db->qstr($this->lastActualTimestamp).' WHERE `id`= '.$db->qstr($this->getId());

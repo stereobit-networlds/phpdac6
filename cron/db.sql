@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS `cronJob`;
-CREATE TABLE IF NOT EXISTS `cronJob` (
+DROP TABLE IF EXISTS `cronjob`;
+CREATE TABLE IF NOT EXISTS `cronjob` (
   `id` int(11) NOT NULL auto_increment COMMENT 'unique identifier',
   `crontabId` int(11) NOT NULL default '0',
   `startTimestamp` timestamp NOT NULL COMMENT 'start',

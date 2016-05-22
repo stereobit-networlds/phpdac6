@@ -2394,11 +2394,11 @@ class IPPlistener extends ServerIPP {
 super rcserver.rcssystem;
 load_extension adodb refby _ADODB_; 
 super database;
-public cp.rcanalyzer;
+/public cp.rcanalyzer;
 ',1);	
             //analyze stats table -> (create rec for panalyze table)
-			$res = GetGlobal('controller')->calldpc_method("rcanalyzer.analyze use 1");
-			$ret = @file_put_contents($this->admin_path . 'analyze.log', str_replace('<br/>', "\r\n", $res));	
+			//$res = GetGlobal('controller')->calldpc_method("rcanalyzer.analyze use 1");
+			//$ret = @file_put_contents($this->admin_path . 'analyze.log', str_replace('<br/>', "\r\n", $res));	
 
 			//analyze tables one by one based on new records (exec cmd per record)
 			$db = GetGlobal('db');

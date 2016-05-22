@@ -21,24 +21,30 @@ class cronscript {
 		$ret = null;
 		
 		if (class_exists('pcntl', true)) {
+			
+			$ret = eval($script);
+
+			//test
+			//$ret = $this->testscript();
+		}
+		return ($ret ? true : false);
+    }
+	
+	protected function testscript() {
 			$page = &new pcntl('
 super rcserver.rcssystem;
 load_extension adodb refby _ADODB_; 
 super database;
-',1);	
-			//eval($script);
-			//...
-			//compile dpc cmds into php code
-			
-			//test
+',1);				
 			$db = GetGlobal('db');
 			$now = date("Y-m-d H:m:s");
-			$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values (1,1,'$now',''," .
+			$sSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values (1,1,'$now',''," .
 						$db->qstr(0) . "," . $db->qstr('cron') . ")"; 
-			$ret = $db->Execute($sSQL,1);			
-		}
-		return $ret ? $ret : false;
-    }
+			$ret = $db->Execute($sSQL,1);
+			
+			//$this->writeLog('Script:'.$sSQL;);	
+			return ($ret);	
+	}
 	
 	
 	protected function writeLog($data = '') {

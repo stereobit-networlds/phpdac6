@@ -28,7 +28,7 @@ class crondaemon {
 	protected function _getJobs() {
     	$db = GetGlobal('db');
     	$jobs = array();
-		$sql = 'SELECT `id` FROM cronJob WHERE `pid` = '.$db->qstr(0).' AND `endTimestamp` = '.$db->qstr('0000-00-00 00:00:00');
+		$sql = 'SELECT `id` FROM cronjob WHERE `pid` = '.$db->qstr(0).' AND `endTimestamp` = '.$db->qstr('0000-00-00 00:00:00');
 		$rows = $db->GetCol($sql);
 		if ($db->ErrorMsg()) {
 			$this->writeLog('MySQL error: '.$db->ErrorMsg().' when _getJobs is called '.$sql);
@@ -61,12 +61,17 @@ class crondaemon {
 				ob_end_clean();*/
 				
 				$script = new cronscript();
-				$script->run($job->code);
+				$results = $script->run($job->code);
 			}
 
 			$job->endTimestamp = time();
-			if (!empty($results)) $job->results = $results;
-			else $job->results = 'results were empty';
+			
+			//if (!empty($results)) 
+			if ($results)	
+				$job->results = $results;
+			else 
+				$job->results = 'error';//'results were empty';
+			
 			$job->update();
    		}
     }
