@@ -61,9 +61,15 @@ class cronparser {
 	var $minutes_arr = array();	//minutes array based on cron string
 	var $hours_arr = array();	//hours array based on cron string
 	var $months_arr = array();	//months array based on cron string
+	
+	var $prpath;
 
 	function cronparser($cronString = '') {
-		if (!empty($cronString)) $this->calcLastRan($cronString);
+		
+		$this->prpath = paramload('SHELL','prpath');
+		
+		if ($cronString) 
+			$this->calcLastRan($cronString);		
 	}	
 	
 	function getLastRan() {
@@ -81,12 +87,15 @@ class cronparser {
 	function debug($str) {
 		if (is_array($str)) {
 			$this->debug .= "\nArray: ";
+			//$this->writeLog("\nArray: ");
 			foreach($str as $k=>$v) {
 				$this->debug .= "$k=>$v, ";
+				//$this->writeLog("$k=>$v, ");
 			}
 
 		} else {
 			$this->debug .= "\n$str";
+			//$this->writeLog($str);
 		}
 	}
 
@@ -477,6 +486,15 @@ class cronparser {
 		}
 		return $this->months_arr;
 	}
+	
+	protected function writeLog($data = '') {
+		if (empty($data)) return;
+
+		$data = date('d-m-Y H:i:s')."\r\n" . $data . "\r\n----\r\n";
+		$ret = file_put_contents($this->prpath . '/cron.log', $data, FILE_APPEND | LOCK_EX);
+		
+		return $ret;
+	}	
 
 }
 ?>

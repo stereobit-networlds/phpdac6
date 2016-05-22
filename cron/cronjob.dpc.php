@@ -132,6 +132,8 @@ class cronjob {
 				`implementationId`	= '.$db->qstr($this->implementationId).',
 				`results`			= '.$db->qstr($this->results).',
 				`pid`				= '.$db->qstr($this->pid);
+		$this->writeLog($sql);
+		
 		if (!$db->Execute($sql)) {
 			$this->writeLog($db->ErrorMsg());
 			return false;

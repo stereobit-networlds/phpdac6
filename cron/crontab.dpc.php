@@ -112,10 +112,11 @@ class crontab {
 	function process() {
 		$db = GetGlobal('db');
 		
+		$this->writeLog("Cron definition:" . $this->cronDefinition);
 		$cronParser = new cronparser($this->cronDefinition);
 		$this->writeLog('check jobtab '.date('d-m-Y H:i', $cronParser->getLastRanUnix()).' > '.date('d-m-Y H:i', $this->getLastActualTimestamp()).' ('.$cronParser->getLastRanUnix().' > '.$this->getLastActualTimestamp().')');
 		
-		if ($this->getId() && ($cronParser->getLastRanUnix() >= $this->getLastActualTimestamp())) {
+		if ($this->getId() && ((!$this->getLastActualTimestamp()) || ($cronParser->getLastRanUnix() > $this->getLastActualTimestamp()))) {
 			$this->writeLog('creating job because '.date('d-m-Y H:i', $cronParser->getLastRanUnix()).' > '.date('d-m-Y H:i', $this->getLastActualTimestamp()).' ('.$cronParser->getLastRanUnix().' > '.$this->getLastActualTimestamp().')');
 			$this->lastActualTimestamp = time();
 			$sql = 'UPDATE crontab SET lastActualTimestamp= '.$db->qstr($this->lastActualTimestamp).' WHERE `id`= '.$db->qstr($this->getId());
@@ -137,13 +138,16 @@ class crontab {
 	 */
 	function _setData() {
 		$db = GetGlobal('db');
+		
 		$sql = 'SELECT * FROM crontab WHERE id = '. $db->qstr($this->id);
 		$this->writeLog($sql);
+		
 		$objVars = get_object_vars($this);
 		foreach((array)$db->getRow($sql) as $key => $value){
 			if (!(empty($key) || $value == '0000-00-00 00:00:00') && in_array($key,array_keys($objVars))){
-				if (strpos($key, 'Timestamp')!== false) $value = strtotime($value);
+				//if (strpos($key, 'Timestamp')!== false) $value = strtotime($value); //none return
 				$this->$key = $value;
+				//$this->writeLog($key.'='.$value);
 			}
 		}
 	}
@@ -249,6 +253,8 @@ class crontab {
 	 */
 	 
 	function getId() { return $this->id; } 
+	
+	function getCronJobCode() { return $this->code; }
 	
 	/**
 	 * Simple getter
