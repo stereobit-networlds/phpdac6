@@ -41,10 +41,10 @@ class rcdynsql {
 	var $ajaxLink;
 	var $hasgraph, $hasgauge;
     var $status_sid, $status_sidexp;
+	var $seclevid, $userDemoIds;
 		
 	function rctransactions() {
 	
-
       $this->path = paramload('SHELL','prpath');
      	
 	  $this->title = localize('RCDYNSQL_DPC',getlocal());		
@@ -58,9 +58,11 @@ class rcdynsql {
 	  $this->graphy = remote_paramload('RCTRANSACTIONS','graphy',$this->path);
 
       $this->status_sid = arrayload('RCTRANSACTIONS','sid');  
-
       $this->status_exp = arrayload('RCTRANSACTIONS','sidexp'); 
-           
+	  
+	  $this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
+	  $this->userDemoIds = array(5,6,7,8); 	  
+      //echo $this->seclevid;     
 	}
 	
     function event($event=null) {
@@ -125,6 +127,10 @@ class rcdynsql {
 		   unset ($js);
 	  }		
 	}*/
+	
+	public function isDemoUser() {
+		return (in_array($this->seclevid, $this->userDemoIds));
+	}		
 
 	function show_graph($xmlfile,$title,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
 	  $gx = $this->graphx?$this->graphx:$xmax?$xmax:550;
@@ -149,7 +155,6 @@ class rcdynsql {
 
 	function show_grid($x=null,$y=null,$filter=null,$bfilter=null) {
 
-	
 	    if (defined('MYGRID_DPC')) {
 			
 								  
@@ -159,15 +164,15 @@ class rcdynsql {
 		
 
 
-			$xsSQL2 = "SELECT * FROM (SELECT i.id,i.fid,i.time,i.date,i.execdate,i.status,i.sqlres,i.reference FROM syncsql i order by i.id DESC) x";
+			$xsSQL2 = "SELECT * FROM (SELECT i.id,i.fid,i.time,i.date,i.execdate,i.status,i.sqlres,i.reference FROM syncsql i where i.reference NOT LIKE 'system' and reference NOT LIKE 'cron' order by i.id DESC) x";
 				//echo $xsSQL2;
 
 			//$out.= $xsSQL2;
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('id',getlocal())."|5|1|");
             GetGlobal('controller')->calldpc_method("mygrid.column use grid2+fid|".localize('fid',getlocal())."|link|5|"."javascript:show_body({id});".'||');
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+time|".localize('_date',getlocal())."|date|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+date|".localize('_date',getlocal())."|date|0|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+execdate|".localize('_xdate',getlocal())."|date|0|");			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+date|".localize('_date',getlocal())."|5|0|");			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+execdate|".localize('_xdate',getlocal())."|5|0|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+status|".localize('_status',getlocal())."|5|1|");
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tdate|".localize('_status',getlocal())."|boolean|1|EXECUTED:INSERTED");			
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tdate|".localize('_date',getlocal())."|date|0|");
@@ -223,25 +228,22 @@ class rcdynsql {
 	
 	
     protected function form($id=null)  { 
-	
+	   $readonly = $this->isDemoUser() ? 'readonly' : null; 
        $filename = seturl("t=cpsqlsave&editmode=".GetReq('editmode'));      
     
        $toprint  = "<FORM action=". "$filename" . " method=post>";
        $toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1>";
-	   //$toprint .= "<STRONG>" . localize('_SQL',getlocal()) . "</STRONG><br>";
-	   //$toprint .= "<INPUT type=\"text\" name=submail maxlenght=\"64\" size=25><br>"; 
-	   //$toprint .= "<select name='xmlfeed' onChange='location=this.options[this.selectedIndex].value'>" .
-				   //$opt . "</select>";
 	   
-       $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"sqlcmd\" ROWS=18 cols=60 wrap=\"virtual\" >"; //readonly
+       $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"sqlcmd\" ROWS=18 cols=60 wrap=\"virtual\" $readonly>";
 	   $toprint .=  $this->load_sql_file($id);		 
        $toprint .= "</TEXTAREA></DIV><br>";	   
 	   
- 
-       $toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"savesql\">"; 
-	   $toprint .= "<input type=\"hidden\" name=\"tid\" value=\"".$id."\">";
-       $toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_savesql',getlocal()) . "\">&nbsp;";  
-       $toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpsqlsave" . "\">";	 	   
+       if (!$this->isDemoUser()) { 
+			$toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"savesql\">"; 
+			$toprint .= "<input type=\"hidden\" name=\"tid\" value=\"".$id."\">";
+			$toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_savesql',getlocal()) . "\">&nbsp;";  
+			$toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpsqlsave" . "\">";
+	   }	
 	   	    
        $toprint .= "</FONT></FORM>"; 
 

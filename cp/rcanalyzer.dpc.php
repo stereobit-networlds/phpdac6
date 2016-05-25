@@ -375,7 +375,7 @@ class rcanalyzer {
 		
 		//print_r($analyze_results);
 		foreach ($analyze_results as $descr=>$i) {
-			$this->storeMessage($descr . ':' . $i . ' results');
+			//$this->storeMessage($descr . ':' . $i . ' results');
 			if ($verbose) 
 				$ret .= $descr . ':' . $i . ' results';
 		}	
@@ -556,7 +556,7 @@ class rcanalyzer {
 		$sSQL = "insert into cpmessages (hash, msg, type, owner) values (";
 		$sSQL.= $db->qstr(md5($message)) . ",";
 		$sSQL.= $db->qstr($message) . ",";
-		$sSQL.= $db->qstr(GetReq('type')) . ",";
+		$sSQL.= $db->qstr('analyzer') . ",";
 		$sSQL.= $db->qstr('analyzer');
 		$sSQL.= ")";
 		//echo $sSQL;

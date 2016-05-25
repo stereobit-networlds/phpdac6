@@ -1104,7 +1104,9 @@ if (!defined('_ADODB_LAYER')) {
 			if (isset($ret)) {
 				return $ret;
 			}
-		}
+		}		
+		
+		
 		//if ($inputarr !== false) {
 		if (($inputarr !== false) && (!is_numeric($inputarr))) { //<<<<<<<<<<<<<<<<< 1,2 execute param (compatibility issue)
 			if (!is_array($inputarr)) {
@@ -1218,27 +1220,55 @@ if (!defined('_ADODB_LAYER')) {
 				}
 			}
 		} else {
+			
+			//REPLICATION (before real sql else error!) //<<<<<
+			if ((stristr($sql, 'select ')==false) && (stristr($sql, 'show ')==false)) {
+				$now = date("Y-m-d H:m:s");
+				$exTables = array('mailqueue', 'panalyze', 'pphotos', 'stats', 'syncsql', 'cpmessages', 'cronjob', 'fsbaseline', 'fshistory', 'fsscanned');
+			
+				//echo 'r:'.$sql; 
+				$replicate = true;
+				//exclude tables
+				foreach ($exTables as $table) 	
+					if (stristr($sql, $table)) {
+						$replicate=false;
+						//echo ':' . $table . "<br>";
+					}	
+			
+				if ($replicate) {
+					//$cclass = get_called_class(); //always this
+					$mysql = addslashes($sql);
+					$xrSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values (1,1,'$now','$now','1','$mysql','system')"; 
+					$retrep = $this->_Execute($xrSQL, false);		
+				}	
+			}			
+			
 			$ret = $this->_Execute($sql,false);
 		}
 		
-		static $_PHPDAC_SQL_BUFFER = array();
+		
+
+		//debug sqlbuffer
+		
+		static $_PHPDAC_SQL_BUFFER = array(); //<<<< static var
 
         //sql buffer
 		//print_r($ret);
-		//if (!empty($ret->fields)) {//no matter if result is empty
-		  $data = $ret->fields;
-		  $sql = $ret->sql;
-		  $cclass = null;//>php5.3.0 get_called_class();
-		  $brec = array('data'=>$data,'query'=>$sql,'class'=>$cclass);
+		if (!empty($ret)) {//no matter if result is empty !!!
+
+		  $cclass = get_called_class(); // > 5.3
+		  $f = !empty($ret->fields) ? $ret->fields : null;
+		  $q = !empty($ret->sql) ? $ret->sql : null;
+		  $brec = array('data'=>$f,'query'=>$q,'class'=>$cclass);
 		
 		  array_push($_PHPDAC_SQL_BUFFER,$brec);
 		  //echo '<pre>';
 		  //print_r($_PHPDAC_SQL_BUFFER);
 		  //echo '</pre>';		  
 		  
-		  SetGlobal('_sqlbuffer',$_PHPDAC_SQL_BUFFER);
-		//}  		
-
+		  SetGlobal('_sqlbuffer',$_PHPDAC_SQL_BUFFER); //<<<< global var	  
+		}  		
+		
 		return $ret;
 	}
 

@@ -31,15 +31,15 @@ class cronscript {
     }
 	
 	protected function testscript() {
-			$page = &new pcntl('
+			$page = new pcntl('
 super rcserver.rcssystem;
 load_extension adodb refby _ADODB_; 
 super database;
 ',1);				
 			$db = GetGlobal('db');
 			$now = date("Y-m-d H:m:s");
-			$sSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values (1,1,'$now',''," .
-						$db->qstr(0) . "," . $db->qstr('cron') . ")"; 
+			$sSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values (1,1,'$now','$now',''," .
+					$db->qstr(0) . "," . $db->qstr('cron') . ")"; 
 			$ret = $db->Execute($sSQL,1);
 			
 			//$this->writeLog('Script:'.$sSQL;);	

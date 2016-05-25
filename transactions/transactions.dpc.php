@@ -127,8 +127,8 @@ class transactions {
 
 	   if ($this->storetype=='DB') {  //db
 	   
-	     $sSQL = "select count(*) from transactions";
-	     $res = $db->Execute($sSQL,null,1);
+	     $sSQL = "select count('recid') from transactions";
+	     $res = $db->Execute($sSQL,1);
 		  
 		 if ($db->model=='ADODB') 
 	       $out = $res->fields[0]+1;//RecordCount()+1;

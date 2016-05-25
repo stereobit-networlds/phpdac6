@@ -210,6 +210,9 @@ class IPPlistener extends ServerIPP {
 		
 		
 		$this->force_raw_text = false;
+		
+		//timezone	   
+        date_default_timezone_set('Europe/Athens'); 		
     }
 	
     private function loader($className) {
@@ -387,7 +390,8 @@ class IPPlistener extends ServerIPP {
 		 break;		 
 		 
 		 case 'Get-Jobs': $status = $this->get_jobs();
-		                  $this->_flush_log_files('system::flush'); //periodically calls by connected printers
+		                  //$this->_flush_log_files('system::flush'); //periodically calls by connected printers
+						  $this->rollingTasks(); //flush inside...
 		 break;
 		 
 		 case 'Purge-Jobs': $status = $this->purge_jobs();
@@ -2199,7 +2203,8 @@ class IPPlistener extends ServerIPP {
 		//agent logs..moved to agentIPP
 		//@unlink($this->admin_path.'pragent.log');
 		@unlink($this->admin_path.$this->printer_name . '.log');
-		//@unlink('error_log');//system error log<<<<<<<<
+		
+		@unlink('error_log');//system error log<<<<<<<<
 	    
 		if (class_exists('AgentIPP', true)) {
 		    $auth = 'dummyref';
@@ -2209,10 +2214,11 @@ class IPPlistener extends ServerIPP {
 		}	
 		
 		//PCNTL JOBS - ANALYZE / CRON
-		
+		/*
 		$ret = $this->cron();
-		
 		$ret = $this->analyze();
+		*/
+		//$this->rollingTasks();
 		
 		return $ret ? $ret : false;
 	}
@@ -2390,15 +2396,11 @@ class IPPlistener extends ServerIPP {
 		$ret = null;
 		
 		if (class_exists('pcntl', true)) {
-			$page = &new pcntl('
+			$page = new pcntl('
 super rcserver.rcssystem;
 load_extension adodb refby _ADODB_; 
 super database;
-/public cp.rcanalyzer;
 ',1);	
-            //analyze stats table -> (create rec for panalyze table)
-			//$res = GetGlobal('controller')->calldpc_method("rcanalyzer.analyze use 1");
-			//$ret = @file_put_contents($this->admin_path . 'analyze.log', str_replace('<br/>', "\r\n", $res));	
 
 			//analyze tables one by one based on new records (exec cmd per record)
 			$db = GetGlobal('db');
@@ -2425,8 +2427,10 @@ super database;
 	protected function cron() {	
 		$ret = null;
 		
+		@unlink('cp/cron.log');//cron log<<<<<<<<
+		
 		if (class_exists('pcntl', true)) {
-			$page = &new pcntl('
+			$page = new pcntl('
 super rcserver.rcssystem;
 load_extension adodb refby _ADODB_; 
 super database;
@@ -2441,8 +2445,55 @@ include cron.crondaemon;
 		}
 		return $ret ? $ret : false;
 	}
+	
+	protected function scanner() {	
+		$ret = null;
+		
+		@unlink('cp/scanner.log');
+		
+		if (class_exists('pcntl', true)) {
+			$page = new pcntl('
+super rcserver.rcssystem;
+load_extension adodb refby _ADODB_; 
+super database;
+include backup.rcbackup;
+',0);	
+			$spath = paramload('SHELL', 'urlpath') . '/newsletters/';
+			$scanner = new rcbackup();
+			$ret = $scanner->scan('newsletters', $spath);
+			
+			//error in agent when rcbackup loaded as public or private
+			//$ret = GetGlobal('controller')->calldpc_method("rcbackup.scan use cgi-bin+$spath"); 			
+			//$ret = 1;
+		}
+		return $ret ? $ret : false;
+	}		
 
 
+	//task to execute per get_jobs ipp periodical check
+	//-2 checks per min (run cron twice on default-step 1 and step 3)
+	protected function rollingTasks() {
+		
+		$fstep = @file_get_contents($this->admin_path . "step.log");
+		$step = $fstep ? intval($fstep) : 1;
+		
+		switch ($step) {
+			case 4 : $this->_flush_log_files('system::flush');
+					 @file_put_contents($this->admin_path . "step.log", '1', LOCK_EX); //goto start
+			         break;						
+			case 3 : $this->analyze();
+                     $this->cron();			
+					 @file_put_contents($this->admin_path . "step.log", '4', LOCK_EX); //next
+			         break;
+			case 2 : //file scan
+					 @file_put_contents($this->admin_path . "step.log", '3', LOCK_EX); //next
+			         break;						 
+			case 1 : 
+			default: $this->cron();
+					 @file_put_contents($this->admin_path . "step.log", '2', LOCK_EX); //next
+		}
+	}
+	
 	
 	
 	//override

@@ -20,6 +20,7 @@ $__EVENTS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 $__EVENTS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
 $__EVENTS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
+$__EVENTS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
@@ -31,6 +32,7 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 $__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
 $__ACTIONS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
+$__ACTIONS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
 
 //$__DPCATTR['RCCONTROLPANEL_DPC']['cp'] = 'cp,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -196,6 +198,11 @@ $__LOCALE['RCCONTROLPANEL_DPC'][154]='_date;Date;Ημερομηνία';
 $__LOCALE['RCCONTROLPANEL_DPC'][155]='_type;Type;Τύπος';
 $__LOCALE['RCCONTROLPANEL_DPC'][156]='_sale;Invoice created;Παραστατικό πώλησης';
 $__LOCALE['RCCONTROLPANEL_DPC'][157]='_installprinter;Install printer;Εγκατάσταση printer';
+$__LOCALE['RCCONTROLPANEL_DPC'][158]='_system;System;System';
+$__LOCALE['RCCONTROLPANEL_DPC'][159]='_sysmessages;Messages;Μηνύματα';
+$__LOCALE['RCCONTROLPANEL_DPC'][160]='_cron;Cron;Cron';
+$__LOCALE['RCCONTROLPANEL_DPC'][161]='_replication;Replication;Replication';
+$__LOCALE['RCCONTROLPANEL_DPC'][162]='_backup;Backup;Backup';
 
 class rccontrolpanel {
 
@@ -309,6 +316,7 @@ class rccontrolpanel {
 							 break;	
 
          case 'cpshowMessages' : break;							 
+         case 'cpsysMessages'  : break;				 
 	   	
          case "cplogout"    : $this->logout();
 		                     break;
@@ -348,6 +356,7 @@ class rccontrolpanel {
 		    case 'cpmessages'  : break;										  
 		    case 'cpdelMessage': break;	
 			case 'cpshowMessages' : $out = $this->viewPastMessages(); break;				
+			case 'cpsysMessages'  : $out = $this->viewSystemMessages(); break;			
 		  	case "cpinfo"      : break;    
 			case "cp"          :	
 			default            : $this->getTURL(); //save param for use by metro cp
@@ -1214,22 +1223,19 @@ function handleResponse() {if(http.readyState == 4){
             $this->stats['Items']['value'] = $this->nformat($res->fields[0]);			
 		//} 
         //if (defined('RCITEMS_DPC')) {//???????SYNC DPC
-			$timein = $this->sqlDateRange('time', true, false);			 
-			$where = $timein ? ' where ' : null;
-			$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql" . $where . $timein;
+			$timein = $this->sqlDateRange('time', true, true);//false);			 
+			//$where = $timein ? ' where ' : null;
+			//$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql" . $where . $timein;
+			$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql where reference NOT LIKE 'system' and reference NOT LIKE 'cron' " . $timein;
 			$res = $db->Execute($sSQL,2);
 			
             $this->stats['Sync']['value'] = $this->nformat($res->fields[0]);		
 			$this->stats['Sync']['bytes'] = $this->bytesToSize1024($res->fields[1],1); //$chars_send,1);
 			
 			$timein = $this->sqlDateRange('time', true, true);			 
-			$sSQL = "select count(id) from syncsql where status IS NOT NULL " . $timein;
+			$sSQL = "select count(id) from syncsql where status <> 1 " . $timein;
 			$res = $db->Execute($sSQL,2);			
 			$this->stats['Sync']['noexec'] = $this->nformat($res->fields[0]); 			
-			
-		    /*$sSQL = "select count(id) from syncsql where substr(date,1,4)='$year'";
-			$res = $db->Execute($sSQL,2);
-            $this->stats['Sync']['value'] = $res->fields[0];*/	
 		//}  		
         //if (defined('RCBULKMAIL_DPC')) {
 			$timein = $this->sqlDateRange('timein', true, false);
@@ -1988,7 +1994,7 @@ function handleResponse() {if(http.readyState == 4){
 		    //echo $sSQL;
 
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|date|1');		   
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
 
@@ -2003,6 +2009,67 @@ function handleResponse() {if(http.readyState == 4){
 		
 	    return ($out);	
 	}	
+	
+	
+	public function viewSysMessages($template=null) {
+		$db = GetGlobal('db');
+		
+		$sSQL = "SELECT id,msg,date,hash FROM cpmessages where type='system' or type='cron' or type= 'analyzer' order by id desc LIMIT 4";
+        $result = $db->Execute($sSQL);
+		if (!$result) return ;
+		
+		foreach ($result as $i=>$rec) {
+			//$status = 'important';
+			$rtokens = array();
+			$rtokens[] = $rec[1]; //msg
+			$rtokens[] = $this->timeSayWhen(strtotime($rec[2])); //time
+			$rtokens[] = '#'; //link
+			$rtokens[] = $rec[3]; //hash
+			
+			$st = $status ? '-' . $status : null;
+			$statusTmpl = str_replace($template, $template.$st ,$template);
+			$t = ($template!=null) ? $this->select_template($statusTmpl) : null;
+			
+			if ($t) 	
+				$ret .= $this->combine_tokens($t, $rtokens);
+			else
+				$ret .= "<option value=\"$hash\">".$rtokens[1]."</option>";
+			
+			unset($rtokens);
+		}
+		//echo $ret;
+		return ($ret);
+	}	
+	
+	protected function viewSystemMessages() {
+		$db = GetGlobal('db');	
+		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;	
+		$ownerSQL = ($this->seclevid==9) ? null : 'where owner=' . $db->qstr($this->owner); 		
+		   	
+		if (defined('MYGRID_DPC')) {
+		    $title = str_replace(' ','_',localize('_messages',getlocal()));
+		   
+			$sSQL = "select * from (SELECT id,date,type,msg FROM cpmessages where type='system' or type='cron' or type= 'analyzer' order by id desc";
+            $sSQL.= ') as o';  				
+		   		   
+		    //echo $sSQL;
+
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
+
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
+			
+			//mail body ajax renderer
+			//$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
+		}
+        else  
+			$out .= null;
+   		
+		
+	    return ($out);	
+	}		
 	
 	
 	
@@ -2086,7 +2153,8 @@ function handleResponse() {if(http.readyState == 4){
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			$saytime = $this->timeSayWhen(strtotime($rec[0].' '.$rec[1]));
+			$tms = mktime(substr($rec[0],0,4), substr($rec[0],6,2), substr($rec[0],9,2), substr($rec[1],0,2), substr($rec[1],3,2), substr($rec[1],6,2));
+			$saytime = $this->timeSayWhen($tms);//strtotime($rec[0].' '.$rec[1]));
 			$msg = "success|" . $rec[2] .", ". $text .' '. $rec[0] . " " .$rec[1] . "|$saytime|cptransactions.php";
 			$this->setMessage($msg);
 		}
