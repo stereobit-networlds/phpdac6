@@ -47,6 +47,11 @@ if ( !defined("DOWNLOADFILE_H") ) {
 		// download file
 		function df_download() {
 			if($this->df_exists() && $this->df_permitother() >= 4) {
+				header("Pragma: public");
+				header("Expires: 0");
+				header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+				header("Cache-Control: public");
+				header("Content-Description: File Transfer");
 				header("Content-type: ".$this->df_contenttype);
 				header("Content-Disposition: ".$this->df_contentdisposition."; filename=\"".$this->df_filename."\"");
 				header("Content-Length: ".$this->df_size());

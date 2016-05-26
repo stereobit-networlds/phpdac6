@@ -64,14 +64,15 @@ class rcbackup  {
 	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
-		 case 'cpbackupsave' : $this->save_job_code();	
+		 case 'cpbackupsave' : $file = $this->downloadFile(); die($file);	
 		                       break;  		   
 		   							   
 		 case 'cpbackcode'   : //die('saverel|test join cat');						   
 							   //echo $this->loadsubframe();
 		                       die();
 							 
-		 case 'cpbackupsh'   : //die('test-first-level');
+		 case 'cpbackupsh'   : //$this->difbackup();
+		                       //die('test-first-level');
 		                       break;
 		 case 'cpbackupdtl'  : echo $this->loadframe();
 		                       die();
@@ -90,16 +91,18 @@ class rcbackup  {
 	 
 	  switch ($action) {
 			
-		 case 'cpbackupsave'  : 										  
-		 case 'cpbackupsh'    : $out = $this->cronjobs_grid(null,140,14,'r', true);
+		 case 'cpbackupsave'  : break; 										  
+		 case 'cpbackupsh'    : //$out = $this->cronjobs_grid(null,140,14,'r', true);
 								//$out .= "<div id='jobcode'></div>"; //2nd div inside this save	 
-								$out .= $this->codeform();
+								//$out .= $this->codeform();
+								$out = $this->scanReport('cgi-bin', 1, 0, true, urldecode(GetReq('date')));
 							    break; 
 		 case 'cpbackupdtl' : 
 							  break;					  
 	     case 'cpbackup'    :
 
-		 default            : $out .= $this->backup_grid(null,140,14,'r', true);	
+		 default            : $out = $this->backup_grid(null,140,14,'r', true);
+							  $out .= $this->getFilesButtons();		 
 							  $out .= "<div id='bdetails'></div>";
 	  }	 
 
@@ -112,9 +115,9 @@ class rcbackup  {
 
 	protected function loadframe($ajaxdiv=null) {
 		$id = GetParam('id');
-		$bodyurl = seturl("t=cpbackupsh&iframe=1&id=$id");
+		$bodyurl = seturl("t=cpbackupsh&iframe=1&date=$id");
 			
-		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"540px\"><p>Your browser does not support iframes</p></iframe>";    
+		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"440px\"><p>Your browser does not support iframes</p></iframe>";    
 
 		if ($ajaxdiv)
 			return $ajaxdiv. '|' . $frame;
@@ -133,10 +136,10 @@ class rcbackup  {
 		
 		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
 
-		$xsSQL = "select * from (SELECT id, stamp, status, file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and stamp > '$backtrace') as o";		
+		$xsSQL = "select * from (SELECT id, stamp, status, file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and file_path NOT LIKE 'FIRST SCAN%' and stamp > '$backtrace') as o";		
 		//echo $xsSQL;  
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|link|2|"."javascript:bdetails(\"{id}\");".'||');
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|link|5|"."javascript:bdetails(\"{stamp}\");".'||');
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal()).'|5|1');			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); //"|link|5|"."javascript:cronjobs(\"{id}\");".'||');		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_last_mod|".localize('_filemod',getlocal())."|5|1|");
@@ -230,37 +233,11 @@ class rcbackup  {
 		return (true);		
 	}	
 
-
-	//zipData('/path/to/folder', '/path/to/backup.zip');
-	public function zipData($folder, $zipTo) {
-	  if (extension_loaded('zip')) {
-		if (file_exists($source)) {
-			$zip = new ZipArchive();
-			if ($zip->open($destination, ZIPARCHIVE::CREATE)) {
-				$source = realpath($source);
-				if (is_dir($source)) {
-					$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
-					foreach ($files as $file) {
-						$file = realpath($file);
-						if (is_dir($file)) {
-							$zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
-						} else if (is_file($file)) {
-							$zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
-						}
-					}
-				} else if (is_file($source)) {
-					$zip->addFromString(basename($source), file_get_contents($source));
-				}
-			}
-			return $zip->close();
-		}
-	  }
-	  return false;
-	}	
 		
-	public function scan($acc=null, $path=null, $skipdir=null) {
+	public function scan($acc=null, $path=null, $skipdir=null, $reportout=false) {
 		if (!$path)	$path = $this->urlpath . '/';
 		$db = GetGlobal('db');
+		$repout = $reportout ? true : $this->report_out;
 		
 		@unlink($this->path . 'scanner.log');
 		$log = fopen($this->path . 'scanner.log', "a");
@@ -565,26 +542,34 @@ Scan executed in $elapsed seconds.";
 
 		$ret = fclose($log);
 		
-		if ($this->report_out) 
+		if ($repout) 
 			return(nl2br($report));
 		else		
 			return ($ret);	
 	}
 	
-	public function scanReport($acc=null, $daysback=null, $minsback=null) {
+	public function scanReport($acc=null, $daysback=null, $minsback=null, $reportout=false, $date=null) {
 		$db = GetGlobal('db');	
 		$backtracedays = $daysback ? $daysback : 1;
 		$backtracemins = $minsback ? $minsback : 0;
 		$acct = $acc ? $acc : 'scanner';
+		$repout = $reportout ? true : $this->report_out;
 		
-		$report = "Scan Daily Report\r\n\r\n";
+		$report = "Scan Report\r\n\r\n";
 		
 		//	Prepare scan report
-		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i')-$backtracemins, date('s'), date('n'), date('j')-$backtracedays,date('Y')));
+		if ($date) { //as clicked by grid
+			$backtrace = $date;
+			$gthan = '>';// '<'; //less than ?
+		}	
+		else {
+			$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i')-$backtracemins, date('s'), date('n'), date('j')-$backtracedays,date('Y')));
+			$gthan = '>'; //greater than
+		}	
 
-		$report .= "SuperScan log report for $acct file changes since ".$backtrace.":\r\n\r\n";	
+		$report .= "Scan log report for $acct file changes since ".$backtrace.":\r\n\r\n";	
 
-		$results = $db->Execute("SELECT stamp, status, file_path, file_last_mod FROM fshistory WHERE acct = '$acct' AND stamp > '$backtrace'");
+		$results = $db->Execute("SELECT stamp, status, file_path, file_last_mod FROM fshistory WHERE acct = '$acct' AND stamp $gthan '$backtrace'");
 		if (!$results)
 		{
 			$report .="No log entries available!\r\n ";
@@ -603,11 +588,570 @@ Scan executed in $elapsed seconds.";
 			$mailed = mail($to, $acct . ' Integrity Monitor Log Report',$report); 
 		}
 
-		if ($this->report_out) 
+		if ($repout) 
 			return(nl2br($report));
 		else
 			return true;	
 	}
+	
+	
+	
+	
+	//zipData('/path/to/folder', '/path/to/backup.zip');
+	public function zipData($folder, $zipTo) {
+	  if (extension_loaded('zip')) {
+		if (file_exists($source)) {
+			$zip = new ZipArchive();
+			if ($zip->open($destination, ZIPARCHIVE::CREATE)) {
+				$source = realpath($source);
+				if (is_dir($source)) {
+					$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
+					foreach ($files as $file) {
+						$file = realpath($file);
+						if (is_dir($file)) {
+							$zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
+						} else if (is_file($file)) {
+							$zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
+						}
+					}
+				} else if (is_file($source)) {
+					$zip->addFromString(basename($source), file_get_contents($source));
+				}
+			}
+			return $zip->close();
+		}
+	  }
+	  return false;
+	}		
+	
+    public function backup_directory($path=null, $name=null, $download=false, $ziprecur=false) {
+	
+        $app_path = $this->urlpath . '/';			
+	
+	    static $dirname;
+		$dirname .= $path .'/'; //goto next dir
+		static $zip; 
+		$zip = new ZipArchive();
+		
+        $d = date('Ymd-Hi');
+        $zname = $name ? /*$d.'-'.*/$name.'.zip' : /*$d.'-'.*/'backup.zip';			
+		$zfilename = $this->path . "/uploads/" . $zname; //to save into
+         
+		if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
+            die("cannot open $zfilename");//false;
+        }			
+		
+		
+        //$ret = null;		
+        //echo 'DIRNAME:'.$dirname. '<br/>';
+	    if (is_dir($app_path . $dirname)) {
+		
+		  //if (!$ziprecur)
+		    $zip->addEmptyDir(str_replace('../','',$dirname));//clean ..
+		   
+          $mydir = dir($app_path . $dirname);
+		 
+			
+          while ($fileread = $mydir->read ()) {
+		   if (($fileread!='.') && ($fileread!='..'))  {
+                 //echo "<br>",$fileread;	   
+  	             if (!is_dir($app_path . $dirname."/".$fileread))  {   
+					$zip->addFile($app_path . $dirname."/".$fileread, str_replace('../','',$dirname).$fileread); //to sub path
+					//echo 'addfile:'.$app_path . $dirname.$fileread.'<br/>';
+				 }
+				 else //recursion
+				    $x = $this->backup_directory($fileread, $name, $download, true);
+		   } 
+	      }
+	      $mydir->close ();
+		  //goto prev dir
+		  $dirname = str_replace($path .'/','',$dirname);
+		  
+		  //echo "directory: " . $dirname . "<br/>";
+		  if (!$ziprecur) {
+			$ret .= "numfiles: " . $zip->numFiles . "<br/>";
+			$ret .= "status:" . $zip->status . "<br/>";
+		  }
+		  
+		  if (!$ziprecur)
+			$zip->close();		  
+        }
+		
+		if ((!$ziprecur) && ($download==true)) {
+		    $dn = new DOWNLOADFILE($zfilename);
+			$ret = $dn->df_download();
+		}
+		
+        //echo $ret;
+		return ($ret);
+    }
+
+   //zip directory without recursion
+    public function backup_directory_norec($path=null, $name=null, $download=false) {
+
+        $app_path = $this->urlpath . '/';	
+	
+        $d = date('Ymd-Hi');
+		$zpath = $path ? $path : '';
+        $zname = $name ? /*$d.'-'.*/$name.'.zip' : /*$d.'-'.*/'backup.zip';
+		$dirname = $app_path . '/' . $zpath;
+		
+	    if (is_dir($dirname)) {
+		   
+          $mydir = dir($dirname);
+		  
+		  $zip = new ZipArchive();
+		  $zfilename = $this->path . "/uploads/" . $zname; //to save into
+         
+		  if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
+              return "cannot open $zfilename";//false;
+          }		  
+
+          while ($fileread = $mydir->read ()) {
+		   if (($fileread!='.') && ($fileread!='..'))  {
+                 //echo "<br>",$fileread;	   
+  	             if (!is_dir($fileread))  {   
+                    $zip->addFile($dirname."/".$fileread, $fileread); //or basename of full path					
+				 }
+		   } 
+	      }
+	      $mydir->close ();
+		  
+          $ret = "numfiles: " . $zip->numFiles . "<br/>";
+          $ret .= "status:" . $zip->status . "<br/>";
+		  
+		  $zip->close();		  
+        }
+		
+		if ($download==true) {
+		    $dn = new DOWNLOADFILE($zfilename);
+			$ret = $dn->df_download();
+		}
+		
+
+		return ($ret);
+    } 	
+	
+    public function backup_dbtable($table=null, $name=null, $download=false) {
+		$db = GetGlobal('db');  
+		$d = date('Ymd-Hi');
+	    $meter = 0;
+		$m = 0;
+		$zname = $name ? /*$d.'-'.*/$name.'.zip' : /*$d.'-'.*/'dbasecsv.zip';
+		if (!$table) return false;
+		
+		$con = mysql_connect(remote_paramload('DATABASE','dbhost', $this->path), 
+		                      remote_paramload('DATABASE','dbuser', $this->path),
+							  remote_paramload('DATABASE','dbpwd', $this->path));
+		if ($con) {	
+
+  	      $zip = new ZipArchive();		
+		  $zfilename = $this->path . "/uploads/" . $zname; //to save into
+         
+		  if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
+              $download=false;//die("cannot open $zfilename");//false;
+			  $ret = 'Zip error!';
+          }				
+							  
+		  mysql_select_db(remote_paramload('DATABASE','dbname', $this->path));	
+		  //mysql_query("SET NAMES utf8");
+		  $charset = remote_paramload('DATABASE','charset', $this->path);
+		  mysql_query("SET NAMES ".$charset);//'utf8'");
+		  
+	      if (stristr($table,'|')) //multitable
+		    $tables = explode('|',$table);
+		  else
+			$tables[] = $table; //one table
+
+          foreach ($tables as $t=>$tbl) {	
+            $ztablename = $this->path . "/uploads/" . $d.'-'.$tbl . '.csv';		
+            
+			$result = mysql_query("SELECT * FROM " . $tbl);
+            if ($result) {	
+			
+			  $fh = fopen($ztablename, 'w');
+			  
+			  // Now UTF-8 - Add byte order mark / UTF8 BOM
+			  //if (($this->encoding=='utf-8') || ($this->encoding=='utf8'))
+				fwrite($fh, pack("CCC",0xef,0xbb,0xbf)); 
+			  
+			  /* insert field values into data.txt */			
+			  while ($row = mysql_fetch_array($result)) {          
+				$last = end($row);          
+				$num = mysql_num_fields($result) ;    
+				for($i = 0; $i < $num; $i++) {
+				
+				    //NULL VALUES..0 zeros ???
+				    //$cell = $row[$i] ? $row[$i] : 'null';
+					
+					fwrite($fh, $row[$i]);                      
+					//fwrite($fh, mb_convert_encoding($row[$i], 'UTF-8', 'GREEK'));
+					//fwrite($fh, iconv("UTF-8", "ISO-8859-7", $row[$i]));
+					
+					if ($row[$i] != $last)
+						fwrite($fh, "; "); //,
+				}                                                                 
+				fwrite($fh, PHP_EOL);//"\n");
+			  }
+			  @fclose($fh);	
+			  
+			  $zip->addFile($ztablename, $tbl . '.csv');
+				
+              $meter+=1;
+			}
+			/*// MUST BE ADMIN TO EXPORT TEXT
+			  $sSQL = "SELECT itmname,itmactive INTO OUTFILE '".$ztablename[$t]."'
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'
+  LINES TERMINATED BY '\\n'
+  FROM " . $tbl;
+            //echo $sSQL;  
+			$result = $db->Execute($sSQL,2);*/
+						 
+          }
+		  $ret .= $meter . ' tables exported.';
+		  $zip->close();	
+		  
+		  if ($download==true) {
+		  
+		    $dn = new DOWNLOADFILE($zfilename);
+			$ret = $dn->df_download();
+		  }	  
+		}  
+        else 
+		  $ret = 'No connection';		  
+		  
+        return ($ret);		
+    }
+
+	
+	protected function download($file) {
+		
+		if (file_exists($file)) {
+			header('Content-Description: File Transfer');
+			header('Content-Type: application/octet-stream');
+			header('Content-Disposition: attachment; filename="'.basename($file).'"');
+			header('Expires: 0');
+			header('Cache-Control: must-revalidate');
+			header('Pragma: public');
+			header('Content-Length: ' . filesize($file));
+			readfile($file);
+			exit;
+		}		
+		
+	}
+	
+	
+	protected function difFiles($name=null, $download=false) {
+		$db = GetGlobal('db');
+		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
+
+		static $zip; 
+		$zip = new ZipArchive();
+        $d = date('Ymd-Hi');
+        $zname = $name ? $d.'-'.$name : $d.'-'.'backup.zip';			
+		$zfilename = $this->path . "/uploads/" . $zname; //to save into
+         
+		if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
+            echo "Cannot open $zfilename";
+			return false;
+		}
+		else {
+			$sSQL = "SELECT id, stamp, status, file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED') and file_path NOT LIKE 'FIRST SCAN%' and stamp > '$backtrace'";
+			$result = $db->Execute($sSQL);
+		
+			foreach ($result as $r=>$rec) {
+				if (is_readable($rec['file_path']))  {   
+				
+					$f = str_replace($this->urlpath .'/', '', $rec['file_path']);
+					$zip->addFile($rec['file_path'], $f);
+					
+					if (!$download) echo $f . '<br/>';
+				}	
+			}
+			
+			$zip->close();		  
+		
+			if ($download==true) {
+				$dn = new DOWNLOADFILE($zfilename, 'application/zip');
+				$ret = $dn->df_download();
+				//return ($ret);	
+			}	
+			else 
+				return true;		
+		}
+		
+	}
+	
+    protected function difTable($table=null, $name=null, $download=false) {
+		$db = GetGlobal('db');  
+		$d = date('Ymd-Hi');
+	    $meter = 0;
+		$m = 0;
+		$zname = $name ? /*$d.'-'.*/$name : /*$d.'-'.*/ $table . '.zip';
+		if (!$table) return false;
+		
+  	    $zip = new ZipArchive();		
+		$zfilename = $this->path . "/uploads/" . $zname; //to save into
+         
+		if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
+		    echo 'Zip error!';
+			return false;
+        }				
+		else {					  
+	
+            $ztablename = $this->path . "/uploads/" . $d.'-'. $table . '.csv';		
+            
+			$result = $db->Execute("SELECT * FROM " . $table);// . " WHERE timestamp...");
+            if ($result) {	
+			
+			  $fh = fopen($ztablename, 'w');
+			  
+			  // Now UTF-8 - Add byte order mark / UTF8 BOM
+			  //if (($this->encoding=='utf-8') || ($this->encoding=='utf8'))
+			  fwrite($fh, pack("CCC",0xef,0xbb,0xbf)); 
+			         
+			  foreach ($result as $r=>$rec) {
+				for($i = 0; $i < count($rec); $i++) {
+					fwrite($fh, $rec[$i] . ';');//implode(';', $rec));
+				//foreach ($rec as $i=>$field) {	
+				    //NULL VALUES..0 zeros ???
+				    //$cell = $row[$i] ? $row[$i] : 'null';
+					//is_numeric($i) ? fwrite($fh, $field . ';') : null;
+				}                                                                 
+				fwrite($fh, PHP_EOL);//"\n");
+			  }
+			  @fclose($fh);	
+			  
+			  $zip->addFile($ztablename, $table . '.csv');
+			}
+						 
+			if ($zip->close())	
+				@unlink($ztablename); //for big files delete csv data
+			
+			if ($download==true) {
+		  
+				//$dn = new DOWNLOADFILE($zfilename);
+				//$ret = $dn->df_download();
+				//return ($ret);
+				
+				/*header("Pragma: no-cache"); 
+				header("Expires: 0"); 
+				header("Content-type: application/zip");
+				header("Content-Disposition: attachment; filename=\"". $zname ."\"");
+				//header("Content-Length: ". filesize($zfilename));				
+				$handle = fopen($zfilename, "rb");
+				while (!feof($handle)){
+					echo fread($handle, 8192);
+				}
+				fclose($handle);
+				exit;	*/
+				
+				$this->download($zfilename);
+			}	
+			else
+				return true;		
+		}	
+    }	
+
+	protected function difPics($path=null, $name=null, $download=false) {
+		$db = GetGlobal('db');
+		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
+
+		static $zip; 
+		$zip = new ZipArchive();
+        $d = date('Ymd-Hi');
+        $zname = $name ? /*$d.'-'.*/$name : /*$d.'-'.*/'backup.zip';			
+		$zfilename = $this->path . "/uploads/" . $zname; //to save into
+         
+		if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
+            echo "Cannot open $zfilename";
+			return false;
+		}
+		else {
+		
+			$picpath = $this->urlpath . realpath($path); //<<< urlpath /this->path = cp
+			if (is_dir($picpath)) {
+				$source = $picpath;
+				if (is_dir($source)) {
+					$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
+					foreach ($files as $file) {
+						$file = realpath($file);
+						if (is_dir($file)) {
+							$zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
+						} else if (is_file($file)) {
+							$zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
+						}
+					}
+				} else if (is_file($source)) {
+					$zip->addFromString(basename($source), file_get_contents($source));
+				}			
+			
+				$zip->close();		  
+		
+				if ($download==true) {
+					$dn = new DOWNLOADFILE($zfilename, 'application/zip');
+					$ret = $dn->df_download();
+					//return ($ret);	
+				}	
+				else 
+					return true;
+			}
+			else {
+				echo "Not a path ($this->path . $path)";
+				return false;	
+			}	
+		}
+		
+	}	
+	
+	protected function downloadFile() {
+		$mode = GetReq('mode');
+		
+		//ini_set('max_execution_time', 600);
+		//ini_set('memory_limit','1024M');
+
+		set_time_limit(180); 	
+		
+		switch ($mode) {
+			case 'system': $path = GetReq('cp'); //GetReq('path');
+						   $p = explode('/', '/'.$path); // / at start in case of one level
+						   $name = array_pop($p);	
+			               $ret = $this->backup_directory($path, $name);
+						   break;	
+			case 'dir'   : $path = GetReq('path');
+						   $p = explode('/', '/'.$path); // / at start in case of one level	
+						   $name = array_pop($p);	
+						   $ret = $this->backup_directory($path, $name);
+			               break;
+			case 'pics'  : $path = GetReq('path');
+						   $p = explode('/', $path);	
+						   $name = array_pop($p);	
+						   $ret = $this->backup_directory_norec($path, $name);
+			               break;
+			case 'table' : $table = GetReq('table');
+						   $ret = $this->difTable($table, null, true);
+			               break;  
+			case 'files' :
+			default      : $ret = $this->difFiles(null, true);
+		}
+		
+		return($ret);
+	}
+	
+	
+	protected function getFilesButtons() {
+		
+		$furl1 = seturl('t=cpbackupsave&mode=files');
+		$furl2 = seturl('t=cpbackupsave&mode=dir&path=files');
+		$furl3 = seturl('t=cpbackupsave&mode=dir&path=newsletters');
+		$button = $this->createButton('Documents', array('Scanned files'=>$furl1,
+														 'Public files'=>$furl2,
+														 'Newsletters'=>$furl3,
+													));
+		
+		$turl1 = seturl('t=cpbackupsave&mode=table&table=users');
+		$turl2 = seturl('t=cpbackupsave&mode=table&table=ulists');		
+		$button .= $this->createButton('Persons', array('Users'=>$turl1,
+													   'e-Mails'=>$turl2,
+		                                                ),'success');
+		$turl1 = seturl('t=cpbackupsave&mode=table&table=customers');
+		$turl2 = seturl('t=cpbackupsave&mode=table&table=custaddress');														  
+		$button .= $this->createButton('Clients', array('Customers'=>$turl1,
+													    'Addresses'=>$turl2,
+		                                                ),'warning');
+													  
+		$turl1 = seturl('t=cpbackupsave&mode=table&table=products');													  
+		$turl2 = seturl('t=cpbackupsave&mode=table&table=categories');
+		$turl3 = seturl('t=cpbackupsave&mode=table&table=transactions');
+		$button .= $this->createButton('Inventory', array('Products'=>$turl1,
+													      'Categories'=>$turl2,
+														  'Transactions'=>$turl3,
+		                                                  ),'info');	
+
+		$turl1 = seturl('t=cpbackupsave&mode=pics&path=images/photo_sm');													  
+		$turl2 = seturl('t=cpbackupsave&mode=pics&path=images/photo_md');
+		$turl3 = seturl('t=cpbackupsave&mode=pics&path=images/photo_bg');		
+		$turl4 = seturl('t=cpbackupsave&mode=pics&path=images');
+		$button .= $this->createButton('Images', array('Small'=>$turl1,
+													   'Medium'=>$turl2,
+													   'Large'=>$turl3,
+													   'Root'=>$turl4,
+		                                               ));															  
+													   
+		$turl1 = seturl('t=cpbackupsave&mode=system&cp=cp');													  
+		$turl2 = seturl('t=cpbackupsave&mode=system&cp=cp/html/metro');
+		$turl3 = seturl('t=cpbackupsave&mode=system&cp=cp/transactions');		
+		$button .= $this->createButton('System', array('Root'=>$turl1,
+													   'Dashboard'=>$turl2,
+													   'Transactions'=>$turl3,
+		                                               ),'warning');													   
+		
+		$ret = $this->window($button);
+		
+		return ($ret);
+	}
+	
+	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
+		$type = $t ? $t : 'primary'; //danger /warning / info /success
+		switch ($s) {
+			case 'large' : $size = 'btn-large '; break;
+			case 'small' : $size = 'btn-small '; break;
+			case 'mini'  : $size = 'btn-mini '; break;
+			default      : $size = null;
+		}
+		
+		//$ret = "<button class=\"btn  btn-primary\" type=\"button\">Primary</button>";
+		
+		if (!empty($urls)) {
+			foreach ($urls as $n=>$url)
+				$links .= '<li><a href="'.$url.'" target="_blank">'.$n.'</a></li>';
+			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
+		} 
+		
+		$ret = '
+			<div class="btn-group">
+                <button data-toggle="dropdown" class="btn '.$size.'btn-'.$type.' dropdown-toggle">'.$name.' <span class="caret"></span></button>
+                '.$lnk.'
+            </div>'; 
+			
+		return ($ret);
+	}
+
+	protected function window($buttons) {
+		$ret = '	
+		    <div class="row-fluid">
+                <div class="span12">
+                  <!-- BEGIN BUTTON PORTLET-->
+                  <div class="widget red">
+                        <div class="widget-title">
+                           <h4><i class="icon-reorder"></i> Downloads</h4>
+                           <span class="tools">
+                               <a href="javascript:;" class="icon-chevron-down"></a>
+                               <a href="javascript:;" class="icon-remove"></a>
+                           </span>
+                        </div>
+                        <div class="widget-body">
+                            <!--p>
+                                <button class="btn " type="button">Default</button>
+                                <button class="btn  btn-primary" type="button">Primary</button>
+                                <button class="btn  btn-info" type="button">Info</button>
+                                <button class="btn  btn-success" type="button">Success</button>
+                                <button class="btn  btn-warning" type="button">Warning</button>
+                                <button class="btn  btn-danger" type="button">Danger</button>
+                                <button class="btn  btn-inverse" type="button">Inverse</button>
+                                <button class="btn  disabled" type="button">Disabled</button>
+                            </p-->
+							<div class="btn-toolbar">
+							'.$buttons.'
+							</div>
+                        </div>
+                  </div>
+                  <!-- END BUTTON PORTLET-->
+                </div>
+            </div>
+';
+		return ($ret);
+	}			
 	
 	protected function writeLog($data = '') {
 		if (empty($data)) return;

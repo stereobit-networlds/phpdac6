@@ -180,7 +180,26 @@ super database;
 									  }						  
 					                  break;
 									  
-                      default       : //insert first update after (if id-code exists will not be ins)								 
+					  case 'replace':				  
+                      default       : //REPLACE
+									  $sSQL = $this->replace_cmd($sc,$field,$getrec,$attrrec);
+									  if ($sSQL) {
+										if ($res = $db->Execute($sSQL,1)) {
+											$ix+=1;
+											$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},1,'{$this->now}',''," .
+													   $db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
+										}
+										else {
+											$errormsg .= $sSQL . "\r\n" . $db->error . "\r\n";
+											$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},-1,'{$this->now}',".
+														$db->qstr(addslashes ($db->error)). ", " . $db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
+										}
+										$ps = $db->Execute($postSQL,1);	
+										//self::write2disk('sqlparser.log', $postSQL);	
+									  }	
+					                  break; 
+									  /*
+					                  //insert first update after (if id-code exists will not be ins)								 
 					                  $insSQL = $updSQL = null; //init vars in loop
 					                  $insSQL = $this->insert_cmd($sc,$field,$getrec,$attrrec);
 									  if (!$res = $db->Execute($insSQL,1)) {
@@ -200,6 +219,7 @@ super database;
 												   $db->qstr(addslashes ($db->error)). ", " . $db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 									  }
                                       $ps = $db->Execute($postSQL,1);	
+									  */
 									  //self::write2disk('sqlparser.log', $postSQL);
                     }//switch			  
 				  
@@ -306,7 +326,58 @@ super database;
 		 $sSQL.= ';';	   
 		 
 		 return ($sSQL);
-   }    
+   }   
+
+   protected function replace_cmd($sc,$field,$getrec,$attrrec) {
+   
+         $sSQL = "REPLACE ". $sc['table'] . " set ";
+         $field_names = explode(',',$sc['setrec']);
+         $extra_field_names = explode(',',$sc['setrec2']);
+         $extra_field_values = explode(',',$sc['getrec2']);
+		 
+		 $datasql = null;
+		 foreach ($field as $fid=>$fdata) {
+		   if (in_array($fid,$getrec))
+		     $datasql[] = $fdata;
+		 }	
+		 
+		 $datasqltype = null;
+		 foreach ($datasql as $fr=>$fd) {
+		    if ($attrrec[$fr]=='s')
+			  $datasqltype[] = '"' . $this->make_replaces($fd) .'"';//$db->qstr($fd);
+			elseif ($attrrec[$fr]=='n')
+			  $datasqltype[] = 0 + str_replace($sc['sdecimal'],$sc['tdecimal'],trim($fd));//casting to num  
+			elseif ($attrrec[$fr]=='d') //date
+			  $datasqltype[] = '"' . $datetime .'"';									  
+			else   
+			  $datasqltype[] = trim($fd);
+		 }  
+								 
+		 foreach ($field_names as $fn=>$name) 					 
+		   $sqlreplace[] = $name.'='.$datasqltype[$fn];
+
+         $sSQL.= implode(',',$sqlreplace);
+								 
+		 foreach ($extra_field_names as $fne=>$namee) {
+		   $value = $this->replace_params($extra_field_values[$fne], $sc);
+		   $sqlupdate2[] = $namee.'='.$value;
+		 }
+								 
+         $sSQL.= implode(',',$sqlupdate2); 	
+
+         /*$sSQL .= ' where ';
+		 
+		 $where = explode(',', $sc['where']);
+		 foreach ($where as $w=>$wcl) {
+			$sSQL .= str_replace(array('eq','gt','lt'), 
+			                     array('='.$datasqltype[$w],'>'.$datasqltype[$w],'<'.$datasqltype[$w]), 
+								 $wcl); 
+		 }*/
+		 
+		 $sSQL.= ';';	   
+		 
+		 return ($sSQL);
+   }   
    
    protected function make_replaces($str=null) {
    
