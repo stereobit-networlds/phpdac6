@@ -4,53 +4,58 @@ $__DPCSEC['RCBACKUP_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 if ((!defined("RCBACKUP_DPC")) && (seclevel('RCBACKUP_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCBACKUP_DPC",true);
 
-$__DPC['RCBACKUP_DPC'] = 'rccron';
+$__DPC['RCBACKUP_DPC'] = 'rcbackup';
  
 $__EVENTS['RCBACKUP_DPC'][0]='cpbackup';
 $__EVENTS['RCBACKUP_DPC'][1]='cpbackupdtl';
 $__EVENTS['RCBACKUP_DPC'][2]='cpbackupsh';
-$__EVENTS['RCBACKUP_DPC'][3]='cpjobcode';
-$__EVENTS['RCBACKUP_DPC'][4]='cpjobcodesave';
+$__EVENTS['RCBACKUP_DPC'][3]='cpbackcode';
+$__EVENTS['RCBACKUP_DPC'][4]='cpbackupsave';
 
 $__ACTIONS['RCBACKUP_DPC'][0]='cpbackup';
 $__ACTIONS['RCBACKUP_DPC'][1]='cpbackupdtl';
 $__ACTIONS['RCBACKUP_DPC'][2]='cpbackupsh';
-$__ACTIONS['RCBACKUP_DPC'][3]='cpjobcode';
-$__ACTIONS['RCBACKUP_DPC'][4]='cpjobcodesave';
+$__ACTIONS['RCBACKUP_DPC'][3]='cpbackcode';
+$__ACTIONS['RCBACKUP_DPC'][4]='cpbackupsave';
 
 //$__DPCATTR['RCBACKUP_DPC']['cpbackup'] = 'cpbackup,1,0,0,0,0,0,0,0,0,0,0,1';
 
 $__LOCALE['RCBACKUP_DPC'][0]='RCBACKUP_DPC;Backup;Backup';
-$__LOCALE['RCBACKUP_DPC'][1]='_description;Job description;Περιγραφή εργασίας';
-$__LOCALE['RCBACKUP_DPC'][2]='_concurrent;Concurrent;Concurrent';
-$__LOCALE['RCBACKUP_DPC'][3]='_implementationId;Impl;Impl';
-$__LOCALE['RCBACKUP_DPC'][4]='_cronDefinition;Settings;Ρυθμίσεις';
-$__LOCALE['RCBACKUP_DPC'][5]='_startTimestamp;Start;Έναρξη';
-$__LOCALE['RCBACKUP_DPC'][6]='_endTimestamp;End;Λήξη';
-$__LOCALE['RCBACKUP_DPC'][7]='_results;Results;Αποτέλεσμα';
-$__LOCALE['RCBACKUP_DPC'][8]='_pid;pid;pid';
-$__LOCALE['RCBACKUP_DPC'][9]='_cronjob;Jobs;Εργασίες';
-$__LOCALE['RCBACKUP_DPC'][10]='_code;Code;Κωδικός';
-$__LOCALE['RCBACKUP_DPC'][11]='_id;ID;ID';
-$__LOCALE['RCBACKUP_DPC'][12]='_title;Title;Τίτλος';
-$__LOCALE['RCBACKUP_DPC'][13]='_type;Type;Τύπος';
-$__LOCALE['RCBACKUP_DPC'][14]='_lastActualTimestamp;Lt;Lt';
-$__LOCALE['RCBACKUP_DPC'][15]='_save;Save;Αποθήκευση';
+$__LOCALE['RCBACKUP_DPC'][1]='_stamp;Stamp;Stamp';
+$__LOCALE['RCBACKUP_DPC'][2]='_status;Status;Κατάσταση';
+$__LOCALE['RCBACKUP_DPC'][3]='_filepath;Object;Στοιχείο';
+$__LOCALE['RCBACKUP_DPC'][4]='_filemod;Date modified;Ημερομηνία αλλαγής';
+$__LOCALE['RCBACKUP_DPC'][5]='_results;Results;Αποτέλεσμα';
+$__LOCALE['RCBACKUP_DPC'][6]='_code;Code;Κωδικός';
+$__LOCALE['RCBACKUP_DPC'][7]='_id;ID;ID';
+$__LOCALE['RCBACKUP_DPC'][8]='_save;Save;Αποθήκευση';
 
 class rcbackup  {
 
     var $title, $path, $urlpath;
 	var $seclevid, $userDemoIds;
+	
+	var $report_out, $email_out, $addresses;
 		
 	function __construct() {
 	
-	  $this->path = paramload('SHELL','prpath');
-	  $this->urlpath = paramload('SHELL','urlpath');
-	  $this->title = localize('RCBACKUP_DPC',getlocal());	 
+		$this->path = paramload('SHELL','prpath');
+		$this->urlpath = paramload('SHELL','urlpath');
+		$this->title = localize('RCBACKUP_DPC',getlocal());	 
 	  
-	  $this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
-	  $this->userDemoIds = array(5,6,7,8); 
-	  //echo $this->seclevid;  
+		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
+		$this->userDemoIds = array(5,6,7,8); 
+		//echo $this->seclevid;
+
+		//	Output to monitor (true or false)
+		//		Recommend true for testing and FALSE for CRON
+		$this->report_out = false;		
+		//	Output as e-mail (true or false)
+		//		Recommend false for testing and true for CRON
+		$this->email_out = false;		
+		//	E-mail address(es) to send reports of change
+		//$addresses = array("balexiou@stereobit.com",);// "user2@domain2.com");
+		$this->addresses = array("b.alexiou@stereobit.gr",);// "user2@domain2.com");		  
 	}
 	
     function event($event=null) {
@@ -59,10 +64,10 @@ class rcbackup  {
 	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
-		 case 'cpjobcodesave': $this->save_job_code();	
+		 case 'cpbackupsave' : $this->save_job_code();	
 		                       break;  		   
 		   							   
-		 case 'cpjobcode'  : //die('saverel|test join cat');						   
+		 case 'cpbackcode'   : //die('saverel|test join cat');						   
 							   //echo $this->loadsubframe();
 		                       die();
 							 
@@ -85,7 +90,7 @@ class rcbackup  {
 	 
 	  switch ($action) {
 			
-		 case 'cpjobcodesave' : 										  
+		 case 'cpbackupsave'  : 										  
 		 case 'cpbackupsh'    : $out = $this->cronjobs_grid(null,140,14,'r', true);
 								//$out .= "<div id='jobcode'></div>"; //2nd div inside this save	 
 								$out .= $this->codeform();
@@ -94,7 +99,7 @@ class rcbackup  {
 							  break;					  
 	     case 'cpbackup'    :
 
-		 default            : $out .= $this->backup_grid(null,140,14,'d', true);	
+		 default            : $out .= $this->backup_grid(null,140,14,'r', true);	
 							  $out .= "<div id='bdetails'></div>";
 	  }	 
 
@@ -125,21 +130,21 @@ class rcbackup  {
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
 		$title = localize('RCBACKUP_DPC',getlocal()); //localize('_items', $lan);	
+		
+		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
 
-        $myfields = "id,title,description,code,concurrent,implementationId,cronDefinition,lastActualTimestamp";  		
-
-		$xsSQL = 'select * from (select '.$myfields . ' from crontab) as o';
-		  
+		$xsSQL = "select * from (SELECT id, stamp, status, file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and stamp > '$backtrace') as o";		
+		//echo $xsSQL;  
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lastActualTimestamp|".localize('_lastActualTimestamp',getlocal())."|link|2|"."javascript:bdetails(\"{id}\");".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cronDefinition|".localize('_cronDefinition',getlocal()).'|5|1');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+title|".localize('_title',getlocal())."|5|1"); //"|link|5|"."javascript:cronjobs(\"{id}\");".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+description|".localize('_description',getlocal())."|19|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|link|2|"."javascript:bdetails(\"{id}\");".'||');
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal()).'|5|1');			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); //"|link|5|"."javascript:cronjobs(\"{id}\");".'||');		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_last_mod|".localize('_filemod',getlocal())."|5|1|");
 		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal()).'|20|1');	
-	    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+concurrent|".localize('_concurrent',getlocal())."|2|1|");				
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+implementationId|".localize('_implementationId',getlocal())."|2|1|");
+	    //GetGlobal('controller')->calldpc_method("mygrid.column use grid1+concurrent|".localize('_concurrent',getlocal())."|2|1|");				
+		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+implementationId|".localize('_implementationId',getlocal())."|2|1|");
 		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lastActualTimestamp|".localize('_lastActualTimestamp',getlocal()).'|5|0|');		
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+crontab+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+fshistory+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}
@@ -226,11 +231,7 @@ class rcbackup  {
 	}	
 
 
-	// Start the backup!
 	//zipData('/path/to/folder', '/path/to/backup.zip');
-	//echo 'Finished.';
-
-	// Here the magic happens :)
 	public function zipData($folder, $zipTo) {
 	  if (extension_loaded('zip')) {
 		if (file_exists($source)) {
@@ -267,9 +268,6 @@ class rcbackup  {
 		$testing = true; //false;
 		$acct = $acc ? $acc : 'scanner';
 		$scan_path_length = strlen($path);
-		$report_out = false;
-		$email_out = false;
-		$addresses = array("b.alexiou@stereobit.gr",);	
 
 	    ini_set('max_execution_time', 600);
 	    ini_set('memory_limit','1024M');		
@@ -552,29 +550,63 @@ Scan executed in $elapsed seconds.";
 		//	End of Report preparation and clean-up		
 		
 		//	OUTPUT Report
+		
 		//	E-mail Report
-		if ($email_out && 0 < $count_changes)
+		if ($this->email_out && 0 < $count_changes)
 		{
-			if (count($addresses)>1)
-			{
-				$to = implode(", ", $addresses); 
-			} else {
-				$to = $addresses[0];
-			}
+			$to =  (count($this->addresses)>1) ? implode(", ", $this->addresses) : $this->addresses[0];
 			mail($to, "SuperScan Report for $acct",str_replace('&nbsp;',' ',$report)); 
 		}
 
-		//	Output Report for testing
-		if ($testing || $report_out)
-		{
-			fwrite($log, $report);//str_replace(array("\r\n", "\r", "\n"), "<br />", $report)); 
-		}
+		if ($testing) fwrite($log, $report);
 
 		//	Destroy tables (release to memory)
 		$baseline = $current = $added = $altered = $deleted = array();
 
 		$ret = fclose($log);
-		return ($ret);	
+		
+		if ($this->report_out) 
+			return(nl2br($report));
+		else		
+			return ($ret);	
+	}
+	
+	public function scanReport($acc=null, $daysback=null, $minsback=null) {
+		$db = GetGlobal('db');	
+		$backtracedays = $daysback ? $daysback : 1;
+		$backtracemins = $minsback ? $minsback : 0;
+		$acct = $acc ? $acc : 'scanner';
+		
+		$report = "Scan Daily Report\r\n\r\n";
+		
+		//	Prepare scan report
+		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i')-$backtracemins, date('s'), date('n'), date('j')-$backtracedays,date('Y')));
+
+		$report .= "SuperScan log report for $acct file changes since ".$backtrace.":\r\n\r\n";	
+
+		$results = $db->Execute("SELECT stamp, status, file_path, file_last_mod FROM fshistory WHERE acct = '$acct' AND stamp > '$backtrace'");
+		if (!$results)
+		{
+			$report .="No log entries available!\r\n ";
+		} else {
+			//while($result=mysqli_fetch_array($results))
+			foreach ($results as $r=>$rec) 	
+			{
+				$report .= $rec['stamp']." =>  ".strtoupper($rec['status'])." =>  ".$rec['file_path']."\r\n";
+			}
+		}
+
+		// OUTPUT Report
+		if ($this->email_out)
+		{
+			$to = (count($this->addresses)>1) ? implode(", ", $this->addresses): $this->addresses[0];
+			$mailed = mail($to, $acct . ' Integrity Monitor Log Report',$report); 
+		}
+
+		if ($this->report_out) 
+			return(nl2br($report));
+		else
+			return true;	
 	}
 	
 	protected function writeLog($data = '') {
