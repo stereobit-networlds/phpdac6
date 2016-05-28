@@ -42,8 +42,8 @@ class sqlparser extends skeleton {
 	if (stristr($this->jf, '.jpg')) { //jpg file
 	
 		//full path csv file (print from win editor)
-		if (stristr($jobfile_parts[4], "\\")) { 
-			$pathfile = explode("\\", $jobfile_parts[4]);
+		if (stristr($jobfile_parts[4], "-")) { 
+			$pathfile = explode("-", $jobfile_parts[4]);
 		    $filename = array_pop($pathfile);
 		}
 		else
@@ -54,11 +54,11 @@ class sqlparser extends skeleton {
 	}
 	elseif (stristr($this->jf, '.csv')) { //csv file
 	
-	    $jobfile_parts = explode('-', $this->jf);
+	    $jobfile_parts = explode('|', $this->jf);
 		
 		//full path csv file (print from win editor)
-		if (stristr($jobfile_parts[4], "\\")) { 
-			$pathfile = explode("\\", $jobfile_parts[4]);
+		if (stristr($jobfile_parts[4], "-")) { 
+			$pathfile = explode("-", $jobfile_parts[4]);
 		    $filename = array_pop($pathfile);
 		}
 		else
@@ -96,11 +96,11 @@ class sqlparser extends skeleton {
  
    protected function istextCSV($name=null) {
 	
-	  $page = &new pcntl('
+	  $page = new pcntl('
 super rcserver.rcssystem;
 load_extension adodb refby _ADODB_; 
 super database;
-',1);	   
+',0);	   
 	   
       $db = GetGlobal('db');  
 		  
@@ -113,13 +113,20 @@ super database;
 		 //if (substr($this->import_data,0,4)=='%!PS') //zipped
 			//$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');
 		 //else
-			$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');		  
+		
+		 //$data = str_replace(array("\r", "\n") , '', trim($this->import_data)); 
+		 $data = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $this->import_data))); 	
+		 $this->export_data = mb_convert_encoding($data, 'UTF-8', 'ISO-8859-7');		  
 	   
 	     //READ SCENARIO  	   
          $sc = parse_ini_file($this->admin_path . '/' .  $scenario);
 		 //self::write2disk('sqlparser.log', print_r($sc, true));
 		 
-		 $line_delimiter =  "\r\n"; 
+		 $delimiter = $sc['delimiter'] ? $sc['delimiter'] : ';';
+         //echo '>',$delimiter;
+		 
+		 $eol = $sc['eol']; //for raw csv printing last in line  = .
+		 $line_delimiter =  $delimiter . $eol; //"\n"; //"\r\n"; 
          $source = explode($line_delimiter, $this->export_data);
 
 		 $getrec = explode(',',$sc['getrec']);
@@ -127,9 +134,7 @@ super database;
 		 //$passtitles = $sc['titles'] ? false : true; //false when titles exists..make it true after 1 ttime of loop
 		 //echo $passtitles;
 		 
-		 $delimiter = $sc['delimiter'] ? $sc['delimiter'] : ';';
-         //echo '>',$delimiter;
-		 //$myi = (int) $sc['i'];
+		 $msg = null;
 		 $i = 0;
 		 $ix = 0;			
 		 $titlelines = $sc['titles'] ? $sc['titles'] : 0;
@@ -140,8 +145,8 @@ super database;
 		    if ($lineno >= $titlelines) {
 				
 				$this->i = $lineno;
-					  
-                $field = explode($delimiter,$record);
+                $field = explode($delimiter, trim($record));
+				
 			    if (trim($field[0]))  {
 				
                     switch ($mode) {
@@ -182,7 +187,7 @@ super database;
 									  
 					  case 'replace':				  
                       default       : //REPLACE
-									  $sSQL = $this->replace_cmd($sc,$field,$getrec,$attrrec);
+									  /*$sSQL = $this->replace_cmd($sc,$field,$getrec,$attrrec);
 									  if ($sSQL) {
 										if ($res = $db->Execute($sSQL,1)) {
 											$ix+=1;
@@ -197,15 +202,16 @@ super database;
 										$ps = $db->Execute($postSQL,1);	
 										//self::write2disk('sqlparser.log', $postSQL);	
 									  }	
-					                  break; 
-									  /*
+					                  break; */
+									  
 					                  //insert first update after (if id-code exists will not be ins)								 
-					                  $insSQL = $updSQL = null; //init vars in loop
-					                  $insSQL = $this->insert_cmd($sc,$field,$getrec,$attrrec);
+					                  /*$insSQL = $updSQL = null; //init vars in loop
+					                  $updSQL = $this->update_cmd($sc,$field,$getrec,$attrrec);
 									  if (!$res = $db->Execute($insSQL,1)) {
-										$updSQL = $this->update_cmd($sc,$field,$getrec,$attrrec);
+										$insSQL = $this->insert_cmd($sc,$field,$getrec,$attrrec);
 										$res = $db->Execute($updSQL,1);
 									  }
+									  self::write2disk('sqlparser.log', $insSQL . "\r\n" . $updSQL);
 									  
 									  $sSQL = $updSQL ? $updSQL : $insSQL;	
 									  if ($res) {	
@@ -218,9 +224,37 @@ super database;
 										$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},-1,'{$this->now}',".
 												   $db->qstr(addslashes ($db->error)). ", " . $db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 									  }
-                                      $ps = $db->Execute($postSQL,1);	
+                                      $ps = $db->Execute($postSQL,1);
 									  */
-									  //self::write2disk('sqlparser.log', $postSQL);
+									  
+									  $sres = null;
+									  
+									  //select first then choose upd or ins
+									  $sltSQL = $this->select_cmd($sc,$field,$getrec,$attrrec);
+									  $sres = $db->Execute($sltSQL);
+									  
+									  if ($sres->fields[0]) 
+										$sSQL = $this->update_cmd($sc,$field,$getrec,$attrrec);	
+									  else 
+										$sSQL = $this->insert_cmd($sc,$field,$getrec,$attrrec);   
+									
+									  $msg .= "\r\n" . $sltSQL;
+									  $msg .= "\r\n" . $sSQL;
+									  //self::write2disk('sqlparser.log', $sltSQL . "\r\n" . $sSQL);
+																		  
+									  if ($res = $db->Execute($sSQL)) {	
+                                        $ix+=1;									  
+										$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},1,'{$this->now}',''," .
+													$db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
+									  }
+									  else {
+										$errormsg .= $sSQL . "\r\n" . $db->error . "\r\n";
+										$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},-1,'{$this->now}',".
+												   $db->qstr(addslashes ($db->error)). ", " . $db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
+									  }
+                                      $ps = $db->Execute($postSQL);									  
+									  
+									  //self::write2disk('sqlparser.log', $errormsg . "\r\n" . $postSQL);
                     }//switch			  
 				  
 				    $i+=1;
@@ -229,12 +263,13 @@ super database;
             }//if titles				
          }//foreach	
 		
-		 $msg = "\r\n" . $scenario . " file readed!";
+		 $msg .= "\r\n" . "(". date('Y-m-d H:i') . ")" . '----------------------- End of process';
+		 $msg .= "\r\n" . $scenario . " file readed!";
          $msg .= "\r\n" ."Mode:" . $mode;		 
          $msg .= "\r\n" . $i . " records readed!";
 		 $msg .= "\r\n" . $ix . " records affercted!";
 	 	 $msg .= "\r\n" . "Import done!";	 			
-	     $msg .= "\r\n" . '-----------------------Errors';			
+	     $msg .= "\r\n" . '----------------------- Errors';			
 	     $msg .= "\r\n" . $errormsg;			 
 	  }
 	  else 
@@ -250,17 +285,17 @@ super database;
          $sSQL = "insert into ". $sc['table'] . " (";
          $sSQL.= $sc['setrec'] . $sc['setrec2'] . ') values (';
 		 
-	     $datasql = null;
+	     $datasql = array();
 		 foreach ($field as $fid=>$fdata) {
 		   //echo $fdata,'+';
 		   if (in_array($fid,$getrec))
 		     $datasql[] = $fdata;
 		 }
 		 
-		 $datasqltype = null;
+		 $datasqltype = array();
 		 foreach ($datasql as $fr=>$fd) {
 		    if ($attrrec[$fr]=='s')
-			  $datasqltype[] = '"' . $this->make_replaces($fd) .'"';//$db->qstr($fd);
+			  $datasqltype[] = "'" . $this->make_replaces($fd) ."'";
 			elseif ($attrrec[$fr]=='n')
 			  $datasqltype[] = 0 + str_replace($sc['sdecimal'],$sc['tdecimal'],trim($fd));//casting to num  
 			elseif ($attrrec[$fr]=='d') //date
@@ -284,20 +319,20 @@ super database;
          $extra_field_names = explode(',',$sc['setrec2']);
          $extra_field_values = explode(',',$sc['getrec2']);
 		 
-		 $datasql = null;
+		 $datasql = array();
 		 foreach ($field as $fid=>$fdata) {
 		   if (in_array($fid,$getrec))
 		     $datasql[] = $fdata;
 		 }	
 		 
-		 $datasqltype = null;
+		 $datasqltype = array();
 		 foreach ($datasql as $fr=>$fd) {
 		    if ($attrrec[$fr]=='s')
-			  $datasqltype[] = '"' . $this->make_replaces($fd) .'"';//$db->qstr($fd);
+			  $datasqltype[] = "'" . $this->make_replaces($fd) ."'";
 			elseif ($attrrec[$fr]=='n')
 			  $datasqltype[] = 0 + str_replace($sc['sdecimal'],$sc['tdecimal'],trim($fd));//casting to num  
 			elseif ($attrrec[$fr]=='d') //date
-			  $datasqltype[] = '"' . $datetime .'"';									  
+			  $datasqltype[] = "'" . $datetime . "'";									  
 			else   
 			  $datasqltype[] = trim($fd);
 		 }  
@@ -309,7 +344,7 @@ super database;
 								 
 		 foreach ($extra_field_names as $fne=>$namee) {
 		   $value = $this->replace_params($extra_field_values[$fne], $sc);
-		   $sqlupdate2[] = $namee.'='.$value;
+		   $sqlupdate2[] = $value ? $namee.'='.$value : null ;
 		 }
 								 
          $sSQL.= implode(',',$sqlupdate2); 	
@@ -318,9 +353,11 @@ super database;
 		 
 		 $where = explode(',', $sc['where']);
 		 foreach ($where as $w=>$wcl) {
-			$sSQL .= str_replace(array('eq','gt','lt'), 
-			                     array('='.$datasqltype[$w],'>'.$datasqltype[$w],'<'.$datasqltype[$w]), 
-								 $wcl); 
+			if ($wcl) 
+			    $sSQL .= str_replace(array('eq','gt','lt'), 
+			                     array('='.$datasqltype[$w],
+								       '>'.$datasqltype[$w],
+									   '<'.$datasqltype[$w]), $wcl); 
 		 }
 		 
 		 $sSQL.= ';';	   
@@ -335,54 +372,88 @@ super database;
          $extra_field_names = explode(',',$sc['setrec2']);
          $extra_field_values = explode(',',$sc['getrec2']);
 		 
-		 $datasql = null;
+		 $datasql = array();
 		 foreach ($field as $fid=>$fdata) {
 		   if (in_array($fid,$getrec))
 		     $datasql[] = $fdata;
 		 }	
+		 //self::write2disk('sqlparser.log', print_r($datasql, true));
 		 
-		 $datasqltype = null;
+		 $datasqltype = array();
 		 foreach ($datasql as $fr=>$fd) {
 		    if ($attrrec[$fr]=='s')
-			  $datasqltype[] = '"' . $this->make_replaces($fd) .'"';//$db->qstr($fd);
+			  $datasqltype[] = "'" . $this->make_replaces($fd) ."'";
 			elseif ($attrrec[$fr]=='n')
 			  $datasqltype[] = 0 + str_replace($sc['sdecimal'],$sc['tdecimal'],trim($fd));//casting to num  
 			elseif ($attrrec[$fr]=='d') //date
-			  $datasqltype[] = '"' . $datetime .'"';									  
+			  $datasqltype[] = "'" . $datetime . "'";									  
 			else   
 			  $datasqltype[] = trim($fd);
-		 }  
+		 } 
+	     //self::write2disk('sqlparser.log', print_r($datasqltype, true));		 
 								 
 		 foreach ($field_names as $fn=>$name) 					 
 		   $sqlreplace[] = $name.'='.$datasqltype[$fn];
 
          $sSQL.= implode(',',$sqlreplace);
-								 
+		
+         //self::write2disk('sqlparser.log', print_r($extra_field_names, true));		
 		 foreach ($extra_field_names as $fne=>$namee) {
 		   $value = $this->replace_params($extra_field_values[$fne], $sc);
-		   $sqlupdate2[] = $namee.'='.$value;
+		   $sqlupdate2[] = $value ? $namee.'='.$value : null ;
 		 }
+		 //self::write2disk('sqlparser.log', print_r($extra_field_values, true));	
 								 
          $sSQL.= implode(',',$sqlupdate2); 	
-
-         /*$sSQL .= ' where ';
-		 
-		 $where = explode(',', $sc['where']);
-		 foreach ($where as $w=>$wcl) {
-			$sSQL .= str_replace(array('eq','gt','lt'), 
-			                     array('='.$datasqltype[$w],'>'.$datasqltype[$w],'<'.$datasqltype[$w]), 
-								 $wcl); 
-		 }*/
 		 
 		 $sSQL.= ';';	   
 		 
 		 return ($sSQL);
-   }   
+   } 
+
+   protected function select_cmd($sc,$field,$getrec,$attrrec) {	
+
+         $field_names = explode(',',$sc['setrec']);   
+   
+		 $datasql = array();
+		 foreach ($field as $fid=>$fdata) {
+		   if (in_array($fid,$getrec))
+		     $datasql[] = $fdata;
+		 }			 
+		 
+		 $datasqltype = array();
+		 foreach ($datasql as $fr=>$fd) {
+		    if ($attrrec[$fr]=='s')
+			  $datasqltype[] = "'" . $this->make_replaces($fd) ."'";
+			elseif ($attrrec[$fr]=='n')
+			  $datasqltype[] = 0 + str_replace($sc['sdecimal'],$sc['tdecimal'],trim($fd));//casting to num  
+			elseif ($attrrec[$fr]=='d') //date
+			  $datasqltype[] = "'" . $datetime . "'";									  
+			else   
+			  $datasqltype[] = trim($fd);		 
+		 }
+		 
+		 $where = explode(',', $sc['where']);
+		 foreach ($where as $w=>$wcl) {
+			if ($wcl) {
+				$sSQL = 'SELECT ' . $field_names[$w] . ' from ' . $sc['table'] . ' where ';				
+			    $sSQL .= str_replace(array('eq','gt','lt'), 
+			                     array('='.$datasqltype[$w],
+								       '>'.$datasqltype[$w],
+									   '<'.$datasqltype[$w]), $wcl); 
+				break;					   
+			}						   
+		 }
+		 
+		 $sSQL.= ';';	   
+		 
+		 return ($sSQL);   
+   }
    
    protected function make_replaces($str=null) {
    
      if ($str) {
-	   $ret = str_replace('"','\"',trim($str)); 
+	   $ret = addslashes(trim($str));// str_replace('"','\"',trim($str)); 
 	   return ($ret);
 	 }
 	 
@@ -403,6 +474,10 @@ super database;
 							  
 		   case '^i'        : $rf[] = $intI ? $this->i : "'" . $this->i . "'"; 
 		                      break;
+							  
+		   case '^stamp'    : $stamp = time() - $this->i; //dec by 1 to be unique as index
+		                      $rf[] = $intI ? $stamp : "'" . $stamp . "'"; 
+		                      break;							  
 							  
 		   default          : if (is_numeric($field))
 		                        $rf[] = $field;
@@ -430,19 +505,21 @@ super database;
 	//if (substr($this->import_data,0,4)=='%!PS') //zipped
 		//$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');
 	//else
-		$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');		  
+		
+	$data = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $this->import_data))); 
+	$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');		  
 	   	
 
-	$page = &new pcntl('
+	$page = new pcntl('
 super rcserver.rcssystem;
 load_extension adodb refby _ADODB_; 
 super database;
-',1);
+',0);
 	 
 	$db = GetGlobal('db'); 	
 
-    $tdata = str_replace(array("\r\n", "no rows selected", "rows selected"), array('',';',';') , $this->export_data);
-    $sqlarray = explode(";", $tdata);	
+    $tdata = str_replace(array("no rows selected", "rows selected"), array(';',';') , $this->export_data);
+    $sqlarray = explode(";", $tdata);
 	
 	set_time_limit(0);	
     foreach ($sqlarray as $s=>$sqlstatement) {

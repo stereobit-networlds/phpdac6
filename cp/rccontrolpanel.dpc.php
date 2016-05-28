@@ -126,7 +126,7 @@ $__LOCALE['RCCONTROLPANEL_DPC'][82]='_additemhtml;Add Item Html;Εισαγωγή
 $__LOCALE['RCCONTROLPANEL_DPC'][83]='_transactions;Transactions;Συναλλαγές';
 $__LOCALE['RCCONTROLPANEL_DPC'][84]='_users;Users;Χρήστες';
 $__LOCALE['RCCONTROLPANEL_DPC'][85]='_itemattachments2db;Add Items to DB;Μεταφορά κειμένων στην Β.Δ.';//βάση δεδομένων';
-$__LOCALE['RCCONTROLPANEL_DPC'][86]='_importdb;Import Database;Εισαγωγή βάσης δεδομένων';
+$__LOCALE['RCCONTROLPANEL_DPC'][86]='_importdb;Import;Εισαγωγή';
 $__LOCALE['RCCONTROLPANEL_DPC'][87]='_config;Configuration;Ρυθμίσεις';
 $__LOCALE['RCCONTROLPANEL_DPC'][88]='_contactform;Contact Form;Φόρμα επικοινωνίας';
 $__LOCALE['RCCONTROLPANEL_DPC'][89]='_subscribers;Subscribers;Συνδρομητές';
@@ -140,8 +140,8 @@ $__LOCALE['RCCONTROLPANEL_DPC'][96]='_syncsql;Sync data;Συγχρονισμός
 $__LOCALE['RCCONTROLPANEL_DPC'][97]='_dbphoto;Image in DB;Εικόνα στην βάση δεδομένων';
 $__LOCALE['RCCONTROLPANEL_DPC'][98]='_editctag;Category Tags;Tags κατηγορίας';
 $__LOCALE['RCCONTROLPANEL_DPC'][99]='_edititag;Item Tags;Tags είδους';
-$__LOCALE['RCCONTROLPANEL_DPC'][100]='_menu;Menu;Ρυθμίσεις Μενού';
-$__LOCALE['RCCONTROLPANEL_DPC'][101]='_slideshow;Slideshow;Ρυθμίσεις Slideshow';
+$__LOCALE['RCCONTROLPANEL_DPC'][100]='_menu;Menu;Μενού';
+$__LOCALE['RCCONTROLPANEL_DPC'][101]='_slideshow;Slideshow;Slideshow';
 $__LOCALE['RCCONTROLPANEL_DPC'][102]='_ckfinder;Upload files;Upload αρχείων';
 $__LOCALE['RCCONTROLPANEL_DPC'][103]='_webmail;Web Mail;Web Mail';
 $__LOCALE['RCCONTROLPANEL_DPC'][104]='_editpage;Edit Page;Επεξεργασία σελίδας';
@@ -200,9 +200,6 @@ $__LOCALE['RCCONTROLPANEL_DPC'][156]='_sale;Invoice created;Παραστατικ
 $__LOCALE['RCCONTROLPANEL_DPC'][157]='_installprinter;Install printer;Εγκατάσταση printer';
 $__LOCALE['RCCONTROLPANEL_DPC'][158]='_system;System;System';
 $__LOCALE['RCCONTROLPANEL_DPC'][159]='_sysmessages;Messages;Μηνύματα';
-$__LOCALE['RCCONTROLPANEL_DPC'][160]='_cron;Cron;Cron';
-$__LOCALE['RCCONTROLPANEL_DPC'][161]='_replication;Replication;Replication';
-$__LOCALE['RCCONTROLPANEL_DPC'][162]='_backup;Backup;Backup';
 
 class rccontrolpanel {
 

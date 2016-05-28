@@ -9,22 +9,22 @@ $__DPC['RCBACKUP_DPC'] = 'rcbackup';
 $__EVENTS['RCBACKUP_DPC'][0]='cpbackup';
 $__EVENTS['RCBACKUP_DPC'][1]='cpbackupdtl';
 $__EVENTS['RCBACKUP_DPC'][2]='cpbackupsh';
-$__EVENTS['RCBACKUP_DPC'][3]='cpbackcode';
+$__EVENTS['RCBACKUP_DPC'][3]='cpbackupget';
 $__EVENTS['RCBACKUP_DPC'][4]='cpbackupsave';
 
 $__ACTIONS['RCBACKUP_DPC'][0]='cpbackup';
 $__ACTIONS['RCBACKUP_DPC'][1]='cpbackupdtl';
 $__ACTIONS['RCBACKUP_DPC'][2]='cpbackupsh';
-$__ACTIONS['RCBACKUP_DPC'][3]='cpbackcode';
+$__ACTIONS['RCBACKUP_DPC'][3]='cpbackupget';
 $__ACTIONS['RCBACKUP_DPC'][4]='cpbackupsave';
 
 //$__DPCATTR['RCBACKUP_DPC']['cpbackup'] = 'cpbackup,1,0,0,0,0,0,0,0,0,0,0,1';
 
 $__LOCALE['RCBACKUP_DPC'][0]='RCBACKUP_DPC;Backup;Backup';
 $__LOCALE['RCBACKUP_DPC'][1]='_stamp;Stamp;Stamp';
-$__LOCALE['RCBACKUP_DPC'][2]='_status;Status;Κατάσταση';
+$__LOCALE['RCBACKUP_DPC'][2]='_name;Name;Ονομασία';
 $__LOCALE['RCBACKUP_DPC'][3]='_filepath;Object;Στοιχείο';
-$__LOCALE['RCBACKUP_DPC'][4]='_filemod;Date modified;Ημερομηνία αλλαγής';
+$__LOCALE['RCBACKUP_DPC'][4]='_filedate;Date created;Ημερομηνία';
 $__LOCALE['RCBACKUP_DPC'][5]='_results;Results;Αποτέλεσμα';
 $__LOCALE['RCBACKUP_DPC'][6]='_code;Code;Κωδικός';
 $__LOCALE['RCBACKUP_DPC'][7]='_id;ID;ID';
@@ -46,6 +46,7 @@ class rcbackup  {
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); 
 		//echo $this->seclevid;
+		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName');
 
 		//	Output to monitor (true or false)
 		//		Recommend true for testing and FALSE for CRON
@@ -67,13 +68,11 @@ class rcbackup  {
 		 case 'cpbackupsave' : $file = $this->downloadFile(); die($file);	
 		                       break;  		   
 		   							   
-		 case 'cpbackcode'   : //die('saverel|test join cat');						   
-							   //echo $this->loadsubframe();
-		                       die();
+		 case 'cpbackupget'  : $this->download($this->urlpath . urldecode(GetReq('file')));
+							   //die();
+							   break;	
 							 
-		 case 'cpbackupsh'   : //$this->difbackup();
-		                       //die('test-first-level');
-		                       break;
+		 case 'cpbackupsh'   : break;
 		 case 'cpbackupdtl'  : echo $this->loadframe();
 		                       die();
 							   break; 	   
@@ -90,20 +89,20 @@ class rcbackup  {
 	  if ($login!='yes') return null;	
 	 
 	  switch ($action) {
+		 
+         case 'cpbackupget'   : break;			 
 			
 		 case 'cpbackupsave'  : break; 										  
-		 case 'cpbackupsh'    : //$out = $this->cronjobs_grid(null,140,14,'r', true);
-								//$out .= "<div id='jobcode'></div>"; //2nd div inside this save	 
-								//$out .= $this->codeform();
-								$out = $this->scanReport('cgi-bin', 1, 0, true, urldecode(GetReq('date')));
+		 case 'cpbackupsh'    : //$out = $this->scanReport('cgi-bin', 1, 0, true, urldecode(GetReq('date')));
+								$out = $this->downloadReport(GetReq('id'));
 							    break; 
 		 case 'cpbackupdtl' : 
 							  break;					  
 	     case 'cpbackup'    :
 
-		 default            : $out = $this->backup_grid(null,140,14,'r', true);
-							  $out .= $this->getFilesButtons();		 
-							  $out .= "<div id='bdetails'></div>";
+		 default            : $grid = $this->backup_grid(null,140,5,'r', true);
+							  $btn = $this->getFilesButtons();		 
+							  $out = $this->window($btn, $grid);
 	  }	 
 
 	  return ($out);
@@ -115,9 +114,9 @@ class rcbackup  {
 
 	protected function loadframe($ajaxdiv=null) {
 		$id = GetParam('id');
-		$bodyurl = seturl("t=cpbackupsh&iframe=1&date=$id");
+		$bodyurl = seturl("t=cpbackupsh&iframe=1&id=$id");
 			
-		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"440px\"><p>Your browser does not support iframes</p></iframe>";    
+		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"240px\"><p>Your browser does not support iframes</p></iframe>";    
 
 		if ($ajaxdiv)
 			return $ajaxdiv. '|' . $frame;
@@ -134,104 +133,20 @@ class rcbackup  {
 	    $lan = getlocal() ? getlocal() : 0;  
 		$title = localize('RCBACKUP_DPC',getlocal()); //localize('_items', $lan);	
 		
-		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
+		//$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
 
-		$xsSQL = "select * from (SELECT id, stamp, status, file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and file_path NOT LIKE 'FIRST SCAN%' and stamp > '$backtrace') as o";		
+		$xsSQL = "select * from (SELECT id, stamp, name, file_path, file_created FROM fsbackup) as o";		
 		//echo $xsSQL;  
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|link|5|"."javascript:bdetails(\"{stamp}\");".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal()).'|5|1');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); //"|link|5|"."javascript:cronjobs(\"{id}\");".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_last_mod|".localize('_filemod',getlocal())."|5|1|");
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal()).'|20|1');	
-	    //GetGlobal('controller')->calldpc_method("mygrid.column use grid1+concurrent|".localize('_concurrent',getlocal())."|2|1|");				
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+implementationId|".localize('_implementationId',getlocal())."|2|1|");
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lastActualTimestamp|".localize('_lastActualTimestamp',getlocal()).'|5|0|');		
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+fshistory+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal()). '|5|1|'); //"|link|5|"."javascript:bdetails(\"{id}\");".'||');			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_name',getlocal())."|link|5|"."javascript:bdetails(\"{id}\");".'||');		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); 		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_created|".localize('_filedate',getlocal())."|5|1|");
+	
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+fsbackup+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
-	}
-	
-	
-	protected function loadsubframe($ajaxdiv=null) {
-		$id=GetParam('id');		
-	    $bodyurl = seturl("t=cpjobcode&iframe=1&id=$id");
-	
-		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"260px\"><p>Your browser does not support iframes</p></iframe>";    
-
-		if ($ajaxdiv)
-			return $ajaxdiv. '|' . $frame;
-		else
-			return ($frame); 
-	}			
-	
-	
-    protected function cronjobs_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
-		$id = GetParam('id');
-	    $height = $height ? $height : 440;
-        $rows = $rows ? $rows : 18;
-        $width = $width ? $width : null; //wide
-        $mode = $mode ? $mode : 'd';
-		$noctrl = $noctrl ? 0 : 1;					
-        $lan = getlocal() ? getlocal() : 0;
-		$title = localize('_cronjob', $lan);	
-
-		$xsSQL = "select * from (select id,startTimestamp,endTimestamp,code,concurrent,implementationId,results,pid from cronjob where crontabId=$id order by id desc) as o";
-        //echo $xsSQL;
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|2|0|");	//"|link|10|"."javascript:jobcode(\"{id}\");".'||'
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+startTimestamp|".localize('_startTimestamp',getlocal())."|5|0");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+endTimestamp|".localize('_endTimestamp',getlocal())."|5|0");
-	    //GetGlobal('controller')->calldpc_method("mygrid.column use grid2+code|".localize('_code',getlocal())."|10|0|");				
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+concurrent|".localize('_concurrent',getlocal())."|2|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+implementationId|".localize('_implementationId',getlocal())."|2|0|");
-	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+results|".localize('_results',getlocal()).'|5|0');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+pid|".localize('_pid',getlocal()).'|2|0|');		
-
-		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+cronjob+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
-	    return ($out);
-	
-    }		
-	
-	
-    protected function codeform($id=null)  { 
-	    $id = GetParam('id');	
-        $filename = seturl("t=cpjobcodesave");//&id=".$id);  
-        $readonly = $this->isDemoUser() ? 'readonly' : null;  		
-    
-        $toprint  = "<FORM action=". "$filename" . " method=post>";
-        $toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1>";	   
-        $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"jobcmd\" ROWS=14 cols=60 wrap=\"virtual\" $readonly>"; 
-	    $toprint .=  $this->load_job_code($id);		 
-        $toprint .= "</TEXTAREA></DIV><br>";	   
-	   
-        if (!$this->isDemoUser()) {
-			$toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"savejobcode\">"; 
-			$toprint .= "<input type=\"hidden\" name=\"id\" value=\"".$id."\">";
-			$toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_save',getlocal()) . "\">&nbsp;";  
-			$toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpjobcodesave" . "\">";	 	   
-	   	}    
-        $toprint .= "</FONT></FORM>"; 
-
-       return ($toprint);
-    }	
-
-	protected function load_job_code($id) {
-		$db = GetGlobal('db'); 
-		if (!$id) return;
-		$sql = "select code from crontab where id=".$id;
-		$result = $db->Execute($sql);
-		
-		return ($result->fields['code']);		
 	}		
-	
-	protected function save_job_code() {
-		$db = GetGlobal('db'); 
-		if (!$id=GetParam('id')) return;
-		$sql = "UPDATE crontab SET code=" . $db->qstr(GetParam('jobcmd')) . "where id=".$id;
-		$result = $db->Execute($sql);
-
-		return (true);		
-	}	
 
 		
 	public function scan($acc=null, $path=null, $skipdir=null, $reportout=false) {
@@ -595,35 +510,6 @@ Scan executed in $elapsed seconds.";
 	}
 	
 	
-	
-	
-	//zipData('/path/to/folder', '/path/to/backup.zip');
-	public function zipData($folder, $zipTo) {
-	  if (extension_loaded('zip')) {
-		if (file_exists($source)) {
-			$zip = new ZipArchive();
-			if ($zip->open($destination, ZIPARCHIVE::CREATE)) {
-				$source = realpath($source);
-				if (is_dir($source)) {
-					$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
-					foreach ($files as $file) {
-						$file = realpath($file);
-						if (is_dir($file)) {
-							$zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
-						} else if (is_file($file)) {
-							$zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
-						}
-					}
-				} else if (is_file($source)) {
-					$zip->addFromString(basename($source), file_get_contents($source));
-				}
-			}
-			return $zip->close();
-		}
-	  }
-	  return false;
-	}		
-	
     public function backup_directory($path=null, $name=null, $download=false, $ziprecur=false) {
 	
         $app_path = $this->urlpath . '/';			
@@ -641,9 +527,6 @@ Scan executed in $elapsed seconds.";
             die("cannot open $zfilename");//false;
         }			
 		
-		
-        //$ret = null;		
-        //echo 'DIRNAME:'.$dirname. '<br/>';
 	    if (is_dir($app_path . $dirname)) {
 		
 		  //if (!$ziprecur)
@@ -653,11 +536,9 @@ Scan executed in $elapsed seconds.";
 		 
 			
           while ($fileread = $mydir->read ()) {
-		   if (($fileread!='.') && ($fileread!='..'))  {
-                 //echo "<br>",$fileread;	   
+		   if (($fileread!='.') && ($fileread!='..'))  {   
   	             if (!is_dir($app_path . $dirname."/".$fileread))  {   
 					$zip->addFile($app_path . $dirname."/".$fileread, str_replace('../','',$dirname).$fileread); //to sub path
-					//echo 'addfile:'.$app_path . $dirname.$fileread.'<br/>';
 				 }
 				 else //recursion
 				    $x = $this->backup_directory($fileread, $name, $download, true);
@@ -667,14 +548,15 @@ Scan executed in $elapsed seconds.";
 		  //goto prev dir
 		  $dirname = str_replace($path .'/','',$dirname);
 		  
-		  //echo "directory: " . $dirname . "<br/>";
 		  if (!$ziprecur) {
 			$ret .= "numfiles: " . $zip->numFiles . "<br/>";
 			$ret .= "status:" . $zip->status . "<br/>";
 		  }
 		  
-		  if (!$ziprecur)
-			$zip->close();		  
+		  if (!$ziprecur) {
+			$zip->close();	
+			$this->savefsBackup($name, $zfilename);
+		  }	
         }
 		
 		if ((!$ziprecur) && ($download==true)) {
@@ -708,8 +590,7 @@ Scan executed in $elapsed seconds.";
           }		  
 
           while ($fileread = $mydir->read ()) {
-		   if (($fileread!='.') && ($fileread!='..'))  {
-                 //echo "<br>",$fileread;	   
+		   if (($fileread!='.') && ($fileread!='..'))  {   
   	             if (!is_dir($fileread))  {   
                     $zip->addFile($dirname."/".$fileread, $fileread); //or basename of full path					
 				 }
@@ -720,7 +601,8 @@ Scan executed in $elapsed seconds.";
           $ret = "numfiles: " . $zip->numFiles . "<br/>";
           $ret .= "status:" . $zip->status . "<br/>";
 		  
-		  $zip->close();		  
+		  $zip->close();
+		  $this->savefsBackup($name, $zfilename);		  
         }
 		
 		if ($download==true) {
@@ -810,6 +692,7 @@ Scan executed in $elapsed seconds.";
           }
 		  $ret .= $meter . ' tables exported.';
 		  $zip->close();	
+		  $this->savefsBackup($name, $zfilename);
 		  
 		  if ($download==true) {
 		  
@@ -869,7 +752,8 @@ Scan executed in $elapsed seconds.";
 				}	
 			}
 			
-			$zip->close();		  
+			$zip->close();	
+			$this->savefsBackup($zname, $zfilename);	
 		
 			if ($download==true) {
 				$dn = new DOWNLOADFILE($zfilename, 'application/zip');
@@ -925,8 +809,10 @@ Scan executed in $elapsed seconds.";
 			  $zip->addFile($ztablename, $table . '.csv');
 			}
 						 
-			if ($zip->close())	
+			if ($zip->close())	{
 				@unlink($ztablename); //for big files delete csv data
+				$this->savefsBackup($zname, $zfilename);
+			}	
 			
 			if ($download==true) {
 		  
@@ -986,7 +872,8 @@ Scan executed in $elapsed seconds.";
 					$zip->addFromString(basename($source), file_get_contents($source));
 				}			
 			
-				$zip->close();		  
+				$zip->close();	
+				$this->savefsBackup($zname, $zfilename);
 		
 				if ($download==true) {
 					$dn = new DOWNLOADFILE($zfilename, 'application/zip');
@@ -1072,23 +959,28 @@ Scan executed in $elapsed seconds.";
 		$turl2 = seturl('t=cpbackupsave&mode=pics&path=images/photo_md');
 		$turl3 = seturl('t=cpbackupsave&mode=pics&path=images/photo_bg');		
 		$turl4 = seturl('t=cpbackupsave&mode=pics&path=images');
+		$turl5 = seturl('t=cpbackupsave&mode=pics&path=images/thub');
+		$turl6 = seturl('t=cpbackupsave&mode=pics&path=images/uphotos');
+		$turl7 = seturl('t=cpbackupsave&mode=pics&path=images/catfiles');
 		$button .= $this->createButton('Images', array('Small'=>$turl1,
 													   'Medium'=>$turl2,
 													   'Large'=>$turl3,
 													   'Root'=>$turl4,
+													   'Thumb'=>$turl5,
+													   'Uphotos'=>$turl6,
+													   'Category'=>$turl7,
 		                                               ));															  
-													   
+		if ($this->isDemoUser()) {}											   
+		else {
 		$turl1 = seturl('t=cpbackupsave&mode=system&cp=cp');													  
 		$turl2 = seturl('t=cpbackupsave&mode=system&cp=cp/html/metro');
 		$turl3 = seturl('t=cpbackupsave&mode=system&cp=cp/transactions');		
 		$button .= $this->createButton('System', array('Root'=>$turl1,
 													   'Dashboard'=>$turl2,
 													   'Transactions'=>$turl3,
-		                                               ),'warning');													   
-		
-		$ret = $this->window($button);
-		
-		return ($ret);
+		                                               ),'warning');
+		}
+		return ($button);
 	}
 	
 	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
@@ -1117,11 +1009,10 @@ Scan executed in $elapsed seconds.";
 		return ($ret);
 	}
 
-	protected function window($buttons) {
+	protected function window($buttons, $content) {
 		$ret = '	
 		    <div class="row-fluid">
                 <div class="span12">
-                  <!-- BEGIN BUTTON PORTLET-->
                   <div class="widget red">
                         <div class="widget-title">
                            <h4><i class="icon-reorder"></i> Downloads</h4>
@@ -1131,27 +1022,56 @@ Scan executed in $elapsed seconds.";
                            </span>
                         </div>
                         <div class="widget-body">
-                            <!--p>
-                                <button class="btn " type="button">Default</button>
-                                <button class="btn  btn-primary" type="button">Primary</button>
-                                <button class="btn  btn-info" type="button">Info</button>
-                                <button class="btn  btn-success" type="button">Success</button>
-                                <button class="btn  btn-warning" type="button">Warning</button>
-                                <button class="btn  btn-danger" type="button">Danger</button>
-                                <button class="btn  btn-inverse" type="button">Inverse</button>
-                                <button class="btn  disabled" type="button">Disabled</button>
-                            </p-->
 							<div class="btn-toolbar">
-							'.$buttons.'
+							'.$buttons .'
+							<hr/><div id="bdetails"></div>
 							</div>
+							'.$content.'
                         </div>
                   </div>
-                  <!-- END BUTTON PORTLET-->
                 </div>
             </div>
 ';
 		return ($ret);
-	}			
+	}	
+
+    protected function bytesToSize1024($bytes, $precision = 2) {
+        $unit = array('B','KB','MB','GB');
+        return @round($bytes / pow(1024, ($i = floor(log($bytes, 1024)))), $precision).' '.$unit[$i];
+    } 	
+	
+	protected function downloadReport($id) {
+		$db = GetGlobal('db');
+		$sSQL = "select name, stamp, file_path, hash, file_created from fsbackup where id=".$id;
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);
+		if ($res) {
+			
+			$url = paramload('SHELL', 'urlname');
+			
+			$out .= "<br/>File name:" . "<a href=\"".$url.$res->fields[2]."\">".$res->fields[0]."</a>";;
+			$out .= "<br/>File stamp:" . $res->fields[1];
+			$out .= "<br/>File path:" . $this->bytesToSize1024(filesize($this->urlpath.$res->fields[2]));
+			$out .= "<br/>File size:" . $res->fields[2];
+			$out .= "<br/>File hash:" . $res->fields[3];
+			$out .= "<br/>Created at:" . $res->fields[4];
+			return ($out);
+		}
+		
+		return false;
+	}
+	
+	protected function savefsBackup($name, $file_path) {
+		$db = GetGlobal('db');
+		if ((!$file_path) || (!$name)) return false;
+		$acct = $this->owner ? $this->owner : 'system';
+		$current = array('file_hash' => hash_file("sha1", $file_path), 'file_created' => date("Y-m-d H:i:s", filemtime($file_path)));
+		
+		$sfpath = str_replace($this->urlpath, '', str_replace('//','/',$file_path)); //hide root and '//'
+		$res = $db->Execute("INSERT INTO fsbackup SET `stamp` = '" . date('Y-m-d h:i:s') . "', `name` = '$name', `file_path` = '$sfpath', `hash` = '" . $current['file_hash'] . "', `file_created` = '" . $current['file_created'] . "', `acct` = '$acct'");
+		
+		return ($res);
+	}
 	
 	protected function writeLog($data = '') {
 		if (empty($data)) return;

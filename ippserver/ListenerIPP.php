@@ -46,7 +46,7 @@ require_once('cp/dpc2/system/pcntl.lib.php');
 define("USE_DATABASE", false);
 define("SERVER_LOG", true);
 define("AUTH_USER", true); 
-define("FILE_DELIMITER", '-');
+define("FILE_DELIMITER", '|'); //-
 
 if (USE_DATABASE==true) {
     require_once("DBStream.php");
@@ -412,6 +412,7 @@ class IPPlistener extends ServerIPP {
 		 break;			 
 		 
 		 case 'Print-Job': $status = $this->print_job();
+				           //$this->_fire_up_agent(null,null,true);					  
 		 break;
 		 
 		 //ipp 2.0 rfc3998
@@ -1717,7 +1718,7 @@ class IPPlistener extends ServerIPP {
 		    //send-document, send-uri : job_id indicates previous create-job command job_id generated
 
 		    if ($jobname = self::read_request_attribute('document-name')) { 
-		      $jobname = str_replace(':','_',str_replace(FILE_DELIMITER,'_',$jobname));  
+		      $jobname = str_replace(array(':','/',FILE_DELIMITER, '\\'), '-', $jobname);  
 			  $jobname.= self::find_data_type_extension(substr($job_data,0,10));
 			}  
             else 		
@@ -1728,7 +1729,7 @@ class IPPlistener extends ServerIPP {
 		    $job_id = self::_get_job_id();			
 		   
 		    if ($jobname = self::read_request_attribute('job-name')) { 
-		      $jobname = str_replace(':','_',str_replace(FILE_DELIMITER,'_',$jobname)); 
+		      $jobname = str_replace(array(':','/',FILE_DELIMITER, '\\'), '-', $jobname);   
 			  $jobname.= self::find_data_type_extension(substr($job_data,0,10));
 			}  
             else 		
@@ -2485,7 +2486,7 @@ include backup.rcbackup;
                      $this->cron();			
 					 @file_put_contents($this->admin_path . "step.log", '4', LOCK_EX); //next
 			         break;
-			case 2 : //file scan
+			case 2 : //$this->_fire_up_agent(null,null,true);
 					 @file_put_contents($this->admin_path . "step.log", '3', LOCK_EX); //next
 			         break;						 
 			case 1 : 

@@ -161,6 +161,10 @@ $__LOCALE['RCPMENU_DPC'][149]='_help;Help;Βοήθεια';
 $__LOCALE['RCPMENU_DPC'][150]='_tour;Guided tour;Βοήθεια';
 $__LOCALE['RCPMENU_DPC'][151]='_analyze;Analyse;Ανάλυση';
 $__LOCALE['RCPMENU_DPC'][152]='_sync;Synchronize;Συγχρονισμός';
+$__LOCALE['RCPMENU_DPC'][153]='_fscanner;Scanner;Scanner';
+$__LOCALE['RCPMENU_DPC'][154]='_cron;Cron;Cron';
+$__LOCALE['RCPMENU_DPC'][155]='_replication;Replication;Replication';
+$__LOCALE['RCPMENU_DPC'][156]='_backup;Backup;Backup';
 	   
 class rcpmenu {
 
