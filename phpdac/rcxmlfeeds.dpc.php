@@ -18,7 +18,7 @@ $__LOCALE['RCXMLFEEDS_DPC'][1]='_XMLFILE;XML file;XML file';
 $__LOCALE['RCXMLFEEDS_DPC'][2]='_XMLITEMS;XML items;XML είδη';
 $__LOCALE['RCXMLFEEDS_DPC'][3]='_dimensions;Dimension;Διαστάσεις';
 $__LOCALE['RCXMLFEEDS_DPC'][4]='_size;Size;Μέγεθος';
-$__LOCALE['RCXMLFEEDS_DPC'][5]='_dimensions;XML item;Είδος XML';
+$__LOCALE['RCXMLFEEDS_DPC'][5]='_dimensions;Dimensions;Διαστάσεις';
 $__LOCALE['RCXMLFEEDS_DPC'][6]='_xmlcreate;Create XML;Δημιούργησε XML';
 $__LOCALE['RCXMLFEEDS_DPC'][7]='_xml;XML item;Είδος XML';
 $__LOCALE['RCXMLFEEDS_DPC'][8]='_manufacturer;Manufacturer;Κατασκευαστής';
@@ -152,9 +152,9 @@ class rcxmlfeeds {
 	
        $filename = seturl("t=cpxmlfeeds&editmode=".GetReq('editmode'));
 
-	   $toprint = '<h2>'. localize('RCXMLFEEDS_DPC',getlocal());
+	   /*$toprint = '<h2>'. localize('RCXMLFEEDS_DPC',getlocal());
        $toprint .= $file ? ' - ' . $file . '.xml' : '';		   
-	   $toprint .=  '</h2>';
+	   $toprint .=  '</h2>';*/
     
        $toprint .= "<FORM action=". "$filename" . " method=post>";
        $toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1><STRONG>";
