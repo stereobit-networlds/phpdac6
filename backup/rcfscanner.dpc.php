@@ -31,7 +31,7 @@ $__LOCALE['RCFSCANNER_DPC'][7]='_id;ID;ID';
 $__LOCALE['RCFSCANNER_DPC'][8]='_save;Save;Αποθήκευση';
 $__LOCALE['RCFSCANNER_DPC'][9]='_date;Date;Ημερ.';
 $__LOCALE['RCFSCANNER_DPC'][10]='_time;Time;Ώρα';
-$__LOCALE['RCFSCANNER_DPC'][11]='_status;Status;Φάση';
+$__LOCALE['RCFSCANNER_DPC'][11]='_status;Status;Status';
 $__LOCALE['RCFSCANNER_DPC'][12]='_fid;id;id';
 $__LOCALE['RCFSCANNER_DPC'][13]='_savesql;Save;Save';
 $__LOCALE['RCFSCANNER_DPC'][14]='_SQL;SQL Query;SQL Query';
@@ -39,6 +39,7 @@ $__LOCALE['RCFSCANNER_DPC'][15]='_xdate;X Date;X Date';
 $__LOCALE['RCFSCANNER_DPC'][16]='_ref;Reference;Reference';
 $__LOCALE['RCFSCANNER_DPC'][17]='_sqlres;Res;Res';
 $__LOCALE['RCFSCANNER_DPC'][18]='_query;Query;Query';
+$__LOCALE['RCFSCANNER_DPC'][18]='_acct;Acct;Acct';
 
 class rcfscanner  {
 
@@ -78,8 +79,10 @@ class rcfscanner  {
 	
 	   switch ($event) {
 
-		 case 'cpdorun'      : $this->report = $this->runscan('cgi-bin'); break;
-		 case 'cpmakeaccfile': $this->makeAccFile($this->urlpath.'/cgi-bin/'); break;
+		 case 'cpdorun'      : $this->report = $this->runscan();//'cgi-bin'); 
+		                       break;
+		 case 'cpmakeaccfile': $this->makeAccFile($this->urlpath.'/cgi-bin/'); 
+		                       break;
 	   
 
 		 case 'cpsreport'    : break; 	
@@ -103,7 +106,8 @@ class rcfscanner  {
 		 case 'cpdorun'     : $out = $this->wscanner($this->report); break;
 		 case 'cpmakeaccfile': $out = $this->wscanner(); break;		  
 												  
-		 case 'cpsreport'   : $out = $this->scanReport('cgi-bin', 1, 0, true, urldecode(GetReq('date')));
+		 case 'cpsreport'   : //$out = $this->scanReport('cgi-bin', 1, 0, true, urldecode(GetReq('date')));
+							  $out = $this->scanReport(GetReq('acct'), 1, 0, true, urldecode(GetReq('date')));	
 							  break; 					
 		 case 'cpscanrep'   : break;					  
 	     case 'cpfscanner'  :
@@ -118,10 +122,12 @@ class rcfscanner  {
 	}	
 	
 	public function runscan($acc=null) {
-		$acct = $acc ? $acc : 'scanner';
 		
-		$where = $this->urlpath . '/cgi-bin/'; //change also acc on event
-		$report = $this->scan($acct, $where, null, true);
+		//$where = $this->urlpath . '/cgi-bin/'; //change also acc on event
+		//$report = $this->scan($acc, $where, null, true);
+		
+		$report = $this->scan($acc, null, null, true);
+		
 		return ($report);
 	}
 	
@@ -143,8 +149,9 @@ class rcfscanner  {
 	}	
 
 	protected function loadframe($ajaxdiv=null) {
-		$id = GetReq('id');
-		$cmd = 'cpsreport&date='.$id;
+		$date = GetReq('date');
+		$acct = GetReq('acct');
+		$cmd = 'cpsreport&date='.$date . '&acct='.$acct;
 		$bodyurl = seturl("t=$cmd&iframe=1");
 			
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"440px\"><p>Your browser does not support iframes</p></iframe>";    
@@ -166,13 +173,16 @@ class rcfscanner  {
 		
 		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
 
-		$xsSQL = "select * from (SELECT id, stamp, status, file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and file_path NOT LIKE 'FIRST SCAN%' and stamp > '$backtrace') as o";		
+		//$xsSQL = "select * from (SELECT id, stamp, status, acct, file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and file_path NOT LIKE 'FIRST SCAN%' and stamp > '$backtrace') as o";		
+		$xsSQL = "select * from (SELECT id, stamp, status, acct, REPLACE(file_path,'{$this->urlpath}','') as file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and file_path NOT LIKE 'FIRST SCAN%' and stamp > '$backtrace') as o";		
 		//echo $xsSQL;  
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|link|5|"."javascript:details(\"{stamp}\");".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal()).'|5|1');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); //"|link|5|"."javascript:cronjobs(\"{id}\");".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_last_mod|".localize('_filemod',getlocal())."|5|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|5|1|".'||');
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal())."|5|1|".'||');			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+acct|".localize('_acct',getlocal())."|link|5|"."javascript:sdetails(\"{stamp}\",\"{acct}\");".'||');	
+		//if (!$this->isDemoUser())
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1");	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_last_mod|".localize('_filemod',getlocal())."|link|5|"."javascript:details(\"{stamp}\");".'||');
 		
 		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+fshistory+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
@@ -232,7 +242,7 @@ class rcfscanner  {
 			
 	
 	protected function makeAccFile($startpath, $acc=null) {
-		if (!$acc) $acc = 'system';
+		$acct = $acc ? $acc : 'scanner';
 		$filename = $this->path . $acc . '.acc';
 		$fh = fopen($filename, 'w');
 		
@@ -242,55 +252,71 @@ class rcfscanner  {
 
 		$ret = @fclose($fh);	
 		return $ret;
-	}		
+	}
+
+	static function getIDX($f, $max) {
+		$i = @file_get_contents($f);
+		$index = intval(trim($i));
+		$idx = ($max > $index+1) ? $index+1 : 0;	
+        @file_put_contents($f, strval($idx), LOCK_EX);		
+		return ($index);
+	}
 	
-	protected function selectPath($acc=null) {
-		if (!$acc) return ($this->urlpath);
+	protected function selectPath($acc=null, &$acct) {
+		//if (!$acc) return ($this->urlpath);
+		$acct = $acc ? $acc : 'scanner';
 		
-		$accfile = $this->path . $acc . '.acc';
+		$tpath = remote_paramload('FRONTHTMLPAGE', 'path', $this->path);
+		$template = remote_paramload('FRONTHTMLPAGE', 'template', $this->path);
+		$cptemplate = remote_paramload('FRONTHTMLPAGE', 'cptemplate', $this->path);
 		
-		if (is_readable($accfile)) {
+		/*$accfile = $this->path . $acct . '.acc';
+		
+		if (is_readable($accfile)) {*/
 			
-			$datalines = file($accfile);
-			
-			$accindexfile = $this->path . $acc . 'idx';
-			$idx = @file_get_contents($accindexfile);
-			
-			if ($idx) {
+			//$datalines = explode(';', @file_get_contents($accfile)); //file($accfile);
+			$datalines = array(0=>$this->urlpath . '/cgi-bin',
+							1=>$this->urlpath . '/css',
+							2=>$this->urlpath . '/newsletters',
+							3=>$this->urlpath . "/cp/$tpath/$cptemplate",
+							4=>$this->urlpath . "/cp/$tpath/$template",
+							);
+			//$datalines = array_merge($datalines1, $datalines2);
+			//print_r($datalines);
+			//if (!empty($datalines)) {
 				
-				foreach ($datalines as $l=>$line) {
-					if (strcmp($line, $idx)==0) {
-						$last = $l;
-						break;
-					}	
-				}
+				$accindexfile = $this->path . $acct . '.id';
+				$index = rcfscanner::getIDX($accindexfile, count($datalines));
+				$scanpath = $datalines[$index];
+				$sp = explode('/', $scanpath);
+				$acct = array_pop($sp); //return acct per dir
 				
-				$next = (count($datalines)>=$last+1) ? $datalines[$last+1] : $datalines[0];
-				@file_put_contents($accindexfile, $next);
-				return ($next);
-			}
-			else {
-				$first = $datalines[0];
-				return ($first);
-			}
-		}
+				//0,2,4 - 1,3,0 ???
+				//return ($index .'-'.$scanpath);
+				
+				return ($scanpath);				
+				
+			//}	
+		//}
 		
-		return ($this->urlpath); 
+		//return ($this->urlpath); 
+		return false;
 	}
 
 		
-	public function scan($acc=null, $path=null, $skipdir=null, $reportout=false) {
+	public function scan($acc=null, $spath=null, $skipdir=null, $reportout=false) {
 		$db = GetGlobal('db');
 		$repout = $reportout ? true : $this->report_out;
+		$testing = true; //false;
+		$acct = $acc ? $acc : 'scanner';		
 		
-		//$path = $this->selectPath();		
-		//return ($path);
+		$path = $spath ? $spath : $this->selectPath(null, $acct);	
+		//return ($acct."[". $path . "]");//test	
+		if (!$path) return ("Acc file not defined ($acct)"); // false
 		
 		@unlink($this->path . 'scanner.log');
 		$log = fopen($this->path . 'scanner.log', "a");
 		
-		$testing = true; //false;
-		$acct = $acc ? $acc : 'scanner';
 		$scan_path_length = strlen($path);
 
 	    ini_set('max_execution_time', 600);
@@ -323,7 +349,7 @@ class rcfscanner  {
 		//	Initialization of scanner variables and tables
 		
 		//	Clear and title the report variable before starting
-		$report = "SuperScan File Check for $acct\r\n\r\n";
+		$report = "Scan File Check for $acct ($path)\r\n\r\n";
 		//	Initialize the baseline array for the baseline table
 		$baseline = array();		
 		//	Initialize the current array for the current file scan
@@ -561,7 +587,9 @@ $indent Added: $count_added
 $indent Altered: $count_altered
 $indent Deleted: $count_deleted.\r\n
 Scan executed in $elapsed seconds.";
-			if (0 < $count_changes) $report .= "\r\n\r\nIf you did not makes these changes, examine your files closely\r\nfor evidence of embedded hacker code or added hacker files.\r\n(WinMerge provides excellent comparisons)";
+
+			//if (0 < $count_changes) 
+				//$report .= "\r\n\r\nIf you did not makes these changes, examine your files closely\r\nfor evidence of embedded hacker code or added hacker files.\r\n(WinMerge provides excellent comparisons)";
 		}
 
 		//	Clean-up history table and scanned table by deleting entries over 30 days old
@@ -602,7 +630,7 @@ Scan executed in $elapsed seconds.";
 		$acct = $acc ? $acc : 'scanner';
 		$repout = $reportout ? true : $this->report_out;
 		
-		$report = "Scan Report\r\n\r\n";
+		$report = "Scan Report ($acct)\r\n\r\n";
 		
 		//	Prepare scan report
 		if ($date) { //as clicked by grid

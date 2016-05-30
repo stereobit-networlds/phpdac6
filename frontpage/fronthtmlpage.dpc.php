@@ -207,7 +207,7 @@ class fronthtmlpage {
 		//problem returning part (outside html body)
 		$this->preprocess = 0;//GetGlobal('controller')->calldpc_var('pcntl.preprosess')		
 
-		date_default_timezone_set('Europe/Athens');		
+		//date_default_timezone_set('Europe/Athens');		
 	}	
 	
     function render($actiondata) { 	
@@ -1094,13 +1094,13 @@ EOF;
 							     "cp/cp.php?editmode=1&encoding=".$encoding."&turl=" . urlencode(base64_encode($turl));
 								 //"cp/cpside.html";
 	  	}
-		
+//<title>{$this->urltitle} - Modify Page ($turl)</title>		
 		$fp = <<<EOF
  
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="EN"> 
 <head> 
-<title>{$this->urltitle} - Modify Page ($turl)</title>
+<title>e-Enterprise</title>
 <meta http-equiv="Content-Type" content="text/html; charset=$encoding" />   
 	<style type="text/css">
 		body { margin: 0; overflow: hidden; }

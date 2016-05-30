@@ -62,6 +62,8 @@ class pcntl extends controller {
       //session_cache_limiter('nocache'); //private_no_expire//'nocache');
   
 	  $this->local_security = array();
+	  
+	  date_default_timezone_set('Europe/Athens');
    
       //echo ">>",$_SERVER['QUERY_STRING'];
 	  $this->remoteapp = null;   

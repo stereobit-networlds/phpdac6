@@ -340,6 +340,27 @@ function load_css($cssname) {
 	return ($css);
 }
 
+function obfuscate($script=null) {
+	if (!$script) return false;
+
+	//$generatedoutput = $script;
+
+	/*$generatedoutput = str_replace("\\\r\n", "\\n", $generatedoutput);
+	$generatedoutput = str_replace("\\\n", "\\n", $generatedoutput);
+	$generatedoutput = str_replace("\\\r", "\\n", $generatedoutput);
+	$generatedoutput = str_replace("}\r\n", "};\r\n", $generatedoutput);
+	$generatedoutput = str_replace("}\n", "};\n", $generatedoutput);
+	$generatedoutput = str_replace("}\r", "};\r", $generatedoutput);*/
+	//return ($generatedoutput);	
+	
+	/*$myPacker = new JavaScriptPacker($script, 62, true, false);
+	$packed = $myPacker->pack();	
+    return ($packed);*/
+	
+	//return (JSMin::minify($script));
+	return ($script); //Class 'JSMin' not found
+}
+
 };
 }
 //}

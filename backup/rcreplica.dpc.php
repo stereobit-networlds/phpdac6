@@ -64,10 +64,14 @@ class rcreplica  {
 	
 	   switch ($event) {
 
-		 case 'cpdorepall'   : break;
+		 case 'cpdorepall'   : $m = (GetReq('mode')=='sql') ? 1 : 2; //0
+		                       $this->doreplication($m, true);
+		                       break;
 	   
-		 case 'cpdorepsql'   : break;
-		 case 'cpdorepfile'  : break;
+		 case 'cpdorepsql'   : $this->doreplication(1, true);
+		                       break;
+		 case 'cpdorepfile'  : $this->doreplication(2, true);
+		                       break;
 		 case 'cpreplsql'    : echo $this->loadframe(null,'sql');
 		                       die();	
 		                       break;  	
@@ -110,6 +114,7 @@ class rcreplica  {
 
 	protected function replicationMode() {
 		$mode = (GetReq('mode')=='sql') ? 'SQL' : 'Filesystem';
+		$um = (GetReq('mode')=='sql') ? '&mode=sql' : '&mode=files'; 
 		
 		$turl1 = seturl('t=cpreplica&mode=files');
 		$turl2 = seturl('t=cpreplica&mode=sql');		
@@ -117,12 +122,14 @@ class rcreplica  {
 													'SQL'=>$turl2,
 		                                            ));
 													
-		$turl1 = seturl('t=cpdorepall&backtrace=today');
-		$turl2 = seturl('t=cpdorepall&backtrace=week');
-		$turl3 = seturl('t=cpdorepall&backtrace=month');
-		$button .= $this->createButton('Actions', array('Run (today)'=>$turl1,
-														'Run (week)'=>$turl2,
-														'Run (month)'=>$turl3,
+		$turl1 = seturl('t=cpdorepall&backtrace=today'.$um);
+		$turl2 = seturl('t=cpdorepall&backtrace=yesterday'.$um);
+		$turl3 = seturl('t=cpdorepall&backtrace=week'.$um);
+		$turl4 = seturl('t=cpdorepall&backtrace=month'.$um);
+		$button .= $this->createButton('Actions', array('Run today'=>$turl1,
+														'Run 1 day'=>$turl2,
+														'Run week'=>$turl3,
+														'Run 30 days'=>$turl4,
 		                                              ),'warning');
 													  													   
 		$content = (GetReq('mode')=='sql') ?
@@ -135,8 +142,9 @@ class rcreplica  {
 	}	
 
 	protected function loadframe($ajaxdiv=null, $mode=null) {
-		$id = GetParam('id');
-		$cmd = ($mode=='sql') ? 'cpdorepsql&date='.$id : 'cpdorepfile&date='.$id;
+		$date = GetParam('date');
+		$acct = GetParam('acct');
+		$cmd = ($mode=='sql') ? 'cpdorepsql&date='.$date : 'cpdorepfile&date='.$date.'&acct='.$acct;
 		$bodyurl = seturl("t=$cmd&iframe=1");
 			
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"440px\"><p>Your browser does not support iframes</p></iframe>";    
@@ -158,13 +166,15 @@ class rcreplica  {
 		
 		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
 
-		$xsSQL = "select * from (SELECT id, stamp, status, file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and file_path NOT LIKE 'FIRST SCAN%' and stamp > '$backtrace') as o";		
+		$xsSQL = "select * from (SELECT id, stamp, status, acct, REPLACE(file_path,'{$this->urlpath}','') as file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and file_path NOT LIKE 'FIRST SCAN%' and stamp > '$backtrace') as o";		
 		//echo $xsSQL;  
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|link|5|"."javascript:filedetails(\"{stamp}\");".'||');
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|link|5|".'||');
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal()).'|5|1');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); //"|link|5|"."javascript:cronjobs(\"{id}\");".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_last_mod|".localize('_filemod',getlocal())."|5|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+acct|".localize('_acct',getlocal())."|link|5|"."javascript:filedetails(\"{stamp}\",\"{acct}\");".'||');
+		//if (!$this->isDemoUser())
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); 		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_last_mod|".localize('_filemod',getlocal())."|link|5|"."javascript:details(\"{stamp}\");".'||');
 		
 		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+fshistory+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
@@ -219,7 +229,7 @@ class rcreplica  {
 
 		$report .= "Scan log report for $acct file changes since ".$backtrace.":\r\n\r\n";	
 
-		$results = $db->Execute("SELECT stamp, status, file_path, file_last_mod FROM fshistory WHERE acct = '$acct' AND stamp $gthan '$backtrace'");
+		$results = $db->Execute("SELECT stamp, status, REPLACE(file_path,'{$this->urlpath}','') as file_path, file_last_mod FROM fshistory WHERE acct = '$acct' AND stamp $gthan '$backtrace'");
 		if (!$results)
 		{
 			$report .="No log entries available!\r\n ";
@@ -244,15 +254,64 @@ class rcreplica  {
 			return true;	
 	}
 	
-	//...replicate (zip now) differencial file system activity
-	protected function difFiles($name=null, $download=false) {
+	//replicate differencial sql system activity
+	protected function difSQL($d=null, $download=false) {
 		$db = GetGlobal('db');
-		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
+		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-$d, date('Y')));
 
 		static $zip; 
 		$zip = new ZipArchive();
-        $d = date('Ymd-Hi');
-        $zname = $name ? $d.'-'.$name : $d.'-'.'backup.zip';			
+        $d1 = date('Ymd-His');
+		$d2 = date("Ymd-His", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-$d, date('Y')));
+        $zname = $d1.'-'.$d2.'-'.'dsql.zip';			
+		$zfilename = $this->path . "/uploads/" . $zname; //zip to save into
+		 
+		if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
+            echo "Cannot open $zfilename";
+			return false;
+		}
+		else {
+			//temp file to save sql as txt
+			$tempfile = $this->path . "/uploads/dsql.txt"; 
+			$fh = @fopen($tempfile, 'w');			
+			
+			//desc form old to new 
+			$sSQL = "SELECT id,time,sqlquery FROM syncsql where status=1 and reference='system' AND reference NOT LIKE 'replication' AND sqlquery NOT LIKE '%cron%' and time > '$backtrace' order by id DESC";
+			$result = $db->Execute($sSQL);
+			foreach ($result as $r=>$rec) {
+				fwrite($fh, "\r\n" . $rec['sqlquery'] . "\r\n");
+				//if (!$download) echo $rec['sqlquery'] . '<br/>';
+			}
+			
+			@fclose($fh);
+			
+			//add txt to zip
+			$f = str_replace($this->urlpath .'/', '', $tempfile);
+			$zip->addFile($tempfile, $f);
+			$zip->close();		  
+			//@unlink($tempfile);
+		
+			if ($download==true) {
+				$dn = new DOWNLOADFILE($zfilename, 'application/zip');
+				$ret = $dn->df_download();
+				//return ($ret);	
+			}	
+			else 
+				return ($zfilename);		
+		}
+		
+	}	
+	
+	//replicate differencial file system activity
+	protected function difFiles($d=null, $download=false) {
+		$db = GetGlobal('db');
+		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-$d, date('Y')));
+
+		static $zip; 
+		$zip = new ZipArchive();
+        $d1 = date('Ymd-His');
+		$d2 = date("Ymd-His", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-$d, date('Y')));
+        $zname = $d1.'-'.$d2.'-'.'dfiles.zip';			
 		$zfilename = $this->path . "/uploads/" . $zname; //to save into
          
 		if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
@@ -268,8 +327,7 @@ class rcreplica  {
 				
 					$f = str_replace($this->urlpath .'/', '', $rec['file_path']);
 					$zip->addFile($rec['file_path'], $f);
-					
-					if (!$download) echo $f . '<br/>';
+					//if (!$download) echo $f . '<br/>';
 				}	
 			}
 			
@@ -281,10 +339,100 @@ class rcreplica  {
 				//return ($ret);	
 			}	
 			else 
-				return true;		
+				return ($zfilename);		
 		}
 		
-	}	
+	}
+
+	protected function zipFiles($afiles, $download=false, $ftp=false)	{
+		static $zip; 
+		$zip = new ZipArchive();
+		$zfilename = $this->path . "/uploads/replication.zip" . $zname;
+		if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
+            echo "Cannot open $zfilename";
+			return false;
+		}
+		else {	
+			foreach ($afiles as $file) {
+				$f = str_replace($this->urlpath .'/', '', $file);
+				$zip->addFile($file, $f);
+				//if (!$download) echo $f . '<br/>';
+			}
+			
+			$zip->close();
+			
+			if ($download==true) {
+				$dn = new DOWNLOADFILE($zfilename, 'application/zip');
+				$ret = $dn->df_download();
+				//return ($ret);	
+			}
+			elseif ($ftp) {
+				
+				//ftp connection (app public root conn)
+				$conn_id = ftp_connect($ftp_server);	
+				$login = ftp_login($conn_id, $ftp_user_name, $ftp_user_pass);
+				
+				if ($login) {//move to ftp
+					$remote_file = str_replace($this->urlpath .'/', '', $zfilename);
+						
+					//if ($debug_mode)
+					//    echo "remotefile:".$remote_file.'<br>';
+						
+					if (ftp_put($conn_id, $remote_file, $zfilename, FTP_BINARY)) {
+                        //@unlink($file);							
+                        //self::write2disk('imgsaveandresize.log',date(DATE_RFC822)."$file transfered\r\n");									
+					}
+                    else {	    
+						if ($debug_mode)
+                            echo "FTP:File not found:".$zfilename.'<br>';						
+                        //self::write2disk('imgsaveandresize.log',date(DATE_RFC822)."$file NOT transfered\r\n");																
+					}	
+				}				
+
+				// close the ftp connection		
+				if ($conn_id) 
+					ftp_close($conn_id);				
+			}	
+			else 
+				return ($zfilename);			
+		}	
+		
+	}
+	
+	protected function doreplication($mode=null, $download=false) {
+		$bt = GetReq('backtrace');
+		
+		ini_set('max_execution_time', 600);
+		ini_set('memory_limit','1024M');
+
+		//set_time_limit(180);		
+		
+		switch ($bt) {
+			case 'month'     : $d = 30; break;
+			case 'week'      : $d = 7; break;
+			case 'yesterday' : $d = 1; break;
+			case 'today'     : $d = 0; break;
+			default          : $d = -1;
+		}
+		
+		if ($d) {			
+			switch ($mode) {
+				case 1  : $this->difSQL($d, $download); break;
+				case 2  : $this->difFiles($d, $download); break;
+				case 0  :
+				default : $f1 = $this->difSQL($d, false); 
+				          $f2 = $this->difFiles($d, false);
+						  $this->zipFiles(array($f1,$f2), $download);
+			}			  
+		}
+		else {
+			$f1 = $this->difSQL(365, false); 
+			$f2 = $this->difFiles(365, false);
+			$this->zipFiles(array($f1,$f2), $download);
+		}
+		
+		return true;	
+	}
 	
 	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
 		$type = $t ? $t : 'primary'; //danger /warning / info /success

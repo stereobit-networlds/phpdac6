@@ -66,6 +66,8 @@ class pcntl extends controller {
  
       session_start(); 
 	  
+	  date_default_timezone_set('Europe/Athens');
+	  
 	  $this->local_security = array();
    
       //echo ">>",$_SERVER['QUERY_STRING'];

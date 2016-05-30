@@ -11,12 +11,14 @@ $__EVENTS['RCBACKUP_DPC'][1]='cpbackupdtl';
 $__EVENTS['RCBACKUP_DPC'][2]='cpbackupsh';
 $__EVENTS['RCBACKUP_DPC'][3]='cpbackupget';
 $__EVENTS['RCBACKUP_DPC'][4]='cpbackupsave';
+$__EVENTS['RCBACKUP_DPC'][5]='cpbackupdn';
 
 $__ACTIONS['RCBACKUP_DPC'][0]='cpbackup';
 $__ACTIONS['RCBACKUP_DPC'][1]='cpbackupdtl';
 $__ACTIONS['RCBACKUP_DPC'][2]='cpbackupsh';
 $__ACTIONS['RCBACKUP_DPC'][3]='cpbackupget';
 $__ACTIONS['RCBACKUP_DPC'][4]='cpbackupsave';
+$__ACTIONS['RCBACKUP_DPC'][5]='cpbackupdn';
 
 //$__DPCATTR['RCBACKUP_DPC']['cpbackup'] = 'cpbackup,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -34,6 +36,8 @@ class rcbackup  {
 
     var $title, $path, $urlpath;
 	var $seclevid, $userDemoIds, $owner;
+	
+	var $instDownload;
 		
 	function __construct() {
 	
@@ -44,7 +48,8 @@ class rcbackup  {
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); 
 		
-		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName');  
+		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName'); 
+		$this->instDownload = true;//false;	
 	}
 	
     function event($event=null) {
@@ -53,7 +58,11 @@ class rcbackup  {
 	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
-		 case 'cpbackupsave' : $file = $this->downloadFile(); die($file);	
+		 case 'cpbackupdn'   : echo $this->loadframeDn();
+		                       die();
+							   break;		   
+		 case 'cpbackupsave' : $file = $this->downloadFile(); 
+							   if ($this->instDownload) die($file);		
 		                       break;  		   
 		   							   
 		 case 'cpbackupget'  : $this->download($this->urlpath . urldecode(GetReq('file')));
@@ -78,19 +87,26 @@ class rcbackup  {
 	 
 	  switch ($action) {
 		 
+		 case 'cpbackupdn'    : break;	
          case 'cpbackupget'   : break;			 
 			
-		 case 'cpbackupsave'  : break; 										  
-		 case 'cpbackupsh'    : //$out = $this->scanReport('cgi-bin', 1, 0, true, urldecode(GetReq('date')));
-								$out = $this->downloadReport(GetReq('id'));
+		 case 'cpbackupsave'  : if (!$this->instDownload) { 
+									$grid = $this->backup_grid(null,140,5,'r', true);
+									//$btn = $this->getFilesButtons();		 
+									$btn = $this->getFilesJSButtons();
+									$out = $this->window($btn, $grid);
+								}	
+								break; 										  
+								
+		 case 'cpbackupsh'    : $out = $this->downloadReport(GetReq('id'));
 							    break; 
-		 case 'cpbackupdtl' : 
-							  break;					  
-	     case 'cpbackup'    :
+		 case 'cpbackupdtl'   : break;					  
+	     case 'cpbackup'      :
 
-		 default            : $grid = $this->backup_grid(null,140,5,'r', true);
-							  $btn = $this->getFilesButtons();		 
-							  $out = $this->window($btn, $grid);
+		 default              : $grid = $this->backup_grid(null,140,5,'r', true);
+							    //$btn = $this->getFilesButtons();
+								$btn = $this->getFilesJSButtons();									
+							    $out = $this->window($btn, $grid);
 	  }	 
 
 	  return ($out);
@@ -110,6 +126,18 @@ class rcbackup  {
 			return $ajaxdiv. '|' . $frame;
 		else
 			return ($frame); 
+	}	
+
+	protected function loadframeDn($ajaxdiv=null) {
+		$cmd = str_replace(array('|','.'),array('&','='), urldecode(GetReq('cmd')));
+		$bodyurl = seturl("t=cpbackupsave&iframe=1&". $cmd);
+			
+		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"40px\"><p>Your browser does not support iframes</p></iframe>";    
+
+		if ($ajaxdiv)
+			return $ajaxdiv. '|' . $frame;
+		else
+			return ($frame); 
 	}		
 	
 	protected function backup_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
@@ -123,12 +151,13 @@ class rcbackup  {
 		
 		//$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
 
-		$xsSQL = "select * from (SELECT id, stamp, name, file_path, file_created FROM fsbackup) as o";		
+		$xsSQL = "select * from (SELECT id, stamp, name, REPLACE(file_path,'{$this->urlpath}','') as file_path, file_created FROM fsbackup) as o";		
 		//echo $xsSQL;  
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal()). '|5|1|'); //"|link|5|"."javascript:bdetails(\"{id}\");".'||');			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_name',getlocal())."|link|5|"."javascript:bdetails(\"{id}\");".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); 		
+		//if (!$this->isDemoUser())
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); 		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_created|".localize('_filedate',getlocal())."|5|1|");
 	
 		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+fsbackup+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
@@ -138,6 +167,9 @@ class rcbackup  {
 	
 	
     public function backup_directory($path=null, $name=null, $download=false, $ziprecur=false) {
+		
+		//ini_set('max_execution_time', 600);
+	    //ini_set('memory_limit','1024M');
 	
         $app_path = $this->urlpath . '/';			
 	
@@ -197,6 +229,9 @@ class rcbackup  {
 
    //zip directory without recursion
     public function backup_directory_norec($path=null, $name=null, $download=false) {
+		
+		//ini_set('max_execution_time', 600);
+	    //ini_set('memory_limit','1024M');
 
         $app_path = $this->urlpath . '/';	
 	
@@ -233,125 +268,18 @@ class rcbackup  {
         }
 		
 		if ($download==true) {
-		    $dn = new DOWNLOADFILE($zfilename);
-			$ret = $dn->df_download();
+		    //$dn = new DOWNLOADFILE($zfilename);
+			//$ret = $dn->df_download();
+			
+			$this->download($zfilename);
 		}
 		
 
 		return ($ret);
     } 	
 	
-    public function backup_dbtable($table=null, $name=null, $download=false) {
-		$db = GetGlobal('db');  
-		$d = date('Ymd-Hi');
-	    $meter = 0;
-		$m = 0;
-		$zname = $name ? /*$d.'-'.*/$name.'.zip' : /*$d.'-'.*/'dbasecsv.zip';
-		if (!$table) return false;
-		
-		$con = mysql_connect(remote_paramload('DATABASE','dbhost', $this->path), 
-		                      remote_paramload('DATABASE','dbuser', $this->path),
-							  remote_paramload('DATABASE','dbpwd', $this->path));
-		if ($con) {	
-
-  	      $zip = new ZipArchive();		
-		  $zfilename = $this->path . "/uploads/" . $zname; //to save into
-         
-		  if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
-              $download=false;//die("cannot open $zfilename");//false;
-			  $ret = 'Zip error!';
-          }				
-							  
-		  mysql_select_db(remote_paramload('DATABASE','dbname', $this->path));	
-		  //mysql_query("SET NAMES utf8");
-		  $charset = remote_paramload('DATABASE','charset', $this->path);
-		  mysql_query("SET NAMES ".$charset);//'utf8'");
-		  
-	      if (stristr($table,'|')) //multitable
-		    $tables = explode('|',$table);
-		  else
-			$tables[] = $table; //one table
-
-          foreach ($tables as $t=>$tbl) {	
-            $ztablename = $this->path . "/uploads/" . $d.'-'.$tbl . '.csv';		
-            
-			$result = mysql_query("SELECT * FROM " . $tbl);
-            if ($result) {	
-			
-			  $fh = fopen($ztablename, 'w');
-			  
-			  // Now UTF-8 - Add byte order mark / UTF8 BOM
-			  //if (($this->encoding=='utf-8') || ($this->encoding=='utf8'))
-				fwrite($fh, pack("CCC",0xef,0xbb,0xbf)); 
-			  
-			  /* insert field values into data.txt */			
-			  while ($row = mysql_fetch_array($result)) {          
-				$last = end($row);          
-				$num = mysql_num_fields($result) ;    
-				for($i = 0; $i < $num; $i++) {
-				
-				    //NULL VALUES..0 zeros ???
-				    //$cell = $row[$i] ? $row[$i] : 'null';
-					
-					fwrite($fh, $row[$i]);                      
-					//fwrite($fh, mb_convert_encoding($row[$i], 'UTF-8', 'GREEK'));
-					//fwrite($fh, iconv("UTF-8", "ISO-8859-7", $row[$i]));
-					
-					if ($row[$i] != $last)
-						fwrite($fh, "; "); //,
-				}                                                                 
-				fwrite($fh, PHP_EOL);//"\n");
-			  }
-			  @fclose($fh);	
-			  
-			  $zip->addFile($ztablename, $tbl . '.csv');
-				
-              $meter+=1;
-			}
-			/*// MUST BE ADMIN TO EXPORT TEXT
-			  $sSQL = "SELECT itmname,itmactive INTO OUTFILE '".$ztablename[$t]."'
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'
-  LINES TERMINATED BY '\\n'
-  FROM " . $tbl;
-            //echo $sSQL;  
-			$result = $db->Execute($sSQL,2);*/
-						 
-          }
-		  $ret .= $meter . ' tables exported.';
-		  $zip->close();	
-		  $this->savefsBackup($name, $zfilename);
-		  
-		  if ($download==true) {
-		  
-		    $dn = new DOWNLOADFILE($zfilename);
-			$ret = $dn->df_download();
-		  }	  
-		}  
-        else 
-		  $ret = 'No connection';		  
-		  
-        return ($ret);		
-    }
-
 	
-	protected function download($file) {
-		
-		if (file_exists($file)) {
-			header('Content-Description: File Transfer');
-			header('Content-Type: application/octet-stream');
-			header('Content-Disposition: attachment; filename="'.basename($file).'"');
-			header('Expires: 0');
-			header('Cache-Control: must-revalidate');
-			header('Pragma: public');
-			header('Content-Length: ' . filesize($file));
-			readfile($file);
-			exit;
-		}		
-		
-	}
-	
-	
-	protected function difFiles($name=null, $download=false) {
+	protected function backup_Files($name=null, $download=false) {
 		$db = GetGlobal('db');
 		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
 
@@ -393,7 +321,7 @@ class rcbackup  {
 		
 	}
 	
-    protected function difTable($table=null, $name=null, $download=false) {
+    protected function backup_Table($table=null, $name=null, $download=false) {
 		$db = GetGlobal('db');  
 		$d = date('Ymd-Hi');
 	    $meter = 0;
@@ -412,7 +340,7 @@ class rcbackup  {
 	
             $ztablename = $this->path . "/uploads/" . $d.'-'. $table . '.csv';		
             
-			$result = $db->Execute("SELECT * FROM " . $table);// . " WHERE timestamp...");
+			$result = $db->Execute("SELECT * FROM " . $table);
             if ($result) {	
 			
 			  $fh = fopen($ztablename, 'w');
@@ -466,7 +394,8 @@ class rcbackup  {
 		}	
     }	
 
-	protected function difPics($path=null, $name=null, $download=false) {
+	//not used
+	protected function backup_Pics($path=null, $name=null, $download=false) {
 		$db = GetGlobal('db');
 		$backtrace = date("Y-m-d H:i:s", mktime(date('H'), date('i'), date('s'), date('n'), date('j')-30,date('Y')));
 
@@ -521,32 +450,37 @@ class rcbackup  {
 	protected function downloadFile() {
 		$mode = GetReq('mode');
 		
-		//ini_set('max_execution_time', 600);
-		//ini_set('memory_limit','1024M');
+		ini_set('max_execution_time', 600);
+		ini_set('memory_limit','1024M');
 
-		set_time_limit(180); 	
+		//set_time_limit(180); 	
 		
 		switch ($mode) {
-			case 'system': $path = GetReq('cp'); //GetReq('path');
+			case 'root'  : $path = GetReq('cp'); 
 						   $p = explode('/', '/'.$path); // / at start in case of one level
 						   $name = array_pop($p);	
-			               $ret = $this->backup_directory($path, $name);
+			               $ret = $this->backup_directory_norec($path, $name, $this->instDownload);
+						   break;				
+			case 'system': $path = GetReq('cp'); 
+						   $p = explode('/', '/'.$path); // / at start in case of one level
+						   $name = array_pop($p);	
+			               $ret = $this->backup_directory($path, $name, $this->instDownload);
 						   break;	
 			case 'dir'   : $path = GetReq('path');
 						   $p = explode('/', '/'.$path); // / at start in case of one level	
 						   $name = array_pop($p);	
-						   $ret = $this->backup_directory($path, $name);
+						   $ret = $this->backup_directory($path, $name, $this->instDownload);
 			               break;
 			case 'pics'  : $path = GetReq('path');
 						   $p = explode('/', $path);	
 						   $name = array_pop($p);	
-						   $ret = $this->backup_directory_norec($path, $name);
+						   $ret = $this->backup_directory_norec($path, $name, $this->instDownload);
 			               break;
 			case 'table' : $table = GetReq('table');
-						   $ret = $this->difTable($table, null, true);
+						   $ret = $this->backup_Table($table, null, $this->instDownload);
 			               break;  
 			case 'files' :
-			default      : $ret = $this->difFiles(null, true);
+			default      : $ret = $this->backup_Files(null, $this->instDownload);
 		}
 		
 		return($ret);
@@ -555,13 +489,27 @@ class rcbackup  {
 	
 	protected function getFilesButtons() {
 		
-		$furl1 = seturl('t=cpbackupsave&mode=files');
-		$furl2 = seturl('t=cpbackupsave&mode=dir&path=files');
-		$furl3 = seturl('t=cpbackupsave&mode=dir&path=newsletters');
-		$button = $this->createButton('Documents', array('Scanned files'=>$furl1,
-														 'Public files'=>$furl2,
-														 'Newsletters'=>$furl3,
+		$furl1 = seturl('t=cpbackupsave&mode=dir&path=files');
+		$furl2 = seturl('t=cpbackupsave&mode=dir&path=newsletters');
+		$button = $this->createButton('Documents', array('Files'=>$furl1,
+														 'Newsletters'=>$furl2,
 													));
+													
+		$turl1 = seturl('t=cpbackupsave&mode=pics&path=images/photo_sm');													  
+		$turl2 = seturl('t=cpbackupsave&mode=pics&path=images/photo_md');
+		$turl3 = seturl('t=cpbackupsave&mode=pics&path=images/photo_bg');		
+		$turl4 = seturl('t=cpbackupsave&mode=pics&path=images');
+		$turl5 = seturl('t=cpbackupsave&mode=pics&path=images/thub');
+		$turl6 = seturl('t=cpbackupsave&mode=pics&path=images/uphotos');
+		$turl7 = seturl('t=cpbackupsave&mode=pics&path=images/catfiles');
+		$button .= $this->createButton('Images', array('Small'=>$turl1,
+													   'Medium'=>$turl2,
+													   'Large'=>$turl3,
+													   'Main'=>$turl4,
+													   'Thumb'=>$turl5,
+													   'Uphotos'=>$turl6,
+													   'Category'=>$turl7,
+		                                               ),'warning');														
 		
 		$turl1 = seturl('t=cpbackupsave&mode=table&table=users');
 		$turl2 = seturl('t=cpbackupsave&mode=table&table=ulists');		
@@ -581,36 +529,26 @@ class rcbackup  {
 													      'Categories'=>$turl2,
 														  'Transactions'=>$turl3,
 		                                                  ),'info');	
-
-		$turl1 = seturl('t=cpbackupsave&mode=pics&path=images/photo_sm');													  
-		$turl2 = seturl('t=cpbackupsave&mode=pics&path=images/photo_md');
-		$turl3 = seturl('t=cpbackupsave&mode=pics&path=images/photo_bg');		
-		$turl4 = seturl('t=cpbackupsave&mode=pics&path=images');
-		$turl5 = seturl('t=cpbackupsave&mode=pics&path=images/thub');
-		$turl6 = seturl('t=cpbackupsave&mode=pics&path=images/uphotos');
-		$turl7 = seturl('t=cpbackupsave&mode=pics&path=images/catfiles');
-		$button .= $this->createButton('Images', array('Small'=>$turl1,
-													   'Medium'=>$turl2,
-													   'Large'=>$turl3,
-													   'Root'=>$turl4,
-													   'Thumb'=>$turl5,
-													   'Uphotos'=>$turl6,
-													   'Category'=>$turl7,
-		                                               ));															  
+														  
 		if ($this->isDemoUser()) {}											   
 		else {
-		$turl1 = seturl('t=cpbackupsave&mode=system&cp=cp');													  
-		$turl2 = seturl('t=cpbackupsave&mode=system&cp=cp/html/metro');
-		$turl3 = seturl('t=cpbackupsave&mode=system&cp=cp/transactions');		
-		$button .= $this->createButton('System', array('Root'=>$turl1,
+			$turl0 = seturl('t=cpbackupsave&mode=files');
+			$turl1 = seturl('t=cpbackupsave&mode=root&cp=cp');													  
+			$turl2 = seturl('t=cpbackupsave&mode=system&cp=cp/html/metro');
+			$turl3 = seturl('t=cpbackupsave&mode=system&cp=cp/transactions');		
+			$button .= $this->createButton('System', array(
+													   'Scanned files'=>$turl0,
+		                                               'Root'=>$turl1,
 													   'Dashboard'=>$turl2,
 													   'Transactions'=>$turl3,
-		                                               ),'warning');
+		                                               ));
 		}
 		return ($button);
 	}
 	
 	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
+		$blank = ($this->instDownload) ? "target='_blanc'" : null; //in a new page ....
+		
 		$type = $t ? $t : 'primary'; //danger /warning / info /success
 		switch ($s) {
 			case 'large' : $size = 'btn-large '; break;
@@ -623,7 +561,7 @@ class rcbackup  {
 		
 		if (!empty($urls)) {
 			foreach ($urls as $n=>$url)
-				$links .= '<li><a href="'.$url.'" target="_blank">'.$n.'</a></li>';
+				$links .= '<li><a href="'.$url.'" '.$blank.'>'.$n.'</a></li>';
 			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
 		} 
 		
@@ -635,6 +573,75 @@ class rcbackup  {
 			
 		return ($ret);
 	}
+	
+
+	/*JS iframe load*/
+	protected function getFilesJSButtons() {
+		
+		$button = $this->createJSButton('Documents', array('Files'=>'mode.dir|path.files',
+														 'Newsletters'=>'mode.dir|path.newsletters',
+													));
+													
+		$button .= $this->createJSButton('Images', array('Small'=>'mode.pics|path.images/photo_sm',
+													   'Medium'=>'mode.pics|path.images/photo_md',
+													   'Large'=>'mode.pics|path.images/photo_bg',
+													   'Main'=>'mode.pics|path.images',
+													   'Thumb'=>'mode.pics|path.images/thub',
+													   'Uphotos'=>'mode.pics|path.images/uphotos',
+													   'Category'=>'mode.pics|path.images/catfiles',
+		                                               ),'warning');													
+			
+		$button .= $this->createJSButton('Persons', array('Users'=>'mode.table|table.users',
+													   'e-Mails'=>'mode.table|table.ulists',
+		                                                ),'success');
+																											  
+		$button .= $this->createJSButton('Clients', array('Customers'=>'mode.table|table.customers',
+													    'Addresses'=>'mode.table|table.custaddress',
+		                                                ),'warning');
+													  
+		$button .= $this->createJSButton('Inventory', array('Products'=>'mode.table|table.products',
+													      'Categories'=>'mode.table|table.categories',
+														  'Transactions'=>'mode.table|table.transactions',
+		                                                  ),'info');	
+															  
+		if ($this->isDemoUser()) {}											   
+		else {	
+			$button .= $this->createJSButton('System', array(
+													   'Scanned files'=>'mode.files',
+		                                               'Root'=>'mode.root|cp.cp',
+													   'Dashboard'=>'mode.system|cp.cp/html/metro',
+													   'Transactions'=>'mode.system|cp.cp/transactions',
+		                                               ));
+		}
+		return ($button);
+	}
+	
+	protected function createJSButton($name=null, $urls=null, $t=null, $s=null) {
+		$type = $t ? $t : 'primary'; //danger /warning / info /success
+		
+		switch ($s) {
+			case 'large' : $size = 'btn-large '; break;
+			case 'small' : $size = 'btn-small '; break;
+			case 'mini'  : $size = 'btn-mini '; break;
+			default      : $size = null;
+		}
+		
+		if (!empty($urls)) {
+			foreach ($urls as $n=>$url) {
+				$js = "onClick=\"bdn('$url');\"";
+				$links .= '<li><a href="#" '.$js.'>'.$n.'</a></li>';
+			}	
+			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
+		} 
+		
+		$ret = '
+			<div class="btn-group">
+                <button data-toggle="dropdown" class="btn '.$size.'btn-'.$type.' dropdown-toggle">'.$name.' <span class="caret"></span></button>
+                '.$lnk.'
+            </div>'; 
+			
+		return ($ret);
+	}	
 
 	protected function window($buttons, $content) {
 		$ret = '	
@@ -651,7 +658,7 @@ class rcbackup  {
                         <div class="widget-body">
 							<div class="btn-toolbar">
 							'.$buttons .'
-							<hr/><div id="bdetails"></div>
+							<hr/><div id="bdetails"></div><div id="bdn" style="display:none"></div>
 							</div>
 							'.$content.'
                         </div>
@@ -678,8 +685,9 @@ class rcbackup  {
 			
 			$out .= "<br/>File name:" . "<a href=\"".$url.$res->fields[2]."\">".$res->fields[0]."</a>";;
 			$out .= "<br/>File stamp:" . $res->fields[1];
-			$out .= "<br/>File path:" . $this->bytesToSize1024(filesize($this->urlpath.$res->fields[2]));
-			$out .= "<br/>File size:" . $res->fields[2];
+			$out .= "<br/>File size:" . $this->bytesToSize1024(filesize($this->urlpath.$res->fields[2]));
+			if (!$this->isDemoUser())
+				$out .= "<br/>File path:" . $res->fields[2];
 			$out .= "<br/>File hash:" . $res->fields[3];
 			$out .= "<br/>Created at:" . $res->fields[4];
 			return ($out);
@@ -699,6 +707,24 @@ class rcbackup  {
 		
 		return ($res);
 	}
+	
+	protected function download($file) {
+		
+		// clean the output buffer
+		ob_clean();
+		
+		if (file_exists($file)) {
+			header('Content-Description: File Transfer');
+			header('Content-Type: application/octet-stream');
+			header('Content-Disposition: attachment; filename="'.basename($file).'"');
+			header('Expires: 0');
+			header('Cache-Control: must-revalidate');
+			header('Pragma: public');
+			header('Content-Length: ' . filesize($file));
+			readfile($file);
+			exit;
+		}			
+	}	
 	
 	protected function writeLog($data = '') {
 		if (empty($data)) return;
