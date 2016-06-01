@@ -43,7 +43,7 @@ class rcdynsql {
     var $status_sid, $status_sidexp;
 	var $seclevid, $userDemoIds;
 		
-	function rctransactions() {
+	function __construct() {
 	
       $this->path = paramload('SHELL','prpath');
      	
@@ -164,7 +164,7 @@ class rcdynsql {
 		
 
 
-			$xsSQL2 = "SELECT * FROM (SELECT i.id,i.fid,i.time,i.date,i.execdate,i.status,i.sqlres,i.reference FROM syncsql i where i.reference NOT LIKE 'system' and reference NOT LIKE 'cron' order by i.id DESC) x";
+			$xsSQL2 = "SELECT * FROM (SELECT i.id,i.fid,i.time,i.date,i.execdate,i.status,i.sqlres,REPLACE(i.reference,'{$this->path}','') as reference FROM syncsql i where i.reference NOT LIKE 'system' and reference NOT LIKE 'cron') x";
 				//echo $xsSQL2;
 
 			//$out.= $xsSQL2;
@@ -179,8 +179,8 @@ class rcdynsql {
 		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ttime|".localize('_time',getlocal())."|9|0|");	
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|5|0|||||right");	
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|link|10|"."javascript:show_body({tid});".'||');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+sqlres|".localize('_sqlres',getlocal())."|20|1|");			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+reference|".localize('_ref',getlocal())."|20|1|");
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+sqlres|".localize('_sqlres',getlocal())."|10|1|");			
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+reference|".localize('_ref',getlocal())."|10|1|");
 	        //GetGlobal('controller')->calldpc_method("mygrid.column use grid2+qty|".localize('_qty',getlocal())."|5|0|||||right");				
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cost|".localize('_cost',getlocal())."|5|0|||||right");
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
@@ -262,38 +262,6 @@ class rcdynsql {
 		else
 			return ($frame);
 	}
-	
-	function loadTransactionHtml($id) {
-	
-        $file = $this->path . $id . ".html"; 
-	    //echo $file;
-		if (is_readable($file)) {
-          /*$fd = fopen($file, 'r');
-          $ret = fread($fd, filesize($file));
-          fclose($fd);   	*/
-		  $ret = file_get_contents($file);
-		
-		  return ($ret);	
-		}
-		else
-		  return false;
-	} 		
-		
-	
-	function viewTransactionHtml($id=null) {
-	    $id = $id?$id:GetReq('tid');
-	
-        $file = $this->path . $id . ".html"; 
-	    //echo $file;
-		if (is_readable($file)) {
-		  $ret = file_get_contents($file);
-		
-		  return ($ret);	
-		}
-		else
-		  return false;
-	} 
-
 };
 }
 ?>

@@ -278,8 +278,10 @@ class rcfscanner  {
 			$datalines = array(0=>$this->urlpath . '/cgi-bin',
 							1=>$this->urlpath . '/css',
 							2=>$this->urlpath . '/newsletters',
-							3=>$this->urlpath . "/cp/$tpath/$cptemplate",
-							4=>$this->urlpath . "/cp/$tpath/$template",
+							3=>$this->urlpath . '/cp/transactions',
+							4=>$this->urlpath . '/cp/collections',
+							5=>$this->urlpath . "/cp/$tpath/$cptemplate",
+							6=>$this->urlpath . "/cp/$tpath/$template",
 							);
 			//$datalines = array_merge($datalines1, $datalines2);
 			//print_r($datalines);
@@ -313,6 +315,8 @@ class rcfscanner  {
 		$path = $spath ? $spath : $this->selectPath(null, $acct);	
 		//return ($acct."[". $path . "]");//test	
 		if (!$path) return ("Acc file not defined ($acct)"); // false
+		
+		if (!is_dir($path)) return ("Invalid path ($path)");
 		
 		@unlink($this->path . 'scanner.log');
 		$log = fopen($this->path . 'scanner.log', "a");

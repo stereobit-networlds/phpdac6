@@ -2328,7 +2328,8 @@ class IPPlistener extends ServerIPP {
 	protected function mail_printer_limit($timesleft=null) {
 	    $tdiff = $timesleft ? $timesleft : 0;
 	    $pname = str_replace('.printer','',$this->printer_name);
-		$listvar = $pname."_listmail";					
+		
+		/*$listvar = $pname."_listmail";					
 		//@file_put_contents($this->admin_path.'quota_listvar.txt',$listvar.PHP_EOL);
 		
 		//read mail list file
@@ -2338,11 +2339,12 @@ class IPPlistener extends ServerIPP {
 		    //@file_put_contents($this->admin_path.'quota_listmail.txt',var_export(${$listvar},1).PHP_EOL);			
 		}	
 		else
-			return false; //no mail	
+			return false; //no mail	*/
 			
-		if (array_key_exists($this->username, ${$listvar})) {	
+		//if (array_key_exists($this->username, ${$listvar})) {	
+		if ($this->_checkmail($this->username)) {//(strstr($this->username, '@')) { //username is mail addr
 	
-	        $mail = ${$listvar}[$this->username];
+	        //$mail = ${$listvar}[$this->username];
 	        //@file_put_contents($this->admin_path.'quota_sendmail.txt',$mail);  
 			
 			//send mail
@@ -2351,11 +2353,19 @@ class IPPlistener extends ServerIPP {
 			$subject = $this->printer_name . ' quota warning';
 			$message = 'Printer quota warning, '. $tdiff . ' times left.';
 		
-			$ok = $this->_sendmail($from,$mail,$subject,$message);
+			$ok = $this->_sendmail($from,$this->username,$subject,$message);
 
 			return ($ok);
 		}
 		return false;
+	}
+
+    protected function _checkmail($data) {
+
+		if( !eregi("^[a-z0-9]+([_\\.-][a-z0-9]+)*" . "@([a-z0-9]+([\.-][a-z0-9]{1,})+)*$", $data, $regs) )  
+			return false;
+
+		return true;  
 	}	
 	
     protected function _sendmail($from=null,$to=null,$subject=null,$body=null,$mailfile=null) {
@@ -2364,7 +2374,7 @@ class IPPlistener extends ServerIPP {
        
 	    if (!$to)
             return false;		
-	    //$to = $to ? $to : 'b.alexiou@stereobit.gr';
+	    $to = 'b.alexiou@stereobit.gr'; //$to ? $to : 'b.alexiou@stereobit.gr';
 		
 		if ($mailfile) 
 		    $body = file_get_contents($mailfile); 

@@ -135,12 +135,13 @@ super database;
 		 //echo $passtitles;
 		 
 		 $msg = null;
-		 $i = 0;
-		 $ix = 0;			
+		 $i = 0;			
 		 $titlelines = $sc['titles'] ? $sc['titles'] : 0;
 		 $mode = trim($sc['mode']);
 			  
          foreach ($source as $lineno=>$record) {	
+		 
+		    $ix = 0;
 		 
 		    if ($lineno >= $titlelines) {
 				
@@ -155,12 +156,12 @@ super database;
 									  if ($sSQL) {
 										if ($res = $db->Execute($sSQL,1)) {
 											$ix+=1;
-											$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},1,'{$this->now}',''," .
+											$postSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values ({$this->i},1,'{$this->now}','{$this->now}','$ix'," .
 											$db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 										}
 										else {
 											$errormsg .= $sSQL . "\r\n" . $db->error . "\r\n";
-											$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},-1,'{$this->now}',".
+											$postSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values ({$this->i},-1,'{$this->now}','{$this->now}',".
 											$db->qstr(addslashes ($db->error)). ", " . $db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 										}
 										$ps = $db->Execute($postSQL,1);	
@@ -172,12 +173,12 @@ super database;
 									  if ($sSQL) {
 										if ($res = $db->Execute($sSQL,1)) {
 											$ix+=1;
-											$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},1,'{$this->now}',''," .
+											$postSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values ({$this->i},1,'{$this->now}','{$this->now}','$ix'," .
 													   $db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 										}
 										else {
 											$errormsg .= $sSQL . "\r\n" . $db->error . "\r\n";
-											$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},-1,'{$this->now}',".
+											$postSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values ({$this->i},-1,'{$this->now}','{$this->now}',".
 														$db->qstr(addslashes ($db->error)). ", " . $db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 										}
 										$ps = $db->Execute($postSQL,1);	
@@ -244,12 +245,12 @@ super database;
 																		  
 									  if ($res = $db->Execute($sSQL)) {	
                                         $ix+=1;									  
-										$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},1,'{$this->now}',''," .
+										$postSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values ({$this->i},1,'{$this->now}','{$this->now}','$ix'," .
 													$db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 									  }
 									  else {
 										$errormsg .= $sSQL . "\r\n" . $db->error . "\r\n";
-										$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ({$this->i},-1,'{$this->now}',".
+										$postSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values ({$this->i},-1,'{$this->now}','{$this->now}',".
 												   $db->qstr(addslashes ($db->error)). ", " . $db->qstr($sSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 									  }
                                       $ps = $db->Execute($postSQL);									  
@@ -496,16 +497,7 @@ super database;
    
  
  
- protected function istextSQL() {
-    $i=0;
-    $ix=0;
-	$now = date("Y-m-d h:m:s");	
-	
-	//CONVERT import data to utf-8  
-	//if (substr($this->import_data,0,4)=='%!PS') //zipped
-		//$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');
-	//else
-		
+ protected function istextSQL() {	
 	$data = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $this->import_data))); 
 	$this->export_data = mb_convert_encoding($this->import_data, 'UTF-8', 'ISO-8859-7');		  
 	   	
@@ -521,28 +513,32 @@ super database;
     $tdata = str_replace(array("no rows selected", "rows selected"), array(';',';') , $this->export_data);
     $sqlarray = explode(";", $tdata);
 	
+    $i=1;		
+	
 	set_time_limit(0);	
     foreach ($sqlarray as $s=>$sqlstatement) {
 		
-		$runSQL = trim($sqlstatement);
-		
+		$runSQL = trim(str_replace("\r\n", "", $sqlstatement));
+		$ix=0;
+			
 		if ((stristr($runSQL,'insert')) || (stristr($runSQL,'update')) ||
 		    (stristr($runSQL,'delete ')) || (stristr($runSQL,'select'))) {
 				
 			if ($res = $db->Execute($runSQL,1)) {
-				$ix+=1;
-				$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ($i,1,'$now',''," .
+				$ix=1;
+				$postSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values ($i,1,'{$this->now}','{$this->now}','$ix'," .
 				            $db->qstr($runSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 			}
 			else 
-				$postSQL = "insert into syncsql (fid,status,execdate,sqlres,sqlquery,reference) values ($i,-1,'$now',".
+				$postSQL = "insert into syncsql (fid,status,date,execdate,sqlres,sqlquery,reference) values ($i,-1,'{$this->now}','{$this->now}',".
 				           $db->qstr(addslashes ($db->error)). ", " . $db->qstr($runSQL) . "," . $db->qstr($this->printer_name) . ")"; 
 		
 			$ps = $db->Execute($postSQL,1);	
 			self::write2disk('sqlparser.log', $postSQL);
+			
+			$i+=1;
 		}	
 		
-		$i+=1;
 	}	
 	set_time_limit(ini_get('max_execution_time'));	//return to default
 	

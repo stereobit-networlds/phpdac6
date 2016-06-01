@@ -1,8 +1,7 @@
 <?php
-if ((defined("DATABASE_DPC")) && (defined("SMTPMAIL_DPC"))) {
 
-$__DPCSEC['MAILDBQUEUE_DPC']='1;1;1;1;1;1;2;2;9';
-$__DPCSEC['_MAILQUEUEDAEMON']='9;1;1;1;1;1;2;2;9';
+$__DPCSEC['MAILDBQUEUE_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['_MAILQUEUEDAEMON']='9;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("MAILDBQUEUE_DPC")) && (seclevel('MAILDBQUEUE_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("MAILDBQUEUE_DPC",true);
@@ -11,15 +10,13 @@ $__DPC['MAILDBQUEUE_DPC'] = 'maildbqueue';
 
 $v = GetGlobal('controller')->require_dpc('crypt/ciphersaber.lib.php');
 require_once($v); 
-
+/*
 $a = GetGlobal('controller')->require_dpc('nitobi/nitobi.lib.php');
 require_once($a);
 
 $b = GetGlobal('controller')->require_dpc('nitobi/nhandler.lib.php');
 require_once($b);
-
-//$c = GetGlobal('controller')->require_dpc('gui/swfcharts.dpc.php');
-//require_once($c);
+*/
 
 $__EVENTS['MAILDBQUEUE_DPC'][0]='cpmaildbqueue';
 $__EVENTS['MAILDBQUEUE_DPC'][1]='cpngetqueue';
@@ -126,13 +123,11 @@ class maildbqueue  {
 	      
 	
 	    switch ($event) {
-	      case 'cpngetqueue'        : $this->get_mailqueue_list(); break;		 
-	      case 'cpnsetqueue'        : $this->save_mailqueue_list();  break;
+	      case 'cpngetqueue'        : 		 
+	      case 'cpnsetqueue'        : 
 		  case 'cpmaildbqueuejob'   : break;
 		  default                   : 
-		                            $this->nitobi_javascript();
-                                    $this->charts = new swfcharts;	
-		                            $this->hasgraph = $this->charts->create_chart_data('mailqueue',"");									
+		                            									
         }	
 	}		
 	
@@ -149,212 +144,13 @@ class maildbqueue  {
 		  case 'cpmaildbqueuejob'  : 	  
 		  case 'cpmaildbqueue'     : 
 		  default                  : 
-		                             $out .= $this->show_mailqueue();
+		                             
 		                       
         }	  
 	  
 	    return ($out);
 	}
-	
-	function nitobi_javascript() {
-      if (iniload('JAVASCRIPT')) {
-
-		   $template = $this->set_template();   		      
-		   
-	       $code = $this->init_grids();			
-
-		   $code .= $this->_grids[0]->OnClick(7,'QueueDetails',$template);//,'Customertrans','vid',2);
-	   
-		   $js = new jscript;
-		   $js->setloadparams("init()");
-           $js->load_js('nitobi.grid.js');		   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }		
-	}
-	
-	function set_template() {
-
-		   $template .= "<h4>'+update_stats_id(i3,i1,i0)+'</h4>";	
-		   $template .= "<table width=\"100%\" class=\"group_win_body\">";	   
-		   $template .= "<tr><td>".localize('AA',getlocal()).":</td><td><b>'+i0+'</b></td></tr>";	
-		   $template .= "<tr><td>".localize('_TIMEIN',getlocal()).":</td><td><b>'+i1+'</b></td></tr>";		
-		   $template .= "<tr><td>".localize('_TIMEOUT',getlocal()).":</td><td><b>'+i2+'</b></td></tr>";		   
-		   $template .= "<tr><td>".localize('_SENDER',getlocal()).":</td><td><b>'+i3+'</b></td></tr>";		
-		   $template .= "<tr><td>".localize('_RECEIVER',getlocal()).":</td><td><b>'+i4+'</b></td></tr>";		
-		   $template .= "<tr><td>".localize('_SUBJECT',getlocal()).":</td><td><b>'+i5+'</b></td></tr>";
-		   $template .= "<tr><td>".localize('_BODY',getlocal()).":</td><td><b>'+unescape(i6)+'</b></td></tr>";		   				   		   	
-		   $template .= "</table>";	
-		   
-		   $template .= "<table width=\"100%\" class=\"group_win_body\"><tr><td>";
-		   //$template .= "'+i4+'";//"'+show_body(i4)+'";		   	
-		   $template .= "</td></tr></table>";	 		        
-		   
-		   return ($template);	
-	}
-	
-	function show_mailqueue() {
-	
-	   if ($this->msg) $out = $this->msg;
-	   
-	   $toprint .= $this->show_grids();	   	
-	   
-       $mywin = new window($this->title,$toprint);
-       $out .= $mywin->render();	
-	   
-	   //HIDDEN FIELD TO HOLD STATS ID FOR AJAX HANDLE
-	   $out .= "<INPUT TYPE= \"hidden\" ID= \"statsid\" VALUE=\"0\" >";	   	    
-	  
-	   return ($out);		   
-	}
-	
-	function init_grids() {
-
-	    $bodyurl = seturl("t=cptranslink&tid=");	
-	
-        //disable alert !!!!!!!!!!!!		
-		$out = "
-function alert() {}\r\n 
-
-function update_stats_id() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];
-  
-  
-  statsid.value = str;
-  //alert(statsid.value);
-  sndReqArg('$this->ajaxLink'+statsid.value,'stats');
-  
-  return str1+' '+str2;
-}
-
-function show_body() {
-  var str = arguments[0];
-
-  body = str;
-  
-  ifr = '<iframe src =\"'+body+'\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes ('+str+').</p>'+str+'</iframe>';  
-  return ifr;
-}
-			
-function init()
-{
-";
-        foreach ($this->_grids as $n=>$g)
-		  $out .= $g->init_grid($n);
-	
-        $out .= "\r\n}";
-        return ($out);
-	}
-	
-	function show_grids() {
-       $sFormErr = GetGlobal('sFormErr');
-	
-	   //gets
-	   $alpha = GetReq('alpha');
-	   //transformed posts !!!!
-	   $apo = GetParam('apo');
-	   $eos = GetParam('eos');	 
-	   
-	   
-	   $grid0_get = seturl("t=cpngetqueue&alpha=$alpha&apo=$apo&eos=$eos");
-	   $grid0_set = seturl("t=cpnsetqueue");
-		
-	   $this->_grids[0]->set_text_column("ID","id","50","true");		   
-	   $this->_grids[0]->set_text_column(localize('_TIMEIN',getlocal()),"timein","100","true");		   
-	   $this->_grids[0]->set_text_column(localize('_TIMEOUT',getlocal()),"timeout","100","true");		   
-	   $this->_grids[0]->set_text_column(localize('_SENDER',getlocal()),"sender","150","true");		   
-	   $this->_grids[0]->set_text_column(localize('_RECEIVER',getlocal()),"receiver","150","true");
-	   $this->_grids[0]->set_text_column(localize('_SUBJECT',getlocal()),"subject","150","true");	   
-	   $this->_grids[0]->set_text_column(localize('_BODY',getlocal()),"body","150","true");
-	   
-       $datattr[] = $this->_grids[0]->set_grid_remote($grid0_get,$grid0_set,"550","460","livescrolling",17,"true","true");
-	   $viewattr[] = "left;50%";		   		        
-	      	   
-	    
-	   //$wd .= $this->mailmsg . '<br>' . $sFormErr . '<br>';
-	   //$wd .= $this->form('cpsubsend','Send',10);
-	   $wd .= $this->_grids[0]->set_detail_div("QueueDetails",550,20,'F0F0FF',$message);
-	   $wd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use stats");	   
-			  
-	   $datattr[] = $wd;
-	   $viewattr[] = "left;50%";
-	   
-	   $myw = new window('',$datattr,$viewattr);
-	   $ret = $myw->render("center::100%::0::group_article_selected::left::3::3::");
-	   unset ($datattr);
-	   unset ($viewattr);		   	
-	   	
-	   return ($ret);	
-	}
-	
-	//nitobi get	
-	function get_mailqueue_list() {
-       $db = GetGlobal('db'); 	
-	   //tranformed posts..
-	   $apo = GetReq('apo'); //echo $apo;
-	   $eos = GetReq('eos');	//echo $eos; 
-       $filter = GetReq('filter');
-	   
-       $handler = new nhandler(17,'id','Desc');	   
-       $handler->sortColumn = 'timein';		
-	   $handler->sortDirection= 'Desc';		   
-
-	   if ($filter) {
-             
-             $whereClause = " where (receiver like '%$filter%' or subject like '%$filter%' or body like '%$filter%') and active=1";
-       }	
-	   else
-	     $whereClause = ' where active=1 ';
-
-	   	
-	   
-		  if (isset($_GET['id'])) {		
-            $whereClause .= ' and id=' . $_GET['id'];				     
-	   	  }
-		  				    
-	   
-	      if ($letter=GetReq('alpha')) {  
-	        $whereClause .= " and ( receiver like '" . strtolower($letter) . "%' or " .
-		                    " receiver like '" . strtoupper($letter) . "%')";	
-			//marka is lookup table...???		 
-		  }			 
-  
-		  if ($apo) {
-		    $whereClause.= " and timein>='" . convert_date(trim($apo),"-DMY",1) . "'";
-		  }  
-		  
-		  if ($eos) {
-		    $whereClause .= "and timein<='" . convert_date(trim($eos),"-DMY",1) . "'";						
-		  } 				   	
-   
-	   $sSQL .="select id,timein,timeout,sender,receiver,subject,body from mailqueue";	
-	   $sSQL .= $whereClause;
-	   $sSQL .= " ORDER BY " . $handler->sortColumn . " " . $handler->sortDirection ." LIMIT ". $handler->ordinalStart .",". ($handler->pageSize) .";";
-	   //echo $sSQL;	die();
-	   
-       $result = $db->Execute($sSQL,2);	
-	   
-	   $names = array('id','timein','timeout','sender','receiver','subject','body');			 			 
-	   $handler->handle_output($db,$result,$names,'id',null,$this->encoding);	
-	}
-	
-	//nitobi set	
-	function save_mailqueue_list() {
-       $db = GetGlobal('db');		
-	
-       $handler = new nhandler(17,'id','Desc');		
-	   $names = array('id','timein','timeout','sender','receiver','subject','body');		 
-	   $sql2run = $handler->handle_input(null,'mailqueue',$names,'id');		
-	
-       $db->Execute($sql2run,3,null,1);
-	   
-	   if (($handler->debug_sql) && ($f = fopen($this->prpath . "nitobi.sql",'w+'))) {
-	     fwrite($f,$sql2run,strlen($sql2run));
-		 fclose($f);
-	   }		
-	}					
+					
 		
     //excuted every hour sending mails to limit		
 	function sendmail_daemon($limit=null,$forcelimits=null) {
@@ -1076,7 +872,5 @@ function init()
 	}	
 
 };
-}	
-}
-else die("DATABASE DPC AND SMTPMAIL DPC REQUIRED!");  	
+}		
 ?>
