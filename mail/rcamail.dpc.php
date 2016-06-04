@@ -76,7 +76,7 @@ class rcamail extends advcontactmail{
 	}	 	
 	
     //overwriten
-    function event($sAction) {
+    function event($action=null) {
 	
        $sFormErr = GetGlobal('sFormErr');	  	    		  
 	   
@@ -96,7 +96,7 @@ class rcamail extends advcontactmail{
   
        if (!$sFormErr) {   
   
-	   switch ($sAction) {	
+	   switch ($action) {	
 
 		case "sendamail"  : if ((GetParam("company")) &&
 		                        (checkmail(GetParam("email"))) /*&&
@@ -168,7 +168,7 @@ class rcamail extends advcontactmail{
       }   
     }
   
-    function action($action) {
+    function action($action=null) {
 
 	 $out = $this->advmailform();
 	 

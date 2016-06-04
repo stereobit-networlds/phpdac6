@@ -152,7 +152,7 @@ class advcontactmail {
       }
   }
   
-  function action() {
+  function action($action=null) {
      $__USERAGENT = GetGlobal('__USERAGENT');
      
 	 switch ($__USERAGENT) {

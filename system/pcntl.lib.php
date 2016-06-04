@@ -663,10 +663,10 @@ class pcntl extends controller {
    }
    
    //overwrite
-   public function event($event=null, $dpc_init=null) {
+   /*public function event($event=null, $dpc_init=null) {
 
      controller::event($event, $dpc_init);
-   }
+   }*/
    //overwrite
    public function action($action=null) {
    

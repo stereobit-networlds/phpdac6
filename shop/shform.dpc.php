@@ -206,7 +206,7 @@ class shform extends rcamail {
 	}	 	
 	
     //overwriten
-    function event($sAction) {
+    function event($action) {
 	   $db = GetGlobal('db');
 	   
        //rcamail::event($sAction);  
@@ -216,7 +216,7 @@ class shform extends rcamail {
   
        if (!$sFormErr) {   
   
-	   switch ($sAction) {	
+	   switch ($action) {	
 	   
         case "sendamailajax"  :
 		case "sendamail"  : //if ($this->valid_recaptcha()) {

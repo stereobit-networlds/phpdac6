@@ -426,7 +426,7 @@ class shkatalogmedia extends shkatalog {
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';						
 		
-		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;	
+		$lastprice = $this->getmapf('lastprice'); //?','.$this->getmapf('lastprice'):null;	
 		
 		if ($text2find) {
 		
@@ -1108,7 +1108,7 @@ class shkatalogmedia extends shkatalog {
 		   $mem = memory_get_peak_usage(true);//memory_get_usage();
 	   
            //$cat = $this->getkategories($rec);
-		   $cat = $this->getkategories(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+		   $cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 		   $ucat = $cat;
 		   
 		   if ($rec[$pp]>0)  
@@ -1247,7 +1247,7 @@ class shkatalogmedia extends shkatalog {
 		   $mem = memory_get_peak_usage(true);//memory_get_usage();
 		   $item_code = $this->getmapf('code');
            //$cat = $this->getkategories($rec);	
-		   $cat = $this->getkategories(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+		   $cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 		   $ucat = $cat;
 		
 		   if ($rec[$pp]>0) 
@@ -1353,7 +1353,7 @@ class shkatalogmedia extends shkatalog {
 		foreach ($this->result as $n=>$rec) {
 			
            //$cat = $this->getkategories($rec);					 
-		   $cat = $this->getkategories(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+		   $cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 		   
 		   if ($rec[$pp]>0) 
 		     $price = $this->spt($rec[$pp],$tax);
@@ -2229,7 +2229,7 @@ class shkatalogmedia extends shkatalog {
 		     $meter+=1;
              $cat = $this->getkategories($rec,1,$lan,'klist');		 
              //$linkcat = $this->getkategories($rec,null);	
-			 $linkcat = $this->getkategories(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+			 $linkcat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 			 		   
 			 if (strtolower($headcat)!=strtolower($cat)) {//paging start
 			   $headcat = $cat;
@@ -2298,7 +2298,7 @@ class shkatalogmedia extends shkatalog {
 		  if ($islink) {
 		    //$cat = $this->getkategories($rec);
 			//$ucat = $cat;//urlencode($cat);
-			$ucat = $this->getkategories(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+			$ucat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 		  	$itemlink = seturl('t=kshow&cat='.$ucat.'&id='.$rec[$this->getmapf('code')],$rec[$attr]);
 			return ($itemlink);
 		  }
@@ -2425,29 +2425,31 @@ class shkatalogmedia extends shkatalog {
 		$pz = $photosize?$photosize:1;
 		$resources = 1;
 
-        $lastviewed = unserialize(GetSessionParam('lastvieweditems')); 		
-		$ilist = implode("','",array_reverse($lastviewed));
+        $lastviewed = unserialize(GetSessionParam('lastvieweditems')); 
+		if (!empty($lastviewed)) {	
+			$ilist = implode("','",array_reverse($lastviewed));
 		
-        $sSQL = "select products.id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
+			$sSQL = "select products.id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->getmapf('code').
 				" from products";
-		$sSQL .= " WHERE " . $this->getmapf('code')." in ('". $ilist ."') and itmactive>0 and active>0";				
+			$sSQL .= " WHERE " . $this->getmapf('code')." in ('". $ilist ."') and itmactive>0 and active>0";				
 
-		//echo $sSQL;	
-	    $resultset = $db->Execute($sSQL,2);	
-		//print_r($resultset);
-		$this->result = $resultset;
+			//echo $sSQL;	
+			$resultset = $db->Execute($sSQL,2);	
+			//print_r($resultset);
+			$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;// free y 75;		
+			$xmax = $imgx?$imgx:100;
+			$ymax = $imgy?$imgy:null;// free y 75;		
 		
-		//echo $nopager,'>',$photosize;
+			//echo $nopager,'>',$photosize;
 
-		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
-		else  	
-          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$resources,$nopager,1);
-		  
+			if ($linemax>1)
+				$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
+			else  	
+				$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$resources,$nopager,1);
+		}
+		
 		return ($out);				
 	}		
 	
@@ -2558,7 +2560,7 @@ class shkatalogmedia extends shkatalog {
 	    foreach ($this->result as $n=>$rec) {
 			  
 					//$cat = $this->getkategories($rec); //GetReq('cat')..no category in url..			  
-					$cat = $this->getkategories(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+					$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 
                    $price = number_format(floatval($price1),2);					 
 			       //echo $price,'>';
@@ -2628,7 +2630,7 @@ class shkatalogmedia extends shkatalog {
 	    foreach ($resultset as $n=>$rec) {
 			//echo $n,'<br/>';  
 			//$cat = $this->getkategories($rec);	      			      		   
-			$cat = $this->getkategories(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 			$item_url = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$rec[$code],null,null,null,null,$this->rewrite);
 
 		    $p[] = $item_url;
@@ -3268,7 +3270,8 @@ class shkatalogmedia extends shkatalog {
 	
 	/*OVERRITE */
     /*not an sql at categories table, use cat fields of readed record*/	
-	public function getkategories($categories) {
+	//public function getkategories($categories) {
+	protected function getkategoriesS($categories) {		
 		$c = $this->cseparator;
 	    $g1 = array("'",',','"','+','/',' ','-&-');
 	    $g2 = array('_','~',"*","plus",":",'-','-n-');		

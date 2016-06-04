@@ -2616,14 +2616,29 @@ class shkatalog extends shkategories {
 	
 	}	
 	
-	function replace_spchars($string) {
+	/*function replace_spchars($string) {
 	
 	  $r1 = str_replace('"',"'",$string);
 	  $r2 = str_replace('+',"plus",$r1);	  
 	  //$r3 = str_replace(')',"-",$r2);
 	  
 	  return ($r2);
-	}	
+	}*/
+	function replace_spchars($string, $reverse=false) {
+	
+	  if ($reverse) {
+	     $g1 = array("'",'"','+','/',' ',' & ');
+	     $g2 = array('_',"*","plus",":",'-',' n ');		  
+		 $ret = str_replace($g2,$g1,$string);
+	  }	 
+	  else {
+	    $g1 = array("'",'"','+','/',' ','-&-');
+	    $g2 = array('_',"*","plus",":",'-','-n-');		  
+		$ret = str_replace($g1,$g2,$string);
+	  }	
+	
+	  return ($ret);
+	}		
 	
 	function combine_template($template_contents,$p0=null,$p1=null,$p2=null,$p3=null,$p4=null,$p5=null,$p6=null,$p7=null,$p8=null,$p9=null) {
 	
