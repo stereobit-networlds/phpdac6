@@ -11,12 +11,18 @@ $__EVENTS['RCCRM_DPC'][1]='cpcrmcus';
 $__EVENTS['RCCRM_DPC'][2]='cpcrmusers';
 $__EVENTS['RCCRM_DPC'][3]='cpcrmshowcus';
 $__EVENTS['RCCRM_DPC'][4]='cpcrmshowusr';
+$__EVENTS['RCCRM_DPC'][5]='cpcrmdata';
+$__EVENTS['RCCRM_DPC'][6]='cpcrmdetails';
+$__EVENTS['RCCRM_DPC'][7]='cpcrmmoduledtl';
 
 $__ACTIONS['RCCRM_DPC'][0]='cpcrm';
 $__ACTIONS['RCCRM_DPC'][1]='cpcrmcus';
 $__ACTIONS['RCCRM_DPC'][2]='cpcrmusers';
 $__ACTIONS['RCCRM_DPC'][3]='cpcrmshowcus';
 $__ACTIONS['RCCRM_DPC'][4]='cpcrmshowusr';
+$__ACTIONS['RCCRM_DPC'][5]='cpcrmdata';
+$__ACTIONS['RCCRM_DPC'][6]='cpcrmdetails';
+$__ACTIONS['RCCRM_DPC'][7]='cpcrmmoduledtl';
 
 //$__DPCATTR['RCCRM_DPC']['cpcrm'] = 'cpcrm,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -88,8 +94,16 @@ class rccrm  {
 	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
-
-
+		   
+		 case 'cpcrmmoduledtl' ://call module detail function
+								echo $this->moduleGridDetails();
+                                die();
+		                        break;
+		 case 'cpcrmdata'    : echo $this->loadsubframe();
+		                       die();
+		                       break; 
+		 case 'cpcrmdetails' : break; 
+		 
 		 case 'cpcrmshowcus' : break; 										  
 		 case 'cpcrmshowusr' : break; 
 		 case 'cpcrmcus'     : echo $this->loadframe(null,'customers');
@@ -112,6 +126,9 @@ class rccrm  {
 	 
 	  switch ($action) {	  
 			
+		 case 'cpcrmmoduledtl' : break;	
+		 case 'cpcrmdata'   : break; 
+		 case 'cpcrmdetails': $out = $this->moduleGrid(); break;	
 		 case 'cpcrmshowcus': $out = $this->show(); break; 
 		 case 'cpcrmshowusr': $out = $this->show(); break; 
 		 case 'cpcrmcus'    :						
@@ -160,8 +177,8 @@ class rccrm  {
 
 	protected function show() {
 		$id = GetReq('id');
-		$ret = 'ID:' . $id;
-		
+		//$ret = 'ID:' . $id; //some 1st line message
+		$ret = $this->loadsubframe(null,'transactions'); //default action
 		return ($ret);
 	}	
 
@@ -176,7 +193,48 @@ class rccrm  {
 			return $ajaxdiv. '|' . $frame;
 		else
 			return ($frame); 
+	}	
+
+	protected function loadsubframe($ajaxdiv=null, $mode=null) {
+		$module = $mode ? $mode : GetParam('module'); //module details
+		$id = GetParam('id'); //crm email
+	    $bodyurl = seturl("t=cpcrmdetails&iframe=1&id=$id&module=$module");
+	
+		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"400px\"><p>Your browser does not support iframes</p></iframe>";    
+
+		if ($ajaxdiv)
+			return $ajaxdiv. '|' . $frame;
+		else
+			return ($frame); 
+	}
+	
+	protected function moduleGrid($mode=null) {
+		$module = $mode ? $mode : GetReq('module'); //details id
+		
+		/*
+		$method = $module . '_grid';
+		if (method_exists($this, $method)) 
+			$ret = $this->$method(null,280,11,'r', true);
+		else {*/
+			//crm module
+			$class = 'crm' . $module;
+			$method = $module . '_grid'; 
+			$ret = GetGlobal('controller')->calldpc_method("$class.$method use +280+11+r+1");
+		//}	
+		
+		return ($ret);
 	}		
+
+	protected function moduleGridDetails() {
+		$data = GetReq('data') ;
+		$module = GetReq('module'); 
+		return ($module . ":" . $data. ':test');
+		
+		$class = 'crm' . $module;
+		$method = 'showdetails'; 
+		$ret = GetGlobal('controller')->calldpc_method("$class.$method use $data");		
+	}
+	
 	
 	protected function users_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 800;
@@ -245,8 +303,71 @@ class rccrm  {
 		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+customers+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
-	}	
+	}
+
+/*
+	protected function transactions_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $selected_cus = urldecode(GetReq('id'));
+		
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;	
+	    $lan = getlocal() ? getlocal() : 0;  
+		$title = localize('RCCRM_DPC',getlocal()); 		
+	
+	    if (defined('MYGRID_DPC')) {
 			
+			$lookup1 = "ELT(FIELD(i.payway, 'Eurobank','Piraeus','Paypal','BankTransfer','PayOnsite','PayOndelivery'),".
+			                      "'".localize('Eurobank',getlocal())."',".
+								  "'".localize('Piraeus',getlocal())."',".
+								  "'".localize('Paypal',getlocal())."',".
+			                      "'".localize('BankTransfer',getlocal())."',".
+								  "'".localize('PayOnsite',getlocal())."',".
+								  "'".localize('PayOndelivery',getlocal())."') as pw";			
+								  
+			$lookup2 = "ELT(FIELD(i.roadway, 'CompanyDelivery','CustomerDelivery','Logistics','Courier'),".
+				                  "'".localize('CompanyDelivery',getlocal())."',".
+					   		      "'".localize('CustomerDelivery',getlocal())."',".
+								  "'".localize('Logistics',getlocal())."',".
+								  "'".localize('Courier',getlocal())."') as rw";								  
+		
+		    if ($selected_cus) {
+				$xsSQL2 = "SELECT * FROM (SELECT DISTINCT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i WHERE i.cid='$selected_cus') x";
+				//echo $xsSQL2;
+			}
+			else {
+				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i) x";
+				//echo $xsSQL2;
+			}
+			//$out.= $xsSQL2;
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
+			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|5|0|||0");
+			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|5|0|||1|0");//"|link|5|".seturl('t=cptransviewhtml&editmode=1&tid={tid}').'||');
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|link|5|"."javascript:show_body({tid});".'||');
+			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+username|".localize('_user',getlocal())."|10|0|||0|1");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cid|".localize('_user',getlocal())."|20|1|");
+			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tdate|".localize('_date',getlocal())."|boolean|1|ACTIVE:DELETED");			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tdate|".localize('_date',getlocal())."|date|0|");
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|5|0|||||right");	
+			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|link|10|"."javascript:show_body({tid});".'||');
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|20|1|");			
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+rw|".localize('_roadway',getlocal())."|20|1|");
+	        GetGlobal('controller')->calldpc_method("mygrid.column use grid3+qty|".localize('_qty',getlocal())."|5|0|||||right");				
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
+			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+0+1+1");
+
+	    }
+		else 
+		   $ret .= 'Initialize jqgrid.';
+        
+        return ($ret);
+  	
+	}	
+*/			
 	
 	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
 		$type = $t ? $t : 'primary'; //danger /warning / info /success
@@ -299,8 +420,183 @@ class rccrm  {
 ';
 		return ($ret);
 	}	
-
 	
+	public function actionTree() {
+		
+		$id = GetReq('id') ? "&id=" . GetReq('id') : null ;
+		
+		$ret = '	
+                            <!--div class="actions">
+                                <a class="btn btn-small btn-success" id="tree_2_collapse" href="javascript:;"> Collapse All</a>
+                                <a class="btn btn-small btn-warning" id="tree_2_expand" href="javascript:;"> Expand All</a>
+                            </div>
+                            <div class="space10"></div-->
+                            <ul id="tree_2" class="tree">
+                                <li>
+                                    <a data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle" data-role="branch" href="#">Bootstrap Tree
+                                    </a>
+                                    <ul class="branch in">
+                                        <li><a id="nut" data-role="leaf" href="javascript:subdetails(\'docs\')"><i class=" icon-book"></i> Documents</a></li>
+                                        <li><a data-role="leaf" href="javascript:subdetails(\'transactions'.$id.'\')"><i class=" icon-bullhorn"></i> Projects</a></li>
+                                        <li><a data-role="leaf" href="javascript:subdetails(\'tasks\')"><i class="icon-tasks"></i> Tasks</a></li>
+										
+										<li>
+											<a data-value="gh_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Structure</a>
+                                            <ul class="branch">
+											<li><a href="#">Some Link</a></li>
+                                            <li><a href="#">Another Link</a></li>
+                                            <li>
+                                                <a data-value="GitHub_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Subtruct</a>
+                                                <ul class="branch">
+                                                    <li><a href="#">Events</a></li>
+                                                    <li><a href="#">Users</a></li>
+                                                    <li><a href="#">Feedbacks</a></li>
+                                                    <li><a href="#">Reports</a></li>
+                                                    <li><a href="#">Sales</a></li>
+                                                    <li><a href="#">Revenue</a></li>
+                                                </ul>
+                                            </li></ul>
+                                        </li>										
+										
+                                        <li>
+                                            <a data-role="leaf"  href="#">
+                                                <i class="icon-share"></i> External Link
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a data-role="leaf"  href="#">
+                                                <i class="icon-share"></i> Another External Link
+                                            </a>
+                                        </li>
+										
+										<li>
+                                            <a id="nut3" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
+                                                Examples
+                                            </a>
+                                            <ul class="branch">
+                                                <li><a data-role="leaf" href="#"><i class="icon-cloud"></i> Internal</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user-md"></i> Client Base</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-retweet"></i> Product Base</a></li>
+                                            </ul>
+                                        </li>
+										
+                                        <li>
+                                            <a id="nut6" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
+                                                Customers
+                                            </a>
+                                            <ul class="branch">
+                                                <li><a data-role="leaf" href="#"><i class="icon-tags"></i> Finance</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> ICT</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> Human Resources</a></li>
+                                            </ul>
+                                        </li>
+										
+                                        <li>
+                                            <a id="nut8" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
+                                                Reports
+                                            </a>
+                                            <ul class="branch">
+                                                <li><a data-role="leaf" href="#"><i class="icon-tags"></i> Finance</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> ICT</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> Human Resources</a></li>
+                                            </ul>
+                                        </li>										
+                                    </ul>
+                                </li>
+                            </ul>		
+';
+		return ($ret);
+	}
+		
+
+	public function actionTree2() {
+		$ret = '
+                            <div class="actions">
+                                <a class="btn btn-small btn-success" id="tree_1_collapse" href="javascript:;"> Collapse All</a>
+                                <a class="btn btn-small btn-warning" id="tree_1_expand" href="javascript:;"> Expand All</a>
+                            </div>
+                            <div class="space10"></div>
+                            <ul id="tree_1" class="tree">
+                                <li>
+                                    <a data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle" data-role="branch" href="#">
+                                        Bootstrap Tree
+                                    </a>
+                                    <ul class="branch in">
+                                        <li>
+                                            <a id="nut1" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle" href="#">
+                                                Documents
+                                            </a>
+                                            <ul class="branch in">
+                                                <li>
+                                                    <a id="nut2" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
+                                                        Finance
+                                                    </a>
+                                                    <ul class="branch">
+                                                        <li><a data-role="leaf" href="#"><i class="icon-book"></i> Sale Revenue</a></li>
+                                                        <li><a data-role="leaf" href="#"><i class="icon-fire"></i> Promotions</a></li>
+                                                        <li><a data-role="leaf" href="#"><i class="icon-edit"></i> IPO</a></li>
+                                                    </ul>
+                                                </li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> ICT</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> Human Resources</a></li>
+                                            </ul>
+                                        </li>
+                                        <li>
+                                            <a id="nut3" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
+                                                Examples
+                                            </a>
+                                            <ul class="branch">
+                                                <li><a data-role="leaf" href="#"><i class="icon-cloud"></i> Internal</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user-md"></i> Client Base</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-retweet"></i> Product Base</a></li>
+                                            </ul>
+                                        </li>
+                                        <li>
+                                            <a id="nut4" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle" href="#">
+                                                Tasks
+                                            </a>
+                                            <ul class="branch in">
+                                                <li><a data-role="leaf" href="#"><i class="icon-suitcase"></i> Internal Projects</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-cloud-download"></i> Outsourcing</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-sitemap"></i> Bug Tracking</a></li>
+                                            </ul>
+                                        </li>
+                                        <li>
+                                            <a id="nut6" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
+                                                Customers
+                                            </a>
+                                            <ul class="branch">
+                                                <li><a data-role="leaf" href="#"><i class="icon-tags"></i> Finance</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> ICT</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> Human Resources</a></li>
+                                            </ul>
+                                        </li>
+                                        <li>
+                                            <a id="nut8" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
+                                                Reports
+                                            </a>
+                                            <ul class="branch">
+                                                <li><a data-role="leaf" href="#"><i class="icon-tags"></i> Finance</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> ICT</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> Human Resources</a></li>
+                                            </ul>
+                                        </li>
+                                        <li>
+                                            <a data-role="leaf" href="#">
+                                                <i class="icon-share"></i> External Link
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a data-role="leaf" href="#">
+                                                <i class="icon-share"></i> Another External Link
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+';
+		return ($ret);
+	}
 	
 	protected function writeLog($data = '') {
 		if (empty($data)) return;
