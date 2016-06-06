@@ -41,6 +41,7 @@ $__LOCALE['RCREPLICA_DPC'][15]='_xdate;X Date;X Date';
 $__LOCALE['RCREPLICA_DPC'][16]='_ref;Reference;Reference';
 $__LOCALE['RCREPLICA_DPC'][17]='_sqlres;Res;Res';
 $__LOCALE['RCREPLICA_DPC'][18]='_query;Query;Query';
+$__LOCALE['RCREPLICA_DPC'][19]='_acct;Acct;Acct';
 
 class rcreplica  {
 

@@ -88,7 +88,7 @@ class advcontactmail {
        return $head_text;					   	
 	}
 	
-    function event($sAction) {
+    function event($action=null) {
        $sFormErr = GetGlobal('sFormErr');	  	    		  
 	   
 	   switch ($this->sendtype) {
@@ -107,7 +107,7 @@ class advcontactmail {
   
        if (!$sFormErr) {   
   
-	   switch ($sAction) {	
+	   switch ($action) {	
 
 		case "sendamail"  : if (GetParam("company")) { //check company name
 		

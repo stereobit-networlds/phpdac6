@@ -206,7 +206,7 @@ class shform extends rcamail {
 	}	 	
 	
     //overwriten
-    function event($action) {
+    function event($action=null) {
 	   $db = GetGlobal('db');
 	   
        //rcamail::event($sAction);  
@@ -302,7 +302,7 @@ class shform extends rcamail {
       }  	   
     }
   
-    function action($action) {
+    function action($action=null) {
 
 	 switch ($action) {
 	   case "sendamailajax"   : if ($this->post) die(localize('_RCAMTRUE',getlocal())); 

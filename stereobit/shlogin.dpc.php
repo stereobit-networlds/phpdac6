@@ -796,6 +796,56 @@ class shlogin {
 		return ($ret);
 	}
 	
+	public static function myf_button($title,$link=null,$image=null) {
+	   //$browser = get_browser(null, true);
+       //print_r($browser);	
+       //echo $_SERVER['HTTP_USER_AGENT']; 
+	   //echo '1';
+	   $path = self::$staticpath;//$this->urlpath;//
+	   
+	   if (($image) && (is_readable($path."/images/".$image.".png"))) {
+	      //echo 'a';
+	      $imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
+	   }
+	   
+	   if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
+	      //echo 'ie';
+		  $_b = $imglink ? $imglink : "[$title]";
+		  $ret = "&nbsp;<a href=\"$link\">$_b</a>&nbsp;";
+		  return ($ret);
+	   }	
+	   
+	   if ($imglink)
+	       return ($imglink);
+	
+       //else button	
+	   if ($link)
+	      $ret = "<a href=\"$link\">";
+		  
+	   $ret .= "<input type=\"button\" class=\"myf_button\" value=\"".$title."\" />";
+	   
+	   if ($link)
+          $ret .= "</a>";	   
+		  
+	   return ($ret);
+	}
+	
+	public function myf_login_logout($link=null,$glue=null) {
+	
+	    if ($UserID = GetGlobal('UserID')) {
+	        $url = seturl("t=dologout",localize('_SHLOGOUT',getlocal()),null,null,null,true);
+			$myfb = ($link) ? (($glue) ? '<'.$glue.'>'.$url.'</'.$glue.'>' : $url) :
+			                  $this->myf_button(localize('_SHLOGOUT',getlocal()),'dologout/','_SHLOGOUT');
+	    }
+	    else {
+		    $url = seturl("t=login",localize('SHLOGIN_DPC',getlocal()),null,null,null,true);
+		    $myfb = ($link) ? (($glue) ? '<'.$glue.'>'.$url.'</'.$glue.'>' : $url) :
+			                  $this->myf_button(localize('SHLOGIN_DPC',getlocal()),'login/','_SHLOGIN');
+	    }
+	   
+	    return ($myfb);
+	}	
+	
 };
 }
 ?>
