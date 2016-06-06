@@ -31,7 +31,15 @@ $__LOCALE['RCCRM_DPC'][1]='_id;ID;ID';
 $__LOCALE['RCCRM_DPC'][2]='_save;Save;Αποθήκευση';
 $__LOCALE['RCCRM_DPC'][3]='_date;Date;Ημερ.';
 $__LOCALE['RCCRM_DPC'][4]='_time;Time;Ώρα';
-
+$__LOCALE['RCCRM_DPC'][5]='_customers;Customers;Πελάτες';
+$__LOCALE['RCCRM_DPC'][6]='_users;Users;Χρήστες';
+$__LOCALE['RCCRM_DPC'][7]='_campaigns;Campaigns;Καμπάνιες';
+$__LOCALE['RCCRM_DPC'][8]='_ulist;Mailing lists;Λίστες διανομής';
+$__LOCALE['RCCRM_DPC'][9]='_failed;Fails;Αποτυχίες';
+$__LOCALE['RCCRM_DPC'][10]='_listname;List name;Όνομα λίστας';
+$__LOCALE['RCCRM_DPC'][11]='_mode;Search in;Αναζήτηση σε';
+$__LOCALE['RCCRM_DPC'][12]='_reply;Replies;Απαντήσεις';
+$__LOCALE['RCCRM_DPC'][13]='_subject;Subject;Θέμα';
 
 $__LOCALE['RCCRM_DPC'][20]='_address;Address;Διεύθυνση';
 $__LOCALE['RCCRM_DPC'][21]='_tel;Tel.;Τηλέφωνο';
@@ -147,14 +155,19 @@ class rccrm  {
 	}	
 
 	protected function crmMode() {
-		$mode = (GetReq('mode')=='customers') ? 'customers' : 'users';
+		$mode = GetReq('mode') ? GetReq('mode') : 'users';
 		//$um = (GetReq('mode')=='sql') ? '&mode=sql' : '&mode=files'; 
 		
 		$turl1 = seturl('t=cpcrm&mode=users');
 		$turl2 = seturl('t=cpcrm&mode=customers');		
-		$button = $this->createButton('Mode', array('Users'=>$turl1,
-													'Customers'=>$turl2,
-		                                            ));
+		$turl3 = seturl('t=cpcrm&mode=ulist');
+		$turl4 = seturl('t=cpcrm&mode=campaigns');
+		$button = $this->createButton(localize('_mode', getlocal()), 
+												array(localize('_users', getlocal())=>$turl1,
+											  		  localize('_customers', getlocal())=>$turl2,
+													  localize('_ulist', getlocal())=>$turl3,
+													  localize('_campaigns', getlocal())=>$turl4,
+		                                              ));
 													
 		/*$turl1 = seturl('t=cpdorepall&backtrace=today'.$um);
 		$turl2 = seturl('t=cpdorepall&backtrace=yesterday'.$um);
@@ -166,11 +179,16 @@ class rccrm  {
 														'Run 30 days'=>$turl4,
 		                                              ),'warning');*/
 													  													   
-		$content = (GetReq('mode')=='customers') ?
-					$this->customers_grid(null,140,5,'r', true) :
-					$this->users_grid(null,140,5,'r', true) ;
+		//$content = (GetReq('mode')=='customers') ?
+		switch ($mode) {
+			case 'customers':	$content = $this->customers_grid(null,140,5,'r', true); break;
+			case 'ulist'    :   $content = $this->ulist_grid(null,140,5,'r', true); break;
+			case 'campaigns':   $content = $this->campaigns_grid(null,140,5,'r', true); break;			
+			case 'users'    :   
+			default         :   $content = $this->users_grid(null,140,5,'r', true); break;
+		}			
 					
-		$ret = $this->window($mode, $button, $content);
+		$ret = $this->window(localize('_'.$mode, getlocal()), $button, $content);
 		
 		return ($ret);
 	}
@@ -228,11 +246,13 @@ class rccrm  {
 	protected function moduleGridDetails() {
 		$data = GetReq('data') ;
 		$module = GetReq('module'); 
-		return ($module . ":" . $data. ':test');
+		//return ($module . ":" . $data. ':test');
 		
 		$class = 'crm' . $module;
 		$method = 'showdetails'; 
 		$ret = GetGlobal('controller')->calldpc_method("$class.$method use $data");		
+		
+		return ($ret);
 	}
 	
 	
@@ -248,7 +268,7 @@ class rccrm  {
         $xsSQL = "SELECT * from (select id,timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users) o ";		   
 		   
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|0|".seturl('t=cptransactions&cusmail={username}').'||');	   
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|5|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|link|10|"."javascript:udetails(\"{username}\");".'||');						
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|19|1|");
@@ -305,69 +325,56 @@ class rccrm  {
 		return ($out);  	
 	}
 
-/*
-	protected function transactions_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
-	    $selected_cus = urldecode(GetReq('id'));
-		
+	protected function ulist_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 800;
         $rows = $rows ? $rows : 36;
         $width = $width ? $width : null; //wide	
 		$mode = $mode ? $mode : 'd';
-		$noctrl = $noctrl ? 0 : 1;	
+		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('RCCRM_DPC',getlocal()); 		
-	
-	    if (defined('MYGRID_DPC')) {
-			
-			$lookup1 = "ELT(FIELD(i.payway, 'Eurobank','Piraeus','Paypal','BankTransfer','PayOnsite','PayOndelivery'),".
-			                      "'".localize('Eurobank',getlocal())."',".
-								  "'".localize('Piraeus',getlocal())."',".
-								  "'".localize('Paypal',getlocal())."',".
-			                      "'".localize('BankTransfer',getlocal())."',".
-								  "'".localize('PayOnsite',getlocal())."',".
-								  "'".localize('PayOndelivery',getlocal())."') as pw";			
-								  
-			$lookup2 = "ELT(FIELD(i.roadway, 'CompanyDelivery','CustomerDelivery','Logistics','Courier'),".
-				                  "'".localize('CompanyDelivery',getlocal())."',".
-					   		      "'".localize('CustomerDelivery',getlocal())."',".
-								  "'".localize('Logistics',getlocal())."',".
-								  "'".localize('Courier',getlocal())."') as rw";								  
+		$title = localize('RCCRM_DPC',getlocal()); 
 		
-		    if ($selected_cus) {
-				$xsSQL2 = "SELECT * FROM (SELECT DISTINCT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i WHERE i.cid='$selected_cus') x";
-				//echo $xsSQL2;
-			}
-			else {
-				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i) x";
-				//echo $xsSQL2;
-			}
-			//$out.= $xsSQL2;
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|5|0|||0");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|5|0|||1|0");//"|link|5|".seturl('t=cptransviewhtml&editmode=1&tid={tid}').'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|link|5|"."javascript:show_body({tid});".'||');
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+username|".localize('_user',getlocal())."|10|0|||0|1");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cid|".localize('_user',getlocal())."|20|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tdate|".localize('_date',getlocal())."|boolean|1|ACTIVE:DELETED");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tdate|".localize('_date',getlocal())."|date|0|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|5|0|||||right");	
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|link|10|"."javascript:show_body({tid});".'||');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|20|1|");			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+rw|".localize('_roadway',getlocal())."|20|1|");
-	        GetGlobal('controller')->calldpc_method("mygrid.column use grid3+qty|".localize('_qty',getlocal())."|5|0|||||right");				
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+0+1+1");
-
-	    }
-		else 
-		   $ret .= 'Initialize jqgrid.';
-        
-        return ($ret);
-  	
+		$xsSQL = "select * from (";
+		$xsSQL.= "SELECT id,startdate,active,failed,name,email,listname FROM ulists";
+		$xsSQL .= ') as o';
+		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal()));
+        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_mail',getlocal())."|link|10|"."javascript:udetails(\"{email}\");".'||');
+        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+startdate|".localize('_date',getlocal()).'|date|0');		   
+        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_lname',getlocal()).'|20|1');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|1');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+failed|".localize('_failed',getlocal()).'|5|1');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+listname|".localize('_listname',getlocal()).'|20|1');			
+		   
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ulists+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		
+		return ($out);  	
 	}	
-*/			
+	
+	protected function campaigns_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;				   
+	    $lan = getlocal() ? getlocal() : 0;  
+		$title = localize('RCCRM_DPC',getlocal()); 
+				   
+		$xsSQL = "SELECT * from (select id,timein,receiver,subject,reply,status,mailstatus,cid from mailqueue) o ";		   
+		   
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+receiver|".localize('_mail',getlocal())."|link|10|"."javascript:udetails(\"{receiver}\");".'||');						
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+subject|".localize('_subject',getlocal())."|19|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+reply|".localize('_reply',getlocal())."|2|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal())."|2|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+mailstatus|".localize('_failed',getlocal())."|2|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cid|".localize('_cid',getlocal())."|10|1|");
+		   
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+mailqueue+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		
+		return ($out);  	
+	}	
 	
 	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
 		$type = $t ? $t : 'primary'; //danger /warning / info /success
@@ -422,8 +429,10 @@ class rccrm  {
 	}	
 	
 	public function actionTree() {
+		$user = GetReq('id');
+		if (!$user) return false;		
 		
-		$id = GetReq('id') ? "&id=" . GetReq('id') : null ;
+		$id = GetReq('id') ? "&id=" . $user : null ;
 		
 		$ret = '	
                             <!--div class="actions">
@@ -433,7 +442,7 @@ class rccrm  {
                             <div class="space10"></div-->
                             <ul id="tree_2" class="tree">
                                 <li>
-                                    <a data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle" data-role="branch" href="#">Bootstrap Tree
+                                    <a data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle" data-role="branch" href="#">'.substr($user, 0, 9).'
                                     </a>
                                     <ul class="branch in">
                                         <li><a id="nut" data-role="leaf" href="javascript:subdetails(\'docs\')"><i class=" icon-book"></i> Documents</a></li>
