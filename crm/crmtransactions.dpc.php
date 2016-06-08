@@ -91,7 +91,7 @@ class crmtransactions extends crmmodule  {
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+0+1+1");
+			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 
