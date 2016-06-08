@@ -122,7 +122,7 @@ class reservations {
         $this->isprivate = false;	
 		
 		//timezone	   
-        date_default_timezone_set('Europe/Athens');	
+        //date_default_timezone_set('Europe/Athens');	
 		
 		// Possible reservation times. Use the same syntax as below (TimeFrom-TimeTo)
 		$this->global_times = array('09-10', '10-11', '11-12', '12-13', '13-14', '14-15', '15-16', '16-17', '17-18', '18-19', '19-20', '20-21');
@@ -147,16 +147,16 @@ class reservations {
 		$this->global_reservation_reminders_code = '1234';
 		$this->global_css_animations = '1';
 		
-		$this->xixuser = ($UserName) ? array_shift($this->get_xixuser('user_name')) : null;
+		$p = $this->get_xixuser('user_name');
+		$u = array_shift($p);
+		$this->xixuser = ($UserName) ? $u : null;
 		
-		//enable only when logged in and id or in cart ...
-		$id = GetReq('id') ? GetReq('id') : GetReq('cat');
-		$incart = (GetReq('t')=='viewcart') ? true : false;
-		
-		if (($UserName) && (($id) || ($incart))) {
+		//enable when id
+		$id = GetReq('id');
+		if ($id) {	
 			//$this->uagent(); //LOADED BY XIXUSER
 			$this->javascript();
-			$this->social_post_javascript();
+			//$this->social_post_javascript(); //disabled
 		}
 		
 	}
@@ -1479,7 +1479,9 @@ EOF;
 		$reservation = $result->fields['ruser_id'];
 		if ($reservation) {
 
-			$user = @array_shift($this->get_xixuser('user_name',$reservation));
+			//$user = @array_shift($this->get_xixuser('user_name',$reservation));
+			$p = $this->get_xixuser('user_name',$reservation);
+			$user = array_shift($p);			
 			
             //$hide_user = array_shift($this->get_project($iproject,'hideusers')) ? true : false;	
 			$projectdata = $this->get_project($iproject,'owner,hideusers');
@@ -1746,7 +1748,10 @@ EOF;
 	    $UserName = GetGlobal('UserName');
 		if (!$UserName) return false;			
 		$user = decode($UserName);
+		
+		return (array(0=>$user)); //return always this user
 
+		/*
 		$qf = $retfields ? ','.$retfields : null; 
 		$query = "SELECT user_email{$qf} from xixusers WHERE";
 		if ($user_id)
@@ -1772,7 +1777,7 @@ EOF;
             return true; 			
         }
 
-        return false;		
+        return false;	*/	
 	}	
 	
 	//user, owner actions by mail
@@ -1885,7 +1890,9 @@ EOF;
 			$inv_subject = localize('_isubject',getlocal());
 			$rem_subject = localize('_rsubject',getlocal());
 			
-		    $nickname = @array_shift($this->get_xixuser('user_name'));
+		    //$nickname = @array_shift($this->get_xixuser('user_name'));
+			$p = $this->get_xixuser('user_name');
+			$nickname = array_shift($p);
 			
             if ($isinvitation) {
 				$iquery = "SELECT code,cat,owner,start,end,title,class,type,plan,exclude,include FROM projects WHERE";

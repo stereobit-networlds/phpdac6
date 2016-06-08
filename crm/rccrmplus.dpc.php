@@ -135,7 +135,10 @@ class rccrmplus extends rccrm  {
 		$title = 'ID:' . $id; 
 		
 		//$ret = $this->loadsubframe(null,'dashboard', true);
-		$ret = GetGlobal('controller')->calldpc_method('mgantti.show_gantti');
+		
+		$ret = GetGlobal('controller')->calldpc_method('acal.render use +1');
+		$ret.= GetGlobal('controller')->calldpc_method('mgantti.show_gantti use '.$title);
+		
 		return ($ret);
 	}		
 	

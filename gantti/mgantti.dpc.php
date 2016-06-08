@@ -457,22 +457,25 @@ JS;
 	public function render($title=null, $cellwidth=25, $cellheight=35, $today=true) {
 		$UserName = GetGlobal('UserName');
 		if (!$UserName) return false;	
-		$id = GetReq('id') ? GetReq('id') : GetReq('cat');
+		
+		$id = GetReq('id');// ? GetReq('id') : GetReq('cat');
+		echo $id;
+				
 		$cellwidth = $cellwidth ? $cellwidth : $this->cellwidth;
 		$cellheight = $cellheight ? $cellheight : $this->cellheight;
 		$today = $today ? true : $this->today;
-		if ($id) {
+		/*if ($id) {
 			$title = strstr($id,':') ? 
 			         array_shift(explode(':',$id)) : 
 			         (strstr($id,'@') ? array_pop(explode('@',$id)) : $id);
 		}	
-		else	
+		else*/	
 			$title = $title ? $title : $this->title;
 			
-	    $is_owner = $this->is_super_owner();//true;
+	    $is_owner = $this->is_super_owner(); //return true
 	
 	    if ($this->get_data()) {
-	
+			echo 'b';
 			$ret = new Gantti($this->data, array(
 						'title'      => $title,
 						'cellwidth'  => $cellwidth,
@@ -509,13 +512,13 @@ JS;
 		if (!$UserName) return false;
 		
 	    //call from javascript ajax scroll
-	    if (!GetReq('ajax')) {
+	    /*if (!GetReq('ajax')) {
 			$out = GetGlobal('controller')->calldpc_method('fronthtmlpage.get_scrollid use '.get_class($this).'+show_gantti+'."title|cellwidth|cellheight|today+$title|$cellwidth|$cellheight|$today"); 		
 			return ($out);
 		}
 		//get GET func params when call from scroll
 		foreach ($_GET as $gname=>$gvalue) 
-			$$gname = $gvalue;
+			$$gname = $gvalue;*/
 
 		$ret = $this->render($title, $cellwidth, $cellheight, $today);	
 		return ($ret);
@@ -598,6 +601,9 @@ JS;
 	}
 	
 	public function is_super_owner($owner=null) {
+		
+		return true; //always true
+		
 		$UserName = GetGlobal('UserName');
 		$id = GetReq('id') ? GetReq('id') : null;
 		if ((!$UserName)||(!$id)) return false;	
@@ -607,7 +613,9 @@ JS;
 			
 		//else see internal..
 		if (strstr($id,'@')) {//post user item
-			if ((array_shift(explode('@',$id))== hash('crc32',decode($UserName)))) 
+			$p = explode('@',$id);
+			$u = array_shift($p);
+			if ($u == hash('crc32',decode($UserName))) 
 			    return true; 
 		}	
 		elseif (strstr($id,':')) {//is xix app remote product

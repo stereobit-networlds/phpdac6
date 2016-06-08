@@ -74,7 +74,7 @@ class acal {
 	    $UserName = GetGlobal('UserName');
 		
         //timezone	   
-        date_default_timezone_set('Europe/Athens');		
+        //date_default_timezone_set('Europe/Athens');		
 	
 		$this->data = array();
 		$this->reserve_only_projects = false; //init
@@ -88,13 +88,14 @@ class acal {
 		$this->iNextYear = '';
 		$this->iPrevYear = '';	
 
-		//enable only when logged in and id
-		$id = GetReq('id') ? GetReq('id') : GetReq('cat');
-		$incart = (GetReq('t')=='viewcart') ? true : false;
+		//enable only when id
+		$id = GetReq('id');
+		//$incart = (GetReq('t')=='viewcart') ? true : false;
 		
-		if (($UserName) && (($id) || ($incart))) {		
+		//if (($UserName) && (($id) || ($incart))) {		
+		if ($id) {
 			$this->javascript();
-			$this->social_invitation_javascript();	
+			//$this->social_invitation_javascript(); //disabled	
         }		
 	}
 	
@@ -260,7 +261,6 @@ GPLUSPOST;
 		//if (!$UserName) return false;
 			
         if (iniload('JAVASCRIPT')){
-	   
 	       $code = $this->javascript_code();	   	
 		   $js = new jscript;		
 
@@ -276,7 +276,7 @@ GPLUSPOST;
 		//$id = GetReq('id') ? GetReq('id') : GetReq('cat');
 		//if (!$id) return false;
 		//in case of no id (cart) append ajaxurl with id var...
-	    $keep_id = GetReq('id') ? 'id='.GetReq('id').'&cat='.GetReq('cat') : 'cat='.GetReq('cat');
+	    $keep_id = GetReq('id');
 	    $ajaxurl = seturl($keep_id."&t=");		
 		
 		$Loading = localize('_loading',getlocal());		
@@ -867,7 +867,7 @@ JSEOF;
 		//keep project + id (id may have many projects in time)
         $project_id_title = $project ? '&projectid='.$project.'&ptitle='.urlencode($project_title) : null;		
 		$id = $code ? $code : GetReq('id');
-		$keep_id = $id ? '&id='.$id.'&cat='.GetReq('cat') : '&cat='.GetReq('cat');
+		$keep_id = '&id='.$id;
 		$_month = "{$month}-{$year}";
 		
 		$_ajax_link = seturl('t=acalajax'.$project_id_title.$keep_id.'&month='.$_month.'&_r=');
@@ -913,7 +913,7 @@ JSEOF;
 			return ($ret);
 		}	
 	
-	    $keep_id = GetReq('id') ? '&id='.GetReq('id').'&cat='.GetReq('cat') : '&cat='.GetReq('cat');
+	    $keep_id = '&id='.GetReq('id');
 		$project_id = GetReq('projectid') ? GetReq('projectid') : null;
 		$project_title = GetReq('ptitle') ? urldecode(GetReq('ptitle')).':' : null;
 		//save project when calendar next,prev
