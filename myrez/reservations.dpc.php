@@ -8,7 +8,7 @@
 
 //<link href="css/myrez/style.css" rel="stylesheet" type="text/css">
 	   
-$__DPCSEC['RESERVATIONS_DPC']='1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RESERVATIONS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if (!defined("RESERVATIONS_DPC")) {
 define("RESERVATIONS_DPC",true);
