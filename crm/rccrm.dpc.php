@@ -151,9 +151,9 @@ class rccrm  {
 	 
 	  switch ($action) {	  
 	  
-		 case 'cpcrmrun'     :if ($crm_module = GetReq('mod')) //module calls inside mod.showdetails 
-								$out = 	GetGlobal('controller')->calldpc_method($crm_module);		
-							  break;  	  
+		 case 'cpcrmrun'       : if ($crm_module = GetReq('mod')) //module calls inside mod.showdetails 
+									$out = 	GetGlobal('controller')->calldpc_method($crm_module);		
+							     break;  	  
 			
 		 case 'cpcrmmoduledtl' : break;	
 		 case 'cpcrmdata'      : break; 
@@ -176,30 +176,19 @@ class rccrm  {
 
 	protected function crmMode() {
 		$mode = GetReq('mode') ? GetReq('mode') : 'users';
-		//$um = (GetReq('mode')=='sql') ? '&mode=sql' : '&mode=files'; 
 		
 		$turl1 = seturl('t=cpcrm&mode=users');
 		$turl2 = seturl('t=cpcrm&mode=customers');		
 		$turl3 = seturl('t=cpcrm&mode=ulist');
 		$turl4 = seturl('t=cpcrm&mode=campaigns');
 		$button = $this->createButton(localize('_mode', getlocal()), 
-												array(localize('_users', getlocal())=>$turl1,
-											  		  localize('_customers', getlocal())=>$turl2,
-													  localize('_ulist', getlocal())=>$turl3,
-													  localize('_campaigns', getlocal())=>$turl4,
-		                                              ));
+										array(localize('_users', getlocal())=>$turl1,
+									  		  localize('_customers', getlocal())=>$turl2,
+											  localize('_ulist', getlocal())=>$turl3,
+											  localize('_campaigns', getlocal())=>$turl4,
+		                                ));
 													
-		/*$turl1 = seturl('t=cpdorepall&backtrace=today'.$um);
-		$turl2 = seturl('t=cpdorepall&backtrace=yesterday'.$um);
-		$turl3 = seturl('t=cpdorepall&backtrace=week'.$um);
-		$turl4 = seturl('t=cpdorepall&backtrace=month'.$um);
-		$button .= $this->createButton('Actions', array('Run today'=>$turl1,
-														'Run 1 day'=>$turl2,
-														'Run week'=>$turl3,
-														'Run 30 days'=>$turl4,
-		                                              ),'warning');*/
-													  													   
-		//$content = (GetReq('mode')=='customers') ?
+
 		switch ($mode) {
 			case 'customers':	$content = $this->customers_grid(null,140,5,'r', true); break;
 			case 'ulist'    :   $content = $this->ulist_grid(null,140,5,'e', true); break;
@@ -329,7 +318,7 @@ class rccrm  {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal())."|boolean|1|");	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+code2|".localize('_code2',getlocal())."|link|10|"."javascript:cdetails(\"{code2}\");".'||');
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+mail|".localize('_mail',getlocal())."|link|10|"."javascript:cdetails(\"{mail}\");".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+name|".localize('_name',getlocal())."|19|1|||1");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+name|".localize('_name',getlocal())."|19|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+prfdescr|".localize('_prfdescr',getlocal())."|20|1|");			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+afm|".localize('_afm',getlocal())."|10|1|");
 	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+eforia|".localize('_doy',getlocal())."|10|1|");				

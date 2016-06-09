@@ -3,69 +3,69 @@
 //    <link href="css/acal.css" rel="stylesheet" type="text/css" />
 //    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
 	
-$__DPCSEC['ACAL_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['CRMACAL_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if (!defined("ACAL_DPC")) {
-define("ACAL_DPC",true);
+if (!defined("CRMACAL_DPC")) {
+define("CRMACAL_DPC",true);
 
-$__DPC['ACAL_DPC'] = 'acal';
+$__DPC['CRMACAL_DPC'] = 'crmacal';
 
-$__EVENTS['ACAL_DPC'][0]= "acal";
-$__EVENTS['ACAL_DPC'][1]= "acalajax";
-$__EVENTS['ACAL_DPC'][2]= "acalnew";
-$__EVENTS['ACAL_DPC'][3]= "acalclose";
-$__EVENTS['ACAL_DPC'][4]= "set_project_combo";
-$__EVENTS['ACAL_DPC'][5]= 'toggleprojectcheckbox';
-$__EVENTS['ACAL_DPC'][6]= 'getprojectcheckbox';
-$__EVENTS['ACAL_DPC'][7]= 'saveprojectconfiguration';
+$__EVENTS['CRMACAL_DPC'][0]= "crmacal";
+$__EVENTS['CRMACAL_DPC'][1]= "acalajax";
+$__EVENTS['CRMACAL_DPC'][2]= "acalnew";
+$__EVENTS['CRMACAL_DPC'][3]= "acalclose";
+$__EVENTS['CRMACAL_DPC'][4]= "set_project_combo";
+$__EVENTS['CRMACAL_DPC'][5]= 'toggleprojectcheckbox';
+$__EVENTS['CRMACAL_DPC'][6]= 'getprojectcheckbox';
+$__EVENTS['CRMACAL_DPC'][7]= 'saveprojectconfiguration';
 
-$__ACTIONS['ACAL_DPC'][0]= "acal";
-$__ACTIONS['ACAL_DPC'][1]= "acalajax";
-$__ACTIONS['ACAL_DPC'][2]= "acalnew";
-$__ACTIONS['ACAL_DPC'][3]= "acalclose";
-$__ACTIONS['ACAL_DPC'][4]= "set_project_combo";
-$__ACTIONS['ACAL_DPC'][5]= 'toggleprojectcheckbox';
-$__ACTIONS['ACAL_DPC'][6]= 'getprojectcheckbox';
-$__ACTIONS['ACAL_DPC'][7]= 'saveprojectconfiguration';
+$__ACTIONS['CRMACAL_DPC'][0]= "crmacal";
+$__ACTIONS['CRMACAL_DPC'][1]= "acalajax";
+$__ACTIONS['CRMACAL_DPC'][2]= "acalnew";
+$__ACTIONS['CRMACAL_DPC'][3]= "acalclose";
+$__ACTIONS['CRMACAL_DPC'][4]= "set_project_combo";
+$__ACTIONS['CRMACAL_DPC'][5]= 'toggleprojectcheckbox';
+$__ACTIONS['CRMACAL_DPC'][6]= 'getprojectcheckbox';
+$__ACTIONS['CRMACAL_DPC'][7]= 'saveprojectconfiguration';
 
-$__LOCALE['ACAL_DPC'][0]='ACAL_DPC;Calendar;Ημερολόγιο';
-$__LOCALE['ACAL_DPC'][1]='sun;Sun;Κυρ';
-$__LOCALE['ACAL_DPC'][2]='mon;Mon;Δευ';
-$__LOCALE['ACAL_DPC'][3]='tue;Tue;Τρι';
-$__LOCALE['ACAL_DPC'][4]='wed;Wed;Τε';
-$__LOCALE['ACAL_DPC'][5]='thu;Thu;Πε';
-$__LOCALE['ACAL_DPC'][6]='fri;Fri;Παρ';
-$__LOCALE['ACAL_DPC'][7]='sat;Sat;Σαβ';
-$__LOCALE['ACAL_DPC'][8]='_newproject;New;Νέο';
-$__LOCALE['ACAL_DPC'][9]='_pname;Name;Όνομα';
-$__LOCALE['ACAL_DPC'][10]='_pstart;Start;Απο';
-$__LOCALE['ACAL_DPC'][11]='_pend;End;Έως';
-$__LOCALE['ACAL_DPC'][12]='_setproject;Set;Ok';
-$__LOCALE['ACAL_DPC'][13]='_planlabel;Plan;Πλάνο';	
-$__LOCALE['ACAL_DPC'][14]='_fwlabel;Week forward;Πρόβλεψη';
-$__LOCALE['ACAL_DPC'][15]='_classlabel;Class;Τάξη';
-$__LOCALE['ACAL_DPC'][16]='_privlabel;Private;Ιδιωτικό';
-$__LOCALE['ACAL_DPC'][17]='_hideulabel;Hide users;Κρύψε χρήστες';
-$__LOCALE['ACAL_DPC'][18]='_inclabel;Include;Συμπεριέλαβε';
-$__LOCALE['ACAL_DPC'][19]='_exclabel;Exclude;Απέριψε';
-$__LOCALE['ACAL_DPC'][20]='_activelabel;Active;Ενεργό';
-$__LOCALE['ACAL_DPC'][21]='_ownerlabel;Owner;Ιδιοκτήτης';
-$__LOCALE['ACAL_DPC'][22]='_resclasslabel;R class;R τύπος';
-$__LOCALE['ACAL_DPC'][23]='_typelabel;Type;Τύπος';
-$__LOCALE['ACAL_DPC'][24]='_grouplabel;Group;Ομαδοποίηση';
-$__LOCALE['ACAL_DPC'][25]='_invitelabel;Invite friends;Κάλεσε φίλους';
-$__LOCALE['ACAL_DPC'][26]='_invitebutton;Invitation;Κλήση';
-$__LOCALE['ACAL_DPC'][27]='_close;Close;Κλείσε';
-$__LOCALE['ACAL_DPC'][28]='_loading;Loading...;Φόρτωση...';
-$__LOCALE['ACAL_DPC'][29]='_project;Project;Δράση';
-$__LOCALE['ACAL_DPC'][30]='_important;Important;Σημαντική δράση';
-$__LOCALE['ACAL_DPC'][31]='_urgent;Urgent;Επείγουσα δράση';
-$__LOCALE['ACAL_DPC'][32]='_latitude;Latitude;Γ. Πλάτος';
-$__LOCALE['ACAL_DPC'][33]='_longitude;Longitude;Γ. Μήκος';
-$__LOCALE['ACAL_DPC'][34]='_recordinserted;Saved;Αποθηκεύθηκε';
-$__LOCALE['ACAL_DPC'][35]='_recordupdated;Updated;Ενημερώθηκε';
+$__LOCALE['CRMACAL_DPC'][0]='CRMACAL_DPC;Calendar;Ημερολόγιο';
+$__LOCALE['CRMACAL_DPC'][1]='sun;Sun;Κυρ';
+$__LOCALE['CRMACAL_DPC'][2]='mon;Mon;Δευ';
+$__LOCALE['CRMACAL_DPC'][3]='tue;Tue;Τρι';
+$__LOCALE['CRMACAL_DPC'][4]='wed;Wed;Τε';
+$__LOCALE['CRMACAL_DPC'][5]='thu;Thu;Πε';
+$__LOCALE['CRMACAL_DPC'][6]='fri;Fri;Παρ';
+$__LOCALE['CRMACAL_DPC'][7]='sat;Sat;Σαβ';
+$__LOCALE['CRMACAL_DPC'][8]='_newproject;New;Νέο';
+$__LOCALE['CRMACAL_DPC'][9]='_pname;Name;Όνομα';
+$__LOCALE['CRMACAL_DPC'][10]='_pstart;Start;Απο';
+$__LOCALE['CRMACAL_DPC'][11]='_pend;End;Έως';
+$__LOCALE['CRMACAL_DPC'][12]='_setproject;Set;Ok';
+$__LOCALE['CRMACAL_DPC'][13]='_planlabel;Plan;Πλάνο';	
+$__LOCALE['CRMACAL_DPC'][14]='_fwlabel;Week forward;Πρόβλεψη';
+$__LOCALE['CRMACAL_DPC'][15]='_classlabel;Class;Τάξη';
+$__LOCALE['CRMACAL_DPC'][16]='_privlabel;Private;Ιδιωτικό';
+$__LOCALE['CRMACAL_DPC'][17]='_hideulabel;Hide users;Κρύψε χρήστες';
+$__LOCALE['CRMACAL_DPC'][18]='_inclabel;Include;Συμπεριέλαβε';
+$__LOCALE['CRMACAL_DPC'][19]='_exclabel;Exclude;Απέριψε';
+$__LOCALE['CRMACAL_DPC'][20]='_activelabel;Active;Ενεργό';
+$__LOCALE['CRMACAL_DPC'][21]='_ownerlabel;Owner;Ιδιοκτήτης';
+$__LOCALE['CRMACAL_DPC'][22]='_resclasslabel;R class;R τύπος';
+$__LOCALE['CRMACAL_DPC'][23]='_typelabel;Type;Τύπος';
+$__LOCALE['CRMACAL_DPC'][24]='_grouplabel;Group;Ομαδοποίηση';
+$__LOCALE['CRMACAL_DPC'][25]='_invitelabel;Invite friends;Κάλεσε φίλους';
+$__LOCALE['CRMACAL_DPC'][26]='_invitebutton;Invitation;Κλήση';
+$__LOCALE['CRMACAL_DPC'][27]='_close;Close;Κλείσε';
+$__LOCALE['CRMACAL_DPC'][28]='_loading;Loading...;Φόρτωση...';
+$__LOCALE['CRMACAL_DPC'][29]='_project;Project;Δράση';
+$__LOCALE['CRMACAL_DPC'][30]='_important;Important;Σημαντική δράση';
+$__LOCALE['CRMACAL_DPC'][31]='_urgent;Urgent;Επείγουσα δράση';
+$__LOCALE['CRMACAL_DPC'][32]='_latitude;Latitude;Γ. Πλάτος';
+$__LOCALE['CRMACAL_DPC'][33]='_longitude;Longitude;Γ. Μήκος';
+$__LOCALE['CRMACAL_DPC'][34]='_recordinserted;Saved;Αποθηκεύθηκε';
+$__LOCALE['CRMACAL_DPC'][35]='_recordupdated;Updated;Ενημερώθηκε';
 
-class acal { 
+class crmacal { 
 
 	var $data, $reserve_only_projects, $subowner;
 	var $sMonthName, $sCalTblRows, $iYear, $iNextMonth, $iPrevMonth, $iNextYear , $iPrevYear;
@@ -115,7 +115,7 @@ class acal {
 														
 							
 	    case 'acalnew':    $this->create_new_project(); break;
-	    case 'acal'   : 
+	    case 'crmacal': 
 	    default       :  
 	  }
     }	
@@ -133,7 +133,7 @@ class acal {
 		case 'acalclose': break;
 	  
 	    case 'acalnew':
-	    case 'acal'   : 
+	    case 'crmacal': 
 	    default       : $out = $this->render();
 	  }
 	  
@@ -1348,7 +1348,7 @@ FORM;
 		}	
 		else {//many projects ..select option
 		
-		    $projects_label = localize('ACAL_DPC', getlocal());
+		    $projects_label = localize('CRMACAL_DPC', getlocal());
             $mydate = time();	
 
 			$close_url = seturl('t=acalclose');

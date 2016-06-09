@@ -488,12 +488,12 @@ JS;
 		    //start new project button
             $newp_label = null;//localize('_newsubproject',getlocal());			
 			
-			if (defined('ACAL_DPC'))  {
+			if (defined('CRMACAL_DPC'))  {
 				$mydate = time(); //is now timestamp
 				$project = null;//id
 				$ptitle = null;//title
 				$href = '#';
-				$jsref = GetGlobal('controller')->calldpc_method("acal.get_href use $mydate");//+$days++".$project.'+'.$ptitle);//+1 for date format Y-m-d,+project id,title 
+				$jsref = GetGlobal('controller')->calldpc_method("crmacal.get_href use $mydate");//+$days++".$project.'+'.$ptitle);//+1 for date format Y-m-d,+project id,title 
 			}
 			else 
 				$href = 'javascript: void(0)';	  	 

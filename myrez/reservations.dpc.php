@@ -151,13 +151,13 @@ class reservations {
 		$u = array_shift($p);
 		$this->xixuser = ($UserName) ? $u : null;
 		
-		//enable when id
-		$id = GetReq('id');
+		//call by host script at event
+		/*$id = GetReq('id');
 		if ($id) {	
 			//$this->uagent(); //LOADED BY XIXUSER
 			$this->javascript();
 			//$this->social_post_javascript(); //disabled
-		}
+		}*/
 		
 	}
 	
@@ -316,7 +316,7 @@ GPLUSPOST;
 		return ($gpostjs);
 	}	
 
-	protected function javascript() {
+	public function javascript() {
 	
        if (iniload('JAVASCRIPT')) {
 	   
@@ -332,7 +332,7 @@ GPLUSPOST;
 	   }	
 	}	
 	
-	protected  function javascript_code()  {
+	public function javascript_code()  {
 		$UserName = GetGlobal('UserName');
 		
 		//in case of no id (cart) append ajaxurl with id var...
