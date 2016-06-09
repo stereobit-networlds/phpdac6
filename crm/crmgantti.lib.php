@@ -57,6 +57,7 @@ class Gantti {
 		'ptitle'  => $d['project_title'], //add link
 		'group'  => $d['group'], //group by
 		'owner'  => $d['owner'], //owner
+		'code'   => $d['code'], //project code
       );
       
       if(!$this->first || $this->first > $start) $this->first = $start;
@@ -192,7 +193,8 @@ class Gantti {
 		 $mydate = $block['start']; //is timestamp
 		 $project = $block['project'];
 		 $ptitle = $block['ptitle'];
-		 $href = GetGlobal('controller')->calldpc_method("crmacal.get_href use $mydate+$rdays++".$project.'+'.$ptitle);//+1 for date format Y-m-d,+project id,title 
+		 $code = $block['code'];
+		 $href = GetGlobal('controller')->calldpc_method("crmacal.get_href use $mydate+$rdays++".$project.'+'.$ptitle.'+'.$code);//+1 for date format Y-m-d,+project id,title 
 	  }
       else {
 	 	 $href = 'javascript: void(0)';	  

@@ -107,7 +107,7 @@ class crmacal {
 	    case 'set_project_combo' : die($this->set_project_combo()); break;
 
 	    case 'acalajax' : 	//if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && isset($_GET['month'])) {
-		                    if (isset($_GET['month'])) {
+		                    if ((isset($_GET['month'])) || (isset($_GET['date']))) {
 								header('Content-Type: text/html; charset=utf-8');
 								die($this->render(true));
 							}
@@ -599,7 +599,7 @@ JSEOF;
 		$project_class = false;
 		$project_id = GetReq('projectid') ? GetReq('projectid') : null;
 		
-		if (!defined('MGANTTI_DPC')) return false;
+		if (!defined('CRMGANTTI_DPC')) return false;
 
 		$sSQL = 'select id,start,end,class,resclass from projects where active=1';
 		$sSQL .= " and code='". $code . "'";
@@ -691,11 +691,17 @@ JSEOF;
 		list($iNowYear, $iNowMonth, $iNowDay) = explode('-', date('Y-m-d'));
 
 		// Get current year and month depending on possible GET parameters
-		if (isset($_GET['month'])) {
+		if (isset($_GET['month'])) { //month-year format
 			list($iMonth, $this->iYear) = explode('-', $_GET['month']);
 			$iMonth = (int)$iMonth;
 			$this->iYear = (int)$this->iYear;
-		} else {
+		} 
+		if (isset($_GET['date'])) { //full date
+			$pd = explode('-', $_GET['date']);
+			$iMonth = (int)$pd[1];
+			$this->iYear = (int)$pd[0];
+		}	
+		else {
 			list($iMonth, $this->iYear) = explode('-', date('n-Y'));
 		}
 
@@ -753,7 +759,7 @@ JSEOF;
 				
 				$cl = null; //has project...reset
 				$projectid = null; //init reset
-				if ((defined('MGANTTI_DPC')) && 
+				if ((defined('CRMGANTTI_DPC')) && 
 				    ($sClass == 'today') || ($sClass == 'current')) {
 					$mydate = $this->iYear.'-'.$iMonth.'-'.$iCurrentDay;
 					//bg color based on projects
@@ -922,8 +928,8 @@ JSEOF;
 		$sat = localize('sat',getlocal());
 							
 		//item owner = super owner
-		if (defined('GANTTI_DPC')) //super owner 
-			$is_super_owner = GetGlobal('controller')->calldpc_method("gantti.is_super_owner");
+		if (defined('CRMGANTTI_DPC')) //super owner 
+			$is_super_owner = GetGlobal('controller')->calldpc_method("crmgantti.is_super_owner");
 				
 		//project is_owner = subowner..	
 	    if ($is_owner = $this->get_data($project_id, $is_super_owner)) {
@@ -1164,7 +1170,7 @@ EOF;
 			$class = '1';
 			$forward = '1';//1 week
 			$type = 'daily';
-			$include = null;
+			$include = GetReq('id');////null;
 			$exclude = null;
 			$latitude = $ulatitude;
 			$longitude = $ulongitude;			

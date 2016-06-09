@@ -5,55 +5,43 @@
   <!--[if lt IE 9]>
   <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
   <![endif]-->*/
-$d = GetGlobal('controller')->require_dpc('gantti/gantti.lib.php');
+$d = GetGlobal('controller')->require_dpc('crm/crmgantti.lib.php');
 require_once($d); 
 
-/*
-date_default_timezone_set('UTC');
-setlocale(LC_ALL, 'en_US');
-
-$gantti = new Gantti($data, array(
-  'title'      => 'Demo',
-  'cellwidth'  => 25,
-  'cellheight' => 35,
-  'today'      => true
-));
-*/
-
 	   
-$__DPCSEC['MGANTTI_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['CRMGANTTI_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if (!defined("MGANTTI_DPC")) {
-define("MGANTTI_DPC",true);
+if (!defined("CRMGANTTI_DPC")) {
+define("CRMGANTTI_DPC",true);
 
-$__DPC['MGANTTI_DPC'] = 'mgantti';
+$__DPC['CRMGANTTI_DPC'] = 'crmgantti';
 
-$__EVENTS['MGANTTI_DPC'][0]= "mgantti";
-$__EVENTS['MGANTTI_DPC'][1]= "getprojectdetails";
-$__EVENTS['MGANTTI_DPC'][2]= "getprojectlocation";
-$__EVENTS['MGANTTI_DPC'][3]= "show_gantti";
+$__EVENTS['CRMGANTTI_DPC'][0]= "crmgantti";
+$__EVENTS['CRMGANTTI_DPC'][1]= "getprojectdetails";
+$__EVENTS['CRMGANTTI_DPC'][2]= "getprojectlocation";
+$__EVENTS['CRMGANTTI_DPC'][3]= "show_gantti";
 
-$__ACTIONS['MGANTTI_DPC'][0]= "mgantti";
-$__ACTIONS['MGANTTI_DPC'][1]= "getprojectdetails";
-$__ACTIONS['MGANTTI_DPC'][2]= "getprojectlocation";
-$__ACTIONS['MGANTTI_DPC'][3]= "show_gantti";
+$__ACTIONS['CRMGANTTI_DPC'][0]= "crmgantti";
+$__ACTIONS['CRMGANTTI_DPC'][1]= "getprojectdetails";
+$__ACTIONS['CRMGANTTI_DPC'][2]= "getprojectlocation";
+$__ACTIONS['CRMGANTTI_DPC'][3]= "show_gantti";
 
-$__LOCALE['MGANTTI_DPC'][0]='MGANTTI_DPC;Gantt chart;Χρονοδιάγραμμα';
-$__LOCALE['MGANTTI_DPC'][1]='January;January;Ιανουάριος';
-$__LOCALE['MGANTTI_DPC'][2]='February;February;Φεβρουάριος';
-$__LOCALE['MGANTTI_DPC'][3]='March;March;Μάρτιος';
-$__LOCALE['MGANTTI_DPC'][4]='April;April;Απρίλιος';
-$__LOCALE['MGANTTI_DPC'][5]='May;May;Μαίος';
-$__LOCALE['MGANTTI_DPC'][6]='June;June;Ιούνιος';
-$__LOCALE['MGANTTI_DPC'][7]='July;July;Ιούλιος';
-$__LOCALE['MGANTTI_DPC'][8]='August;August;Αύγουστος';
-$__LOCALE['MGANTTI_DPC'][9]='September;September;Σεπτέμβριος';
-$__LOCALE['MGANTTI_DPC'][10]='October;October;Οκτώβριος';
-$__LOCALE['MGANTTI_DPC'][11]='November;November;Νοέμβριος';
-$__LOCALE['MGANTTI_DPC'][12]='December;December;Δεκέμβριος';
-$__LOCALE['MGANTTI_DPC'][13]='_newsubproject;New;Νέο';
+$__LOCALE['CRMGANTTI_DPC'][0]='CRMGANTTI_DPC;Gantt chart;Χρονοδιάγραμμα';
+$__LOCALE['CRMGANTTI_DPC'][1]='January;January;Ιανουάριος';
+$__LOCALE['CRMGANTTI_DPC'][2]='February;February;Φεβρουάριος';
+$__LOCALE['CRMGANTTI_DPC'][3]='March;March;Μάρτιος';
+$__LOCALE['CRMGANTTI_DPC'][4]='April;April;Απρίλιος';
+$__LOCALE['CRMGANTTI_DPC'][5]='May;May;Μαίος';
+$__LOCALE['CRMGANTTI_DPC'][6]='June;June;Ιούνιος';
+$__LOCALE['CRMGANTTI_DPC'][7]='July;July;Ιούλιος';
+$__LOCALE['CRMGANTTI_DPC'][8]='August;August;Αύγουστος';
+$__LOCALE['CRMGANTTI_DPC'][9]='September;September;Σεπτέμβριος';
+$__LOCALE['CRMGANTTI_DPC'][10]='October;October;Οκτώβριος';
+$__LOCALE['CRMGANTTI_DPC'][11]='November;November;Νοέμβριος';
+$__LOCALE['CRMGANTTI_DPC'][12]='December;December;Δεκέμβριος';
+$__LOCALE['CRMGANTTI_DPC'][13]='_newsubproject;New;Νέο';
 
-class mgantti { 
+class crmgantti { 
 
     var $title, $cellwidth, $cellheight, $today;
 	var $data, $global_times;
@@ -447,6 +435,7 @@ JS;
 						'project_title'  => $prj['title'],//project title
 						'group'=>$prj['pid'],
 						'owner'=>$prj['owner'],//sub owner
+						'code'=>$prj['code'],//prj code (GetReq(id) used in this case)
 					);			
         }	
         //print_r($this->data);
@@ -474,8 +463,10 @@ JS;
 	    $is_owner = $this->is_super_owner(); //return true
 	
 	    if ($this->get_data()) {
-			//echo 'b';
-			$ret = new Gantti($this->data, array(
+			
+			$ret = GetGlobal('controller')->calldpc_method('crmacal.render use +1'); //hidden div
+			
+			$ret .= new Gantti($this->data, array(
 						'title'      => $title,
 						'cellwidth'  => $cellwidth,
 						'cellheight' => $cellheight,
@@ -493,12 +484,15 @@ JS;
 				$project = null;//id
 				$ptitle = null;//title
 				$href = '#';
-				$jsref = GetGlobal('controller')->calldpc_method("crmacal.get_href use $mydate");//+$days++".$project.'+'.$ptitle);//+1 for date format Y-m-d,+project id,title 
+				//$jsref = GetGlobal('controller')->calldpc_method("crmacal.get_href use $mydate");//+$days++".$project.'+'.$ptitle);//+1 for date format Y-m-d,+project id,title 
+				//$ret = "<a class='btn btn-small' href='$href' $jsref><i class='icon-bolt'></i>$newp_label</a>";
+				
+				$ret = GetGlobal('controller')->calldpc_method('crmacal.render'); //show div
 			}
-			else 
+			else { 
 				$href = 'javascript: void(0)';	  	 
-			
-			$ret = "<a class='btn btn-small' href='$href' $jsref><i class='icon-bolt'></i>$newp_label</a>";
+				$ret = "<a class='btn btn-small' href='$href' $jsref><i class='icon-bolt'></i>$newp_label</a>";
+			}	
 			return ($ret);
 		}	
 		
@@ -509,15 +503,6 @@ JS;
 	public function show_gantti($title=null, $cellwidth=25, $cellheight=35, $today=true) {
 		$UserName = GetGlobal('UserName');
 		if (!$UserName) return false;
-		
-	    //call from javascript ajax scroll
-	    /*if (!GetReq('ajax')) {
-			$out = GetGlobal('controller')->calldpc_method('fronthtmlpage.get_scrollid use '.get_class($this).'+show_gantti+'."title|cellwidth|cellheight|today+$title|$cellwidth|$cellheight|$today"); 		
-			return ($out);
-		}
-		//get GET func params when call from scroll
-		foreach ($_GET as $gname=>$gvalue) 
-			$$gname = $gvalue;*/
 
 		$ret = $this->render($title, $cellwidth, $cellheight, $today);	
 		return ($ret);
@@ -568,6 +553,7 @@ JS;
 						'project_title'  => $prj['title'],//project title
 						'group'=>$prj['pid'],
 						'owner'=>$prj['owner'],//sub-owner
+						'code'=>$prj['code'],//prj code
 					);			
 		  }
 		  //print_r($this->data);
@@ -707,7 +693,7 @@ JS;
 		}	
 		else {//many projects ..select option
 		*/
-		    $projects_label = localize('MGANTTI_DPC', getlocal());
+		    $projects_label = localize('CRMGANTTI_DPC', getlocal());
             $mydate = time();
 
 			$projects[0] = "--{$projects_label}--";

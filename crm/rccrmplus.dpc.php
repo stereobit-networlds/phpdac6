@@ -24,8 +24,10 @@ $__LOCALE['RCCRMPLUS_DPC'][3]='_status;Status;Κατάσταση';
 $__LOCALE['RCCRMPLUS_DPC'][4]='_user;User;Πελάτης';
 $__LOCALE['RCCRMPLUS_DPC'][5]='_cid;cid;cid';
 
-$__LOCALE['RCCRMPLUS_DPC'][6]='_projects;Projects;Πλάνο';
-$__LOCALE['RCCRMPLUS_DPC'][7]='_since;Since;Απο';
+$__LOCALE['RCCRMPLUS_DPC'][6]='_crmplist;List;Λίστα';
+$__LOCALE['RCCRMPLUS_DPC'][7]='_crmpgant;Gantt;Διάγραμμα';
+$__LOCALE['RCCRMPLUS_DPC'][8]='_projects;Projects;Πλάνο';
+$__LOCALE['RCCRMPLUS_DPC'][9]='_since;Since;Απο';
 
 
 class rccrmplus extends rccrm  {
@@ -78,23 +80,11 @@ class rccrmplus extends rccrm  {
 		$turl1 = seturl('t=cpcrmplus&mode=crmpgant');
 		$turl2 = seturl('t=cpcrmplus&mode=crmplist');
 		$button = $this->createButton(localize('_projects', getlocal()), 
-										array('New'=>$turl0,
+										array('New/Edit'=>$turl0,
 										      'Gant'=>$turl1,
 											  'List'=>$turl2,
 		                                ),'success');		
 		
-		$turl0 = seturl('t=cpcrmplus&mode=projects');
-		$turl1 = seturl('t=cpcrmplus&mode=users');
-		$turl2 = seturl('t=cpcrmplus&mode=customers');		
-		$turl3 = seturl('t=cpcrmplus&mode=ulist');
-		$turl4 = seturl('t=cpcrmplus&mode=campaigns');
-		$button .= $this->createButton(localize('_mode', getlocal()), 
-										array(localize('_projects', getlocal())=>$turl0,
-										      localize('_users', getlocal())=>$turl1,
-									  		  localize('_customers', getlocal())=>$turl2,
-											  localize('_ulist', getlocal())=>$turl3,
-											  localize('_campaigns', getlocal())=>$turl4,
-		                                ));
 										
 		$turl1 = seturl('t=cpcrmplus&backtrace=today');
 		$turl2 = seturl('t=cpcrmplus&backtrace=yesterday');
@@ -108,23 +98,39 @@ class rccrmplus extends rccrm  {
 											  '30 days'=>$turl4,
 											  '6 months'=>$turl5,
 		                                ),'warning');
-													  					
+										
+		if (($mode!='crmpgant') && ($mode!='crmplist'))	{
+		$turl0 = seturl('t=cpcrmplus&mode=projects');
+		$turl1 = seturl('t=cpcrmplus&mode=users');
+		$turl2 = seturl('t=cpcrmplus&mode=customers');		
+		$turl3 = seturl('t=cpcrmplus&mode=ulist');
+		$turl4 = seturl('t=cpcrmplus&mode=campaigns');
+		$button .= $this->createButton(localize('_mode', getlocal()), 
+										array(/*localize('_projects', getlocal())=>$turl0,*/
+										      localize('_users', getlocal())=>$turl1,
+									  		  localize('_customers', getlocal())=>$turl2,
+											  localize('_ulist', getlocal())=>$turl3,
+											  localize('_campaigns', getlocal())=>$turl4,
+		                                ));										
+		}											  					
 																		
 		$content = null;//GetGlobal('controller')->calldpc_method('mgantti.render_sum');
 		
 		switch ($mode) {
 			
-			case 'crmpgant' :	$content .= GetGlobal('controller')->calldpc_method('crmgantti.render_sum'); 
+			case 'crmpgant' :	$content .= GetGlobal('controller')->calldpc_method('crmacal.render use +1');
+			                    $content .= GetGlobal('controller')->calldpc_method('crmgantti.render_sum'); 
 			                    break;
-			case 'crmplist' :   $content .= $this->projects_grid(null,140,5,'r', true); break;
+			case 'crmplist' :   $content .= GetGlobal('controller')->calldpc_method('crmacal.render use +1');
+			                    $content .= $this->projects_grid(null,140,5,'r', true); break;
 			
 			case 'customers':	$content .= $this->customers_grid(null,140,5,'r', true); break;
 			case 'ulist'    :   $content .= $this->ulist_grid(null,140,5,'e', true); break;
 			case 'campaigns':   $content .= $this->campaigns_grid(null,140,5,'r', true); break;			
 			case 'users'    :   $content .= $this->users_grid(null,140,5,'r', true); break;
-			case 'projects' :   $content .= $this->projects_grid(null,140,5,'r', true); break;
+			//case 'projects' :   $content .= $this->projects_grid(null,140,5,'r', true); break;
 			
-			default         :   $content .= $this->projects_grid(null,140,5,'r', true); 
+			default         :   $content .= $this->users_grid(null,140,5,'r', true); 
 		}			
 					
 		$ret = $this->window('e-CRM+: '.localize('_'.$mode, getlocal()), $button, $content);
@@ -154,9 +160,10 @@ class rccrmplus extends rccrm  {
 		
 		//$ret = $this->loadsubframe(null,'dashboard', true);
 		
-		$ret = GetGlobal('controller')->calldpc_method('crmacal.render use +1');
-		$ret.= GetGlobal('controller')->calldpc_method('crmgantti.show_gantti use '.$title);
-		//$ret.= GetGlobal('controller')->calldpc_method('crmgantti.render_sum');
+		/* render inside ganti for new acal when new project
+		  $ret = GetGlobal('controller')->calldpc_method('crmacal.render use +1'); 
+		*/
+		$ret.= GetGlobal('controller')->calldpc_method('crmgantti.show_gantti use '.substr($id,0,9));
 		
 		return ($ret);
 	}	
@@ -183,13 +190,13 @@ class rccrmplus extends rccrm  {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");	
 		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+pid|".localize('_pid',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+owner|".localize('_username',getlocal())."|link|10|"."javascript:udetails(\"{username}\");".'||');						
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+owner|".localize('_owner',getlocal())."|5|0|");						
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+dateupd|".localize('_dateupd',getlocal())."|5|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+title|".localize('_title',getlocal())."|10|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal())."|link|10|"."javascript:$(\"#acal\").load(\"cpcrmplus.php?t=acalajax&projectid={id}&ptitle={title}&id={code}&date={start}\");".'||');
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat|".localize('_cat',getlocal())."|5|0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+start|".localize('_start',getlocal())."|5|1|");			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+end|".localize('_end',getlocal())."|5|1|");
