@@ -38,9 +38,9 @@ $__LOCALE['CRMACAL_DPC'][6]='fri;Fri;Παρ';
 $__LOCALE['CRMACAL_DPC'][7]='sat;Sat;Σαβ';
 $__LOCALE['CRMACAL_DPC'][8]='_newproject;New;Νέο';
 $__LOCALE['CRMACAL_DPC'][9]='_pname;Name;Όνομα';
-$__LOCALE['CRMACAL_DPC'][10]='_pstart;Start;Απο';
-$__LOCALE['CRMACAL_DPC'][11]='_pend;End;Έως';
-$__LOCALE['CRMACAL_DPC'][12]='_setproject;Set;Ok';
+$__LOCALE['CRMACAL_DPC'][10]='_pstart;Start;Εκκίνηση';
+$__LOCALE['CRMACAL_DPC'][11]='_pend;End;Λήξη';
+$__LOCALE['CRMACAL_DPC'][12]='_setproject;Save;Αποθήκευση';
 $__LOCALE['CRMACAL_DPC'][13]='_planlabel;Plan;Πλάνο';	
 $__LOCALE['CRMACAL_DPC'][14]='_fwlabel;Week forward;Πρόβλεψη';
 $__LOCALE['CRMACAL_DPC'][15]='_classlabel;Class;Τάξη';
@@ -272,7 +272,9 @@ GPLUSPOST;
 	    $keep_id = 'id='. GetReq('id');
 	    $ajaxurl = seturl($keep_id."&t=");		
 		
-		$Loading = localize('_loading',getlocal());		
+		$Loading = localize('_loading',getlocal());
+		$Inserted = localize('_recordinserted',getlocal());
+		$Updated = localize('_recordupdated',getlocal());		
 
 		if (defined('RESERVATIONS_DPC')) {
 			$jscript = <<<RESJS
@@ -384,6 +386,7 @@ function save_project_configuration()
 	var project_end = $('#project_end').val();
 	var project_plan = $('#project_plan').val();
 	var project_id = $('#project_id').val();
+	var code_id = $('#code_id').val();
 	var project_owner = $('#project_owner').val();
 	var project_active = $('#project_active').val();
 	var project_type = $('#project_type').val();
@@ -399,13 +402,19 @@ function save_project_configuration()
 
 	$('#project_details_message_p').html('<img src="images/loading.gif" alt="Loading"> {$savingandrefresh}').slideDown('fast');
 
-	$.post('{$ajaxurl}saveprojectconfiguration', { project_active: project_active, project_owner: project_owner, project_name: project_name, project_start: project_start, project_end: project_end, project_plan: project_plan, project_class: project_class, project_resclass: project_resclass, project_type: project_type, project_forward: project_forward, project_private: project_private, project_hideusers: project_hideusers, project_include: project_include, project_exclude: project_exclude, project_latitude: project_latitude, project_longitude: project_longitude, project_id: project_id}, function(data)
+	$.post('{$ajaxurl}saveprojectconfiguration', { project_active: project_active, project_owner: project_owner, project_name: project_name, project_start: project_start, project_end: project_end, project_plan: project_plan, project_class: project_class, project_resclass: project_resclass, project_type: project_type, project_forward: project_forward, project_private: project_private, project_hideusers: project_hideusers, project_include: project_include, project_exclude: project_exclude, project_latitude: project_latitude, project_longitude: project_longitude, project_id: project_id, code_id: code_id}, function(data)
 	{
-			if(data == 1)
+			//if(data == 1)
+			if ((data=='{$Inserted}') || (data=='{$Updated}'))	
 			{
+				$('#project_title').html(project_name); /*update  title*/
+				$('#project_id_span').html(project_id); /*update id in title*/
+				
+				$('#project_details_message_p').html(''); //data);
+				
 				input_focus();
-				setTimeout(function() { window.location.replace('.'); }, 1000);
-				//window.location.reload(true);
+				if (data=='{$Inserted}')
+					window.location.reload(true);
 			}
 			else
 			{
@@ -414,12 +423,12 @@ function save_project_configuration()
 			}
 			
 			//socialize
-			$.get('{$ajaxurl}is_social', function(data) {
+			/*$.get('{$ajaxurl}is_social', function(data) {
 		
 				if (data) {
 					setTimeout(function() { social_post(project_name,project_start,project_plan); }, 2000);
 				}	
-			});				
+			});*/				
 	});
 };	
 
@@ -479,7 +488,8 @@ JSEOF;
 		
 		if (!$UserName) return false;
  
-		if (!$code = GetReq('id')) return 'Invalid Id.';
+		$code = GetParam('code_id') ? GetParam('code_id') : GetReq('id'); 
+		if (!$code) return 'Invalid Id.';
 		//$code = $id;// ? $id : $cat;
 		$cat = 'x'; //no cat used
 		
@@ -513,7 +523,7 @@ JSEOF;
 		
 		if ($project_id) {
 			//update
-			$upddate = date('Y-m-d');
+			$upddate = date('Y-m-d H:i:s');
 			$sSQL = "UPDATE projects SET dateupd='$upddate',pid=$group,active=$active,owner='$owner',code='$code',cat='$cat',title='$title',start='$start',end='$end',class=$class,resclass=$resclass,type='$type',plan='$plan',reswforward=$forward,hideusers=$hideusers,private=$private,include='$include',exclude='$exclude',latitude='$latitude',longitude='$longitude'";
 			$sSQL.= " WHERE id=".$project_id;
 			$result = $db->Execute($sSQL,1);
@@ -521,18 +531,22 @@ JSEOF;
 			return (localize('_recordupdated',getlocal()));//'Record updated.');
 		}
 		else {
-		    //extra checks
-			if (strtotime($start)<time()) return 'Invalid start date.';
+		    //extra checks 
+			//if (strtotime($start)<time()) return 'Invalid start date.'; //(must be next day)
+			if (strtotime($start) < mktime(0, 0, 0, date("m")  , date("d"), date("Y")))
+				return 'Invalid start date.';
+			if (strtotime($end) <= strtotime($start))
+				return 'Invalid end date.';
 			
 			//insert
-			$insdate = date('Y-m-d');
+			$insdate = date('Y-m-d H:i:s');
 			$sSQL = "INSERT INTO projects SET date='$insdate',dateupd='$insdate',pid=1,active=1,owner='$owner',code='$code',cat='$cat',title='$title',start='$start',end='$end',class=$class,resclass=$resclass,type='$type',plan='$plan',reswforward=$forward,hideusers=$hideusers,private=$private,include='$include',exclude='$exclude',latitude='$latitude',longitude='$longitude'";
 			$result = $db->Execute($sSQL,1);
 			//echo $sSQL;	
 			return (localize('_recordinserted',getlocal()));//'Record added.');
         }		
 		
-	    return (1);//'Record added.');
+	    //return (1);//'Record added.'); //never here
 	}		
 
 	protected function get_project_checkbox() {
@@ -1089,10 +1103,12 @@ EOF;
 		return false;		
 	}
 	
-	protected function project_form($project_id=null) {
+	protected function project_metroForm($project_id=null) {
 	    $db = GetGlobal('db');
 	    $UserName = GetGlobal('UserName');
 		if (!$UserName) return false;
+		
+		$code_id = GetReq('id');
 		
 		//$this->get_friends();
 		if (defined('XIXUSER_DPC')) { 
@@ -1160,7 +1176,219 @@ EOF;
 		    $project_title = null;//$newname;
 			$project_group = 1;
 			$start = date('Y-m-d');	
-			$end = date('Y-m-d',time()+43200); //+1 day
+			$end = date('Y-m-d',mktime(0, 0, 0, date("m")  , date("d")+1, date("Y"))); //+1 day
+			$plan = null;
+			$owner = decode($UserName);
+			$active = 'checked="checked"';
+			$isprivate = 'checked="checked"';
+			$hideusers = 'checked="checked"';			
+			$resclass = '1';
+			$class = '1';
+			$forward = '1';//1 week
+			$type = 'daily';
+			$include = GetReq('id');////null;
+			$exclude = null;
+			$latitude = $ulatitude;
+			$longitude = $ulongitude;			
+			$readonly = null;
+			
+			$inv_js = null;
+		}
+		
+		//$social_inv_button = $this->social_invite_button($inv_js);
+		
+		if (defined('RESERVATIONS_DPC')) {
+			$post_url = '.'; //js call from reservations
+			$method = null;
+		}	
+		else {
+			//$post_url = seturl("t=kshow&cat=".GetReq('cat').'&id='.GetReq('id'),null,null,null,null,true);
+			$post_url = seturl("t=cpcrmshowgant&id=".GetReq('id'));//,null,null,null,null,true);
+			$method = "method='post'";
+		}	
+		
+		$pid = $project_id ? $project_id : '0';//new pid
+
+        //weeks forward combo selector		
+		$cweek = date('W');
+		for($i=1;$i<=(52-$cweek);$i++)
+			$weeks[$i] = $i;
+		$weeks_forward = $this->make_combo('reswforward',$weeks,$forward,'set_project_combo','myf_select_small');
+		//class combo selector
+		$classes = array(0=>localize('_project',getlocal()),
+		                 1=>localize('_important',getlocal()),
+						 2=>localize('_urgent',getlocal()));
+		$project_class = $this->make_combo('class',$classes,$class,'set_project_combo');		
+
+        $form = <<<FORM
+
+	
+		    <div class="row-fluid">
+                <div class="span12">
+                    <div class="widget green">
+                        <div class="widget-title">
+                            <h4><i class="icon-reorder"></i> $project_title </h4>
+							<span id="project_id_span">$pid</span>
+                            <span class="tools">
+                            <!--a href="javascript:;" class="icon-chevron-down"></a-->
+                            <a href="javascript:acalclose();" class="icon-remove"></a>
+                            </span>
+                        </div>
+                        <div class="widget-body">
+						
+						
+	<table>
+	<tr>
+	<td>
+	<form action="$post_url" $method id="project_details_form" autocomplete="off">	
+	<label for="project_start" style='font-weight:bold'>{$start_label}:</label><br/>
+	<input type="text" id="project_start" value="{$start}" {$readonly}><br/>		
+	<label for="project_latitude" style='font-weight:bold'>{$latitude_label}:</label><br>
+	<input type="text" id="project_latitude" value="{$latitude}"><br/>	
+	<label for="project_name" style='font-weight:bold'>{$name_label}:</label><br/>
+	<input type="text" id="project_name" value="{$project_title}"><br/>	
+	<label for="project_owner" style='font-weight:bold'>{$owner_label}:</label><br/>
+	<input type="text" id="project_owner" value="{$owner}"><br/>
+	<label for="project_type" style='font-weight:bold'>{$type_label}:</label><br/>	
+	<input type="text" id="project_type" value="{$type}"><br/>
+	<label for="project_plan" style='font-weight:bold'>{$plan_label}:</label><br/>
+	<input type="text" id="project_plan" value="{$plan}"><br/>	
+	</td>
+	<td>
+	<label for="project_end" style='font-weight:bold'>{$end_label}:</label><br/>
+	<input type="text" id="project_end" value="{$end}"><br/>
+	<label for="project_longitude" style='font-weight:bold'>{$longitude_label}:</label><br>
+	<input type="text" id="project_longitude" value="{$longitude}"><br/>		
+	<label for="project_group" style='font-weight:bold'>{$group_label}:</label><br/>
+	<input type="text" id="project_group" value="{$project_group}"><br/>	
+	<label for="project_include" style='font-weight:bold'>{$include_label}:</label><br/>		
+	<input type="text" id="project_include" value="{$include}"><br/>
+	<label for="project_exclude" style='font-weight:bold'>{$exclude_label}:</label><br/>	
+	<input type="text" id="project_exclude" value="{$exclude}"><br/>	
+	<input type="hidden" name="FormAction" value="acalnew">
+	<input type="hidden" name="project_id" id="project_id" value="{$project_id}">
+	<input type="hidden" name="code_id" id="code_id" value="{$code_id}">	
+	<!--input type="submit" class="btn" value="{$projectset}"-->
+	<input type="button" class="btn" onclick='javascript: save_project_configuration()' value="{$projectset}">
+	<input type="button" class="btn" onclick='javascript: acalclose()' value="{$close}">
+	</form>
+	<p id="project_details_message_p"></p>	
+	</td>
+	<td>
+	{$active_label}:<br/>
+	{$forward_label}:<br/>
+	{$class_label}:<br/>
+	{$resclass_label}:<br/>
+    {$isprivate_label}:<br/>
+	{$hideusers_label}:<br/>
+	<hr/>
+	{$invite_social_label}:<br/>
+	</td>
+	<td>
+	<input type="checkbox" id="project_active" $active ><br/>
+	{$weeks_forward}
+	<!--input type="checkbox" id="project_forward" $forward--><br/>
+	{$project_class}	
+	<!--input type="checkbox" id="project_class" $class--><br/>
+	<input type="checkbox" id="project_resclass" $resclass><br/>
+	<input type="checkbox" id="project_private" $isprivate><br/>
+	<input type="checkbox" id="project_hideusers" $hideusers><br/>
+	<p id="project_details_checkbox_p"></p>
+	<hr/>
+	<input type="button" class="btn btn-small" $inv_js value="{$project_social_invite}">
+	</td>	
+	</tr>
+	</table>							
+						
+                        </div>
+                    </div>
+                </div>
+            </div>		
+	
+
+FORM;
+		return ($form); 
+
+	}
+	
+	protected function project_form($project_id=null) {
+		
+		
+		return ($this->project_metroForm($project_id)); //<<<<<<<<<<<< new metro form
+		
+	    $db = GetGlobal('db');
+	    $UserName = GetGlobal('UserName');
+		if (!$UserName) return false;
+		
+		$code_id = GetReq('id');
+		
+		//$this->get_friends();
+		if (defined('XIXUSER_DPC')) { 
+			$location = GetGlobal('controller')->calldpc_method('xixuser.get_user_location');
+			$xy = explode(',',$location);
+			$ulatitude = $xy[0];
+			$ulongitude = $xy[1];
+		}
+        else {
+			$ulatitude = 0;
+			$ulongitude = 0;		
+        }  
+		//echo $ulatitude,'-',$ulongitude;		
+		
+		$name_label = localize('_pname' ,getlocal());
+		$start_label = localize('_pstart' ,getlocal());
+		$end_label = localize('_pend' ,getlocal());
+		$newname = localize('_newproject',getlocal());
+		$projectset = localize('_setproject',getlocal());
+		$plan_label = localize('_planlabel',getlocal());	
+		$forward_label = localize('_fwlabel',getlocal());
+		$class_label = localize('_classlabel',getlocal());
+		$resclass_label = localize('_resclasslabel',getlocal());
+		$type_label = localize('_typelabel',getlocal());
+		$isprivate_label = localize('_privlabel',getlocal());
+		$hideusers_label = localize('_hideulabel',getlocal());
+		$include_label = localize('_inclabel',getlocal());
+		$exclude_label = localize('_exclabel',getlocal());
+		$active_label = localize('_activelabel',getlocal());
+		$owner_label = localize('_ownerlabel',getlocal());
+		$group_label = localize('_grouplabel',getlocal());			
+		$invite_social_label = localize('_invitelabel',getlocal());
+		$project_social_invite = localize('_invitebutton',getlocal());
+		$close = localize('close',getlocal());
+		$latitude_label = localize('_latitude',getlocal());
+		$longitude_label = localize('_longitude',getlocal());		
+		
+		if ($project_id) {//fetch project
+		
+			$sSQL = "SELECT pid,owner,active,title,start,end,class,resclass,type,plan,reswforward,hideusers,private,include,exclude,latitude,longitude from projects WHERE id=".$project_id;
+			$result = $db->Execute($sSQL,2);
+			//echo $sSQL;
+		    $project_title = $result->fields['title'];
+			$project_group = $result->fields['pid'] ? intval($result->fields['pid']) : 1;
+			$start = $result->fields['start'];	
+			$end = $result->fields['end'];
+			$plan = $result->fields['plan'];
+			$owner = $result->fields['owner'];
+			$active = $result->fields['active'] ? 'checked="checked"' : null;
+			$isprivate = $result->fields['private'] ? 'checked="checked"' : null;
+			$hideusers = $result->fields['hideusers'] ? 'checked="checked"' : null;
+			$resclass = $result->fields['resclass']? 'checked="checked"' : null;
+			$class = $result->fields['class'];
+			$forward = $result->fields['reswforward'];
+			$type = $result->fields['type'];
+			$include = $result->fields['include'];
+			$exclude = $result->fields['exclude'];
+			$latitude = $result->fields['latitude'] ? $result->fields['latitude'] : $ulatitude ;
+			$longitude = $result->fields['longitude'] ? $result->fields['longitude'] : $ulongitude;
+            $readonly = 'readonly';		
+
+			$inv_js = "onclick='javascript: social_invitation(\"{$project_title}\",\"{$start} {$end}\",\"{$plan}\")'";	
+		}
+		else {
+		    $project_title = null;//$newname;
+			$project_group = 1;
+			$start = date('Y-m-d');	
+			$end = date('Y-m-d',mktime(0, 0, 0, date("m")  , date("d")+1, date("Y"))); //+1 day
 			$plan = null;
 			$owner = decode($UserName);
 			$active = 'checked="checked"';
@@ -1207,9 +1435,9 @@ EOF;
         $form = <<<FORM
 	<div class="navigation">
 	<div class="title" >
-	<label for="project_id">ID:</label>
+	<!--label for="project_id">ID:</label-->
 	<span id="project_id_span">$pid</span>
-	<label for="project_title">&nbsp;$project_title</label>
+	<label id="project_title" for="project_title">$project_title</label>
 	</div>
 	</div>
 	<table>
@@ -1242,6 +1470,7 @@ EOF;
 	<input type="text" id="project_exclude" value="{$exclude}"><br/>	
 	<input type="hidden" name="FormAction" value="acalnew">
 	<input type="hidden" name="project_id" id="project_id" value="{$project_id}">	
+	<input type="hidden" name="code_id" id="code_id" value="{$code_id}">
 	<!--input type="submit" class="btn" value="{$projectset}"-->
 	<input type="button" class="btn" onclick='javascript: save_project_configuration()' value="{$projectset}">
 	<input type="button" class="btn" onclick='javascript: acalclose()' value="{$close}">

@@ -648,7 +648,7 @@ function toggle_reservation_time(id, week, day, time, from, iproject)
 		});
 		
 		//socialize
-		$.get('{$ajaxurl}is_social', function(data) {
+		/*$.get('{$ajaxurl}is_social', function(data) {
 		
 		    if (data == 1) {
 			    var descr = $('#project_title_span').html(); 
@@ -658,7 +658,7 @@ function toggle_reservation_time(id, week, day, time, from, iproject)
 				  setTimeout(function() { social_post(descr,'{$insert_res}',details+iurl); }, 2000);
 				}); 
 			}	
-		});	
+		});	*/
 	}
 	else
 	{
@@ -710,7 +710,7 @@ function toggle_reservation_time(id, week, day, time, from, iproject)
 		}
 		
 		//..socialize
-		$.get('{$ajaxurl}is_social', function(data) {
+		/*$.get('{$ajaxurl}is_social', function(data) {
 		
 		    if (data == 1) {
 			    var descr = $('#project_title_span').html(); 
@@ -720,7 +720,7 @@ function toggle_reservation_time(id, week, day, time, from, iproject)
 				  setTimeout(function() { social_post(descr,'{$remove_res}',details+iurl); }, 1000);
 				}); 
 			}					
-		});			
+		});	*/		
 	}
 	
 };

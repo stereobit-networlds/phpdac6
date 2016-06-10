@@ -28,6 +28,7 @@ $__LOCALE['RCCRMPLUS_DPC'][6]='_crmplist;List;Λίστα';
 $__LOCALE['RCCRMPLUS_DPC'][7]='_crmpgant;Gantt;Διάγραμμα';
 $__LOCALE['RCCRMPLUS_DPC'][8]='_projects;Projects;Πλάνο';
 $__LOCALE['RCCRMPLUS_DPC'][9]='_since;Since;Απο';
+$__LOCALE['RCCRMPLUS_DPC'][10]='_newproject;New;Νέο';
 
 
 class rccrmplus extends rccrm  {
@@ -80,9 +81,9 @@ class rccrmplus extends rccrm  {
 		$turl1 = seturl('t=cpcrmplus&mode=crmpgant');
 		$turl2 = seturl('t=cpcrmplus&mode=crmplist');
 		$button = $this->createButton(localize('_projects', getlocal()), 
-										array('New/Edit'=>$turl0,
-										      'Gant'=>$turl1,
-											  'List'=>$turl2,
+										array(localize('_newproject', getlocal())=>$turl0,
+										      localize('_crmpgant', getlocal())=>$turl1,
+											  localize('_crmplist', getlocal())=>$turl2,
 		                                ),'success');		
 		
 										
