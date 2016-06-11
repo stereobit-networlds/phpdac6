@@ -12,6 +12,7 @@ $__EVENTS['RCDYNSQL_DPC'][2]='cpsqlsave';
 $__EVENTS['RCDYNSQL_DPC'][3]='cpdynview';
 $__EVENTS['RCDYNSQL_DPC'][4]='cptransviewhtml';
 $__EVENTS['RCDYNSQL_DPC'][5]='cploadframe';
+$__EVENTS['RCDYNSQL_DPC'][6]='cpsqlrun';
 
 $__ACTIONS['RCDYNSQL_DPC'][0]='cpdynsql';
 $__ACTIONS['RCDYNSQL_DPC'][1]='cpsqlshow';
@@ -19,6 +20,7 @@ $__ACTIONS['RCDYNSQL_DPC'][2]='cpsqlsave';
 $__ACTIONS['RCDYNSQL_DPC'][3]='cpdynview';
 $__ACTIONS['RCDYNSQL_DPC'][4]='cptransviewhtml';
 $__ACTIONS['RCDYNSQL_DPC'][5]='cploadframe';
+$__ACTIONS['RCDYNSQL_DPC'][6]='cpsqlrun';
 
 $__DPCATTR['RCDYNSQL_DPC']['cpdynsql'] = 'cpdynsql,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -32,6 +34,7 @@ $__LOCALE['RCDYNSQL_DPC'][6]='_SQL;SQL Query;SQL Query';
 $__LOCALE['RCDYNSQL_DPC'][7]='_xdate;X Date;X Date';
 $__LOCALE['RCDYNSQL_DPC'][8]='_ref;Reference;Reference';
 $__LOCALE['RCDYNSQL_DPC'][9]='_sqlres;Res;Res';
+$__LOCALE['RCDYNSQL_DPC'][10]='_sqlrun;Run;Run';
 
 
 class rcdynsql {
@@ -71,6 +74,9 @@ class rcdynsql {
 	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
+	     case 'cpsqlrun'   : $this->run_sql(); 
+					         echo $this->form(GetParam('tid')); die();
+		                     break;		   
 	     case 'cpsqlsave'  : $this->save_sql_file(); 
 					         echo $this->form(GetParam('tid')); die();
 		                     break;	   
@@ -98,7 +104,8 @@ class rcdynsql {
 	  $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	  if ($login!='yes') return null;	
 	 
-	  switch ($action) {	  
+	  switch ($action) {	 
+         case 'cpsqlrun'   :	  
 	     case 'cpsqlsave'  : //die($this->save_sql()); 
 		                     break;
 		 case 'cpdynview'  : break;
@@ -162,28 +169,20 @@ class rcdynsql {
 				                  "'".localize('1',getlocal())."',".
 								  "'".localize('0',getlocal())."') as s";								  
 		
+			if ($this->isDemoUser()) //search capabilities when where only in superivisor
+				$where =  "where i.reference NOT LIKE 'system' and reference NOT LIKE 'cron'";
 
-
-			$xsSQL2 = "SELECT * FROM (SELECT i.id,i.fid,i.time,i.date,i.execdate,i.status,i.sqlres,REPLACE(i.reference,'{$this->path}','') as reference FROM syncsql i where i.reference NOT LIKE 'system' and reference NOT LIKE 'cron') x";
+			$xsSQL2 = "SELECT * FROM (SELECT i.id,i.fid,i.time,i.date,i.execdate,i.status,i.sqlres,REPLACE(i.reference,'{$this->path}','') as reference FROM syncsql i $where) x";
 				//echo $xsSQL2;
 
 			//$out.= $xsSQL2;
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('id',getlocal())."|5|1|");
             GetGlobal('controller')->calldpc_method("mygrid.column use grid2+fid|".localize('fid',getlocal())."|link|5|"."javascript:show_body({id});".'||');
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+time|".localize('_date',getlocal())."|date|0|");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+date|".localize('_date',getlocal())."|5|0|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+execdate|".localize('_xdate',getlocal())."|5|0|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+status|".localize('_status',getlocal())."|5|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tdate|".localize('_status',getlocal())."|boolean|1|EXECUTED:INSERTED");			
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tdate|".localize('_date',getlocal())."|date|0|");
-		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ttime|".localize('_time',getlocal())."|9|0|");	
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|5|0|||||right");	
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|link|10|"."javascript:show_body({tid});".'||');
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+sqlres|".localize('_sqlres',getlocal())."|10|1|");			
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+reference|".localize('_ref',getlocal())."|10|1|");
-	        //GetGlobal('controller')->calldpc_method("mygrid.column use grid2+qty|".localize('_qty',getlocal())."|5|0|||||right");				
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cost|".localize('_cost',getlocal())."|5|0|||||right");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
 			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+syncsql+$xsSQL2+r+".localize('RCDYNSQL_DPC',getlocal())."+id+1+1+17+400+$x+0+1+1");
 
 	    }
@@ -224,28 +223,58 @@ class rcdynsql {
        if (GetParam('tid'))
 			return (GetParam('sqlcmd'));	
 		
-	} 	
+	} 
+
+	protected function run_sql() {
+		$db = GetGlobal('db'); 
+		if (!$id=GetParam('tid')) return;
+		$sql = "select sqlquery from syncsql where id=".$id;
+		$result = $db->Execute($sql);
+		
+		if ($query = $result->fields[0]) {
+			$result = $db->Execute($query);
+		}
+
+		return (true);
+	}
+	
 	
 	
     protected function form($id=null)  { 
 	   $readonly = $this->isDemoUser() ? 'readonly' : null; 
-       $filename = seturl("t=cpsqlsave&editmode=".GetReq('editmode'));      
-    
-       $toprint  = "<FORM action=". "$filename" . " method=post>";
-       $toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1>";
+       $filename = seturl("t=cpsqlsave");      
+	   $filename2 = seturl("t=cpsqlrun");
 	   
-       $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"sqlcmd\" ROWS=18 cols=60 wrap=\"virtual\" $readonly>";
+   
+       //show/update qry form
+       $toprint = "<FORM action=". "$filename" . " method=post>";
+       $toprint .= "<FONT face=\"Arial, Helvetica, sans-serif\" size=1>";
+	   
+       $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"sqlcmd\" ROWS=14 cols=60 wrap=\"virtual\" $readonly>";
 	   $toprint .=  $this->load_sql_file($id);		 
        $toprint .= "</TEXTAREA></DIV><br>";	   
 	   
        if (!$this->isDemoUser()) { 
+			if ($_POST['sqlcmd']) $toprint .= 'Saved';
 			$toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"savesql\">"; 
 			$toprint .= "<input type=\"hidden\" name=\"tid\" value=\"".$id."\">";
 			$toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_savesql',getlocal()) . "\">&nbsp;";  
-			$toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpsqlsave" . "\">";
+			$toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"cpsqlsave\">";
 	   }	
 	   	    
        $toprint .= "</FONT></FORM>"; 
+	   
+	   //run query form
+       if (!$this->isDemoUser()) { 
+			if ($_POST['tid']) $toprint .= 'Executed';
+	        $toprint .= "<FORM action=". "$filename2" . " method=post>";
+			$toprint .= "<FONT face=\"Arial, Helvetica, sans-serif\" size=1>";
+			$toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"runsql\">"; 
+			$toprint .= "<input type=\"hidden\" name=\"tid\" value=\"".$id."\">";
+			$toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_sqlrun',getlocal()) . "\">&nbsp;";  
+			$toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"cpsqlrun\">";				
+			$toprint .= "</FONT></FORM>"; 
+   	   }	   
 
        return ($toprint);
     }		
@@ -253,7 +282,7 @@ class rcdynsql {
 	
 	function loadframe($ajaxdiv=null) {
 	    $bodyurl = seturl("t=cpdynview&tid=").GetReq('tid');
-		$frame = "<html><head></head><iframe src =\"$bodyurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe></html>";    
+		$frame = "<html><head></head><iframe src =\"$bodyurl\" width=\"100%\" height=\"300px\"><p>Your browser does not support iframes</p></iframe></html>";    
 
 		//$iframe = $this->form(GetReq('tid'));
 		

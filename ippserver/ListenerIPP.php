@@ -801,7 +801,15 @@ class IPPlistener extends ServerIPP {
 		    //quota failure...client not responding with auth error, just the job is not processing
 		    $this->setAttribute('status-message','Not allowed to print');
             $status = $this->setStatusCode('client-error-not-authorized');
-			return ($status);		
+			
+			return ($status);	
+						
+			/*
+			//delete jobs
+			self::delete_user_jobs($this->username);
+			//reset quota 
+			self::reset_user_quota($this->username, $this->printer_name);
+			*/				
 		}
 		else { //send warning mail
 		   
@@ -968,6 +976,16 @@ class IPPlistener extends ServerIPP {
 				$this->printer_is_accepting_jobs = false;
 				$printer_state_reasons = 'media-empty';
 				$printer_state_message = 'Media Empty';
+				/*
+				$this->printer_is_accepting_jobs = true; 
+				$printer_state_reasons = 'none';
+				$printer_state_message = 'Ready to Print';	
+				
+				//delete jobs
+				self::delete_user_jobs($this->username);
+				//reset quota 
+				self::reset_user_quota($this->username, $this->printer_name);
+				*/
 			}	 
 			else {
 				$this->printer_is_accepting_jobs = true; 
@@ -2281,8 +2299,10 @@ class IPPlistener extends ServerIPP {
 	
 	protected function get_user_quota($user=null,$printer=null) {
 	    $pname = $printer ? $printer : $this->printer_name;
-		$puser = $user ? FILE_DELIMITER.$user : FILE_DELIMITER.$this->username;
-		$qfile = $pname.$puser.'.quota';
+		//$puser = $user ? FILE_DELIMITER.$user : FILE_DELIMITER.$this->username;
+		//$qfile = $pname.$puser.'.quota';
+		$puser = $user ? $user : $this->username;
+		$qfile = $puser . '.quota';
 	
         if ($quota = @file_get_contents($this->admin_path . $qfile)) {
 		    return (intval($quota)); 
@@ -2293,25 +2313,95 @@ class IPPlistener extends ServerIPP {
 	
 	protected function set_user_quota($quota=null,$user=null,$printer=null) {
 	    $pname = $printer ? $printer : $this->printer_name;
-		$puser = $user ? FILE_DELIMITER.$user : FILE_DELIMITER.$this->username;
-		$qfile = $pname.$puser.'.quota';
+		//$puser = $user ? FILE_DELIMITER.$user : FILE_DELIMITER.$this->username;
+		//$qfile = $pname.$puser.'.quota';
+		$puser = $user ? $user : $this->username;
+		$qfile = $puser . '.quota';		
+		
 		$quota = $quota ? $quota : 1;
 		$ret = false;
-		
-		//$file = $this->printers_path . $qfile;
 	
-        if ($prev_quota = @file_get_contents($this->admin_path . $qfile)) {
+        //if ($prev_quota = @file_get_contents($this->admin_path . $qfile)) {
+		if ($prev_quota = $this->get_user_quota($user, $printer)) {	
 		
-		    $new_quota = intval($prev_quota) + intval($quota);
-		    $ret = @file_put_contents($file, $new_quota , LOCK_EX);
+		    $new_quota = strval($prev_quota+$quota);//intval($prev_quota) + intval($quota);
+		    $ret = @file_put_contents($this->admin_path . $qfile, $new_quota , LOCK_EX);
 		
+			//self::write2disk('quota.log',"\r\n".date('Y-m-d H:i:s')." ($user):$prev_quota > $new_quota\r\n");
 		    return ($new_quota); 
         }
 		else
-		   $ret = @file_put_contents($this->admin_path . $qfile, $quota, LOCK_EX);
+		   $ret = @file_put_contents($this->admin_path . $qfile, 1, LOCK_EX);
+	   
+	    self::write2disk('quota.log',"\r\n".date('Y-m-d H:i:s')." ($user):0 > 1\r\n");
         
         return ($ret); 		
+	}
+
+	protected function reset_user_quota($user=null,$printer=null) {
+	    $pname = $printer ? $printer : $this->printer_name;
+		$puser = $user ? $user : $this->username;
+		$qfile = $puser . '.quota';
+	
+        if (is_readable($this->admin_path . $qfile)) {
+			
+			@unlink($this->admin_path . $qfile);
+		    return true; 
+        }
+        
+        return false; 
 	}	
+	
+	protected function delete_user_jobs($user=null, $which_jobs=null) {
+	    if (!is_dir($this->jobs_path))
+		  return false;
+	  
+	    $user = $user ? $user : $this->username;
+	
+        $mydir = dir($this->jobs_path);	
+		$i=0;		
+        while ($fileread = $mydir->read ()) { 
+		    if (substr($fileread,0,4)=='job'.FILE_DELIMITER) {
+			
+                $i+=1;
+                $pf = explode(FILE_DELIMITER,$fileread);
+                $jid = $pf[1];//sort
+				$job_owner = $pf[3];
+											 
+			    //switch depending on request attr
+			    switch ($which_jobs) {
+				
+				    case 'completed'     : if (($my_jobs) && ($user) && ($job_owner!=$user))
+					                         break;
+                                           elseif (stristr($fileread,FILE_DELIMITER.'completed')) {
+				                             $jobs[intval($jid)] = $fileread;		
+                                           } 					
+					                       break;	
+					case 'all'           : 			    
+				    default              : if (($my_jobs) && ($user) && ($job_owner!=$user))
+					                         break;
+										   elseif ((stristr($fileread,FILE_DELIMITER.'completed')==false) &&
+           										   (stristr($fileread,FILE_DELIMITER.'deleted')==false) &&
+												   (stristr($fileread,FILE_DELIMITER.'canceled')==false)
+												   ){ 
+				                             $jobs[intval($jid)] = $fileread;
+				                           } 
+				}						   
+			}
+	    }
+		
+        $mydir->close ();	
+			 
+		if (!empty($jobs)) {
+			//DELETE JOB FILES	
+			foreach($jobs as $j=>$jfile)
+				@unlink($this->jobs_path . $jfile);
+				
+			return true;	
+		}
+		
+		return false;	
+	}		
 	
     protected function get_printer_admin() {
 	
@@ -2328,25 +2418,9 @@ class IPPlistener extends ServerIPP {
 	protected function mail_printer_limit($timesleft=null) {
 	    $tdiff = $timesleft ? $timesleft : 0;
 	    $pname = str_replace('.printer','',$this->printer_name);
-		
-		/*$listvar = $pname."_listmail";					
-		//@file_put_contents($this->admin_path.'quota_listvar.txt',$listvar.PHP_EOL);
-		
-		//read mail list file
-		if (is_readable($this->admin_path."$pname-listmail.php")) {
-
-			include($this->admin_path."$pname-listmail.php");
-		    //@file_put_contents($this->admin_path.'quota_listmail.txt',var_export(${$listvar},1).PHP_EOL);			
-		}	
-		else
-			return false; //no mail	*/
 			
-		//if (array_key_exists($this->username, ${$listvar})) {	
-		if ($this->_checkmail($this->username)) {//(strstr($this->username, '@')) { //username is mail addr
+		if ($this->_checkmail($this->username)) {
 	
-	        //$mail = ${$listvar}[$this->username];
-	        //@file_put_contents($this->admin_path.'quota_sendmail.txt',$mail);  
-			
 			//send mail
 			$sendermail = $this->printer_name . '@' . str_replace('www.','',$_ENV["HTTP_HOST"]);
             $from = $this->printer_name . " service <".$sendermail.">"; 			
@@ -2371,6 +2445,8 @@ class IPPlistener extends ServerIPP {
     protected function _sendmail($from=null,$to=null,$subject=null,$body=null,$mailfile=null) {
 	    ini_set("SMTP","localhost");//"smtp.example.com" ); 
         ini_set('sendmail_from', $from);//'user@example.com'); 
+		
+		//return true; //!!!!!!!!!!! DISABLED !!!!!!!!!!!!!!1
        
 	    if (!$to)
             return false;		
@@ -2397,7 +2473,8 @@ class IPPlistener extends ServerIPP {
 		$ret = @mail($to,$subject,$message,$headers);
 						
 	    return ($ret);					
-    }	
+    }		
+	
 	
 	
 	//periodically executed funcs

@@ -1096,7 +1096,7 @@ EOF;
 	
 	    /*datetime::ISO8601*/
 	    if ($tstamp) 
-			$ret = date('d-m-Y', strtotime(date('Y',$tstamp)."W".date('W',$tstamp).$d));
+			$ret = date('d-m-Y', strtotime(date('Y',$tstamp)."W".date('W',$tstamp).$d)); //<<string
 		else {//..error date when next prev..solved	
 			$ww = sprintf('%02d',$weekNum);
 			$ret = date('d-m-Y', strtotime("{$y}W{$ww}{$d}"));
@@ -1149,7 +1149,7 @@ EOF;
 		$tstamp = GetReq('istamp') ? GetReq('istamp') : null;
 		
 	    if ($tstamp) 
-			$sdate = date('Y-m-d', strtotime(date('Y',$tstamp)."W".date('W',$tstamp).$d));
+			$sdate = date('Y-m-d', strtotime(date('Y',$tstamp)."W".date('W',$tstamp).$d)); //<<< string
 		else {//..error date when no tstamp ..solved sprintf 2 digits	
 		    $ww = sprintf('%02d',$weekNum);
 			$sdate = date('Y-m-d', strtotime("{$y}W{$ww}{$d}"));

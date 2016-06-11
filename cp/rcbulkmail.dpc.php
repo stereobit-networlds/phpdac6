@@ -705,7 +705,7 @@ class rcbulkmail {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+mailstatus|".localize('_mailstatus',getlocal()).'|2|1');	
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+cid|".localize('_cid',getlocal())."|link|5|"); 
 			
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+16+400++0+1+1");
 			
 			//mail body ajax renderer
 			$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
@@ -739,7 +739,7 @@ class rcbulkmail {
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_code',getlocal()).'|10|1');
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_category',getlocal()).'|30|1');			
 			
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+16+400++0+1+1");
 			
 			//mail body ajax renderer
 			$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
@@ -772,12 +772,12 @@ class rcbulkmail {
 		   //echo $sSQL;
 		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_ID',getlocal()));
            GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_SUBMAIL',getlocal()).'|10|1');
-           GetGlobal('controller')->calldpc_method("mygrid.column use grid1+startdate|".localize('_SUBDATE',getlocal()).'|date|0');		   
+           GetGlobal('controller')->calldpc_method("mygrid.column use grid1+startdate|".localize('_SUBDATE',getlocal()).'|10|0');		   
            GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_FNAME',getlocal()).'|20|1');	
 		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_ACTIVE',getlocal()).'|boolean|1');	
 		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+failed|".localize('_FAILED',getlocal()).'|5|1');	
 		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+listname|".localize('_LISTNAME',getlocal()).'|20|1');	
-		   $out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ulists+$sSQL+d+$ulistname+id+0+1+20+400++0+1+1");
+		   $out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ulists+$sSQL+d+$ulistname+id+0+1+12+320++0+1+1");
 
 		}	
 		
@@ -2689,13 +2689,13 @@ This email and any files transmitted with it are confidential and intended solel
 		    //echo $sSQL;
 
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|date|1');		   
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|10|1');		   
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_receiver',getlocal()).'|10|1');
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+title|".localize('_campaign',getlocal()).'|20|1');	
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_code',getlocal()).'|10|1');
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_category',getlocal()).'|20|1');			
 
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+16+400++0+1+1");
 			
 			//mail body ajax renderer
 			$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");

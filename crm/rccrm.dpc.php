@@ -91,6 +91,8 @@ class rccrm  {
 
     var $title, $path, $urlpath;
 	var $seclevid, $userDemoIds;
+	
+	var $crmplus;
 		
 	function __construct() {
 	
@@ -100,6 +102,8 @@ class rccrm  {
 	  
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); 		  
+		
+		$this->crmplus = false; /*must be loaded in php script to enable plus tree*/
 	}
 	
     function event($event=null) {
@@ -449,6 +453,26 @@ class rccrm  {
 		if (!$user) return false;		
 		
 		$id = GetReq('id') ? "&id=" . $user : null ;
+		$this->crmplus = (defined('CRMPLUS_DPC')) ? true : false; 
+		
+		$crmplustree = $this->crmplus ? '
+										<li>
+											<a data-value="gh_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Plus</a>
+                                            <ul class="branch">
+											<li><a href="#">Actions</a></li>
+                                            <li><a href="javascript:subdetails(\'plus'.$id.'\')">Projects</a></li>
+                                            <li>
+                                                <a data-value="GitHub_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Automations</a>
+                                                <ul class="branch">
+                                                    <li><a href="#">Events</a></li>
+                                                    <li><a href="#">Users</a></li>
+                                                    <li><a href="#">Feedbacks</a></li>
+                                                    <li><a href="#">Reports</a></li>
+                                                    <li><a href="#">Sales</a></li>
+                                                    <li><a href="#">Revenue</a></li>
+                                                </ul>
+                                            </li></ul>
+                                        </li>' : null;		
 		
 		$ret = '	
                             <!--div class="actions">
@@ -466,24 +490,8 @@ class rccrm  {
                                         <li><a data-role="leaf" href="javascript:subdetails(\'transactions'.$id.'\')"><i class=" icon-bullhorn"></i> Sales</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'tasks'.$id.'\')"><i class="icon-tasks"></i> Tasks</a></li>
 										<li><a data-role="leaf" href="javascript:subdetails(\'stats'.$id.'\')"><i class="icon-share"></i> Stats</a></li>
-										<li>
-											<a data-value="gh_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Actions</a>
-                                            <ul class="branch">
-											<li><a href="#">New</a></li>
-                                            <li><a href="#">View</a></li>
-                                            <li>
-                                                <a data-value="GitHub_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Automations</a>
-                                                <ul class="branch">
-                                                    <li><a href="#">Events</a></li>
-                                                    <li><a href="#">Users</a></li>
-                                                    <li><a href="#">Feedbacks</a></li>
-                                                    <li><a href="#">Reports</a></li>
-                                                    <li><a href="#">Sales</a></li>
-                                                    <li><a href="#">Revenue</a></li>
-                                                </ul>
-                                            </li></ul>
-                                        </li>										
-										
+											
+										'.$crmplustree.'		
 										<li>
                                             <a id="nut3" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
                                                 Templates

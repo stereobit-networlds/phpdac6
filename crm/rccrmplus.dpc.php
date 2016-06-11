@@ -21,14 +21,29 @@ $__LOCALE['RCCRMPLUS_DPC'][0]='RCCRMPLUS_DPC;Crm Plus;Crm Plus';
 $__LOCALE['RCCRMPLUS_DPC'][1]='_date;Date;Ημερ.';
 $__LOCALE['RCCRMPLUS_DPC'][2]='_time;Time;Ώρα';
 $__LOCALE['RCCRMPLUS_DPC'][3]='_status;Status;Κατάσταση';
-$__LOCALE['RCCRMPLUS_DPC'][4]='_user;User;Πελάτης';
-$__LOCALE['RCCRMPLUS_DPC'][5]='_cid;cid;cid';
-
+$__LOCALE['RCCRMPLUS_DPC'][4]='_owner;Owner;Καταχώρητης';
+$__LOCALE['RCCRMPLUS_DPC'][5]='_pid;pid;pid';
 $__LOCALE['RCCRMPLUS_DPC'][6]='_crmplist;List;Λίστα';
 $__LOCALE['RCCRMPLUS_DPC'][7]='_crmpgant;Gantt;Διάγραμμα';
 $__LOCALE['RCCRMPLUS_DPC'][8]='_projects;Projects;Πλάνο';
 $__LOCALE['RCCRMPLUS_DPC'][9]='_since;Since;Απο';
 $__LOCALE['RCCRMPLUS_DPC'][10]='_newproject;New;Νέο';
+$__LOCALE['RCCRMPLUS_DPC'][11]='_title;Title;Τίτλος';
+$__LOCALE['RCCRMPLUS_DPC'][12]='_descr;Description;Περιγραφή';
+$__LOCALE['RCCRMPLUS_DPC'][13]='_cat;Category;Κατηγορία';
+$__LOCALE['RCCRMPLUS_DPC'][14]='_start;Start;Εκκίνηση';
+$__LOCALE['RCCRMPLUS_DPC'][15]='_end;End;Λήξη';
+$__LOCALE['RCCRMPLUS_DPC'][16]='_class;Class;Κλάση';
+$__LOCALE['RCCRMPLUS_DPC'][17]='_resclass;rClass;rΚλάση';
+$__LOCALE['RCCRMPLUS_DPC'][18]='_hideusers;Hide;Hide';
+$__LOCALE['RCCRMPLUS_DPC'][19]='_plan;Plan;Πλάνο';
+$__LOCALE['RCCRMPLUS_DPC'][20]='_reswforward;rForward;rForward';
+$__LOCALE['RCCRMPLUS_DPC'][21]='_include;Include;Συμπεριέλαβε';
+$__LOCALE['RCCRMPLUS_DPC'][22]='_exclude;Exclude;Απέκλεισε';
+$__LOCALE['RCCRMPLUS_DPC'][23]='_invsend;iSend;iSend';
+$__LOCALE['RCCRMPLUS_DPC'][24]='_remsend;rSend;rSend';
+$__LOCALE['RCCRMPLUS_DPC'][25]='_closed;Closed;Έκλεισε';
+$__LOCALE['RCCRMPLUS_DPC'][26]='_private;Private;Ιδιωτικό';
 
 
 class rccrmplus extends rccrm  {
@@ -218,6 +233,34 @@ class rccrmplus extends rccrm  {
 		
 		return ($out);  	
 	}	
+	
+	//override
+	/*
+	protected function window($title, $buttons, $content) {
+		$ret = '	
+		    <div id="content_div"></div> <!--reservation div (view error)-->
+		    <div class="row-fluid">
+                <div class="span12">
+                  <div class="widget red">
+                        <div class="widget-title">
+                           <h4><i class="icon-reorder"></i> '.$title.'</h4>
+                           <span class="tools">
+                               <a href="javascript:;" class="icon-chevron-down"></a>
+                           </span>
+                        </div>
+                        <div class="widget-body">
+							<div class="btn-toolbar">
+							'. $buttons .'
+							<hr/><div id="crmdetails"></div>
+							</div>
+							'.  $content .'
+                        </div>
+                  </div>
+                </div>
+            </div>
+';
+		return ($ret);
+	}	*/	
 	
 };
 }
