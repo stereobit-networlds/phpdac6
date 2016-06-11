@@ -799,17 +799,19 @@ class IPPlistener extends ServerIPP {
 		    //self::write2disk('_qqq.log','USER:'.$quota."\r\n".'PRINTER QUOTA:'.$this->printer_use_quota."\r\n");
 		
 		    //quota failure...client not responding with auth error, just the job is not processing
+			
+			/* DISABLE RESTICTION
 		    $this->setAttribute('status-message','Not allowed to print');
             $status = $this->setStatusCode('client-error-not-authorized');
 			
 			return ($status);	
-						
-			/*
+			*/			
+			
 			//delete jobs
 			self::delete_user_jobs($this->username);
 			//reset quota 
 			self::reset_user_quota($this->username, $this->printer_name);
-			*/				
+							
 		}
 		else { //send warning mail
 		   
@@ -976,16 +978,6 @@ class IPPlistener extends ServerIPP {
 				$this->printer_is_accepting_jobs = false;
 				$printer_state_reasons = 'media-empty';
 				$printer_state_message = 'Media Empty';
-				/*
-				$this->printer_is_accepting_jobs = true; 
-				$printer_state_reasons = 'none';
-				$printer_state_message = 'Ready to Print';	
-				
-				//delete jobs
-				self::delete_user_jobs($this->username);
-				//reset quota 
-				self::reset_user_quota($this->username, $this->printer_name);
-				*/
 			}	 
 			else {
 				$this->printer_is_accepting_jobs = true; 
@@ -2333,7 +2325,7 @@ class IPPlistener extends ServerIPP {
 		else
 		   $ret = @file_put_contents($this->admin_path . $qfile, 1, LOCK_EX);
 	   
-	    self::write2disk('quota.log',"\r\n".date('Y-m-d H:i:s')." ($user):0 > 1\r\n");
+	    //self::write2disk('quota.log',"\r\n".date('Y-m-d H:i:s')." ($user):0 > 1\r\n");
         
         return ($ret); 		
 	}
@@ -2371,26 +2363,21 @@ class IPPlistener extends ServerIPP {
 			    //switch depending on request attr
 			    switch ($which_jobs) {
 				
-				    case 'completed'     : if (($my_jobs) && ($user) && ($job_owner!=$user))
-					                         break;
-                                           elseif (stristr($fileread,FILE_DELIMITER.'completed')) {
-				                             $jobs[intval($jid)] = $fileread;		
-                                           } 					
+				    case 'completed'     : if ((stristr($job_owner, $user)) &&
+					                           (stristr($fileread,FILE_DELIMITER.'completed'))) 
+													$jobs[intval($jid)] = $fileread;		
 					                       break;	
 					case 'all'           : 			    
-				    default              : if (($my_jobs) && ($user) && ($job_owner!=$user))
-					                         break;
-										   elseif ((stristr($fileread,FILE_DELIMITER.'completed')==false) &&
-           										   (stristr($fileread,FILE_DELIMITER.'deleted')==false) &&
-												   (stristr($fileread,FILE_DELIMITER.'canceled')==false)
-												   ){ 
-				                             $jobs[intval($jid)] = $fileread;
-				                           } 
+				    default              : if (stristr($job_owner, $user))
+												$jobs[intval($jid)] = $fileread;
+				                           
 				}						   
 			}
 	    }
 		
-        $mydir->close ();	
+        $mydir->close ();
+		
+		//self::write2disk('deletejobs.log',"\r\n".date('Y-m-d H:i:s')." ($user):\r\n".print_r($jobs, true)."\r\n");	
 			 
 		if (!empty($jobs)) {
 			//DELETE JOB FILES	
@@ -2446,11 +2433,11 @@ class IPPlistener extends ServerIPP {
 	    ini_set("SMTP","localhost");//"smtp.example.com" ); 
         ini_set('sendmail_from', $from);//'user@example.com'); 
 		
-		//return true; //!!!!!!!!!!! DISABLED !!!!!!!!!!!!!!1
+		return true; //!!!!!!!!!!! DISABLED !!!!!!!!!!!!!!1
        
 	    if (!$to)
             return false;		
-	    $to = 'b.alexiou@stereobit.gr'; //$to ? $to : 'b.alexiou@stereobit.gr';
+	    $to = $to ? $to : 'b.alexiou@stereobit.gr';
 		
 		if ($mailfile) 
 		    $body = file_get_contents($mailfile); 
