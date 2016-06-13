@@ -168,6 +168,8 @@ $__LOCALE['RCPMENU_DPC'][156]='_backup;Backup;Backup';
 $__LOCALE['RCPMENU_DPC'][157]='_blacklist;IP Blacklist;Εξαιρέσεις IP';
 $__LOCALE['RCPMENU_DPC'][158]='_crm;Crm;Crm';
 $__LOCALE['RCPMENU_DPC'][159]='_crmplus;Plus;Plus';
+$__LOCALE['RCPMENU_DPC'][160]='_crmforms;Forms;Φόρμες';
+$__LOCALE['RCPMENU_DPC'][161]='_itemqpolicy;Qty policy;Ποσοτικές εκπτώσεις';
 	   
 class rcpmenu {
 

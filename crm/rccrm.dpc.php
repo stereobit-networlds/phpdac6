@@ -497,7 +497,7 @@ class rccrm  {
                                                 Templates
                                             </a>
                                             <ul class="branch">
-                                                <li><a data-role="leaf" href="#"><i class="icon-cloud"></i> New</a></li>
+                                                <li><a data-role="leaf" href="javascript:subdetails(\'forms'.$id.'\')"><i class="icon-cloud"></i> Forms</a></li>
                                                 <li><a data-role="leaf" href="#"><i class="icon-user-md"></i> Attach</a></li>
                                                 <li><a data-role="leaf" href="#"><i class="icon-retweet"></i> View</a></li>
                                             </ul>

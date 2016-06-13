@@ -189,11 +189,11 @@ class rccron  {
         $filename = seturl("t=cpjobcodesave");//&id=".$id);  
         $readonly = $this->isDemoUser() ? 'readonly' : null;  		
     
-        $toprint  = "<FORM action=". "$filename" . " method=post>";
+        $toprint  = "<FORM id=\"form1\" action=". "$filename" . " method=post>";
         $toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1>";	   
-        $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"jobcmd\" ROWS=14 cols=60 wrap=\"virtual\" $readonly>"; 
+        $toprint .= "<DIV class=\"monospace\"><TEXTAREA wrap='virtual' id='crondata' style=\"width:100%\" NAME=\"jobcmd\" ROWS=15 cols=60 wrap=\"virtual\" $readonly>"; 
 	    $toprint .=  $this->load_job_code($id);		 
-        $toprint .= "</TEXTAREA></DIV><br>";	   
+        $toprint .= "</TEXTAREA></DIV>";	   
 	   
         if (!$this->isDemoUser()) {
 			$toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"savejobcode\">"; 
