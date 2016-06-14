@@ -12,12 +12,12 @@ require_once($d);
 
 GetGlobal('controller')->get_parent('JSDIALOG_DPC','JSDIALOGSTREAM_DPC');
 
-$__EVENTS['JSDIALOGSTREAM_DPC'][4]='jsdialog';
+$__EVENTS['JSDIALOGSTREAM_DPC'][4]='jsdialogstream';
 $__EVENTS['JSDIALOGSTREAM_DPC'][5]='jsdtime';
 //$__EVENTS['JSDIALOGSTREAM_DPC'][6]='jsno';
 //$__EVENTS['JSDIALOGSTREAM_DPC'][7]='jscancel';
 
-$__ACTIONS['JSDIALOGSTREAM_DPC'][4]='jsdialog';
+$__ACTIONS['JSDIALOGSTREAM_DPC'][4]='jsdialogstream';
 $__ACTIONS['JSDIALOGSTREAM_DPC'][5]='jsdtime';
 //$__ACTIONS['JSDIALOGSTREAM_DPC'][6]='jsno';
 //$__ACTIONS['JSDIALOGSTREAM_DPC'][7]='jscancel';

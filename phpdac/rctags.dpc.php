@@ -26,7 +26,7 @@ $__ACTIONS['RCTAGS_DPC'][3]='cpedittag';
 $__ACTIONS['RCTAGS_DPC'][4]='cpeditctag';
 $__ACTIONS['RCTAGS_DPC'][5]='cpedititag';
 
-$__LOCALE['RCTAGS_DPC'][0]='RCTAGS_DPC;SQL tags;Tags SQL';
+$__LOCALE['RCTAGS_DPC'][0]='RCTAGS_DPC;Tags;Tags';
 $__LOCALE['RCTAGS_DPC'][1]='_LEVEL1;Category Level 1;Κατηγορία επιπέδου 1';
 $__LOCALE['RCTAGS_DPC'][2]='_LEVEL2;Category Level 2;Κατηγορία επιπέδου 2';
 $__LOCALE['RCTAGS_DPC'][3]='_LEVEL3;Category Level 3;Κατηγορία επιπέδου 3';
@@ -382,8 +382,8 @@ class rctags extends shtags {
   }
   
   function show_tag_list_grid($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
-	    $height = $height ? $height : 800;
-        $rows = $rows ? $rows : 36;
+	    $height = $height ? $height : 600;
+        $rows = $rows ? $rows : 26;
         $width = $width ? $width : null; //wide
         $mode = $mode ? $mode : 'd';
 	    $noctrl = $noctrl ? 0 : 1;  
@@ -443,8 +443,11 @@ class rctags extends shtags {
 				GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$t|".$title."|$type|$edit|$options");
 			} 
 
-			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ptags+$xsSQL+$mode++id+$noctrl+1+$rows+$height+$width");			
+			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ptags+$xsSQL+$mode+{$this->title}+id+$noctrl+1+$rows+$height+$width");			
 		}  
+		else 
+		   $out .= 'Initialize jqgrid.';
+	   
 		return ($out);
   }  
   

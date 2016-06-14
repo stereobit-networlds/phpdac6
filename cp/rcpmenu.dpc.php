@@ -7,6 +7,8 @@ define("RCPMENU_DPC",true);
 
 $__DPC['RCPMENU_DPC'] = 'rcpmenu';
 
+$a = GetGlobal('controller')->require_dpc('jsdialog/jsdialogStreamSrv.dpc.php');
+require_once($a);
 
 $__EVENTS['RCPMENU_DPC'][1]='cpmenu';
 $__EVENTS['RCPMENU_DPC'][2]='cpmenu1';
@@ -626,6 +628,16 @@ class rcpmenu {
 			return true;
 		}
 		return false;	
+	}
+	
+	/*stream dialog for srv called by js */ 
+	/*universal stream dialog loader, to not load dpc into every php cp page */
+	public function streamDialog() {
+		
+		$sd = new jsdialogStreamSrv();
+		$ret= $sd->streamDialog();
+		
+		return ($ret);
 	}
    
 };
