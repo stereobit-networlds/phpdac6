@@ -35,6 +35,10 @@ $__LOCALE['RCITEMQPOLICY_DPC'][13]='_dimensions;Dimensions;Διαστάσεις'
 $__LOCALE['RCITEMQPOLICY_DPC'][14]='_xmlcreate;Create XML;Δημιούργησε XML';
 $__LOCALE['RCITEMQPOLICY_DPC'][15]='_xml;XML item;Είδος XML';
 $__LOCALE['RCITEMQPOLICY_DPC'][16]='_manufacturer;Manufacturer;Κατασκευαστής';
+$__LOCALE['RCITEMQPOLICY_DPC'][17]='_uniname1;Unit;Μον.μετρ.';
+$__LOCALE['RCITEMQPOLICY_DPC'][18]='_ypoloipo1;Qty;Υπόλοιπο';
+$__LOCALE['RCITEMQPOLICY_DPC'][19]='_price0;Price 1;Αξία 1';
+$__LOCALE['RCITEMQPOLICY_DPC'][20]='_price1;Price 2;Αξία 2';
 
 
 class rcitemqpolicy {
@@ -107,7 +111,7 @@ class rcitemqpolicy {
 			default         :   
 			
 		}			
-		$content = $this->items_grid(null,140,5,'r', true);
+		$content = $this->items_grid(null,140,5,'e', true);
 					
 		$ret = $this->window('q-Policy: '.localize('_'.$mode, getlocal()), $button, $content);
 		
@@ -174,20 +178,25 @@ class rcitemqpolicy {
 	    $lan = getlocal() ? getlocal() : 0;  
 		$title = localize('_items', getlocal()); 
 		
-        $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,code3,itmname,uniname1,ypoloipo1,price0,price1,cat0,cat1,cat2,cat3,cat4,manufacturer,size,color,resources from products) o ";		   
+        $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,itmname,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
+		//code3,cat0,cat1,cat2,cat3,cat4,resources
 		   							
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|1|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|1|");//"|boolean|1|1:0");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|1|");//"|boolean|1|101:0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|1|");	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|link|10|"."javascript:editform(\"{code5}\");".'||');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price1|".localize('_price1',getlocal())."|5|1|");			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:deleteform(\"{code5}\");".'||');
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+crmforms+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	

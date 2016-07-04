@@ -489,8 +489,24 @@ class rccrm  {
                                         <li><a data-role="leaf" href="javascript:subdetails(\'customer'.$id.'\')"><i class="icon-share"></i> Details</a></li>										
                                         <li><a data-role="leaf" href="javascript:subdetails(\'transactions'.$id.'\')"><i class=" icon-bullhorn"></i> Sales</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'tasks'.$id.'\')"><i class="icon-tasks"></i> Tasks</a></li>
-										<li><a data-role="leaf" href="javascript:subdetails(\'stats'.$id.'\')"><i class="icon-share"></i> Stats</a></li>
-											
+										<li><a data-role="leaf" href="javascript:subdetails(\'stats'.$id.'\')"><i class="icon-share"></i> History</a></li>
+										
+                                        <li>
+                                            <a id="nut6" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
+                                                Items
+                                            </a>
+                                            <ul class="branch">
+                                                <li><a data-role="leaf" href="javascript:subdetails(\'purchases'.$id.'\')"><i class="icon-tags"></i> Purchases</a></li>
+												<li><a data-role="leaf" href="javascript:subdetails(\'wishlist'.$id.'\')"><i class="icon-tags"></i> Wish List</a></li>
+												<li><a data-role="leaf" href="javascript:subdetails(\'wishcmp'.$id.'\')"><i class="icon-tags"></i> Compares</a></li>
+												<li><a data-role="leaf" href="javascript:subdetails(\'wishfav'.$id.'\')"><i class="icon-tags"></i> Favorites</a></li>
+												<li><a data-role="leaf" href="javascript:subdetails(\'itemstats'.$id.'\')"><i class="icon-tags"></i> Views</a></li>												
+                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> Returns</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> Offers</a></li>
+												<li><a data-role="leaf" href="#"><i class="icon-magic"></i> Behaviors</a></li>
+                                            </ul>
+                                        </li>
+										
 										'.$crmplustree.'		
 										<li>
                                             <a id="nut3" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
@@ -500,18 +516,6 @@ class rccrm  {
                                                 <li><a data-role="leaf" href="javascript:subdetails(\'forms'.$id.'\')"><i class="icon-cloud"></i> Forms</a></li>
                                                 <li><a data-role="leaf" href="#"><i class="icon-user-md"></i> Attach</a></li>
                                                 <li><a data-role="leaf" href="#"><i class="icon-retweet"></i> View</a></li>
-                                            </ul>
-                                        </li>
-										
-                                        <li>
-                                            <a id="nut6" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
-                                                Items
-                                            </a>
-                                            <ul class="branch">
-                                                <li><a data-role="leaf" href="#"><i class="icon-tags"></i> Sales</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> Returns</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> Offers</a></li>
-												<li><a data-role="leaf" href="#"><i class="icon-magic"></i> Behaviors</a></li>
                                             </ul>
                                         </li>
 										

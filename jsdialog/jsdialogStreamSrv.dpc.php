@@ -14,13 +14,10 @@ GetGlobal('controller')->get_parent('JSDIALOG_DPC','JSDIALOGSTREAMSRV_DPC');
 
 $__EVENTS['JSDIALOGSTREAMSRV_DPC'][4]='jsdialogstreamsrv';
 $__EVENTS['JSDIALOGSTREAMSRV_DPC'][5]='jsdtime';
-//$__EVENTS['JSDIALOGSTREAMSRV_DPC'][6]='jsno';
-//$__EVENTS['JSDIALOGSTREAMSRV_DPC'][7]='jscancel';
 
 $__ACTIONS['JSDIALOGSTREAMSRV_DPC'][4]='jsdialogstreamsrv';
 $__ACTIONS['JSDIALOGSTREAMSRV_DPC'][5]='jsdtime';
-//$__ACTIONS['JSDIALOGSTREAMSRV_DPC'][6]='jsno';
-//$__ACTIONS['JSDIALOGSTREAMSRV_DPC'][7]='jscancel';
+
 
 $__LOCALE['JSDIALOGSTREAMSRV_DPC'][0]='JSDIALOGSTREAMSRV_DPC;JS dialog stream;JS dialog stream';
 $__LOCALE['JSDIALOGSTREAMSRV_DPC'][1]='_sText;Stream message;Stream message';
@@ -47,7 +44,7 @@ class jsdialogStreamSrv extends jsdialog {
 	                                break;
 
 			case 'jsdialogstreamsrv' :
-			default                  :	jsdialog::event($event);						  
+			default                  :	die($this->respond()); //jsdialog::event($event);						  
 									
         }
     }	
@@ -56,7 +53,7 @@ class jsdialogStreamSrv extends jsdialog {
 	
 	    switch ($action) {
 		   case 'jsdialogstreamsrv'  : 
-		   default                   : $out = jsdialog::action($action);
+		   default                   : $out = null;//jsdialog::action($action);
 		}			 
 
 	    return ($out);
@@ -86,7 +83,7 @@ class jsdialogStreamSrv extends jsdialog {
 		//..exec scenario..
 		$source = null;
 		
-		$response = $this->say($text, $title, $source, 2000); 
+		$response = $this->sayMsg($text, $title, $source, 2000); 
 		
 		return ($response);
 	}
@@ -100,6 +97,25 @@ class jsdialogStreamSrv extends jsdialog {
 		$ret = "
 		new $.Zebra_Dialog('$msg', 
 		{
+			'buttons':  false,
+			'modal': false,
+			$s
+			$c
+			'position': ['right - 20', 'bottom - 20']
+		});";
+		return ($ret);
+	}	
+
+	public function sayMsg($text=null, $title=null, $source=null, $close=null, $type=null) {
+		$msg = $title ? '<strong>' . $title .'</strong><br/>'. $text : $text;
+		$s = $source ? "'source':  {'ajax': '$source'}," : null;
+		$c = $close ? "'auto_close': $close," : null;
+		$type = $type ? $type : 'warning';
+		
+		$ret = "
+		new $.Zebra_Dialog('$msg', 
+		{
+			'type'   : '$type',
 			'buttons':  false,
 			'modal': false,
 			$s

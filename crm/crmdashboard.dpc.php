@@ -276,14 +276,74 @@ function handleResponse() {if(http.readyState == 4){
 		$db = GetGlobal('db');
 		$user = urldecode(GetReq('id'));
 		
-		$sSQL = "select count(id) from stats where attr3='$user'";
+		$sSQL = "select count(id) from stats where attr2='$user' or attr3='$user'";
 		$sSQL.= " and " . $this->sqlDateRange('date', true); 
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
 		$ret = $res->fields[0];
 		
 		return ($ret);
-	}		
+	}	
+	
+	
+	public function itemsPurchased() {
+       $db = GetGlobal('db');
+	   $user = urldecode(GetReq('id'));
+	   //$ret = 0;
+	   
+	   //search serialized data for id
+	   $sSQL = "select tdata from transactions " . 
+	           "where cid= " . $db->qstr($user);
+       $result = $db->Execute($sSQL,2);
+	   //echo $sSQL;
+	   
+	   foreach ($result as $n=>$rec) {	
+         $tdata = $rec['tdata'];
+		 
+		 if ($tdata) {
+		   $cdata = unserialize($tdata);
+		   if (count($cdata)>1) {//if many items
+		     foreach ($cdata as $i=>$buffer_data) {
+		 
+		        $param = explode(";",$buffer_data);
+		        //if ($param[9]>0) //if qty exist 
+				  // $ret += 1; //$param[0];  
+				if (!in_array($param[0],$ret))  
+					$ret[] = $param[0];  
+		     }	 
+		   }
+		 } 
+	   }
+	   return count($ret);   	   	
+	}
+
+	public function itemsPurchasedQty() {
+       $db = GetGlobal('db');
+	   $user = urldecode(GetReq('id'));
+	   $ret = 0;
+	   
+	   //search serialized data for id
+	   $sSQL = "select tdata from transactions " . 
+	           "where cid= " . $db->qstr($user);
+       $result = $db->Execute($sSQL,2);
+	   //echo $sSQL;
+	   
+	   foreach ($result as $n=>$rec) {	
+         $tdata = $rec['tdata'];
+		 
+		 if ($tdata) {
+		   $cdata = unserialize($tdata);
+		   if (count($cdata)>1) {//if many items
+		     foreach ($cdata as $i=>$buffer_data) {
+		 
+		       $param = explode(";",$buffer_data);
+		       $ret += $param[9];  
+		     }	 
+		   }
+		 } 
+	   }
+	   return $ret;   	   	
+	}	
 	
 };
 }
