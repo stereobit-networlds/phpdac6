@@ -87,6 +87,32 @@ $__LOCALE['RCCRM_DPC'][68]='_custaddress;Addresses;Διευθύνσεις';
 $__LOCALE['RCCRM_DPC'][69]='_active;Active;Ενεργός';
 $__LOCALE['RCCRM_DPC'][70]='_code2;Code;Κωδικός';
 
+$__LOCALE['RCCRM_DPC'][100]='_crmdashb;Dashboard;Συνοπτικά';
+$__LOCALE['RCCRM_DPC'][101]='_inbox;Inbox;Εισερχόμενα';
+$__LOCALE['RCCRM_DPC'][102]='_details;Details;Στοιχεία';
+$__LOCALE['RCCRM_DPC'][103]='_sales;Sales;Πωλήσεις';
+$__LOCALE['RCCRM_DPC'][104]='_tasks;Tasks;Εργασίες';
+$__LOCALE['RCCRM_DPC'][105]='_stats;History;Ιστορικό';
+$__LOCALE['RCCRM_DPC'][106]='_purchases;Purchases;Αγορές';
+$__LOCALE['RCCRM_DPC'][107]='_wishlist;Wishlist;Wishlist';
+$__LOCALE['RCCRM_DPC'][108]='_compares;Compares;Συγκρίσεις';
+$__LOCALE['RCCRM_DPC'][109]='_favorites;Favorites;Αγαπημένα';
+$__LOCALE['RCCRM_DPC'][110]='_views;Views;Επικέψεις';
+$__LOCALE['RCCRM_DPC'][111]='_returns;Returns;Επιστροφές';
+$__LOCALE['RCCRM_DPC'][112]='_offers;Offers;Προσφορές';
+$__LOCALE['RCCRM_DPC'][113]='_behaviors;Behavior;Δράσεις';
+$__LOCALE['RCCRM_DPC'][114]='_actions;Actions;Ενέργειες';
+$__LOCALE['RCCRM_DPC'][115]='_projects;Projects;Projects';
+$__LOCALE['RCCRM_DPC'][116]='_items;Items;Είδη';
+$__LOCALE['RCCRM_DPC'][117]='_forms;Forms;Φόρμες';
+$__LOCALE['RCCRM_DPC'][118]='_templates;Templates;Templates';
+$__LOCALE['RCCRM_DPC'][119]='_attach;Attach;Επαφές';
+$__LOCALE['RCCRM_DPC'][120]='_view;View;Όψεις';
+$__LOCALE['RCCRM_DPC'][121]='_reports;Reports;Αναφορές';
+$__LOCALE['RCCRM_DPC'][122]='_plus;Plus;Plus';
+$__LOCALE['RCCRM_DPC'][123]='_automations;Automations;Αυτοματισμοί';
+$__LOCALE['RCCRM_DPC'][124]='_finance;Finance;Οικονομικές';
+
 class rccrm  {
 
     var $title, $path, $urlpath;
@@ -455,14 +481,20 @@ class rccrm  {
 		$id = GetReq('id') ? "&id=" . $user : null ;
 		$this->crmplus = (defined('CRMPLUS_DPC')) ? true : false; 
 		
+		$l = getlocal();
+		$t_plus = localize('_plus', $l);
+		$t_auto = localize('_automations', $l);
+		$t_projects = localize('_projects', $l);
+		$t_actions = localize('_actions', $l);
+		
 		$crmplustree = $this->crmplus ? '
 										<li>
-											<a data-value="gh_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Plus</a>
+											<a data-value="gh_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">'.$t_plus.'</a>
                                             <ul class="branch">
-											<li><a href="#">Actions</a></li>
-                                            <li><a href="javascript:subdetails(\'plus'.$id.'\')">Projects</a></li>
+											<li><a href="#">'.$t_actions.'</a></li>
+                                            <li><a href="javascript:subdetails(\'plus'.$id.'\')">'.$t_projects.'</a></li>
                                             <li>
-                                                <a data-value="GitHub_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Automations</a>
+                                                <a data-value="GitHub_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">'.$t_auto.'</a>
                                                 <ul class="branch">
                                                     <li><a href="#">Events</a></li>
                                                     <li><a href="#">Users</a></li>
@@ -473,6 +505,29 @@ class rccrm  {
                                                 </ul>
                                             </li></ul>
                                         </li>' : null;		
+										
+										
+		$t_dashboard = localize('_crmdashb', $l);
+		$t_inbox = localize('_inbox', $l);
+		$t_details = localize('_details', $l);
+		$t_sales = localize('_sales', $l);
+		$t_tasks = localize('_tasks', $l);
+		$t_stats = localize('_stats', $l);
+		$t_purchases = localize('_purchases', $l);
+		$t_wishlist = localize('_wishlist', $l);		
+		$t_compares = localize('_compares', $l);
+		$t_favorites = localize('_favorites', $l);
+		$t_views = localize('_views', $l);
+		$t_returns = localize('_returns', $l);	
+		$t_offers = localize('_offers', $l);
+		$t_behaviors = localize('_behaviors', $l);
+		$t_templates = localize('_templates', $l);
+		$t_forms = localize('_forms', $l);	
+		$t_attach = localize('_attach', $l);
+		$t_view = localize('_view', $l);
+		$t_reports = localize('_reports', $l);
+		$t_finance = localize('_finance', $l);		
+		$t_items = localize('_items', $l);
 		
 		$ret = '	
                             <!--div class="actions">
@@ -484,47 +539,47 @@ class rccrm  {
                                 <li>
                                     <a data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle" data-role="branch" href="#">'.substr($user, 0, 9).'</a>
                                     <ul class="branch in">
-										<li><a data-role="leaf" href="javascript:subdetails(\'dashboard'.$id.'\')"><i class="icon-user"></i> Dashboard</a></li>
-                                        <li><a data-role="leaf" href="javascript:subdetails(\'inbox'.$id.'\')"><i class=" icon-book"></i> Inbox</a></li>
-                                        <li><a data-role="leaf" href="javascript:subdetails(\'customer'.$id.'\')"><i class="icon-share"></i> Details</a></li>										
-                                        <li><a data-role="leaf" href="javascript:subdetails(\'transactions'.$id.'\')"><i class=" icon-bullhorn"></i> Sales</a></li>
-                                        <li><a data-role="leaf" href="javascript:subdetails(\'tasks'.$id.'\')"><i class="icon-tasks"></i> Tasks</a></li>
-										<li><a data-role="leaf" href="javascript:subdetails(\'stats'.$id.'\')"><i class="icon-share"></i> History</a></li>
+										<li><a data-role="leaf" href="javascript:subdetails(\'dashboard'.$id.'\')"><i class="icon-user"></i> '.$t_dashboard.'</a></li>
+                                        <li><a data-role="leaf" href="javascript:subdetails(\'inbox'.$id.'\')"><i class=" icon-book"></i> '.$t_inbox.'</a></li>
+                                        <li><a data-role="leaf" href="javascript:subdetails(\'customer'.$id.'\')"><i class="icon-share"></i> '.$t_details.'</a></li>										
+                                        <li><a data-role="leaf" href="javascript:subdetails(\'transactions'.$id.'\')"><i class=" icon-bullhorn"></i> '.$t_sales.'</a></li>
+                                        <li><a data-role="leaf" href="javascript:subdetails(\'tasks'.$id.'\')"><i class="icon-tasks"></i> '.$t_tasks.'</a></li>
+										<li><a data-role="leaf" href="javascript:subdetails(\'stats'.$id.'\')"><i class="icon-share"></i> '.$t_stats.'</a></li>
 										
                                         <li>
                                             <a id="nut6" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
-                                                Items
+                                                '.$t_items.'
                                             </a>
-                                            <ul class="branch">
-                                                <li><a data-role="leaf" href="javascript:subdetails(\'purchases'.$id.'\')"><i class="icon-tags"></i> Purchases</a></li>
-												<li><a data-role="leaf" href="javascript:subdetails(\'wishlist'.$id.'\')"><i class="icon-tags"></i> Wish List</a></li>
-												<li><a data-role="leaf" href="javascript:subdetails(\'wishcmp'.$id.'\')"><i class="icon-tags"></i> Compares</a></li>
-												<li><a data-role="leaf" href="javascript:subdetails(\'wishfav'.$id.'\')"><i class="icon-tags"></i> Favorites</a></li>
-												<li><a data-role="leaf" href="javascript:subdetails(\'itemstats'.$id.'\')"><i class="icon-tags"></i> Views</a></li>												
-                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> Returns</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> Offers</a></li>
-												<li><a data-role="leaf" href="#"><i class="icon-magic"></i> Behaviors</a></li>
+                                            <ul class="branch">											
+                                                <li><a data-role="leaf" href="javascript:subdetails(\'purchases'.$id.'\')"><i class="icon-tags"></i> '.$t_purchases.'</a></li>
+												<li><a data-role="leaf" href="javascript:subdetails(\'wishlist'.$id.'\')"><i class="icon-tags"></i> '.$t_wishlist.'</a></li>
+												<li><a data-role="leaf" href="javascript:subdetails(\'wishcmp'.$id.'\')"><i class="icon-tags"></i> '.$t_compares.'</a></li>
+												<li><a data-role="leaf" href="javascript:subdetails(\'wishfav'.$id.'\')"><i class="icon-tags"></i> '.$t_favorites.'</a></li>
+												<li><a data-role="leaf" href="javascript:subdetails(\'itemstats'.$id.'\')"><i class="icon-tags"></i> '.$t_views.'</a></li>												
+                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_returns.'</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> '.$t_offers.'</a></li>
+												<li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_behaviors.'</a></li>
                                             </ul>
                                         </li>
 										
 										'.$crmplustree.'		
 										<li>
                                             <a id="nut3" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
-                                                Templates
+                                                '.$t_templates.'
                                             </a>
                                             <ul class="branch">
-                                                <li><a data-role="leaf" href="javascript:subdetails(\'forms'.$id.'\')"><i class="icon-cloud"></i> Forms</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-user-md"></i> Attach</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-retweet"></i> View</a></li>
+                                                <li><a data-role="leaf" href="javascript:subdetails(\'forms'.$id.'\')"><i class="icon-cloud"></i> '.$t_forms.'</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-user-md"></i> '.$t_attach.'</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-retweet"></i> '.$t_view.'</a></li>
                                             </ul>
                                         </li>
 										
                                         <li>
                                             <a id="nut8" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
-                                                Reports
+                                                '.$t_reports.'
                                             </a>
                                             <ul class="branch">
-                                                <li><a data-role="leaf" href="#"><i class="icon-tags"></i> Finance</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-tags"></i> '.$t_finance.'</a></li>
                                                 <li><a data-role="leaf" href="#"><i class="icon-magic"></i> ICT</a></li>
                                                 <li><a data-role="leaf" href="#"><i class="icon-user"></i> Human Resources</a></li>
                                             </ul>

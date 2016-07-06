@@ -21,6 +21,8 @@ $__EVENTS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 $__EVENTS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
 $__EVENTS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
+$__EVENTS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
+$__EVENTS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
@@ -33,6 +35,8 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 $__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
 $__ACTIONS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
+$__ACTIONS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
+$__ACTIONS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
 
 //$__DPCATTR['RCCONTROLPANEL_DPC']['cp'] = 'cp,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -200,6 +204,12 @@ $__LOCALE['RCCONTROLPANEL_DPC'][156]='_sale;Invoice created;Παραστατικ
 $__LOCALE['RCCONTROLPANEL_DPC'][157]='_installprinter;Install printer;Εγκατάσταση printer';
 $__LOCALE['RCCONTROLPANEL_DPC'][158]='_system;System;System';
 $__LOCALE['RCCONTROLPANEL_DPC'][159]='_sysmessages;Messages;Μηνύματα';
+$__LOCALE['RCCONTROLPANEL_DPC'][160]='_visits;Visits;Επισκέπτες';
+$__LOCALE['RCCONTROLPANEL_DPC'][161]='_attr1;Category;Κατηγορία';
+$__LOCALE['RCCONTROLPANEL_DPC'][162]='_attr2;Visitor;Επισκέπτης';
+$__LOCALE['RCCONTROLPANEL_DPC'][163]='_attr3;Visitor;Επισκέπτης';
+$__LOCALE['RCCONTROLPANEL_DPC'][164]='_ip;Ip;Ip';
+$__LOCALE['RCCONTROLPANEL_DPC'][165]='_tid;Item;Είδος';
 
 class rccontrolpanel {
 
@@ -314,6 +324,8 @@ class rccontrolpanel {
 
          case 'cpshowMessages' : break;							 
          case 'cpsysMessages'  : break;				 
+         case 'cpitemVisits'   : break;							 
+         case 'cpcatVisists'   : break;			 
 	   	
          case "cplogout"    : $this->logout();
 		                     break;
@@ -354,6 +366,8 @@ class rccontrolpanel {
 		    case 'cpdelMessage': break;	
 			case 'cpshowMessages' : $out = $this->viewPastMessages(); break;				
 			case 'cpsysMessages'  : $out = $this->viewSystemMessages(); break;			
+			case 'cpitemVisits': $out = $this->viewItemVisits(); break;
+			case 'cpcatVisits' : $out = $this->viewCatVisits(); break;			
 		  	case "cpinfo"      : break;    
 			case "cp"          :	
 			default            : $this->getTURL(); //save param for use by metro cp
@@ -1155,9 +1169,90 @@ function handleResponse() {if(http.readyState == 4){
 		if ($fs < 0)
 			$this->setTask('danger|Upgrade your hosting plan|99');		
 		
+        if ($id = $this->cpGet['id']) {
+			
+			$timeins = $this->sqlDateRange('date', true, true);	
+			
+			$sSQL = "select count(id) from stats where tid='$id' " . $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['value'] = $this->nformat($res->fields[0]);		
 
-		
-        //if (defined('RCKATEGORIES_DPC')) { //	//SHUSERS / SHCUSTOMERS
+			$sSQL = "select distinct count(attr2) from stats where tid='$id' " . $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['unique'] = $this->nformat($res->fields[0]);				
+			
+			$sSQL = "select count(id) from stats where tid='$id' and attr1='cartin'" . $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['cartin'] = $this->nformat($res->fields[0]);	
+
+			$sSQL = "select count(id) from stats where tid='$id' and attr1='cartout'" . $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['cartout'] = $this->nformat($res->fields[0]);
+	
+			$sSQL = "select count(recid) from wishlist where tid='$id' and listname='wishlist'";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['wishlist'] = $this->nformat($res->fields[0]);
+
+			$sSQL = "select count(recid) from wishlist where tid='$id' and listname='compares'";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['compares'] = $this->nformat($res->fields[0]);		
+
+			$sSQL = "select count(recid) from wishlist where tid='$id' and listname='favorites'";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['favorites'] = $this->nformat($res->fields[0]);	
+
+			$sSQL = "select count(recid) from wishlist where tid='$id'";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['wishall'] = $this->nformat($res->fields[0]);
+			
+			//transactions
+			$timeins = $this->sqlDateRange('tdate', false, true);
+			
+			$sSQL = "select count(recid) from transactions where tdata like '%$id%'" . $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Purchase']['transactions'] = $this->nformat($res->fields[0]);
+
+			$sSQL = "select tdata from transactions where tdata like '%$id%'" . $timeins;
+			$result = $db->Execute($sSQL,2);
+			//echo $sSQL;	   
+			$counter = 0;
+			$qty = 0;
+			$value = 0;
+			foreach ($result as $n=>$rec) {	
+				$tdata = $rec['tdata'];
+				if ($tdata) {
+					$cdata = unserialize($tdata);
+					//if (count($cdata)>1) {//if many items
+					foreach ($cdata as $i=>$buffer_data) {
+						$param = explode(";",$buffer_data);
+						if ($param[0]==$id) {
+							$counter += 1;
+							$qty += $param[9];
+							$value += $param[9] * floatval(str_replace(',','.',$param[8]));
+							//echo "<br/>" . $param[9]. ' * '.$param[8];
+						}  	
+					}	 
+					//}
+				} 
+			} 
+			$this->stats['Purchase']['orders'] = $this->nformat($counter);	
+			$this->stats['Purchase']['qty'] = $this->nformat($qty);
+			$this->stats['Purchase']['value'] = $this->nformat($value, 2);
+
+		}
+		elseif ($cat = $this->cpGet['cat']) {
+			
+			$timeins = $this->sqlDateRange('date', true, true);	
+			
+			$sSQL = "select count(id) from stats where attr1='$cat' " . $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['value'] = $this->nformat($res->fields[0]);			
+			
+			$sSQL = "select distinct count(attr2) from stats where attr1='$cat' " . $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Visits']['unique'] = $this->nformat($res->fields[0]);				
+		}		
+		else {
 	
             $sSQL = "select count(id) from users";
 			$res = $db->Execute($sSQL,2);
@@ -1191,8 +1286,7 @@ function handleResponse() {if(http.readyState == 4){
 			$res = $db->Execute($sSQL,2);	
             $this->stats['Items']['Attachments'] = $this->nformat($res->fields[0]);			
 			
-		//}  
-        //if (defined('RCITEMS_DPC')) {
+
             $timeins = $this->sqlDateRange('sysins', false, false);	
 			$where = $timeins ? ' where ' : null;
 		    //$sSQL = "select id,substr(sysins,1,4) as year,substr(sysins,6,2) as month from products where substr(sysins,1,4)='$year' and substr(sysins,6,2)='$month'";
@@ -1218,8 +1312,8 @@ function handleResponse() {if(http.readyState == 4){
             $sSQL = "select count(id) from products";
 			$res = $db->Execute($sSQL,2);	
             $this->stats['Items']['value'] = $this->nformat($res->fields[0]);			
-		//} 
-        //if (defined('RCITEMS_DPC')) {//???????SYNC DPC
+
+			
 			$timein = $this->sqlDateRange('time', true, true);//false);			 
 			//$where = $timein ? ' where ' : null;
 			//$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql" . $where . $timein;
@@ -1233,8 +1327,8 @@ function handleResponse() {if(http.readyState == 4){
 			$sSQL = "select count(id) from syncsql where status <> 1 " . $timein;
 			$res = $db->Execute($sSQL,2);			
 			$this->stats['Sync']['noexec'] = $this->nformat($res->fields[0]); 			
-		//}  		
-        //if (defined('RCBULKMAIL_DPC')) {
+
+			
 			$timein = $this->sqlDateRange('timein', true, false);
             $where = $timein ? ' where ' : null;			
 			$sSQL = "select count(id), sum(CHAR_LENGTH(body)) from mailqueue" . $where . $timein;
@@ -1261,8 +1355,8 @@ function handleResponse() {if(http.readyState == 4){
 		    $sSQL = "select count(id) from mailcamp where active=1";
 			$res = $db->Execute($sSQL,2);
             $this->stats['Mail']['campaigns'] = $this->nformat($res->fields[0]);				
-		//}  
-		//if (defined('RCTRANSACTIONS_DPC')) { //!!!! to be implemented as cp call			
+
+			
 			$timein = $this->sqlDateRange('tdate', false, false);
 			$where = $timein ? ' where ' : null;
 			//$sSQL = "select count(recid) from transactions where substr(tdate,1,4)='$year'";
@@ -1278,7 +1372,7 @@ function handleResponse() {if(http.readyState == 4){
 			$this->stats['Transactions']['revenuenet'] = $this->nformat($res->fields[0],2);
 			$this->stats['Transactions']['revenue'] = $this->nformat($res->fields[1],2);			
 			$this->stats['Transactions']['tax'] = $this->nformat((floatval($res->fields[1]) - floatval($res->fields[0])),2);
-		//}  
+		}  
 
         return ($ret);     	
     }
@@ -1731,29 +1825,6 @@ function handleResponse() {if(http.readyState == 4){
 			$this->objcall['mailqueue'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=mailqueue&statsid=');
 
 	}	
-	/*
-    protected function _show_charts() {
-		//$stats = $this->_show_addon_tools(); //tools to enable
-	    if (!empty($this->objcall)) {  
-		 
- 		    foreach ($this->objcall as $report=>$goto) {//goto not used in this case
-                $title = localize("_$report",getlocal()); //title
-		        if ($this->ajaxgraph)  {//ajax
-			        $ts = GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use $report");
-			    }
-		        elseif ($transtats = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use transactions")) {
-			        $ts = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use $report+500+240+$this->goto");
-			    }						
-			    $win1 = new window2($title,$ts,null,1,null,'SHOW',null,1);
-	            $stats .= $win1->render();
-		        unset ($win1);								 	   
-			}
-		}
-
-		return ($stats);		 
-    }
-  
-	*/
 	
 	/* all charts together */
     public function _show_charts() {
@@ -1966,10 +2037,8 @@ function handleResponse() {if(http.readyState == 4){
 			$statusTmpl = str_replace($template, $template.$st ,$template);
 			$t = ($template!=null) ? $this->select_template($statusTmpl) : null;
 			
-			if ($t) 	
-				$ret .= $this->combine_tokens($t, $rtokens);//array(0=>$hash,1=>$msg,2=>$when,3=>$action));
-			else
-				$ret .= "<option value=\"$hash\">".$rtokens[0]."</option>";
+			$ret .= $t ? $this->combine_tokens($t, $rtokens) :
+				         "<option value=\"$hash\">".$rtokens[0]."</option>";
 			
 			unset($rtokens);
 		}
@@ -1979,7 +2048,6 @@ function handleResponse() {if(http.readyState == 4){
 	
 	protected function viewPastMessages() {
 		$db = GetGlobal('db');	
-		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;	
 		$ownerSQL = ($this->seclevid==9) ? null : 'where owner=' . $db->qstr($this->owner); 		
 		   	
 		if (defined('MYGRID_DPC')) {
@@ -1987,23 +2055,17 @@ function handleResponse() {if(http.readyState == 4){
 		   
 			$sSQL = "select * from (SELECT id,date,type,msg FROM cpmessages $ownerSQL order by date desc";
             $sSQL.= ') as o';  				
-		   		   
-		    //echo $sSQL;
 
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
 
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
-			
-			//mail body ajax renderer
-			//$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+cpmessages+$sSQL+r+$title+id+1+1+25+600++0+1+1");
 		}
         else  
 			$out .= null;
    		
-		
 	    return ($out);	
 	}	
 	
@@ -2027,10 +2089,8 @@ function handleResponse() {if(http.readyState == 4){
 			$statusTmpl = str_replace($template, $template.$st ,$template);
 			$t = ($template!=null) ? $this->select_template($statusTmpl) : null;
 			
-			if ($t) 	
-				$ret .= $this->combine_tokens($t, $rtokens);
-			else
-				$ret .= "<option value=\"$hash\">".$rtokens[1]."</option>";
+			$ret .= $t ? $this->combine_tokens($t, $rtokens) :
+			             "<option value=\"$hash\">".$rtokens[1]."</option>"; 
 			
 			unset($rtokens);
 		}
@@ -2039,8 +2099,7 @@ function handleResponse() {if(http.readyState == 4){
 	}	
 	
 	protected function viewSystemMessages() {
-		$db = GetGlobal('db');	
-		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;	
+		$db = GetGlobal('db');		
 		$ownerSQL = ($this->seclevid==9) ? null : 'where owner=' . $db->qstr($this->owner); 		
 		   	
 		if (defined('MYGRID_DPC')) {
@@ -2048,22 +2107,16 @@ function handleResponse() {if(http.readyState == 4){
 		   
 			$sSQL = "select * from (SELECT id,date,type,msg FROM cpmessages where type='system' or type='cron' or type= 'analyzer' order by id desc";
             $sSQL.= ') as o';  				
-		   		   
-		    //echo $sSQL;
 
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
             GetGlobal('controller')->calldpc_method("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
 
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+20+400++0+1+1");
-			
-			//mail body ajax renderer
-			//$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+cpmessages+$sSQL+r+$title+id+1+1+25+600++0+1+1");
 		}
         else  
 			$out .= null;
-   		
 		
 	    return ($out);	
 	}		
@@ -2157,6 +2210,120 @@ function handleResponse() {if(http.readyState == 4){
 		}
 
 		return ($ret);			
+	}
+
+	public function viewItemStatistics($template=null) {
+		$db = GetGlobal('db');
+		$t = $template ? $this->select_template($template) : null;//'alert-important';
+		$id = $this->cpGet['id'];
+		
+        $timein = $this->sqlDateRange('date', true, true);			
+		
+		$sSQL = "SELECT id,date,attr2,attr3,REMOTE_ADDR FROM stats where tid='$id' $timein order by id desc LIMIT 100";
+		//echo $sSQL;
+        $result = $db->Execute($sSQL);
+		if (!$result) return ;
+		
+		foreach ($result as $i=>$rec) {
+			$rtokens = array();
+			$rtokens[] = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : 
+			                             $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")"; 
+			$rtokens[] = $this->timeSayWhen(strtotime($rec['date'])); 
+			$rtokens[] = '#'; //link
+			$rtokens[] = null;//$rec[3]; //hash
+			
+			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
+			             "<option value=\"$hash\">".$rtokens[1]."</option>";
+			
+			unset($rtokens);
+		}
+		//echo $ret;
+		return ($ret);
+	}	
+	
+	protected function viewItemVisits() {
+		$db = GetGlobal('db');	
+		//$id = $this->cpGet['id'];			
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$id = $cpGet['id']; 	
+		   	
+		if (defined('MYGRID_DPC')) {
+		    $title = localize('_visits',getlocal());
+		   
+			$sSQL = "select * from (SELECT id,date,tid,attr2,attr3,REMOTE_ADDR FROM stats WHERE tid='$id'";
+            $sSQL.= ') as o';  
+			//echo $sSQL;	
+
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|0|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0');		   
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0');
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr2|".localize('_attr2',getlocal()).'|10|0');			
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_attr3',getlocal()).'|10|0');
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal()).'|10|0');			
+
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+25+600++1+1+1");
+		}
+        else  
+			$out .= null;
+		
+	    return ($out);	
+	}		
+
+	public function viewCategoryStatistics($template=null) {
+		$db = GetGlobal('db');
+		$t = $template ? $this->select_template($template) : null;//'alert-important';
+		$cat = $this->cpGet['cat'];
+		
+        $timein = $this->sqlDateRange('date', true, true);			
+		
+		$sSQL = "SELECT id,date,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein order by id desc LIMIT 100";
+		//echo $sSQL;
+        $result = $db->Execute($sSQL);
+		if (!$result) return ;
+		
+		foreach ($result as $i=>$rec) {
+			$rtokens = array();
+			$rtokens[] = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : 
+			                             $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")"; 
+			$rtokens[] = $this->timeSayWhen(strtotime($rec['date'])); 
+			$rtokens[] = '#'; //link
+			$rtokens[] = null;//$rec[3]; //hash
+			
+			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
+			             "<option value=\"$hash\">".$rtokens[1]."</option>";
+			
+			unset($rtokens);
+		}
+		//echo $ret;
+		return ($ret);
+	}	
+	
+	protected function viewCatVisits() {
+		$db = GetGlobal('db');
+		//$cat = $this->cpGet['cat'];			
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cat = $cpGet['cat']; 	
+		   	
+		if (defined('MYGRID_DPC')) {
+		    $title = localize('_visits',getlocal());
+		   
+			$sSQL = "select * from (SELECT id,date,attr1,attr2,attr3,REMOTE_ADDR FROM stats WHERE attr1='$cat'";
+            $sSQL.= ') as o';  
+			//echo $sSQL;	
+
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|0|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0');		   
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_attr1',getlocal()).'|10|0');
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr2|".localize('_attr2',getlocal()).'|10|0');			
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_attr3',getlocal()).'|10|0');
+            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal()).'|10|0');			
+
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+stats+$sSQL+r+$title+id+1+1+25+600++1+1+1");
+		}
+        else  
+			$out .= null;
+		
+	    return ($out);	
 	}		
 	
 	public function timeSayWhen($ts=null) {
