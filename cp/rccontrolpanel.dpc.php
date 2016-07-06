@@ -225,7 +225,7 @@ class rccontrolpanel {
 	var $appkey, $awstats_url;
 	var $cptemplate, $stats, $cpStats;
 	var $turl, $cpGet, $turldecoded, $messages, $tasks;
-	var $owner, $seclevid;
+	var $owner, $seclevid, $cseparator, $map_t, $map_f;
 	var $userDemoIds;
 	
 	var $rootapp_path, $tool_path;
@@ -285,6 +285,11 @@ class rccontrolpanel {
 		
 		$this->stats = array();
 		$this->cpStats = false;
+		
+		$this->map_t = remote_arrayload('RCITEMS','maptitle',$this->path);	
+		$this->map_f = remote_arrayload('RCITEMS','mapfields',$this->path);		
+		$csep = remote_paramload('RCITEMS','csep',$this->path); 
+        $this->cseparator = $csep ? $csep : '^';		
 		
 		$this->userDemoIds = array(6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 		//ini_set('max_input_vars', '3000'); //NOT ALLOWED ADD IT TO .HTACCESS
@@ -1173,6 +1178,7 @@ function handleResponse() {if(http.readyState == 4){
 			
 			$timeins = $this->sqlDateRange('date', true, true);	
 			
+			//stats
 			$sSQL = "select count(id) from stats where tid='$id' " . $timeins;
 			$res = $db->Execute($sSQL,2);
             $this->stats['Visits']['value'] = $this->nformat($res->fields[0]);		
@@ -1189,6 +1195,7 @@ function handleResponse() {if(http.readyState == 4){
 			$res = $db->Execute($sSQL,2);
             $this->stats['Visits']['cartout'] = $this->nformat($res->fields[0]);
 	
+	        //wishlists
 			$sSQL = "select count(recid) from wishlist where tid='$id' and listname='wishlist'";
 			$res = $db->Execute($sSQL,2);
             $this->stats['Visits']['wishlist'] = $this->nformat($res->fields[0]);
@@ -1222,7 +1229,6 @@ function handleResponse() {if(http.readyState == 4){
 				$tdata = $rec['tdata'];
 				if ($tdata) {
 					$cdata = unserialize($tdata);
-					//if (count($cdata)>1) {//if many items
 					foreach ($cdata as $i=>$buffer_data) {
 						$param = explode(";",$buffer_data);
 						if ($param[0]==$id) {
@@ -1232,7 +1238,6 @@ function handleResponse() {if(http.readyState == 4){
 							//echo "<br/>" . $param[9]. ' * '.$param[8];
 						}  	
 					}	 
-					//}
 				} 
 			} 
 			$this->stats['Purchase']['orders'] = $this->nformat($counter);	
@@ -1244,13 +1249,74 @@ function handleResponse() {if(http.readyState == 4){
 			
 			$timeins = $this->sqlDateRange('date', true, true);	
 			
+			//stats (category)
 			$sSQL = "select count(id) from stats where attr1='$cat' " . $timeins;
 			$res = $db->Execute($sSQL,2);
             $this->stats['Visits']['value'] = $this->nformat($res->fields[0]);			
 			
 			$sSQL = "select distinct count(attr2) from stats where attr1='$cat' " . $timeins;
 			$res = $db->Execute($sSQL,2);
-            $this->stats['Visits']['unique'] = $this->nformat($res->fields[0]);				
+            $this->stats['Visits']['unique'] = $this->nformat($res->fields[0]);	
+
+
+			/**** find category's items ***/
+			$activecode = 	$this->getmapf('code');
+			$mcat = explode($this->cseparator, $cat);
+			foreach ($mcat as $c=>$category)
+				$catSQL .= " AND cat$c = " . $db->qstr(str_replace('_', ' ', $category));
+			
+			//items
+			$sSQL = "select $activecode from products where active>0 AND itmactive>0 " . $catSQL;
+			$result = $db->Execute($sSQL,2);
+			foreach ($result as $i=>$rec) $items[] = $rec[0];
+			$this->stats['Items']['active'] = count($items);
+			
+			$sSQL = "select count($activecode) from products where (active=0 OR itmactive=0) " . $catSQL;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Items']['inactive'] = $this->nformat($res->fields[0]);				
+
+	        //stats (items)
+			$sSQL = "select count(id) from stats where tid in ('" . implode("','", $items) . "') " . $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Items']['visits'] = $this->nformat($res->fields[0]);				
+			
+			//wishlists
+			$sSQL = "select count(recid) from wishlist where tid in ('" . implode("','", $items) . "') ";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Items']['wishall'] = $this->nformat($res->fields[0]);
+			
+			
+			//transactions
+			$timeins = $this->sqlDateRange('tdate', false, true);
+			
+			$sSQL = "select count(recid) from transactions where tdata REGEXP '". implode('|', $items) ."'" . $timeins;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Items']['transactions'] = $this->nformat($res->fields[0]);
+
+			$sSQL = "select tdata from transactions where tdata REGEXP '". implode('|', $items) ."'" . $timeins;
+			$result = $db->Execute($sSQL,2);
+			//echo $sSQL;	   
+			$counter = 0;
+			$qty = 0;
+			$value = 0;
+			foreach ($result as $n=>$rec) {	
+				$tdata = $rec['tdata'];
+				if ($tdata) {
+					$cdata = unserialize($tdata);
+					foreach ($cdata as $i=>$buffer_data) {
+						$param = explode(";",$buffer_data);
+						if (in_array($param[0], $items)) {
+							$counter += 1;
+							$qty += $param[9];
+							$value += $param[9] * floatval(str_replace(',','.',$param[8]));
+							//echo "<br/>" . $param[9]. ' * '.$param[8];
+						}  	
+					}	 
+				} 
+			} 
+			$this->stats['Items']['orders'] = $this->nformat($counter);	
+			$this->stats['Items']['qty'] = $this->nformat($qty);
+			$this->stats['Items']['income'] = $this->nformat($value, 2);			
 		}		
 		else {
 	
@@ -1780,10 +1846,17 @@ function handleResponse() {if(http.readyState == 4){
 				$mm = sprintf('%02d',$m);
 				$monthsli .= '<li>' . seturl('t=cp&month='.$mm.'&year='.$year, $mm) .'</li>';
 			}	  
+			
+			if ($id = $this->cpGet['id'])
+				$section = ' &gt ' . $id;
+			elseif ($cat = $this->cpGet['cat'])
+				$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', str_replace('_', ' ', $cat));
+			else
+				$section = null;
 	  
-	        $posteddaterange = $daterange ? ' > ' . $daterange : ($year ? ' > ' . $month . ' ' . $year : null) ;
+	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
 	  
-			$tokens[] = localize('RCCONTROLPANEL_DPC',getlocal()) . $posteddaterange; 
+			$tokens[] = localize('RCCONTROLPANEL_DPC',getlocal()) . $section . $posteddaterange; 
 			$tokens[] = $year;
 			$tokens[] = $month;
 			$tokens[] = localize('_year',getlocal());
@@ -2422,7 +2495,19 @@ function handleResponse() {if(http.readyState == 4){
 		}		
 		
 		return ($ret);
-	} 	
+	} 
+
+	protected function getmapf($name) {
+	
+		if (empty($this->map_t)) return 0;
+	  
+		foreach ($this->map_t as $id=>$elm)
+			if ($elm==$name) break;
+				
+		//$id = key($this->map_t[$name]) ;
+		$ret = $this->map_f[$id];
+		return ($ret);
+	}	
 	
 };
 }
