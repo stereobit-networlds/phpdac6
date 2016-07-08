@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['RCNOTUFIER_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCNOTUFIER_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ( (!defined("RCNOTIFIER_DPC")) && (seclevel('RCNOTIFIER_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCNOTIFIER_DPC",true);

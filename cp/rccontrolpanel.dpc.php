@@ -1133,30 +1133,29 @@ function handleResponse() {if(http.readyState == 4){
 			if ($istimestamp)
 				$dateSQL = $sqland . " DATE($fieldname) BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";
 			else			
-				$dateSQL = $sqland . " $fieldname BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";
-			
-			//$this->messages[] = 'Range selection:'.$daterange;			
+				$dateSQL = $sqland . " $fieldname BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";		
 		}				
 		elseif ($y = GetReq('year')) {
 			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12';}
+			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
 				
 			if ($istimestamp)
-				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
 			else
-				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
-			
-			//$this->messages[] = 'Combo selection:'.$m.'-'.$y;
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
 		}	
         else {
-			//$dateSQL = null; 
-			
 			//always this year by default
-			$mstart = '01'; $mend = '12';
+			//$mstart = '01'; $mend = '12';
+			//always this month by default
+			$mstart = date('m'); $mend = date('m');
 			$y = date('Y');
+			$daysofmonth = date('t');
+			
 			if ($istimestamp)
-				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
 			else
-				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";	
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";	
             //echo $dateSQL;			
 		}	
 		
@@ -1175,7 +1174,7 @@ function handleResponse() {if(http.readyState == 4){
 			$this->setTask('danger|Upgrade your hosting plan|99');		
 		
         if ($id = $this->cpGet['id']) {
-			
+			//return (0); //test bypass
 			$timeins = $this->sqlDateRange('date', true, true);	
 			
 			//stats
@@ -1212,6 +1211,13 @@ function handleResponse() {if(http.readyState == 4){
 			$res = $db->Execute($sSQL,2);
             $this->stats['Visits']['wishall'] = $this->nformat($res->fields[0]);
 			
+			//ypoloipo
+			$sSQL = "select ypoloipo1 from products where ". $this->getmapf('code') ."='$id'";
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Item']['ypoloipo1'] = $this->nformat($res->fields[0]);
+			
+			//return (0); //test bypass
+			
 			//transactions
 			$timeins = $this->sqlDateRange('tdate', false, true);
 			
@@ -1246,7 +1252,7 @@ function handleResponse() {if(http.readyState == 4){
 
 		}
 		elseif ($cat = $this->cpGet['cat']) {
-			
+			//return (0); //test bypass
 			$timeins = $this->sqlDateRange('date', true, true);	
 			
 			//stats (category)
@@ -1285,6 +1291,7 @@ function handleResponse() {if(http.readyState == 4){
 			$res = $db->Execute($sSQL,2);
             $this->stats['Items']['wishall'] = $this->nformat($res->fields[0]);
 			
+			//return (0); //test bypass
 			
 			//transactions
 			$timeins = $this->sqlDateRange('tdate', false, true);
@@ -1319,7 +1326,7 @@ function handleResponse() {if(http.readyState == 4){
 			$this->stats['Items']['income'] = $this->nformat($value, 2);			
 		}		
 		else {
-	
+			//users items lists etc
             $sSQL = "select count(id) from users";
 			$res = $db->Execute($sSQL,2);
             $this->stats['Users']['value'] = $this->nformat($res->fields[0]);			
@@ -1352,7 +1359,7 @@ function handleResponse() {if(http.readyState == 4){
 			$res = $db->Execute($sSQL,2);	
             $this->stats['Items']['Attachments'] = $this->nformat($res->fields[0]);			
 			
-
+            //products
             $timeins = $this->sqlDateRange('sysins', false, false);	
 			$where = $timeins ? ' where ' : null;
 		    //$sSQL = "select id,substr(sysins,1,4) as year,substr(sysins,6,2) as month from products where substr(sysins,1,4)='$year' and substr(sysins,6,2)='$month'";
@@ -1377,52 +1384,10 @@ function handleResponse() {if(http.readyState == 4){
 						
             $sSQL = "select count(id) from products";
 			$res = $db->Execute($sSQL,2);	
-            $this->stats['Items']['value'] = $this->nformat($res->fields[0]);			
+            $this->stats['Items']['value'] = $this->nformat($res->fields[0]);
 
-			
-			$timein = $this->sqlDateRange('time', true, true);//false);			 
-			//$where = $timein ? ' where ' : null;
-			//$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql" . $where . $timein;
-			$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql where reference NOT LIKE 'system' and reference NOT LIKE 'cron' " . $timein;
-			$res = $db->Execute($sSQL,2);
-			
-            $this->stats['Sync']['value'] = $this->nformat($res->fields[0]);		
-			$this->stats['Sync']['bytes'] = $this->bytesToSize1024($res->fields[1],1); //$chars_send,1);
-			
-			$timein = $this->sqlDateRange('time', true, true);			 
-			$sSQL = "select count(id) from syncsql where status <> 1 " . $timein;
-			$res = $db->Execute($sSQL,2);			
-			$this->stats['Sync']['noexec'] = $this->nformat($res->fields[0]); 			
 
-			
-			$timein = $this->sqlDateRange('timein', true, false);
-            $where = $timein ? ' where ' : null;			
-			$sSQL = "select count(id), sum(CHAR_LENGTH(body)) from mailqueue" . $where . $timein;
-			//echo $sSQL;
-			$res = $db->Execute($sSQL,2);
-			
-			$this->stats['Mail']['value'] = $this->nformat($res->fields[0]); 
-			$this->stats['Mail']['bytes'] = $this->bytesToSize1024($res->fields[1],1); //$chars_send,1);
-			
-		    $sSQL = "select count(id) from mailqueue where active=0";
-			$res = $db->Execute($sSQL,2);
-            $this->stats['Mail']['sent'] = $this->nformat($res->fields[0]);			
-
-		    $sSQL = "select count(id) from mailqueue " . $where . $timein;;
-			$res = $db->Execute($sSQL,2);
-            $this->stats['Mail']['value'] = $this->nformat($res->fields[0]);
-					
-			$timein = $this->sqlDateRange('timein', true, true);				
-		    //$sSQL = "select count(id) from mailqueue where substr(timeout,1,4)='$year' and active=0";
-			$sSQL = "select count(id) from mailqueue where active=1 " . $timein;
-			$res = $db->Execute($sSQL,2);
-            $this->stats['Mail']['send'] = $this->nformat($res->fields[0]);
-			
-		    $sSQL = "select count(id) from mailcamp where active=1";
-			$res = $db->Execute($sSQL,2);
-            $this->stats['Mail']['campaigns'] = $this->nformat($res->fields[0]);				
-
-			
+			//transactions
 			$timein = $this->sqlDateRange('tdate', false, false);
 			$where = $timein ? ' where ' : null;
 			//$sSQL = "select count(recid) from transactions where substr(tdate,1,4)='$year'";
@@ -1437,10 +1402,57 @@ function handleResponse() {if(http.readyState == 4){
 			$res = $db->Execute($sSQL,2);
 			$this->stats['Transactions']['revenuenet'] = $this->nformat($res->fields[0],2);
 			$this->stats['Transactions']['revenue'] = $this->nformat($res->fields[1],2);			
-			$this->stats['Transactions']['tax'] = $this->nformat((floatval($res->fields[1]) - floatval($res->fields[0])),2);
+			$this->stats['Transactions']['tax'] = $this->nformat((floatval($res->fields[1]) - floatval($res->fields[0])),2);			
+			
+			//mail, campaigns
+			$timein = $this->sqlDateRange('timein', true, true);			
+		    $sSQL = "select count(id) from mailqueue where active=0 " . $timein;
+			$res = $db->Execute($sSQL,2);
+            //$this->stats['Mail']['sent'] = $this->nformat($res->fields[0]);		
+			$this->stats['Mail']['value'] = $this->nformat($res->fields[0]);		
+			
+			$sSQL = "select count(id) from mailqueue where active=1 " . $timein;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Mail']['send'] = $this->nformat($res->fields[0]);				
+
+		    $sSQL = "select count(id) from mailcamp where active=1 " . $timein;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Mail']['campaigns'] = $this->nformat($res->fields[0]);			
+			
+			return (0); //test bypass			
+
+			//synsql
+			$timein = $this->sqlDateRange('time', true, true);//false);			 
+			//$where = $timein ? ' where ' : null;
+			//$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql" . $where . $timein;
+			$sSQL = "select count(id), sum(CHAR_LENGTH(sqlquery)) from syncsql where reference NOT LIKE 'system' and reference NOT LIKE 'cron' " . $timein;
+			$res = $db->Execute($sSQL,2);
+			
+            $this->stats['Sync']['value'] = $this->nformat($res->fields[0]);		
+			$this->stats['Sync']['bytes'] = $this->bytesToSize1024($res->fields[1],1); //$chars_send,1);
+			
+			$timein = $this->sqlDateRange('time', true, true);			 
+			$sSQL = "select count(id) from syncsql where status <> 1 " . $timein;
+			$res = $db->Execute($sSQL,2);			
+			$this->stats['Sync']['noexec'] = $this->nformat($res->fields[0]); 			
+			
+			//mail campaigns
+			$timein = $this->sqlDateRange('timein', true, false);
+            $where = $timein ? ' where ' : null;			
+			$sSQL = "select count(id), sum(CHAR_LENGTH(body)) from mailqueue" . $where . $timein;
+			//echo $sSQL;
+			$res = $db->Execute($sSQL,2);
+			
+			$this->stats['Mail']['value'] = $this->nformat($res->fields[0]); 
+			$this->stats['Mail']['bytes'] = $this->bytesToSize1024($res->fields[1],1); //$chars_send,1);		
+
+		    $sSQL = "select count(id) from mailqueue " . $where . $timein;;
+			$res = $db->Execute($sSQL,2);
+            $this->stats['Mail']['value'] = $this->nformat($res->fields[0]);			
+
 		}  
 
-        return ($ret);     	
+        return (1);     	
     }
 	
 	protected function nformat($n, $dec=0) {
@@ -1848,7 +1860,7 @@ function handleResponse() {if(http.readyState == 4){
 			}	  
 			
 			if ($id = $this->cpGet['id'])
-				$section = ' &gt ' . $id;
+				$section = ' &gt ' . $this->getItemName($id);
 			elseif ($cat = $this->cpGet['cat'])
 				$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', str_replace('_', ' ', $cat));
 			else
@@ -2497,7 +2509,7 @@ function handleResponse() {if(http.readyState == 4){
 		return ($ret);
 	} 
 
-	protected function getmapf($name) {
+	public function getmapf($name) {
 	
 		if (empty($this->map_t)) return 0;
 	  
@@ -2508,6 +2520,17 @@ function handleResponse() {if(http.readyState == 4){
 		$ret = $this->map_f[$id];
 		return ($ret);
 	}	
+	
+	public function getItemName($id) {
+		if (!$id) return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+		$name = $lan ? 'itmname' : 'itmfname';
+		
+		$sSQL = "select $name from products where " . $this->getmapf('code') . "=" . $db->qstr($id);
+		$res = $db->Execute($sSQL,2);
+        return $res->fields[0];		
+	}
 	
 };
 }
