@@ -2311,10 +2311,13 @@ function handleResponse() {if(http.readyState == 4){
 		
 		foreach ($result as $i=>$rec) {
 			$rtokens = array();
+			$visitor = $this->checkmail($rec['attr3']) ? $rec['attr3'] : 
+							( $this->checkmail($rec['attr2']) ? $rec['attr2'] : $rec['REMOTE_ADDR']);
+			
 			$rtokens[] = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : 
 			                             $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")"; 
 			$rtokens[] = $this->timeSayWhen(strtotime($rec['date'])); 
-			$rtokens[] = '#'; //link
+			$rtokens[] = defined('RCCRMTRACE_DPC') ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
@@ -2368,10 +2371,13 @@ function handleResponse() {if(http.readyState == 4){
 		
 		foreach ($result as $i=>$rec) {
 			$rtokens = array();
+			$visitor = $this->checkmail($rec['attr3']) ? $rec['attr3'] : 
+							( $this->checkmail($rec['attr2']) ? $rec['attr2'] : $rec['REMOTE_ADDR']);
+							
 			$rtokens[] = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : 
 			                             $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")"; 
 			$rtokens[] = $this->timeSayWhen(strtotime($rec['date'])); 
-			$rtokens[] = '#'; //link
+			$rtokens[] = defined('RCCRMTRACE_DPC') ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
@@ -2531,6 +2537,14 @@ function handleResponse() {if(http.readyState == 4){
 		$res = $db->Execute($sSQL,2);
         return $res->fields[0];		
 	}
+	
+    public function checkmail($data) {
+
+		if( !eregi("^[a-z0-9]+([_\\.-][a-z0-9]+)*" . "@([a-z0-9]+([\.-][a-z0-9]{1,})+)*$", $data, $regs) )  
+			return false;
+
+		return true;  
+	}	
 	
 };
 }

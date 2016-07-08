@@ -8,14 +8,20 @@ $__DPC['RCCRMTRACE_DPC'] = 'rccrmtrace';
  
 $__EVENTS['RCCRMTRACE_DPC'][0]='cpcrmtrace';
 $__EVENTS['RCCRMTRACE_DPC'][1]='cpcrmprofile';
-$__EVENTS['RCCRMTRACE_DPC'][2]='cpcrmbacktrace';
+$__EVENTS['RCCRMTRACE_DPC'][2]='cpcrmactivities';
+$__EVENTS['RCCRMTRACE_DPC'][3]='cpcrmcontact';
+$__EVENTS['RCCRMTRACE_DPC'][4]='cpcrmtimeline';
+$__EVENTS['RCCRMTRACE_DPC'][5]='cpcrmeditprofile';
+$__EVENTS['RCCRMTRACE_DPC'][6]='cpcrmsaveprofile';
 
 $__ACTIONS['RCCRMTRACE_DPC'][0]='cpcrmtrace';
 $__ACTIONS['RCCRMTRACE_DPC'][1]='cpcrmprofile';
-$__ACTIONS['RCCRMTRACE_DPC'][2]='cpcrmbacktrace';
+$__ACTIONS['RCCRMTRACE_DPC'][2]='cpcrmactivities';
+$__ACTIONS['RCCRMTRACE_DPC'][3]='cpcrmcontact';
+$__ACTIONS['RCCRMTRACE_DPC'][4]='cpcrmtimeline';
+$__ACTIONS['RCCRMTRACE_DPC'][5]='cpcrmeditprofile';
+$__ACTIONS['RCCRMTRACE_DPC'][6]='cpcrmsaveprofile';
 
-
-//$__DPCATTR['RCCRMTRACE_DPC']['cpcrm'] = 'cpcrm,1,0,0,0,0,0,0,0,0,0,0,1';
 
 $__LOCALE['RCCRMTRACE_DPC'][0]='RCCRMTRACE_DPC;Crm trace;Crm trace';
 $__LOCALE['RCCRMTRACE_DPC'][1]='_id;ID;ID';
@@ -54,30 +60,40 @@ class rccrmtrace  {
 	
     function event($event=null) {
 	
-	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	   if ($login!='yes') return null;		 
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;		 
 	
-	   switch ($event) {
-		   	
-		 case 'cpcrmprofile' :  	   
-	     case 'cpcrmtrace'   :
-		 default             :    
+	    switch ($event) {
+		   
+		    case 'cpcrmtimeline'   :
+		    case 'cpcrmcontact'    : 
+			case 'cpcrmactivities' :   	
+			case 'cpcrmsaveprofile': 
+			case 'cpcrmeditprofile': 			
+			case 'cpcrmprofile'    :  	   
+			case 'cpcrmtrace'      :
+			default                :    
 		                      
-	   }
+	    }
 			
     }   
 	
     function action($action=null) {
 		
-	  $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	  if ($login!='yes') return null;	
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+		if ($login!='yes') return null;	
 	 
-	  switch ($action) {	  
+		switch ($action) {	  
 	  					
-		 case 'cpcrmprofile'   : break;					  
-	     case 'cpcrmtrace'     :
-		 default               : $out = null;
-	  }	 
+			case 'cpcrmtimeline'   :			
+		    case 'cpcrmcontact'    : 
+			case 'cpcrmactivities' : 
+			case 'cpcrmsaveprofile': 
+			case 'cpcrmeditprofile': 
+			case 'cpcrmprofile'    : 					  
+			case 'cpcrmtrace'      :
+			default                : $out = null;
+		}	 
 
 	  return ($out);
     }
