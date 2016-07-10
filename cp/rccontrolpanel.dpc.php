@@ -185,7 +185,7 @@ $__LOCALE['RCCONTROLPANEL_DPC'][137]='_ITEMCOLLECTION;Select items;Επιλογ�
 $__LOCALE['RCCONTROLPANEL_DPC'][138]='_GNAVAL;Empty;Μη διαθέσιμο';
 $__LOCALE['RCCONTROLPANEL_DPC'][139]='_caddress;Addresses;Διευθύνσεις';
 $__LOCALE['RCCONTROLPANEL_DPC'][140]='_susers;Superusers;Διαχειριστές';
-$__LOCALE['RCCONTROLPANEL_DPC'][141]='_min;minutes;λεπτά';
+$__LOCALE['RCCONTROLPANEL_DPC'][141]='_mins;minutes;λεπτά';
 $__LOCALE['RCCONTROLPANEL_DPC'][142]='_hrs;hours;ώρες';
 $__LOCALE['RCCONTROLPANEL_DPC'][143]='_days;days;ημέρες';
 $__LOCALE['RCCONTROLPANEL_DPC'][144]='_ago;ago;πριν';
@@ -210,6 +210,18 @@ $__LOCALE['RCCONTROLPANEL_DPC'][162]='_attr2;Visitor;Επισκέπτης';
 $__LOCALE['RCCONTROLPANEL_DPC'][163]='_attr3;Visitor;Επισκέπτης';
 $__LOCALE['RCCONTROLPANEL_DPC'][164]='_ip;Ip;Ip';
 $__LOCALE['RCCONTROLPANEL_DPC'][165]='_tid;Item;Είδος';
+$__LOCALE['RCCONTROLPANEL_DPC'][166]='minute;minute;λεπτό';
+$__LOCALE['RCCONTROLPANEL_DPC'][167]='minutes;minutes;λεπτά';
+$__LOCALE['RCCONTROLPANEL_DPC'][168]='hour;hour;ώρα';
+$__LOCALE['RCCONTROLPANEL_DPC'][169]='hours;hours;ώρες';
+$__LOCALE['RCCONTROLPANEL_DPC'][170]='day;day;ημέρα';
+$__LOCALE['RCCONTROLPANEL_DPC'][171]='days;days;ημέρες';
+$__LOCALE['RCCONTROLPANEL_DPC'][172]='month;month;μήνα';
+$__LOCALE['RCCONTROLPANEL_DPC'][173]='months;months;μήνες';
+$__LOCALE['RCCONTROLPANEL_DPC'][174]='year;year;έτος';
+$__LOCALE['RCCONTROLPANEL_DPC'][175]='years;years;έτη';
+$__LOCALE['RCCONTROLPANEL_DPC'][176]='second;second;δεύτερόλεπτο';
+$__LOCALE['RCCONTROLPANEL_DPC'][177]='seconds;seconds;δευτερόλεπτα';
 
 class rccontrolpanel {
 
@@ -1124,7 +1136,7 @@ function handleResponse() {if(http.readyState == 4){
   
   
   
- 	protected function sqlDateRange($fieldname, $istimestamp=false, $and=false) {
+ 	public function sqlDateRange($fieldname, $istimestamp=false, $and=false) {
 		$sqland = $and ? ' AND' : null;
 		if ($daterange = GetParam('rdate')) {//post
 			$range = explode('-',$daterange);
@@ -1859,9 +1871,11 @@ function handleResponse() {if(http.readyState == 4){
 				$monthsli .= '<li>' . seturl('t=cp&month='.$mm.'&year='.$year, $mm) .'</li>';
 			}	  
 			
-			if ($id = $this->cpGet['id'])
+			//call cpGet from rcpmenu not this (only def action)
+			$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');	
+			if ($id = $cpGet['id'])
 				$section = ' &gt ' . $this->getItemName($id);
-			elseif ($cat = $this->cpGet['cat'])
+			elseif ($cat = $cpGet['cat'])
 				$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', str_replace('_', ' ', $cat));
 			else
 				$section = null;
@@ -2304,7 +2318,7 @@ function handleResponse() {if(http.readyState == 4){
 		
         $timein = $this->sqlDateRange('date', true, true);			
 		
-		$sSQL = "SELECT id,date,attr2,attr3,REMOTE_ADDR FROM stats where tid='$id' $timein order by id desc LIMIT 100";
+		$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where tid='$id' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc LIMIT 100";
 		//echo $sSQL;
         $result = $db->Execute($sSQL);
 		if (!$result) return ;
@@ -2364,7 +2378,7 @@ function handleResponse() {if(http.readyState == 4){
 		
         $timein = $this->sqlDateRange('date', true, true);			
 		
-		$sSQL = "SELECT id,date,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein order by id desc LIMIT 100";
+		$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc LIMIT 100";
 		//echo $sSQL;
         $result = $db->Execute($sSQL);
 		if (!$result) return ;
@@ -2417,12 +2431,15 @@ function handleResponse() {if(http.readyState == 4){
 	    return ($out);	
 	}		
 	
-	public function timeSayWhen($ts=null) {
+	/* old ver */
+	public function timeSayWhen2($ts=null) {
 		$when = $ts ? $ts : time();
 		$now = time();
-		$diff = ($now-$when);
+		$diff = ($now-$when);	
 
-		if ($diff<60) 
+		if ($diff<1) 
+			$saytime = '0 ' . localize('_sec',getlocal());	
+		elseif ($diff<60) 
 			$saytime = date('s',$diff) . ' ' . localize('_sec',getlocal());		
 		elseif ($diff<3600) 
 			$saytime = date('i',$diff) . ' ' . localize('_min',getlocal());
@@ -2432,6 +2449,38 @@ function handleResponse() {if(http.readyState == 4){
 			$saytime = date('d',$diff) . ' ' . localize('_days',getlocal());		
 		
 		return ($saytime);
+	}	
+	
+	public function timeSayWhen($ptime=null) {
+		$etime = time() - $ptime;
+
+		if ($etime < 1)
+			return '0 ' . localize('second', getlocal());
+
+		$a = array( 365 * 24 * 60 * 60  =>  'year',
+					 30 * 24 * 60 * 60  =>  'month',
+						  24 * 60 * 60  =>  'day',
+							   60 * 60  =>  'hour',
+                                    60  =>  'minute',
+                                     1  =>  'second'
+                  );
+		$a_plural = array( 'year'   => 'years',
+                           'month'  => 'months',
+                           'day'    => 'days',
+                           'hour'   => 'hours',
+                           'minute' => 'minutes',
+                           'second' => 'seconds'
+                        );
+
+		foreach ($a as $secs => $str) {
+			$d = $etime / $secs;
+			if ($d >= 1) {
+				$r = round($d);
+				$a = localize($a_plural[$str], getlocal());
+				$b = localize($str, getlocal());
+				return $r . ' ' . ($r > 1 ? $a : $b);// . ' ago';
+			}
+		}
 	}	
 	
 	//called by page as json array...(NOT USED)

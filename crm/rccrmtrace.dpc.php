@@ -39,13 +39,19 @@ $__LOCALE['RCCRMTRACE_DPC'][12]='_reply;Replies;Απαντήσεις';
 $__LOCALE['RCCRMTRACE_DPC'][13]='_subject;Subject;Θέμα';
 $__LOCALE['RCCRMTRACE_DPC'][14]='_dateins;Start at;Εκκίνηση';
 $__LOCALE['RCCRMTRACE_DPC'][15]='_dateupd;Updated;Ενημερώση';
+$__LOCALE['RCCRMTRACE_DPC'][16]='_about;About;Eπαφή';
+$__LOCALE['RCCRMTRACE_DPC'][17]='_unknown;Unknown;Άγνωστος';
+$__LOCALE['RCCRMTRACE_DPC'][18]='_undefined;Unknown;Άγνωστο';
 
 
 
 class rccrmtrace  {
 
     var $title, $path, $urlpath;
-	var $seclevid, $userDemoIds;
+	var $seclevid, $userDemoIds, $owner;
+	
+	var $contactRec, $cantactData;
+	var $v, $visitor, $visitorIP, $visitorEmail, $resolved, $ref, $source;
 		
 	function __construct() {
 	
@@ -54,8 +60,35 @@ class rccrmtrace  {
 		$this->title = localize('RCCRMTRACE_DPC',getlocal());	 
 	  
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
-		$this->userDemoIds = array(5,6,7,8); 		  
+		$this->userDemoIds = array(5,6,7,8); 	
 		
+		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName');		
+		
+		$this->contactRec = array(0=>'id',1=>'date',2=>'udate',3=>'code',4=>'type',5=>'email',
+								  6=>'firstname',7=>'lastname',8=>'address',9=>'country',10=>'birthday',
+								  11=>'occupation',12=>'mobile',13=>'phone',14=>'skype',15=>'website',
+								  16=>'facebook',17=>'twitter',18=>'linkedin',19=>'longitude',20=>'latitude',
+								  21=>'about');
+		$this->contactData = array();						   
+
+		//$this->visitor = GetParam('v') ? GetParam('v') : false;	
+		$this->v = GetParam('v') ? GetParam('v') : false;		
+		if (($this->v) && (stristr($this->v, '|'))) { //pre-resolved visitor
+			$p = explode('|', $this->v);
+			$this->visitor = $p[0]; //email
+			$this->visitorEmail = $p[0]; //email			
+			$this->visitorIP = $p[1]; //ip
+			$this->resolved = true;			
+		}
+		else {
+			$this->visitor = $this->v;
+			$this->visitorEmail = $this->iseMailUser($this->v) ? $this->v : null;
+			$this->visitorIP = $this->isIPUser($this->v) ? $this->v : '0.0.0.0';	
+			$this->resolved = false;
+		}
+		
+		$this->ref = null;
+		$this->source = null;	
 	}
 	
     function event($event=null) {
@@ -65,12 +98,17 @@ class rccrmtrace  {
 	
 	    switch ($event) {
 		   
-		    case 'cpcrmtimeline'   :
+		    case 'cpcrmtimeline'   : 
 		    case 'cpcrmcontact'    : 
-			case 'cpcrmactivities' :   	
-			case 'cpcrmsaveprofile': 
+			case 'cpcrmactivities' : $this->readProfile();  	
+			                         break;
+			case 'cpcrmsaveprofile': $this->saveProfile();
+			                         $this->readProfile();
+									 break;
+			
 			case 'cpcrmeditprofile': 			
-			case 'cpcrmprofile'    :  	   
+			case 'cpcrmprofile'    : $this->readProfile();
+                                     break;			
 			case 'cpcrmtrace'      :
 			default                :    
 		                      
@@ -102,7 +140,549 @@ class rccrmtrace  {
 		return (in_array($this->seclevid, $this->userDemoIds));
 	}	
 
+    public function isIPUser($string) {
+		$valid = filter_var($string, FILTER_VALIDATE_IP);
+		return ($valid);
+	}
+	
+    public function iseMailUser($string) {
+		$valid = filter_var($string, FILTER_VALIDATE_EMAIL);
+		return ($valid);
+	}
+	
+	public function readContactField($fieldname=null, $ucfirst=false) {
+		if ((!$fieldname) || (empty($this->contactData))) return null;
+		
+		$ret = $ucfirst ? ucfirst($this->contactData[$fieldname]) : $this->contactData[$fieldname];
+		return ($ret);
+	}
+	
+	public function readContactID() {
+		if (empty($this->contactData)) return null;
+		
+		if (strcmp($this->ref, 'contact')==0) //only when native crm contact (use on form to update/replace)
+			$ret = $this->contactData['id'];
+		else
+			$ret = null;
+		return ($ret);
+	}	
 
+	public function readContactRef() {
+		$ret = $this->contactData['reference'] ? $this->contactData['reference'] : $this->ref;
+		return ($ret);
+	}	
+	
+	public function readContactSource() {
+		$ret = $this->contactData['source'] ? $this->contactData['source'] : $this->source;
+		return ($ret);
+	}	
+	
+	public function readContactIP() {
+		$ret = $this->contactData['ip'] ? $this->contactData['ip'] : $this->visitorIP;
+		return ($ret);
+	}		
+	
+	public function readContactWeb($fieldname=null) {
+		if ((!$fieldname) || (empty($this->contactData))) return null;
+		$undef = localize('_undefined', getlocal());		
+		
+		$ret = $this->contactData[$fieldname]!=$undef ? $this->contactData[$fieldname] : '#';
+		return ($ret!='#' ? (strstr($ret, 'http') ? $ret : 'http://'.$ret) : '#');
+	}
+
+	public function readContactMail($fieldname=null) {
+		if ((!$fieldname) || (empty($this->contactData))) return null;
+		
+		$ret = $this->contactData[$fieldname];
+		return ($ret);
+	}	
+	
+	public function readContactName() {
+		$undef = localize('_undefined', getlocal());
+		$name = ($this->contactData['firstname'] != $undef ) ? 
+		            $this->contactData['firstname'] : $this->visitor;
+				
+		$name .= ($this->resolved) ? 
+		         (strcmp($this->visitor, $this->visitorIP)!==0 ? " (" . $this->visitorIP. ")" : null) : 
+				 null;	
+				 
+		//$name .= " (". $this->contactData['reference'] . ")";			
+		return ($name);
+	}	
+	
+    public function currentVisitor($type=null) {
+		
+		switch ($type) {
+			case 'auto' : $ret = $this->visitorEmail ? $this->visitorEmail : $this->visitorIP; break;
+			case 'ip'   : $ret = $this->visitorIP; break;
+			case 'email': $ret = $this->visitorEmail; break;
+			default     : $ret = $this->v;
+		}
+		
+		return ($ret);
+	}
+		
+	
+	private function readProfile() {
+		$db = GetGlobal('db');
+		
+		//resolve if ip (or not pre-resolved)
+		if (($this->isIPUser($this->visitor)) && ($visitor = $this->resolveIP($this->visitor))) {
+			$this->visitorEmail = $visitor; //email			
+			$this->visitorIP = $this->visitor; //ip			
+			$this->resolved = true;
+		}	
+		else
+			$visitor = $this->visitor; //is email
+		
+		//if pre-resolved or now resolved ip
+		if (($this->iseMailUser($visitor)) || (($this->resolved) && ($this->iseMailUser($visitor)))) {
+		
+			//crm contact (default)
+			$crmfields = implode(',', $this->contactRec);
+			$sSQL = "select $crmfields,reference,source,ip,owner from crmcontacts ";		   
+			$sSQL.= "WHERE email=" . $db->qstr($visitor);
+			$result = $db->Execute($sSQL);
+			$this->ref = 'contact'; //crm contact
+		
+			if (!$result->fields[0]) { //search for customer data
+			
+				$sSQL1 = "select id,timein,code1,code2,active,mail,name,afm,address,city,prfid,prfdescr,voice1,fax,voice2,area from customers ";
+				$sSQL1.= "WHERE mail=" . $db->qstr($visitor) . " OR code2=" . $db->qstr($visitor) . " order by active desc"; //active first		   
+				$result = $db->Execute($sSQL1);
+				$this->ref = 'customer'; 
+
+				if (!$result->fields[0]) { //search for user data
+			
+					$sSQL2 = "select id,timein,code1,code2,notes,email,fname,lname,notes,username from users ";
+					$sSQL2.= "WHERE username=" . $db->qstr($visitor) . " OR email=" . $db->qstr($visitor) . " order by notes asc"; //ACTIVE note first		   
+					$result = $db->Execute($sSQL2);			
+					$this->ref = 'user';
+				}
+			}
+		}
+		else {
+			//no user, customer or crm rec (may newsletter or other action resolved mail)
+			$result = true; //dummy
+			$this->ref = 'visitor';
+		}
+		
+		if ($result) {
+			//handle rec
+			$undef = localize('_undefined', getlocal());
+			foreach ($this->contactRec as $i=>$contactField) {
+				$this->contactData[$contactField] = isset($result->fields[$i]) ? $result->fields[$i] : $undef;
+			}
+			
+			//last fields params
+			$this->contactData['reference'] = $result->fields['reference'] ? $result->fields['reference'] : $this->ref;
+			$this->source = ($this->resolved) ? ((strcmp($visitor, $this->visitorIP)!==0) ? $visitor . " (resolved $this->visitorIP)" : $visitor) : $visitor;
+			$this->contactData['source'] = $result->fields['source'] ? $result->fields['source'] : $this->source; //$this->resolved ? $visitor . '(resolved)' : $visitor;
+			$this->contactData['ip'] = $result->fields['ip'] ? $result->fields['ip'] :$this->visitorIP;
+			$this->contactData['owner'] = $result->fields['owner'] ? $result->fields['owner'] :$this->owner;
+			return true;
+		}
+		return false;	
+	}
+	
+	private function saveProfile() {
+		$db = GetGlobal('db');
+		$undef = localize('_undefined', getlocal());
+		$cr = array();
+				
+		foreach ($this->contactRec as $i=>$contactField) {
+			//echo $_POST[$contactField] . '<br>';
+			if ($value = GetParam($contactField)) {
+				$value2 = strcmp($value, $undef)!==0 ? $value : null;
+				$cr[] = $contactField;
+				$ins_params[] = $db->qstr($value2);
+				$upd_params[] = $contactField . "=" . $db->qstr($value2);
+			}	
+		}
+        /*
+		if (!empty($upd_params)) {
+			$sSQL = "REPLACE crmcontacts set ";
+			$sSQL .= implode(',', $upd_params) . ",udate=" . $db->qstr(time());
+			$sSQL .= GEtParam('id') ? " where id=" . $db->qstr($id) : null;
+			echo $sSQL;	
+		}*/
+		
+		if ($id = GetParam('id')) {
+			//update
+			if (!empty($upd_params)) {
+				$fields = implode(',', $cr);
+				$sSQL = "update crmcontacts set ";
+				$sSQL.= implode(',', $upd_params) . 
+						",udate=" . $db->qstr(date('Y-m-d H:i:s')) .
+						",owner=" . $db->qstr($this->owner);
+				$sSQL.= " where id=" . $db->qstr($id);
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);
+				
+				$this->addActivity($this->visitor, 'Profile updated.');
+				
+				return true;
+			}				
+		}
+		else {
+			//insert
+			if (!empty($ins_params)) {
+				$fields = implode(',', $cr);
+				$sSQL = "insert into crmcontacts (". $fields .",reference,source,ip,owner) values (";
+				$sSQL.= implode(',', $ins_params) . 
+						",".$db->qstr(GetParam('reference')).
+						",".$db->qstr(GetParam('source')).
+						",".$db->qstr(GetParam('ip')).
+						",".$db->qstr($this->owner).")";
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);
+				
+				$this->addActivity($this->visitor, 'Profile created.');
+				
+				return true;
+			}	
+		}
+
+		return false;
+    }	
+	
+
+	/*search for name based on email*/
+	public function resolveProfile($email=null)	{
+		if (!$email) return false;
+		$db = GetGlobal('db');
+		
+		if ($this->iseMailUser($email)) {
+		
+			//crm contact (default)
+			$crmfields = implode(',', $this->contactRec);
+			$sSQL = "select firstname,lastname,occupation from crmcontacts ";		   
+			$sSQL.= "WHERE email=" . $db->qstr($email);
+			$result = $db->Execute($sSQL);
+			$ref = 'contact'; //crm contact
+		
+			if (!$result->fields[0]) { //search for customer data
+				$sSQL1 = "select name,prfdescr from customers ";		   
+				$sSQL1.= "WHERE mail=" . $db->qstr($email) . " OR code2=" . $db->qstr($email) . " order by active desc";
+				$result = $db->Execute($sSQL1);	
+				$ref = 'customer'; 
+				
+				if (!$result->fields[0]) { //search for user data
+			
+					$sSQL2 = "select fname,lname from users ";
+					$sSQL2.= "WHERE username=" . $db->qstr($email) . " OR email=" . $db->qstr($email) . " order by notes asc"; //ACTIVE note first		   
+					$result = $db->Execute($sSQL2);			
+					$ref = 'user';
+				}				
+			}
+			
+			if ($result->fields) {
+				$ret = $result->fields[0] . ' ' . $result->fields[1] . ' ' . $result->fields[2];
+				return ($ret);
+			}
+		}
+
+		//return false;	
+		return ($email); //input out
+	}		
+	
+	/*search for email based on ip*/
+	public function resolveIP($ip=null)	{
+		if (!$ip) return false;
+		$db = GetGlobal('db');
+        $year = GetParam('year') ? GetParam('year') : date('Y'); 
+	    $month = GetParam('month') ? GetParam('month') : date('m');
+
+		//into current date range
+		//$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		
+		//back one month from now
+		//$timein = "AND DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) ";		
+		
+		//back 60 days from date/month max selected
+		if ($daterange = GetParam('rdate')) {
+			$range = explode('-',$daterange);
+			$dend = str_replace('/','-',trim($range[1]));
+			$fromDate = "STR_TO_DATE('$dend','%m-%d-%Y')";			
+		}	
+		elseif (($m = GetReq('month')) && ($m!=date('m'))) {
+			$y = GetReq('year') ? GetReq('year') : date('Y');
+			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
+			$fromDate = "'$y-$m-$daysofmonth'";
+		}	
+		else 
+			$fromDate = "NOW()";	
+		
+		$timein = "AND DATE(date) BETWEEN DATE( DATE_SUB( $fromDate , INTERVAL 60 DAY ) ) AND DATE ( $fromDate ) ";
+				
+		$sSQL = "SELECT attr2,attr3 FROM stats where REMOTE_ADDR='$ip' $timein order by id desc"; 
+		//echo $sSQL;
+        $result = $db->Execute($sSQL);
+		if (!$result) return false;
+
+		foreach ($result as $i=>$rec) {
+			if ($this->iseMailUser($rec[0]))
+				return $rec[0];
+			elseif ($this->iseMailUser($rec[1]))
+				return $rec[1];
+		}	
+		
+		return false;
+	}
+	
+    public function visitors($template=null) {
+		$db = GetGlobal('db'); 	
+
+		$recognize = GetReq('recognized') ? true : false;
+		$resolve = GetReq('resolved') ? true : false;
+		$limit = null;//($recognize) ? null : ( $resolve ? " LIMIT 5000" : " LIMIT 500" );
+		
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		
+		if ($v = $this->visitor)  //ip / mail / session
+			$vSQL = $this->isIPUser($v) ? " AND REMOTE_ADDR='$v' " : 
+			       ($this->iseMailUser($v) ? " AND (attr2='$v' OR attr3='$v') " : " AND attr2='$v' " );
+		else
+			$vSQL = null;
+		
+        if ($id = $cpGet['id']) {
+			$cat = $cpGet['cat'];
+			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where (tid='$id' OR attr1='$cat') $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+		}
+		elseif ($cat = $cpGet['cat']) {
+			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+		}
+		else {
+			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+0');
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+		}
+		//echo $sSQL;	
+        $result = $db->Execute($sSQL);
+		if (!$result) return ;
+		
+		$t = $template ? GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template) : null;
+
+		foreach ($result as $i=>$rec) {
+			$rtokens = array();
+			$resolved = null;
+			
+			$visitor = $this->iseMailUser($rec['attr3']) ? $rec['attr3'] : 
+						( $this->iseMailUser($rec['attr2']) ? $rec['attr2'] : $rec['REMOTE_ADDR']);
+						
+			if (($recognize) && (!$this->iseMailUser($visitor))) 
+				continue;		
+			elseif (($resolve) && ($this->isIPUser($visitor))) {
+				$resolved = $this->resolveIP($visitor);		
+				if (!$this->iseMailUser($resolved)) continue;
+			}
+			
+			//$name = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")";	
+			$name = $recognize ? $visitor . " -&gt resolved : " . $this->resolveProfile($visitor) : $visitor; 
+			//$name.= " -&gt resolved : " . $this->resolveProfile($visitor);
+			$rtokens[] = $resolved ? $name . " -&gt resolved : " . $this->resolveProfile($resolved) : $name; 
+			$rtokens[] = GetGlobal('controller')->calldpc_method('rccontrolpanel.timeSayWhen use '. strtotime($rec['date'])); 
+			$rtokens[] = 'cpcrmtrace.php?t=cpcrmprofile&v=' . ($resolved ? $resolved.'|'.$visitor : $visitor); //link
+			$rtokens[] = null;//$rec[3]; //hash
+			
+			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
+			             "<option value=\"$hash\">".$rtokens[1]."</option>";
+			
+			unset($rtokens);
+		}
+		//echo $ret;
+		return ($ret);		
+	}
+	
+	public function getMonth() {
+		return (GetReq('month') ? GetReq('month') :  date('m'));
+	}
+	
+	public function getYear() {
+		return (GetReq('year') ? GetReq('year') :  date('Y'));
+	}	
+	
+	public function getDateRange() {
+		if ($rdate = GetReq('rdate'))
+			$ret = "rdate=" . $rdate;
+		else
+			$ret = "month=".$this->getYear()."&year=".$this->getMonth();
+		
+		return ($ret);
+	}	
+	
+	
+	
+	protected function addActivity($profile, $say, $type=null) {
+		if ((!$say)||(!$profile)) return false;
+		$db = GetGlobal('db');
+		$t = $type ? $type : 0; //int
+	
+		$sSQL = "insert into crmactivities (profile, memo, type) values (";
+		$sSQL.= $db->qstr($profile) . "," . $db->qstr($say). "," . $t . ")";
+		//echo $sSQL;
+		$result = $db->Execute($sSQL);		
+		
+		return true;
+	}
+	
+	public function showActivities($template=null) {
+		$db = GetGlobal('db');
+		$t = $this->select_template($template);
+
+		$sSQL = "select DATE_FORMAT(date, '%d-%m-%Y %H:%i:%s') as date,memo,type from crmactivities where profile=" . $db->qstr($this->visitor);	
+		$sSQL.= "order by date desc LIMIT 100";
+		//echo $sSQL;
+		$result = $db->Execute($sSQL);	
+			
+		if ($result) {
+			foreach ($result as $i=>$rec) {
+				$tokens = array($rec['date'], $rec['memo']); //,$rec['type']
+				if ($template)
+					$ret .= $this->combine_tokens($t, $tokens);
+				else
+					$ret[] = $tokens;	
+			}	
+		}	
+		
+		return ($ret);
+	}
+	
+	public function searchTags($template=null) {
+		$db = GetGlobal('db');
+		$t = $this->select_template($template);
+
+		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		
+		$sSQL = "select count(id) as c,attr1 from stats where tid='search' " . $timein;	
+		$sSQL.= " group by attr1 order by c desc";//" LIMIT 30";
+		//echo $sSQL;
+		$result = $db->Execute($sSQL);	
+			
+		if ($result) {
+			foreach ($result as $i=>$rec) {
+				$tokens = array($rec['attr1'], $rec['c'], '#');
+				if ($template)
+					$ret .= $this->combine_tokens($t, $tokens);
+				else
+					$ret[] = $tokens;	
+			}	
+		}	
+		
+		return ($ret);
+	}	
+	
+	public function showTimeline($template=null, $color=null, $icon=null, $time=null) {
+		$db = GetGlobal('db');
+		$c = $color ? $color : 'gray';
+		$ic = $icon ? $icon : 'icon-time';
+		$time = $time ? $time : date('Y-m-d H:i');
+		$t = $this->select_template($template);
+
+		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		
+		$sSQL = "select DATE_FORMAT(date, '%d-%m-%Y %H:%i') as datetime, DATE_FORMAT(date, '%d-%m-%Y') as date, DATE_FORMAT(date, '%H:%i') as time, tid, attr1, attr2, attr3, ref, REMOTE_ADDR from stats where " . 
+		        "(attr2=" . $db->qstr($this->visitorEmail) . " OR " .	
+				"attr3=" . $db->qstr($this->visitorEmail) . " OR " .
+				"REMOTE_ADDR=" . $db->qstr($this->visitorIP) . ")" . $timein;
+		$sSQL.= "order by id desc LIMIT 100";
+		//echo $sSQL;
+		$result = $db->Execute($sSQL);	
+			
+		if ($result) {
+			foreach ($result as $i=>$rec) {
+				$item = null;
+				$link = '#';
+				switch ($rec['tid']) {
+					case 'search' : $c = 'orange'; $item = 'Search: ' . $rec['attr1']; break;
+					case 'filter' : $c = 'blue'; $item = 'Filter: ' . $rec['attr1']; break;
+					default       : if ($rec['tid']) {
+										$c = 'purple'; 
+										$item = GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']);
+										$link = seturl('t=kshow&id='.$rec['tid']);
+									}	
+					
+					                switch ($rec['attr1']) {
+										case 'cartin'  : $c = 'green'; $item = 'Cart in: ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); break;
+										case 'cartout' : $c = 'red';   $item = 'Cart out: ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); break;
+										case 'checkout': $c = 'gray';  $item = 'Checkout: ' . $rec['tid']; break;
+										default        : if ($rec['attr1']) {
+															$c = 'yellow'; 
+															$item = str_replace('_', ' ', $rec['attr1']);
+															$link = seturl('t=klist&cat='.$rec['attr1']);
+										                 }	
+					                } 
+				}
+				
+				/*$c = $rec['tid'] ? ($rec['tid']=='search' ? 'red' : ($rec['tid']=='filter' ? 'green' : 'purple')) : 'yellow';
+				
+				$item = $rec['tid'] ? 
+				        GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']) : 
+						str_replace('_', ' ', $rec['attr1']); //id or cat
+						
+				$link = $rec['tid'] ? seturl('t=kshow&id=').$rec['tid'] : seturl('t=klist&cat=').$rec['attr1'];		
+				*/
+				$details = $rec['attr3'] ? 'Reference:' . $rec['ref'] .' ('.$rec['REMOTE_ADDR']. ')' : $rec['REMOTE_ADDR'];
+						
+				$tokens = array($c, $ic, $rec['datetime'], $rec['date'], $rec['time'], $item, $details, $link); 
+				
+				if ($template)
+					$ret .= $this->combine_tokens($t, $tokens);
+				else
+					$ret[] = $tokens;	
+			}	
+		}	
+		
+		return ($ret);
+	}	
+	
+	function select_template($tfile=null, $path=null) {
+		if (!$tfile) return;
+		$cppath = $path ? $path : GetGlobal('controller')->calldpc_var('rccontrolpanel.cptemplate');
+	  
+		$template = $tfile . '.htm';	
+		$t = GetGlobal('controller')->calldpc_var('rccontrolpanel.prpath') . 'html/'. $cppath .'/'. str_replace('.',getlocal().'.',$template) ;   
+		if (is_readable($t)) 
+			$mytemplate = file_get_contents($t);
+
+		return ($mytemplate);	 
+    }		
+	
+	//tokens method	
+	protected function combine_tokens($template, $tokens, $execafter=null) {
+	    if (!is_array($tokens)) return;		
+
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template;
+		  
+		//echo $ret;
+	    foreach ($tokens as $i=>$tok) {
+            //echo $tok,'<br>';
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<30;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);
+		//echo $ret;
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	} 	
+	
 };
 }
 ?>
