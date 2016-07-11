@@ -101,7 +101,7 @@ $__LOCALE['RCCRM_DPC'][105]='_stats;History;Ιστορικό';
 $__LOCALE['RCCRM_DPC'][106]='_purchases;Purchases;Αγορές';
 $__LOCALE['RCCRM_DPC'][107]='_wishlist;Wishlist;Wishlist';
 $__LOCALE['RCCRM_DPC'][108]='_compares;Compares;Συγκρίσεις';
-$__LOCALE['RCCRM_DPC'][109]='_favorites;Favorites;Αγαπημένα';
+$__LOCALE['RCCRM_DPC'][109]='_favorites;Recommended;Προτιμήσεις';
 $__LOCALE['RCCRM_DPC'][110]='_views;Views;Επικέψεις';
 $__LOCALE['RCCRM_DPC'][111]='_returns;Returns;Επιστροφές';
 $__LOCALE['RCCRM_DPC'][112]='_offers;Offers;Προσφορές';
@@ -266,7 +266,7 @@ class rccrm  {
 	protected function loadsubframe($ajaxdiv=null, $mode=null, $isdashboard=false) {
 		$module = $mode ? $mode : GetParam('module'); //module details
 		$id = GetParam('id'); //crm email
-		
+
 		if (($isdashboard) || ($module=='dashboard'))
 			$bodyurl = seturl("t=cpcrmdashboard&iframe=1&id=$id&module=$module");
 		else

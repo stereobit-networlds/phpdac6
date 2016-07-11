@@ -1854,6 +1854,7 @@ function handleResponse() {if(http.readyState == 4){
 	
 	
     public function select_timeline($template=null, $year=null, $month=null) {
+		$t = GetReq('t') ? GetReq('t') : 'cp';
 		$year = GetParam('year') ? GetParam('year') : date('Y'); 
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 		$daterange = GetParam('rdate');
@@ -1863,12 +1864,12 @@ function handleResponse() {if(http.readyState == 4){
 			$tdata = $this->select_template($template);
 			
 			for ($y=2015;$y<=intval(date('Y'));$y++) {
-				$yearsli .= '<li>'. seturl('t=cp&month='.$month.'&year='.$y, $y) .'</li>';
+				$yearsli .= '<li>'. seturl('t='.$t.'&month='.$month.'&year='.$y, $y) .'</li>';
 			}
 		
 			for ($m=1;$m<=12;$m++) {
 				$mm = sprintf('%02d',$m);
-				$monthsli .= '<li>' . seturl('t=cp&month='.$mm.'&year='.$year, $mm) .'</li>';
+				$monthsli .= '<li>' . seturl('t='.$t.'&month='.$mm.'&year='.$year, $mm) .'</li>';
 			}	  
 			
 			//call cpGet from rcpmenu not this (only def action)

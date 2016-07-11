@@ -13,6 +13,8 @@ $__EVENTS['RCCRMTRACE_DPC'][3]='cpcrmcontact';
 $__EVENTS['RCCRMTRACE_DPC'][4]='cpcrmtimeline';
 $__EVENTS['RCCRMTRACE_DPC'][5]='cpcrmeditprofile';
 $__EVENTS['RCCRMTRACE_DPC'][6]='cpcrmsaveprofile';
+$__EVENTS['RCCRMTRACE_DPC'][7]='cpcrmdataprofile';
+$__EVENTS['RCCRMTRACE_DPC'][8]='cpcrmframe';
 
 $__ACTIONS['RCCRMTRACE_DPC'][0]='cpcrmtrace';
 $__ACTIONS['RCCRMTRACE_DPC'][1]='cpcrmprofile';
@@ -21,7 +23,8 @@ $__ACTIONS['RCCRMTRACE_DPC'][3]='cpcrmcontact';
 $__ACTIONS['RCCRMTRACE_DPC'][4]='cpcrmtimeline';
 $__ACTIONS['RCCRMTRACE_DPC'][5]='cpcrmeditprofile';
 $__ACTIONS['RCCRMTRACE_DPC'][6]='cpcrmsaveprofile';
-
+$__ACTIONS['RCCRMTRACE_DPC'][7]='cpcrmdataprofile';
+$__ACTIONS['RCCRMTRACE_DPC'][8]='cpcrmframe';
 
 $__LOCALE['RCCRMTRACE_DPC'][0]='RCCRMTRACE_DPC;Crm trace;Crm trace';
 $__LOCALE['RCCRMTRACE_DPC'][1]='_id;ID;ID';
@@ -42,7 +45,7 @@ $__LOCALE['RCCRMTRACE_DPC'][15]='_dateupd;Updated;Ενημερώση';
 $__LOCALE['RCCRMTRACE_DPC'][16]='_about;About;Eπαφή';
 $__LOCALE['RCCRMTRACE_DPC'][17]='_unknown;Unknown;Άγνωστος';
 $__LOCALE['RCCRMTRACE_DPC'][18]='_undefined;Unknown;Άγνωστο';
-
+$__LOCALE['RCCRMTRACE_DPC'][19]='_crm;Crm;Crm';
 
 
 class rccrmtrace  {
@@ -83,7 +86,7 @@ class rccrmtrace  {
 		else {
 			$this->visitor = $this->v;
 			$this->visitorEmail = $this->iseMailUser($this->v) ? $this->v : null;
-			$this->visitorIP = $this->isIPUser($this->v) ? $this->v : '0.0.0.0';	
+			$this->visitorIP = $this->isIPUser($this->v) ? $this->v : null;//'0.0.0.0';	
 			$this->resolved = false;
 		}
 		
@@ -97,6 +100,13 @@ class rccrmtrace  {
 	    if ($login!='yes') return null;		 
 	
 	    switch ($event) {
+			
+		    case 'cpcrmframe'      : echo $this->urlframe();
+									 die();
+							         break; 		   
+		    case 'cpcrmdataprofile': echo $this->crmframe();
+									 die();
+							         break; 
 		   
 		    case 'cpcrmtimeline'   : 
 		    case 'cpcrmcontact'    : 
@@ -121,8 +131,11 @@ class rccrmtrace  {
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 		if ($login!='yes') return null;	
 	 
-		switch ($action) {	  
-	  					
+		switch ($action) {	 
+
+			case 'cpcrmframe'      : break;
+			
+			case 'cpcrmdataprofile': 				
 			case 'cpcrmtimeline'   :			
 		    case 'cpcrmcontact'    : 
 			case 'cpcrmactivities' : 
@@ -130,7 +143,7 @@ class rccrmtrace  {
 			case 'cpcrmeditprofile': 
 			case 'cpcrmprofile'    : 					  
 			case 'cpcrmtrace'      :
-			default                : $out = null;
+			default                : $out = "<div id=\"crmdetails\"></div>"; //null;
 		}	 
 
 	  return ($out);
@@ -167,9 +180,12 @@ class rccrmtrace  {
 		return ($ret);
 	}	
 
-	public function readContactRef() {
-		$ret = $this->contactData['reference'] ? $this->contactData['reference'] : $this->ref;
-		return ($ret);
+	public function readContactRef($thisRefOn=false, $ucfirst=false) {
+		if ($thisRefOn)
+			$ret = $this->ref ? $this->ref : $this->contactData['reference'];
+		else
+			$ret = $this->contactData['reference'] ? $this->contactData['reference'] : $this->ref;
+		return ($ucfirst ? ucfirst($ret) : $ret);
 	}	
 	
 	public function readContactSource() {
@@ -221,6 +237,29 @@ class rccrmtrace  {
 		
 		return ($ret);
 	}
+	
+	protected function crmframe() {
+		$id = GetParam('id');
+		$cmd = 'cpcrm.php?t=cpcrmshowusr&id='. $id . '&iframe=1';
+		$bodyurl = $cmd; //seturl("t=$cmd&iframe=1");
+	
+		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"520px\"><p>Your browser does not support iframes</p></iframe>";    
+
+		return ($frame); 
+	}	
+	
+	protected function urlframe() {
+		$cmd = urldecode(base64_decode(GetParam('url')));
+		if (strstr($cmd,'|')) 
+			list($url, $h) = explode('|',$cmd);
+		else 
+			$url = $cmd;
+		
+	    $height = $h ? $h : 520;
+		$frame = "<iframe src =\"$url\" width=\"100%\" height=\"{$height}px\"><p>Your browser does not support iframes</p></iframe>";    
+
+		return ($frame); 
+	}	
 		
 	
 	private function readProfile() {
@@ -266,6 +305,7 @@ class rccrmtrace  {
 			$result = true; //dummy
 			$this->ref = 'visitor';
 		}
+		//echo $this->ref;
 		
 		if ($result) {
 			//handle rec
@@ -435,7 +475,7 @@ class rccrmtrace  {
 
 		$recognize = GetReq('recognized') ? true : false;
 		$resolve = GetReq('resolved') ? true : false;
-		$limit = null;//($recognize) ? null : ( $resolve ? " LIMIT 5000" : " LIMIT 500" );
+		$limit = ($recognize) ? null : ( $resolve ? " LIMIT 5000" : " LIMIT 500" ); //????
 		
 		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
 		
@@ -507,7 +547,7 @@ class rccrmtrace  {
 		if ($rdate = GetReq('rdate'))
 			$ret = "rdate=" . $rdate;
 		else
-			$ret = "month=".$this->getYear()."&year=".$this->getMonth();
+			$ret = "month=".$this->getMonth()."&year=".$this->getYear();
 		
 		return ($ret);
 	}	
@@ -529,14 +569,17 @@ class rccrmtrace  {
 	
 	public function showActivities($template=null) {
 		$db = GetGlobal('db');
-		$t = $this->select_template($template);
+		
+		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
 
-		$sSQL = "select DATE_FORMAT(date, '%d-%m-%Y %H:%i:%s') as date,memo,type from crmactivities where profile=" . $db->qstr($this->visitor);	
+		$sSQL = "select DATE_FORMAT(date, '%d-%m-%Y %H:%i:%s') as date,memo,type from crmactivities where profile=" . $db->qstr($this->visitor) . $timein;	
 		$sSQL.= "order by date desc LIMIT 100";
 		//echo $sSQL;
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
+			$t = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);			
+			
 			foreach ($result as $i=>$rec) {
 				$tokens = array($rec['date'], $rec['memo']); //,$rec['type']
 				if ($template)
@@ -551,16 +594,24 @@ class rccrmtrace  {
 	
 	public function searchTags($template=null) {
 		$db = GetGlobal('db');
-		$t = $this->select_template($template);
 
 		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
 		
-		$sSQL = "select count(id) as c,attr1 from stats where tid='search' " . $timein;	
+		if ($ip = $this->visitorIP)
+			$iSQL = " REMOTE_ADDR=" . $db->qstr($ip);		
+		if ($v = $this->visitorEmail)
+			$vSQL = " and (attr2=" . $db->qstr($v) . " or attr3=" . $db->qstr($v) . ($iSQL ? " or " . $iSQL : null) . ")";
+		else
+			$vSQL = $iSQL ? " and " . $iSQL : null;
+		
+		$sSQL = "select count(id) as c,attr1 from stats where tid='search'" . $vSQL . $timein;	
 		$sSQL.= " group by attr1 order by c desc";//" LIMIT 30";
 		//echo $sSQL;
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
+			$t = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);
+					
 			foreach ($result as $i=>$rec) {
 				$tokens = array($rec['attr1'], $rec['c'], '#');
 				if ($template)
@@ -573,24 +624,61 @@ class rccrmtrace  {
 		return ($ret);
 	}	
 	
+	public function mailResponds($template=null) {
+		$db = GetGlobal('db');
+			
+		if (!$v = $this->visitorEmail)
+			return false;
+		
+		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use timeout+1+1');			
+					
+		$sSQL = "select timeout,subject,reply,status from mailqueue where receiver='$v'" . $timein;	
+		$sSQL.= " order by id desc";//" LIMIT 30";
+		//echo $sSQL;
+		$result = $db->Execute($sSQL);	
+			
+		if ($result) {
+			$t = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);
+
+			foreach ($result as $i=>$rec) {
+				$title = $rec['timeout'];
+				$views = $rec['status'] ? ' ('. $rec['reply'] .')' : null;
+				$details =  $rec['subject'] . $views;
+				$tokens = array($title, $details);
+				if ($template)
+					$ret .= $this->combine_tokens($t, $tokens);
+				else
+					$ret[] = $tokens;	
+			}	
+		}	
+		
+		return ($ret);
+	}	
+	
+	/*copied and used in crmtimeline dpc*/
 	public function showTimeline($template=null, $color=null, $icon=null, $time=null) {
 		$db = GetGlobal('db');
 		$c = $color ? $color : 'gray';
 		$ic = $icon ? $icon : 'icon-time';
 		$time = $time ? $time : date('Y-m-d H:i');
-		$t = $this->select_template($template);
 
 		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
 		
-		$sSQL = "select DATE_FORMAT(date, '%d-%m-%Y %H:%i') as datetime, DATE_FORMAT(date, '%d-%m-%Y') as date, DATE_FORMAT(date, '%H:%i') as time, tid, attr1, attr2, attr3, ref, REMOTE_ADDR from stats where " . 
-		        "(attr2=" . $db->qstr($this->visitorEmail) . " OR " .	
-				"attr3=" . $db->qstr($this->visitorEmail) . " OR " .
-				"REMOTE_ADDR=" . $db->qstr($this->visitorIP) . ")" . $timein;
-		$sSQL.= "order by id desc LIMIT 100";
+		if ($this->visitorIP) $iSQL = " REMOTE_ADDR=" . $db->qstr($this->visitorIP);		
+		if ($this->visitorEmail) 
+			$vSQL = "(attr2=" . $db->qstr($this->visitorEmail) . " or attr3=" . $db->qstr($this->visitorEmail) . ($iSQL ? " or " . $iSQL : null) . ")"; 
+		else 
+			$vSQL = $iSQL ? $iSQL : null;		
+		
+		$sSQL = "select DATE_FORMAT(date, '%d-%m-%Y %H:%i') as datetime, DATE_FORMAT(date, '%d-%m-%Y') as date, DATE_FORMAT(date, '%H:%i') as time, tid, attr1, attr2, attr3, ref, REMOTE_ADDR from stats where ";
+		$sSQL.=  $vSQL . $timein;
+		$sSQL.= " order by id desc LIMIT 100";
 		//echo $sSQL;
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
+			$t = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);
+			
 			foreach ($result as $i=>$rec) {
 				$item = null;
 				$link = '#';
@@ -606,7 +694,7 @@ class rccrmtrace  {
 					                switch ($rec['attr1']) {
 										case 'cartin'  : $c = 'green'; $item = 'Cart in: ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); break;
 										case 'cartout' : $c = 'red';   $item = 'Cart out: ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); break;
-										case 'checkout': $c = 'gray';  $item = 'Checkout: ' . $rec['tid']; break;
+										case 'checkout': $c = 'gray';  $item = 'Checkout: ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); break;
 										default        : if ($rec['attr1']) {
 															$c = 'yellow'; 
 															$item = str_replace('_', ' ', $rec['attr1']);
@@ -615,14 +703,6 @@ class rccrmtrace  {
 					                } 
 				}
 				
-				/*$c = $rec['tid'] ? ($rec['tid']=='search' ? 'red' : ($rec['tid']=='filter' ? 'green' : 'purple')) : 'yellow';
-				
-				$item = $rec['tid'] ? 
-				        GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']) : 
-						str_replace('_', ' ', $rec['attr1']); //id or cat
-						
-				$link = $rec['tid'] ? seturl('t=kshow&id=').$rec['tid'] : seturl('t=klist&cat=').$rec['attr1'];		
-				*/
 				$details = $rec['attr3'] ? 'Reference:' . $rec['ref'] .' ('.$rec['REMOTE_ADDR']. ')' : $rec['REMOTE_ADDR'];
 						
 				$tokens = array($c, $ic, $rec['datetime'], $rec['date'], $rec['time'], $item, $details, $link); 
@@ -637,16 +717,51 @@ class rccrmtrace  {
 		return ($ret);
 	}	
 	
-	function select_template($tfile=null, $path=null) {
-		if (!$tfile) return;
-		$cppath = $path ? $path : GetGlobal('controller')->calldpc_var('rccontrolpanel.cptemplate');
+    public function select_timeline($template=null, $year=null, $month=null) {
+		$t = GetReq('t') ? GetReq('t') . '&v=' . $this->visitor : 'cpcrmtrace';
+		$year = GetParam('year') ? GetParam('year') : date('Y'); 
+	    $month = GetParam('month') ? GetParam('month') : date('m');
+		$daterange = GetParam('rdate');
+			
+	    if ($template) {
+			
+			$tdata = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);
+			
+			for ($y=2015;$y<=intval(date('Y'));$y++) {
+				$yearsli .= '<li>'. seturl('t='.$t.'&month='.$month.'&year='.$y, $y) .'</li>';
+			}
+		
+			for ($m=1;$m<=12;$m++) {
+				$mm = sprintf('%02d',$m);
+				$monthsli .= '<li>' . seturl('t='.$t.'&month='.$mm.'&year='.$year, $mm) .'</li>';
+			}	  
+			
+			//call cpGet from rcpmenu not this (only def action)
+			$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');	
+			if ($id = $cpGet['id'])
+				$section = ' &gt ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$id);
+			elseif ($cat = $cpGet['cat'])
+				$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', str_replace('_', ' ', $cat));
+			else
+				$section = null;
 	  
-		$template = $tfile . '.htm';	
-		$t = GetGlobal('controller')->calldpc_var('rccontrolpanel.prpath') . 'html/'. $cppath .'/'. str_replace('.',getlocal().'.',$template) ;   
-		if (is_readable($t)) 
-			$mytemplate = file_get_contents($t);
-
-		return ($mytemplate);	 
+	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
+	  
+			$tokens[] = localize('_crm',getlocal()) . $section . $posteddaterange; 
+			$tokens[] = $year;
+			$tokens[] = $month;
+			$tokens[] = localize('_year',getlocal());
+			$tokens[] = $yearsli;
+			$tokens[] = localize('_month',getlocal());			
+			$tokens[] = $monthsli;	
+            $tokens[] = $daterange;			
+		
+			$ret = $this->combine_tokens($tdata, $tokens); 				
+     
+			return ($ret);
+		}
+		
+		return null;	
     }		
 	
 	//tokens method	

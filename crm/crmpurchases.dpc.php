@@ -72,6 +72,7 @@ class crmpurchases extends crmmodule  {
 	
 	protected function getTransactionCodes($cid=null) {
        $db = GetGlobal('db');
+	   if (!$cid) return null;
 	   
 	   //search serialized data for id
 	   $sSQL = "select tdata from transactions " . 
@@ -80,11 +81,11 @@ class crmpurchases extends crmmodule  {
 	   //echo $sSQL;
 	   
 	   foreach ($result as $n=>$rec) {	
-         $tdata = $rec['tdata'];
 		 
-		 if ($tdata) {
+		 if ($tdata = $rec['tdata']) {
 		   $cdata = unserialize($tdata);
-		   if (count($cdata)>1) {//if many items
+		   //if (count($cdata)>1) {//if many items
+		   if (!empty($cdata)) {
 		     foreach ($cdata as $i=>$buffer_data) {
 		 
 		        $param = explode(";",$buffer_data);
@@ -111,8 +112,11 @@ class crmpurchases extends crmmodule  {
 	    if (defined('MYGRID_DPC')) {
 			
 			$codelist = $this->getTransactionCodes($selected);
-			if (!empty($codelist))
-				$dSQL = ' code5 in (' . implode(',', $codelist) . ')';
+			if (!empty($codelist)) {
+				$cc = count($codelist);
+			    $cl = ($cc>1) ? implode('|', $codelist) : $codelist[0];	//one code
+				$dSQL = ($cc>1) ? " code5 REGEXP '". $cl . "'" : " code5='" . $cl . "'";
+			}	
 			else
 				$dSQL = ' code5=0'; //dummy, null grid			
 			
