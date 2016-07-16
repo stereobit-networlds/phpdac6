@@ -13,7 +13,7 @@ $__LOCALE['CRMTIMELINE_DPC'][0]='CRMTIMELINE_DPC;Timeline;Χρονοροή';
 $__LOCALE['CRMTIMELINE_DPC'][1]='_date;Date;Ημερ.';
 $__LOCALE['CRMTIMELINE_DPC'][2]='_time;Time;Ώρα';
 $__LOCALE['CRMTIMELINE_DPC'][3]='_status;Status;Κατάσταση';
-$__LOCALE['CRMTIMELINE_DPC'][4]='_views;Views;Ιστορικό προβολών';
+$__LOCALE['CRMTIMELINE_DPC'][4]='_views;Views;Ιστορικό επισκέψεων';
 $__LOCALE['CRMTIMELINE_DPC'][5]='_actions;Actions;Επιλογές';
 $__LOCALE['CRMTIMELINE_DPC'][6]='_itemin;Item viewed;Προβολή είδους';
 $__LOCALE['CRMTIMELINE_DPC'][7]='_categorin;Category viewed;Προβολή κατηγορίας';
@@ -31,7 +31,10 @@ $__LOCALE['CRMTIMELINE_DPC'][18]='_favorites;Recommended;Προτιμήσεις'
 $__LOCALE['CRMTIMELINE_DPC'][19]='_addfav;Add recommendation;Προσθήκη προτίμησης';
 $__LOCALE['CRMTIMELINE_DPC'][20]='_remfav;Remove recommendation;Αφαίρεση προτίμησης';
 $__LOCALE['CRMTIMELINE_DPC'][21]='_purchases;Purchaces;Αγορές ειδών';
-
+$__LOCALE['CRMTIMELINE_DPC'][22]='_viewpage;View;Προβολή';
+$__LOCALE['CRMTIMELINE_DPC'][23]='_reference;Reference;Πηγή';
+$__LOCALE['CRMTIMELINE_DPC'][24]='_addoffer;Οffer recommendation;Είδος προσφοράς';
+$__LOCALE['CRMTIMELINE_DPC'][25]='_addcoll;Add in collection;Είδος συλλογής';
 
 class crmtimeline extends crmmodule  {
 	
@@ -198,17 +201,17 @@ class crmtimeline extends crmmodule  {
 					//$details = $this->actionButton(localize('_view', getlocal()), "javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url={$ulink}');", null, true);				
 					
 					$ulink = (strstr($link, 'http://')) ? $link : 'http://' . $link;
-					$details = $this->actionButton(localize('_view', getlocal()), $ulink, null, true);	
+					$details = $this->actionButton(localize('_viewpage', getlocal()), $ulink, null, true);	
 				}	
 				
 				if (($itemcode) && (filter_var($visitor, FILTER_VALIDATE_EMAIL))) {
 					//not ip based client and itemcode
 					//$ulink = $this->makeCrmURL("cpcrm.php?t=cpcrmdetails&iframe=1&id=$visitor&module=wishfav",300); //height 300
 					//$details .= $this->actionButton(localize('_details', getlocal()), "javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url={$ulink}');");//, 'crmdetails'.$meter);
-					$details .= $this->timelineMenu($visitor, $meter);
+					$details .= $this->timelineMenu($visitor, $meter, $itemcode);
 				}
 				//else	
-					$details .= $rec['attr3'] ? 'Reference:' . $rec['ref'] .' ('.$rec['REMOTE_ADDR']. ')' : ' ip:' . $rec['REMOTE_ADDR'];
+					$details .= $rec['attr3'] ? localize('_reference', getlocal()).':' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getRefName use '.$rec['ref']) .' ('.$rec['REMOTE_ADDR']. ')' : ' ip:' . $rec['REMOTE_ADDR'];
 				
 				$details .= "<div id=\"urldetails{$meter}\"></div>"; //last (common)
 								
@@ -244,14 +247,18 @@ class crmtimeline extends crmmodule  {
 		return ($ret);
 	}
 	
-	protected function timelineMenu($visitor, $meter=0) {
+	protected function timelineMenu($visitor, $meter=0, $itemcode=null) {
 		$l = getlocal();
 		
 		$links = array(localize('_views',     $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url=".$this->makeCrmURL("cpcrm.php?t=cpcrmdetails&iframe=1&id={$visitor}&module=itemstats", 450)."');",
-			 	       localize('_favorites', $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url=".$this->makeCrmURL("cpcrm.php?t=cpcrmdetails&iframe=1&id={$visitor}&module=wishfav", 450)."');",
 					   localize('_purchases', $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url=".$this->makeCrmURL("cpcrm.php?t=cpcrmdetails&iframe=1&id={$visitor}&module=purchases", 450)."');",
-					   localize('_addfav',    $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url=".$this->makeCrmURL("cpcrm.php?t=cpcrmdetails&iframe=1&id={$visitor}&module=wishfav", 450)."');",
-					   localize('_remfav',    $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url=".$this->makeCrmURL("cpcrm.php?t=cpcrmdetails&iframe=1&id={$visitor}&module=wishfav", 450)."');",
+					   localize('_favorites', $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url=".$this->makeCrmURL("cpcrm.php?t=cpcrmdetails&iframe=1&id={$visitor}&module=wishfav", 450)."');",					   
+					   '0'=>'',
+					   localize('_addfav',    $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmaddfav&item={$itemcode}&v={$visitor}');",
+					   localize('_remfav',    $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmremfav&item={$itemcode}&v={$visitor}');",
+					   '1'=>'',
+					   localize('_addoffer',  $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmaddoffer&item={$itemcode}&v={$visitor}');",
+					   localize('_addcoll',   $l)=>"javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmaddcol&item={$itemcode}&v={$visitor}');",
 		              );
 		
 		$button = $this->timelineButton(localize('_actions', $l), $links);
@@ -305,7 +312,7 @@ class crmtimeline extends crmmodule  {
 		
 		if (!empty($urls)) {
 			foreach ($urls as $n=>$url)
-				$links .= '<li><a href="'.$url.'">'.$n.'</a></li>';
+				$links .= $url ? '<li><a href="'.$url.'">'.$n.'</a></li>' : '<li class="divider"></li>';
 			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
 		} 
 		

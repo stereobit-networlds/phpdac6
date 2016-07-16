@@ -173,6 +173,7 @@ $__LOCALE['RCPMENU_DPC'][159]='_crmplus;Plus;Plus';
 $__LOCALE['RCPMENU_DPC'][160]='_crmforms;Forms;Φόρμες';
 $__LOCALE['RCPMENU_DPC'][161]='_itemqpolicy;Qty policy;Ποσοτικές εκπτώσεις';
 $__LOCALE['RCPMENU_DPC'][162]='_crmtrace;Contacts;Επαφές';
+$__LOCALE['RCPMENU_DPC'][163]='_crmoffers;Offers;Προσφορές';
 	   
 class rcpmenu {
 

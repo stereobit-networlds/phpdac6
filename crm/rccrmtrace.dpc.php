@@ -15,6 +15,10 @@ $__EVENTS['RCCRMTRACE_DPC'][5]='cpcrmeditprofile';
 $__EVENTS['RCCRMTRACE_DPC'][6]='cpcrmsaveprofile';
 $__EVENTS['RCCRMTRACE_DPC'][7]='cpcrmdataprofile';
 $__EVENTS['RCCRMTRACE_DPC'][8]='cpcrmframe';
+$__EVENTS['RCCRMTRACE_DPC'][9]='cpcrmaddfav';
+$__EVENTS['RCCRMTRACE_DPC'][10]='cpcrmremfav';
+$__EVENTS['RCCRMTRACE_DPC'][11]='cpcrmaddoffer';
+$__EVENTS['RCCRMTRACE_DPC'][12]='cpcrmaddcol';
 
 $__ACTIONS['RCCRMTRACE_DPC'][0]='cpcrmtrace';
 $__ACTIONS['RCCRMTRACE_DPC'][1]='cpcrmprofile';
@@ -25,6 +29,10 @@ $__ACTIONS['RCCRMTRACE_DPC'][5]='cpcrmeditprofile';
 $__ACTIONS['RCCRMTRACE_DPC'][6]='cpcrmsaveprofile';
 $__ACTIONS['RCCRMTRACE_DPC'][7]='cpcrmdataprofile';
 $__ACTIONS['RCCRMTRACE_DPC'][8]='cpcrmframe';
+$__ACTIONS['RCCRMTRACE_DPC'][9]='cpcrmaddfav';
+$__ACTIONS['RCCRMTRACE_DPC'][10]='cpcrmremfav';
+$__ACTIONS['RCCRMTRACE_DPC'][11]='cpcrmaddoffer';
+$__ACTIONS['RCCRMTRACE_DPC'][11]='cpcrmaddcol';
 
 $__LOCALE['RCCRMTRACE_DPC'][0]='RCCRMTRACE_DPC;Crm trace;Crm trace';
 $__LOCALE['RCCRMTRACE_DPC'][1]='_id;ID;ID';
@@ -46,7 +54,10 @@ $__LOCALE['RCCRMTRACE_DPC'][16]='_about;About;Eπαφή';
 $__LOCALE['RCCRMTRACE_DPC'][17]='_unknown;Unknown;Άγνωστος';
 $__LOCALE['RCCRMTRACE_DPC'][18]='_undefined;Unknown;Άγνωστο';
 $__LOCALE['RCCRMTRACE_DPC'][19]='_crm;Crm;Crm';
-
+$__LOCALE['RCCRMTRACE_DPC'][20]='_favadded;Add recommendation;Εισαγωγή προτίμησης';
+$__LOCALE['RCCRMTRACE_DPC'][21]='_favremoved;Remove recommendation;Διαγραφή προτίμησης';
+$__LOCALE['RCCRMTRACE_DPC'][22]='_favexist;Recommendation exist;Υπάρχουσα προτίμηση';
+$__LOCALE['RCCRMTRACE_DPC'][23]='_addcollection;Add in collection;Εισαγωγή στη συλλογή';
 
 class rccrmtrace  {
 
@@ -101,6 +112,16 @@ class rccrmtrace  {
 	
 	    switch ($event) {
 			
+			case 'cpcrmaddcol'     : echo $this->addCollection();
+									 die();	
+		    case 'cpcrmaddoffer'   : echo $this->addfavProfile('crmoffer');
+									 die();				
+			
+		    case 'cpcrmremfav'     : echo $this->remfavProfile();
+									 die();
+		    case 'cpcrmaddfav'     : echo $this->addfavProfile();
+									 die();									 
+			
 		    case 'cpcrmframe'      : echo $this->urlframe();
 									 die();
 							         break; 		   
@@ -133,6 +154,11 @@ class rccrmtrace  {
 	 
 		switch ($action) {	 
 
+		    case 'cpcrmaddcol'     : break;
+		    case 'cpcrmaddoffer'   : break;
+			
+		    case 'cpcrmremfav'     : break;
+		    case 'cpcrmaddfav'     : break;			
 			case 'cpcrmframe'      : break;
 			
 			case 'cpcrmdataprofile': 				
@@ -424,7 +450,67 @@ class rccrmtrace  {
 
 		//return false;	
 		return ($email); //input out
-	}		
+	}	
+
+	public function addfavProfile($listID=null) {
+		if (!$item = GetReq('item')) return null;
+		$listname = $listID ? $listID : 'crmfav';
+		$db = GetGlobal('db');
+		
+		if ($visitor = GetReq('v')) {
+			$sSQL = "select tid from wishlist where listname='$listname' and cid=" . $db->qstr($visitor);
+			$res = $db->Execute($sSQL);
+			if (!$res->fields[0]) {
+			
+				$sSQL = "insert into wishlist (tid,cid,listname) values (" . 
+					$db->qstr($item) .",". 
+					$db->qstr($visitor) .",'$listname'".
+					")";				 
+				$res = $db->Execute($sSQL);		
+			
+				$ret = localize('_favadded', getlocal()) . ' ' . $item . " [$visitor]";
+			}
+			else
+				$ret = localize('_favexist', getlocal()) . ' ' . $item . " [$visitor]";
+			return ($ret);
+		}
+		return false;		
+	}	
+	
+	public function remfavProfile($listID=null) {	
+		if (!$item = GetReq('item')) return null;
+		$listname = $listID ? $listID : 'crmfav';		
+		$db = GetGlobal('db');
+		
+		if ($visitor = GetReq('v')) {
+			$sSQL = "delete from wishlist where tid=" . 
+					$db->qstr($item) ." and cid=". $db->qstr($visitor) .
+					" and listname='$listname'";				 
+			$res = $db->Execute($sSQL);		
+			
+			$ret = localize('_favremoved', getlocal()) . ' ' . $item . " [$visitor]";
+			return ($ret);
+		}
+		return false;				
+	}	
+
+	/*add item to collection */
+	public function addCollection() {	
+		if (!$item = GetReq('item')) return null;
+		$visitor = GetReq('v');
+		
+		if (defined('RCCOLLECTIONS_DPC')) { 
+			//$collection = GetGlobal('controller')->calldpc_var("rccollections.savedlist");
+			//$ret = $collection;
+			
+			if ($add = GetGlobal('controller')->calldpc_method("rccollections.addtoList use " . $item))
+				$ret = localize('_addcollection', getlocal()) . ' ' . $item . " [$visitor]";
+				
+			return ($ret);
+		}
+        
+		return false;	
+	}
 	
 	/*search for email based on ip*/
 	public function resolveIP($ip=null)	{

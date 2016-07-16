@@ -488,6 +488,25 @@ class rccollections {
 		return true;
 	}
 	
+	//called from rccrmtrace
+	public function addtoList($itemcode=null) {
+        if (!$itemcode) return false;
+		$db = GetGlobal('db');	
+		$code = $this->getmapf('code');		
+		
+		$sSQL = 'select id from products where ' . $code ."=" . $db->qstr($itemcode);
+		$sSQL .= " and itmactive>0 and active>0";			   
+	    $resultset = $db->Execute($sSQL,2);		
+
+		if ($c = $resultset->fields[0]) {
+			$list = isset($this->savedlist) ?  $this->savedlist . "," . $c : $c;
+			SetSessionParam($this->listName, $list);
+			return true;
+		}
+		
+		return false;	
+	}	
+	
 	/************************ db item handler **********************/
 	
     protected function getCurrentDbList() {

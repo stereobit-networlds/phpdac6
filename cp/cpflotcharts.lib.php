@@ -11,6 +11,11 @@ $__LOCALE['CPFLOTCHARTS_DPC'][0]='CPFLOTCHARTS_DPC;Flot charts;Διαγράμμ�
 $__LOCALE['CPFLOTCHARTS_DPC'][1]='_day;Day;Ημέρα';
 $__LOCALE['CPFLOTCHARTS_DPC'][2]='_hits;views;προβολές';
 $__LOCALE['CPFLOTCHARTS_DPC'][3]='_transactions;Transactions;Αγορές';
+$__LOCALE['CPFLOTCHARTS_DPC'][4]='_clicks;Clicks;Clicks';
+$__LOCALE['CPFLOTCHARTS_DPC'][5]='_uclicks;Unique;Unique';
+$__LOCALE['CPFLOTCHARTS_DPC'][6]='_mailqueue;Mails sent;Αποστολές e-mail';
+$__LOCALE['CPFLOTCHARTS_DPC'][7]='_mailreply;Mails viewed;Προβολές e-mail';
+$__LOCALE['CPFLOTCHARTS_DPC'][8]='_mailbounce;Mails bounced;Αποτυχημένα e-mail';
 
 class cpflotcharts {
 	
@@ -239,7 +244,6 @@ class cpflotcharts {
 			$sSQL = "select count(id) as hits, DAY(date) as day from stats where tid='$id' " . $timeins . " group by DAY(date) order by DAY(date)";
 			$res = $db->Execute($sSQL,2);
 			//echo $sSQL;
-			//$this->charts['Visits'] = $this->make_chart_data($res, 'hits,year,month');
             $this->make_chart_data('Visits0', $res, array('day','hits'), $item, array('day',$diff));
 			//echo '<br/>' . $this->callChart('Visits');
 			//echo '<br/>' . $diff;
@@ -816,6 +820,152 @@ var Script = function () {
 FLOT;
 		return $js;
 	}   
+	
+	
+    protected function flot_mail_stats() {
+		$db = GetGlobal('db'); 	
+		$mqlabel = localize('_mailqueue',getlocal());
+		$mqreplies = localize('_mailreply',getlocal());
+		$mqbounce = localize('_mailbounce',getlocal());	
+
+		$diff = 0;
+		$timeins = $this->sqlDateRange('timein', true, true, $diff);		
+
+        if ($cid = GetReq('cid')) {
+			
+			//stats (mailqueue)
+			$sSQL = "select count(id) as hits, DAY(timeout) as day from mailqueue where cid='$cid' and active=0 " . $timeins . " group by DAY(timeout) order by DAY(timeout)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('Mailqueue', $res, array('day','hits'), $mqlabel, array('day',$diff));
+			//stats (mailqueue replied)
+			$sSQL = "select count(id) as hits, DAY(timeout) as day from mailqueue where cid='$cid' and active=0 and status=1 " . $timeins . " group by DAY(timeout) order by DAY(timeout)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('Mailreplies', $res, array('day','hits'), $mqreplies, array('day',$diff));			
+			//stats (mailqueue bounced)
+			$sSQL = "select count(id) as hits, DAY(timeout) as day from mailqueue where cid='$cid' and active=0 and status<0 " . $timeins . " group by DAY(timeout) order by DAY(timeout)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('Mailbounce', $res, array('day','hits'), $mqbounce, array('day',$diff));			
+					
+			//Campaign clicks
+			$sSQL = "select count(id) as hits, DAY(date) as day from stats where ref='$cid' group by DAY(date) order by DAY(date)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('CampaignClicks', $res, array('day','hits'), localize('_clicks',getlocal()), array('day',$diff));	
+			/*echo $sSQL;
+			$sSQL = "select count(id) as hits, DAY(date) as day from stats where ref='$cid' group by DAY(date) order by DAY(date)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('UniqueClicks', $res, array('day','hits'), localize('_uclicks',getlocal()), array('day',$diff));		
+			*/
+			$this->chartGroup = array('Mailqueue', 'Mailreplies', 'Mailbounce', 'CampaignClicks');//, 'UniqueClicks');			
+		}		
+		else {
+			
+			//stats (mailqueue)
+			$sSQL = "select count(id) as hits, DAY(timeout) as day from mailqueue where active=0 " . $timeins . " group by DAY(timeout) order by DAY(timeout)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('Mailqueue', $res, array('day','hits'), $mqlabel, array('day',$diff));
+			//stats (mailqueue replied)
+			$sSQL = "select count(id) as hits, DAY(timeout) as day from mailqueue where active=0 and status=1 " . $timeins . " group by DAY(timeout) order by DAY(timeout)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('Mailreplies', $res, array('day','hits'), $mqreplies, array('day',$diff));			
+			//stats (mailqueue bounced)
+			$sSQL = "select count(id) as hits, DAY(timeout) as day from mailqueue where active=0 and status<0 " . $timeins . " group by DAY(timeout) order by DAY(timeout)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('Mailbounce', $res, array('day','hits'), $mqbounce, array('day',$diff));			
+			
+
+			$this->chartGroup = array('Mailqueue', 'Mailreplies', 'Mailbounce');			
+        } 
+        return (1);     	
+    }	
+	
+	public function jsflotMailcharts() {
+		$daylabel = localize('_day',getlocal());
+		$clicks = ': '; //localize('_clicks',getlocal());
+		
+		$this->flot_mail_stats();	
+		$js = <<<FLOTMAIL
+		
+var Script = function () {
+
+   //flot mail chart visits
+
+    var metro = {
+        showTooltip: function (x, y, contents) {
+            $('<div class="metro_tips">' + contents + '</div>').css( {
+                position: 'absolute',
+                display: 'none',
+                top: y + 5,
+                left: x + 5
+            }).appendTo("body").fadeIn(200);
+        }
+
+    }
+
+    if (!!$(".plots").offset() ) {
+
+        $.plot($(".plots"), [ {$this->callChartGroup($this->chartGroup)}  ],
+            {
+                colors: ["#4a8bc2", "#de577b", "#cc99cc", "#008800", "#99ff6b"],
+
+                series: {
+                    lines: {
+                        show: true,
+                        lineWidth: 2
+                    },
+                    points: {show: true},
+                    shadowSize: 2
+                },
+
+                grid: {
+                    hoverable: true,
+                    show: true,
+                    borderWidth: 0,
+                    labelMargin: 12
+                },
+
+                legend: {
+                    show: true,
+                    margin: [0,-24],
+                    noColumns: 0,
+                    labelBoxBorderColor: null
+                },
+
+                yaxis: { min: 0, max: {$this->callChartGroupMax($this->chartGroup, 'ymax')}},
+                xaxis: { min: 1, max: {$this->callChartGroupMax($this->chartGroup, 'xmax')}}
+            });
+
+        // plot tooltip show
+        var previousPoint = null;
+        $(".plots").bind("plothover", function (event, pos, item) {
+            if (item) {
+                if (previousPoint != item.dataIndex) {
+                    previousPoint = item.dataIndex;
+                    $(".charts_tooltip").fadeOut("fast").promise().done(function(){
+                        $(this).remove();
+                    });
+                    var x = item.datapoint[0].toFixed(0),
+                        y = item.datapoint[1].toFixed(0);
+                    metro.showTooltip(item.pageX, item.pageY, item.series.label + " {$daylabel} " + x + " {$clicks} " + y);
+                }
+            }
+            else {
+                $(".metro_tips").fadeOut("fast").promise().done(function(){
+                    $(this).remove();
+                });
+                previousPoint = null;
+            }
+        });
+    }
+
+}();
+
+
+		
+		
+FLOTMAIL;
+		return $js;
+	}   
+	
 };
 }   
 ?>

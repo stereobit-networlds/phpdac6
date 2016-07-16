@@ -2296,16 +2296,17 @@ function handleResponse() {if(http.readyState == 4){
 		$tokens = array();
 		$text = localize('_sale',getlocal());
 		
-		$sSQL = "SELECT tdate,ttime,cid FROM transactions where tdate BETWEEN DATE_SUB( NOW() , INTERVAL 3 DAY ) AND NOW() order by tdate desc LIMIT " . $l;
+		$sSQL = "SELECT timein,cid,tid FROM transactions where timein BETWEEN DATE_SUB( NOW() , INTERVAL 3 DAY ) AND NOW() order by timein desc LIMIT " . $l;
 
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			$tms = mktime(substr($rec[0],0,4), substr($rec[0],6,2), substr($rec[0],9,2), substr($rec[1],0,2), substr($rec[1],3,2), substr($rec[1],6,2));
-			$saytime = $this->timeSayWhen($tms);//strtotime($rec[0].' '.$rec[1]));
-			$msg = "success|" . $rec[2] .", ". $text .' '. $rec[0] . " " .$rec[1] . "|$saytime|cptransactions.php";
+			//$tms = mktime(substr($rec[0],0,4), substr($rec[0],6,2), substr($rec[0],9,2), substr($rec[1],0,2), substr($rec[1],3,2), substr($rec[1],6,2));
+			//$saytime = $this->timeSayWhen($tms);//strtotime($rec[0].' '.$rec[1]));
+			$saytime = $this->timeSayWhen(strtotime($rec['timein']));
+			$msg = "success|" . $rec['cid'] .", ". $text .' '. $rec['tid'] . "|$saytime|cptransactions.php";
 			$this->setMessage($msg);
 		}
 
@@ -2587,6 +2588,15 @@ function handleResponse() {if(http.readyState == 4){
 		$res = $db->Execute($sSQL,2);
         return $res->fields[0];		
 	}
+	
+	public function getRefName($id) {
+		if (!$id) return null;
+		$db = GetGlobal('db');
+		
+		$sSQL = "select title from mailcamp where cid=" . $db->qstr($id);
+		$res = $db->Execute($sSQL,2);
+        return $res->fields[0];		
+	}	
 	
     public function checkmail($data) {
 
