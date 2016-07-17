@@ -458,7 +458,7 @@ class rccrmtrace  {
 		$db = GetGlobal('db');
 		
 		if ($visitor = GetReq('v')) {
-			$sSQL = "select tid from wishlist where listname='$listname' and cid=" . $db->qstr($visitor);
+			$sSQL = "select tid from wishlist where tid='$item' and listname='$listname' and cid=" . $db->qstr($visitor);
 			$res = $db->Execute($sSQL);
 			if (!$res->fields[0]) {
 			
@@ -467,11 +467,12 @@ class rccrmtrace  {
 					$db->qstr($visitor) .",'$listname'".
 					")";				 
 				$res = $db->Execute($sSQL);		
-			
-				$ret = localize('_favadded', getlocal()) . ' ' . $item . " [$visitor]";
+				$ret = localize('_favadded', getlocal()) . ' ' . $item . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$item);
+				$this->addActivity($visitor, $ret);
 			}
 			else
-				$ret = localize('_favexist', getlocal()) . ' ' . $item . " [$visitor]";
+				$ret = localize('_favexist', getlocal()) . ' ' . $item . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$item);
+			
 			return ($ret);
 		}
 		return false;		
@@ -488,7 +489,8 @@ class rccrmtrace  {
 					" and listname='$listname'";				 
 			$res = $db->Execute($sSQL);		
 			
-			$ret = localize('_favremoved', getlocal()) . ' ' . $item . " [$visitor]";
+			$ret = localize('_favremoved', getlocal()) . ' ' . $item . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$item);
+			$this->addActivity($visitor, $ret);
 			return ($ret);
 		}
 		return false;				
@@ -500,11 +502,8 @@ class rccrmtrace  {
 		$visitor = GetReq('v');
 		
 		if (defined('RCCOLLECTIONS_DPC')) { 
-			//$collection = GetGlobal('controller')->calldpc_var("rccollections.savedlist");
-			//$ret = $collection;
-			
 			if ($add = GetGlobal('controller')->calldpc_method("rccollections.addtoList use " . $item))
-				$ret = localize('_addcollection', getlocal()) . ' ' . $item . " [$visitor]";
+				$ret = localize('_addcollection', getlocal()) . ' ' . $item;// . " [$visitor]";
 				
 			return ($ret);
 		}

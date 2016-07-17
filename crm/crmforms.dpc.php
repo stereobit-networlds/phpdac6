@@ -82,6 +82,88 @@ class crmforms extends crmmodule  {
 	*  for cp environment
 	*/
 	
+	public function renderForm($title=null, $items=null, $test=false) {
+		$db = GetGlobal('db');		
+		if (!$title) return null;	
+		$sSQL = "select id,title,descr,formdata,codedata from crmforms where title=" . $db->qstr($title);
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);			
+		$form = base64_decode($res->fields['formdata']);		
+		$code = base64_decode($res->fields['codedata']);
+		$template = $res->fields['title'];
+		
+		if ($code)  {
+			$pf = explode('>|',$code);
+			//search last edited line
+			foreach ($pf as $line) {
+				if (trim($line)) {
+					$joins = explode(',', array_pop($pf)); 
+					break;
+				}
+			}
+			//rest lines
+			foreach ($pf as $line) {
+				$subtemplates .= trim($line);
+			}
+			$_pattern[0] = explode(',', $subtemplates);
+			$_pattern[1] = (array) $joins;
+			//print_r($_pattern);
+			//return ($_pattern);
+			
+			if ((!$items) && ($test)) { //make pseudo-items arrray
+				$maxitm = count($_pattern[0]);// * $test;
+				for($i=1;$i<=$maxitm;$i++)
+					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');			
+		    }	
+			//render pattern
+			if ((!empty($items)) && (is_array($_pattern))) {
+				$pattern = (array) $_pattern[0];
+				$join = (array) $_pattern[1];				
+
+				//render
+				$out = null;
+				$tts = array();
+				$gr = array();
+				$itms = array();
+				$cc = array_chunk($items, count($pattern));//, true);
+
+				foreach ($cc as $i=>$group) {
+					foreach ($group as $j=>$child) {
+						//echo $pattern[$j] . '<br>';
+						$tts[] = $this->ct($pattern[$j], $child, true);
+						if ($cmd = trim($join[$j])) {
+							//echo $join[$j] . '<br>';
+							switch ($cmd) {
+							    case '_break' : $out .= implode('', $tts); break;
+								default       : $out .= $this->ct($cmd, $tts, true);		
+							} 
+							unset($tts);
+						}
+					}
+					$gr[] = (empty($tts)) ? $out : $out . implode('', $tts) ;
+					unset($tts);
+					$out = null;
+				}
+			}//has pattern data
+		}//has pattern
+		
+		$sSQL = "select formdata from crmforms where title=" . $db->qstr($template.'-sub');
+		$res = $db->Execute($sSQL);
+		//echo $sSQL;	
+		if (isset($res->fields['formdata'])) {			
+			$itms[] = (!empty($gr)) ? implode('',$gr) : null; 
+			if (!empty($itms))			
+				$ret = $this->combine_tokens(base64_decode($res->fields['formdata']), $itms, true);
+		}	
+		else
+			$ret = (!empty($gr)) ? implode('',$gr) : null;
+		
+		//echo $template.'-sub:' . $ret;				
+		$data = ($ret) ? str_replace('<!--?'.$template.'-sub'.'?-->', $ret, $form) : $form;
+		
+		return $data;
+	}	
+	
 	public function formsMenu($user, $class=null, $type=null, $style=null) {
 		if ((!$user) || (!$class)) return null;
 		

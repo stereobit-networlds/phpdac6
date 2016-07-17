@@ -397,7 +397,7 @@ class rccrmforms {
 			   }		   
 			   );
 			   CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
-			   CKEDITOR.config.forcePasteAsPlainText = false; // default so content won't be manipulated on load
+			   CKEDITOR.config.forcePasteAsPlainText = true; // default so content won't be manipulated on load
 			   CKEDITOR.config.fullPage = $fullpage;
                CKEDITOR.config.entities = false;
 			   CKEDITOR.config.basicEntities = false;
@@ -468,9 +468,6 @@ class rccrmforms {
 		$code = base64_decode($res->fields['codedata']);
 		$template = $res->fields['title'];
 		
-		//init one item
-		$oneitem[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');		
-		
 		if ($code)  {
 			$pf = explode('>|',$code);
 			//search last edited line
@@ -495,8 +492,9 @@ class rccrmforms {
 				$join = (array) $_pattern[1];				
 				
 				//make pseudo-items arrray
-				$maxitm = count($pattern);
-				for($i=0;$i<$maxitm;$i++)
+				$maxitm = count($pattern); 
+				//echo count($pattern) . '>';
+				for($i=1;$i<=$maxitm;$i++)
 					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');
 				//print_r($items);
 				
@@ -508,14 +506,16 @@ class rccrmforms {
 				$cc = array_chunk($items, count($pattern));//, true);
 
 				foreach ($cc as $i=>$group) {
+					//print_r($group);
 					foreach ($group as $j=>$child) {
 						//echo $pattern[$j] . '<br>';// . print_r($child, true) . '<br>';
 						$tts[] = $this->ct($pattern[$j], $child, true);
-						if ($cmd = $join[$j]) {
-							//echo $join[$j] . '<br>';
+						if ($cmd = trim($join[$j])) {
+							//echo $j . '>' . $join[$j] . '!<br>';
 							switch ($cmd) {
 							    case '_break' : $out .= implode('', $tts); break;
-								default       : $out .= $this->ct($cmd, $tts, true); //print_r($tts); 
+								default       : $out .= $this->ct($cmd, $tts, true); 
+								                //echo $j; print_r($tts);
 							} 
 							unset($tts);
 						}
@@ -532,7 +532,7 @@ class rccrmforms {
 		$res = $db->Execute($sSQL);
 		//echo $sSQL;	
 		if (isset($res->fields['formdata'])) {		
-			$itms[] = (!empty($gr)) ? implode('',$gr) : null; //$oneitem; 
+			$itms[] = (!empty($gr)) ? implode('',$gr) : null;  
 
 			if (!empty($itms))			
 			    $ret = $this->combine_tokens(base64_decode($res->fields['formdata']), $itms, true);

@@ -20,9 +20,10 @@ $__EVENTS['RCCRMOFFERS_DPC'][2]='cpmailbodyshow';
 $__EVENTS['RCCRMOFFERS_DPC'][3]='cpsaveoffer';
 $__EVENTS['RCCRMOFFERS_DPC'][4]='cpsendoffer';
 $__EVENTS['RCCRMOFFERS_DPC'][5]='cpsortcollection';
-$__EVENTS['RCCRMOFFERS_DPC'][6]='cpviewcamp';
-$__EVENTS['RCCRMOFFERS_DPC'][7]='cppreviewcamp';
-$__EVENTS['RCCRMOFFERS_DPC'][8]='cpcampcontent';
+$__EVENTS['RCCRMOFFERS_DPC'][6]='cpaddcollection';
+$__EVENTS['RCCRMOFFERS_DPC'][7]='cpviewcamp';
+$__EVENTS['RCCRMOFFERS_DPC'][8]='cppreviewcamp';
+$__EVENTS['RCCRMOFFERS_DPC'][9]='cpcampcontent';
 
 $__ACTIONS['RCCRMOFFERS_DPC'][0]='cpcrmoffers';
 $__ACTIONS['RCCRMOFFERS_DPC'][1]='cploadframe';
@@ -30,9 +31,10 @@ $__ACTIONS['RCCRMOFFERS_DPC'][2]='cpmailbodyshow';
 $__ACTIONS['RCCRMOFFERS_DPC'][3]='cpsaveoffer';
 $__ACTIONS['RCCRMOFFERS_DPC'][4]='cpsendoffer';
 $__ACTIONS['RCCRMOFFERS_DPC'][5]='cpsortcollection';
-$__ACTIONS['RCCRMOFFERS_DPC'][6]='cpviewcamp';
-$__ACTIONS['RCCRMOFFERS_DPC'][7]='cppreviewcamp';
-$__ACTIONS['RCCRMOFFERS_DPC'][8]='cpcampcontent';
+$__ACTIONS['RCCRMOFFERS_DPC'][6]='cpaddcollection';
+$__ACTIONS['RCCRMOFFERS_DPC'][7]='cpviewcamp';
+$__ACTIONS['RCCRMOFFERS_DPC'][8]='cppreviewcamp';
+$__ACTIONS['RCCRMOFFERS_DPC'][9]='cpcampcontent';
 
 $__LOCALE['RCCRMOFFERS_DPC'][0]='RCCRMOFFERS_DPC;Crm create offer;Crm σύνταξη προσφοράς';
 $__LOCALE['RCCRMOFFERS_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
@@ -43,7 +45,7 @@ $__LOCALE['RCCRMOFFERS_DPC'][5]='_receiver;Receiver;Παραλήπτης';
 $__LOCALE['RCCRMOFFERS_DPC'][6]='_reply;Views;Εμφανίσεις';
 $__LOCALE['RCCRMOFFERS_DPC'][7]='_subject;Subject;Θέμα';
 $__LOCALE['RCCRMOFFERS_DPC'][8]='_id;Id;Α/Α';
-$__LOCALE['RCCRMOFFERS_DPC'][9]='_HTMLSELECTEDITEMS;Selected items;Επιλεγμένα αντικείμενα';
+$__LOCALE['RCCRMOFFERS_DPC'][9]='_wlists;Lists;Λίστες';
 $__LOCALE['RCCRMOFFERS_DPC'][10]='_inlist;List;Σε λίστα';
 $__LOCALE['RCCRMOFFERS_DPC'][11]='_sendtousers;Send to Users;Αποστολή σε χρήστες';
 $__LOCALE['RCCRMOFFERS_DPC'][12]='_sendtolists;Send to Lists;Αποστολη σε λίστες';
@@ -105,6 +107,8 @@ class rccrmoffers {
 	
 	var $userDemoIds, $maxinpvars, $batchid, $ckeditver;
 	var $newtemplatebody, $saved, $savedname, $newsubtemplatebody, $newpatternbody;
+	
+	var $visitor;
 		
     function __construct() {
 	  
@@ -189,17 +193,15 @@ class rccrmoffers {
 		$this->newsubtemplatebody = null;
 		$this->newpatternbody = null;
 		$this->saved = false;
-        $this->savedname = null;		
+        $this->savedname = null;
+
+		$this->visitor = GetParam('v');	
 	}
 	
     function event($event=null) {
 	
 	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
-		
-		if (defined('RCCOLLECTIONS_DPC')) //used by wizard html page !!
-			$this->iscollection = GetGlobal('controller')->calldpc_method('rccollection.isCollection');  		
-			
 
 	    switch ($event) {
 								
@@ -209,20 +211,20 @@ class rccrmoffers {
 			case 'cppreviewcamp'   : break;
 			case 'cpcampcontent'   : die($this->preview_campaign());
 			                         break;							 
-			 
-			case 'cpsortcollection': if ($this->iscollection>0) {
+			
+			case 'cpaddcollection' : $this->addListToCollection(); //break;	
+			case 'cpsortcollection': if (GetGlobal('controller')->calldpc_method('rccollection.isCollection')) {
 										if (!empty($_POST['colsort'])) { 
 											$slist = implode(',', $_POST['colsort']);	
 											GetGlobal('controller')->calldpc_method("rccollections.saveSortedlist use " . $slist);
 										}
-										
 										$this->loadTemplate2(); 	
 			                          }										
 									  else
 										$this->loadTemplate();	
 									  
-			                          if ($this->ulistselect = GetReq('ulistselect')) 
-											SetSessionParam('ulistselect', $this->ulistselect); 
+			                          //if ($this->ulistselect = GetReq('ulistselect')) 
+											//SetSessionParam('ulistselect', $this->ulistselect); 
                                       break;			
 			 	 
 			 
@@ -245,7 +247,7 @@ class rccrmoffers {
 			case 'cpcrmoffers'    :
 			default               :	if ($this->template) {
 				                        //also when returns in cp and template is selected
-										if ($this->iscollection>0)
+										if (GetGlobal('controller')->calldpc_method('rccollection.isCollection'))
 											$this->loadTemplate2(); //subtemp						  
 										else
 											$this->loadTemplate();						  
@@ -264,6 +266,7 @@ class rccrmoffers {
 			case 'cpmailbodyshow'      :
 			case 'cploadframe'         :  									 
 			
+			case 'cpaddcollection'     :
 			case 'cpsortcollection'    :
             case 'cpsaveoffer'         :		
 			case 'cpsendoffer'         :
@@ -411,8 +414,9 @@ class rccrmoffers {
 		$tmpl = $this->savedname ? $this->savedname :
 				(GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate'));
 	
-		$url = ($taction) ? seturl('t='.$taction.'&stemplate=',null,null,null,null) : 
-		                    seturl('t=cpcrmoffers&stemplate=',null,null,null,null);
+		$visitorUrl = '&v=' . $this->visitor;
+		$url = ($taction) ? seturl('t='.$taction.$visitorUrl.'&stemplate=',null,null,null,null) : 
+		                    seturl('t=cpcrmoffers'.$visitorUrl.'&stemplate=',null,null,null,null);
 		
 		if (defined('RCFS_DPC')) {
 			$path = $this->templatepath;
@@ -507,8 +511,17 @@ class rccrmoffers {
 				$data = str_replace('<!--?'.$sub_template.'?-->',$sub_data,$data);		   
 			}
 		}	
-		else 
-			$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items")); //, 1);
+		else {
+			
+			switch ($set) {
+				case 'wishlist'   : break;
+				case 'crmfav'     : break;
+				case 'crmoffer'   : break;
+				case 'collection' :
+				default           : $dataset = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items");
+		    }
+			$data = $this->renderForm($template, $dataset); //, 1);
+		}	
 
 		return ($data);		
 	}		
@@ -593,20 +606,14 @@ class rccrmoffers {
 			
 			if ((!$items) && ($test)) { //make pseudo-items arrray
 				$maxitm = count($_pattern[0]);// * $test;
-				for($i=0;$i<$maxitm;$i++)
+				for($i=1;$i<=$maxitm;$i++)
 					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');			
 		    }	
 			//render pattern
 			if ((!empty($items)) && (is_array($_pattern))) {
 				$pattern = (array) $_pattern[0];
 				$join = (array) $_pattern[1];				
-				/*
-				//make pseudo-items arrray
-				$maxitm = count($pattern);
-				for($i=1;$i<=$maxitm;$i++)
-					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');
-				//print_r($items);
-				*/
+
 				//render
 				$out = null;
 				$tts = array();
@@ -618,7 +625,7 @@ class rccrmoffers {
 					foreach ($group as $j=>$child) {
 						//echo $pattern[$j] . '<br>';
 						$tts[] = $this->ct($pattern[$j], $child, true);
-						if ($cmd = $join[$j]) {
+						if ($cmd = trim($join[$j])) {
 							//echo $join[$j] . '<br>';
 							switch ($cmd) {
 							    case '_break' : $out .= implode('', $tts); break;
@@ -650,6 +657,48 @@ class rccrmoffers {
 		
 		return $data;
 	}	
+	
+	/*add wishlist listID to collection */
+	public function addListToCollection($list=null, $v=null) {	
+		$db = GetGlobal('db');
+		$listID = GetReq('list') ?  GetReq('list') : ($list ? $list : 'crm');
+		$visitor = GetReq('v') ? GetReq('v') : ($v ? $v : null);
+		
+		if (($listID) && (defined('RCCOLLECTIONS_DPC'))) {
+
+			$sSQL = "select tid from wishlist where cid=" . $db->qstr($visitor);
+			$sSQL.= " and listname=" . $db->qstr($listID);
+			$res = $db->Execute($sSQL);
+			foreach ($res as $i=>$rec) 
+				$codes[] = $rec[0];
+				
+			GetGlobal('controller')->calldpc_method("rccollections.addtoList use " . implode(',', $codes));
+
+			$ret = localize('_addcollection', getlocal()) . ' list:' . $listID;// . " [$visitor]";
+			return ($ret);
+		}
+        
+		return false;	
+	}	
+	
+	public function buttonListToCollection() {
+		$db = GetGlobal('db');
+		$l = getlocal();
+		$visitor = GetReq('v') ? GetReq('v') : null;
+		
+		if (($visitor) && (defined('RCCOLLECTIONS_DPC'))) {
+			
+			$sSQL = "select DISTINCT listname from wishlist where cid=" . $db->qstr($visitor);
+			$res = $db->Execute($sSQL);
+			foreach ($res as $i=>$rec) 
+				$curls[localize($rec[0], $l)] = seturl("t=cpaddcollection&v=$visitor&list=".$rec[0]);			
+			
+			$button = $this->createButton(localize('_wlists', getlocal()), $curls);//, 'success');	
+			return $button;								
+		}	
+		
+		return null;
+	}
 
 	/*
 	protected function saveTemplate() {
@@ -1692,6 +1741,30 @@ This email and any files transmitted with it are confidential and intended solel
 		    </script>		
 ";
 
+		return ($ret);
+	}	
+	
+	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
+		$type = $t ? $t : 'primary'; //danger /warning / info /success
+		switch ($s) {
+			case 'large' : $size = 'btn-large '; break;
+			case 'small' : $size = 'btn-small '; break;
+			case 'mini'  : $size = 'btn-mini '; break;
+			default      : $size = null;
+		}
+		
+		if (!empty($urls)) {
+			foreach ($urls as $n=>$url)
+				$links .= '<li><a href="'.$url.'">'.$n.'</a></li>';
+			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
+		} 
+		
+		$ret = '
+			<div class="btn-group">
+                <button data-toggle="dropdown" class="btn '.$size.'btn-'.$type.' dropdown-toggle">'.$name.' <span class="caret"></span></button>
+                '.$lnk.'
+            </div>'; 
+			
 		return ($ret);
 	}	
 

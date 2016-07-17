@@ -176,9 +176,30 @@ class rccollections {
 		return ($ret);
 	}	
 	
+	//shcustomer type for price selection
+	protected function get_cus_type($id,$field=null) {
+        $db = GetGlobal('db');
+		$mycode = $field ? $field : 'code2';
+
+		if ($id) { 
+	      $sSQL = "select attr1 from customers where active=1 and $mycode=" . $db->qstr($id);
+		  $res = $db->Execute($sSQL,2);
+		  $ret = ($res->fields[0] == remote_paramload('SHCUSTOMERS','reseller',$this->prpath)) ? true : false; 
+		  return ($ret);	
+		}
+		
+		return false;
+	}	
+	
 	//called by crm renderForm func
-	public function get_collected_items() {
+	public function get_collected_items($visitor=null) {
+		$is_reseller = false;
+		//if visitor (email) search for price option
+		if ($visitor)
+			$is_reseller = $this->get_cus_type($visitor);
+		
 		$this->selected_items = $this->get_selected_items();
+		
 		if (!empty($this->selected_items)) {
 			$tokens = array();
 			$items = array();	
@@ -191,8 +212,8 @@ class rccollections {
 				$tokens[] = $rec['itmdescr'];
 				$tokens[] = $rec['itmremark'];
 				$tokens[] = $rec['uniname1'];
-				$tokens[] = $rec['price0'];
-				$tokens[] = $rec['price1'];
+				$tokens[] = ($is_reseller==true) ? $rec['price0'] : $rec['price1'];
+				$tokens[] = ($is_reseller==true) ? $rec['price0'] : $rec['price1'];
 				$tokens[] = $rec['cat0'];
 				$tokens[] = $rec['cat1'];
 				$tokens[] = $rec['cat2'];
@@ -534,16 +555,27 @@ class rccollections {
 		$db = GetGlobal('db');	
 		$code = $this->getmapf('code');		
 		
-		$sSQL = 'select id from products where ' . $code ."=" . $db->qstr($itemcode);
-		$sSQL .= " and itmactive>0 and active>0";			   
-	    $resultset = $db->Execute($sSQL,2);		
-
-		if ($c = $resultset->fields[0]) {
-			$list = isset($this->savedlist) ?  $this->savedlist . "," . $c : $c;
-			SetSessionParam($this->listName, $list);
-			return true;
+		if (strstr($itemcode, ',')) { //list of codes, csv
+			$sSQL = 'select id from products where ' . $code ." REGEXP " . $db->qstr(str_replace(',','|',$itemcode));
+			$sSQL .= " and itmactive>0 and active>0";			   
+			$resultset = $db->Execute($sSQL,2);	
+			//echo $sSQL;
+			foreach ($resultset as $i=>$rec)
+				$c[] = $rec[0];
+			$list = isset($this->savedlist) ?  $this->savedlist . "," . implode(',', $c) : implode(',', $c);
+			SetSessionParam($this->listName, $list);	
 		}
-		
+		else {
+			$sSQL = 'select id from products where ' . $code ."=" . $db->qstr($itemcode);
+			$sSQL .= " and itmactive>0 and active>0";			   
+			$resultset = $db->Execute($sSQL,2);		
+
+			if ($c = $resultset->fields[0]) {
+				$list = isset($this->savedlist) ?  $this->savedlist . "," . $c : $c;
+				SetSessionParam($this->listName, $list);
+				return true;
+			}
+		}
 		return false;	
 	}	
 	
