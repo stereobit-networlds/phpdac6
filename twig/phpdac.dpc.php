@@ -185,7 +185,46 @@ class phpdac {
 	   $parts = explode(';', $n);
 	   return ($parts[11]);
     }	
-		
+	
+    public function _13($n) {
+	   $parts = explode(';', $n);
+	   return ($parts[12]);
+    }	
+	
+    public function _14($n) {
+	   $parts = explode(';', $n);
+	   return ($parts[13]);
+    }	
+	
+    public function _15($n) {
+	   $parts = explode(';', $n);
+	   return ($parts[14]);
+    }		
+	
+    public function _16($n) {
+	   $parts = explode(';', $n);
+	   return ($parts[15]);
+    }	
+	
+    public function _17($n) {
+	   $parts = explode(';', $n);
+	   return ($parts[16]);
+    }		
+	
+    public function _18($n) {
+	   $parts = explode(';', $n);
+	   return ($parts[17]);
+    }		
+	
+    public function _19($n) {
+	   $parts = explode(';', $n);
+	   return ($parts[18]);
+    }	
+
+    public function _20($n) {
+	   $parts = explode(';', $n);
+	   return ($parts[19]);
+    }		
 
     public function _brstrstr($s) {
 	
