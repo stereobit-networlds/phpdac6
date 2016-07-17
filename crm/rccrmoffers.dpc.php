@@ -17,30 +17,22 @@ require_once($a);
 $__EVENTS['RCCRMOFFERS_DPC'][0]='cpcrmoffers';
 $__EVENTS['RCCRMOFFERS_DPC'][1]='cploadframe';
 $__EVENTS['RCCRMOFFERS_DPC'][2]='cpmailbodyshow';
-$__EVENTS['RCCRMOFFERS_DPC'][3]='cpsavemailadv';
-$__EVENTS['RCCRMOFFERS_DPC'][4]='cpsubsend';
-$__EVENTS['RCCRMOFFERS_DPC'][5]='cpsubloadhtmlmail';
+$__EVENTS['RCCRMOFFERS_DPC'][3]='cpsaveoffer';
+$__EVENTS['RCCRMOFFERS_DPC'][4]='cpsendoffer';
+$__EVENTS['RCCRMOFFERS_DPC'][5]='cpsortcollection';
 $__EVENTS['RCCRMOFFERS_DPC'][6]='cpviewcamp';
 $__EVENTS['RCCRMOFFERS_DPC'][7]='cppreviewcamp';
-$__EVENTS['RCCRMOFFERS_DPC'][8]='cpmailstats';
-$__EVENTS['RCCRMOFFERS_DPC'][9]='cpcampcontent';
-$__EVENTS['RCCRMOFFERS_DPC'][10]='cpdeletecamp';
-$__EVENTS['RCCRMOFFERS_DPC'][11]='cptemplatenew';
-$__EVENTS['RCCRMOFFERS_DPC'][12]='cptemplatesav';
+$__EVENTS['RCCRMOFFERS_DPC'][8]='cpcampcontent';
 
 $__ACTIONS['RCCRMOFFERS_DPC'][0]='cpcrmoffers';
 $__ACTIONS['RCCRMOFFERS_DPC'][1]='cploadframe';
 $__ACTIONS['RCCRMOFFERS_DPC'][2]='cpmailbodyshow';
-$__ACTIONS['RCCRMOFFERS_DPC'][3]='cpsavemailadv';
-$__ACTIONS['RCCRMOFFERS_DPC'][4]='cpsubsend';
-$__ACTIONS['RCCRMOFFERS_DPC'][5]='cpsubloadhtmlmail';
+$__ACTIONS['RCCRMOFFERS_DPC'][3]='cpsaveoffer';
+$__ACTIONS['RCCRMOFFERS_DPC'][4]='cpsendoffer';
+$__ACTIONS['RCCRMOFFERS_DPC'][5]='cpsortcollection';
 $__ACTIONS['RCCRMOFFERS_DPC'][6]='cpviewcamp';
 $__ACTIONS['RCCRMOFFERS_DPC'][7]='cppreviewcamp';
-$__ACTIONS['RCCRMOFFERS_DPC'][8]='cpmailstats';
-$__ACTIONS['RCCRMOFFERS_DPC'][9]='cpcampcontent';
-$__ACTIONS['RCCRMOFFERS_DPC'][10]='cpdeletecamp';
-$__ACTIONS['RCCRMOFFERS_DPC'][11]='cptemplatenew';
-$__ACTIONS['RCCRMOFFERS_DPC'][12]='cptemplatesav';
+$__ACTIONS['RCCRMOFFERS_DPC'][8]='cpcampcontent';
 
 $__LOCALE['RCCRMOFFERS_DPC'][0]='RCCRMOFFERS_DPC;Crm create offer;Crm σύνταξη προσφοράς';
 $__LOCALE['RCCRMOFFERS_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
@@ -106,10 +98,9 @@ class rccrmoffers {
 	var $mailname, $mailuser, $mailpass, $mailserver;
 	var $ishtml, $mailbody, $template_ext, $template_images_path, $template;
 	var $ulistselect, $messages, $cid, $savehtmlpath, $savehtmlurl;
-	var $stats, $cpStats, $hasgraph, $goto, $refresh, $ajaxgraph, $objcall;
 	var $sendOk, $iscollection, $disable_settings, $user_realm;
 	
-	var $appname, $appkey, $cptemplate, $urlRedir, $urlRedir2, $webview, $nsPage;
+	var $appname, $appkey, $cptemplate, $urlRedir, $webview, $nsPage;
 	var $owner, $seclevid, $isHostedApp;
 	
 	var $userDemoIds, $maxinpvars, $batchid, $ckeditver;
@@ -155,7 +146,6 @@ class rccrmoffers {
 		$this->mailbody = null;
 		$this->cid = $_GET['cid'] ? $_GET['cid'] : $_POST['cid'];//no gereq,getparam may cid used by campaigns is in cookies
 		
-        //$defaultsavepath = remote_paramload('FRONTHTMLPAGE','path', $this->prpath);
 		$tmplsavepath = remote_paramload('RCBULKMAIL','tmplsavepath', $this->prpath);		
 		$this->nsPage = remote_paramload('RCBULKMAIL','webview', $this->prpath);
 		$this->webview = $this->nsPage ? 1 : 0;
@@ -168,15 +158,8 @@ class rccrmoffers {
 		$this->appkey = new appkey();			
 		
 		$this->messages = array(); //reset messages any time page reload - local msg system
-		$this->stats = array();
-		$this->cpStats = false;			
-		
-		//$this->refresh = GetReq('refresh')?GetReq('refresh'):60;//0
-		$this->gotourl = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
-		$this->objcall = array();
 		
 		$this->urlRedir = remote_paramload('RCBULKMAIL','urlredir', $this->prpath);
-		$this->urlRedir2 = remote_paramload('RCBULKMAIL','urlredir2', $this->prpath);
 		
 		$tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
 	    $this->cptemplate = $tmpl ? $tmpl : 'metro';	
@@ -189,9 +172,7 @@ class rccrmoffers {
 		$this->seclevid = GetSessionParam('ADMINSecID');			
 
 		$this->isHostedApp = remote_paramload('RCBULKMAIL','hostedapp', $this->prpath);
-		//echo '>', GetSessionParam('LoginName').'<br/>'.GetSessionParam('UserName').'<br/>'.decode(GetSessionParam('UserName'));
-		//$timeZone = 'Europe/Athens';  // +2 hours !!! (cron must run at the same timezone)
-		
+
 		$this->sendOk = 0; //false unitl bid decrease to 0
 		$this->batchid = GetParam('bid') ? GetParam('bid') : 0; //as reade by post form when send submit
 		
@@ -219,29 +200,9 @@ class rccrmoffers {
 		if (defined('RCCOLLECTIONS_DPC')) //used by wizard html page !!
 			$this->iscollection = GetGlobal('controller')->calldpc_method('rccollection.isCollection');  		
 			
-		//set message (in actions, dpc call error)
-		//GetGlobal('controller')->calldpc_method("rccontrolpanel.setTask use info|test 123|1|#");						
-		//$this->percentofCamps();		//<<<<<<<<<<<<<<<<<<<<<<<<<<<??? use with new rccontrolpanel		
-  
+
 	    switch ($event) {
-			
-			case 'cptemplatenew': $this->newcopyTemplate(); 
-			                      break;
-								  
-			case 'cptemplatesav': $this->saved = $this->saveTemplate(); 
-								  $this->newcopyTemplate();	//load
-								  break;
-			
-		    case 'cpchartshow'	: if ($report = GetReq('report')) {//ajax call
-									$this->hasgraph = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use $report");
-									$this->gotourl = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
-								  }
-								  break;										
-			
-	        case 'cpdeletecamp'    : $this->delete_campaign();
-			                         break;	
-									
-            case 'cpdeletecamp'    : break;									
+								
 	        case 'cpviewcamp'      : $this->load_campaign();
 			                         break;			
 									 
@@ -249,9 +210,7 @@ class rccrmoffers {
 			case 'cpcampcontent'   : die($this->preview_campaign());
 			                         break;							 
 			 
-			case 'cpsubloadhtmlmail': if ($this->iscollection>0) {
-                                        //print_r($_POST);
-				                        //check for sort post
+			case 'cpsortcollection': if ($this->iscollection>0) {
 										if (!empty($_POST['colsort'])) { 
 											$slist = implode(',', $_POST['colsort']);	
 											GetGlobal('controller')->calldpc_method("rccollections.saveSortedlist use " . $slist);
@@ -265,21 +224,7 @@ class rccrmoffers {
 			                          if ($this->ulistselect = GetReq('ulistselect')) 
 											SetSessionParam('ulistselect', $this->ulistselect); 
                                       break;			
-			 
-			/*case 'cpsubscribe'    : $this->dosubscribe();
-		                            $this->mass_subscribe();				
-	                                break;
-									
-		    case 'cpunsubscribe'  : $this->dounsubscribe();				
-	                                break;		 
-			 
-			case 'cpactivatequeuerec': $this->activate_queue_rec(); //ajax call
-		                               die('mailbody|<h1>Enabled</h1>');
-		                               break;
-									   
-			case 'cpdeactivatequeuerec': $this->deactivate_queue_rec(); //ajax call
-		                                 die('mailbody|<h1>Disabled</h1>');
-		                                 break;	*/		 
+			 	 
 			 
 	        case 'cpmailbodyshow' : die($this->show_mailbody());
 		                            break; 			 
@@ -288,24 +233,12 @@ class rccrmoffers {
 								    die();
 		                            break;
 									
-			//case 'cpadvsubscribe' : break; 
-
-	        /*case 'cpviewtrace'     : //echo $this->viewTrace($_GET['m'], $_GET['cid']); //ajax call
-			                         //die();
-			                         break;	*/				
-			
-			/*case 'cpviewclicks'        :
-            case 'cpviewsubsqueueactiv':
-		    case 'cpviewsubsqueue'     : 				
-	                                     break;	*/
 										 
-			case "cpsubsend"      :	$this->sendOk = $this->send_mails();
-									//echo 'sendOK:',$this->sendOk;
+			case "cpsendoffer"    :	$this->sendOk = $this->send_mails();
 									SetSessionParam('messages',$this->messages);
-									//$this->runstats();
 				                    break; 									 
 			
-	        case 'cpsavemailadv'  : $this->save_campaign();
+	        case 'cpsaveoffer'    : $this->save_campaign();
 									SetSessionParam('messages',$this->messages); //save messages
 			                        break;
 														
@@ -326,31 +259,19 @@ class rccrmoffers {
         $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
 		
-	    switch ($action) {
-			
-			case 'cptemplatesav'       :  $out = ($this->saved==true) ? "Saved" : null; break;
-			case 'cptemplatenew'       :  break;
-			 
-		    case 'cpchartshow'         : if ($this->hasgraph) //ajax call
-											$out = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");
-										 else
-											$out = localize('_GNAVAL',0);	
-
-										 die(GetReq('report').'|'.$out); //ajax return
-										 break;	
-										 
+	    switch ($action) {										 
 										 
 			case 'cpmailbodyshow'      :
 			case 'cploadframe'         :  									 
 			
-			case 'cpsubloadhtmlmail'   :
-            case 'cpsavemailadv'       :		
-			case 'cpsubsend'           :
+			case 'cpsortcollection'    :
+            case 'cpsaveoffer'         :		
+			case 'cpsendoffer'         :
 			case 'cpcampcontent'       : 
 			case 'cppreviewcamp'       : 
 			case 'cpviewcamp'          : 
 			case 'cpcrmoffers'         : 
-		    default                    : $out .= null;
+		    default                    : $out = null;
 		}		
 		
         return ($out);
@@ -404,48 +325,6 @@ class rccrmoffers {
 		return ($htmlbody);	  
     }	
 
-	public function viewMails($active=null) {
-		$active = $active?$active:GetReq('active');
-		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;
-		   	
-	    //in case of preview in ajax win mygrid is not working so render browser
-		//when paging goto fullscreesn and ajax req is not exist so can render mygid
-		//also when active is 1 because sql can't select using where
-		if ((!$active) && (!$isajax_window) && (defined('MYGRID_DPC'))) {
-		    $title = str_replace(' ','_',localize('_MAILQUEUE',getlocal()));//NO SPACES !!!//localize('_MAILQUEUE',getlocal());
-		   
-	        $sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue";
-            $sSQL.= ') as o';  				
-		   		   
-		    //echo $sSQL;
-            //seturl('t=cpactivatequeuerec&editmode=1&rec={id}')
-			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal())."|boolean|1|ACTIVE:NOT ACTIVE");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal()).'|link|2|'."javascript:disable({id});".'||');			
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+timeout|".localize('_date',getlocal())."|link|5|"."javascript:enable({id});".'||'); //.'|date|1');				
-            //GetGlobal('controller')->calldpc_method("mygrid.column use grid9+receiver|".localize('_receiver',getlocal()).'|10|1');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+receiver|".localize('_receiver',getlocal())."|link|5|".seturl('t=cpviewtrace&m={receiver}&cid={cid}&editmode=1').'||');	   
-            //GetGlobal('controller')->calldpc_method("mygrid.column use grid9+subject|".localize('_subject',getlocal()).'|20|1');	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+subject|".localize('_subject',getlocal())."|link|15|"."javascript:show_body({id});".'||'); //.seturl('t=cpactivatequeuerec&editmode=1&rec={id}').'||');
-		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal()).'|boolean|1');	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+reply|".localize('_reply',getlocal()).'|2|1|||||right');	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+status|".localize('_status',getlocal()).'|2|1|||||right');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+mailstatus|".localize('_mailstatus',getlocal()).'|2|1');	
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+cid|".localize('_cid',getlocal())."|link|5|"); 
-			
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+16+400++0+1+1");
-			
-			//mail body ajax renderer
-			$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
-		}
-        else  
-			$out .= null;
-   		
-		
-	    return ($out);	
-	}
-
 	protected function ulistform($ulistname) {
         $db = GetGlobal('db');	
 		$ulistname = localize('_list',getlocal()); 'grid1';//$ulistname ? $ulistname : 'default';
@@ -453,16 +332,6 @@ class rccrmoffers {
 		if (defined('MYGRID_DPC')) { 
 		   $sSQL = "select * from (";
 		   $sSQL.= "SELECT id,startdate,active,failed,name,email,listname FROM ulists";
-		   
-		   //not selectable by typing listname...just search in grid
-		   //$sSQL .= " where listname=" . $db->qstr($ulistname);
-           //solving where using not in users !!!!!		   
-		   //$sSQL.= " LEFT JOIN users c ON c.email <> u.email AND ";
-           /*if ($ulistname=='default') 
-				$sSQL .= "(u.listname='".$ulistname."' OR u.listname='')";
-		   else
-				$sSQL .= " u.listname='".$ulistname."'";*/
-		   
            $sSQL .= ') as o';  		   
 		   //echo $sSQL;
 		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_ID',getlocal()));
@@ -486,7 +355,7 @@ class rccrmoffers {
 		$cl = $class ? "class=\"$class\"" : null;
 		 
         $c .= "<button type=\"submit\" name=\"submit\" value=\"" . $submit . "\" $cl />";  
-        $c .= "<INPUT type=\"hidden\" name=\"FormName\" value=\"MailBulkInsert\" />";		   
+        $c .= "<INPUT type=\"hidden\" name=\"FormName\" value=\"OfferInsert\" />";		   
         $c .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . $action . "\" $cl />";
         return ($c);   		   
 	}	
@@ -496,27 +365,38 @@ class rccrmoffers {
 
         if (defined('RCFS_DPC')) {
 		   
-	    $path = $this->templatepath;
-		$myext = explode(',',$ext);
-	    $extensions = is_array($myext) ? $myext : array(0=>".png",1=>".gif",2=>".jpg");
-		$ret = null;
+			$path = $this->templatepath;
+			$myext = explode(',',$ext);
+			$extensions = is_array($myext) ? $myext : array(0=>".png",1=>".gif",2=>".jpg");
+			$ret = null;
 		
-		if (is_dir($path)) {
-			$this->fs= new rcfs($path);
-			$ddir = $this->fs->read_directory($path,$extensions); 
+			if (is_dir($path)) {
+				$this->fs= new rcfs($path);
+				$ddir = $this->fs->read_directory($path,$extensions); 
 			
-			if (!empty($ddir)) {
+				if (!empty($ddir)) {
 		  
-				sort($ddir);
-				foreach ($ddir as $i=>$name) {
-					$parts = explode(".",$name);
-					//echo $name,'<br/>';
-					$title = $parts[0];
-					$ret .= "<option value=\"$name\">$title</option>";		
-				}	 			    
-			}
-	    }  	   
-	    }	  
+					sort($ddir);
+					foreach ($ddir as $i=>$name) {
+						$parts = explode(".",$name);
+						//echo $name,'<br/>';
+						$title = $parts[0];
+						$ret .= "<option value=\"$name\">$title</option>";		
+					}	 			    
+				}
+			}  	   
+	    }
+		else {
+			
+			$db = GetGlobal('db');
+		
+			$sSQL = "select id,title,descr from crmforms where active=1 and class='crmform' and type='1'";
+			$res = $db->Execute($sSQL);
+		
+			foreach ($res as $i=>$rec) {
+				$ret .= "<option value=\"". $url . $rec['title']. "\"". $selection .">{$rec['title']}</option>";
+			}	
+		}		
 	    
 	    return ($ret);		
 	}	
@@ -532,7 +412,7 @@ class rccrmoffers {
 				(GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate'));
 	
 		$url = ($taction) ? seturl('t='.$taction.'&stemplate=',null,null,null,null) : 
-		                    seturl('t=cpsubloadhtmlmail&stemplate=',null,null,null,null);
+		                    seturl('t=cpcrmoffers&stemplate=',null,null,null,null);
 		
 		if (defined('RCFS_DPC')) {
 			$path = $this->templatepath;
@@ -564,22 +444,30 @@ class rccrmoffers {
 					$ret .= "</select>";			    
 				}
 			}//empty dir
-	    }  
+	    }
+		else {
+			
+			$db = GetGlobal('db');
+		
+			$sSQL = "select id,title,descr from crmforms where active=1 and class='crmform' and type='1'";
+			$res = $db->Execute($sSQL);
+		
+			$ret = "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
+			$ret .= "<option value=\"$url\">Select...</option>";		
+			foreach ($res as $i=>$rec) {
+				$ret .= "<option value=\"". $url . $rec['title']. "\"". $selection .">{$rec['title']}</option>";
+			}
+			$ret .= "</select>";	
+		}	
 		       
 	    return ($ret);		
 	}
-
+    
 	public function viewTemplateSelect() {
 		
 		$ret = $this->show_select_files('mytemplate', null, $this->template_ext, null);
 		return ($ret);
 	}	
-	
-	public function viewTemplateCopy() {
-		
-		$ret = $this->show_select_files('mytemplate', 'cptemplatenew', $this->template_ext, null);
-		return ($ret);
-	}		
 	
 	public function templateLoaded() {
 		
@@ -591,117 +479,102 @@ class rccrmoffers {
 	protected function get_mail_body($tmpl=null) {
 		$template = $tmpl ? $tmpl : GetReq('stemplate'); 
 		$mailbody = null;
-
-		//if ($this->iscollection>0) {			
+		
 		if (defined('RCCOLLECTIONS_DPC')) {
-			//echo 'RCCOLLECTIONS_DPC';	
 		    if ($template) {
 				$template_file = $this->templatepath . $template;
 				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page use ".$template_file.'+'.$this->templatepath);
 			}
 			else
 				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page");
-		}					
-		elseif (defined('RCTEDIT_DPC')) {//..STANDART BUILD KATALOG TO MAIL...//template engine
-            //echo 'RCTEDIT_DPC';
-		    if ($template) {
-				$template_file = $this->templatepath . $template;
-				$mailbody = GetGlobal('controller')->calldpc_method("rcitems.create_page use ".$template_file);
-			}
-			else
-				$mailbody = GetGlobal('controller')->calldpc_method("rcitems.create_page");
-		}				   
+		}									   
 	 
 		return ($mailbody);	 
 	}		
 	
 	//subload template including collections
     public function loadData($template) {
-		$path = $this->templatepath;	
-		$data = null;	
+		$data = null;		
 		
-		$data = @file_get_contents($path . $template); 
-						 
-		$sub_template = str_replace($this->template_ext,$this->template_subext,$template);
-		//echo $path.$sub_template,'>';
+		if (defined('RCFS_DPC')) {
+			$path = $this->templatepath;		
+		    $sub_template = str_replace($this->template_ext,$this->template_subext,$template);			
+			$data = @file_get_contents($path . $template); 			 
 			 
-		//if sub template exist 
-		if (is_readable($path . $sub_template)) { 
-		    $sub_data = $this->get_mail_body($sub_template);//<<selected items sub-template !!!!!!!!!!!!!!!!!!!!!!!!
-		    //echo $sub_data,'>';
-			$data = str_replace('<!--?'.$sub_template.'?-->',$sub_data,$data);	/**changed the subtemplate mask **/	   
-		}
+			//if sub template exist 
+			if (is_readable($path . $sub_template)) { 
+				$sub_data = $this->get_mail_body($sub_template);
+				$data = str_replace('<!--?'.$sub_template.'?-->',$sub_data,$data);		   
+			}
+		}	
+		else 
+			$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items")); //, 1);
 
 		return ($data);		
 	}		
 	
 	//load template including collections
     protected function loadTemplate2() {
-		$path = $this->templatepath;
-		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');				
+		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');
+		
+		if (defined('RCFS_DPC')) {
+			$path = $this->templatepath;				
 		   
-		if (is_readable($path . $template)) {
+			if (is_readable($path . $template)) {
 		   
-		    SetSessionParam('stemplate', $template); //save tmpl 
-		   
-		    $this->mailbody = $this->loadData($template);			
+				SetSessionParam('stemplate', $template); //save tmpl 
+				$this->mailbody = $this->loadData($template);			
+				return true;
+			}
+		}	
+		else {
 			
-			return true;
-		}
+			$this->mailbody = $this->loadData($template);//base64_decode($res->fields['formdata']);
+
+			SetSessionParam('stemplate', $template); //save tmpl			
+			return true;	
+		}			
 		return false;	  			
 	}	
 	
 	protected function loadTemplate() {
-		$path = $this->templatepath;
-		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');
+		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');	
 		
-		if (($template) && (is_readable($path . $template))) {
+		if (defined('RCFS_DPC')) {
+			$path = $this->templatepath;
+		
+			if (($template) && (is_readable($path . $template))) {
 		  
+				SetSessionParam('stemplate', $template); //save tmpl 
+				$this->mailbody = @file_get_contents($path . $template); 			
+				return true;			
+			}	
+		}
+		else {
+			$db = GetGlobal('db');
+			$sSQL = "select id,title,descr,formdata from crmforms where title=" . $db->qstr($template);
+			$res = $db->Execute($sSQL);			
+			$this->mailbody = base64_decode($res->fields['formdata']);
+			
 			SetSessionParam('stemplate', $template); //save tmpl 
-			
-			$this->mailbody = @file_get_contents($path . $template); 			
-			return true;			
-		}	
-		return false;
-	}	
-	
-	/*copied or new template design*/
-	protected function newcopyTemplate() {
-		$path = $this->templatepath;
-		$template = $this->savedname ? $this->savedname : GetReq('stemplate');
-
-		if (($template) && (is_readable($path . $template))) {
-
-			$this->newtemplatebody = @file_get_contents($path . $template); 
-
-            //subtemplate loading
-			$sub_template = str_replace($this->template_ext, $this->template_subext, $template);
-			if (is_readable($path . $sub_template))
-				$this->newsubtemplatebody = @file_get_contents($path . $sub_template);
-			
-			//pattern loading
-			$pattern_file = str_replace($this->template_subext, '', $sub_template) . '.pattern.txt';
-			if (is_readable($path . $sub_template))
-				$this->newpatternbody = @file_get_contents($path . $pattern_file);
-			
-			return true;			
-		}	
-		//else (not a selected template -ignore session name when create new template)
-		//reset template name
-		SetSessionParam('stemplate', '');
-		$this->template=null;		
+			return true;
+		}
 		
 		return false;
 	}	
-
-	public function renderTemplate() {
-		$path = $this->templatepath;
-		$template = GetReq('stemplate');
-		$file = str_replace($this->template_ext, '', $template) . '.pattern.txt';
-		//echo $file;
+    
+	public function renderForm($title=null, $items=null, $test=false) {
+		$db = GetGlobal('db');		
+		if (!$title) return null;	
+		$sSQL = "select id,title,descr,formdata,codedata from crmforms where title=" . $db->qstr($title);
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);			
+		$form = base64_decode($res->fields['formdata']);		
+		$code = base64_decode($res->fields['codedata']);
+		$template = $res->fields['title'];
 		
-		if (is_readable($path . $file))  {
-			$pf = file($path . $file);
+		if ($code)  {
+			$pf = explode('>|',$code);
 			//search last edited line
 			foreach ($pf as $line) {
 				if (trim($line)) {
@@ -718,17 +591,22 @@ class rccrmoffers {
 			//print_r($_pattern);
 			//return ($_pattern);
 			
+			if ((!$items) && ($test)) { //make pseudo-items arrray
+				$maxitm = count($_pattern[0]);// * $test;
+				for($i=0;$i<$maxitm;$i++)
+					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');			
+		    }	
 			//render pattern
-			if (is_array($_pattern)) {
+			if ((!empty($items)) && (is_array($_pattern))) {
 				$pattern = (array) $_pattern[0];
 				$join = (array) $_pattern[1];				
-				
+				/*
 				//make pseudo-items arrray
 				$maxitm = count($pattern);
 				for($i=1;$i<=$maxitm;$i++)
 					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');
 				//print_r($items);
-				
+				*/
 				//render
 				$out = null;
 				$tts = array();
@@ -738,13 +616,13 @@ class rccrmoffers {
 
 				foreach ($cc as $i=>$group) {
 					foreach ($group as $j=>$child) {
-						//echo $path . $pattern[$j] . '<br>';
-						$tts[] = $this->ct($path . $pattern[$j], $child, true);
+						//echo $pattern[$j] . '<br>';
+						$tts[] = $this->ct($pattern[$j], $child, true);
 						if ($cmd = $join[$j]) {
-							//echo $path . $join[$j] . '<br>';
+							//echo $join[$j] . '<br>';
 							switch ($cmd) {
 							    case '_break' : $out .= implode('', $tts); break;
-								default       : $out .= $this->ct($path . $cmd, $tts, true);		
+								default       : $out .= $this->ct($cmd, $tts, true);		
 							} 
 							unset($tts);
 						}
@@ -756,30 +634,24 @@ class rccrmoffers {
 			}//has pattern data
 		}//has pattern
 		
-		$subtemplate = str_replace($this->template_ext, $this->template_subext, $template);
-		if ($subtemplatedata = @file_get_contents($path . $subtemplate)) {
-			
-			$itms[] = (!empty($gr)) ? implode('',$gr) : null;
-			if (!empty($itms))
-				$ret = $this->combine_tokens($subtemplatedata, $itms, true);				
+		$sSQL = "select formdata from crmforms where title=" . $db->qstr($template.'-sub');
+		$res = $db->Execute($sSQL);
+		//echo $sSQL;	
+		if (isset($res->fields['formdata'])) {			
+			$itms[] = (!empty($gr)) ? implode('',$gr) : null; 
+			if (!empty($itms))			
+				$ret = $this->combine_tokens(base64_decode($res->fields['formdata']), $itms, true);
 		}	
 		else
 			$ret = (!empty($gr)) ? implode('',$gr) : null;
-						
-		$templatedata = @file_get_contents($path . $template);
-		$data = ($ret) ? str_replace('<!--?'.$subtemplate.'?-->', $ret, $templatedata) : $templatedata;
-					
-		if ($data) {				
-			$path2save = ($this->isDemoUser()) ? $this->urlpath . '/' : $this->prpath;
-			@file_put_contents($path2save . '_pview.html', $data, LOCK_EX);
-
-			$frame = "<iframe src =\"_pview.html\" width=\"100%\" height=\"540px\"><p>Your browser does not support iframes</p></iframe>";    	
-			return ($frame);	
-		}
-
-		return null;
+		
+		//echo $template.'-sub:' . $ret;				
+		$data = ($ret) ? str_replace('<!--?'.$template.'-sub'.'?-->', $ret, $form) : $form;
+		
+		return $data;
 	}	
-	
+
+	/*
 	protected function saveTemplate() {
 		$path = $this->templatepath;
 		$template_name = GetParam('tmplname');
@@ -792,29 +664,16 @@ class rccrmoffers {
 			if (stristr($m[2], 'phpdac'))	
 				return "<a{$m[1]}href=\"{$m[2]}\"{$m[3]}>"; //as is
 			else
-				return	"<a{$m[1]}href=\"<phpdac>rcbulkmail.encUrl use {$m[2]}+1</phpdac>\"{$m[3]}>";
+				return	"<a{$m[1]}href=\"<phpdac>crmforms.encUrl use {$m[2]}+1</phpdac>\"{$m[3]}>";
 		};		
 
-		//if (is_readable($path . $this->savedname)) {
 		if ($template = GetParam('template_text')) {	
 
-			if ($this->isDemoUser()) {	
-				//$hrefurl = '<a$1href="<phpdac>rcbulkmail.encUrl use $2+1</phpdac>"$3>';
-				//$text = preg_replace($preghref, $hrefurl, GetParam('template_text')) ;	
+			if ($this->isDemoUser()) 
 				$text = preg_replace_callback($preghref, $pregCallback, $template);
-			}
-			else {
-				//$hrefurl_isapp = '<a$1href="<phpdac>rcbulkmail.encUrl use $2</phpdac>"$3>';
-				//$hrefurl = '<a$1href="<phpdac>rcbulkmail.encUrl use $2+1</phpdac>"$3>';
-				/*if it is hosted app dont use +1 at encUrl*/
-				/*$text = GetParam('hrefapp') ? preg_replace($preghref, $hrefurl_isapp, GetParam('template_text')) : 
-				  							    preg_replace($preghref, $hrefurl, GetParam('template_text')) ;
-				*/							  
+			else 					  
 				$text = preg_replace_callback($preghref, $pregCallback, $template);
-				//}
-				//else
-					//$text = GetParam('template_text'); //as is
-			}	
+
 		
 		    //save pattern
 			$pattern_file = str_replace($this->template_ext, '', $this->savedname) . '.pattern.txt';
@@ -839,7 +698,7 @@ class rccrmoffers {
 		
 		return false;
 	}		
-	
+	*/	
 	public function userRealm() {
        $db = GetGlobal('db');	
 	
@@ -852,6 +711,7 @@ class rccrmoffers {
 	   return false;
 	}
 	
+	/*
 	public function viewCampaigns() {
 		$db = GetGlobal('db');	
 		
@@ -898,7 +758,7 @@ class rccrmoffers {
 		}	
 		$sSQL .= " ORDER BY cdate desc";
 
-        $mycid = $cid ? $cid : $this->cid; /*new post or load camp request */ 		
+        $mycid = $cid ? $cid : $this->cid; 	
 
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
@@ -925,7 +785,7 @@ class rccrmoffers {
 
 		$ret = $this->show_select_camp('campaign', $action, 'class="span6 chzn-select" data-placeholder="Choose a Category" tabindex="1"');		
 		return ($ret);
-	}	
+	}	*/
 	
 	protected function load_campaign() {
 		$db = GetGlobal('db');		
@@ -957,7 +817,7 @@ class rccrmoffers {
 			$nofmails = explode(';', $rec[7]);
 			$nfm = intval(count($nofmails));
 			$this->batchid = ceil($nfm / $this->maxinpvars);
-			$this->messages[] =  "Load task batch: " . $this->batchid;
+			//$this->messages[] =  "Load task batch: " . $this->batchid;
 			//echo 'Load batchid:',$this->batchid,':',$nfm;
 		}	
 
@@ -981,32 +841,6 @@ class rccrmoffers {
 		
 		return ($text);
 	}
-	
-	protected function delete_campaign() {
-		$db = GetGlobal('db');	
-        if (!$this->cid) die("CID error");
-		
-		if ($this->isDemoUser()) {
-			$this->messages[] = "Campaign NOT deleted (demo user).";//localize('_delcamp', getlocal());
-			return true;
-		}	
-		
-		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
-        $cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
-		
-		$sSQL = 'update mailcamp set active=0 where '. $ownerSQL . $cidSQL;
-        //echo $sSQL;		
-		
-		$resultset = $db->Execute($sSQL,1);
-		
-		if ($db->Affected_Rows()) {
-			$this->messages[] = localize('_delcamp', getlocal());
-			return true;
-		}	
-		
-		return false;
-	}	
 	
     /*type : 0 save text as mail body /1 save collections as text to reproduce (offers, katalogs) */	
     protected function save_campaign($type=null) {
@@ -1033,7 +867,7 @@ class rccrmoffers {
 		$bcc = $this->getmails($to); //fetch mails plus 'to' origin
 		//echo $bcc;
 		if (!$bcc) {
-			$this->messages[] = 'Campaign NOT saved (no receipients)';
+			//$this->messages[] = 'Campaign NOT saved (no receipients)';
 			return false;
 		}	
 
@@ -1041,7 +875,7 @@ class rccrmoffers {
 		$nofmails = explode(';', $bcc);
 		$nfm = intval(count($nofmails));
 		$this->batchid = ceil( $nfm / $this->maxinpvars);	//post form save it as hidden
-		$this->messages[] =  'Batch tasks to submit:' . $this->batchid;
+		//$this->messages[] =  'Batch tasks to submit:' . $this->batchid;
 		//echo 'batchid:',$thid->batchid,'>';
 		
 		$m_user = GetParam('user') ? GetParam('user') : $this->mailuser; //user origin
@@ -1130,16 +964,16 @@ class rccrmoffers {
 		$result = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
-			$this->messages[] = $active ? 'Campaign stored' : 'Campaign is temporary';
+			//$this->messages[] = $active ? 'Campaign stored' : 'Campaign is temporary';
 			
 			//save the file
 			if ($p = $this->savehtmlpath) {
-				$s = @file_put_contents($p .'/'. $cid . '.html' , $body, LOCK_EX);	
+				/*$s = @file_put_contents($p .'/'. $cid . '.html' , $body, LOCK_EX);	
 				
 				if ($s) 
 					$this->messages[] = 'Saved as ' . $this->savehtmlurl . $cid . '.html';
 				else
-					$this->messages[] = $this->savehtmlurl . $cid . '.html NOT saved!';				
+					$this->messages[] = $this->savehtmlurl . $cid . '.html NOT saved!';	*/			
 			}
 			
 			//reset campaign
@@ -1153,57 +987,11 @@ class rccrmoffers {
 			return (true);		
 		}
 		
-		$this->messages[] = 'Campaign NOT saved';
+		//$this->messages[] = 'Campaign NOT saved';
 		//echo $sSQL;
 		
 		return (false);		
 	}
-	
-
-	
-	public function getCmpMails($option=null) {
-		$db = GetGlobal('db');
-		
-		$sSQL = 'select bcc from mailcamp where ';		   
-		if ($text = GetParam('mail_text')) {
-			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail'));
-			$sSQL .= " cid = " . $db->qstr($cid);	
-		}
-        else		
-			$sSQL .= " cid=" . $db->qstr($this->cid);	
-
-		//echo $sSQL;	
-	    $resultset = $db->Execute($sSQL,2);	
-		
-		//print_r($resultset);
-		//foreach ($resultset as $n=>$rec) {
-		
-        $bcc = $resultset->fields[0];		
-		$csv = explode(';', $bcc); //$rec[0]);
-		$nfm = intval(count($csv));
-		$this->messages[] =  'Mails in campaign :' . $nfm;
-		$bid = ceil( $nfm / $this->maxinpvars); //static batchid always in max val
-		
-		//also must reduce input array by the mails that already send (here)
-		if (GetParam('FormAction')) { //means that there is post to send
-			$index = ($bid - $this->batchid);//+1;
-			$lim = $this->maxinpvars * $index;
-			//echo 'index:',$index,' bid:',$bid,' batchid:',$this->batchid,' lim:',$lim ; 
-			foreach ($csv as $i=>$m) {
-				if ($i >= $lim) //check for mail list bigger than max input vars
-					$oret[] = $option ? "<option value='".$m."'>". $m."</option>" : $m;
-			}	
-		}	
-		else {
-			foreach ($csv as $m)
-				$oret[] = $option ? "<option value='".$m."'>". $m."</option>" : $m;
-        }		
-		
-		if (is_array($oret))
-			$ret = $option ? implode('',$oret) : implode(';',$oret);
-		
-		return ($ret);
-	}	
 	
 	
 	protected  function get_mails_from_lists($listname=null) {
@@ -1241,19 +1029,6 @@ class rccrmoffers {
 		
 		return false;	
 	}
-	
-	public function viewMessages($template=null) {
-		if (empty($this->messages)) return;
-	    $t = ($template!=null) ? $this->select_template($template) : null;
-		
-		foreach ($this->messages as $m=>$message) {
-			if ($t) 	
-				$ret .= $this->combine_tokens($t, array(0=>$message));
-			else
-				$ret .= "<option value=\"$m\">$message</option>";
-		}
-		return ($ret);
-	}
 
 	protected function csvTrim($mail=null) {
 		$ret = str_replace(array("\r\n", "\r", "\n", " "), array("","","",""), $mail);
@@ -1263,15 +1038,17 @@ class rccrmoffers {
 	//demo user allow 3max csv list
 	protected function getmails($mail=null) {
         $db = GetGlobal('db');	
-		$this->messages[] = 'Get mails...'; 
+		//$this->messages[] = 'Get mails...'; 
 		$ret = null;
+		
+		return ($mail); //<<<<<<<<<<<<<<<<< no lists
 		
 		$mails = $mail ? $mail : null;
 		
 		/*combo with reload func*/
 	    if ((!$this->isDemoUser()) && ($selectedlist = $_POST['myulistselector'])) {
 			//$q = $mails ? ';' : null;
-			$this->messages[] = 'Call mail list ' . $this->ulistselect;
+			//$this->messages[] = 'Call mail list ' . $this->ulistselect;
 			
 			$mails .= ';' . $this->get_mails_from_lists($this->ulistselect);	   
 		}	
@@ -1282,13 +1059,13 @@ class rccrmoffers {
 			if (is_array($altlist)) {
 				$lm = null;
 				foreach ($altlist as $i=>$list) {
-				   $this->messages[] = 'Call mail list ' . $list; 	
+				   //$this->messages[] = 'Call mail list ' . $list; 	
 				   $lm .= ';' . $this->get_mails_from_lists($list);	//not mails ; check inside loop
 				}   
 				$mails .= $lm;
 			}
 			else {
-				$this->messages[] = 'Call mail list ' . $altlist; 
+				//$this->messages[] = 'Call mail list ' . $altlist; 
 				$mails .= ';' . $this->get_mails_from_lists($altlist);			
 			}	
 		}
@@ -1296,7 +1073,7 @@ class rccrmoffers {
 		/*csv addons */
 		if ($csvlist = $_POST['csv']) { 
 		    //$q = $mails ? ';' : null;
-		    $this->messages[] = 'Call csv mail list '; 
+		    //$this->messages[] = 'Call csv mail list '; 
 			
 		    $m = explode(',', $csvlist);
 			if (is_array($m)) {
@@ -1328,7 +1105,7 @@ class rccrmoffers {
 	    if ((!$this->isDemoUser()) && ($users = $_POST['siteusers'])) {
 		    //$q = $mails ? ';' : null;			
 			$seclevid = 1;
-			$this->messages[] = 'Call user mail list ' . $seclevid;			
+			//$this->messages[] = 'Call user mail list ' . $seclevid;			
 			 
 			$sSQL .="SELECT email FROM users where";	
 			$sSQL .= " seclevid=" . $seclevid . " and";	 
@@ -1350,7 +1127,7 @@ class rccrmoffers {
 	    /*app customers checkbox*/
 	    if ((!$this->isDemoUser()) &&($users = $_POST['sitecusts'])) {
 		    //$q = $mails ? ';' : null;			
-			$this->messages[] = 'Call customers mail list ';			
+			//$this->messages[] = 'Call customers mail list ';			
 			  
 			$sSQL .="SELECT mail FROM customers ";	 
 			//echo $sSQL;	
@@ -1375,7 +1152,7 @@ class rccrmoffers {
 				if ($m) $subs[] = $m;
 				
 			$uret = array_unique($subs);
-			$this->messages[] = 'Extract duplicate mails';
+			//$this->messages[] = 'Extract duplicate mails';
 			$ret = implode(';', $uret);
 		}	
 	    //echo $ret,'>'; 
@@ -1384,10 +1161,11 @@ class rccrmoffers {
 	
 	protected function send_mails() {	  
         //check expiration key
-        if ($this->appkey->isdefined('RCBULKMAIL')==false) {
+        /*if ($this->appkey->isdefined('RCBULKMAIL')==false) {
 	        $this->messages[] = "Failed, module expired.";
 		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
-	    }
+	    }*/
+		
 		if (!$cid = $_POST['cid']) {
 			$this->messages[] = 'CID form error!';
 			return false;		
@@ -1407,12 +1185,12 @@ class rccrmoffers {
 				
 				$rawtext = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html'); //$this->mailbody; //not exist in this post			
 				$res = $this->sendit($from,$subject,$rawtext); 
-				if (!$res) 
-					$this->messages[] = $this->batchid ? "Batch send" : "Sent failed";				
+				//if (!$res) 
+					//$this->messages[] = $this->batchid ? "Batch send" : "Sent failed";				
 				
 				return ($res); 
 			}
-			else $this->messages[] = 'File not exist ('. $this->savehtmlpath .'/'. $cid . '.html)';			
+			//else $this->messages[] = 'File not exist ('. $this->savehtmlpath .'/'. $cid . '.html)';			
 		}
 		else $this->messages[] = "No recipients, send failed";
 		
@@ -1421,7 +1199,7 @@ class rccrmoffers {
 	
 	protected function sendit($from,$subject,$mail_text='') {
 	    if (!$mail_text) {
-		    $this->messages[] = 'Failed: Empty content';	
+		    //$this->messages[] = 'Failed: Empty content';	
 			return 0; 
 		}	 
 		
@@ -1477,7 +1255,7 @@ class rccrmoffers {
 			//also the input array must reduced by the mails that already send
 			if ($this->batchid>0) {
 				$this->batchid = $this->batchid - 1; //reduce batchid by 1
-				$this->messages[] =  'Batch tasks remain:' . $this->batchid;	
+				//$this->messages[] =  'Batch tasks remain:' . $this->batchid;	
 			}			
 		} 
 		else $this->messages[] =  'Send failed: NO receipients (cc)';
@@ -1830,7 +1608,6 @@ This email and any files transmitted with it are confidential and intended solel
 				array_shift($burl); //shift //
 				array_shift($burl); //www //
 				$xurl = implode('/',$burl);
-				//$qry = 'a='.$this->appname.'&u=' . $xurl . '&cid=_CID_' . '&r=_TRACK_';
 				$qry = 't=mt&a='.$this->appname.'_AMP_u=' . $xurl . '_AMP_cid=_CID_' . '_AMP_r=_TRACK_'; //CKEditor &amp; issue				
 			}
 			else {
@@ -1839,10 +1616,6 @@ This email and any files transmitted with it are confidential and intended solel
 			}	
 			
 			$uredir = $this->urlRedir .'?'. $qry; //'?turl=' . $encoded_qry;
-			
-			/*RewriteRule ^m/([^/]*)/([^/]*)/([^/]*)/([^/]*)/$ /mtrackurl.php?t=mtrack&a=$1&u=$2&cid=$3&r=$4 [L] */
-			//$uredir = $this->urlRedir2 .'/'. $this->appname .'/'. str_replace('/','-', $xurl) . '/_CID_/_TRACK_/' ; // htaccess / problem
-			
 			return ($uredir); 
 		}
 		else
@@ -1922,7 +1695,6 @@ This email and any files transmitted with it are confidential and intended solel
 		return ($ret);
 	}	
 
-
 	protected function select_template($tfile=null) {
 		if (!$tfile) return;
 	  
@@ -1934,6 +1706,44 @@ This email and any files transmitted with it are confidential and intended solel
 		return ($mytemplate);	 
     }	
 	
+    //combine tokens with load tmpl data inside	
+	public function ct($template, $tokens, $execafter=null) {
+	    //if (!is_array($tokens)) return;
+		$db = GetGlobal('db');		
+		
+		//type 2 sub template data into html/body text
+		$sSQL = "select formdata from crmforms where type=2 and title=" . $db->qstr($template);
+		$res = $db->Execute($sSQL);			
+		$template_contents = base64_decode($res->fields['formdata']);		
+		
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template_contents);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template_contents; 
+		  
+		//echo $ret;
+	    foreach ($tokens as $i=>$tok) {
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<30;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);		
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	}	
+
 	//tokens method	
 	protected function combine_tokens($template, $tokens, $execafter=null) {
 	    if (!is_array($tokens)) return;		
@@ -1968,40 +1778,6 @@ This email and any files transmitted with it are confidential and intended solel
 		return ($ret);
 	}
 	
-    //combine tokens with load tmpl data inside	
-	public function ct($template, $tokens, $execafter=null) {
-	    //if (!is_array($tokens)) return;
-		$template_contents = @file_get_contents($template);
-		
-		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
-		}		  		
-		else
-		  $ret = $template_contents; 
-		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
-		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
-		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;		
-		
-		//execute after replace tokens
-		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          
-		  return ($retout);
-		}		
-		
-		return ($ret);
-	}						
 };
 }
 ?>

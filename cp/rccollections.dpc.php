@@ -176,6 +176,48 @@ class rccollections {
 		return ($ret);
 	}	
 	
+	//called by crm renderForm func
+	public function get_collected_items() {
+		$this->selected_items = $this->get_selected_items();
+		if (!empty($this->selected_items)) {
+			$tokens = array();
+			$items = array();	
+			
+			foreach ($this->selected_items as $n=>$rec) {
+		        
+			    //$ret.= $rec['itmname'].'<BR/>'; 
+			    $tokens[] = $rec['code'];
+			    $tokens[] = $rec['itmname'];
+				$tokens[] = $rec['itmdescr'];
+				$tokens[] = $rec['itmremark'];
+				$tokens[] = $rec['uniname1'];
+				$tokens[] = $rec['price0'];
+				$tokens[] = $rec['price1'];
+				$tokens[] = $rec['cat0'];
+				$tokens[] = $rec['cat1'];
+				$tokens[] = $rec['cat2'];
+				$tokens[] = $rec['cat3'];
+				$tokens[] = $rec['cat4'];
+				$tokens[] = $rec['item_name_url'];
+				$tokens[] = (defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['item_url']) : $rec['item_url'];
+				$tokens[] =  $rec['photo_url']; /*(defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['photo_url']) : $rec['photo_url'];*/
+				$tokens[] = $rec['photo_html'];
+				$tokens[] = $rec['photo_link'];
+				$tokens[] = $rec['attachment'];
+				//print_r($tokens); 		
+				
+				$items[] = $tokens;
+				
+				unset($tokens);		
+ 	
+			}//foreach
+
+			return ($items);	
+        }			
+		
+		return false;
+	}	
+	
 	public function create_page_test($template=null, $imgw=null,$imgh=null,$tmplpath=null) {		
 		$p = $this->readPattern($template);
 		$pattern = (array) $p[0];
@@ -278,8 +320,6 @@ class rccollections {
 		if (!empty($this->selected_items)) {
 			$tokens = array();
 			$items = array();		
-			//..order array by key
-			//ksort($this->selected_items);
 					
 			foreach ($this->selected_items as $n=>$rec) {
 		        
@@ -368,7 +408,7 @@ class rccollections {
 	}
 	
 	//when no create_page..just read items to show...
-	function read_selected_items() {
+	public function read_selected_items() {
 		if ($this->savedXMLlist) 
 			$this->selected_items = $this->get_selected_xml_items();
 		else

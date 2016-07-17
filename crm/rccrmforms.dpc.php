@@ -37,8 +37,8 @@ class rccrmforms {
 	
     var $title, $path, $urlpath;
 	var $seclevid, $userDemoIds;
-	
 	var $crmplus, $ckeditver;	
+	var $appname, $urkRedir, $isHostedApp; 
 	
 	function __construct() {
 
@@ -51,6 +51,10 @@ class rccrmforms {
 		
 		$this->crmplus = false;	
 		$this->ckeditver = 3;
+		
+		$this->appname = paramload('ID','instancename');
+		$this->urlRedir = remote_paramload('RCBULKMAIL','urlredir', $this->path);
+		$this->isHostedApp = remote_paramload('RCBULKMAIL','hostedapp', $this->path);		
 	}
 
     function event($event=null) {
@@ -165,12 +169,15 @@ class rccrmforms {
 	}	
 	
 	protected function showFormDetail() {
-		$module = GetReq('module');// ? GetReq('module') : 'formhtml';
+		$module = GetReq('module');
+		$formid = GetReq('id');
 		
 		switch ($module) {
-			case 'formcode' :
-			case 'formhtml' :
-			default         :
+			case 'formrender' : $ret = $this->renderForm($formid);
+			                    die($ret);
+			case 'formcode'   :
+			case 'formhtml'   :
+			default           :
 		}
 		
 		return ($ret);
@@ -306,9 +313,9 @@ class rccrmforms {
 		if (!GetReq('id')) return false;		
 		
 		$id = "&id=" . GetReq('id');
-		$this->crmplus = (defined('CRMPLUS_DPC')) ? true : false;
 		$treeTitle = $this->fetchField(GetReq('id'), 'code');
-		
+		/*
+		$this->crmplus = (defined('CRMPLUS_DPC')) ? true : false;		
 		$crmplustree = $this->crmplus ? '
 										<li>
 											<a data-value="gh_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Plus</a>
@@ -327,7 +334,7 @@ class rccrmforms {
                                                 </ul>
                                             </li></ul>
                                         </li>' : null;		
-		
+		*/
 		$ret = '	
                             <ul id="tree_2" class="tree">
                                 <li>
@@ -335,34 +342,12 @@ class rccrmforms {
                                     <ul class="branch in">
 										<li><a data-role="leaf" href="javascript:subdetails(\'formhtml'.$id.'\')"><i class="icon-user"></i> Html</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'formcode'.$id.'\')"><i class=" icon-book"></i> Code</a></li>
-                                        <li><a data-role="leaf" href="javascript:subdetails(\'users'.$id.'\')"><i class="icon-share"></i> Users</a></li>										
-                                        <li><a data-role="leaf" href="javascript:subdetails(\'customers'.$id.'\')"><i class=" icon-bullhorn"></i> Customers</a></li>
+                                        <li><a data-role="leaf" href="javascript:subdetails(\'formrender'.$id.'\')"><i class="icon-share"></i> View</a></li>										
+                                        <!--li><a data-role="leaf" href="javascript:subdetails(\'customers'.$id.'\')"><i class=" icon-bullhorn"></i> Customers</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'items'.$id.'\')"><i class="icon-tasks"></i> Items</a></li>
-										<li><a data-role="leaf" href="javascript:subdetails(\'tasks'.$id.'\')"><i class="icon-share"></i> Tasks</a></li>
+										<li><a data-role="leaf" href="javascript:subdetails(\'tasks'.$id.'\')"><i class="icon-share"></i> Tasks</a></li-->
 											
-										'.$crmplustree.'		
-										<li>
-                                            <a id="nut3" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
-                                                Templates
-                                            </a>
-                                            <ul class="branch">
-                                                <li><a data-role="leaf" href="#"><i class="icon-cloud"></i> New</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-user-md"></i> Attach</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-retweet"></i> View</a></li>
-                                            </ul>
-                                        </li>
-										
-                                        <li>
-                                            <a id="nut6" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
-                                                Items
-                                            </a>
-                                            <ul class="branch">
-                                                <li><a data-role="leaf" href="#"><i class="icon-tags"></i> Select</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> Collect</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> Offers</a></li>
-												<li><a data-role="leaf" href="#"><i class="icon-magic"></i> Specials</a></li>
-                                            </ul>
-                                        </li>										
+										'.$crmplustree.'												
                                     </ul>
                                 </li>
                             </ul>		
@@ -386,11 +371,14 @@ class rccrmforms {
 		$minmax = $maxmininit ? $maxmininit : ($_GET['stemplate'] ? 'maximize' : 'minimize') ;
 		//echo $minmax;	
 		
+		$ftype = $this->getFormType(GetReq('id'));
+		$fullpage = ($ftype>1) ? 'false' : 'true'; //'true'; //when type=1 = html contents else partial content
+		
 	    $ckattr = ($this->ckeditver==4) ?
-	           "fullpage : true,"	  
+	           "fullpage : $fullpage,"	  
 	           : 
 	           "skin : 'v2', 
-			   fullpage : true, 
+			   fullpage : $fullpage, 
 			   extraPlugins :'docprops',";		
 		
 		$ret = "
@@ -410,7 +398,7 @@ class rccrmforms {
 			   );
 			   CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
 			   CKEDITOR.config.forcePasteAsPlainText = false; // default so content won't be manipulated on load
-			   CKEDITOR.config.fullPage = true;
+			   CKEDITOR.config.fullPage = $fullpage;
                CKEDITOR.config.entities = false;
 			   CKEDITOR.config.basicEntities = false;
 			   CKEDITOR.config.entities_greek = false;
@@ -434,7 +422,201 @@ class rccrmforms {
 ";
 		//     CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
 		return ($ret);
+	}
+
+	public function encUrl($url, $nohost=false) {
+		if ($url) {
+			
+			if (($this->isHostedApp)&&($nohost==false)) {
+				$burl = explode('/', $url);
+				array_shift($burl); //shift http
+				array_shift($burl); //shift //
+				array_shift($burl); //www //
+				$xurl = implode('/',$burl);
+				$qry = 't=mt&a='.$this->appname.'_AMP_u=' . $xurl . '_AMP_cid=_CID_' . '_AMP_r=_TRACK_'; //CKEditor &amp; issue				
+			}
+			else {
+				//$xurl = $url; //as is
+				$qry = 't=mt&u=' . $url . '_AMP_cid=_CID_' . '_AMP_r=_TRACK_'; //CKEditor &amp; issue				
+			}	
+			
+			$uredir = $this->urlRedir .'?'. $qry; //'?turl=' . $encoded_qry;
+			return ($uredir); 
+		}
+		else
+			return ('#');
+	}
+	
+	public function getFormType($id=null) {
+		$db = GetGlobal('db');		
+		if (!$id) return null;	
+		
+		$sSQL = "select type from crmforms where id=$id";
+		$res = $db->Execute($sSQL);
+		
+		return ($res->fields[0]);	
+	}	
+	
+	public function renderForm($id=null) {
+		$db = GetGlobal('db');		
+		if (!$id) return null;
+		//$template = GetReq('stemplate');		
+		$sSQL = "select id,title,descr,formdata,codedata from crmforms where id=$id";// . $db->qstr($template);
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);			
+		$form = base64_decode($res->fields['formdata']);		
+		$code = base64_decode($res->fields['codedata']);
+		$template = $res->fields['title'];
+		
+		//init one item
+		$oneitem[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');		
+		
+		if ($code)  {
+			$pf = explode('>|',$code);
+			//search last edited line
+			foreach ($pf as $line) {
+				if (trim($line)) {
+					$joins = explode(',', array_pop($pf)); 
+					break;
+				}
+			}
+			//rest lines
+			foreach ($pf as $line) {
+				$subtemplates .= trim($line);
+			}
+			$_pattern[0] = explode(',', $subtemplates);
+			$_pattern[1] = (array) $joins;
+			//print_r($_pattern);
+			//return ($_pattern);
+			
+			//render pattern
+			if (is_array($_pattern)) {
+				$pattern = (array) $_pattern[0];
+				$join = (array) $_pattern[1];				
+				
+				//make pseudo-items arrray
+				$maxitm = count($pattern);
+				for($i=0;$i<$maxitm;$i++)
+					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');
+				//print_r($items);
+				
+				//render
+				$out = null;
+				$tts = array();
+				$gr = array();
+				$itms = array();
+				$cc = array_chunk($items, count($pattern));//, true);
+
+				foreach ($cc as $i=>$group) {
+					foreach ($group as $j=>$child) {
+						//echo $pattern[$j] . '<br>';// . print_r($child, true) . '<br>';
+						$tts[] = $this->ct($pattern[$j], $child, true);
+						if ($cmd = $join[$j]) {
+							//echo $join[$j] . '<br>';
+							switch ($cmd) {
+							    case '_break' : $out .= implode('', $tts); break;
+								default       : $out .= $this->ct($cmd, $tts, true); //print_r($tts); 
+							} 
+							unset($tts);
+						}
+					}
+					
+					$gr[] = (empty($tts)) ? $out : $out . implode('', $tts) ;
+					unset($tts);
+					$out = null;
+				}
+			}//has pattern data
+		}//has pattern
+		
+		$sSQL = "select formdata from crmforms where title=" . $db->qstr($template.'-sub');
+		$res = $db->Execute($sSQL);
+		//echo $sSQL;	
+		if (isset($res->fields['formdata'])) {		
+			$itms[] = (!empty($gr)) ? implode('',$gr) : null; //$oneitem; 
+
+			if (!empty($itms))			
+			    $ret = $this->combine_tokens(base64_decode($res->fields['formdata']), $itms, true);
+		}	
+		else
+			$ret = (!empty($gr)) ? implode('',$gr) : null;
+		
+		//echo $template.'-sub:' . $ret;				
+		$data = ($ret) ? str_replace('<!--?'.$template.'-sub'.'?-->', $ret, $form) : $form;
+		
+		return $data;
 	}		
+
+    //combine tokens with load tmpl data inside	
+	public function ct($template, $tokens, $execafter=null) {
+	    //if (!is_array($tokens)) return;
+		$db = GetGlobal('db');
+
+		//type 2 sub template data into html/body text
+		$sSQL = "select formdata from crmforms where type=2 and title=" . $db->qstr($template);
+		$res = $db->Execute($sSQL);			
+		$template_contents = base64_decode($res->fields['formdata']);		
+		
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template_contents);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template_contents; 
+		  
+		//echo $ret;
+	    foreach ($tokens as $i=>$tok) {
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<30;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);	
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	}
+
+	//tokens method	
+	protected function combine_tokens($template, $tokens, $execafter=null) {
+	    if (!is_array($tokens)) return;		
+
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template;
+		  
+		//echo $ret;
+	    foreach ($tokens as $i=>$tok) {
+            //echo $tok,'<br>';
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<30;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);
+		//echo $ret;
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	}	
 	
 };
 }

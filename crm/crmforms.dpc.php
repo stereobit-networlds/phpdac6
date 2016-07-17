@@ -21,10 +21,16 @@ $__LOCALE['CRMFORMS_DPC'][8]='_title;Title;Τίτλος';
 
 
 class crmforms extends crmmodule  {
+	
+	var $appname, $urkRedir, $isHostedApp; 
 		
 	function __construct() {
 	
-	  crmmodule::__construct();
+		crmmodule::__construct();
+	  
+		$this->appname = paramload('ID','instancename');
+		$this->urlRedir = remote_paramload('RCBULKMAIL','urlredir', $this->path);
+		$this->isHostedApp = remote_paramload('RCBULKMAIL','hostedapp', $this->path);		
 	}
 
 	public function forms_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
@@ -124,6 +130,30 @@ class crmforms extends crmmodule  {
             </div>'; 
 			
 		return ($ret);
+	}
+
+
+	public function encUrl($url, $nohost=false) {
+		if ($url) {
+			
+			if (($this->isHostedApp)&&($nohost==false)) {
+				$burl = explode('/', $url);
+				array_shift($burl); //shift http
+				array_shift($burl); //shift //
+				array_shift($burl); //www //
+				$xurl = implode('/',$burl);
+				$qry = 't=mt&a='.$this->appname.'_AMP_u=' . $xurl . '_AMP_cid=_CID_' . '_AMP_r=_TRACK_'; //CKEditor &amp; issue				
+			}
+			else {
+				//$xurl = $url; //as is
+				$qry = 't=mt&u=' . $url . '_AMP_cid=_CID_' . '_AMP_r=_TRACK_'; //CKEditor &amp; issue				
+			}	
+			
+			$uredir = $this->urlRedir .'?'. $qry; //'?turl=' . $encoded_qry;
+			return ($uredir); 
+		}
+		else
+			return ('#');
 	}	
 };
 }
