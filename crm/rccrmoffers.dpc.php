@@ -512,17 +512,16 @@ class rccrmoffers {
 			}
 		}	
 		else {
+			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items")); 
 			
-			switch ($set) {
-				case 'wishlist'   : break;
-				case 'crmfav'     : break;
-				case 'crmoffer'   : break;
-				case 'collection' :
-				default           : $dataset = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items");
-		    }
-			$data = $this->renderForm($template, $dataset); //, 1);
-		}	
-
+			//with visitor (price selection)
+			$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor)); 
+			
+			//with visitor and preset (collection must have at least one item in this phase)
+			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor . '+test50')); 
+			//with visitor and source preset (collection must have at least one item in this phase)
+			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor . '+4,5,6,7+1'));			
+		}
 		return ($data);		
 	}		
 	
@@ -574,20 +573,16 @@ class rccrmoffers {
 		}
 		
 		return false;
-	}	
-    
-	public function renderForm($title=null, $items=null, $test=false) {
-		$db = GetGlobal('db');		
-		if (!$title) return null;	
-		$sSQL = "select id,title,descr,formdata,codedata from crmforms where title=" . $db->qstr($title);
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);			
-		$form = base64_decode($res->fields['formdata']);		
-		$code = base64_decode($res->fields['codedata']);
-		$template = $res->fields['title'];
+	}
+
+	protected function renderPattern($template, $form=null, $code=null, $items=null, $test=false) {
+		$db = GetGlobal('db');	
+		if (!$template) return false;
 		
-		if ($code)  {
+		if (strstr($code, '>|')) {
+		//if ($code)  {
 			$pf = explode('>|',$code);
+			
 			//search last edited line
 			foreach ($pf as $line) {
 				if (trim($line)) {
@@ -595,17 +590,17 @@ class rccrmoffers {
 					break;
 				}
 			}
+			
 			//rest lines
-			foreach ($pf as $line) {
+			foreach ($pf as $line) 
 				$subtemplates .= trim($line);
-			}
+
 			$_pattern[0] = explode(',', $subtemplates);
 			$_pattern[1] = (array) $joins;
-			//print_r($_pattern);
-			//return ($_pattern);
 			
-			if ((!$items) && ($test)) { //make pseudo-items arrray
-				$maxitm = count($_pattern[0]);// * $test;
+			//make pseudo-items arrray
+			if ((!$items) && ($test)) { 
+				$maxitm = count($_pattern[0]);
 				for($i=1;$i<=$maxitm;$i++)
 					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');			
 		    }	
@@ -655,7 +650,23 @@ class rccrmoffers {
 		//echo $template.'-sub:' . $ret;				
 		$data = ($ret) ? str_replace('<!--?'.$template.'-sub'.'?-->', $ret, $form) : $form;
 		
-		return $data;
+		return $data;		
+	}	
+    
+	public function renderForm($title=null, $items=null, $test=false) {
+		$db = GetGlobal('db');		
+		if (!$title) return null;	
+		$sSQL = "select id,title,descr,formdata,codedata from crmforms where title=" . $db->qstr($title);
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);			
+		$form = base64_decode($res->fields['formdata']);		
+		$code = base64_decode($res->fields['codedata']);
+		$template = $res->fields['title'];
+		
+		//if (strstr($code, '>|'))
+		$ret = $this->renderPattern($template, $form, $code, $items, $test);
+		return ($ret);
+		
 	}	
 	
 	/*add wishlist listID to collection */

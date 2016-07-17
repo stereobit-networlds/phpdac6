@@ -166,12 +166,12 @@ class rccollections {
 		return null;
 	}
 	
-	protected function get_selected_items() {
+	protected function get_selected_items($preset=null, $asis=false) {
 		
 		if ($this->savedXMLlist) 
 			$ret = $this->get_selected_XML_items();
 		else	
-			$ret = $this->get_selected_db_items(500);
+			$ret = $this->get_selected_db_items($preset, $asis);
 		
 		return ($ret);
 	}	
@@ -192,13 +192,13 @@ class rccollections {
 	}	
 	
 	//called by crm renderForm func
-	public function get_collected_items($visitor=null) {
+	public function get_collected_items($visitor=null, $preset=null, $asis=false) {
 		$is_reseller = false;
 		//if visitor (email) search for price option
 		if ($visitor)
 			$is_reseller = $this->get_cus_type($visitor);
 		
-		$this->selected_items = $this->get_selected_items();
+		$this->selected_items = $this->get_selected_items($preset, $asis);
 		
 		if (!empty($this->selected_items)) {
 			$tokens = array();
@@ -206,7 +206,6 @@ class rccollections {
 			
 			foreach ($this->selected_items as $n=>$rec) {
 		        
-			    //$ret.= $rec['itmname'].'<BR/>'; 
 			    $tokens[] = $rec['code'];
 			    $tokens[] = $rec['itmname'];
 				$tokens[] = $rec['itmdescr'];
@@ -221,7 +220,7 @@ class rccollections {
 				$tokens[] = $rec['cat4'];
 				$tokens[] = $rec['item_name_url'];
 				$tokens[] = (defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['item_url']) : $rec['item_url'];
-				$tokens[] =  $rec['photo_url']; /*(defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['photo_url']) : $rec['photo_url'];*/
+				$tokens[] =  $rec['photo_url']; 
 				$tokens[] = $rec['photo_html'];
 				$tokens[] = $rec['photo_link'];
 				$tokens[] = $rec['attachment'];
@@ -239,104 +238,25 @@ class rccollections {
 		return false;
 	}	
 	
-	public function create_page_test($template=null, $imgw=null,$imgh=null,$tmplpath=null) {		
-		$p = $this->readPattern($template);
-		$pattern = (array) $p[0];
-		$join = (array) $p[1];
-		
-		/*$p = array(0=>array(0=>'basis-xondriki-1-align-left-sub.htm',1=>'basis-xondriki-1-align-right-sub.htm'),1=>array(0=>'',1=>''));
-		$pattern= $p[0];
-		print_r($pattern);
-		$join = array();*/		
-		
-        $this->selected_items = $this->get_selected_items(500);	
-		
-		foreach ($this->selected_items as $n=>$rec) {
-		
-			    $tokens[] = $rec['code'];
-			    $tokens[] = $rec['itmname'];
-				$tokens[] = $rec['itmdescr'];
-				$tokens[] = $rec['itmremark'];
-				$tokens[] = $rec['uniname1'];
-				$tokens[] = $rec['price0'];
-				$tokens[] = $rec['price1'];
-				$tokens[] = $rec['cat0'];
-				$tokens[] = $rec['cat1'];
-				$tokens[] = $rec['cat2'];
-				$tokens[] = $rec['cat3'];
-				$tokens[] = $rec['cat4'];
-				$tokens[] = $rec['item_name_url'];
-				$tokens[] = (defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['item_url']) : $rec['item_url'];
-				$tokens[] =  $rec['photo_url']; /*(defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['photo_url']) : $rec['photo_url'];*/
-				$tokens[] = $rec['photo_html'];
-				$tokens[] = $rec['photo_link'];
-				$tokens[] = $rec['attachment'];
-				$tokens[] = ($n % 2 == 0) ? '1' : '0'; //even  / odd	
-				
-				$childs[] = $tokens;
-				unset($tokens);
-		}
-		/*echo '<pre>';
-		print_r($this->selected_items);
-		echo '</pre>';*/
-        if ($cn=count($pattern)) {		
-		$cc = array_chunk($childs, $cn);//, true);
-		/*echo '<pre>';
-		print_r($cc);
-		echo '</pre>';*/
-
-		foreach ($cc as $i=>$group) {
-			foreach ($group as $j=>$child) {
-				//echo $tmplpath . $pattern[$j] . '<br>';
-			    $ret .= $this->ct($tmplpath . $pattern[$j], $child, true);
-				if ($join[$j]) {
-					 $ret = $this->ct($tmplpath . $join[$j], array(0=>$ret), true);
-				}
-			}
-		}
-        }
-		return($ret);		
-	}
-	
 	public function create_page($template=null, $tmplpath=null) {
 		$pattern_method = false;
 		
 		$p = $this->readPattern($template);
 		if (is_array($p)) {
-			//print_r($p);
-			//echo 'pattern:',$template;
+			
 			$pattern = (array) $p[0];
 			$join = (array) $p[1];				
 			$pattern_method = true;
 			$template_data = @file_get_contents($template);
 	    }
 	    elseif (($template) && (is_readable($template)))  {
-			//echo 'sub>',$template;
-			/* //*** beware of twing file path of the instance ***
-			if (defined('TWIGENGINE_DPC')) {
-				$date = date('m.d.y');
-				$x = 'notes123';//.var_export($invoice_tokens, true);
-				$t = array('invoice'=>GetSessionParam('invway') .' '.$this->transaction_id,
-						'mynotes'=>$x,
-						'mydate'=>$date);
-				$tokens = serialize($t);
-				echo GetGlobal('controller')->calldpc_method('twigengine.render use '.$invoice_template.'++'.$tokens);
-				//echo 'z';
-				//die();
-			}	*/			
 			
-			/*if (defined('CCPP_VERSION')) { //one template for all lines
-				$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); 
-				$template_data = $preprocessor->execute($template, 0, false, true);
-			}
-			else*/
-				$template_data = @file_get_contents($template); 
+			$template_data = @file_get_contents($template); 
         }
 		else
 			return null;
 
         $this->selected_items = $this->get_selected_items();	
-		//echo 'selected items:';
 		
 		if (!empty($this->selected_items)) {
 			$tokens = array();
@@ -344,7 +264,6 @@ class rccollections {
 					
 			foreach ($this->selected_items as $n=>$rec) {
 		        
-			    //$ret.= $rec['itmname'].'<BR/>'; 
 			    $tokens[] = $rec['code'];
 			    $tokens[] = $rec['itmname'];
 				$tokens[] = $rec['itmdescr'];
@@ -359,26 +278,12 @@ class rccollections {
 				$tokens[] = $rec['cat4'];
 				$tokens[] = $rec['item_name_url'];
 				$tokens[] = (defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['item_url']) : $rec['item_url'];
-				$tokens[] =  $rec['photo_url']; /*(defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['photo_url']) : $rec['photo_url'];*/
+				$tokens[] =  $rec['photo_url']; 
 				$tokens[] = $rec['photo_html'];
 				$tokens[] = $rec['photo_link'];
 				$tokens[] = $rec['attachment'];
 				$tokens[] = ($n % 2 == 0) ? '1' : '0'; //even  / odd
-				//print_r($tokens); 
-				//echo '>',  ($n % 2 == 0) ? '1' : '0';
-				$this->odd = ($n % 2 == 0) ? '0' : '1';
-				
-				/*if (defined('CCPP_VERSION')) { //override, customized per line
-					//$config = array();
-					if ($n % 2 == 0) 
-						$config = array('LINE'=>array('ODD'=>null,'EVEN'=>1),'PRICE'=>array('ON'=>1,));
-					else 
-						$config = array('LINE'=>array('ODD'=>1,'EVEN'=>null),'PRICE'=>array('ON'=>1,));
-					
-					$preprocessor = new CCPP($config, true); //new ccpp
-					$template_data = $preprocessor->execute($template_data, 0, true, true);
-					unset($preprocessor);
-				}*/			
+				$this->odd = ($n % 2 == 0) ? '0' : '1';		
 				
 				if ($pattern_method==true) /** pattern method **/
 					$items[] = $tokens;
@@ -414,7 +319,6 @@ class rccollections {
 					$out = null;
 				}
 				$itms[] = implode('',$gr);
-                //$ret = $this->ct($template, $itms, true);	
 				$ret = $this->combine_tokens($template_data, $itms, true); 
 			    unset($itms);
 				unset($gr);
@@ -429,11 +333,11 @@ class rccollections {
 	}
 	
 	//when no create_page..just read items to show...
-	public function read_selected_items() {
+	public function read_selected_items($preset=null, $asis=false) {
 		if ($this->savedXMLlist) 
 			$this->selected_items = $this->get_selected_xml_items();
 		else
-			$this->selected_items = $this->get_selected_db_items(500);
+			$this->selected_items = $this->get_selected_db_items($preset, $asis);
 		   	
 		//..order array by key
 		ksort($this->selected_items);			
@@ -723,25 +627,37 @@ class rccollections {
 	  return ($ret);
 	}
 	
-	protected function get_selected_db_items($items=10,$img_width=null, $img_height=null, $id=null) {
+	protected function get_selected_db_items($preset=null, $asis=false) {
         $db = GetGlobal('db');		
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';	
-        $codefield = $this->getmapf('code');		
+        $codefield = $this->getmapf('code');
+
+		if ($preset) {
+			if ($asis==false) {
+				$colext = '.' . base64_encode($this->owner) . '.col';
+				$colfile = $preset . $colext;
+				$itemsIdList = @file_get_contents($this->prpath . $this->savecolpath . '/'. $colfile);
+			}
+			else
+				$itemsIdList = $preset;
+			//SetSessionParam($this->listName, $itemsIdList); //dont save in mem
+		}	
+		else
+			$itemsIdList = GetSessionParam($this->listName);
 		
         $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->getmapf('code').
 				" from products WHERE ";
 
-		$sSQL .= "id in (" . GetSessionParam($this->listName) .")";
+		$sSQL .= "id in (" . $itemsIdList .")";
 	    $sSQL .= " and itmactive>0 and active>0";	
-		$sSQL .= " ORDER BY FIELD(id,".  GetSessionParam($this->listName) .")";
-        $sSQL .= " limit " . $items;		
+		$sSQL .= " ORDER BY FIELD(id,".  $itemsIdList .")";
+        //$sSQL .= " limit " . $items;		
 		
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
-		//print_r($resultset);
 		if (empty($resultset)) return null;
 		
 		$ix =1;
@@ -760,7 +676,7 @@ class rccollections {
 		    $item_name_url_base = "<a href='$item_url'>".$rec['itmname']."</a>";
 			
 			$imgfile = $this->urlpath . $this->image_size_path . '/' . $id . $this->restype;
-			//echo '<br/>', $imgfile;
+
 			if (file_exists($imgfile)) 	 
 				$item_photo_url = $this->url . $this->image_size_path . '/' . $id . $this->restype;
 			else 
