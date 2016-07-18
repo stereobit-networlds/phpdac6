@@ -82,18 +82,14 @@ class crmforms extends crmmodule  {
 	*  for cp environment
 	*/
 	
-	public function renderForm($title=null, $items=null, $test=false) {
-		$db = GetGlobal('db');		
-		if (!$title) return null;	
-		$sSQL = "select id,title,descr,formdata,codedata from crmforms where title=" . $db->qstr($title);
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);			
-		$form = base64_decode($res->fields['formdata']);		
-		$code = base64_decode($res->fields['codedata']);
-		$template = $res->fields['title'];
+	protected function renderPattern($template, $form=null, $code=null, $items=null, $test=false) {
+		$db = GetGlobal('db');	
+		if (!$template) return false;
 		
-		if ($code)  {
+		if (strstr($code, '>|')) {
+		//if ($code)  {
 			$pf = explode('>|',$code);
+			
 			//search last edited line
 			foreach ($pf as $line) {
 				if (trim($line)) {
@@ -101,17 +97,17 @@ class crmforms extends crmmodule  {
 					break;
 				}
 			}
+			
 			//rest lines
-			foreach ($pf as $line) {
+			foreach ($pf as $line) 
 				$subtemplates .= trim($line);
-			}
+
 			$_pattern[0] = explode(',', $subtemplates);
 			$_pattern[1] = (array) $joins;
-			//print_r($_pattern);
-			//return ($_pattern);
 			
-			if ((!$items) && ($test)) { //make pseudo-items arrray
-				$maxitm = count($_pattern[0]);// * $test;
+			//make pseudo-items arrray
+			if ((!$items) && ($test)) { 
+				$maxitm = count($_pattern[0]);
 				for($i=1;$i<=$maxitm;$i++)
 					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');			
 		    }	
@@ -161,8 +157,64 @@ class crmforms extends crmmodule  {
 		//echo $template.'-sub:' . $ret;				
 		$data = ($ret) ? str_replace('<!--?'.$template.'-sub'.'?-->', $ret, $form) : $form;
 		
-		return $data;
+		return $data;		
+	}
+
+	protected function renderTwing($doctitle=null, $template, $form=null, $code=null, $items=null) {
+		$db = GetGlobal('db');	
+		if (!$template) return false;	
+		$docdescr = $doctitle ? $doctitle : 'Document'; 	
+		
+		if (defined('TWIGENGINE_DPC')) {
+				
+			//save db form into temp file
+			$tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);
+			$tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);
+			$twigpath = $this->prpath . $tmpl_path .'/'. $tmpl_name .'/';	
+			$tempfile = 'crmform-cache-' . base64_encode($template) . '.html';
+				
+			if (@file_put_contents($twigpath . $tempfile, $form)) {
+				
+				//csvitems var
+				$this->csvitems = $this->getcsvItems($items);
+
+				$t = array('invoice'=>$docdescr,
+							'mynotes'=>'notes 123',
+							'mydate'=>date('m.d.y'));
+							
+				$tokens = serialize($t);
+				$ret = GetGlobal('controller')->calldpc_method('twigengine.render use '.$tempfile.'++'.$tokens);
+			}
+			else
+				$ret = 'twig cache error!';
+		}
+		else 
+			$ret = $form;		
+		
+		return ($ret);
+	}		
+	
+	public function renderForm($title=null, $items=null, $test=false) {
+		$db = GetGlobal('db');		
+		if (!$title) return null;	
+		$sSQL = "select id,title,descr,formdata,codedata from crmforms where title=" . $db->qstr($title);
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);			
+		$form = base64_decode($res->fields['formdata']);		
+		$code = base64_decode($res->fields['codedata']);
+		$template = $res->fields['title'];
+		$docdescr = $res->fields['descr'];
+		
+		if (strstr($code, '>|')) { //pattern code
+			$ret = $this->renderPattern($template, $form, $code, $items, $test);
+		}
+		else 
+		    $ret = $this->renderTwing($docdescr, $template, $form, $code, $items);	
+	
+		return ($ret);
+		
 	}	
+	
 	
 	public function formsMenu($user, $class=null, $type=null, $style=null) {
 		if ((!$user) || (!$class)) return null;

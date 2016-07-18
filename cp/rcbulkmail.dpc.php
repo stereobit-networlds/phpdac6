@@ -1168,23 +1168,10 @@ class rcbulkmail {
 		//if (is_readable($path . $this->savedname)) {
 		if ($template = GetParam('template_text')) {	
 
-			if ($this->isDemoUser()) {	
-				//$hrefurl = '<a$1href="<phpdac>rcbulkmail.encUrl use $2+1</phpdac>"$3>';
-				//$text = preg_replace($preghref, $hrefurl, GetParam('template_text')) ;	
+			if ($this->isDemoUser()) 	
 				$text = preg_replace_callback($preghref, $pregCallback, $template);
-			}
-			else {
-				//$hrefurl_isapp = '<a$1href="<phpdac>rcbulkmail.encUrl use $2</phpdac>"$3>';
-				//$hrefurl = '<a$1href="<phpdac>rcbulkmail.encUrl use $2+1</phpdac>"$3>';
-				/*if it is hosted app dont use +1 at encUrl*/
-				/*$text = GetParam('hrefapp') ? preg_replace($preghref, $hrefurl_isapp, GetParam('template_text')) : 
-				  							    preg_replace($preghref, $hrefurl, GetParam('template_text')) ;
-				*/							  
-				$text = preg_replace_callback($preghref, $pregCallback, $template);
-				//}
-				//else
-					//$text = GetParam('template_text'); //as is
-			}	
+			else 	  
+				$text = preg_replace_callback($preghref, $pregCallback, $template);	
 		
 		    //save pattern
 			$pattern_file = str_replace($this->template_ext, '', $this->savedname) . '.pattern.txt';
@@ -1382,19 +1369,7 @@ class rcbulkmail {
     protected function save_campaign($type=null) {
         $db = GetGlobal('db'); 	
 		$rtokens= null;
-		//print_r($_POST);
-        /*foreach ($_POST as $p=>$pp) {
-			if ($p == 'mail_text')
-				echo '';
-			elseif ($p == 'ulistname')
-			    print_r($_POST['ulistname']);
-			else
-				echo $p,'=>',$pp,'<br/>';
-			
-	    }*/	
-		
 		$ctype = $type ? $type : 0;
-      
 		$r = rand(000001, 999999);
 				
         $cc = GetParam('from'); //from origin		
@@ -1429,7 +1404,7 @@ class rcbulkmail {
 		$body = GetParam('mail_text');
 		$title = GetParam('subject') ? GetParam('subject') : 'Campaign ' . $r;
 		
-		$date = date('Y-m-d h:m:s');
+		$date = date('Y-m-d H:m:s');
 		$cid = md5(GetParam('mail_text') .'|'. GetParam('subject') .'|'. $to);
         $active = GetParam('savecmp') ? 1 : 0;	
 		

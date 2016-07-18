@@ -17,8 +17,8 @@ require_once($a);
 $__EVENTS['RCCRMOFFERS_DPC'][0]='cpcrmoffers';
 $__EVENTS['RCCRMOFFERS_DPC'][1]='cploadframe';
 $__EVENTS['RCCRMOFFERS_DPC'][2]='cpmailbodyshow';
-$__EVENTS['RCCRMOFFERS_DPC'][3]='cpsaveoffer';
-$__EVENTS['RCCRMOFFERS_DPC'][4]='cpsendoffer';
+$__EVENTS['RCCRMOFFERS_DPC'][3]='cpsavedocument';
+$__EVENTS['RCCRMOFFERS_DPC'][4]='cpsenddocument';
 $__EVENTS['RCCRMOFFERS_DPC'][5]='cpsortcollection';
 $__EVENTS['RCCRMOFFERS_DPC'][6]='cpaddcollection';
 $__EVENTS['RCCRMOFFERS_DPC'][7]='cpviewcamp';
@@ -28,8 +28,8 @@ $__EVENTS['RCCRMOFFERS_DPC'][9]='cpcampcontent';
 $__ACTIONS['RCCRMOFFERS_DPC'][0]='cpcrmoffers';
 $__ACTIONS['RCCRMOFFERS_DPC'][1]='cploadframe';
 $__ACTIONS['RCCRMOFFERS_DPC'][2]='cpmailbodyshow';
-$__ACTIONS['RCCRMOFFERS_DPC'][3]='cpsaveoffer';
-$__ACTIONS['RCCRMOFFERS_DPC'][4]='cpsendoffer';
+$__ACTIONS['RCCRMOFFERS_DPC'][3]='cpsavedocument';
+$__ACTIONS['RCCRMOFFERS_DPC'][4]='cpsenddocument';
 $__ACTIONS['RCCRMOFFERS_DPC'][5]='cpsortcollection';
 $__ACTIONS['RCCRMOFFERS_DPC'][6]='cpaddcollection';
 $__ACTIONS['RCCRMOFFERS_DPC'][7]='cpviewcamp';
@@ -97,16 +97,14 @@ class rccrmoffers {
 	
 	var $title, $prpath, $urlpath, $url, $mtrackimg;
     var $trackmail, $overwrite_encoding, $encoding, $templatepath;
-	var $mailname, $mailuser, $mailpass, $mailserver;
+	var $mailname, $mailuser, $mailpass, $mailserver, $user_realm;
 	var $ishtml, $mailbody, $template_ext, $template_images_path, $template;
-	var $ulistselect, $messages, $cid, $savehtmlpath, $savehtmlurl;
-	var $sendOk, $disable_settings, $user_realm;
+	var $messages, $disable_settings;
 	
-	var $appname, $appkey, $cptemplate, $urlRedir, $webview, $nsPage;
+	var $appname, $appkey, $cptemplate, $urlRedir;
 	var $owner, $seclevid, $isHostedApp;
 	
-	var $userDemoIds, $maxinpvars, $batchid, $ckeditver;
-	
+	var $userDemoIds, $ckeditver;
 	var $visitor, $items, $csvitems;
 		
     function __construct() {
@@ -144,19 +142,9 @@ class rccrmoffers {
 	    $this->template_images_path = $this->urlpath . $ipath;		
 		$this->template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');
 		
-		$this->ulistselect = GetReq('ulistselect') ? GetReq('ulistselect') : GetSessionParam('ulistselect');
 		$this->ishtml = true;
 		$this->mailbody = null;
-		$this->cid = $_GET['cid'] ? $_GET['cid'] : $_POST['cid'];//no gereq,getparam may cid used by campaigns is in cookies
-		
-		$tmplsavepath = remote_paramload('RCBULKMAIL','tmplsavepath', $this->prpath);		
-		$this->nsPage = remote_paramload('RCBULKMAIL','webview', $this->prpath);
-		$this->webview = $this->nsPage ? 1 : 0;
-		
-		$savepath = $tmplsavepath ? $tmplsavepath : null;//$defaultsavepath;
-		$this->savehtmlpath = $savepath ? $this->urlpath . $savepath : null;
-		$this->savehtmlurl = $savepath ? ($this->webview ? $this->url .'/'. $this->nsPage : $this->url . $savepath) : null;
-
+	
 		$this->appname = paramload('ID','instancename');
 		$this->appkey = new appkey();			
 		
@@ -175,12 +163,7 @@ class rccrmoffers {
 		$this->seclevid = GetSessionParam('ADMINSecID');			
 
 		$this->isHostedApp = remote_paramload('RCBULKMAIL','hostedapp', $this->prpath);
-
-		$this->sendOk = 0; //false unitl bid decrease to 0
-		$this->batchid = GetParam('bid') ? GetParam('bid') : 0; //as reade by post form when send submit
-		
 		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
-		$this->maxinpvars = ini_get('max_input_vars') - 50; //DEPEND ON SRV AND DEFINES THE BATCH OUTPUT
 		
 		$ckeditorVersion = remote_paramload('RCBULKMAIL','ckeditor',$this->prpath);		
 		$this->ckeditver = $ckeditorVersion ? $ckeditorVersion : 4; //default version 4
@@ -206,16 +189,12 @@ class rccrmoffers {
 			case 'cpcampcontent'   : //die($this->preview_campaign());
 			                         break;							 
 			
-			case 'cpaddcollection' : $this->addListToCollection(); //break;	
-			case 'cpsortcollection': //if (GetGlobal('controller')->calldpc_method('rccollection.isCollection')) {
-										if (!empty($_POST['colsort'])) { 
-											$slist = implode(',', $_POST['colsort']);	
-											GetGlobal('controller')->calldpc_method("rccollections.saveSortedlist use " . $slist);
-										}
-										$this->loadTemplate(); 	
-			                          /*}										
-									  else
-										$this->loadTemplate();	*/
+			case 'cpaddcollection' : $this->addListToCollection(); //no break;
+			case 'cpsortcollection': if (!empty($_POST['colsort'])) { 
+										$slist = implode(',', $_POST['colsort']);	
+										GetGlobal('controller')->calldpc_method("rccollections.saveSortedlist use " . $slist);
+									  }
+									  $this->loadTemplate(); 	
                                       break;			
 			 	 
 			 
@@ -227,21 +206,17 @@ class rccrmoffers {
 		                            break;
 									
 										 
-			case "cpsendoffer"    :	$this->sendOk = $this->send_mails();
+			case "cpsenddocument" :	$this->send_document();
 									SetSessionParam('messages',$this->messages);
 				                    break; 									 
 			
-	        case 'cpsaveoffer'    : $this->save_campaign();
-									SetSessionParam('messages',$this->messages); //save messages
+	        case 'cpsavedocument' : $this->save_document();
+									SetSessionParam('messages',$this->messages); 
 			                        break;
 														
 			case 'cpcrmoffers'    :
-			default               :	if ($this->template) {
-										/*if (GetGlobal('controller')->calldpc_method('rccollection.isCollection'))
-											$this->loadTemplate2(); //subtemp						  
-										else*/
-											$this->loadTemplate();						  
-			                        }									
+			default               :	if ($this->template) 
+										$this->loadTemplate();						  								
         }			
 			
     }	
@@ -258,8 +233,8 @@ class rccrmoffers {
 			
 			case 'cpaddcollection'     :
 			case 'cpsortcollection'    :
-            case 'cpsaveoffer'         :		
-			case 'cpsendoffer'         :
+            case 'cpsavedocument'      :		
+			case 'cpsenddocument'      :
 			case 'cpcampcontent'       : 
 			case 'cppreviewcamp'       : 
 			case 'cpviewcamp'          : 
@@ -293,6 +268,17 @@ class rccrmoffers {
 
 		return true;  
 	}
+	
+	protected function checkmail($mail=null) {
+		if (!$mail) return false;
+		
+		if ($this->_checkmail($mail))
+			return ($mail);
+		else 
+			$this->messages[] = 'Invalid mail address ('. $mail .')';
+		
+		return false;	
+	}		
 	
 	
 	protected function loadframe($ajaxdiv=null) {
@@ -761,98 +747,32 @@ class rccrmoffers {
 		
 		return null;
 	}
-
-	public function userRealm() {
-       $db = GetGlobal('db');	
-	
-	   if ($UserName) {
-		    $sSQL = 'select fname from users where username=' . $db->qstr($this->owner);
-			//echo $sSQL;
-			$result = $db->Execute($sSQL,2);
-			return ($result->fields[0]);
-	   }
-	   return false;
-	}
-	
-	
 	
 	
 	
     /*type : 0 save text as mail body /1 save collections as text to reproduce (offers, katalogs) */	
-    protected function save_campaign($type=null) {
+    protected function save_document($type=null) {
         $db = GetGlobal('db'); 	
-		$rtokens= null;
-		//print_r($_POST);
-        /*foreach ($_POST as $p=>$pp) {
-			if ($p == 'mail_text')
-				echo '';
-			elseif ($p == 'ulistname')
-			    print_r($_POST['ulistname']);
-			else
-				echo $p,'=>',$pp,'<br/>';
-			
-	    }*/	
-		
+		$rtokens = null;
 		$ctype = $type ? $type : 0;
-      
 		$r = rand(000001, 999999);
-				
-        $cc = GetParam('from'); //from origin		
-		$to = GetParam('submail'); //to origin
-		
-		$bcc = $this->getmails($to); //fetch mails plus 'to' origin
-		//echo $bcc;
-		if (!$bcc) {
-			//$this->messages[] = 'Campaign NOT saved (no receipients)';
-			return false;
-		}	
+        $from = GetParam('from'); //from origin		
+		$to = GetParam('to'); //to origin
 
-        //compute batch submits
-		$nofmails = explode(';', $bcc);
-		$nfm = intval(count($nofmails));
-		$this->batchid = ceil( $nfm / $this->maxinpvars);	//post form save it as hidden
-		//$this->messages[] =  'Batch tasks to submit:' . $this->batchid;
-		//echo 'batchid:',$thid->batchid,'>';
-		
-		$m_user = GetParam('user') ? GetParam('user') : $this->mailuser; //user origin
-		$m_pass = GetParam('pass') ? GetParam('pass') : $this->mailpass;//pass origin
-		$m_server = GetParam('server') ? GetParam('server') : $this->mailserver; //server origin
-		//make it global to used be html form (hide default settings)
-		if ($m_user!=$this->mailuser) SetParam('user', $m_user); 
-		if ($m_pass!=$this->mailpass) SetParam('pass', $m_pass);
-		if ($m_server!=$this->mailserver) SetParam('server', $m_server);
-        //fetch user realm from users
-        $realm = $this->userRealm();		
-		$m_realm = $realm ? $realm : $this->mailname; 
-		SetParam('realm', $m_realm);
-		
 		$body = GetParam('mail_text');
-		$title = GetParam('subject') ? GetParam('subject') : 'Campaign ' . $r;
+		$title = GetParam('subject') ? GetParam('subject') : 'Document ' . $r; //!!!!!
 		
-		$date = date('Y-m-d h:m:s');
-		$cid = md5(GetParam('mail_text') .'|'. GetParam('subject') .'|'. $to);
-        $active = GetParam('savecmp') ? 1 : 0;	
+		$date = date('Y-m-d H:m:s');
+		$cid = null;//md5(GetParam('mail_text') .'|'. GetParam('subject') .'|'. $to);
+        $active = 1;//GetParam('savecmp') ? 1 : 0;	
 		
-		if ($viewashtml = GetParam('webviewlink')) {
-			$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
-										$this->encUrl($this->savehtmlurl . $cid . '.html');
-			$plink = "<a href='$pageurl'>".localize('_here',getlocal())."</a>";	
-			
-			$text = str_replace('_WEBLINK_',$plink, GetParam('webviewtext'));	//replace special words		
-			$rtext = $this->add_remarks_to_hide($text); //add remark to easilly remove 
-			//if use tokens place at atoken
-			if ($hastokens = GetParam('usetokens')) 
-				$rtokens[0] = $this->add_remarks_to_hide($text); 
-			else  //else at end of body
-				$body = str_replace('</body>',$rtext .'</body>', $body);							   	
-		}
-		else
-			$rtokens[0] = ''; //dummy token to replace if $0$ exist in page
+		//if ($viewashtml = GetParam('webviewlink')) {
+		$rtokens[0] = ''; //dummy token to replace if $0$ exist in page
 		
 		if ($unsublink = GetParam('unsubscribelink')) {
 			$unlink = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_here',getlocal())."</a>";			
 			
-			$text = str_replace(array('_UNSUBSCRIBE_','_MAILSENDER_'),array($unlink, $cc), GetParam('unsubscribetext'));			
+			$text = str_replace(array('_UNSUBSCRIBE_','_MAILSENDER_','_SUBSCRIBER_'),array($unlink, $from, $to), GetParam('unsubscribetext'));			
 			$rtext = $this->add_remarks_to_hide($text);
 			//if use tokens place at atoken
 			if ($hastokens = GetParam('usetokens'))
@@ -864,343 +784,81 @@ class rccrmoffers {
 			$rtokens[1] = ''; //dummy token to replace if $1$ exist in page
 		
 		$body =  $this->combine_tokens($body, $rtokens); //in case of tokens	
-
-		if (is_array($_POST['csv'])) 
-		    $mycsvlist = 'csv';  	
-		if (is_array($_POST['ulistname'])) {
-			$multi_ulists = implode(',', $_POST['ulistname']);
-		    $multitags = $mycsvlist ? $mycsvlist . ',' . $multi_ulists : $multi_ulists;  	
-		}	
-		$ulists = $this->ulistselect ? $this->ulistselect . ',' . $multitags : $multitags;
-		SetParam('taglists',$taglists); //used by form
-		
-		if (defined('RCCOLLECTIONS_DPC')) 
-			$collection = GetGlobal('controller')->calldpc_var("rccollections.savedlist");
-		else
-			$collection = '';	
   
-        $sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,bcc,template,body,collection,owner,user,pass,name,server) values (";
+        $sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,to,template,body,collection,owner,user,pass,name,server) values (";
 	    $sSQL .= $db->qstr($cid).",".
 		         $ctype .",". 
 				 $db->qstr($date).",$active,".
 	             $db->qstr($title).",".
-				 $db->qstr($ulists).",".
-				 $db->qstr($cc).",".
-				 $db->qstr($bcc).",".
+				 $db->qstr('ulists').",".
+				 $db->qstr($from).",".
+				 $db->qstr($to).",".
 				 $db->qstr($this->template).",".
 				 $db->qstr(base64_encode($body)).",".
-				 $db->qstr($collection).",".
+				 $db->qstr('collection').",".
 				 $db->qstr($this->owner).",".
-				 $db->qstr($m_user).",".
-				 $db->qstr($m_pass).",".
-				 $db->qstr($m_realm).",".
-				 $db->qstr($m_server).				 
+				 $db->qstr($this->mailuser).",".
+				 $db->qstr($this->mailpass).",".
+				 $db->qstr($this->mailname).",".
+				 $db->qstr($this->mailserver).				 
 				 ")"; 
         //echo $sSQL;
-		$result = $db->Execute($sSQL,1);
+		//$result = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
-			//$this->messages[] = $active ? 'Campaign stored' : 'Campaign is temporary';
-			
-			//save the file
-			if ($p = $this->savehtmlpath) {
-				/*$s = @file_put_contents($p .'/'. $cid . '.html' , $body, LOCK_EX);	
-				
-				if ($s) 
-					$this->messages[] = 'Saved as ' . $this->savehtmlurl . $cid . '.html';
-				else
-					$this->messages[] = $this->savehtmlurl . $cid . '.html NOT saved!';	*/			
-			}
-			
+
 			//reset campaign
 			SetSessionParam('stemplate', '');
-			$this->template=null;
-			SetSessionParam('ulistselect', '');
+			$this->template = null;
 			$this->mailbody = null;
 			
-			$this->cid = $cid; //hold cid in form after submit
+			//send document
+			$this->send_document($this->mailuser, $to, $title, $body);
 			
 			return (true);		
 		}
 		
-		//$this->messages[] = 'Campaign NOT saved';
+		$this->messages[] = 'Document NOT saved';
 		//echo $sSQL;
 		
 		return (false);		
-	}
-	
-	
-	protected  function get_mails_from_lists($listname=null) {
-       $db = GetGlobal('db');	
-	   $ulistname = $listname ? $listname : 'default';
-	   $out = null; 
-	   
-	   $sSQL .= "SELECT email FROM ulists where listname=" . $db->qstr($ulistname); 
-	   $sSQL .= " and active=1";
-	   //echo $sSQL;	
-       $result = $db->Execute($sSQL,2);
-	   
-	   if (count($result)>0) {		   
-	     foreach ($result as $n=>$rec) {
-            if ($m = $this->checkmail(trim($rec['email']))) 		 
-				$ret[] = trim($m);
-		 }
-	   }
-	   
-	   if (!empty($ret)) {  
-	     $out = implode(';',$ret);
-       }
-
-	   return $out;		   
-	}
-	
-	
-	protected function checkmail($mail=null) {
-		if (!$mail) return false;
-		
-		if ($this->_checkmail($mail))
-			return ($mail);
-		else 
-			$this->messages[] = 'Invalid mail address ('. $mail .')';
-		
-		return false;	
-	}
-
-	protected function csvTrim($mail=null) {
-		$ret = str_replace(array("\r\n", "\r", "\n", " "), array("","","",""), $mail);
-		return $ret;
-	}
-	
-	//demo user allow 3max csv list
-	protected function getmails($mail=null) {
-        $db = GetGlobal('db');	
-		//$this->messages[] = 'Get mails...'; 
-		$ret = null;
-		
-		return ($mail); //<<<<<<<<<<<<<<<<< no lists
-		
-		$mails = $mail ? $mail : null;
-		
-		/*combo with reload func*/
-	    if ((!$this->isDemoUser()) && ($selectedlist = $_POST['myulistselector'])) {
-			//$q = $mails ? ';' : null;
-			//$this->messages[] = 'Call mail list ' . $this->ulistselect;
-			
-			$mails .= ';' . $this->get_mails_from_lists($this->ulistselect);	   
-		}	
-		
-		/*multiple combo as alternatives */
-		if ((!$this->isDemoUser()) && ($altlist = $_POST['ulistname'])) {
-			//$q = $mails ? ';' : null;
-			if (is_array($altlist)) {
-				$lm = null;
-				foreach ($altlist as $i=>$list) {
-				   //$this->messages[] = 'Call mail list ' . $list; 	
-				   $lm .= ';' . $this->get_mails_from_lists($list);	//not mails ; check inside loop
-				}   
-				$mails .= $lm;
-			}
-			else {
-				//$this->messages[] = 'Call mail list ' . $altlist; 
-				$mails .= ';' . $this->get_mails_from_lists($altlist);			
-			}	
-		}
-		
-		/*csv addons */
-		if ($csvlist = $_POST['csv']) { 
-		    //$q = $mails ? ';' : null;
-		    //$this->messages[] = 'Call csv mail list '; 
-			
-		    $m = explode(',', $csvlist);
-			if (is_array($m)) {
-				
-			  if ($this->isDemoUser())  { //demo user
-			    $max = (count($m)<2) ? count($m) : 2; //max 3 addresess (2csv+'to')
-				for ($i=0;$i<$max;$i++) { 
-					$tcsvMail = $this->csvTrim($m[$i]);
-                    if ($ml = $this->checkmail($tcsvMail)) 					
-						$mails .= ';' . $ml;
-				}	
-			  }
-			  else {	
-				foreach ($m as $csvmail) {
-					$tcsvMail = $this->csvTrim($csvmail);
-                    if ($ml = $this->checkmail($tcsvMail)) 					
-						$mails .= ';' . $ml;
-				}	
-              }				
-			}
-			else {  //one address
-				$tcsvList = $this->csvTrim($csvlist); 
-			    $ml = $this->checkmail($tcsvList);	
-				$mails .= $ml  ? ';' . $tcsvList : '';
-			}			
-		}
-	   
-	    /*app users checkbox*/
-	    if ((!$this->isDemoUser()) && ($users = $_POST['siteusers'])) {
-		    //$q = $mails ? ';' : null;			
-			$seclevid = 1;
-			//$this->messages[] = 'Call user mail list ' . $seclevid;			
-			 
-			$sSQL .="SELECT email FROM users where";	
-			$sSQL .= " seclevid=" . $seclevid . " and";	 
-		    $sSQL .= " notes='ACTIVE'";	//NOT THE INACTIVE USERS   
-			//echo $sSQL;	
-			$result = $db->Execute($sSQL,2);	
-	   
-			if ($db->Affected_Rows()>0) {		   
-				foreach ($result as $n=>$rec) {
-                    if ($m = $this->checkmail(trim($rec[0]))) 					
-						$ret[] = $m;
-				}
-			} 
-			if (!empty($ret)) {  
-				$mails .= ';' . implode(';',$ret); 
-			}
-	    }
-		
-	    /*app customers checkbox*/
-	    if ((!$this->isDemoUser()) &&($users = $_POST['sitecusts'])) {
-		    //$q = $mails ? ';' : null;			
-			//$this->messages[] = 'Call customers mail list ';			
-			  
-			$sSQL .="SELECT mail FROM customers ";	 
-			//echo $sSQL;	
-			$result = $db->Execute($sSQL,2);
-	   
-			if ($db->Affected_Rows()>0) {		   
-				foreach ($result as $n=>$rec) {
-                    if ($m = $this->checkmail(trim($rec[0]))) 					
-						$ret[] = $m;
-				}
-			}
-			if (!empty($ret)) {  
-				$mails .= ';' . implode(';',$ret); 
-			}
-	    }
-		
-		if ($mails) {
-			$mcsv = explode(';', str_replace(';;', ';', $mails));
-			//print_r($mcsv);
-			//some clean
-			foreach ($mcsv as $i=>$m)
-				if ($m) $subs[] = $m;
-				
-			$uret = array_unique($subs);
-			//$this->messages[] = 'Extract duplicate mails';
-			$ret = implode(';', $uret);
-		}	
-	    //echo $ret,'>'; 
-	    return $ret;	
-	}			
-	
-	protected function send_mails() {	  
-        //check expiration key
-        /*if ($this->appkey->isdefined('RCBULKMAIL')==false) {
-	        $this->messages[] = "Failed, module expired.";
-		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
-	    }*/
-		
-		if (!$cid = $_POST['cid']) {
-			$this->messages[] = 'CID form error!';
-			return false;		
-        }
-		if (!$from = $_POST['from']) {
-			$this->messages[] = 'From field missing!';
-			return false;
-		}		
-		if (!$subject = $_POST['subject']) {
-			$this->messages[] = 'Subject field missing!';
-			return false;
-		}				
-		
-		if (!empty($_POST['include'])) {
-			
-			if (is_readable($this->savehtmlpath .'/'. $cid.'.html')) {
-				
-				$rawtext = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html'); //$this->mailbody; //not exist in this post			
-				$res = $this->sendit($from,$subject,$rawtext); 
-				//if (!$res) 
-					//$this->messages[] = $this->batchid ? "Batch send" : "Sent failed";				
-				
-				return ($res); 
-			}
-			//else $this->messages[] = 'File not exist ('. $this->savehtmlpath .'/'. $cid . '.html)';			
-		}
-		else $this->messages[] = "No recipients, send failed";
-		
-	    return false;   
 	}	
 	
-	protected function sendit($from,$subject,$mail_text='') {
-	    if (!$mail_text) {
-		    //$this->messages[] = 'Failed: Empty content';	
+	protected function send_document($from, $to, $subject, $body) {	  
+        //check expiration key
+        if ($this->appkey->isdefined('RCCRMOFFERS')==false) {
+	        $this->messages[] = "Failed, module expired.";
+		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
+	    }
+					
+		$res = $this->sendit($from, $to, $subject, $body); 				
+				
+		return ($res); 
+	}	
+	
+	protected function sendit($from, $to, $subject, $body=null) {
+	    if (!$body) {
+		    $this->messages[] = 'Failed: Empty content';	
 			return 0; 
 		}	 
 		
-		$i = 0;
 		$meter = 0;
-		$mailuser = GetParam('user') ? GetParam('user') : $this->mailuser;
-		$mailpass = GetParam('pass') ? GetParam('pass') : $this->mailpass;
-		$mailserver = GetParam('server') ? GetParam('server') : $this->mailserver;
-		$mailname = GetParam('realm') ? GetParam('realm') : $this->mailname; //a per user submit (realm)
-		$from = $mailuser ? $mailuser : $from; //replace sender when another server settings ? 
-		$cc = $_POST['include'] ? implode(';',$_POST['include']) : null; //subscribers field array
-		//print_r($_POST);//['include']);
-		//echo count($_POST['include']);
-		
-		/* $to = $_POST['to'] ? $_POST['to'] : $_POST['submail']; //to field, submail come from create
-		if ($to) { //to alone test
-		    //echo 'to:'.$to;
-		    if ($this->domain_exists($to)) {
-				$text = str_replace('_SUBSCRIBER_', $to, $mail_text); 	
-				$meter += $this->sendmail_instant($from,$to,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
-				$i=1;
-			}
-			else $this->messages[] =  'Send failed: MX error (to)';
-		}
-		else*/
-		if ($cc) {		
-			$qty = count($_POST['include']);
-			//echo 'qty:',$qty;
-			if ($qty<=3) { //send instand mail if <=3 mail address
-				//$m = array_pop($_POST['include']);
-				foreach ($_POST['include'] as $z=>$m) {
-					$text = str_replace('_SUBSCRIBER_', $m, $mail_text); 	
-					$meter += $this->sendmail_instant($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
-					$i=1;
-				}	
-			}
-			else {			
-				set_time_limit(60); 
-				foreach ($_POST['include'] as $z=>$m) { //remaining postc (reduced input array)...
-					
-					//break if mails bigger than max input vars 					
-					if ($z==$this->maxinpvars) 
-						break;						
-					
-					$text = str_replace('_SUBSCRIBER_', $m, $mail_text); 	
-					$meter += $this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
-					$i+=1;
-				}
-				set_time_limit(ini_get('max_execution_time'));	//return to default
-			}
-			
-			//reduce batch id
-			//also the input array must reduced by the mails that already send
-			if ($this->batchid>0) {
-				$this->batchid = $this->batchid - 1; //reduce batchid by 1
-				//$this->messages[] =  'Batch tasks remain:' . $this->batchid;	
-			}			
+		if ($to) {				
+			if ($sendnow = GetParam('sendnow')) {	
+				$meter = $this->sendmail_instant($from,$m,$subject,$body,$this->ishtml,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);
+				$this->messages[] =  'Mail sent to '.$to;
+			}	
+			else { 		
+				$meter = $this->sendmail_inqueue($from,$m,$subject,$body,$this->ishtml,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);			
+				$this->messages[] =  'Mail NOT sent to '.$to;
+			}	
 		} 
-		else $this->messages[] =  'Send failed: NO receipients (cc)';
+		else 
+			$this->messages[] =  'Send failed: NO receipients (to)';
 
 		$mtr = $meter ? $meter : 0;		
 		$this->messages[] = $mtr . ' mail(s) sent';		
-		//return ($i);				
-		$ret = ($this->batchid>0) ? 0 : $i; //return false until batchid became 0
-		return ($ret);				
+		return ($mtr);							
     }	
 	
 	//send mail to db queue
@@ -1333,14 +991,6 @@ class rccrmoffers {
     protected function sendmail($from,$to,$subject,$mail_text='',$is_html=false) {
 		$sFormErr = GetGlobal('sFormErr');
 		$err = null;
-		/*$ccs = GetParam('cc'); //echo $ccs;
-	   
-		if ($ccs)
-			$ccaddress = explode(';',$ccs);		      
-		$bccs = GetParam('bcc');	//echo $bccs;	 
-		if ($ccs)
-			$bccaddress = explode(';',$bccs);			 
-		//global $info; //receives errors	*/ 
 
 		if (($this->_checkmail($to)) && ($subject)) {//echo $to,'<br>';
 	   
@@ -1352,7 +1002,6 @@ class rccrmoffers {
 		   $smtpm->to($to);  
 		   if (!empty($ccaddress)) {
 		     foreach ($ccaddress as $cc) {
-			   //echo $cc,'<br>';
 			   if (trim($cc)) {
 		         //$smtpm->cc($cc);//ONLY WIN32  
 			     $smtpm->to($cc);
@@ -1360,8 +1009,7 @@ class rccrmoffers {
 			 }  
 		   }  	 
 		   if (!empty($bccaddress)) {
-		     foreach ($bccaddress as $bcc) {
-			   //echo $bcc,'<br>';		
+		     foreach ($bccaddress as $bcc) {		
 			   if (trim($bcc)) {	 
 		         //$smtpm->bcc($bcc); //ONLY WIN32  
 			     $smtpm->to($bcc);  
@@ -1478,9 +1126,7 @@ class rccrmoffers {
 	   return (false);	  	   
     } 	
 	
-	/*when web view hide texts */
 	protected function add_remarks_to_hide($text=null) {
-		//remark used to rename when webview (not to show as web page)
 		$ret = "<!--REMARK--><p>" . $text. "</p><!--REMARK-->";
 		return ($ret);
     }		
@@ -1546,12 +1192,10 @@ This email and any files transmitted with it are confidential and intended solel
 				$xurl = implode('/',$burl);
 				$qry = 't=mt&a='.$this->appname.'_AMP_u=' . $xurl . '_AMP_cid=_CID_' . '_AMP_r=_TRACK_'; //CKEditor &amp; issue				
 			}
-			else {
-				//$xurl = $url; //as is
+			else 
 				$qry = 't=mt&u=' . $url . '_AMP_cid=_CID_' . '_AMP_r=_TRACK_'; //CKEditor &amp; issue				
-			}	
 			
-			$uredir = $this->urlRedir .'?'. $qry; //'?turl=' . $encoded_qry;
+			$uredir = $this->urlRedir .'?'. $qry; 
 			return ($uredir); 
 		}
 		else
@@ -1569,15 +1213,10 @@ This email and any files transmitted with it are confidential and intended solel
 		//CKEDITOR.config.basicEntities = false;
 		//CKEDITOR.config.htmlEncodeOutput = false;	
 	    //...		
-		//ckeditor attributes depend on template edit new / mail text
-		//$readonly = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 0 : 1;  
 		$readonly = $disable ? 1 : 0;  
-	
-        //$element_name = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 'template_text' : 'mail_text';	
-		$element_name = $element ? $element : ((($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 'template_text' : 'mail_text');
+		$element_name = $element ? $element : 'mail_text';
 		
 		//minmax only when select for new/edit not when select for mail sent
-		//$minmax = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? ($_GET['stemplate'] ? 'maximize' : 'minimize') : 'minimize' ;
 		$minmax = $maxmininit ? $maxmininit : ($_GET['stemplate'] ? 'maximize' : 'minimize') ;
 		//echo $minmax;	
 		
