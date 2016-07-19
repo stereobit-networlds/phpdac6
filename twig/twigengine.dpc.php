@@ -41,6 +41,8 @@ class twigengine extends Twig_Autoloader {
 		$this->pdac = new phpdac();				   
 		$this->twig->addGlobal('phpdac', $this->pdac);
 		$this->twig->addFilter('nformat', new Twig_Filter_Function('phpdac::_nformat'));
+		$this->twig->addFilter('nformatstr', new Twig_Filter_Function('phpdac::_nformatstr'));
+		$this->twig->addFilter('nformatcdot', new Twig_Filter_Function('phpdac::_nformatcdot'));
 		//$this->twig->addFilter('sexplode', new Twig_Filter_Function('phpdac::_sexplode'));
 		$this->twig->addFilter('dacarray', new Twig_Filter_Function('phpdac::_dacarray'));
 		//$this->twig->addFilter('dacelement', new Twig_Filter_Function('phpdac::_dacelement'));

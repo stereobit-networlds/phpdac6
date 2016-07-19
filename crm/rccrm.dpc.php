@@ -117,6 +117,7 @@ $__LOCALE['RCCRM_DPC'][121]='_reports;Reports;Αναφορές';
 $__LOCALE['RCCRM_DPC'][122]='_plus;Plus;Plus';
 $__LOCALE['RCCRM_DPC'][123]='_automations;Automations;Αυτοματισμοί';
 $__LOCALE['RCCRM_DPC'][124]='_finance;Finance;Οικονομικές';
+$__LOCALE['RCCRM_DPC'][125]='_outbox;Outbox;Εξερχόμενα';
 
 class rccrm  {
 
@@ -533,7 +534,7 @@ class rccrm  {
 										<li>
 											<a data-value="gh_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">'.$t_plus.'</a>
                                             <ul class="branch">
-											<li><a href="#">'.$t_actions.'</a></li>
+											<li><a href="javascript:subdetails(\'docs'.$id.'\')">'.$t_actions.'</a></li>
                                             <li><a href="javascript:subdetails(\'plus'.$id.'\')">'.$t_projects.'</a></li>
                                             <li>
                                                 <a data-value="GitHub_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">'.$t_auto.'</a>
@@ -551,6 +552,7 @@ class rccrm  {
 										
 		$t_dashboard = localize('_crmdashb', $l);
 		$t_inbox = localize('_inbox', $l);
+		$t_outbox = localize('_outbox', $l);
 		$t_details = localize('_details', $l);
 		$t_sales = localize('_sales', $l);
 		$t_tasks = localize('_tasks', $l);
@@ -583,6 +585,7 @@ class rccrm  {
                                     <ul class="branch in">
 										<li><a data-role="leaf" href="javascript:subdetails(\'dashboard'.$id.'\')"><i class="icon-user"></i> '.$t_dashboard.'</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'inbox'.$id.'\')"><i class=" icon-book"></i> '.$t_inbox.'</a></li>
+										<li><a data-role="leaf" href="javascript:subdetails(\'outbox'.$id.'\')"><i class=" icon-book"></i> '.$t_outbox.'</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'customer'.$id.'\')"><i class="icon-share"></i> '.$t_details.'</a></li>										
                                         <li><a data-role="leaf" href="javascript:subdetails(\'transactions'.$id.'\')"><i class=" icon-bullhorn"></i> '.$t_sales.'</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'tasks'.$id.'\')"><i class="icon-tasks"></i> '.$t_tasks.'</a></li>
@@ -598,8 +601,8 @@ class rccrm  {
 												<li><a data-role="leaf" href="javascript:subdetails(\'wishcmp'.$id.'\')"><i class="icon-tags"></i> '.$t_compares.'</a></li>
 												<li><a data-role="leaf" href="javascript:subdetails(\'wishfav'.$id.'\')"><i class="icon-tags"></i> '.$t_favorites.'</a></li>
 												<li><a data-role="leaf" href="javascript:subdetails(\'itemstats'.$id.'\')"><i class="icon-tags"></i> '.$t_views.'</a></li>												
-                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_returns.'</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-user"></i> '.$t_offers.'</a></li>
+                                                <li><a data-role="leaf" href="javascript:subdetails(\'docsitem'.$id.'\')"><i class="icon-user"></i> '.$t_offers.'</a></li>
+                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_returns.'</a></li>												
 												<li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_behaviors.'</a></li>
                                             </ul>
                                         </li>

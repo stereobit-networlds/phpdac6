@@ -37,15 +37,17 @@ $__ACTIONS['RCCRMOFFERS_DPC'][8]='cppreviewcamp';
 $__ACTIONS['RCCRMOFFERS_DPC'][9]='cpcampcontent';
 
 $__LOCALE['RCCRMOFFERS_DPC'][0]='RCCRMOFFERS_DPC;Crm create offer;Crm σύνταξη προσφοράς';
-$__LOCALE['RCCRMOFFERS_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
+$__LOCALE['RCCRMOFFERS_DPC'][1]='_favadded;Add recommendation;Εισαγωγή προτίμησης';
+/*$__LOCALE['RCCRMOFFERS_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
 $__LOCALE['RCCRMOFFERS_DPC'][2]='_MAILCAMPAIGNS;Mail campaigns;Αποστολές σε συνδρομητές';
 $__LOCALE['RCCRMOFFERS_DPC'][3]='_active;Active;Ενεργό';
 $__LOCALE['RCCRMOFFERS_DPC'][4]='_sender;Sender;Αποστολέας';
 $__LOCALE['RCCRMOFFERS_DPC'][5]='_receiver;Receiver;Παραλήπτης';
 $__LOCALE['RCCRMOFFERS_DPC'][6]='_reply;Views;Εμφανίσεις';
 $__LOCALE['RCCRMOFFERS_DPC'][7]='_subject;Subject;Θέμα';
-$__LOCALE['RCCRMOFFERS_DPC'][8]='_id;Id;Α/Α';
+$__LOCALE['RCCRMOFFERS_DPC'][8]='_id;Id;Α/Α';*/
 $__LOCALE['RCCRMOFFERS_DPC'][9]='_wlists;Lists;Λίστες';
+/*
 $__LOCALE['RCCRMOFFERS_DPC'][10]='_inlist;List;Σε λίστα';
 $__LOCALE['RCCRMOFFERS_DPC'][11]='_sendtousers;Send to Users;Αποστολή σε χρήστες';
 $__LOCALE['RCCRMOFFERS_DPC'][12]='_sendtolists;Send to Lists;Αποστολη σε λίστες';
@@ -60,23 +62,23 @@ $__LOCALE['RCCRMOFFERS_DPC'][20]='_MAILQUEUEACTIVE;Active queue;Πρός απο�
 $__LOCALE['RCCRMOFFERS_DPC'][21]='_SELECTITEMS;Select Items;Επιλογή στοιχείων';
 $__LOCALE['RCCRMOFFERS_DPC'][22]='_OPTIONS;Options;Επιλογές';
 $__LOCALE['RCCRMOFFERS_DPC'][23]='_status;Status;Κατάσταση';
-$__LOCALE['RCCRMOFFERS_DPC'][24]='_mailstatus;Reason;Αιτία';
+$__LOCALE['RCCRMOFFERS_DPC'][24]='_mailstatus;Reason;Αιτία';*/
 $__LOCALE['RCCRMOFFERS_DPC'][25]='_date;Date sent;Ημ. αποστολής';
 $__LOCALE['RCCRMOFFERS_DPC'][26]='_unsubscribe;Unsubscribe;Διαγραφή απο την λίστα';
-$__LOCALE['RCCRMOFFERS_DPC'][27]='_viewasweb;View as web page;Πατήστε εδώ για να δείτε την ιστοσελίδα';
+/*$__LOCALE['RCCRMOFFERS_DPC'][27]='_viewasweb;View as web page;Πατήστε εδώ για να δείτε την ιστοσελίδα';
 $__LOCALE['RCCRMOFFERS_DPC'][28]='_notifications;Notifications;Ειδοποιήσεις';
 $__LOCALE['RCCRMOFFERS_DPC'][29]='_viewallnotifications;View all notifications;Όλες οι ειδοποιήσεις';
 $__LOCALE['RCCRMOFFERS_DPC'][30]='_MAILCLICKS;Responses;Ανταπόκριση';
 $__LOCALE['RCCRMOFFERS_DPC'][31]='_dashboard;Dashboard;Στατιστικά';
 $__LOCALE['RCCRMOFFERS_DPC'][32]='_year;Year;Έτος';
-$__LOCALE['RCCRMOFFERS_DPC'][33]='_month;Month;Μήνας';
+$__LOCALE['RCCRMOFFERS_DPC'][33]='_month;Month;Μήνας';*/
 $__LOCALE['RCCRMOFFERS_DPC'][34]='_here;here;εδώ';
 $__LOCALE['RCCRMOFFERS_DPC'][35]='_docid;Document;Έγγραφο';
-$__LOCALE['RCCRMOFFERS_DPC'][36]='_MAILTRACE;Actions;Ενέργειες';
+$__LOCALE['RCCRMOFFERS_DPC'][36]='_docactivity;Document created;Δημιουργία εγγράφου';
 $__LOCALE['RCCRMOFFERS_DPC'][37]='_msgsuccess;Mail sent;Το μήνυμα στάλθηκε επιτυχώς';
 $__LOCALE['RCCRMOFFERS_DPC'][38]='_msgerror;Sent error;Το μήνυμα απέτυχε να σταλθεί';
-$__LOCALE['RCCRMOFFERS_DPC'][39]='_delcamp;Campaign deleted;Επιτυχής διαγραφή';
 
+/*
 $__LOCALE['RCCRMOFFERS_DPC'][40]='_statisticscat;Category Viewed/Month;Επισκεψιμότητα κατηγοριών';
 $__LOCALE['RCCRMOFFERS_DPC'][41]='_statistics;Items Viewed/Month;Επισκεψιμότητα ειδών';
 $__LOCALE['RCCRMOFFERS_DPC'][42]='_transactions;Transaction/Month;Συναλλαγές ανα μήνα';
@@ -92,14 +94,14 @@ $__LOCALE['RCCRMOFFERS_DPC'][51]='_code;Item;Κωδικός';
 $__LOCALE['RCCRMOFFERS_DPC'][52]='_category;Category;Κατηγορία';
 $__LOCALE['RCCRMOFFERS_DPC'][53]='_outoflist;out of list;εξήχθει απο';
 $__LOCALE['RCCRMOFFERS_DPC'][54]='_FAILED;Bounce;Bounce';
-
+*/
 class rccrmoffers {
 	
 	var $title, $prpath, $urlpath, $url, $mtrackimg;
     var $trackmail, $overwrite_encoding, $encoding, $templatepath;
 	var $mailname, $mailuser, $mailpass, $mailserver, $user_realm;
 	var $ishtml, $mailbody, $template_ext, $template_images_path, $template;
-	var $messages, $disable_settings, $document, $doctitle;
+	var $messages, $disable_settings, $document, $doctitle, $docnumber;
 	
 	var $appname, $appkey, $cptemplate, $urlRedir;
 	var $owner, $seclevid, $isHostedApp;
@@ -152,8 +154,8 @@ class rccrmoffers {
 		
 		$this->urlRedir = remote_paramload('RCBULKMAIL','urlredir', $this->prpath);
 		
-		$tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
-	    $this->cptemplate = $tmpl ? $tmpl : 'metro';	
+		//$tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
+	    //$this->cptemplate = $tmpl ? $tmpl : 'metro';	
 
 		$settings = remote_paramload('RCBULKMAIL','settingsdisable', $this->prpath);		
 		$this->disable_settings = $settings ? true : false; //form disable
@@ -174,6 +176,7 @@ class rccrmoffers {
 		$this->items = null;	
 		$this->csvitems = null;
 		$this->doctitle = null;
+		$this->docnumber = null;
 	}
 	
     function event($event=null) {
@@ -240,11 +243,128 @@ class rccrmoffers {
 			case 'cppreviewcamp'       : 
 			case 'cpviewcamp'          : 
 			case 'cpcrmoffers'         : 
-		    default                    : $out = null;
+		    default                    : $out = ($this->visitor) ? null : $this->select_visitor('alert-important');
 		}		
 		
         return ($out);
 	}
+	
+	protected function addActivity($profile, $say, $type=null) {
+		if ((!$say)||(!$profile)) return false;
+		$db = GetGlobal('db');
+		$t = $type ? $type : 0; //int
+	
+		$sSQL = "insert into crmactivities (profile, memo, type) values (";
+		$sSQL.= $db->qstr($profile) . "," . $db->qstr($say). "," . $t . ")";
+		//echo $sSQL;
+		$result = $db->Execute($sSQL);		
+		
+		return true;
+	}	
+	
+	/*search for email based on ip*/
+	protected function resolveIP($ip=null)	{
+		if (!$ip) return false;
+		$db = GetGlobal('db');
+        $year = GetParam('year') ? GetParam('year') : date('Y'); 
+	    $month = GetParam('month') ? GetParam('month') : date('m');
+
+		//into current date range
+		//$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		
+		//back one month from now
+		//$timein = "AND DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) ";		
+		
+		//back 60 days from date/month max selected
+		if ($daterange = GetParam('rdate')) {
+			$range = explode('-',$daterange);
+			$dend = str_replace('/','-',trim($range[1]));
+			$fromDate = "STR_TO_DATE('$dend','%m-%d-%Y')";			
+		}	
+		elseif (($m = GetReq('month')) && ($m!=date('m'))) {
+			$y = GetReq('year') ? GetReq('year') : date('Y');
+			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
+			$fromDate = "'$y-$m-$daysofmonth'";
+		}	
+		else 
+			$fromDate = "NOW()";	
+		
+		$timein = "AND DATE(date) BETWEEN DATE( DATE_SUB( $fromDate , INTERVAL 60 DAY ) ) AND DATE ( $fromDate ) ";
+				
+		$sSQL = "SELECT attr2,attr3 FROM stats where REMOTE_ADDR='$ip' $timein order by id desc"; 
+		//echo $sSQL;
+        $result = $db->Execute($sSQL);
+		if (!$result) return false;
+
+		foreach ($result as $i=>$rec) {
+			if ($this->iseMailUser($rec[0]))
+				return $rec[0];
+			elseif ($this->iseMailUser($rec[1]))
+				return $rec[1];
+		}	
+		
+		return false;
+	}	
+	
+    protected function select_visitor($template=null) {
+		$db = GetGlobal('db'); 	
+
+		$recognize = true;////GetReq('recognized') ? true : false;
+		$resolve = false;//GetReq('resolved') ? true : false;
+		$limit = ($recognize) ? null : ( $resolve ? " LIMIT 5000" : " LIMIT 500" ); //????
+		
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		
+		
+        if ($id = $cpGet['id']) {
+			$cat = $cpGet['cat'];
+			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where (tid='$id' OR attr1='$cat') $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+		}
+		elseif ($cat = $cpGet['cat']) {
+			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+		}
+		else {
+			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+0');
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+		}
+		//echo $sSQL;	
+        $result = $db->Execute($sSQL);
+		if (!$result) return ;
+		
+		$t = $template ? GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template) : null;
+
+		foreach ($result as $i=>$rec) {
+			$rtokens = array();
+			$resolved = null;
+			
+			$visitor = filter_var($rec['attr3'], FILTER_VALIDATE_EMAIL) ? $rec['attr3'] : 
+						( filter_var($rec['attr2'], FILTER_VALIDATE_EMAIL) ? $rec['attr2'] : $rec['REMOTE_ADDR']);
+						
+			if (($recognize) && (!filter_var($visitor, FILTER_VALIDATE_EMAIL))) 
+				continue;		
+			elseif (($resolve) && (filter_var($visitor, FILTER_VALIDATE_IP))) {
+				$resolved = $this->resolveIP($visitor);		
+				if (!filter_var($resolved, FILTER_VALIDATE_EMAIL)) continue;
+			}
+			
+			//$name = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")";	
+			$name = $recognize ? $visitor/* . " -&gt resolved : " . $visitor*/ : $visitor; 
+
+			$rtokens[] = $name; //$resolved ? $name . " -&gt resolved : " . $resolved : $name; 
+			$rtokens[] = GetGlobal('controller')->calldpc_method('rccontrolpanel.timeSayWhen use '. strtotime($rec['date'])); 
+			$rtokens[] = ($resolved || $recognize) ? 'cpcrmoffers.php?v=' . $visitor : '#'; //link
+			$rtokens[] = null;//$rec[3]; //hash
+			
+			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
+			             "<option value=\"$hash\">".$rtokens[1]."</option>";
+			
+			unset($rtokens);
+		}
+		//echo $ret;
+		return ($ret);		
+	}	
 	
 	public function isDemoUser() {
 		return (in_array($this->seclevid, $this->userDemoIds));
@@ -487,23 +607,23 @@ class rccrmoffers {
 		   
 			if (is_readable($path . $template)) {
 		   
-				SetSessionParam('stemplate', $template); //save tmpl 
+				SetSessionParam('stemplate', $template);  
 				$this->document = $this->loadData($template);			
 				return true;
 			}
 		}	
 		else {
 			
-			$this->document = $this->loadData($template);//base64_decode($res->fields['formdata']);
+			$this->document = $this->loadData($template);
 
-			SetSessionParam('stemplate', $template); //save tmpl			
+			SetSessionParam('stemplate', $template); 			
 			return true;	
 		}			
 		return false;	  			
 	}	
 
 
-	protected function renderPattern($template, $form=null, $code=null, $items=null, $test=false) {
+	protected function renderPattern($template, $form=null, $code=null, $items=null) {
 		$db = GetGlobal('db');	
 		if (!$template) return false;
 		
@@ -527,11 +647,12 @@ class rccrmoffers {
 			$_pattern[1] = (array) $joins;
 			
 			//make pseudo-items arrray
-			if ((!$items) && ($test)) { 
+			/*if ((!$items) && ($test)) { 
 				$maxitm = count($_pattern[0]);
 				for($i=1;$i<=$maxitm;$i++)
 					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');			
-		    }	
+		    }*/
+			
 			//render pattern
 			if ((!empty($items)) && (is_array($_pattern))) {
 				$pattern = (array) $_pattern[0];
@@ -583,10 +704,23 @@ class rccrmoffers {
 	
 	protected function getcsvItems($items=null) {
 		if (!is_array($items)) return false;
-		
+
 		//csv array of fields
-		foreach ($items as $i=>$rec)
-			$ritems[] = implode(';', $rec);
+		foreach ($items as $i=>$rec) {
+			//$ritems[] = implode(';', $rec);
+			$ret = array();
+			foreach ($rec as $field=>$value) {
+				if (($field==5) || ($field==6)) 
+					$ret[] = GetParam('price'.$i) ? str_replace(',','.', GetParam('price'.$i)) : str_replace(',','.', $value); //price	
+				else
+					$ret[] = $value;
+			}
+			
+			//add qty as last element
+			$ret[] = (GetParam('qty'.$i)) ? str_replace(',','.', GetParam('qty'.$i)) : 1;
+			
+			$ritems[] = implode(';', $ret); //filtered
+		}	
 			
 		return $ritems; 	
 	}	
@@ -610,8 +744,8 @@ class rccrmoffers {
 				$this->csvitems = $this->getcsvItems($items);
 
 				$t = array('invoice'=>$docdescr,
-							'mynotes'=>'notes 123',
-							'mydate'=>date('m.d.y'));
+						   'invoiceno'=>$this->docnumber,
+						   'mydate'=>date('m.d.y'));
 							
 				$tokens = serialize($t);
 				$ret = GetGlobal('controller')->calldpc_method('twigengine.render use '.$tempfile.'++'.$tokens);
@@ -624,6 +758,17 @@ class rccrmoffers {
 		
 		return ($ret);
 	}	
+	
+	private function getDocNumber($title=null) {
+		$db = GetGlobal('db');
+		
+		$sSQL = "select max(id) from crmdocs ";	
+		if ($title)	
+			$sSQL.= "WHERE formname=" . $db->qstr($title);
+		$result = $db->Execute($sSQL);
+        //echo $sSQL;
+		return ($result->fields[0]+1);	
+	}
     
 	public function renderForm($title=null, $items=null, $test=false) {
 		$db = GetGlobal('db');		
@@ -634,7 +779,9 @@ class rccrmoffers {
 		$form = base64_decode($res->fields['formdata']);		
 		$code = base64_decode($res->fields['codedata']);
 		$template = $res->fields['title'];
-		$this->doctitle = $docdescr = $res->fields['descr'];
+		
+		$this->docnumber = $this->getDocNumber($template);
+		$this->doctitle = $docdescr = $res->fields['descr'] . ' ' . $this->docnumber;
 		
 		if (strstr($code, '>|')) { //pattern code
 			$ret = $this->renderPattern($template, $form, $code, $items, $test);
@@ -725,12 +872,52 @@ class rccrmoffers {
 		return null;
 	}
 	
-	
+	public function editItems() {
+		
+		//if (defined('RCCOLLECTIONS_DPC')) //already called by content
+			//$this->items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);
+			
+		if (is_array($this->items)) {
+			
+			foreach ($this->items as $i=>$rec) {
+				
+				//update prices
+				$price0 = (GetParam('price'.$i)) ? str_replace(',','.',GetParam('price'.$i)) : str_replace(',','.',$rec[5]);
+				//$price1 = (GetParam('price'.$i)) ? str_replace(',','.',GetParam('price'.$i)) : str_replace(',','.',$rec[6]);	
+				//update qty
+				$qty = (GetParam('qty'.$i)) ? str_replace(',','.',GetParam('qty'.$i)) : 1;
+				
+				$line .= "						<div class=\"input-icon left\">
+													<i class=\"icon-user\"></i>
+													<input name=\"code$i\" class=\" \" type=\"text\"  value=\"{$rec[0]}\" disabled />
+													<span class=\"help-inline\">
+														<i class=\"icon-lock\"></i>
+														<input name=\"name$i\" class=\" \" type=\"text\" value=\"{$rec[1]}\" disabled/>
+													</span>
+													<span class=\"help-inline\">
+														<i class=\"icon-tasks\"></i>
+														<input name=\"qty$i\" class=\" \" type=\"text\" value=\"$qty\" />
+													</span>
+													<span class=\"help-inline\">
+														<i class=\"icon-tasks\"></i>
+														<input name=\"percent$i\" class=\" \" type=\"text\" value=\"0\" />
+													</span>													
+													<span class=\"help-inline\">
+														<i class=\"icon-tasks\"></i>
+														<input name=\"price$i\" class=\" \" type=\"text\" value=\"{$price0}\" />
+													</span>														
+												</div>";
+			}	
+			
+			return ($line);
+		}
+		return false;		
+	}	
 	
 	
 	public function viewMessages($template=null) {
 		if (empty($this->messages)) return;
-	    $t = ($template!=null) ? $this->select_template($template) : null;
+	    $t = ($template!=null) ? GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template) : null;
 		
 		foreach ($this->messages as $m=>$message) {
 			if ($t) 	
@@ -749,13 +936,21 @@ class rccrmoffers {
 		$r = rand(000001, 999999);
 		
 		//print_r($_POST);
+		$dontSaveDocument = GetParam('dontsave') ? true : null;
+		$dontMailDocument = GetParam('dontmail') ? true : null;		
+		$setFavItems = GetParam('setfav') ? true : false;
+		
         $from = GetParam('from'); //from origin = $this->mailuser		
 		$to = $this->visitor; //GetParam('to'); //to origin = $this->visitor
 		if ($this->checkmail($to)==false) return false;
 		
-		$body = GetParam('document');
 		$title = GetParam('subject') ? GetParam('subject') : 'Document ' . $r; //!!!!!
 		$template = GetSessionParam('stemplate');
+		
+		//$body = GetParam('document');
+		//to recal values re-load template before save/send
+		$this->document = $body = $this->loadData($template);
+		//return;	
 		
 		if (defined('RCCOLLECTIONS_DPC')) {
 			$collection = GetGlobal('controller')->calldpc_var("rccollections.savedlist");
@@ -785,12 +980,13 @@ class rccrmoffers {
 		$body =  $this->combine_tokens($body, $rtokens); //in case of tokens	
   
 		//save to campaigns
-		$date = date('Y-m-d H:m:s');
-		$ctype = 1;
-		$active = 0;
-		$ulists = 'crm';
-        $sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,bcc,template,body,collection,owner,user,pass,name,server) values (";
-	    $sSQL .= $db->qstr($docid).",".
+		if ($dontMailDocument==false) {
+			$date = date('Y-m-d H:m:s');
+			$ctype = 1;
+			$active = 0;
+			$ulists = 'crm';
+			$sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,bcc,template,body,collection,owner,user,pass,name,server) values (";
+			$sSQL .= $db->qstr($docid).",".
 		         $ctype .",". 
 				 $db->qstr($date).",$active,".
 	             $db->qstr($title).",".
@@ -806,39 +1002,52 @@ class rccrmoffers {
 				 $db->qstr($this->mailname).",".
 				 $db->qstr($this->mailserver).				 
 				 ")"; 
-        //echo $sSQL;
-		$result = $db->Execute($sSQL,1);  
-  
+			//echo $sSQL;
+			$result = $db->Execute($sSQL,1);  
+		}
+		else
+			$result = true; //dummy
+		
         //save to crm docs
-        $sSQL = "insert into crmdocs (docid,title,from,to,crmform,contents,items,owner) values (";
-	    $sSQL .= $db->qstr($docid).",".
+		if ($dontSaveDocument==false) {
+			$sSQL = "insert into crmdocs (docid,cid,title,formname,contents,items,owner) values (";
+			$sSQL .= $db->qstr($docid).",".
+				 $db->qstr($this->visitor).",".
 		         $db->qstr($title).",".
-				 $db->qstr($from).",".
-				 $db->qstr($to).",".
 				 $db->qstr($template).",".
 				 $db->qstr(base64_encode($body)).",".
 				 $db->qstr(serialize($csvitems)).",".
 				 $db->qstr($this->owner).			 
 				 ")"; 
-        //echo $sSQL;
-		$result2 = true;//$db->Execute($sSQL,1);	
-				
+			//echo $sSQL;
+			$result2 = $db->Execute($sSQL,1);	
+		}
+		else
+			$result2 = true; //dummy
+		
 		if (($result) && ($result2)) { 
-			$this->messages[] = 'Document saved';
+			$this->messages[] = ($dontSaveDocument) ? 'Document option not saved' : 'Document saved';
 			
 			//save items
-			//$this->save_items($docid, $items);
+			$s = ($dontSaveDocument==true) ? null : $this->save_items($docid, $items);
 			
 			//send document
-			$this->send_document($docid, $this->mailuser, $to, $title, $body);
+			$m = ($dontMailDocument==true) ? null : $this->send_document($docid, $this->mailuser, $to, $title, $body);
 
+			//fav items
+			$f = ($setFavItems==true) ? $this->fav_items('crmfav',$items) : null;
+			
+			//remove from fav not implemented
+			
 			//reset vars
 			SetSessionParam('stemplate', '');
 			$this->template = null;
-			$this->document = null;
+			//$this->document = null;
 			//$this->messages = null;
 			//SetSessionParam('messages','');			
-			$this->document = null;
+			
+			$ret = localize('_docactivity',getlocal()) . ': ' . $title;
+			$this->addActivity($this->visitor, $ret);			
 			
 			return (true);		
 		}
@@ -849,34 +1058,62 @@ class rccrmoffers {
 	}
 
 	protected function save_items($docid, $items=null) {
+		$db = GetGlobal('db'); 
 		if (empty($items)) return false;
 		
-		//fetch sent items collection
-		if (defined('RCCOLLECTIONS_DPC')) {		
-			$this->items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);	
-		
-			foreach ($this->items as $i=>$rec) {
-				//...
-				echo $i;
-				$sSQL = "insert into crmdocitems (docid,code,from,to,crmform,contents,items,owner) values (";
-				$sSQL .= $db->qstr($docid).",". 
-				        $db->qstr($title).",".
-						$db->qstr($from).",".
-						$db->qstr($to).",".
-						$db->qstr($template).",".
-						$db->qstr(base64_encode($body)).",".
-						$db->qstr('collection').",".
-						$db->qstr($this->owner).			 
-						")"; 
-				//echo $sSQL;
-				//$result = $db->Execute($sSQL,1);				
-			}
+		foreach ($items as $i=>$rec) {
 			
-			$this->messages[] = 'Items saved';
-			return true;
+			//update prices
+			$price0 = (GetParam('price'.$i)) ? str_replace(',','.',GetParam('price'.$i)) : str_replace(',','.',$rec[5]);
+			$price1 = (GetParam('price'.$i)) ? str_replace(',','.',GetParam('price'.$i)) : str_replace(',','.',$rec[6]);
+			//qty
+			$qty = (GetParam('qty'.$i)) ? str_replace(',','.',GetParam('qty'.$i)) : 1;
+			
+			$sSQL = "insert into crmdocsitem (docid,cid,itemcode,name,price0,price1,scale,itmactive,active) values (";
+			$sSQL .= $db->qstr($docid).",". 
+						$db->qstr($this->visitor).",".
+						$db->qstr($rec[0]).",".
+				        $db->qstr($rec[1]).",".
+						$price0.",".
+						$price1.",".
+						$qty.",".
+						"1,1)"; 
+			//echo $sSQL;
+			$result = $db->Execute($sSQL,1);				
 		}
-		return false;
+			
+		$this->messages[] = 'Items saved';
+		return true;
 	}
+	
+	protected function fav_items($listID=null, $items=null) {
+		if (!$items) return false;
+		$listname = $listID ? $listID : 'crmfav';
+		$db = GetGlobal('db');
+		
+		if ($visitor = $this->visitor) {
+			
+			foreach ($items as $i=>$rec) {	
+				$item = $rec[0];
+				$sSQL = "select tid from wishlist where tid='$item' and listname='$listname' and cid=" . $db->qstr($visitor);
+				$res = $db->Execute($sSQL);
+				
+				if (!$res->fields[0]) {
+			
+					$sSQL = "insert into wishlist (tid,cid,listname) values (" . 
+							$db->qstr($item) .",". 
+							$db->qstr($visitor) .",'$listname'".
+							")";				 
+					$res = $db->Execute($sSQL);		
+					$ret = localize('_favadded', getlocal()) . ' ' . $item . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$item);
+					$this->addActivity($visitor, $ret);
+				}
+			}	
+			
+			return ($i);
+		}
+		return false;		
+	}													
 	
 	protected function send_document($docid, $from, $to, $subject, $body) {	  
         //check expiration key
@@ -1344,17 +1581,6 @@ This email and any files transmitted with it are confidential and intended solel
 			
 		return ($ret);
 	}	
-
-	protected function select_template($tfile=null) {
-		if (!$tfile) return;
-	  
-		$template = $tfile . '.htm';	
-		$t = $this->prpath . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
-		if (is_readable($t)) 
-			$mytemplate = file_get_contents($t);
-
-		return ($mytemplate);	 
-    }	
 	
     //combine tokens with load tmpl data inside	
 	public function ct($template, $tokens, $execafter=null) {

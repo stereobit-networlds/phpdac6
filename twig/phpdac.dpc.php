@@ -104,6 +104,16 @@ class phpdac {
 	   return (number_format(floatval($n),2,',','.'));
 	}
 	
+	public static function _nformatstr($n=null) {
+	   if (!$n) return;
+	   return (number_format(floatval(str_replace(',','.',$n)),2,',','.'));
+	}	
+	
+	public static function _nformatcdot($n=null) {
+	   if (!$n) return;
+	   return (str_replace(',','.',$n));
+	}		
+	
 	public function _sexplode($n=null, $nret=null, $sep=null) {
 	   if (!$n) return;
 	   //echo '|||||',$nret,$sep,'>>>>';
