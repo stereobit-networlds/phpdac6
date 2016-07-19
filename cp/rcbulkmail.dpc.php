@@ -2431,19 +2431,19 @@ This email and any files transmitted with it are confidential and intended solel
 		$this->seclevid = GetSessionParam('ADMINSecID');			
 		
 		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner);		
+		$ownerSQL = ($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner);	
+		$timein = ($ownerSQL) ? $this->sqlDateRange('timein', true, true) : 
+							    $this->sqlDateRange('timein', true, false);
+		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : 'WHERE ' . $timein) : null;
 		
-		$timein = $this->sqlDateRange('timein', true, false);
-		//if ($timein) return null; //no current tasks when time range (NOT ANYMORE, CURR YEAR DEFAULT TIMERANGE)
-		
-		$sSQL = "SELECT cid,subject,AVG(active),MIN(timein),MAX(timein) AS a FROM mailqueue $ownerSQL group by cid,subject order by a desc";
+		$sSQL = "SELECT cid,subject,AVG(active),MIN(timein),MAX(timein) AS a FROM mailqueue $ownerSQL $dateRangeSQL group by cid,subject order by a desc";
 		$resultset = $db->Execute($sSQL,2);
-		//echo $sSQL, $rec[2];
+		//echo $sSQL, $resultset->fields[1];
 		
-		if (empty($resultset)) return null;
+		if (empty($resultset->fields)) return null;
 		foreach ($resultset as $n=>$rec) {
 		    if ($rec[2] > 0) { //float avg of actives (else must be 0)
-					
+
 					$percent = (100-intval($rec[2]*100));
 					
 					if ($t) {
@@ -2477,7 +2477,6 @@ This email and any files transmitted with it are confidential and intended solel
 		
 		//all as 9 user or only owned	
 		$ownerSQL = ($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner); 
-		
 		$timein = ($ownerSQL) ? $this->sqlDateRange('timein', true, true) : 
 							    $this->sqlDateRange('timein', true, false);
 		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : 'WHERE ' . $timein) : null;
@@ -2485,11 +2484,11 @@ This email and any files transmitted with it are confidential and intended solel
 		$l = $limit ? $limit : 3;	
         $limitSQL = $limit ? 'LIMIT '.$l : 'LIMIT 3'; 	
 		
-		$sSQL = "SELECT cid,subject,AVG(active),MIN(timeout),MAX(timeout) AS a FROM  mailqueue $ownerSQL $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
+		$sSQL = "SELECT cid,subject,AVG(active),MIN(timeout),MAX(timeout) AS a FROM mailqueue $ownerSQL $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
-		if (empty($resultset)) return null;
+		if (empty($resultset->fields)) return null;
 		foreach ($resultset as $n=>$rec) {
 		    if ($rec[2] == 0) { //float avg of actives (must be 0)
 				if ($t) {

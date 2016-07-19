@@ -202,7 +202,15 @@ class rccollections {
 		
 		if (!empty($this->selected_items)) {
 			$tokens = array();
-			$items = array();	
+			$items = array();
+
+			//select dpc method to encode url
+			if (defined('RCBULKMAIL_DPC')) 
+				$dpcfunc = 'rcbulkmail';
+			elseif (defined('RCCRMOFFER_DPC'))
+				$dpcfunc = 'rccrmoffers';
+			else
+				$dpcfunc = false;			
 			
 			foreach ($this->selected_items as $n=>$rec) {
 		        
@@ -219,7 +227,7 @@ class rccollections {
 				$tokens[] = $rec['cat3'];
 				$tokens[] = $rec['cat4'];
 				$tokens[] = $rec['item_name_url'];
-				$tokens[] = (defined('RCBULKMAIL_DPC')) ? GetGlobal('controller')->calldpc_method('rcbulkmail.encUrl use '.$rec['item_url']) : $rec['item_url'];
+				$tokens[] = (isset($dpcfunc)) ? GetGlobal('controller')->calldpc_method($dpcfunc.'.encUrl use '.$rec['item_url']) : $rec['item_url'];
 				$tokens[] =  $rec['photo_url']; 
 				$tokens[] = $rec['photo_html'];
 				$tokens[] = $rec['photo_link'];

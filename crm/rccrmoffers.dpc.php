@@ -71,7 +71,7 @@ $__LOCALE['RCCRMOFFERS_DPC'][31]='_dashboard;Dashboard;Στατιστικά';
 $__LOCALE['RCCRMOFFERS_DPC'][32]='_year;Year;Έτος';
 $__LOCALE['RCCRMOFFERS_DPC'][33]='_month;Month;Μήνας';
 $__LOCALE['RCCRMOFFERS_DPC'][34]='_here;here;εδώ';
-$__LOCALE['RCCRMOFFERS_DPC'][35]='_cid;Campaign;Καμπάνια';
+$__LOCALE['RCCRMOFFERS_DPC'][35]='_docid;Document;Έγγραφο';
 $__LOCALE['RCCRMOFFERS_DPC'][36]='_MAILTRACE;Actions;Ενέργειες';
 $__LOCALE['RCCRMOFFERS_DPC'][37]='_msgsuccess;Mail sent;Το μήνυμα στάλθηκε επιτυχώς';
 $__LOCALE['RCCRMOFFERS_DPC'][38]='_msgerror;Sent error;Το μήνυμα απέτυχε να σταλθεί';
@@ -99,7 +99,7 @@ class rccrmoffers {
     var $trackmail, $overwrite_encoding, $encoding, $templatepath;
 	var $mailname, $mailuser, $mailpass, $mailserver, $user_realm;
 	var $ishtml, $mailbody, $template_ext, $template_images_path, $template;
-	var $messages, $disable_settings;
+	var $messages, $disable_settings, $document, $doctitle;
 	
 	var $appname, $appkey, $cptemplate, $urlRedir;
 	var $owner, $seclevid, $isHostedApp;
@@ -143,7 +143,7 @@ class rccrmoffers {
 		$this->template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');
 		
 		$this->ishtml = true;
-		$this->mailbody = null;
+		$this->document = null;
 	
 		$this->appname = paramload('ID','instancename');
 		$this->appkey = new appkey();			
@@ -173,6 +173,7 @@ class rccrmoffers {
 		$this->visitor = GetParam('v');
 		$this->items = null;	
 		$this->csvitems = null;
+		$this->doctitle = null;
 	}
 	
     function event($event=null) {
@@ -466,7 +467,8 @@ class rccrmoffers {
 			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items")); 
 			
 			//with visitor (price selection)
-			$this->items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);
+			if (defined('RCCOLLECTIONS_DPC')) 
+				$this->items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);
 			$data = $this->renderForm($template, $this->items); 
 			
 			//with visitor and preset (collection must have at least one item in this phase)
@@ -486,45 +488,20 @@ class rccrmoffers {
 			if (is_readable($path . $template)) {
 		   
 				SetSessionParam('stemplate', $template); //save tmpl 
-				$this->mailbody = $this->loadData($template);			
+				$this->document = $this->loadData($template);			
 				return true;
 			}
 		}	
 		else {
 			
-			$this->mailbody = $this->loadData($template);//base64_decode($res->fields['formdata']);
+			$this->document = $this->loadData($template);//base64_decode($res->fields['formdata']);
 
 			SetSessionParam('stemplate', $template); //save tmpl			
 			return true;	
 		}			
 		return false;	  			
 	}	
-	
-	protected function loadTemplate_2() {
-		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');	
-		
-		if (defined('RCFS_DPC')) {
-			$path = $this->templatepath;
-		
-			if (($template) && (is_readable($path . $template))) {
-		  
-				SetSessionParam('stemplate', $template); //save tmpl 
-				$this->mailbody = @file_get_contents($path . $template); 			
-				return true;			
-			}	
-		}
-		else {
-			$db = GetGlobal('db');
-			$sSQL = "select id,title,descr,formdata from crmforms where title=" . $db->qstr($template);
-			$res = $db->Execute($sSQL);			
-			$this->mailbody = base64_decode($res->fields['formdata']);
-			
-			SetSessionParam('stemplate', $template); //save tmpl 
-			return true;
-		}
-		
-		return false;
-	}
+
 
 	protected function renderPattern($template, $form=null, $code=null, $items=null, $test=false) {
 		$db = GetGlobal('db');	
@@ -603,6 +580,16 @@ class rccrmoffers {
 		
 		return $data;		
 	}
+	
+	protected function getcsvItems($items=null) {
+		if (!is_array($items)) return false;
+		
+		//csv array of fields
+		foreach ($items as $i=>$rec)
+			$ritems[] = implode(';', $rec);
+			
+		return $ritems; 	
+	}	
 
 	protected function renderTwing($doctitle=null, $template, $form=null, $code=null, $items=null) {
 		$db = GetGlobal('db');	
@@ -647,7 +634,7 @@ class rccrmoffers {
 		$form = base64_decode($res->fields['formdata']);		
 		$code = base64_decode($res->fields['codedata']);
 		$template = $res->fields['title'];
-		$docdescr = $res->fields['descr'];
+		$this->doctitle = $docdescr = $res->fields['descr'];
 		
 		if (strstr($code, '>|')) { //pattern code
 			$ret = $this->renderPattern($template, $form, $code, $items, $test);
@@ -657,15 +644,6 @@ class rccrmoffers {
 	
 		return ($ret);
 		
-	}
-
-	/*used for/inside crm twig docs*/
-	public function getcsvItems() {
-		//csv array of fields
-		foreach ($this->items as $i=>$rec)
-			$ritems[] = implode(';', $rec);
-			
-		return $ritems; 	
 	}
 	
 	/*used inside crm twig docs*/
@@ -677,7 +655,6 @@ class rccrmoffers {
 		$record = ';;;;;';
 		
 		//crm contact (default)
-		$crmfields = implode(',', $this->contactRec);
 		$sSQL = "select email,firstname,lastname,address,country,occupation from crmcontacts ";		   
 		$sSQL.= "WHERE email=" . $db->qstr($visitor);
 		$result = $db->Execute($sSQL);
@@ -750,21 +727,43 @@ class rccrmoffers {
 	
 	
 	
+	
+	public function viewMessages($template=null) {
+		if (empty($this->messages)) return;
+	    $t = ($template!=null) ? $this->select_template($template) : null;
+		
+		foreach ($this->messages as $m=>$message) {
+			if ($t) 	
+				$ret .= $this->combine_tokens($t, array(0=>$message));
+			else
+				$ret .= "<option value=\"$m\">$message</option>";
+		}
+		return ($ret);
+	}	
+	
     /*type : 0 save text as mail body /1 save collections as text to reproduce (offers, katalogs) */	
-    protected function save_document($type=null) {
+    protected function save_document() {
         $db = GetGlobal('db'); 	
 		$rtokens = null;
-		$ctype = $type ? $type : 0;
+		$ctype = 0;//$type ? $type : 0;
 		$r = rand(000001, 999999);
-        $from = GetParam('from'); //from origin		
-		$to = GetParam('to'); //to origin
-
-		$body = GetParam('mail_text');
-		$title = GetParam('subject') ? GetParam('subject') : 'Document ' . $r; //!!!!!
 		
-		$date = date('Y-m-d H:m:s');
-		$cid = null;//md5(GetParam('mail_text') .'|'. GetParam('subject') .'|'. $to);
-        $active = 1;//GetParam('savecmp') ? 1 : 0;	
+		//print_r($_POST);
+        $from = GetParam('from'); //from origin = $this->mailuser		
+		$to = $this->visitor; //GetParam('to'); //to origin = $this->visitor
+		if ($this->checkmail($to)==false) return false;
+		
+		$body = GetParam('document');
+		$title = GetParam('subject') ? GetParam('subject') : 'Document ' . $r; //!!!!!
+		$template = GetSessionParam('stemplate');
+		
+		if (defined('RCCOLLECTIONS_DPC')) {
+			$collection = GetGlobal('controller')->calldpc_var("rccollections.savedlist");
+			$items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);
+			$csvitems = $this->getcsvItems($items);
+		}	
+		
+		$docid = md5($body .'|'. $r .'|'. $to);
 		
 		//if ($viewashtml = GetParam('webviewlink')) {
 		$rtokens[0] = ''; //dummy token to replace if $0$ exist in page
@@ -785,17 +784,22 @@ class rccrmoffers {
 		
 		$body =  $this->combine_tokens($body, $rtokens); //in case of tokens	
   
-        $sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,to,template,body,collection,owner,user,pass,name,server) values (";
-	    $sSQL .= $db->qstr($cid).",".
+		//save to campaigns
+		$date = date('Y-m-d H:m:s');
+		$ctype = 1;
+		$active = 0;
+		$ulists = 'crm';
+        $sSQL = "insert into mailcamp (cid,ctype,cdate,active,title,ulists,cc,bcc,template,body,collection,owner,user,pass,name,server) values (";
+	    $sSQL .= $db->qstr($docid).",".
 		         $ctype .",". 
 				 $db->qstr($date).",$active,".
 	             $db->qstr($title).",".
-				 $db->qstr('ulists').",".
-				 $db->qstr($from).",".
-				 $db->qstr($to).",".
-				 $db->qstr($this->template).",".
+				 $db->qstr($ulists).",".
+				 $db->qstr($this->mailuser).",".
+				 $db->qstr($this->visitor).",".
+				 $db->qstr($template).",".
 				 $db->qstr(base64_encode($body)).",".
-				 $db->qstr('collection').",".
+				 $db->qstr($collection).",".
 				 $db->qstr($this->owner).",".
 				 $db->qstr($this->mailuser).",".
 				 $db->qstr($this->mailpass).",".
@@ -803,77 +807,125 @@ class rccrmoffers {
 				 $db->qstr($this->mailserver).				 
 				 ")"; 
         //echo $sSQL;
-		//$result = $db->Execute($sSQL,1);
-		
-		if ($db->Affected_Rows()) {
-
-			//reset campaign
-			SetSessionParam('stemplate', '');
-			$this->template = null;
-			$this->mailbody = null;
+		$result = $db->Execute($sSQL,1);  
+  
+        //save to crm docs
+        $sSQL = "insert into crmdocs (docid,title,from,to,crmform,contents,items,owner) values (";
+	    $sSQL .= $db->qstr($docid).",".
+		         $db->qstr($title).",".
+				 $db->qstr($from).",".
+				 $db->qstr($to).",".
+				 $db->qstr($template).",".
+				 $db->qstr(base64_encode($body)).",".
+				 $db->qstr(serialize($csvitems)).",".
+				 $db->qstr($this->owner).			 
+				 ")"; 
+        //echo $sSQL;
+		$result2 = true;//$db->Execute($sSQL,1);	
+				
+		if (($result) && ($result2)) { 
+			$this->messages[] = 'Document saved';
+			
+			//save items
+			//$this->save_items($docid, $items);
 			
 			//send document
-			$this->send_document($this->mailuser, $to, $title, $body);
+			$this->send_document($docid, $this->mailuser, $to, $title, $body);
+
+			//reset vars
+			SetSessionParam('stemplate', '');
+			$this->template = null;
+			$this->document = null;
+			//$this->messages = null;
+			//SetSessionParam('messages','');			
+			$this->document = null;
 			
 			return (true);		
 		}
 		
 		$this->messages[] = 'Document NOT saved';
-		//echo $sSQL;
-		
+				
 		return (false);		
-	}	
+	}
+
+	protected function save_items($docid, $items=null) {
+		if (empty($items)) return false;
+		
+		//fetch sent items collection
+		if (defined('RCCOLLECTIONS_DPC')) {		
+			$this->items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);	
+		
+			foreach ($this->items as $i=>$rec) {
+				//...
+				echo $i;
+				$sSQL = "insert into crmdocitems (docid,code,from,to,crmform,contents,items,owner) values (";
+				$sSQL .= $db->qstr($docid).",". 
+				        $db->qstr($title).",".
+						$db->qstr($from).",".
+						$db->qstr($to).",".
+						$db->qstr($template).",".
+						$db->qstr(base64_encode($body)).",".
+						$db->qstr('collection').",".
+						$db->qstr($this->owner).			 
+						")"; 
+				//echo $sSQL;
+				//$result = $db->Execute($sSQL,1);				
+			}
+			
+			$this->messages[] = 'Items saved';
+			return true;
+		}
+		return false;
+	}
 	
-	protected function send_document($from, $to, $subject, $body) {	  
+	protected function send_document($docid, $from, $to, $subject, $body) {	  
         //check expiration key
-        if ($this->appkey->isdefined('RCCRMOFFERS')==false) {
+        if ($this->appkey->isdefined('RCCRMOFFERS_DPC')==false) {
 	        $this->messages[] = "Failed, module expired.";
 		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
 	    }
 					
-		$res = $this->sendit($from, $to, $subject, $body); 				
-				
+		$res = $this->sendit($docid, $from, $to, $subject, $body); 				
+		if ($res) $this->messages[] = 'Document sent';
+		
 		return ($res); 
 	}	
 	
-	protected function sendit($from, $to, $subject, $body=null) {
+	protected function sendit($docid, $from, $to, $subject, $body=null) {
 	    if (!$body) {
 		    $this->messages[] = 'Failed: Empty content';	
 			return 0; 
 		}	 
 		
 		$meter = 0;
-		if ($to) {				
+		if ($this->checkmail($to)) {				
 			if ($sendnow = GetParam('sendnow')) {	
-				$meter = $this->sendmail_instant($from,$m,$subject,$body,$this->ishtml,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);
+				$meter = $this->sendmail_instant($docid, $from,$to,$subject,$body,$this->ishtml,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);
 				$this->messages[] =  'Mail sent to '.$to;
 			}	
 			else { 		
-				$meter = $this->sendmail_inqueue($from,$m,$subject,$body,$this->ishtml,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);			
+				$meter = $this->sendmail_inqueue($docid, $from,$to,$subject,$body,$this->ishtml,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);			
 				$this->messages[] =  'Mail NOT sent to '.$to;
 			}	
 		} 
 		else 
-			$this->messages[] =  'Send failed: NO receipients (to)';
+			$this->messages[] =  'Send failed';
 
 		$mtr = $meter ? $meter : 0;		
-		$this->messages[] = $mtr . ' mail(s) sent';		
-		return ($mtr);							
+		$this->messages[] = $mtr . ' mail(s) sent';	
+
+		return ($meter);							
     }	
 	
 	//send mail to db queue
-	protected function sendmail_inqueue($from,$to,$subject,$mail_text='',$is_html=false,$user=null,$pass=null,$name=null,$server=null) {
+	protected function sendmail_inqueue($docid, $from,$to,$subject,$mail_text='',$is_html=false,$user=null,$pass=null,$name=null,$server=null) {
 		$db = GetGlobal('db');		
 		$ishtml = $is_html?$is_html:0;
 		$altbody = null;
-		$origin = $this->prpath; 
+		$origin = 'crm';//$this->prpath; 
 		$encoding = $this->overwrite_encoding ? $this->overwrite_encoding : $this->encoding;
 		$datetime = date('Y-m-d h:s:m');
-		$active = 1;//0; //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<		
-		$cid = $_POST['cid']; //cid mark 
-		
-		//test
-		//return 1; //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+		$active = 1;	
 	   
 		//tracking var
 		if ($this->trackmail) {
@@ -888,7 +940,7 @@ class rccrmoffers {
 			else //already html body ...leave it as is		 
 				$body = $this->add_tracker_to_mailbody($mail_text,$trackid,$to,$ishtml);
 
-			$body = $this->add_urltracker_to_mailbody($body,$to,$cid);			
+			$body = $this->add_urltracker_to_mailbody($body,$to,$docid);			
 		}
 		else {
 			$body = $mail_text;	   
@@ -914,10 +966,10 @@ class rccrmoffers {
 			 $db->qstr($name) . "," .
 			 $db->qstr($server) . "," .
 			 $db->qstr($trackid) . "," .
-			 $db->qstr($cid) . "," .
+			 $db->qstr($docid) . "," .
 			 $db->qstr($this->owner) . ")";
 			 
-		//echo $sSQL,'<br>';			
+		//echo $sSQL,'inqueue<br>';			
 		$result = $db->Execute($sSQL,1);			 
 		$ret = $db->Affected_Rows();    
  
@@ -925,15 +977,14 @@ class rccrmoffers {
 	}	
 	
 	//send mail to db queue
-	protected function sendmail_instant($from,$to,$subject,$mail_text='',$is_html=false,$user=null,$pass=null,$name=null,$server=null) {
+	protected function sendmail_instant($docid, $from,$to,$subject,$mail_text='',$is_html=false,$user=null,$pass=null,$name=null,$server=null) {
 		$db = GetGlobal('db');		
 		$ishtml = $is_html?$is_html:0;
 		$altbody = null;
-		$origin = $this->prpath; 
+		$origin = 'crm';//$this->prpath; 
 		$encoding = $this->overwrite_encoding ? $this->overwrite_encoding : $this->encoding;
 		$datetime = date('Y-m-d h:s:m');
-		$active = 0; //<<<<<<<<<<<<<<<<<<<<<< instant send active = 0 in db		
-		$cid = $_POST['cid']; //cid mark 
+		$active = 0; 		
 	   
 		//tracking var
 		if ($this->trackmail) {
@@ -948,7 +999,7 @@ class rccrmoffers {
 			else //already html body ...leave it as is		 
 				$body = $this->add_tracker_to_mailbody($mail_text,$trackid,$to,$ishtml);
 
-			$body = $this->add_urltracker_to_mailbody($body,$to,$cid);			
+			$body = $this->add_urltracker_to_mailbody($body,$to,$docid);			
 		}
 		else {
 			$body = $mail_text;	   
@@ -976,10 +1027,10 @@ class rccrmoffers {
 			 $db->qstr($name) . "," .
 			 $db->qstr($server) . "," .
 			 $db->qstr($trackid) . "," .
-			 $db->qstr($cid) . "," .
+			 $db->qstr($docid) . "," .
 			 $db->qstr($this->owner) . ")";
 			 
-		//echo $sSQL,'<br>';			
+		//echo $sSQL,'instant<br>';			
 		$result = $db->Execute($sSQL,1);			 
 		$ret = $db->Affected_Rows();   		
 
@@ -1214,7 +1265,7 @@ This email and any files transmitted with it are confidential and intended solel
 		//CKEDITOR.config.htmlEncodeOutput = false;	
 	    //...		
 		$readonly = $disable ? 1 : 0;  
-		$element_name = $element ? $element : 'mail_text';
+		$element_name = $element ? $element : 'document';
 		
 		//minmax only when select for new/edit not when select for mail sent
 		$minmax = $maxmininit ? $maxmininit : ($_GET['stemplate'] ? 'maximize' : 'minimize') ;

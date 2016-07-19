@@ -99,14 +99,14 @@ class phpdac {
 	}
 	
 	//filter
-	public function _nformat($n=null) {
+	public static function _nformat($n=null) {
 	   if (!$n) return;
 	   return (number_format(floatval($n),2,',','.'));
 	}
 	
 	public function _sexplode($n=null, $nret=null, $sep=null) {
 	   if (!$n) return;
-	   echo '|||||',$nret,$sep,'>>>>';
+	   //echo '|||||',$nret,$sep,'>>>>';
 	   $sep = $sep ? $sep : ';';
 	   $p = is_numeric($nret) ? $nret : 0;
 	   $parts = explode($sep, $n);
@@ -126,107 +126,107 @@ class phpdac {
 	   return $this->phpdacarray[$n];
     }
 
-    public function _1($n) {
+    public static function _1($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[0]);
     }	
 	
-    public function _2($n) {
+    public static function _2($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[1]);
     }	
 	
-    public function _3($n) {
+    public static function _3($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[2]);
     }		
 	
-    public function _4($n) {
+    public static function _4($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[3]);
     }	
 
-    public function _5($n) {
+    public static function _5($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[4]);
     }	
 	
-    public function _6($n) {
+    public static function _6($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[5]);
     }	
 	
-    public function _7($n) {
+    public static function _7($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[6]);
     }		
 	
-    public function _8($n) {
+    public static function _8($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[7]);
     }	
 	
-    public function _9($n) {
+    public static function _9($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[8]);
     }		
 	
-    public function _10($n) {
+    public static function _10($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[9]);
     }		
 	
-    public function _11($n) {
+    public static function _11($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[10]);
     }	
 
-    public function _12($n) {
+    public static function _12($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[11]);
     }	
 	
-    public function _13($n) {
+    public static function _13($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[12]);
     }	
 	
-    public function _14($n) {
+    public static function _14($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[13]);
     }	
 	
-    public function _15($n) {
+    public static function _15($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[14]);
     }		
 	
-    public function _16($n) {
+    public static function _16($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[15]);
     }	
 	
-    public function _17($n) {
+    public static function _17($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[16]);
     }		
 	
-    public function _18($n) {
+    public static function _18($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[17]);
     }		
 	
-    public function _19($n) {
+    public static function _19($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[18]);
     }	
 
-    public function _20($n) {
+    public static function _20($n) {
 	   $parts = explode(';', $n);
 	   return ($parts[19]);
     }		
 
-    public function _brstrstr($s) {
+    public static function _brstrstr($s) {
 	
 	    if (strstr($s, '<br>'))
 			return (explode('<br>',$s));

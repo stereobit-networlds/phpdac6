@@ -82,6 +82,18 @@ class crmforms extends crmmodule  {
 	*  for cp environment
 	*/
 	
+			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items")); 
+			
+			//with visitor (price selection)
+			/*if (defined('RCCOLLECTIONS_DPC')) 
+				$this->items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);
+			$data = $this->renderForm($template, $this->items); 
+			*/
+			//with visitor and preset (collection must have at least one item in this phase)
+			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor . '+test50')); 
+			//with visitor and source preset (collection must have at least one item in this phase)
+			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor . '+4,5,6,7+1'));		
+	
 	protected function renderPattern($template, $form=null, $code=null, $items=null, $test=false) {
 		$db = GetGlobal('db');	
 		if (!$template) return false;
@@ -159,6 +171,16 @@ class crmforms extends crmmodule  {
 		
 		return $data;		
 	}
+	
+	protected function getcsvItems($items=null) {
+		if (!is_array($items)) return false;
+		
+		//csv array of fields
+		foreach ($items as $i=>$rec)
+			$ritems[] = implode(';', $rec);
+			
+		return $ritems; 	
+	}	
 
 	protected function renderTwing($doctitle=null, $template, $form=null, $code=null, $items=null) {
 		$db = GetGlobal('db');	
