@@ -16,6 +16,7 @@ $__EVENTS['RCCRM_DPC'][6]='cpcrmdetails';
 $__EVENTS['RCCRM_DPC'][7]='cpcrmmoduledtl';
 $__EVENTS['RCCRM_DPC'][8]='cpcrmrun';
 $__EVENTS['RCCRM_DPC'][9]='cpcrmdashboard';
+$__EVENTS['RCCRM_DPC'][10]='crmstats';
 
 $__ACTIONS['RCCRM_DPC'][0]='cpcrm';
 $__ACTIONS['RCCRM_DPC'][1]='cpcrmcus';
@@ -27,6 +28,7 @@ $__ACTIONS['RCCRM_DPC'][6]='cpcrmdetails';
 $__ACTIONS['RCCRM_DPC'][7]='cpcrmmoduledtl';
 $__ACTIONS['RCCRM_DPC'][8]='cpcrmrun';
 $__ACTIONS['RCCRM_DPC'][9]='cpcrmdashboard';
+$__ACTIONS['RCCRM_DPC'][10]='crmstats';
 
 //$__DPCATTR['RCCRM_DPC']['cpcrm'] = 'cpcrm,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -124,7 +126,7 @@ class rccrm  {
     var $title, $path, $urlpath;
 	var $seclevid, $userDemoIds;
 	
-	var $crmplus;
+	var $crmplus, $crmstats;
 		
 	function __construct() {
 	
@@ -136,6 +138,8 @@ class rccrm  {
 		$this->userDemoIds = array(5,6,7,8); 		  
 		
 		$this->crmplus = false; /*must be loaded in php script to enable plus tree*/
+		
+		$this->crmstats = array();
 	}
 	
     function event($event=null) {
@@ -144,6 +148,8 @@ class rccrm  {
 	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
+		   
+		 case 'crmstats'     : $this->crm_stats(); break;   
 		   
 		 case 'cpcrmrun'     : /*if ($crm_module = GetReq('mod')) {//module calls inside mod.showdetails
 								$m = explode('.', $crm_module);
@@ -185,7 +191,9 @@ class rccrm  {
 	  $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	  if ($login!='yes') return null;	
 	 
-	  switch ($action) {	  
+	  switch ($action) {
+
+		 case 'crmstats'       : break;	  
 	  
 		 case 'cpcrmrun'       : if ($crm_module = GetReq('mod')) //module calls inside mod.showdetails 
 									$out = 	GetGlobal('controller')->calldpc_method($crm_module);		
@@ -352,7 +360,7 @@ class rccrm  {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('_users', getlocal());//localize('RCCRM_DPC',getlocal()); 
+		$title = localize('_users', getlocal());
 		
         $xsSQL = "SELECT * from (select id,timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users) o ";		   
 		   
@@ -724,6 +732,266 @@ class rccrm  {
                             </ul>
 ';
 		return ($ret);
+	}
+	
+	
+	public function javascript() {
+        $js = "
+function createRequestObject() {var ro; var browser = navigator.appName;
+    if(browser == \"Microsoft Internet Explorer\"){ro = new ActiveXObject(\"Microsoft.XMLHTTP\");
+    }else{ro = new XMLHttpRequest();} return ro;}
+var http = createRequestObject();
+function sndReqArg(url) { var params = url+'&ajax=1'; http.open('post', params, true); http.setRequestHeader(\"Content-Type\", \"text/html; charset=utf-8\");
+    http.setRequestHeader(\"encoding\", \"utf-8\");	 http.onreadystatechange = handleResponse;	http.send(null);}
+function handleResponse() {if(http.readyState == 4){
+	    var response = http.responseText;
+        var update = new Array();
+        response = response.replace( /^\s+/g, \"\" ); // strip leading 
+        response = response.replace( /\s+$/g, \"\" ); // strip trailing		
+        if(response.indexOf('|' != -1)) { /*alert(response);*/  update = response.split('|');
+            document.getElementById(update[0]).innerHTML = update[1];
+        }}}  		
+";
+
+		return $js;
+	}	
+	
+    public function select_timeline($template,$year=null, $month=null) {
+		$user = urldecode(GetReq('id'));
+		$year = GetParam('year') ? GetParam('year') : date('Y'); 
+	    $month = GetParam('month') ? GetParam('month') : date('m');
+		$daterange = GetParam('rdate');
+		
+		$t = ($template!=null) ? GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template) : null;		
+	    if ($t) {
+			for ($y=2015;$y<=intval(date('Y'));$y++) {
+				$yearsli .= '<li>'. seturl("t=crmstats&id=$user&month=".$month.'&year='.$y, $y) .'</li>';
+			}
+		
+			for ($m=1;$m<=12;$m++) {
+				$mm = sprintf('%02d',$m);
+				$monthsli .= '<li>' . seturl("t=crmstats&id=$user&month=".$mm.'&year='.$year, $mm) .'</li>';
+			}	  
+	  
+	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
+	  
+			$tokens[] = localize('RCCRM_DPC', getlocal()) . ' &gt ' . localize('_crmdashb', getlocal()) . ' ' . $posteddaterange;
+			$tokens[] = $year;
+			$tokens[] = $month;
+			$tokens[] = localize('_year',getlocal());
+			$tokens[] = $yearsli;
+			$tokens[] = localize('_month',getlocal());			
+			$tokens[] = $monthsli;	
+            $tokens[] = $daterange;			
+		
+			$ret = $this->combine_tokens($t, $tokens); 				
+     
+			return ($ret);
+		}
+		
+		return null;	
+    }	
+
+	protected function sqlDateRange($fieldname, $istimestamp=false, $and=false) {
+		$sqland = $and ? ' AND' : null;
+		if ($daterange = GetParam('rdate')) {//post
+			$range = explode('-',$daterange);
+			$dstart = str_replace('/','-',trim($range[0]));
+			$dend = str_replace('/','-',trim($range[1]));
+			if ($istimestamp)
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";
+			else			
+				$dateSQL = $sqland . " $fieldname BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";			
+		}				
+		elseif ($y = GetReq('year')) {
+			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12';}
+			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
+			
+			if ($istimestamp)
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
+			else
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";		
+		}	
+        else {
+			//$dateSQL = null; 
+			
+			//always this year by default
+			//$mstart = '01'; $mend = '12';
+			//always this month by default
+			$mstart = date('m'); $mend = date('m');
+			$y = date('Y');
+			$daysofmonth = date('t');
+			
+			if ($istimestamp)
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
+			else
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";	
+            //echo $dateSQL;			
+		}	
+		
+		return ($dateSQL);
+	}	
+	
+	protected function nformat($n, $dec=0) {
+		return (number_format($n,$dec,',','.'));
+	}
+	
+	public function getStats($section=null, $subsection=null) {
+		if (!$section) return 0;
+		$sb = $subsection ? $subsection : 'value';
+		return ($this->crmstats[$section][$sb]);
+	}		
+	
+    protected function crm_stats() {
+        $db = GetGlobal('db');		
+		
+		$origin = "origin='crm' and ";
+		$timein = $this->sqlDateRange('timein', true);
+		
+		$sSQL = "select count(id) from mailqueue where $origin and active=0 and " . $timein; 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['outbox']['sent'] = $this->nformat($res->fields[0]);
+		/*
+		$sSQL = "select count(id) from mailqueue where $origin active=0 and status<0 and " . $timein; 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['outbox']['failed'] = $this->nformat($res->fields[0]);	
+        */
+		$sSQL = "select count(id) from mailqueue where $origin active=1 and " . $timein; 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['outbox']['value'] = $this->nformat($res->fields[0]);
+		
+		
+		$sSQL = "select count(id) from cform where " . $this->sqlDateRange('date', true); 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['inbox']['value'] = $this->nformat($res->fields[0]);		
+
+		$date = $this->sqlDateRange('date', true);
+		$sSQL = "select count(id) from stats where ref IS NOT NULL and " . $date; 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['stats']['clicks'] = $this->nformat($res->fields[0]);	
+		
+		//$sSQL = "select count(id) from stats where attr2='$user' or attr3='$user'";
+		//$sSQL.= " and " . $date; 
+		//$res = $db->Execute($sSQL);
+		//$this->crmstats['stats']['pageview'] = $this->nformat($res->fields[0]);		
+		
+		
+		$timein = $this->sqlDateRange('timein', true);
+		
+		$sSQL = "select count(recid) from transactions where " . $timein; 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['transactions']['value'] = $this->nformat($res->fields[0]);	
+
+		$sSQL = "select sum(costpt) from transactions where " . $timein; 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['transactions']['sales'] = $this->nformat($res->fields[0],2);
+
+		
+		$sSQL = "select count(id) from crmdocs where " . $this->sqlDateRange('date', true); 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['crmdocs']['value'] = $this->nformat($res->fields[0]);	
+
+		$sSQL = "select count(id) from users where " . $this->sqlDateRange('timein', true); 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['contacts']['users'] = $this->nformat($res->fields[0]);	
+
+		$sSQL = "select count(id) from crmcontacts where " . $this->sqlDateRange('date', true); 
+		$res = $db->Execute($sSQL);
+		$this->crmstats['contacts']['value'] = $this->nformat($res->fields[0]);			
+		
+		return true;
+	}	
+
+	public function itemsPurchased() {
+       $db = GetGlobal('db');
+	   $user = urldecode(GetReq('id'));
+	   
+	   //search serialized data for id
+	   $sSQL = "select tdata from transactions where " . $this->sqlDateRange('timein', true, false);
+       $result = $db->Execute($sSQL,2);
+	   //echo $sSQL;
+	   
+	   foreach ($result as $n=>$rec) {	
+         $tdata = $rec['tdata'];
+		 
+		 if ($tdata) {
+		   $cdata = unserialize($tdata);
+		   if (is_array($cdata)) { //(count($cdata)>1) {//if many items
+		     foreach ($cdata as $i=>$buffer_data) {
+		        $param = explode(";",$buffer_data);
+				if (!in_array($param[0],$ret))  
+					$ret[] = $param[0];  
+		     }	 
+		   }
+		 } 
+	   }
+	   
+	   return $this->nformat(count($ret));  	   	
+	}
+
+	public function itemsPurchasedQty() {
+       $db = GetGlobal('db');
+	   $user = urldecode(GetReq('id'));
+	   $ret = 0;
+	   
+	   //search serialized data for id
+	   $sSQL = "select tdata from transactions where " . $this->sqlDateRange('timein', true, false);
+       $result = $db->Execute($sSQL,2);
+	   //echo $sSQL;
+	   
+	   foreach ($result as $n=>$rec) {	
+         $tdata = $rec['tdata'];
+		 
+		 if ($tdata) {
+		   $cdata = unserialize($tdata);
+		   if (is_array($cdata)) { //if (count($cdata)>1) {//if many items
+		     foreach ($cdata as $i=>$buffer_data) {
+		       $param = explode(";",$buffer_data);
+		       $ret += $param[9];  
+		     }	 
+		   }
+		 } 
+	   }
+	   
+	   return $this->nformat($ret);   	   	
+	}	
+
+	//tokens method	
+	protected function combine_tokens($template, $tokens, $execafter=null) {
+	    if (!is_array($tokens)) return;		
+
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template;
+		  
+		//echo $ret;
+	    foreach ($tokens as $i=>$tok) {
+            //echo $tok,'<br>';
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<30;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);
+		//echo $ret;
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	}		
+	
+	public function charts() {
+		
 	}
 	
 	protected function writeLog($data = '') {

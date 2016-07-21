@@ -123,7 +123,7 @@ function handleResponse() {if(http.readyState == 4){
 				$monthsli .= '<li>' . seturl("t=cpcrmdashboard&id=$user&month=".$mm.'&year='.$year, $mm) .'</li>';
 			}	  
 	  
-	        $posteddaterange = $daterange ? ' > ' . $daterange : ($year ? ' > ' . $month . ' ' . $year : null) ;
+	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
 	  
 			$tokens[] = null;//localize('CRMDASHBOARD_DPC',getlocal()) . $posteddaterange; 
 			$tokens[] = $year;
@@ -155,22 +155,27 @@ function handleResponse() {if(http.readyState == 4){
 		}				
 		elseif ($y = GetReq('year')) {
 			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12';}
-				
+			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
+			
 			if ($istimestamp)
-				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
 			else
-				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";		
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";		
 		}	
         else {
 			//$dateSQL = null; 
 			
 			//always this year by default
 			$mstart = '01'; $mend = '12';
+			//always this month by default
+			//$mstart = date('m'); $mend = date('m');
 			$y = date('Y');
+			$daysofmonth = date('t');
+			
 			if ($istimestamp)
-				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
 			else
-				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";	
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";	
             //echo $dateSQL;			
 		}	
 		
@@ -189,7 +194,7 @@ function handleResponse() {if(http.readyState == 4){
 		$sSQL.= " and active=0 and " . $this->sqlDateRange('timein', true); 
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
-		$ret = $res->fields[0];
+		$ret = $this->nformat($res->fields[0]);
 		
 		return ($ret);
 	}	
@@ -202,7 +207,7 @@ function handleResponse() {if(http.readyState == 4){
 		$sSQL.= " and active=1 and " . $this->sqlDateRange('timein', true); 
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
-		$ret = $res->fields[0];
+		$ret = $this->nformat($res->fields[0]);
 		
 		return ($ret);
 	}	
@@ -215,7 +220,7 @@ function handleResponse() {if(http.readyState == 4){
 		$sSQL.= " and active=0 and status<0 and " . $this->sqlDateRange('timein', true); 
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
-		$ret = $res->fields[0];
+		$ret = $this->nformat($res->fields[0]);
 		
 		return ($ret);
 	}
@@ -228,7 +233,7 @@ function handleResponse() {if(http.readyState == 4){
 		$sSQL.= " and ref IS NOT NULL and " . $this->sqlDateRange('date', true); 
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
-		$ret = $res->fields[0];
+		$ret = $this->nformat($res->fields[0]);
 		
 		return ($ret);
 	}	
@@ -238,10 +243,10 @@ function handleResponse() {if(http.readyState == 4){
 		$user = urldecode(GetReq('id'));
 		
 		$sSQL = "select count(recid) from transactions where cid='$user'";
-		$sSQL.= " and " . $this->sqlDateRange('tdate'); 
+		$sSQL.= " and " . $this->sqlDateRange('timein', true); 
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
-		$ret = $res->fields[0];
+		$ret = $this->nformat($res->fields[0]);
 		
 		return ($ret);
 	}
@@ -251,7 +256,7 @@ function handleResponse() {if(http.readyState == 4){
 		$user = urldecode(GetReq('id'));
 		
 		$sSQL = "select sum(costpt) from transactions where cid='$user'";
-		$sSQL.= " and " . $this->sqlDateRange('tdate'); 
+		$sSQL.= " and " . $this->sqlDateRange('timein', true); 
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
 		$ret = $this->nformat($res->fields[0],2);
@@ -267,7 +272,7 @@ function handleResponse() {if(http.readyState == 4){
 		$sSQL.= " and " . $this->sqlDateRange('date', true); 
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
-		$ret = $res->fields[0];
+		$ret = $this->nformat($res->fields[0]);
 		
 		return ($ret);
 	}	
@@ -280,7 +285,7 @@ function handleResponse() {if(http.readyState == 4){
 		$sSQL.= " and " . $this->sqlDateRange('date', true); 
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
-		$ret = $res->fields[0];
+		$ret = $this->nformat($res->fields[0]);
 		
 		return ($ret);
 	}	
@@ -293,28 +298,25 @@ function handleResponse() {if(http.readyState == 4){
 	   
 	   //search serialized data for id
 	   $sSQL = "select tdata from transactions " . 
-	           "where cid= " . $db->qstr($user);
+	           "where cid= " . $db->qstr($user) . $this->sqlDateRange('timein', true, true);
        $result = $db->Execute($sSQL,2);
-	   //echo $sSQL;
 	   
 	   foreach ($result as $n=>$rec) {	
          $tdata = $rec['tdata'];
 		 
 		 if ($tdata) {
 		   $cdata = unserialize($tdata);
-		   if (count($cdata)>1) {//if many items
+		   if (is_array($cdata)) { //if (count($cdata)>1) {//if many items
 		     foreach ($cdata as $i=>$buffer_data) {
-		 
-		        $param = explode(";",$buffer_data);
-		        //if ($param[9]>0) //if qty exist 
-				  // $ret += 1; //$param[0];  
+		        $param = explode(";",$buffer_data); 
 				if (!in_array($param[0],$ret))  
 					$ret[] = $param[0];  
 		     }	 
 		   }
 		 } 
 	   }
-	   return count($ret);   	   	
+	   
+	   return $this->nformat(count($ret));   	   	
 	}
 
 	public function itemsPurchasedQty() {
@@ -324,16 +326,15 @@ function handleResponse() {if(http.readyState == 4){
 	   
 	   //search serialized data for id
 	   $sSQL = "select tdata from transactions " . 
-	           "where cid= " . $db->qstr($user);
+	           "where cid= " . $db->qstr($user) . $this->sqlDateRange('timein', true, true);
        $result = $db->Execute($sSQL,2);
-	   //echo $sSQL;
 	   
 	   foreach ($result as $n=>$rec) {	
          $tdata = $rec['tdata'];
 		 
 		 if ($tdata) {
 		   $cdata = unserialize($tdata);
-		   if (count($cdata)>1) {//if many items
+		   if (is_array($cdata)) { //if (count($cdata)>1) {//if many items
 		     foreach ($cdata as $i=>$buffer_data) {
 		 
 		       $param = explode(";",$buffer_data);
@@ -342,7 +343,8 @@ function handleResponse() {if(http.readyState == 4){
 		   }
 		 } 
 	   }
-	   return $ret;   	   	
+	   
+	   return $this->nformat($ret);   	   	
 	}	
 	
 };
