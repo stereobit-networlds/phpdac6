@@ -19,6 +19,9 @@ $__EVENTS['RCCRMTRACE_DPC'][9]='cpcrmaddfav';
 $__EVENTS['RCCRMTRACE_DPC'][10]='cpcrmremfav';
 $__EVENTS['RCCRMTRACE_DPC'][11]='cpcrmaddoffer';
 $__EVENTS['RCCRMTRACE_DPC'][12]='cpcrmaddcol';
+$__EVENTS['RCCRMTRACE_DPC'][13]='cpcrmuser';
+$__EVENTS['RCCRMTRACE_DPC'][14]='cpcrmcust';
+$__EVENTS['RCCRMTRACE_DPC'][15]='cpcrmcont';
 
 $__ACTIONS['RCCRMTRACE_DPC'][0]='cpcrmtrace';
 $__ACTIONS['RCCRMTRACE_DPC'][1]='cpcrmprofile';
@@ -33,6 +36,9 @@ $__ACTIONS['RCCRMTRACE_DPC'][9]='cpcrmaddfav';
 $__ACTIONS['RCCRMTRACE_DPC'][10]='cpcrmremfav';
 $__ACTIONS['RCCRMTRACE_DPC'][11]='cpcrmaddoffer';
 $__ACTIONS['RCCRMTRACE_DPC'][11]='cpcrmaddcol';
+$__ACTIONS['RCCRMTRACE_DPC'][12]='cpcrmuser';
+$__ACTIONS['RCCRMTRACE_DPC'][13]='cpcrmcust';
+$__ACTIONS['RCCRMTRACE_DPC'][14]='cpcrmcont';
 
 $__LOCALE['RCCRMTRACE_DPC'][0]='RCCRMTRACE_DPC;Crm trace;Crm trace';
 $__LOCALE['RCCRMTRACE_DPC'][1]='_id;ID;ID';
@@ -112,6 +118,10 @@ class rccrmtrace  {
 	
 	    switch ($event) {
 			
+			case 'cpcrmuser'       : $this->readUserProfile(); break;
+			case 'cpcrmcust'       : $this->readCustomerProfile(); break;
+			case 'cpcrmcont'       : $this->readContactProfile(); break;
+			
 			case 'cpcrmaddcol'     : echo $this->addCollection();
 									 die();	
 		    case 'cpcrmaddoffer'   : echo $this->addfavProfile('crmoffer');
@@ -153,6 +163,10 @@ class rccrmtrace  {
 		if ($login!='yes') return null;	
 	 
 		switch ($action) {	 
+		
+			case 'cpcrmuser'       : break;
+			case 'cpcrmcust'       : break;
+			case 'cpcrmcont'       : break;		
 
 		    case 'cpcrmaddcol'     : break;
 		    case 'cpcrmaddoffer'   : break;
@@ -287,6 +301,102 @@ class rccrmtrace  {
 		return ($frame); 
 	}	
 		
+	protected function readUserProfile() {	
+		$db = GetGlobal('db');
+		$visitor = $this->visitor;
+		
+		if ($this->iseMailUser($visitor)) {
+			
+			$sSQL2 = "select id,timein,code1,code2,notes,email,fname,lname,notes,username from users ";
+			$sSQL2.= "WHERE username=" . $db->qstr($visitor) . " OR email=" . $db->qstr($visitor) . " order by notes asc"; //ACTIVE note first		   
+			$result = $db->Execute($sSQL2);				
+			
+			if ($result) {
+				$this->ref = 'user'; 				
+				
+				//handle rec
+				$undef = localize('_undefined', getlocal());
+				foreach ($this->contactRec as $i=>$contactField) {
+					$this->contactData[$contactField] = isset($result->fields[$i]) ? $result->fields[$i] : $undef;
+				}
+			
+				//last fields params
+				$this->contactData['reference'] = $result->fields['reference'] ? $result->fields['reference'] : $this->ref;
+				$this->source = $visitor;
+				$this->contactData['source'] = $result->fields['source'] ? $result->fields['source'] : $this->source; //$this->resolved ? $visitor . '(resolved)' : $visitor;
+				$this->contactData['ip'] = $result->fields['ip'] ? $result->fields['ip'] :$this->visitorIP;
+				$this->contactData['owner'] = $result->fields['owner'] ? $result->fields['owner'] :$this->owner;
+				return true;
+			}
+		} 
+		
+		return false;
+	}
+	
+	protected function readCustomerProfile() {	
+		$db = GetGlobal('db');
+		$visitor = $this->visitor;
+		
+		if ($this->iseMailUser($visitor)) {
+			
+			$sSQL1 = "select id,timein,code1,code2,active,mail,name,afm,address,city,prfid,prfdescr,voice1,fax,voice2,area from customers ";
+			$sSQL1.= "WHERE mail=" . $db->qstr($visitor) . " OR code2=" . $db->qstr($visitor) . " order by active desc"; //active first		   
+			$result = $db->Execute($sSQL1);				
+			
+			if ($result) {
+				$this->ref = 'customer'; 
+				
+				//handle rec
+				$undef = localize('_undefined', getlocal());
+				foreach ($this->contactRec as $i=>$contactField) {
+					$this->contactData[$contactField] = isset($result->fields[$i]) ? $result->fields[$i] : $undef;
+				}
+			
+				//last fields params
+				$this->contactData['reference'] = $result->fields['reference'] ? $result->fields['reference'] : $this->ref;
+				$this->source = $visitor;
+				$this->contactData['source'] = $result->fields['source'] ? $result->fields['source'] : $this->source; //$this->resolved ? $visitor . '(resolved)' : $visitor;
+				$this->contactData['ip'] = $result->fields['ip'] ? $result->fields['ip'] :$this->visitorIP;
+				$this->contactData['owner'] = $result->fields['owner'] ? $result->fields['owner'] :$this->owner;
+				return true;
+			}
+		} 
+		
+		return false;		
+	}
+	
+	protected function readContactProfile() {	
+		$db = GetGlobal('db');
+		$visitor = $this->visitor;
+		
+		if ($this->iseMailUser($visitor)) {
+
+			$crmfields = implode(',', $this->contactRec);
+			$sSQL = "select $crmfields,reference,source,ip,owner from crmcontacts ";		   
+			$sSQL.= "WHERE email=" . $db->qstr($visitor);
+			$result = $db->Execute($sSQL);
+
+			if ($result) {
+				$this->ref = 'contact'; //crm contact
+				
+				//handle rec
+				$undef = localize('_undefined', getlocal());
+				foreach ($this->contactRec as $i=>$contactField) {
+					$this->contactData[$contactField] = isset($result->fields[$i]) ? $result->fields[$i] : $undef;
+				}
+			
+				//last fields params
+				$this->contactData['reference'] = $result->fields['reference'] ? $result->fields['reference'] : $this->ref;
+				$this->source = $visitor;
+				$this->contactData['source'] = $result->fields['source'] ? $result->fields['source'] : $this->source; //$this->resolved ? $visitor . '(resolved)' : $visitor;
+				$this->contactData['ip'] = $result->fields['ip'] ? $result->fields['ip'] :$this->visitorIP;
+				$this->contactData['owner'] = $result->fields['owner'] ? $result->fields['owner'] :$this->owner;
+				return true;
+			}			
+		} 
+		
+		return false;		
+	}
 	
 	private function readProfile() {
 		$db = GetGlobal('db');

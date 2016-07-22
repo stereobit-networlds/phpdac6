@@ -226,16 +226,19 @@ class rccrm  {
 		$turl2 = seturl('t=cpcrm&mode=customers');		
 		$turl3 = seturl('t=cpcrm&mode=ulist');
 		$turl4 = seturl('t=cpcrm&mode=campaigns');
+		$turl5 = seturl('t=cpcrm&mode=sales');
 		$button = $this->createButton(localize('_mode', getlocal()), 
 										array(localize('_contacts', getlocal())=>$turl0,
 										      localize('_users', getlocal())=>$turl1,
 									  		  localize('_customers', getlocal())=>$turl2,
 											  localize('_ulist', getlocal())=>$turl3,
 											  localize('_campaigns', getlocal())=>$turl4,
+											  localize('_sales', getlocal())=>$turl5,
 		                                ));
 													
 
 		switch ($mode) {
+			case 'sales'    :   $content = $this->sales_grid(null,140,5,'r', true); break;
 			case 'contacts' :	$content = $this->contacts_grid(null,140,5,'r', true); break;
 			case 'customers':	$content = $this->customers_grid(null,140,5,'r', true); break;
 			case 'ulist'    :   $content = $this->ulist_grid(null,140,5,'e', true); break;
@@ -351,6 +354,58 @@ class rccrm  {
 		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+crmcontacts+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  
+	}	
+	
+	public function sales_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $selected_cus = urldecode(GetReq('id'));
+		
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;	
+	    $lan = getlocal() ? getlocal() : 0;  
+		$title = localize('_sales',getlocal());  
+	
+	    if (defined('MYGRID_DPC')) {
+			
+			$lookup1 = "ELT(FIELD(i.payway, 'Eurobank','Piraeus','Paypal','BankTransfer','PayOnsite','PayOndelivery'),".
+			                      "'".localize('Eurobank',getlocal())."',".
+								  "'".localize('Piraeus',getlocal())."',".
+								  "'".localize('Paypal',getlocal())."',".
+			                      "'".localize('BankTransfer',getlocal())."',".
+								  "'".localize('PayOnsite',getlocal())."',".
+								  "'".localize('PayOndelivery',getlocal())."') as pw";			
+								  
+			$lookup2 = "ELT(FIELD(i.roadway, 'CompanyDelivery','CustomerDelivery','Logistics','Courier'),".
+				                  "'".localize('CompanyDelivery',getlocal())."',".
+					   		      "'".localize('CustomerDelivery',getlocal())."',".
+								  "'".localize('Logistics',getlocal())."',".
+								  "'".localize('Courier',getlocal())."') as rw";								  
+		
+			$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.timein,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i) x";
+				//echo $xsSQL2;
+
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|link|5|"."javascript:showdetails({tid});".'||');
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cid|".localize('_user',getlocal())."|10|0|");			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+timein|".localize('_date',getlocal())."|10|0|");
+		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|2|0|||||right");	
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|link|20|"."javascript:udetails(\"{cid}\");".'||');		
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+rw|".localize('_roadway',getlocal())."|link|20|"."cpcrmtrace.php?t=cpcrmprofile&v={cid}".'||');
+	        GetGlobal('controller')->calldpc_method("mygrid.column use grid3+qty|".localize('_qty',getlocal())."|5|0|||||right");				
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
+			
+			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+0+1+1");
+
+	    }
+		else 
+		   $ret .= 'Initialize jqgrid.';
+        
+        return ($ret);
+  	
 	}	
 	
 	protected function users_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
