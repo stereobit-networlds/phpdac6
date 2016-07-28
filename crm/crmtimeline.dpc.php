@@ -195,20 +195,27 @@ class crmtimeline extends crmmodule  {
 										                 }	
 					                } 
 				}
-
+				
+				
+				//common for all
+				if ((defined('CRMFORMS_DPC')) && (filter_var($visitor, FILTER_VALIDATE_EMAIL)))
+					$details =	GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") . "&nbsp;";
+					
+				//if link	
 				if ($link) {
 					//$ulink = base64_encode(urlencode($link.'|300')); //height 300				
 					//$details = $this->actionButton(localize('_view', getlocal()), "javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url={$ulink}');", null, true);				
 					
 					$ulink = (strstr($link, 'http://')) ? $link : 'http://' . $link;
-					$details = $this->actionButton(localize('_viewpage', getlocal()), $ulink, null, true);	
+					$details .= $this->actionButton(localize('_viewpage', getlocal()), $ulink, null, true);	
 				}	
 				
+				//if itemcode
 				if (($itemcode) && (filter_var($visitor, FILTER_VALIDATE_EMAIL))) {
 					//not ip based client and itemcode
 					//$ulink = $this->makeCrmURL("cpcrm.php?t=cpcrmdetails&iframe=1&id=$visitor&module=wishfav",300); //height 300
 					//$details .= $this->actionButton(localize('_details', getlocal()), "javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url={$ulink}');");//, 'crmdetails'.$meter);
-					$details .= $this->timelineMenu($visitor, $meter, $itemcode);
+					$details .= $this->timelineMenu($visitor, $meter, $itemcode);	
 				}
 				//else	
 					$details .= $rec['attr3'] ? localize('_reference', getlocal()).':' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getRefName use '.$rec['ref']) .' ('.$rec['REMOTE_ADDR']. ')' : ' ip:' . $rec['REMOTE_ADDR'];

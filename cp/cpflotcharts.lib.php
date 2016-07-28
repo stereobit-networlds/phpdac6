@@ -268,9 +268,9 @@ class cpflotcharts {
 			
 			//transactions
 			$diff = 0;
-			$timeins = $this->sqlDateRange('tdate', false, true, $diff);
+			$timeins = $this->sqlDateRange('timein', true, true, $diff);
 			
-			$sSQL = "select count(recid) as hits, DAY(tdate) as day from transactions where tdata like '%$id%'" . $timeins . " group by DAY(tdate) order by DAY(tdate)";
+			$sSQL = "select count(recid) as hits, DAY(timein) as day from transactions where tdata like '%$id%'" . $timeins . " group by DAY(timein) order by DAY(timein)";
 			$res = $db->Execute($sSQL,2);
             $this->make_chart_data('Transactions', $res, array('day','hits'), localize('_transactions',getlocal()), array('day',$diff));	
             //echo $sSQL;
@@ -311,20 +311,45 @@ class cpflotcharts {
 			
 			//transactions
 			$diff = 0;
-			$timeins = $this->sqlDateRange('tdate', false, true, $diff);
+			$timeins = $this->sqlDateRange('timein', true, true, $diff);
 			
-			$sSQL = "select count(recid) as hits, DAY(tdate) as day from transactions where tdata REGEXP '". implode('|', $items) ."'" . $timeins . " group by DAY(tdate) order by DAY(tdate)";
+			$sSQL = "select count(recid) as hits, DAY(timein) as day from transactions where tdata REGEXP '". implode('|', $items) ."'" . $timeins . " group by DAY(timein) order by DAY(timein)";
 			$res = $db->Execute($sSQL,2);
             $this->make_chart_data('Transactions', $res, array('day','hits'), localize('_transactions',getlocal()), array('day',$diff));
 		
 		}		
 		else {
 			
-			return (0); //test bypass			
+			//return (0); //test bypass			
 			
-			//frontpage charts
-			//...
+			//stats (items)
+			$diff = 0;
+			$timeins = $this->sqlDateRange('date', true, false, $diff);			
+			
+			//where tid IS NOT NULL 
+			$sSQL = "select count(id) as hits, DAY(date) as day from stats where " . $timeins . " group by DAY(date) order by DAY(date)";
+			$res = $db->Execute($sSQL,2);
+			//echo $sSQL;
+            $this->make_chart_data('Visits0', $res, array('day','hits'), localize('_hits',getlocal()), array('day',$diff));
 
+			$this->chartGroup = array('Visits0');
+			
+			//transactions
+			$diff = 0;
+			$timeins = $this->sqlDateRange('timein', true, false, $diff);
+			
+			$sSQL = "select count(recid) as hits, DAY(timein) as day from transactions where " . $timeins . " group by DAY(timein) order by DAY(timein)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('Transactions', $res, array('day','hits'), localize('_transactions',getlocal()), array('day',$diff));				
+			
+			//stats (mailqueue)
+			//$diff = 0;
+			//$timeins = $this->sqlDateRange('timein', true, true, $diff);
+		    /*
+			$sSQL = "select count(id) as hits, DAY(timeout) as day from mailqueue where active=0 " . $timeins . " group by DAY(timeout) order by DAY(timeout)";
+			$res = $db->Execute($sSQL,2);
+            $this->make_chart_data('Mailqueue', $res, array('day','hits'), $mqlabel, array('day',$diff));
+			*/
 		}  
 
         return (1);     	
@@ -345,7 +370,7 @@ class cpflotcharts {
 		
 var Script = function () {
 
-//  tracking chart
+   //  tracking chart
 
     var plot;
     $(function () {
@@ -356,7 +381,8 @@ var Script = function () {
         }
 
         plot = $.plot($("#chart-1"),
-            [ { data: sin, label: "sin(x) = -0.00"},
+            [ 
+			   { data: sin, label: "sin(x) = -0.00"},
                 { data: cos, label: "cos(x) = -0.00" } ], {
                 series: {
                     lines: { show: true }
@@ -878,7 +904,8 @@ FLOT;
         return (1);     	
     }	
 	
-	public function jsflotMailcharts() {
+	public function jsflotMailcharts($div=null) {
+		$plotdiv = $div ? $div : 'plots';
 		$daylabel = localize('_day',getlocal());
 		$clicks = ': '; //localize('_clicks',getlocal());
 		
@@ -901,9 +928,9 @@ var Script = function () {
 
     }
 
-    if (!!$(".plots").offset() ) {
+    if (!!$(".$plotdiv").offset() ) {
 
-        $.plot($(".plots"), [ {$this->callChartGroup($this->chartGroup)}  ],
+        $.plot($(".$plotdiv"), [ {$this->callChartGroup($this->chartGroup)}  ],
             {
                 colors: ["#4a8bc2", "#de577b", "#cc99cc", "#008800", "#99ff6b"],
 
@@ -936,7 +963,7 @@ var Script = function () {
 
         // plot tooltip show
         var previousPoint = null;
-        $(".plots").bind("plothover", function (event, pos, item) {
+        $(".$plotdiv").bind("plothover", function (event, pos, item) {
             if (item) {
                 if (previousPoint != item.dataIndex) {
                     previousPoint = item.dataIndex;
@@ -979,8 +1006,8 @@ FLOTMAIL;
 			$res = $db->Execute($sSQL,2);
             $this->make_chart_data('Visits0', $res, array('day','hits'), $item, array('day',$diff));
 
-			$timeins = $this->sqlDateRange('tdate', true, true, $diff);				
-			$sSQL = "select count(recid) as hits, DAY(tdate) as day from transactions where cid='$cid' " . $timeins . " group by DAY(tdate) order by DAY(tdate)";
+			$timeins = $this->sqlDateRange('timein', true, true, $diff);				
+			$sSQL = "select count(recid) as hits, DAY(timein) as day from transactions where cid='$cid' " . $timeins . " group by DAY(timein) order by DAY(timein)";
 			$res = $db->Execute($sSQL,2);
             $this->make_chart_data('Transactions', $res, array('day','hits'), localize('_transactions',getlocal()), array('day',$diff));
 		
@@ -992,8 +1019,8 @@ FLOTMAIL;
 			$res = $db->Execute($sSQL,2);
             $this->make_chart_data('Visits0', $res, array('day','hits'), $item, array('day',$diff));			
 			*/
-			$timeins = $this->sqlDateRange('tdate', true, false, $diff);	
-			$sSQL = "select count(recid) as hits, DAY(tdate) as day from transactions where " . $timeins . " group by DAY(tdate) order by DAY(tdate)";
+			$timeins = $this->sqlDateRange('timein', true, false, $diff);	
+			$sSQL = "select count(recid) as hits, DAY(timein) as day from transactions where " . $timeins . " group by DAY(timein) order by DAY(timein)";
 			$res = $db->Execute($sSQL,2);
             $this->make_chart_data('Transactions', $res, array('day','hits'), localize('_transactions',getlocal()), array('day',$diff));
 		

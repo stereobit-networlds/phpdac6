@@ -253,6 +253,18 @@ class rccrmtrace  {
 		return ($ret);
 	}	
 	
+	public function contactMenu($v=null) {
+		$visitor = $v ? $v : $this->currentVisitor('email');
+		if (!$this->iseMailUser($visitor)) return null;		
+		
+		if (defined('CRMFORMS_DPC')) 
+			$ret = GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc");
+		//else
+			//$ret = "<a href='cpcrmoffers.php?v=".$visitor."'>".$visitor."</a>";
+		
+		return ($ret);
+	}
+	
 	public function readContactName() {
 		$undef = localize('_undefined', getlocal());
 		$name = ($this->contactData['firstname'] != $undef ) ? 
@@ -720,6 +732,10 @@ class rccrmtrace  {
 			$rtokens[] = GetGlobal('controller')->calldpc_method('rccontrolpanel.timeSayWhen use '. strtotime($rec['date'])); 
 			$rtokens[] = 'cpcrmtrace.php?t=cpcrmprofile&v=' . ($resolved ? $resolved.'|'.$visitor : $visitor); //link
 			$rtokens[] = null;//$rec[3]; //hash
+			
+			$rtokens[] = $resolved ? GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$resolved."+crmdoc") : 
+			              ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) ? 
+							GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") : null);			
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
 			             "<option value=\"$hash\">".$rtokens[1]."</option>";

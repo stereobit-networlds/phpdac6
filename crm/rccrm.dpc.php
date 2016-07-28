@@ -30,8 +30,6 @@ $__ACTIONS['RCCRM_DPC'][8]='cpcrmrun';
 $__ACTIONS['RCCRM_DPC'][9]='cpcrmdashboard';
 $__ACTIONS['RCCRM_DPC'][10]='crmstats';
 
-//$__DPCATTR['RCCRM_DPC']['cpcrm'] = 'cpcrm,1,0,0,0,0,0,0,0,0,0,0,1';
-
 $__LOCALE['RCCRM_DPC'][0]='RCCRM_DPC;Crm;Crm';
 $__LOCALE['RCCRM_DPC'][1]='_id;ID;ID';
 $__LOCALE['RCCRM_DPC'][2]='_save;Save;Αποθήκευση';
@@ -51,7 +49,7 @@ $__LOCALE['RCCRM_DPC'][15]='_dateupd;Updated;Ενημερώση';
 $__LOCALE['RCCRM_DPC'][16]='_contacts;Contacts;Επαφές';
 $__LOCALE['RCCRM_DPC'][17]='_birthday;Birthday;Ημ. γέννησης';
 $__LOCALE['RCCRM_DPC'][18]='_occupation;Occupation;Επάγγελμα';
-
+$__LOCALE['RCCRM_DPC'][19]='_visitors;Visitors;Επισκέπτες';
 $__LOCALE['RCCRM_DPC'][20]='_address;Address;Διεύθυνση';
 $__LOCALE['RCCRM_DPC'][21]='_tel;Tel.;Τηλέφωνο';
 $__LOCALE['RCCRM_DPC'][22]='_mob;Mobile;Κινητό';
@@ -227,6 +225,7 @@ class rccrm  {
 		$turl3 = seturl('t=cpcrm&mode=ulist');
 		$turl4 = seturl('t=cpcrm&mode=campaigns');
 		$turl5 = seturl('t=cpcrm&mode=sales');
+		$turl6 = seturl('t=cpcrm&mode=visitors');
 		$button = $this->createButton(localize('_mode', getlocal()), 
 										array(localize('_contacts', getlocal())=>$turl0,
 										      localize('_users', getlocal())=>$turl1,
@@ -234,10 +233,12 @@ class rccrm  {
 											  localize('_ulist', getlocal())=>$turl3,
 											  localize('_campaigns', getlocal())=>$turl4,
 											  localize('_sales', getlocal())=>$turl5,
+											  localize('_visitors', getlocal())=>$turl6,
 		                                ));
 													
 
 		switch ($mode) {
+			case 'visitors' :   $content = $this->visitors_grid(null,140,5,'r', true); break;
 			case 'sales'    :   $content = $this->sales_grid(null,140,5,'r', true); break;
 			case 'contacts' :	$content = $this->contacts_grid(null,140,5,'r', true); break;
 			case 'customers':	$content = $this->customers_grid(null,140,5,'r', true); break;
@@ -320,6 +321,146 @@ class rccrm  {
 		
 		return ($ret);
 	}
+	
+	/*search for email based on ip*/
+	protected function resolveIP($ip=null)	{
+		if (!$ip) return false;
+		$db = GetGlobal('db');
+        $year = GetParam('year') ? GetParam('year') : date('Y'); 
+	    $month = GetParam('month') ? GetParam('month') : date('m');
+
+		//into current date range
+		//$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		
+		//back one month from now
+		//$timein = "AND DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) ";		
+		
+		//back 60 days from date/month max selected
+		if ($daterange = GetParam('rdate')) {
+			$range = explode('-',$daterange);
+			$dend = str_replace('/','-',trim($range[1]));
+			$fromDate = "STR_TO_DATE('$dend','%m-%d-%Y')";			
+		}	
+		elseif (($m = GetReq('month')) && ($m!=date('m'))) {
+			$y = GetReq('year') ? GetReq('year') : date('Y');
+			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
+			$fromDate = "'$y-$m-$daysofmonth'";
+		}	
+		else 
+			$fromDate = "NOW()";	
+		
+		$timein = "AND DATE(date) BETWEEN DATE( DATE_SUB( $fromDate , INTERVAL 60 DAY ) ) AND DATE ( $fromDate ) ";
+				
+		$sSQL = "SELECT attr2,attr3 FROM stats where REMOTE_ADDR='$ip' $timein order by id desc"; 
+		//echo $sSQL;
+        $result = $db->Execute($sSQL);
+		if (!$result) return false;
+
+		foreach ($result as $i=>$rec) {
+			if (filter_var($rec[0], FILTER_VALIDATE_EMAIL))
+				return $rec[0];
+			elseif (filter_var($rec[1], FILTER_VALIDATE_EMAIL))
+				return $rec[1];
+		}		
+		
+		return false;
+	}	
+	
+    protected function visitors_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+		$db = GetGlobal('db'); 
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;				   
+	    $lan = getlocal() ? getlocal() : 0;  
+		$title = localize('_visitors', getlocal());		
+
+		$recognize = true;
+		$resolve = false;
+		$limit = ($recognize) ? null : ( $resolve ? " LIMIT 5000" : " LIMIT 500" ); //????
+		
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		
+		
+        if ($id = $cpGet['id']) {
+			$cat = $cpGet['cat'];
+			$timein = $this->sqlDateRange('date', true, true);
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where (tid='$id' OR attr1='$cat') $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+		}
+		elseif ($cat = $cpGet['cat']) {
+			$timein = $this->sqlDateRange('date', true, true);
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+		}
+		else {
+			$timein = $this->sqlDateRange('date', true, false);
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+		}
+		//echo $sSQL;	
+        $result = $db->Execute($sSQL);
+		
+        $vis = array();
+		foreach ($result as $i=>$rec) {
+			$rtokens = array();
+			$resolved = null;
+			
+			$visitor = filter_var($rec['attr3'], FILTER_VALIDATE_EMAIL) ? $rec['attr3'] : 
+						( filter_var($rec['attr2'], FILTER_VALIDATE_EMAIL) ? $rec['attr2'] : $rec['REMOTE_ADDR']);
+						
+			if (($recognize) && (!filter_var($visitor, FILTER_VALIDATE_EMAIL))) 
+				continue;		
+			elseif (($resolve) && (filter_var($visitor, FILTER_VALIDATE_IP))) {
+				$resolved = $this->resolveIP($visitor);		
+				if (!filter_var($resolved, FILTER_VALIDATE_EMAIL)) continue;
+			}
+
+			$vis[] = $visitor;
+		}
+		//print_r($vis);
+		if (!empty($vis)) {
+			$rvis = implode("','", $vis); 
+			$uSQL = "WHERE email in ('" . $rvis . "')"; 
+		}
+		else
+			$uSQL = "WHERE email = ''"; //dummy null		
+		
+        /*$xsSQL = "SELECT * from (select id,timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users $uSQL) o ";	
+		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|5|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|link|10|"."javascript:udetails(\"{username}\");".'||');						
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|19|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|19|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={email}".'||');
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code2|".localize('_code',getlocal())."|10|0|");			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");
+		*/   		
+		
+		$xsSQL = "select * from (";
+		$xsSQL.= "SELECT id,startdate,datein,active,failed,name,email,listname FROM ulists " . $uSQL;
+		$xsSQL .= ') as o'; 
+		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|5|0");
+        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_mail',getlocal())."|link|10|"."javascript:udetails(\"{email}\");".'||');
+        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+startdate|".localize('_dateins',getlocal()).'|10|0');		   
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+datein|".localize('_dateupd',getlocal())."|10|0|");			
+        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_lname',getlocal()).'|19|1');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|0');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+failed|".localize('_failed',getlocal()).'|5|0');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+listname|".localize('_listname',getlocal()).'|10|0');			
+		   		
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		
+		return ($out);  		
+		
+		//echo $xsSQL;  
+		return ($ret);		
+	}	
 	
 	protected function contacts_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 800;

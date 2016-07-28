@@ -1336,7 +1336,7 @@ window.setTimeout(\"neu()\",10);
 		foreach ($result as $i=>$rec) {
 			$saytime = GetGlobal('controller')->calldpc_method("rccontrolpanel.timeSayWhen use ".strtotime($rec[1]));
 			//" (" .date("d-m-Y G:i", strtotime($rec[1])). 
-			$msg = "warning|" . $text .' '. $rec[0] . "|$saytime|cpusers.php";
+			$msg = "warning|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];
 			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
 		}
 		return null;
@@ -1352,7 +1352,7 @@ window.setTimeout(\"neu()\",10);
 		
 		foreach ($result as $i=>$rec) {
 			$saytime = GetGlobal('controller')->calldpc_method("rccontrolpanel.timeSayWhen use ".strtotime($rec[1]));
-			$msg = "success|" . $text .' '. $rec[0] . "|$saytime|cpusers.php";
+			$msg = "success|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];
 			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
 		}
 		return null;
@@ -1368,7 +1368,7 @@ window.setTimeout(\"neu()\",10);
 		//echo $sSQL;
 		foreach ($result as $i=>$rec) {
 			$saytime = GetGlobal('controller')->calldpc_method("rccontrolpanel.timeSayWhen use ".strtotime($rec[1]));
-			$msg = "info|" . $text .' '. $rec[0] . "|$saytime|cpform.php";
+			$msg = "info|" . $text .' '. $rec[0] . "|$saytime|cpform.php|".$rec[0];
 			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
 		}
 		return null;

@@ -238,7 +238,7 @@ class rccontrolpanel {
 	var $cptemplate, $stats, $cpStats;
 	var $turl, $cpGet, $turldecoded, $messages, $tasks;
 	var $owner, $seclevid, $cseparator, $map_t, $map_f;
-	var $userDemoIds;
+	var $userDemoIds, $crmLevel;
 	
 	var $rootapp_path, $tool_path;
 		
@@ -304,6 +304,8 @@ class rccontrolpanel {
         $this->cseparator = $csep ? $csep : '^';		
 		
 		$this->userDemoIds = array(6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
+		$this->crmLevel = 9;
+				
 		//ini_set('max_input_vars', '3000'); //NOT ALLOWED ADD IT TO .HTACCESS
 	}
 	 	
@@ -407,6 +409,14 @@ class rccontrolpanel {
 	public function isDemoUser() {
 		return (in_array($this->seclevid, $this->userDemoIds));
 	}	
+	
+	public function isLevelUser($level=6) {
+		return ($this->seclevid>=$level ? true : false);
+	}	
+	
+	public function isCrmUser() {
+		return ($this->seclevid>=$this->crmLevel ? true : false);
+	}		
 	
 	//save param for use by metro cp
 	protected function getTURL() {
@@ -2122,6 +2132,14 @@ function handleResponse() {if(http.readyState == 4){
 	public function viewMessages($template=null) {
 		if (empty($this->messages)) return;
 		$rtokens = array();
+		
+		if ((defined('CRMFORMS_DPC')) && ($this->isCrmUser())) {
+			$template = 'crm-' . $template;
+			$crm = true;
+		}
+		else
+			$crm = false;
+		
 		//$msgs = array_reverse($this->messages, true);
         
 		foreach ($this->messages as $hash=>$message) {
@@ -2132,6 +2150,10 @@ function handleResponse() {if(http.readyState == 4){
 			$rtokens[] = $tokens[2]; //time
 			$rtokens[] = $tokens[3] ? $tokens[3] : '#'; //link
 			$rtokens[] = $hash; //hash when link to delete
+			
+			$rtokens[] = $tokens[4] ? 
+			   (((filter_var($tokens[4], FILTER_VALIDATE_EMAIL)) && $crm) ? 
+					GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$tokens[4]."+crmdoc") : null) : null;
 			
 			$st = $status ? '-' . $status : null;
 			$statusTmpl = str_replace($template, $template.$st ,$template);
@@ -2182,7 +2204,7 @@ function handleResponse() {if(http.readyState == 4){
 			$rtokens = array();
 			$rtokens[] = $rec[1]; //msg
 			$rtokens[] = $this->timeSayWhen(strtotime($rec[2])); //time
-			$rtokens[] = '#'; //link
+			$rtokens[] = $this->isLevelUser(8) ? 'cp.php?t=cpsysMessages' :'#'; //link
 			$rtokens[] = $rec[3]; //hash
 			
 			$st = $status ? '-' . $status : null;
@@ -2303,10 +2325,9 @@ function handleResponse() {if(http.readyState == 4){
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			//$tms = mktime(substr($rec[0],0,4), substr($rec[0],6,2), substr($rec[0],9,2), substr($rec[1],0,2), substr($rec[1],3,2), substr($rec[1],6,2));
-			//$saytime = $this->timeSayWhen($tms);//strtotime($rec[0].' '.$rec[1]));
+			
 			$saytime = $this->timeSayWhen(strtotime($rec['timein']));
-			$msg = "success|" . $rec['cid'] .", ". $text .' '. $rec['tid'] . "|$saytime|cptransactions.php";
+			$msg = "success|" . $rec['cid'] .", ". $text .' '. $rec['tid'] . "|$saytime|cptransactions.php|".$rec['cid'];
 			$this->setMessage($msg);
 		}
 
@@ -2315,8 +2336,16 @@ function handleResponse() {if(http.readyState == 4){
 
 	public function viewItemStatistics($template=null) {
 		$db = GetGlobal('db');
-		$t = $template ? $this->select_template($template) : null;//'alert-important';
 		$id = $this->cpGet['id'];
+		
+		if ((defined('CRMFORMS_DPC')) && ($this->isCrmUser())) {
+			$template = 'crm-' . $template;
+			$crm = true;
+		}
+		else
+			$crm = false;		
+		
+		$t = $template ? $this->select_template($template) : null;//'alert-important';		
 		
         $timein = $this->sqlDateRange('date', true, true);			
 		
@@ -2333,8 +2362,12 @@ function handleResponse() {if(http.readyState == 4){
 			$rtokens[] = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : 
 			                             $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")"; 
 			$rtokens[] = $this->timeSayWhen(strtotime($rec['date'])); 
-			$rtokens[] = defined('RCCRMTRACE_DPC') ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
+			$rtokens[] = $crm ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
+			
+			$rtokens[] = ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) && $crm) ? 
+							GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
+						
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
 			             "<option value=\"$hash\">".$rtokens[1]."</option>";
@@ -2375,8 +2408,16 @@ function handleResponse() {if(http.readyState == 4){
 
 	public function viewCategoryStatistics($template=null) {
 		$db = GetGlobal('db');
-		$t = $template ? $this->select_template($template) : null;//'alert-important';
 		$cat = $this->cpGet['cat'];
+		
+		if ((defined('CRMFORMS_DPC')) && ($this->isCrmUser())) {
+			$template = 'crm-' . $template;
+			$crm = true;
+		}
+		else
+			$crm = false;		
+		
+		$t = $template ? $this->select_template($template) : null;//'alert-important';		
 		
         $timein = $this->sqlDateRange('date', true, true);			
 		
@@ -2388,13 +2429,17 @@ function handleResponse() {if(http.readyState == 4){
 		foreach ($result as $i=>$rec) {
 			$rtokens = array();
 			$visitor = $this->checkmail($rec['attr3']) ? $rec['attr3'] : 
-							( $this->checkmail($rec['attr2']) ? $rec['attr2'] : $rec['REMOTE_ADDR']);
+							($this->checkmail($rec['attr2']) ? $rec['attr2'] : $rec['REMOTE_ADDR']);
 							
 			$rtokens[] = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : 
 			                             $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")"; 
 			$rtokens[] = $this->timeSayWhen(strtotime($rec['date'])); 
-			$rtokens[] = defined('RCCRMTRACE_DPC') ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
+			$rtokens[] = $crm ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
+			
+			$rtokens[] =  ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) && $crm) ? 
+							GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
+						
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
 			             "<option value=\"$hash\">".$rtokens[1]."</option>";
@@ -2600,10 +2645,12 @@ function handleResponse() {if(http.readyState == 4){
 	
     public function checkmail($data) {
 
-		if( !eregi("^[a-z0-9]+([_\\.-][a-z0-9]+)*" . "@([a-z0-9]+([\.-][a-z0-9]{1,})+)*$", $data, $regs) )  
+		/*if( !eregi("^[a-z0-9]+([_\\.-][a-z0-9]+)*" . "@([a-z0-9]+([\.-][a-z0-9]{1,})+)*$", $data, $regs) )  
 			return false;
 
-		return true;  
+		return true;  */
+		
+		return (filter_var($data, FILTER_VALIDATE_EMAIL) ? true : false);
 	}	
 	
 };

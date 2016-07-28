@@ -241,13 +241,13 @@ class crmforms extends crmmodule  {
 	public function formsMenu($user, $class=null, $type=null, $style=null) {
 		if ((!$user) || (!$class)) return null;
 		
-		if ($this->isdemoUser())
-			return ($user); //not menu for not allowd users
+		//if ($this->isdemoUser())  //handled by caller
+			//return ($user); //not menu for not allowd users
 		
 		$db = GetGlobal('db');
 		$lan = getlocal();
 		
-		$sSQL = "select id,title,descr from crmforms where class=" . $db->qstr($class);
+		$sSQL = "select id,title,descr from crmforms where active=1 and type='1' and (class='$user' OR class=" . $db->qstr($class) .")";
 		if ($type)
 			$sSQL.= " and type=" . $db->qstr($type);
 		//echo $sSQL;
@@ -255,7 +255,7 @@ class crmforms extends crmmodule  {
 		
 		foreach ($res as $i=>$rec) {
 			$_title = localize($rec['title'], $lan);
-			$dropdown[$_title] = seturl('t=cpcrmsend&id='.$rec['id'].'&user='.$user.'&subject='.$rec['title']);
+			$dropdown[$_title] = 'cpcrmoffers.php'.'?v='.$user.'&stemplate='.$rec['title'];
 		}
 		
 		$menu = $this->createButton($user, $dropdown, $style);

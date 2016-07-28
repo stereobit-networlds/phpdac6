@@ -38,63 +38,16 @@ $__ACTIONS['RCCRMOFFERS_DPC'][9]='cpcampcontent';
 
 $__LOCALE['RCCRMOFFERS_DPC'][0]='RCCRMOFFERS_DPC;Crm create offer;Crm σύνταξη προσφοράς';
 $__LOCALE['RCCRMOFFERS_DPC'][1]='_favadded;Add recommendation;Εισαγωγή προτίμησης';
-/*$__LOCALE['RCCRMOFFERS_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
-$__LOCALE['RCCRMOFFERS_DPC'][2]='_MAILCAMPAIGNS;Mail campaigns;Αποστολές σε συνδρομητές';
-$__LOCALE['RCCRMOFFERS_DPC'][3]='_active;Active;Ενεργό';
-$__LOCALE['RCCRMOFFERS_DPC'][4]='_sender;Sender;Αποστολέας';
-$__LOCALE['RCCRMOFFERS_DPC'][5]='_receiver;Receiver;Παραλήπτης';
-$__LOCALE['RCCRMOFFERS_DPC'][6]='_reply;Views;Εμφανίσεις';
-$__LOCALE['RCCRMOFFERS_DPC'][7]='_subject;Subject;Θέμα';
-$__LOCALE['RCCRMOFFERS_DPC'][8]='_id;Id;Α/Α';*/
-$__LOCALE['RCCRMOFFERS_DPC'][9]='_wlists;Lists;Λίστες';
-/*
-$__LOCALE['RCCRMOFFERS_DPC'][10]='_inlist;List;Σε λίστα';
-$__LOCALE['RCCRMOFFERS_DPC'][11]='_sendtousers;Send to Users;Αποστολή σε χρήστες';
-$__LOCALE['RCCRMOFFERS_DPC'][12]='_sendtolists;Send to Lists;Αποστολη σε λίστες';
-$__LOCALE['RCCRMOFFERS_DPC'][13]='_savenewsletter;Save Newsletter;Αποθήκευση περιεχομένου';
-$__LOCALE['RCCRMOFFERS_DPC'][14]='_options;Options;Ρυθμίσεις';
-$__LOCALE['RCCRMOFFERS_DPC'][15]='_ACTIVE;Active;Ενεργό';
-$__LOCALE['RCCRMOFFERS_DPC'][16]='_LISTNAME;List;Όνομα λίστας';
-$__LOCALE['RCCRMOFFERS_DPC'][17]='_ID;Id;Α/Α';
-$__LOCALE['RCCRMOFFERS_DPC'][18]='_BULKSUBSCRIBE;Bulk subscribe;Μαζική εισαγωγή';
-$__LOCALE['RCCRMOFFERS_DPC'][19]='_MAILQUEUE;Mail list;Λίστα αποστολών';
-$__LOCALE['RCCRMOFFERS_DPC'][20]='_MAILQUEUEACTIVE;Active queue;Πρός αποστολή';
-$__LOCALE['RCCRMOFFERS_DPC'][21]='_SELECTITEMS;Select Items;Επιλογή στοιχείων';
-$__LOCALE['RCCRMOFFERS_DPC'][22]='_OPTIONS;Options;Επιλογές';
-$__LOCALE['RCCRMOFFERS_DPC'][23]='_status;Status;Κατάσταση';
-$__LOCALE['RCCRMOFFERS_DPC'][24]='_mailstatus;Reason;Αιτία';*/
-$__LOCALE['RCCRMOFFERS_DPC'][25]='_date;Date sent;Ημ. αποστολής';
-$__LOCALE['RCCRMOFFERS_DPC'][26]='_unsubscribe;Unsubscribe;Διαγραφή απο την λίστα';
-/*$__LOCALE['RCCRMOFFERS_DPC'][27]='_viewasweb;View as web page;Πατήστε εδώ για να δείτε την ιστοσελίδα';
-$__LOCALE['RCCRMOFFERS_DPC'][28]='_notifications;Notifications;Ειδοποιήσεις';
-$__LOCALE['RCCRMOFFERS_DPC'][29]='_viewallnotifications;View all notifications;Όλες οι ειδοποιήσεις';
-$__LOCALE['RCCRMOFFERS_DPC'][30]='_MAILCLICKS;Responses;Ανταπόκριση';
-$__LOCALE['RCCRMOFFERS_DPC'][31]='_dashboard;Dashboard;Στατιστικά';
-$__LOCALE['RCCRMOFFERS_DPC'][32]='_year;Year;Έτος';
-$__LOCALE['RCCRMOFFERS_DPC'][33]='_month;Month;Μήνας';*/
-$__LOCALE['RCCRMOFFERS_DPC'][34]='_here;here;εδώ';
-$__LOCALE['RCCRMOFFERS_DPC'][35]='_docid;Document;Έγγραφο';
-$__LOCALE['RCCRMOFFERS_DPC'][36]='_docactivity;Document created;Δημιουργία εγγράφου';
-$__LOCALE['RCCRMOFFERS_DPC'][37]='_msgsuccess;Mail sent;Το μήνυμα στάλθηκε επιτυχώς';
-$__LOCALE['RCCRMOFFERS_DPC'][38]='_msgerror;Sent error;Το μήνυμα απέτυχε να σταλθεί';
+$__LOCALE['RCCRMOFFERS_DPC'][2]='_wlists;Lists;Λίστες';
+$__LOCALE['RCCRMOFFERS_DPC'][3]='_date;Date sent;Ημ. αποστολής';
+$__LOCALE['RCCRMOFFERS_DPC'][4]='_unsubscribe;Unsubscribe;Διαγραφή απο την λίστα';
+$__LOCALE['RCCRMOFFERS_DPC'][5]='_here;here;εδώ';
+$__LOCALE['RCCRMOFFERS_DPC'][6]='_docid;Document;Έγγραφο';
+$__LOCALE['RCCRMOFFERS_DPC'][7]='_docactivity;Document created;Δημιουργία εγγράφου';
+$__LOCALE['RCCRMOFFERS_DPC'][8]='_msgsuccess;Mail sent;Το μήνυμα στάλθηκε επιτυχώς';
+$__LOCALE['RCCRMOFFERS_DPC'][9]='_msgerror;Sent error;Το μήνυμα απέτυχε να σταλθεί';
 
-/*
-$__LOCALE['RCCRMOFFERS_DPC'][40]='_statisticscat;Category Viewed/Month;Επισκεψιμότητα κατηγοριών';
-$__LOCALE['RCCRMOFFERS_DPC'][41]='_statistics;Items Viewed/Month;Επισκεψιμότητα ειδών';
-$__LOCALE['RCCRMOFFERS_DPC'][42]='_transactions;Transaction/Month;Συναλλαγές ανα μήνα';
-$__LOCALE['RCCRMOFFERS_DPC'][43]='_applications;Applications Birth/Month;Νεές εφαρμογές ανα μήνα';
-$__LOCALE['RCCRMOFFERS_DPC'][44]='_appexpires;Applications Expires/Month;Ληξεις εφαρμογών ανα μήνα';
-$__LOCALE['RCCRMOFFERS_DPC'][45]='_mailqueue;Mail send/Month;Σταλθέντα e-mail ανα μήνα';
-$__LOCALE['RCCRMOFFERS_DPC'][46]='_mailsendok;Mail Received/Month;Παρεληφθέντα e-mail ανα μήνα';
-$__LOCALE['RCCRMOFFERS_DPC'][47]='_income;Income;Εισόδημα';
-$__LOCALE['RCCRMOFFERS_DPC'][48]='_moretrans;All transactions;Όλες οι συναλλαγές';
-$__LOCALE['RCCRMOFFERS_DPC'][49]='_list;List;Λίστα';
-$__LOCALE['RCCRMOFFERS_DPC'][50]='_campaign;Campaign;Καμπάνια';
-$__LOCALE['RCCRMOFFERS_DPC'][51]='_code;Item;Κωδικός';
-$__LOCALE['RCCRMOFFERS_DPC'][52]='_category;Category;Κατηγορία';
-$__LOCALE['RCCRMOFFERS_DPC'][53]='_outoflist;out of list;εξήχθει απο';
-$__LOCALE['RCCRMOFFERS_DPC'][54]='_FAILED;Bounce;Bounce';
-*/
+
 class rccrmoffers {
 	
 	var $title, $prpath, $urlpath, $url, $mtrackimg;
@@ -243,7 +196,7 @@ class rccrmoffers {
 			case 'cppreviewcamp'       : 
 			case 'cpviewcamp'          : 
 			case 'cpcrmoffers'         : 
-		    default                    : $out = ($this->visitor) ? null : $this->select_visitor('alert-important');
+		    default                    : $out = ($this->visitor) ? null : $this->select_visitor('crm-alert-important');
 		}		
 		
         return ($out);
@@ -297,9 +250,9 @@ class rccrmoffers {
 		if (!$result) return false;
 
 		foreach ($result as $i=>$rec) {
-			if ($this->iseMailUser($rec[0]))
+			if (filter_var($rec[0], FILTER_VALIDATE_EMAIL))
 				return $rec[0];
-			elseif ($this->iseMailUser($rec[1]))
+			elseif (filter_var($rec[1], FILTER_VALIDATE_EMAIL))
 				return $rec[1];
 		}	
 		
@@ -356,6 +309,10 @@ class rccrmoffers {
 			$rtokens[] = GetGlobal('controller')->calldpc_method('rccontrolpanel.timeSayWhen use '. strtotime($rec['date'])); 
 			$rtokens[] = ($resolved || $recognize) ? 'cpcrmoffers.php?v=' . $visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
+			
+			$rtokens[] = (filter_var($visitor, FILTER_VALIDATE_EMAIL)) ? 
+							GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
+									
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
 			             "<option value=\"$hash\">".$rtokens[1]."</option>";
