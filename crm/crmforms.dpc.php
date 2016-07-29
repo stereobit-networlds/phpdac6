@@ -18,6 +18,8 @@ $__LOCALE['CRMFORMS_DPC'][5]='_cat;Category;Κατηγορία';
 $__LOCALE['CRMFORMS_DPC'][6]='_class;Class;Κλάση';
 $__LOCALE['CRMFORMS_DPC'][7]='_code;Code;Κωδικός';
 $__LOCALE['CRMFORMS_DPC'][8]='_title;Title;Τίτλος';
+$__LOCALE['CRMFORMS_DPC'][9]='_profile;Profile;Στοιχεία';
+$__LOCALE['CRMFORMS_DPC'][10]='_udashboard;Dashboard;Σύνοψη';
 
 
 class crmforms extends crmmodule  {
@@ -42,7 +44,7 @@ class crmforms extends crmmodule  {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;	
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('CRMFORMS_DPC',getlocal()); // .'_'. str_replace('@','AT',$selected_cus); 
+		$title = localize('CRMFORMS_DPC',getlocal()); 
 	
 	    if (defined('MYGRID_DPC')) {
 		
@@ -193,7 +195,7 @@ class crmforms extends crmmodule  {
 			$tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);
 			$tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);
 			$twigpath = $this->prpath . $tmpl_path .'/'. $tmpl_name .'/';	
-			$tempfile = 'crmform-cache-' . base64_encode($template) . '.html';
+			$tempfile = 'crmform-cache-' . urlencode(base64_encode($template)) . '.html';
 				
 			if (@file_put_contents($twigpath . $tempfile, $form)) {
 				
@@ -258,6 +260,10 @@ class crmforms extends crmmodule  {
 			$dropdown[$_title] = 'cpcrmoffers.php'.'?v='.$user.'&stemplate='.$rec['title'];
 		}
 		
+		$dropdown[0]=''; //divider
+		$dropdown[localize('_udashboard',getlocal())]='cpcrm.php?t=crmtree&id='.$user;
+		$dropdown[localize('_profile',getlocal())]='cpcrmtrace.php?t=cpcrmprofile&v='.$user;
+		
 		$menu = $this->createButton($user, $dropdown, $style);
 		
 		return ($menu);		
@@ -275,7 +281,7 @@ class crmforms extends crmmodule  {
 		
 		if (!empty($urls)) {
 			foreach ($urls as $n=>$url)
-				$links .= '<li><a href="'.$url.'">'.$n.'</a></li>';
+				$links .= $url ? '<li><a href="'.$url.'">'.$n.'</a></li>' : '<li class="divider"></li>';
 			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
 		} 
 		

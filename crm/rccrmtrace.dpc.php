@@ -22,6 +22,8 @@ $__EVENTS['RCCRMTRACE_DPC'][12]='cpcrmaddcol';
 $__EVENTS['RCCRMTRACE_DPC'][13]='cpcrmuser';
 $__EVENTS['RCCRMTRACE_DPC'][14]='cpcrmcust';
 $__EVENTS['RCCRMTRACE_DPC'][15]='cpcrmcont';
+$__EVENTS['RCCRMTRACE_DPC'][16]='cpcrmaddactivity';
+$__EVENTS['RCCRMTRACE_DPC'][17]='cpcrmsaveactivity';
 
 $__ACTIONS['RCCRMTRACE_DPC'][0]='cpcrmtrace';
 $__ACTIONS['RCCRMTRACE_DPC'][1]='cpcrmprofile';
@@ -35,10 +37,12 @@ $__ACTIONS['RCCRMTRACE_DPC'][8]='cpcrmframe';
 $__ACTIONS['RCCRMTRACE_DPC'][9]='cpcrmaddfav';
 $__ACTIONS['RCCRMTRACE_DPC'][10]='cpcrmremfav';
 $__ACTIONS['RCCRMTRACE_DPC'][11]='cpcrmaddoffer';
-$__ACTIONS['RCCRMTRACE_DPC'][11]='cpcrmaddcol';
-$__ACTIONS['RCCRMTRACE_DPC'][12]='cpcrmuser';
-$__ACTIONS['RCCRMTRACE_DPC'][13]='cpcrmcust';
-$__ACTIONS['RCCRMTRACE_DPC'][14]='cpcrmcont';
+$__ACTIONS['RCCRMTRACE_DPC'][12]='cpcrmaddcol';
+$__ACTIONS['RCCRMTRACE_DPC'][13]='cpcrmuser';
+$__ACTIONS['RCCRMTRACE_DPC'][14]='cpcrmcust';
+$__ACTIONS['RCCRMTRACE_DPC'][15]='cpcrmcont';
+$__ACTIONS['RCCRMTRACE_DPC'][16]='cpcrmaddactivity';
+$__ACTIONS['RCCRMTRACE_DPC'][17]='cpcrmsaveactivity';
 
 $__LOCALE['RCCRMTRACE_DPC'][0]='RCCRMTRACE_DPC;Crm trace;Crm trace';
 $__LOCALE['RCCRMTRACE_DPC'][1]='_id;ID;ID';
@@ -118,6 +122,12 @@ class rccrmtrace  {
 	
 	    switch ($event) {
 			
+			case 'cpcrmsaveactivity' : $this->saveActivity();
+			                           $this->readProfile();
+			                           break;
+			case 'cpcrmaddactivity'  : $this->readProfile();
+			                           break;
+			
 			case 'cpcrmuser'       : $this->readUserProfile(); break;
 			case 'cpcrmcust'       : $this->readCustomerProfile(); break;
 			case 'cpcrmcont'       : $this->readContactProfile(); break;
@@ -162,7 +172,10 @@ class rccrmtrace  {
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 		if ($login!='yes') return null;	
 	 
-		switch ($action) {	 
+		switch ($action) {
+
+			case 'cpcrmsaveactivity' : break;
+			case 'cpcrmaddactivity'  : break;		
 		
 			case 'cpcrmuser'       : break;
 			case 'cpcrmcust'       : break;
@@ -764,7 +777,7 @@ class rccrmtrace  {
 	}	
 	
 	
-	
+	/*save actions*/
 	protected function addActivity($profile, $say, $type=null) {
 		if ((!$say)||(!$profile)) return false;
 		$db = GetGlobal('db');
@@ -777,6 +790,21 @@ class rccrmtrace  {
 		
 		return true;
 	}
+	
+	/*post data */
+	protected function saveActivity() {
+		$db = GetGlobal('db');
+		$t = 1; //int
+		
+		if (($say = GetParam('about')) && ($profile=GetParam('v'))) {
+	
+			$sSQL = "insert into crmactivities (profile, memo, type) values (";
+			$sSQL.= $db->qstr($profile) . "," . $db->qstr($say). "," . $t . ")";
+			$result = $db->Execute($sSQL);	
+			return true;
+		}
+		return false;	
+	}		
 	
 	public function showActivities($template=null) {
 		$db = GetGlobal('db');

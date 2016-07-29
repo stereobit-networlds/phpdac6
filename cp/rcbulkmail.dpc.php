@@ -132,7 +132,7 @@ class rcbulkmail {
 	var $appname, $appkey, $cptemplate, $urlRedir, $urlRedir2, $webview, $nsPage;
 	var $owner, $seclevid, $isHostedApp;
 	
-	var $userDemoIds, $maxinpvars, $batchid, $ckeditver;
+	var $userDemoIds, $crmLevel, $maxinpvars, $batchid, $ckeditver;
 	var $newtemplatebody, $saved, $savedname, $newsubtemplatebody, $newpatternbody;
 		
     function __construct() {
@@ -216,6 +216,7 @@ class rcbulkmail {
 		$this->batchid = GetParam('bid') ? GetParam('bid') : 0; //as reade by post form when send submit
 		
 		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
+		$this->crmLevel = 9;
 		$this->maxinpvars = ini_get('max_input_vars') - 50; //DEPEND ON SRV AND DEFINES THE BATCH OUTPUT
 		
 		$ckeditorVersion = remote_paramload('RCBULKMAIL','ckeditor',$this->prpath);		
@@ -411,6 +412,14 @@ class rcbulkmail {
 	public function isDemoUser() {
 		return (in_array($this->seclevid, $this->userDemoIds));
 	}
+	
+	public function isLevelUser($level=6) {
+		return ($this->seclevid>=$level ? true : false);
+	}	
+	
+	public function isCrmUser() {
+		return ($this->seclevid>=$this->crmLevel ? true : false);
+	}		
 	
 	/*disable settings in form*/
 	public function disableSettings() {
@@ -2542,7 +2551,15 @@ This email and any files transmitted with it are confidential and intended solel
 	public function getViews($template=null, $limit=null) {
 		$db = GetGlobal('db');	
 		$l = $limit ? $limit : 5;
-		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
+		$cid = $_GET['cid'] ? $_GET['cid'] : null;	
+		
+		if ((defined('CRMFORMS_DPC')) && ($this->isCrmUser())) {
+			$template = 'crm-' . $template;
+			$crm = true;
+		}
+		else
+			$crm = false;
+		
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
@@ -2558,7 +2575,8 @@ This email and any files transmitted with it are confidential and intended solel
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 			$tokens[] = $rec[1] . ' '. $rec[3];
-			$tokens[] = $rec[2];
+			$tokens[] = $crm ?	GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$rec[2]."+crmdoc") : $rec[2];
+			
 			$ret .= $this->combine_tokens($t, $tokens);
 			unset($tokens);	
 		}
@@ -2596,7 +2614,15 @@ This email and any files transmitted with it are confidential and intended solel
 	public function getClicks($template=null, $limit=null) {
 		$db = GetGlobal('db');	
 		$l = $limit ? $limit : 5;
-		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
+		$cid = $_GET['cid'] ? $_GET['cid'] : null;	
+		
+		if ((defined('CRMFORMS_DPC')) && ($this->isCrmUser())) {
+			$template = 'crm-' . $template;
+			$crm = true;
+		}
+		else
+			$crm = false;
+		
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
@@ -2615,7 +2641,8 @@ This email and any files transmitted with it are confidential and intended solel
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 			$tokens[] = $rec[1] . ' '. $rec[3];
-			$tokens[] = $rec[2];
+			$tokens[] = $crm ?	GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$rec[2]."+crmdoc") : $rec[2];
+			
 			$ret .= $this->combine_tokens($t, $tokens);
 			unset($tokens);	
 		}

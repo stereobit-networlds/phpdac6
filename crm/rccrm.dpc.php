@@ -17,6 +17,7 @@ $__EVENTS['RCCRM_DPC'][7]='cpcrmmoduledtl';
 $__EVENTS['RCCRM_DPC'][8]='cpcrmrun';
 $__EVENTS['RCCRM_DPC'][9]='cpcrmdashboard';
 $__EVENTS['RCCRM_DPC'][10]='crmstats';
+$__EVENTS['RCCRM_DPC'][11]='crmtree';
 
 $__ACTIONS['RCCRM_DPC'][0]='cpcrm';
 $__ACTIONS['RCCRM_DPC'][1]='cpcrmcus';
@@ -29,6 +30,7 @@ $__ACTIONS['RCCRM_DPC'][7]='cpcrmmoduledtl';
 $__ACTIONS['RCCRM_DPC'][8]='cpcrmrun';
 $__ACTIONS['RCCRM_DPC'][9]='cpcrmdashboard';
 $__ACTIONS['RCCRM_DPC'][10]='crmstats';
+$__ACTIONS['RCCRM_DPC'][11]='crmtree';
 
 $__LOCALE['RCCRM_DPC'][0]='RCCRM_DPC;Crm;Crm';
 $__LOCALE['RCCRM_DPC'][1]='_id;ID;ID';
@@ -147,6 +149,9 @@ class rccrm  {
 	
 	   switch ($event) {
 		   
+		 case 'crmtree'      : /*menu call for one user dahsboard*/
+							   break; 		   
+		   
 		 case 'crmstats'     : $this->crm_stats(); break;   
 		   
 		 case 'cpcrmrun'     : /*if ($crm_module = GetReq('mod')) {//module calls inside mod.showdetails
@@ -190,6 +195,10 @@ class rccrm  {
 	  if ($login!='yes') return null;	
 	 
 	  switch ($action) {
+		  
+		 case 'crmtree'        : $frame = $this->loadframe(null,'users');//,'560px'); /*menu call for one user dahsboard*/
+								 $out = $this->window('e-CRM: '.GetReq('id'), null, $frame);
+							     break; 		  
 
 		 case 'crmstats'       : break;	  
 	  
@@ -263,12 +272,13 @@ class rccrm  {
 		return ($ret);
 	}	
 
-	protected function loadframe($ajaxdiv=null, $mode=null) {
+	protected function loadframe($ajaxdiv=null, $mode=null, $height=null) {
 		$id = GetParam('id');
 		$cmd = ($mode=='customers') ? 'cpcrmshowcus&id='.$id : 'cpcrmshowusr&id='.$id;
 		$bodyurl = seturl("t=$cmd&iframe=1");
+		$ht = $height ? $height : '460px';
 			
-		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"460px\"><p>Your browser does not support iframes</p></iframe>";    
+		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"$ht\"><p>Your browser does not support iframes</p></iframe>";    
 
 		if ($ajaxdiv)
 			return $ajaxdiv. '|' . $frame;
