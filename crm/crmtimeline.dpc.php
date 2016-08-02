@@ -161,7 +161,7 @@ class crmtimeline extends crmmodule  {
 									$link = $this->url . "/search/{$rec['attr1']}/";
 									break;
 					case 'filter' : $c = 'blue'; 
-									$title = localize('_filter', getlocal());	
+									$title = localize('_filterin', getlocal());	
 					                $item = $rec['attr1']; 
 									$link = $this->url . "/filter/{$rec['attr1']}/";
 									break;

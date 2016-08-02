@@ -24,6 +24,7 @@ class i18nL {
 	
     }
 	
+	/*generate lang file for current language*/
 	protected function create_i18n_file() {
 		global $__LOCALE;
 			
@@ -39,12 +40,12 @@ class i18nL {
 				@copy($locfile, str_replace('.ini','._ni', $locfile)); //backup
 			
 			if ($append) //read file as ini
-				$existed_data = @parse_ini_file($locfile, 1, INI_SCANNER_NORMAL);
+				$existed_data = @parse_ini_file($locfile, 1, INI_SCANNER_RAW);
 			
 			foreach ($__LOCALE as $m=>$loc) {
 				$cm = str_replace('_DPC','',$m);
 				
-				if (($append) && array_key_exists($cm , $existed_data))
+				if (($append) && (is_array($existed_data)) && (@array_key_exists($cm , $existed_data)))
 					continue; //bypass if module has already written
 				
 				$data .= "[$cm]" . PHP_EOL;
@@ -53,9 +54,9 @@ class i18nL {
 					
 					//$data .= $l[0] . '="' . $l[$lan+1] . '"' . PHP_EOL; 
 					$var = array_shift($l);
-					$svar = ($var[0]=='_') ? substr($var, 1) : $var;
+					$svar = ($var[0]=='_') ? $this->spchars(substr($var, 1)) : $this->spchars($var);
 					$data .= str_replace(' ','_', $svar);
-					$data .= ' = "' . mb_convert_encoding($l[$lan], 'UTF-8', 'UTF-8') . '"' . PHP_EOL; 
+					$data .= ' = "' . mb_convert_encoding($this->spchars($l[$lan]), 'UTF-8', 'UTF-8') . '"' . PHP_EOL; 
 				}
 				$data .= PHP_EOL . PHP_EOL;
 			}
@@ -71,21 +72,34 @@ class i18nL {
 		//return false;
 	}
 	
+	protected function spchars($s) {
+		$ret = str_replace(array('?','{','}','|','&','~','!','(',')','^','"','NO','YES','no','yes'), 
+		                   array('','','','','','','','','','',"'",'_NO','_YES','_no','_yes'),
+						   $s);
+		return ($ret);
+	}
+	
 	public function translate($string=null, $category=null) {
 		if (!$string) return null;
-		
+
 		if (defined('I18N_DPC')) {
+			
+			//$c = new ReflectionClass('L');
+            //echo $c->getStaticPropertyValue('strName');
+			
 			if ($category) {
 				$cstring = "{$category}_{$string}";
-				$ret = L::$csting;
+				//return (L::$csting);
+				//return $c->getStaticPropertyValue($cstring);
+				return L($cstring);
 			}	
 			else
-				$ret = L::$string;		
+				//return (L::$string);		
+				//return $c->getStaticPropertyValue($string);
+				return L($string);
 		}
 		else
-			$ret = localize($string, getlocal());
-		
-		return ($ret);
+			return (localize($string, getlocal()));	
 	}	
 
 };

@@ -104,7 +104,7 @@ class i18n {
 		$this->clang = getlocal();
 		
 		$this->isol = arrayload('SHELL','isolangs');		
-		$this->isolan = (!empty($isol)) ? $this->isol[$this->clang] : 'en';
+		$this->isolan = (!empty($this->isol)) ? $this->isol[$this->clang] : 'en';
 		
         // Apply settings
         if ($filePath != NULL) {
@@ -132,7 +132,7 @@ class i18n {
             $this->prefix = $prefix;
         }
 		
-		$this->init(); //initalize
+		$this->init(); //initalize		
     }
 
     public function init() {
@@ -156,7 +156,8 @@ class i18n {
         if ($this->appliedLang == NULL) {
             throw new RuntimeException('No language file was found.');
         }
-
+		//echo $this->langFilePath; print_r($this->userLangs);
+		
         // search for cache file
         $this->cacheFilePath = $this->cachePath . '/php_i18n_' . md5_file(__FILE__) . '_' . $this->prefix . '_' . $this->appliedLang . '.cache.php';
 
@@ -165,7 +166,7 @@ class i18n {
             switch ($this->get_file_extension()) {
                 case 'properties':
                 case 'ini':
-                    $config = parse_ini_file($this->langFilePath, true);
+                    $config = parse_ini_file($this->langFilePath, true, INI_SCANNER_RAW); 
                     break;
                 case 'yml':
                     if( ! class_exists('Spyc') )
@@ -271,16 +272,19 @@ class i18n {
 
         // 2nd highest priority: GET parameter 'lang'
         //if (isset($_GET['lang']) && is_string($_GET['lang'])) {
-		if (($_GET['t']=='lang') && ($currentlang = $_GET['langsel'])) {	
-            $userLangs[] = $this->isol[$currentlang]; //$_GET['lang'];
+		if (($_GET['t']=='lang') && ($currentlang = $_GET['langsel'])) {
+			$cl = $currentlang ? $currentlang : 0;		
+            $userLangs[] = $this->isol[$cl]; //$_GET['lang'];
         }
-
-        // 3rd highest priority: SESSION parameter 'lang'
-        //if (isset($_SESSION['lang']) && is_string($_SESSION['lang'])) {
-		if ($currentlang = getlocal())  {	
-            $userLangs[] = $this->isol[$currentlang]; //$_SESSION['lang'];
-        }
-
+        else {
+			// 3rd highest priority: SESSION parameter 'lang'
+			//if (isset($_SESSION['lang']) && is_string($_SESSION['lang'])) {
+			$currentlang = getlocal();
+			$cl = $currentlang ? $currentlang : 0;	
+            $userLangs[] = $this->isol[$cl]; //$_SESSION['lang'];
+		}
+        //echo getlocal(); print_r($userLangs); 
+		
         // 4th highest priority: HTTP_ACCEPT_LANGUAGE
         if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
             foreach (explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']) as $part) {
