@@ -104,7 +104,7 @@ class i18n {
 		$this->clang = getlocal();
 		
 		$this->isol = arrayload('SHELL','isolangs');		
-		$this->isolan = (!empty($isol)) ? $this->isol[$this->clang] : 'en';
+		$this->isolan = (!empty($this->isol)) ? $this->isol[$this->clang] : 'en';
 		
         // Apply settings
         if ($filePath != NULL) {
@@ -132,7 +132,7 @@ class i18n {
             $this->prefix = $prefix;
         }
 		
-		$this->init(); //initalize
+		$this->init(); //initalize		
     }
 
     public function init() {
