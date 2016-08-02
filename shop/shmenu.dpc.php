@@ -143,7 +143,14 @@ class shmenu {
                     
                     if ($sub_menu = $smu[$name.'-submenu']) {
 					
-					   if (stristr($sub_menu,'.htm')) {//htm template file
+					   if (stristr($sub_menu,'shkategories.')) {//phpdac cmd
+					     if (defined('SHKATEGORIES_DPC')) {
+							$cmddac = str_replace('^',$this->cseparator,$sub_menu);
+							$ret2 = GetGlobal('controller')->calldpc_method($cmddac); //cat sep
+							$tokens[] = $this->dropdown_class;//'dropdown'; 
+						 }
+					   }
+					   elseif (stristr($sub_menu,'.htm')) {//htm template file
 					     //echo 'a',$sub_menu;
                          $menusubfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$sub_menu) ; 
 					     if (is_readable($menusubfile)) {

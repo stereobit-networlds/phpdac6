@@ -142,9 +142,16 @@ class jsdialog {
 		'type':     'error',
 		'title':    'Error'
 	});
+	*/
+	public function zdialog($text, $title=null, $type='error') {
+		return "new $.Zebra_Dialog('$text', 
+	{
+		'type':     '$type',
+		'title':    '$title'
+	});";
+	}
 	
-	
-	$.Zebra_Dialog('<strong>Zebra_Dialog</strong>, a small, compact and highly configurable dialog box plugin for jQuery', 
+	/*$.Zebra_Dialog('<strong>Zebra_Dialog</strong>, a small, compact and highly configurable dialog box plugin for jQuery', 
 	{
 		'type':     'question',
 		'title':    'Custom buttons',
@@ -153,8 +160,17 @@ class jsdialog {
 			alert((caption != '' ? '"' + caption + '"' : 'nothing') + ' was clicked');
 		}
 	});	
+	*/
+	public function zdialogQuestion($text, $title=null, $buttons) {
+		$b = $buttons ? $buttons : "'Yes', 'No', 'Help'";
+		return "new $.Zebra_Dialog('$text', 
+		'type':     'question',
+		'title':    '$title',
+		'buttons':  [$b]
+	});";
+	}
 	
-	$.Zebra_Dialog('<strong>Zebra_Dialog</strong>, a small, compact and highly configurable dialog box plugin for jQuery', 
+	/*$.Zebra_Dialog('<strong>Zebra_Dialog</strong>, a small, compact and highly configurable dialog box plugin for jQuery', 
 	{
 		'type':     'question',
 		'title':    'Custom buttons',
@@ -164,15 +180,39 @@ class jsdialog {
                     {caption: 'Cancel', callback: function() { alert('"Cancel" was clicked')}}
                 ]
 	});	
+	*/
+	public function zdialogCB($text, $title=null, $buttons, $cb) {
+		if (is_array($buttons)) {
+			foreach ($buttons as $b=>$caption)
+				$btn[] = "{caption: '$caption', callback: ".$cb[$b]."}";
+		}	
+		$mybuttons = implode(',',$btn);
+		
+		return "new $.Zebra_Dialog('$text', 
+		'type':     'question',
+		'title':    '$title',
+		'buttons':  [$mybuttons]
+	});";
+	}	
 	
-	new $.Zebra_Dialog('<strong>Some dummy content:</strong><br><br>', 
+	/*new $.Zebra_Dialog('<strong>Some dummy content:</strong><br><br>', 
 	{
 		'source':  {'ajax': 'ajax.html'},
 		width: 600,
 		'title': 'External content loaded via AJAX'
-	});
+	});*/
+	public function zdialogAjax($url,$title=null,$width=600) {
+		$w = $width ? $width : 600;		
+		if ($url)		
+		return "new $.Zebra_Dialog('$text', 
+	{
+		'source':  {'ajax': '$url'},
+		width: $w,
+		'title': '$title'
+	});";
+	}	
 	
-	new $.Zebra_Dialog('<strong>Content loaded via IFRAME:</strong>', 
+	/*new $.Zebra_Dialog('<strong>Content loaded via IFRAME:</strong>', 
 	{
 		source: {'iframe': {
 			'src':  'http://en.m.wikipedia.org/wiki/Dialog_box',
@@ -182,49 +222,71 @@ class jsdialog {
 		title:  'External content loaded in an iFrame'
 	});	
 	*/
+	public function zdialogFrame($url,$title=null,$width=800,$height=500) {
+		$w = $width ? $width : 800;
+		$h = $height ? $height : 500;
+		if ($url)
+		return "new $.Zebra_Dialog('$text', 
+	{
+		source: {'iframe': {
+			'src':  '$url',
+			'height': $h
+			}},
+		width: $w,
+		title:  '$title'
+	});";
+	}		
 	
 	public function sayError($text=null, $title=null) {
 
-		$ret = "
+		/*$ret = "
 		new $.Zebra_Dialog('$text', 
 		{
 			'type':     'error',
 			'title':    '$title'
 		});";
-		return ($ret);
+		return ($ret);*/
+		
+		return ($this->zDialog($text,$title,'error'));
 	}	
 
 	public function sayWarning($text=null, $title=null) {
 
-		$ret = "
+		/*$ret = "
 		new $.Zebra_Dialog('$text', 
 		{
 			'type':     'warning',
 			'title':    '$title'
 		});";
-		return ($ret);
+		return ($ret);*/
+		
+		return ($this->zDialog($text,$title,'warning'));
 	}		
 	
 	public function sayInformation($text=null, $title=null) {
 
-		$ret = "
+		/*$ret = "
 		new $.Zebra_Dialog('$text', 
 		{
 			'type':     'information',
 			'title':    '$title'
 		});";
-		return ($ret);
+		return ($ret);*/
+		
+		return ($this->zDialog($text,$title,'information'));		
 	}	
 	
 	public function sayConfirmation($text=null, $title=null) {
 
-		$ret = "
+		/*$ret = "
 		new $.Zebra_Dialog('$text', 
 		{
 			'type':     'confirmation',
 			'title':    '$title'
 		});";
-		return ($ret);
+		return ($ret);*/
+		
+		return ($this->zDialog($text,$title,'confirmation'));
 	}		
 					
 };

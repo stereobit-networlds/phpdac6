@@ -171,6 +171,7 @@ class rcxmlfeeds {
  
        $toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"xmlcreate\">"; 
        $toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_xmlcreate',getlocal()) . "\">&nbsp;";  
+	   $toprint .= "<input type=\"checkbox\" name=\"actives\" value=\"1\" checked>&nbsp;All active items" ; 
        $toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpxmlcreate" . "\">";	 	   
 	   	    
        $toprint .= "</FONT></FORM>";	    
@@ -224,7 +225,11 @@ class rcxmlfeeds {
 		$myfields = implode(',', $this->select_fields);	
 
 		$sSQL = "select id," . $myfields . " from products";			
-		$sSQL .= " WHERE itmactive>0 and active>0 and " . $this->xmlindex[0] . "=1";//" IS NOT NULL"; //!!!				
+		$sSQL .= " WHERE itmactive>0 and active>0 ";
+		//print_r($_POST);
+		if ($_POST['actives']) {/*echo 'actives';*/} 
+		else
+			$sSQL .= " and "	. $this->xmlindex[0] . "=1";			
 
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
@@ -241,7 +246,9 @@ class rcxmlfeeds {
 			$cat .= $rec['cat3'] ? $this->cseparator.$rec['cat3'] : null;
 			$cat .= $rec['cat4'] ? $this->cseparator.$rec['cat4'] : null;
 			
-			$recarray['itemurl'] = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$id,null,null,null,null,1);
+			$_cat = str_replace(' ','_', $cat);
+			
+			$recarray['itemurl'] = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$_cat.'&id='.$id,null,null,null,null,1);
 			$recarray['itemimg'] = 'http://' . $this->url . '/' . $this->imgpath . $id . $this->restype;
 			$recarray['itemcat'] = $cat; /** <<<<<<<<<<<<<<<<<<<<<<<<<<< also add **/
 			
