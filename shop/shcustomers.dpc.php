@@ -88,7 +88,7 @@ $__LOCALE['SHCUSTOMERS_DPC'][43]='_SELCUSTOMER;Select Detail;Επιλογή';
 $__LOCALE['SHCUSTOMERS_DPC'][44]='_UPDCUSTOMER;Edit Detail;Μεταβολή';
 $__LOCALE['SHCUSTOMERS_DPC'][45]='_CUSTEXISTS;Customer exists. Already registered!;Είστε ήδη καταχωρημενος!';
 $__LOCALE['SHCUSTOMERS_DPC'][46]='_OK;Submit;Αποστολή';
-$__LOCALE['SHCUSTOMERS_DPC'][47]='Customer registration;Customer registration;Εγγραφή πελάτη';
+$__LOCALE['SHCUSTOMERS_DPC'][47]='CustomerRegistration;Customer registration;Εγγραφή πελάτη';
 
 class shcustomers {
 	var $userLevelID;

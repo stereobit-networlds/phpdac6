@@ -52,7 +52,9 @@ class i18nL {
 					$l = explode(';', $localestring);
 					
 					//$data .= $l[0] . '="' . $l[$lan+1] . '"' . PHP_EOL; 
-					$data .= array_shift($l);
+					$var = array_shift($l);
+					$svar = ($var[0]=='_') ? substr($var, 1) : $var;
+					$data .= str_replace(' ','_', $svar);
 					$data .= ' = "' . mb_convert_encoding($l[$lan], 'UTF-8', 'UTF-8') . '"' . PHP_EOL; 
 				}
 				$data .= PHP_EOL . PHP_EOL;
