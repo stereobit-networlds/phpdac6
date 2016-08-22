@@ -143,7 +143,7 @@ class i18n {
         $this->isInitialized = true;
 
         $this->userLangs = $this->getUserLangs();
-
+		//print_r($this->userLangs);
         // search for language file
         $this->appliedLang = NULL;
         foreach ($this->userLangs as $priority => $langcode) {
