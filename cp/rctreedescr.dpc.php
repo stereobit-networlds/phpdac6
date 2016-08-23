@@ -63,10 +63,24 @@ $__LOCALE['RCTREEDESCR_DPC'][37]='_cat3;Category 4;Κατηγορία 4';
 $__LOCALE['RCTREEDESCR_DPC'][38]='_cat4;Category 5;Κατηγορία 5';
 $__LOCALE['RCTREEDESCR_DPC'][39]='_id;ID;ID';
 $__LOCALE['RCTREEDESCR_DPC'][40]='_tree;Tree;Δέντρο';
+$__LOCALE['RCTREEDESCR_DPC'][41]='_leaf;Childs;Παιδιά';
+$__LOCALE['RCTREEDESCR_DPC'][42]='_rel;Relation;Σχέση';
+$__LOCALE['RCTREEDESCR_DPC'][43]='_active;Active;Ενεργό';
+$__LOCALE['RCTREEDESCR_DPC'][44]='_timein;Date;Ημερομηνία';
+$__LOCALE['RCTREEDESCR_DPC'][45]='_id;ID;ID';
+$__LOCALE['RCTREEDESCR_DPC'][46]='_title;Title;Τίτλος';
+$__LOCALE['RCTREEDESCR_DPC'][47]='_descr;Description;Περιγραφή';
+$__LOCALE['RCTREEDESCR_DPC'][48]='_code;Code;Κωδικός';
+$__LOCALE['RCTREEDESCR_DPC'][49]='_parent;Parent;Σχέση';
+$__LOCALE['RCTREEDESCR_DPC'][50]='_orderid;Order;Σειρά';
+$__LOCALE['RCTREEDESCR_DPC'][51]='_title0;Title L1;Τίτλος L1';
+$__LOCALE['RCTREEDESCR_DPC'][52]='_title1;Title L2;Τίτλος L2';
+$__LOCALE['RCTREEDESCR_DPC'][53]='_title2;Title L3;Τίτλος L3';
+$__LOCALE['RCTREEDESCR_DPC'][54]='_fields;Fields;Πεδία';
 
 class rctreedescr {
 	
-	var $title, $prpath, $urlpath, $url;//, $cat, $item;
+	var $title, $prpath, $urlpath, $url;
 	var $map_t, $map_f, $cseparator, $onlyincategory;
 	var $listName;
 	
@@ -74,7 +88,7 @@ class rctreedescr {
 	var $selected_items, $autoresize, $restype, $odd;	
 	
 	var $filename, $fields, $photodb, $sizeDB;
-	var $owner, $savecolpath;
+	var $owner, $fid, $echoSQL;
 
     function __construct() {
 	  
@@ -83,11 +97,7 @@ class rctreedescr {
 		$this->url = paramload('SHELL','urlbase');
 		$this->title = localize('RCTREEDESCR_DPC',getlocal());
 
-		$this->owner = GetSessionParam('LoginName');
-        $this->savecolpath = remote_paramload('RCTREEDESCR','savecolpath',$this->prpath);		
-		
-		//$this->cat = GetParam('cat'); //GetReq('cat');	    
-		//$this->item = GetParam('id'); //GetReq('id');
+		$this->owner = GetSessionParam('LoginName');	
 		
 		$this->map_t = remote_arrayload('RCITEMS','maptitle',$this->prpath);	
 		$this->map_f = remote_arrayload('RCITEMS','mapfields',$this->prpath);		
@@ -128,12 +138,9 @@ class rctreedescr {
 		
         $this->listName = 'mytreelist';
         $this->savedlist = GetSessionParam($this->listName) ? GetSessionParam($this->listName) : null;
-		//$this->filename = $this->prpath . $this->savecolpath . '/' . $_POST['cname'] . '.' . base64_encode($this->owner) . '.col';
-		
-		//$this->fields = array('code','itmname','itmdescr','itmremark','uniname1','price0','price1','cat','item_name_url','item_url','photo_url');
-		//$this->xmlfile = $_POST['xmlfile'];
-        //$this->listXMLName = 'mytreeXMLlist';
-        //$this->savedXMLlist = GetSessionParam($this->listXMLName) ? GetSessionParam($this->listXMLName) : null;		
+	
+		$this->fid = GetSessionParam('fid') ? GetSessionParam('fid') : GetReq('fid');
+		$this->echoSQL = false; //true;
 	}
 	
     function event($event=null) {
@@ -149,14 +156,14 @@ class rctreedescr {
 			case 'cptreeframe'    : echo $this->loadframe();
 		                            die(); 
 			 
-			case 'cptreeusers'    : break;
-			case 'cptreeitems'    : break;
-			
+			case 'cptreeusers'    : //break;
+			case 'cptreeitems'    : if ($fid = $this->fid) {
+										SetSessionParam('fid', $fid); //save fid 
+										//$fidparam = "&fid=" . $fid;
+									}
+			                        break;			 
 			 
-            //case 'cpsavexml'      : //$this->savedXMLlist = $this->save_xml_file(); 
-			                        //break;				 
-			 
-		    case 'cploadtree'     : $this->savedlist = $this->loadList(); 
+		    case 'cploadtree'     : //$this->savedlist = $this->loadList(); 
 			                        break;			 
 		 
 		    case 'cpsavetree'     : $this->savedlist = $this->saveList();				
@@ -171,29 +178,27 @@ class rctreedescr {
 
 	     switch ($action) {
 			 
-		   case 'cptreeframe'    : break;	 
+		   case 'cptreeframe'    :  break;	 
 			 
-		   case 'cptreeusers'    : break;
-		   case 'cptreeitems'    : break;			 
-			 
-           //case 'cpsavexml'      : break;		 
+		   case 'cptreeusers'    :  break;
+		   case 'cptreeitems'    :  break;			 	 
 		   
-		   case 'cploadtree'     : break;		   
+		   case 'cploadtree'     :  break;		   
 		   
-		   case 'cpsavetree'     : $out = 'Filename:' . $this->filename . '<br/>';
-		                           $out .= 'SessionList:' . $this->savedList . '<br/>';
-								   $out .= implode('<br/>', $_POST);
-								   $out .= implode('<br/>', array_keys($_POST));
-		                           /*$out .= $this->listName . ':'; //implode('<br/>', $_POST); 
-								   foreach ($_POST[$this->listName] as $s)
+		   case 'cpsavetree'     :  $out = 'Filename:' . $this->filename . '<br/>';
+		                            $out .= 'SessionList:' . $this->savedList . '<br/>';
+								    $out .= implode('<br/>', $_POST);
+								    $out .= implode('<br/>', array_keys($_POST));
+		                            /*$out .= $this->listName . ':'; //implode('<br/>', $_POST); 
+								    foreach ($_POST[$this->listName] as $s)
 									$out .= $s.'|';
 								   $out .= '<br/><br/>tlist:';	
 								   foreach ($_POST['tlist'] as $t)
 									$out .= $t.'|';	*/
-		                           break;
+		                            break;
 								   
 		   case 'cptreedescr'    :						   
-		   default               : $out = $this->gridMode();
+		   default               :  $out = $this->gridMode();
 		                           //$out = $this->savedlist;
 		 }			 
 
@@ -204,12 +209,14 @@ class rctreedescr {
 	protected function loadframe($mode=null) {
 		$selectmode = $mode ? $mode : GetReq('mode');
 		$id = GetReq('id');
+		$fidparam = $this->fid ? "&fid=" . $this->fid : null;
+		
 		switch ($selectmode) {
-			case 'users' : $bodyurl = seturl("t=cptreeusers&mode=users&id=".$id); break;
-			case 'cats'  : $bodyurl = seturl("t=cptreeusers&mode=cats&id=".$id); break;
-			case 'items' : $bodyurl = seturl("t=cptreeitems&mode=items&id=".$id); break;
+			case 'users' : $bodyurl = seturl("t=cptreeusers&mode=users&id=". $id); break;
+			case 'cats'  : $bodyurl = seturl("t=cptreeitems&mode=cats&id=". $id . $fidparam); break;
+			case 'items' : $bodyurl = seturl("t=cptreeitems&mode=items&id=". $id . $fidparam); break;
 			case 'tree'  : 
-			default      : $bodyurl = seturl("t=cptreeitems&mode=tree&id=".$id);
+			default      : $bodyurl = seturl("t=cptreeitems&mode=tree&id=". $id . $fidparam);
 		}
 			
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"500px\"><p>Your browser does not support iframes</p></iframe>";    
@@ -218,7 +225,7 @@ class rctreedescr {
 	}		
 		
 	protected function gridMode() {
-		$mode = GetReq('mode') ? GetReq('mode') : 'items';
+		$mode = GetReq('mode') ? GetReq('mode') : 'tree';
         
 		$turl0 = seturl('t=cptreedescr&mode=items');		
 		$turl1 = seturl('t=cptreedescr&mode=cats');
@@ -228,7 +235,7 @@ class rctreedescr {
 										array(localize('_items', getlocal())=>$turl0,
 											  localize('_cats', getlocal())=>$turl1,
 										      //localize('_users', getlocal())=>$turl2,
-											  localize('_treedescr', getlocal())=>$turl3,
+											  localize('_tree', getlocal())=>$turl3,
 		                                ),'success');		
 																	
 		switch ($mode) {
@@ -250,26 +257,27 @@ class rctreedescr {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('_items', getlocal()); 
+		$title = localize('_tree', getlocal()); 
 		
-        $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,itmname,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
+        $xsSQL = "SELECT * from (select id,timein,active,tid,pid,tname,tdescr,tname0,tname1,tname2,items,users,orderid from ctree) o ";		   
 					
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|link|10|"."javascript:ttree\"{code5}\");".'||');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price1|".localize('_price1',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{code5}\");".'||');
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");		
+		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|1:0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tid|".localize('_code',getlocal())."|5|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|5|1|");			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|10|"."javascript:ttree(\"{tid}\");".'||');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|5|0|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname0|".localize('_title0',getlocal())."|5|1|");			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
+		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+items|".localize('_items',getlocal())."|boolean|1|1:0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+users|".localize('_users',getlocal())."|boolean|1|1:0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	
@@ -291,7 +299,7 @@ class rctreedescr {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|link|10|"."javascript:titems(\"{code5}\");".'||');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|link|10|"."javascript:titems(\"{id}\");".'||');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
@@ -329,13 +337,13 @@ class rctreedescr {
 
 		$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
 		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|1|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|5|1|");
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat1|".localize('_cat0',getlocal())."|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat2|".localize('_cat1',getlocal())."|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat3|".localize('_cat2',getlocal())."|10|1|");				
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat4|".localize('_cat3',getlocal())."|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat5|".localize('_cat4',getlocal())."|10|1|");			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|2|1|");	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|2|1|");
+		//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat1|".localize('_cat0',getlocal())."|5|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat2|".localize('_cat1',getlocal())."|5|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat3|".localize('_cat2',getlocal())."|5|1|");				
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat4|".localize('_cat3',getlocal())."|5|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat5|".localize('_cat4',getlocal())."|5|1|");			
 		//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}1|".localize('_cat0',getlocal())."|link|10|"."javascript:tcats(\"{cat1}\");".'||');
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|link|10|"."javascript:tcats(\"{cat2}\");".'||');
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|link|10|"."javascript:tcats(\"{cat2}$CS{cat3}\");".'||');				
@@ -403,186 +411,112 @@ class rctreedescr {
 		return ($ret);
 	}	
 	
-
-	
-	protected function get_selected_items($preset=null, $asis=false) {
+	public function currentSelectedTreeType() {
+		$db = GetGlobal('db');		
+		$tid = GetParam('id');
 		
-		/*if ($this->savedXMLlist) 
-			$ret = $this->get_selected_XML_items();
-		else*/	
-			$ret = $this->get_selected_db_items($preset, $asis);
+		$sSQL = 'select items,users from ctree where tid=' . $db->qstr($tid);
+		$result = $db->Execute($sSQL);
 		
+		$isitemstype = $result->fields[0];
+		$isuserstype = $result->fields[1];
+		
+		$ret = $isitemstype ? 1 : ($isuserstype ? 2 : 0);
+		//echo $ret;
 		return ($ret);
 	}	
 	
-	//when no create_page..just read items to show...
-	public function read_selected_items($preset=null, $asis=false) {
-		/*if ($this->savedXMLlist) 
-			$this->selected_items = $this->get_selected_xml_items();
-		else*/
-			$this->selected_items = $this->get_selected_db_items($preset, $asis);
-		   	
-		//..order array by key
-		ksort($this->selected_items);			
-	}	
-	
-	public function viewList() {
-		/*if ($this->savedXMLlist) 
-			$ret = $this->viewXmlList();
-		else*/
-			$ret = $this->viewDbList();		
+	public function currentSelectedTree() {
+		$db = GetGlobal('db');		
+		$lan = getlocal() ?  getlocal() : '0';
+		$tid = GetParam('id');
+		
+		$sSQL = 'select tname, tname0, tname1, tname2 from ctree where tid=' . $db->qstr($tid);
+		$result = $db->Execute($sSQL);
+		
+		$ret = $result->fields['tname'.$lan] ? $result->fields['tname'.$lan] : $result->fields[0];
 		return ($ret);
 	}
-
-	public function viewCollection() {
-		/*if ($this->savedXMLlist) 
-			$ret = $this->viewXmlCollection();
-		else*/
-			$ret = $this->viewDbCollection();		
-		//return ($ret);		
-    }		
 	
-	public function isCollection() {
-		/*if ($this->savedXMLlist) {
-			$s = unserialize($this->savedXMLlist);
-			$ret = count($s);	
+	//select field to display
+	public function selectFieldUrl($field=null) {
+		$t=GetReq('t');
+		$id = GetReq('id');
+		$mode = GetReq('mode');
+		
+		switch ($field) {
+			case 'qty' :
+			default    : $fid = $field ? $field : $this->getmapf('code');
 		}
-		else {*/
-			if ($c = $this->savedlist) {
-				if (strstr($c, ',')) 
-					$ret = count(explode(',', $c));
-				else 
-					$ret = 1;
-			}
-			else
-				$ret = 0;
-	    //}	
+		
+		$ret = seturl("t=$t&mode=$mode&id=$id&fid=". $fid);
+		
 		return ($ret);
-	}		
-
-    public function getCurrentList() {
-		/*if ($this->savedXMLlist) 
-			$ret = $this->getCurrentXmlList();
-		else*/
-			$ret = $this->getCurrentDbList();
-		return ($ret);
-    }
-	
-	protected function saveListInFile($data=null) {
-		
-		if ($_POST['cname']) { 
-		    if (!is_dir($this->prpath . $this->savecolpath))
-				@mkdir($this->prpath . $this->savecolpath);
-		
-			$ret = @file_put_contents($this->filename, $data);
-			return $ret;
-		}
-		return false;
-	}	
-	
-	protected function saveList() {
-		
-		/*if ($xmlfile = $_POST['xmlload']) { 
-		    //in case of xml loading (recycle saves until the end of field match)
-			$this->load_xml_file($xmlfile,true);
-		}
-		elseif ($this->savedXMLlist) {
-			//loaded xml record list, handle by removing items
-			if (!empty($_POST[$this->listName])) { //mylist post array selector
-				//print_r($_POST[$this->listName]);
-				$xmlrecs = unserialize($this->savedXMLlist);
-				foreach ($xmlrecs as $i=>$rec) {
-					if (in_array($rec['code'],$_POST[$this->listName]))
-						$newrec[] = $rec;
-				}
-				if (!empty($newrec)) {
-					$this->savedXMLlist = serialize($newrec);
-					SetSessionParam($this->listXMLName, $this->savedXMLlist); //re-save xml list as recordset
-				}
-			}
-			else {	
-				$this->savedXMLlist = null;
-				SetSessionParam($this->listXMLName, $this->savedXMLlist); //clean xml list			
-			}	
-			
-			return true;
-		}
-		else {*/ //choose items from selected cat /id
-		  if (!empty($_POST[$this->listName])) { 
-			$plist = implode(',', $_POST[$this->listName]);
-		
-			$list = GetSessionParam($this->listName) ? GetSessionParam($this->listName) . ',' . $plist : $plist;
-			SetSessionParam($this->listName, $list);
-			
-			$this->saveListInFile($list);
-		  }
-		  else {
-			$list = null; //GetSessionParam($this->listName);
-			SetSessionParam($this->listName, $list);
-			
-			$this->saveListInFile($list);
-		  }
-		  
-		  return ($list);
-        //}
-		//return false;	
 	}
 	
-	//called from rcbulmail
-	public function saveSortedList($csvlist=null) {
-		//echo $csvlist;
-		$this->savedlist = $csvlist;
-		SetSessionParam($this->listName, $csvlist);
-		return true;
-	}
-	
-	//called from rccrmtrace
-	public function addtoList($itemcode=null) {
-        if (!$itemcode) return false;
-		$db = GetGlobal('db');	
-		$code = $this->getmapf('code');		
+	public function selectFieldButton() {
 		
-		if (strstr($itemcode, ',')) { //list of codes, csv
-			$sSQL = 'select id from products where ' . $code ." REGEXP " . $db->qstr(str_replace(',','|',$itemcode));
-			$sSQL .= " and itmactive>0 and active>0";			   
-			$resultset = $db->Execute($sSQL,2);	
-			//echo $sSQL;
-			foreach ($resultset as $i=>$rec)
-				$c[] = $rec[0];
-			$list = isset($this->savedlist) ?  $this->savedlist . "," . implode(',', $c) : implode(',', $c);
-			SetSessionParam($this->listName, $list);	
-		}
-		else {
-			$sSQL = 'select id from products where ' . $code ."=" . $db->qstr($itemcode);
-			$sSQL .= " and itmactive>0 and active>0";			   
-			$resultset = $db->Execute($sSQL,2);		
-
-			if ($c = $resultset->fields[0]) {
-				$list = isset($this->savedlist) ?  $this->savedlist . "," . $c : $c;
-				SetSessionParam($this->listName, $list);
-				return true;
-			}
-		}
-		return false;	
+		$turl0 = $this->selectFieldUrl('datein');		
+		$turl1 = $this->selectFieldUrl('code1');
+		$turl2 = $this->selectFieldUrl('code2');
+		$turl3 = $this->selectFieldUrl('code3');
+		$turl4 = $this->selectFieldUrl('code4');
+		$turl5 = $this->selectFieldUrl('code5');		
+		
+		$turl6 = $this->selectFieldUrl('itmactive');
+		$turl7 = $this->selectFieldUrl('active');
+		$turl8 = $this->selectFieldUrl('uniname1');
+		$turl9 = $this->selectFieldUrl('uniname2');
+		$turl10 = $this->selectFieldUrl('price0');
+		$turl11 = $this->selectFieldUrl('price1');
+		
+		$turl12 = $this->selectFieldUrl('id');
+		
+		$button = $this->createButton(localize('_fields', getlocal()), 
+										array(localize('date', getlocal())=>$turl0,
+										      localize('code0', getlocal())=>$turl12,
+											  localize('code1', getlocal())=>$turl1,
+										      localize('code2', getlocal())=>$turl2,
+											  localize('code3', getlocal())=>$turl3,
+											  localize('code4', getlocal())=>$turl4,
+											  localize('code5', getlocal())=>$turl5,
+											  localize('active', getlocal())=>$turl6,
+										      localize('itmactive', getlocal())=>$turl7,
+											  localize('uniname1', getlocal())=>$turl8,
+											  localize('uniname2', getlocal())=>$turl9,
+											  localize('price0', getlocal())=>$turl10,											  
+											  localize('price1', getlocal())=>$turl11,
+		                                ));//,'success');		
+		
+		return ($button);
 	}	
 	
-	/************************ db item handler **********************/
-	
-    protected function getCurrentDbList() {
+
+	//exclude existed session items
+    protected function getCurrentSessionList() {
 		$db = GetGlobal('db');
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->getmapf('code');
+		$code = $this->fid ? $this->fid : $this->getmapf('code');
 		
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');	
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+
+        switch (GetReq('mode')) { 
+			case 'cats'  : $cat = GetReq('id'); break;
+			case 'items' : $id = GetReq('id'); break;
+			case 'tree'  :			
+			default      : $id = $cpGet['id'];
+					       $cat = $cpGet['cat'];	
+		}		
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		
-		if ($id = $cpGet['id']) {
-			$sSQL .= $code . '=' . $db->qstr($id);
+		if ($id) {
+			//$sSQL .= $code . '=' . $db->qstr($id);
+			$sSQL .= 'id =' . $db->qstr($id);
 		}	
-		elseif ($cat = $cpGet['cat']) {
+		elseif ($cat) {
 			
 			$cat_tree = explode($this->cseparator,str_replace('_',' ',$cat));
 			/////////////////////////////////// $db->qstr($this->replace_spchars($cat_tree[0],1))...
@@ -618,10 +552,95 @@ class rctreedescr {
 			
 		if ($plist)
 			$sSQL .= ' and id not in (' . $plist . ')';
-		$sSQL .= " and itmactive>0 and active>0";			   
+		
+		//$sSQL .= " and itmactive>0 and active>0";			   
 		$sSQL .= " ORDER BY " . $itmname;	//order unselected list by name	
 		
-		//echo $sSQL;	
+		if ($this->echoSQL)
+			echo $sSQL . '<br/>';
+		
+	    $resultset = $db->Execute($sSQL,2);	
+		foreach ($resultset as $n=>$rec) {
+			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
+        }		
+
+		return (implode('',$ret));	
+	}
+	
+	//exclude existed tree map items and session items
+    protected function getCurrentTreeList() {
+		$db = GetGlobal('db');
+	    $lan = getlocal();
+	    $itmname = $lan ? 'itmname':'itmfname';
+	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
+		$code = $this->fid ? $this->fid : $this->getmapf('code');
+		$tid = GetParam('id');
+		
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+
+        switch (GetReq('mode')) { 
+			case 'cats'  : $cat = GetReq('id'); break;
+			case 'items' : $id = GetReq('id'); break;
+			case 'tree'  :			
+			default      : $id = $cpGet['id'];
+					       $cat = $cpGet['cat'];	
+		}		
+		
+		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
+		
+		if ($id) {
+			$sSQL .= $code . '=' . $db->qstr($id);
+		}	
+		elseif ($cat) {
+			
+			$cat_tree = explode($this->cseparator,str_replace('_',' ',$cat));
+			/////////////////////////////////// $db->qstr($this->replace_spchars($cat_tree[0],1))...
+			if ($cat_tree[0])
+				$whereClause .= ' cat0=' . $db->qstr(str_replace('_',' ',$cat_tree[0]));		
+			elseif ($this->onlyincategory)
+				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
+			if ($cat_tree[1])	
+				$whereClause .= ' and cat1=' . $db->qstr(str_replace('_',' ',$cat_tree[1]));	
+			elseif ($this->onlyincategory)
+				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
+			if ($cat_tree[2])	
+				$whereClause .= ' and cat2=' . $db->qstr(str_replace('_',' ',$cat_tree[2]));	
+			elseif ($this->onlyincategory)
+			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
+			if ($cat_tree[3])	
+				$whereClause .= ' and cat3=' . $db->qstr(str_replace('_',' ',$cat_tree[3]));
+			elseif ($this->onlyincategory)
+				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
+		   		
+		    
+			$sSQL .= $whereClause;	
+
+		}
+        else
+			return null;	
+		
+		//check session
+        if (!empty($_POST[$this->listName]))    
+            $plist = implode(',',$_POST[$this->listName]);
+
+        if ($sl = GetSessionParam($this->listName)) 
+			$plist .= ($plist ? ','. $sl : $sl);			
+			
+		if ($plist)
+			$sSQL .= ' and id not in (' . $plist . ')';
+		
+		//check tree maps
+		if (isset($tid)) {
+			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);
+			$sSQL .= ' and id not in (' . $treeSQL . ')';
+		}	
+		
+		//$sSQL .= " and itmactive>0 and active>0";			   
+		$sSQL .= " ORDER BY " . $itmname;	//order unselected list by name	
+		
+		if ($this->echoSQL)
+			echo $sSQL . '<br/>';
+		
 	    $resultset = $db->Execute($sSQL,2);	
 		//print_r($resultset);
 		foreach ($resultset as $n=>$rec) {
@@ -629,14 +648,28 @@ class rctreedescr {
         }		
 
 		return (implode('',$ret));	
-	}		
+	}	
+
+    public function getCurrentList() {
 		
-	protected function viewDbList() {
+        switch (GetReq('mode')) { 
+			case 'tree'  : $ret = $this->getCurrentTreeList(); break;		
+			case 'cats'  : 
+			case 'items' : 
+			default      : $ret = $this->getCurrentSessionList();
+		}	
+		
+		return ($ret);
+    }	
+
+	
+	//include session items	
+	protected function viewSessionList() {
 		$db = GetGlobal('db');
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->getmapf('code');
+		$code = $this->fid ? $this->fid : $this->getmapf('code');
 		
 		if (!empty($_POST[$this->listName]))  
 			$plist = implode(',', $_POST[$this->listName]);	
@@ -648,10 +681,12 @@ class rctreedescr {
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		$sSQL .= ' id in (' . $this->savedlist . ')';
-		$sSQL .= " and itmactive>0 and active>0";			   
+		//$sSQL .= " and itmactive>0 and active>0";			   
 		$sSQL .= " ORDER BY FIELD(id,".  $this->savedlist .")";
 
-		//echo $sSQL;	
+		if ($this->echoSQL)
+			echo $sSQL . '<br/>';
+		
 	    $resultset = $db->Execute($sSQL,2);	
 		
 		//print_r($resultset);
@@ -662,86 +697,87 @@ class rctreedescr {
 		return (implode('',$ret));			
 	}	
 	
-	protected function viewDbCollection() {
+	//include tree map items or session items
+	protected function viewTreeList() {
 		$db = GetGlobal('db');
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->getmapf('code');
+		$code = $this->fid ? $this->fid : $this->getmapf('code');
+		$tid = GetParam('id');
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
-		$sSQL .= ' id in (' . GetSessionParam($this->listName) . ')';
-		$sSQL .= " and itmactive>0 and active>0";			   
-		$sSQL .= " ORDER BY FIELD(id,".  GetSessionParam($this->listName) .")";
+			
+		//check session	
+		if (!empty($_POST[$this->listName]))  
+			$plist = implode(',', $_POST[$this->listName]);	
+        else
+			$plist = null;	
+		
+		$list = $this->savedlist ? $this->savedlist .','.$plist : $plist;
+		if ($list)
+			$sesSQL = ' id in (' . $this->savedlist . ')';
+			
+		//check tree maps
+		if (isset($tid)) {
+			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);			
+			$sSQL .= $sesSQL ? $sesSQL . ' OR id in (' . $treeSQL . ')' : ' id in (' . $treeSQL . ')';
+		}
+		else
+			$sSQL .= $sesSQL;
+			
+		//$sSQL .= " and itmactive>0 and active>0";			   
+		$sSQL .= " ORDER BY " . $code; //FIELD(id,".  $this->savedlist .")";
 
-		//echo $sSQL;	
-	    $resultset = $db->Execute($sSQL,2);	
+		if ($this->echoSQL)
+			echo $sSQL . '<br/>';	
+		
+		$resultset = $db->Execute($sSQL,2);	
 		
 		//print_r($resultset);
-		if ($resultset) {
-			foreach ($resultset as $n=>$rec) {
-				$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
-			}		
-			return (implode('',$ret));
-		}
-		return false;	
-	}		
-	
-	public function postSubmit($action, $title=null, $class=null) {
-		if (!$action) return;
-		$submit = $title ? $title : 'Submit';
-		$cl = $class ? "class=\"$class\"" : null;
-		 
-		$id = GetReq('id'); 
-		$c = "<INPUT type=\"hidden\" name=\"id\" value=\"{$id}\" />";
-		$mode = GetReq('mode');
-		$c .= "<INPUT type=\"hidden\" name=\"mode\" value=\"{$mode}\" />";
+		foreach ($resultset as $n=>$rec) {
+			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
+		}		
 		
-        $c .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . $submit . "\" $cl />";  
-        $c .= "<INPUT type=\"hidden\" name=\"FormName\" value=\"Treedescr\" />";		   
-        $c .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . $action . "\" $cl />";
-        return ($c);   		   
+		return (implode('',$ret));				
 	}
 
-	protected function getmapf($name) {
+	public function viewList() {
+		
+        switch (GetReq('mode')) { 
+			case 'tree'  : $ret = $this->viewTreeList(); break;		
+			case 'cats'  : 
+			case 'items' : 
+			default      : $ret = $this->viewSessionList();	
+		}			
+			
+		return ($ret);
+	}	
 	
-	  if (empty($this->map_t)) return 0;
-	  
-	  foreach ($this->map_t as $id=>$elm)
-	    if ($elm==$name) break;
-				
-	  $ret = $this->map_f[$id];
-	  return ($ret);
-	}
+
 	
-	protected function get_selected_db_items($preset=null, $asis=false) {
+	protected function get_selected_session_items($preset=null, $limit=null) {
         $db = GetGlobal('db');		
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';	
         $codefield = $this->getmapf('code');
-
-		if ($preset) {
-			if ($asis==false) {
-				$colext = '.' . base64_encode($this->owner) . '.col';
-				$colfile = $preset . $colext;
-				$itemsIdList = @file_get_contents($this->prpath . $this->savecolpath . '/'. $colfile);
-			}
-			else
-				$itemsIdList = $preset;
-			//SetSessionParam($this->listName, $itemsIdList); //dont save in mem
-		}	
-		else
-			$itemsIdList = GetSessionParam($this->listName);
+		$tid = $preset ? $preset : GetParam('id');	
 		
         $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->getmapf('code').
 				" from products WHERE ";
 
-		$sSQL .= "id in (" . $itemsIdList .")";
-	    $sSQL .= " and itmactive>0 and active>0";	
-		$sSQL .= " ORDER BY FIELD(id,".  $itemsIdList .")";
-        //$sSQL .= " limit " . $items;		
+		if (isset($tid)) {
+			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
+			$sSQL .=  ' id in (' . $treeSQL . ')';	
+		}	
+        else
+			return null;
+		
+	    //$sSQL .= " and itmactive>0 and active>0";	
+		$sSQL .= " ORDER BY " . $codefield;//FIELD(id,".  $itemsIdList .")";
+        $sSQL .= $limit ? " limit " . $limit : null;		
 		
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
@@ -798,317 +834,134 @@ class rctreedescr {
 		
 		return ($ret_array);
 	}		
-	/*
-	protected function show_select_collections($name, $taction=null, $ext=null, $class=null) {
-		$col = GetReq('collection') ;
 	
-		$url = ($taction) ? seturl('t='.$taction.'&collection=',null,null,null,null) : 
-		                    seturl('t=cploadcol&collection=',null,null,null,null);
+	public function get_selected_items($preset=null, $asis=false) {
 		
-		if (defined('RCFS_DPC')) {
-			$path = $this->prpath . $this->savecolpath . '/';
-			$myext = explode(',',$ext);
-			$extensions = is_array($myext) ? $myext : array(0=>".png",1=>".gif",2=>".jpg");
-			//echo '>', print_r($extensions);
-			
-			if (is_dir($path)) {
-		
-				$this->fs= new rcfs($path);
-				$ddir = $this->fs->read_directory($path,$extensions); 
-
-				if (!empty($ddir)) {
-		  
-					sort($ddir);	 
-					
-					$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
-					$ret .= "<option value=\"\">Select...</option>";
-					
-					foreach ($ddir as $id=>$fname) {
-						$parts = explode(".",$fname);
-						$title = $parts[0];
-						$parts2 = explode(".",$col);
-						$selectedcol = $parts2[0];
-						$selection = ($title == $selectedcol) ? " selected" : null;
-						
-						$ret .= "<option value=\"". $url . $fname. "\"". $selection .">$title</option>";		
-					}	
-		
-					$ret .= "</select>";			    
-				}
-			}//empty dir
-	    }  
-		       
-	    return ($ret);		
-	}	
-	
-	public function viewCollectionsSelect() {
-		$colext = '.' . base64_encode($this->owner) . '.col';
-		$ret = $this->show_select_collections('mycollection', null, $colext, null);
+		$ret = $this->get_selected_session_items($preset, $asis);
 		return ($ret);
 	}		
 	
-	protected function loadList() {
-		$colfile = $_GET['collection'];
-		$list = @file_get_contents($this->prpath . $this->savecolpath . '/'. $colfile);
-		
-		SetSessionParam($this->listName, $list);
-		return $list;
-	}
-	*/
-	/*************************** XML handler *************************************/
-	/*
-	protected function getCurrentXmlList() {
-		return false; //not active when xml selections (only remove)
-	}	
-	
-	protected function viewXmlList() {
-		$xmlrecs = unserialize($this->savedXMLlist);
-		if (!empty($xmlrecs)) {
-			foreach ($xmlrecs as $i=>$rec) {
-				//if ($i==0) print_r($rec);
-				$ret[] = "<option value='".$rec['code']."'>". $rec['code'].'-'.$rec['itmname']."</option>" ;
-			}		
-			return (implode('',$ret));	
-		}
-		return null;
-	}
-	
-	protected function viewXmlCollection() {
-		$xmlrecs = unserialize($this->savedXMLlist);
-		if (!empty($xmlrecs)) {
-			foreach ($xmlrecs as $i=>$rec) {
-				//if ($i==0) print_r($rec);
-				$ret[] = "<option value='".$rec['code']."'>". $rec['code'].'-'.$rec['itmname']."</option>" ;
-			}		
-			return (implode('',$ret));	
-		}		
-	}	
-	
-	protected function get_selected_XML_items() {
-		$xmlrecs = unserialize($this->savedXMLlist);
-		return ($xmlrecs);
-	}	
-	
-	protected function load_xml_file($file=null, $returnkeys=false) {
-		if (!$file) $file = $this->prpath . 'temp.xml';//read cached file when no file submited (first time read)
-		
-		if (($response_xml_data = file_get_contents($file))===false){
-			echo "Error fetching XML\n";
-		} 
-		else {
-			libxml_use_internal_errors(true);
-			$data = simplexml_load_string($response_xml_data, null, LIBXML_NOCDATA);
-			if (!$data) {
-				echo "Error loading XML\n";
-				foreach(libxml_get_errors() as $error) {
-					echo "\t", $error->message;
-				}
-			} 
-			else {
-				$ret = @file_put_contents($this->prpath . 'temp.xml', $response_xml_data);
-				unlink ('temp.xlx'); //reset xlx
-				
-				return ($ret);
-			}
-		}
-		return false;
-	}
-	
-	//check fields already in couples 
-	protected function fixarray() {
-		$filename = $_POST['xmlfile'] ? $_POST['xmlfile'].'.xlx' : 'temp.xlx'; 
-		$f = @file($this->prpath . $filename);
-		
-		if (is_array($f)) {
-			foreach ($f as $a=>$line) {
-			  if ($line) {
-				$x = explode(',',$line);
-				$fa[trim($x[0])] = trim($x[1]);
-			  }
-			}  
-		}
-		else
-			$fa = array(); //empty
-		//print_r($fa);
-		return $fa;
-	}	
-	
-	protected function readXMLKeys($r) {
-		$fx = $this->fixarray();
-		foreach ($r as $f=>$field) {
-			//print_r($field);
-			if (is_array($field)) 
-				$ret .= $this->readXMLKeys($field);
-			else {
-				if (!in_array($f, $fx))
-					$ret .= "<option value='$f'>$f -> $field</option>";
-			}	
-			if ($f>0) break;
-		}			
-		return ($ret);
-	}
-	
-	public function viewXMLkeys() {		
-
-		$response_xml_data = @file_get_contents($this->prpath . 'temp.xml');		
-		$data = simplexml_load_string($response_xml_data, null, LIBXML_NOCDATA);
-		if ($data) {
-			$array = json_decode(json_encode($data), TRUE);	
-			$ret = $this->readXMLKeys($array);
-        }
-		return ($ret);		
-	}
-	
-	public function viewDBKeys() {
-		$fx = $this->fixarray();
-		foreach ($this->fields as $f=>$field) {
-			if (!array_key_exists($field, $fx))
-				$ret .= "<option value='$field'>$field</option>";
-		}	
-			
-		return ($ret);	
-	}
-	
-	protected function proccedXMLKeys($r, $keys, $id=0) {
-		foreach ($r as $f=>$field) {
-			if (is_array($field)) {
-				$a = $this->proccedXMLKeys($field, $keys, $id+1);
-				$rec .= (!empty($a)) ? serialize($a) . '<@>' : null;
-			}	
-			else {
-				if (in_array($f, $keys)) {
-					//echo $id,'-',$f,'=',$field,'<br/>';
-					foreach ($keys as $k=>$key) {
-						if ($f==$key) $rec[$k] = $field;
-					}					
-				}
-			}
-		}		
-		return ($rec);
-	}	
-	
-	protected function proceedXML($matchkeys=null,$xmldata=null) {
-        if (!is_array($matchkeys)) return false;	
-
-		foreach ($matchkeys as $mkey) {
-			$k = explode(',',$mkey);
-			$keys[trim($k[0])] = trim($k[1]); //db field / xml field pair
-		}	
-		//print_r($keys);
-		$data = simplexml_load_string($xmldata, null, LIBXML_NOCDATA);
-		if ($data) {
-			$array = json_decode(json_encode($data), TRUE);	
-			
-			$ret = $this->proccedXMLKeys($array, $keys, 0);
-			$ds = explode('<@>',$ret);
-			foreach ($ds as $i=>$serialarray) {
-				$un = unserialize($serialarray);
-				if (!empty($un))
-					$rec[] = $un;
-			}	
-			//print_r($rec);
-			$ret = serialize($rec);
-			SetSessionParam($this->listXMLName, $ret); //save xml list as recordset
-        }
-		return ($ret);	//serialized	
-	}	
-	
-	protected function save_xml_file() {
-		$dbf = $_POST['dbfield'];
-		$xmlf = $_POST['xmlfield'];
-		//fire up when check is on after fields connection or xlx preset selection
-		$go = $_POST['goxml'] ? true : ($_GET['xlx'] ? true : false);
-
-		if ($file = $_POST['xmlfile']) { 
-		    $filename = $file . '.xlx';
-			@copy($this->prpath . 'temp.xlx', $this->prpath . $filename);
-			@unlink ('temp.xlx'); //reset xlx
-		}	
-		else	
-			$filename = 'temp.xlx';
-		
-		if (($dbf) && ($xmlf)) {
-			$line =  $dbf . ',' . $xmlf."\r\n";
-			$ret = file_put_contents($this->prpath . $filename, $line , FILE_APPEND);
-			//echo 'save:' . $line . '<br>';	
-		}	
-		
-		if ($go) {
-			$xlxfile = $_POST['xmlfile'] ? $_POST['xmlfile'].'.xlx' : ($_GET['xlx'] ? $_GET['xlx'] : 'temp.xlx'); 
-			$xmlfile = $_POST['xmlfile'] ? $_POST['xmlfile'].'.xml' : 'temp.xml';
-			//echo 'proceed:' . @file_get_contents($this->prpath . $xlxfile);
-			
-			$ret = $this->proceedXML(file($this->prpath . $xlxfile), 
-			                         @file_get_contents($this->prpath . $xmlfile));
-			//return ($ret);	
-		}		
-		
-		return ($ret);
-	}
-	
-	public function postXMLSubmit($action, $title=null, $class=null) {
+	public function postSubmit($action, $title=null, $class=null) {
 		if (!$action) return;
 		$submit = $title ? $title : 'Submit';
 		$cl = $class ? "class=\"$class\"" : null;
 		 
-		$c = "<INPUT type=\"hidden\" name=\"cat\" value=\"{$this->cat}\" />";
-		$c .= "<INPUT type=\"hidden\" name=\"item\" value=\"{$this->id}\" />";	
-		$c .= "<INPUT type=\"hidden\" name=\"xmlload\" value=\"1\" />";  //<< keep param active to load the xml process page at .php
+		$id = GetReq('id'); 
+		$c = "<INPUT type=\"hidden\" name=\"id\" value=\"{$id}\" />";
+		$mode = GetReq('mode');
+		$c .= "<INPUT type=\"hidden\" name=\"mode\" value=\"{$mode}\" />";
 		
         $c .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . $submit . "\" $cl />";  
-        $c .= "<INPUT type=\"hidden\" name=\"FormName\" value=\"XMLCollections\" />";		   
+        $c .= "<INPUT type=\"hidden\" name=\"FormName\" value=\"Treedescr\" />";		   
         $c .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . $action . "\" $cl />";
         return ($c);   		   
-	}	
-	
-	protected function show_select_presets($name, $taction=null, $ext=null, $class=null) {
-		$xlx = $_GET['xlx'] ;
-	
-		$url = ($taction) ? seturl('t='.$taction.'&xlx=',null,null,null,null) : 
-		                    seturl('t=cpsavexml&xlx=',null,null,null,null);
-		
-		if (defined('RCFS_DPC')) {
-			$path = $this->prpath;
-			$myext = explode(',',$ext);
-			$extensions = is_array($myext) ? $myext : array(0=>".png",1=>".gif",2=>".jpg");
-			
-			if (is_dir($path)) {
-		
-				$this->fs= new rcfs($path);
-				$ddir = $this->fs->read_directory($path,$extensions); 
+	}
 
-				if (!empty($ddir)) {
-		  
-					sort($ddir);	 
-					
-					$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
-					$ret .= "<option value=\"\">Select...</option>";
-					
-					foreach ($ddir as $id=>$fname) {
-						$parts = explode(".",$fname);
-						$title = $parts[0];
-						$parts2 = explode(".",$xlx);
-						$selectedxlx = $parts2[0];
-						$selection = ($title == $selectedxlx) ? " selected" : null;
-						
-						$ret .= "<option value=\"". $url . $fname. "\"". $selection .">$title</option>";		
-					}	
+	protected function saveTreeList($data=null) {
+		$db = GetGlobal('db');		
+		$tid = GetParam('id');
+		$m=0;
 		
-					$ret .= "</select>";			    
+		if ($data) {
+			$ids = explode(',', $data);
+			
+			//insert if not in tree
+			foreach ($ids as $i=>$item) {
+				$existSQL = "select code from ctreemap WHERE code=" . $db->qstr($item) . " and tid=" . $db->qstr($tid);	
+				$resultset = $db->Execute($existSQL);
+				
+				if ($this->echoSQL)	echo $existSQL;
+				
+				if ($resultset->fields[0]) {
+					//dont insert
+					if ($this->echoSQL)	echo '0<br/>';
+					continue;
 				}
-			}//empty dir
-	    }  
-		       
-	    return ($ret);		
+				else {
+					$sSQL = 'insert into ctreemap (tid, code) values';
+					$sSQL .= ' ('. $db->qstr($tid) . ',' . $db->qstr($item) . ')';		   
+					$db->Execute($sSQL);
+					$m+=1;	
+					if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";
+				}
+			}			
+		}
+		
+		return ($m);
 	}	
 	
-	public function viewXMLPresetsSelect() {
+	protected function remTreeList($data=null) {
+		$db = GetGlobal('db');		
+		$tid = GetParam('id');
+		$m=0;	
 		
-		$ret = $this->show_select_presets('mypreset', null, '.xlx', null);
-		return ($ret);
-	}		
+		if ($data) {
+			$ids = explode(',', $data);
+			
+			//delete if not in post list
+			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
+			$result = $db->Execute($treeSQL);
+			if (!empty($result->fields)) {
+				foreach ($result as $r=>$rec) {
+					if (in_array($rec['code'], $ids)) {
+						//dont remove
+						//if ($this->echoSQL) echo '0<br/>';
+						continue;						
+					}
+					else {
+						$sSQL = 'delete from ctreemap where tid='. $db->qstr($tid) . ' and code=' . $db->qstr($rec['code']);		   
+						$db->Execute($sSQL);
+						$m+=1;	
+						if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";						
+					}
+				}
+			}
+		}
+		
+		return ($m);
+	}				
+					
 	
-	*/
+	protected function saveList() {
+		$mode = GetParam('mode');		
+		
+		if (!empty($_POST[$this->listName])) { 
+		
+			$plist = implode(',', $_POST[$this->listName]); //post list
+			$slist = GetSessionParam($this->listName); //current session list			
+			$list = $slist ? $slist . ',' . $plist : $plist;
+			
+			switch (GetReq('mode')) { 
+			
+				case 'tree'  :  if ($this->currentSelectedTreeType()==1) { //items tree
+									$this->remTreeList($plist); //remove post list
+									$this->saveTreeList($list); //save list at table
+									SetSessionParam($this->listName, ''); //reset session list
+				                }	
+								break;		
+			
+				case 'cats'  :
+				case 'items' : 		
+				default      :	SetSessionParam($this->listName, $list); //save session list
+			}	
+			
+		}
+		  
+		return ($list);
+	}	
+	
+	
+	protected function getmapf($name) {
+	
+	  if (empty($this->map_t)) return 0;
+	  
+	  foreach ($this->map_t as $id=>$elm)
+	    if ($elm==$name) break;
+				
+	  $ret = $this->map_f[$id];
+	  return ($ret);
+	}	
+
 	protected function replace_spchars($string, $reverse=false) {
 	
 	  if ($reverse) {
