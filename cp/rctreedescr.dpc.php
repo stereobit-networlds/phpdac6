@@ -145,9 +145,8 @@ class rctreedescr {
 	
     function event($event=null) {
 	
-	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
-	   /////////////////////////////////////////////////////////////			
+	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	   if ($login!='yes') return null;				
 
        if (!$this->msg) {
   
@@ -174,7 +173,10 @@ class rctreedescr {
       }
     }	
 
-    function action($action=null)  { 
+    function action($action=null)  {
+
+	     $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	     if ($login!='yes') return null;		
 
 	     switch ($action) {
 			 
