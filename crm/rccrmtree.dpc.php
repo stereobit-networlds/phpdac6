@@ -136,7 +136,7 @@ class rccrmtree {
         $this->savedlist = GetSessionParam($this->listName) ? GetSessionParam($this->listName) : null;
 	
 		$this->fid = GetReq('fid');//GetSessionParam('fid') ? GetSessionParam('fid') : GetReq('fid');
-		$this->echoSQL = true;
+		$this->echoSQL = false; //true;
 	}
 	
     function event($event=null) {
@@ -559,7 +559,7 @@ class rccrmtree {
         GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_lname',getlocal()).'|19|1');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|0');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+failed|".localize('_failed',getlocal()).'|5|0');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+listname|".localize('_listname',getlocal()).'|10|0');			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+listname|".localize('_listname',getlocal())."|link|10|"."javascript:tulist(\"{listname}\");".'||');			
 		   
 		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ulists+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
@@ -584,7 +584,7 @@ class rccrmtree {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+reply|".localize('_reply',getlocal())."|2|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal())."|2|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+mailstatus|".localize('_failed',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cid|".localize('_cid',getlocal())."|10|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cid|".localize('_cid',getlocal())."|link|10|"."javascript:tcamp(\"{cid}\");".'||');
 		   
 		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+mailqueue+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
@@ -687,38 +687,32 @@ class rccrmtree {
 	}
 	
 	public function selectFieldButton() {
+		$mode = GetParam('mode');
 		
-		$turl0 = $this->selectFieldUrl('datein');		
-		$turl1 = $this->selectFieldUrl('code1');
-		$turl2 = $this->selectFieldUrl('code2');
-		$turl3 = $this->selectFieldUrl('code3');
-		$turl4 = $this->selectFieldUrl('code4');
-		$turl5 = $this->selectFieldUrl('code5');		
+		switch ($mode) {
+			case 'ulist' :  $fields = 'startdate,datein,active,failed,name,email,listname';
+							break;
+					  
+			case 'campaign' : $fields = 'subject,reply,status,mailstatus';
+							break;		  
 		
-		$turl6 = $this->selectFieldUrl('itmactive');
-		$turl7 = $this->selectFieldUrl('active');
-		$turl8 = $this->selectFieldUrl('uniname1');
-		$turl9 = $this->selectFieldUrl('uniname2');
-		$turl10 = $this->selectFieldUrl('price0');
-		$turl11 = $this->selectFieldUrl('price1');
+			case 'users' :	$fields = 'timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid';
+							break;	
+	
+	        case 'email' : 	break; //direct input in session
+
+			case 'tree'  :  
+		    default      :  $fields = 'type,email,firstname,lastname,address,country,birthday,occupation,mobile,phone';
+		}		
+		if (!$fields) return null;
+		$f = explode(',', $fields);
 		
-		$turl12 = $this->selectFieldUrl('id');
+		foreach ($f as $i=>$field) {
+			$myfields[$field] = $this->selectFieldUrl($field);
+		}
 		
-		$button = $this->createButton(localize('_fields', getlocal()), 
-										array(localize('date', getlocal())=>$turl0,
-										      localize('code0', getlocal())=>$turl12,
-											  localize('code1', getlocal())=>$turl1,
-										      localize('code2', getlocal())=>$turl2,
-											  localize('code3', getlocal())=>$turl3,
-											  localize('code4', getlocal())=>$turl4,
-											  localize('code5', getlocal())=>$turl5,
-											  localize('active', getlocal())=>$turl6,
-										      localize('itmactive', getlocal())=>$turl7,
-											  localize('uniname1', getlocal())=>$turl8,
-											  localize('uniname2', getlocal())=>$turl9,
-											  localize('price0', getlocal())=>$turl10,											  
-											  localize('price1', getlocal())=>$turl11,
-		                                ));//,'success');		
+		if (empty($myfields)) return null;
+		$button = $this->createButton(localize('_fields', getlocal()), $myfields);		
 		
 		return ($button);
 	}	
@@ -732,34 +726,50 @@ class rccrmtree {
 		$mode = GetParam('mode');
 		$ret = null;	
 		
-		return;
+		$and = false;
+		$where = false;
+		$email = 'email';
 		
 		switch ($mode) {
-			case 'a' : $sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
-					  break;
+			case 'ulist' :  $sSQL = GetReq('id') ? "select $email from ulists where listname=" . $db->qstr(GetReq('id')) : null;
+							$and = true;
+							break;
+					  
+			case 'campaign' : $email = 'receiver'; 
+			                $sSQL = GetReq('id') ? "select $email from mailqueue where cid=" . $db->qstr(GetReq('id')) : null;
+			                $and = true;
+							break;		  
 		
+			case 'users' :	$sSQL = "select $email from users";
+							$where = true;
+							break;	
 	
 	        case 'email' : 	break; //direct input in session
-		    default      :
-							if (!empty($_POST[$this->listName]))    
-								$plist = implode(',',$_POST[$this->listName]);
 
-							if ($sl = GetSessionParam($this->listName)) 
-								$plist .= ($plist ? ','. $sl : $sl);			
+			case 'tree'  :  
+		    default      :  $sSQL = "select $email from crmcontacts";
+			                $where = true;
+		}
+
+        if (!$sSQL) return false;  
+		
+		//check session
+		if (!empty($_POST[$this->listName]))  
+			$list = implode(',', $_POST[$this->listName]);	
+        else
+			$list = $this->savedlist; 		
 			
-							if ($plist)
-								$sSQL .= ' and id not in (' . $plist . ')';
-				   
-							$sSQL .= " ORDER BY " . $itmname;	//order unselected list by name	
+		if ($list)
+			$sSQL .= $where ? " WHERE $email NOT REGEXP '" . str_replace(',','|',$list) . "'" :
+		                      ($and ? " and $email NOT REGEXP '" . str_replace(',','|',$list) . "'" : null);
 		
-							if ($this->echoSQL)
-								echo $sSQL . '<br/>';
+		if ($this->echoSQL)
+			echo $sSQL . '<br/>';
 		
-							$resultset = $db->Execute($sSQL,2);	
-							foreach ($resultset as $n=>$rec) {
-								$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
-							}		
-        }
+		$resultset = $db->Execute($sSQL);	
+		foreach ($resultset as $n=>$rec) {
+			$ret[] = "<option value='".$rec[0]."'>". $rec[0]."</option>" ;
+		}		
 		
 		return (implode('',$ret));	
 	}
@@ -773,40 +783,58 @@ class rccrmtree {
 		$mode = GetParam('mode');		
 		$ret = null;
 
-		return;	
+		$and = false;
+		$where = false;
+		$email = 'email';
 		
-		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
-			
+		switch ($mode) {
+			/*case 'ulist' :  $sSQL = GetReq('id') ? "select $email from ulists where listname=" . $db->qstr(GetReq('id')) : null;
+							$and = true;
+							break;
+					  
+			case 'campaign' :$email = 'receiver';  
+			                 $sSQL = GetReq('id') ? "select $email from mailqueue where cid=" . $db->qstr(GetReq('id')) : null;
+			                $and = true;
+							break;		  
 		
-		//check session
-        if (!empty($_POST[$this->listName]))    
-            $plist = implode(',',$_POST[$this->listName]);
-
-        if ($sl = GetSessionParam($this->listName)) 
-			$plist .= ($plist ? ','. $sl : $sl);			
+			case 'users' :	$sSQL = "select $email from users";
+							$where = true;
+							break;	
+	
+	        case 'email' : 	break; //direct input in session
+            */
+			case 'tree'  :  
+		    default      :  $sSQL = "select $email from crmcontacts";
+			                $where = true;
+		}
+		
+        if (!$sSQL) return false; 		
+		
+		//check session		
+		if (!empty($_POST[$this->listName]))  
+			$list = implode(',', $_POST[$this->listName]);	
+        else
+			$list = $this->savedlist; 		
 			
-		if ($plist)
-			$sSQL .= ' and id not in (' . $plist . ')';
+		if ($list)
+			$sSQL .= $where ? " WHERE $email NOT REGEXP '" . str_replace(',','|',$list) . "'" :
+		                      ($and ? " and $email NOT REGEXP '" . str_replace(',','|',$list) . "'" : null);	
 		
 		//check tree maps
 		if (isset($tid)) {
 			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);
-			$sSQL .= ' and id not in (' . $treeSQL . ')';
-		}	
-		
-		//$sSQL .= " and itmactive>0 and active>0";			   
-		$sSQL .= " ORDER BY " . $itmname;	//order unselected list by name	
+			$sSQL .= " and $email not in (" . $treeSQL . ')';
+		}			
 		
 		if ($this->echoSQL)
 			echo $sSQL . '<br/>';
 		
-	    $resultset = $db->Execute($sSQL,2);	
-		//print_r($resultset);
+		$resultset = $db->Execute($sSQL);	
 		foreach ($resultset as $n=>$rec) {
-			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
-        }		
-
-		return (implode('',$ret));	
+			$ret[] = "<option value='".$rec[0]."'>". $rec[0]."</option>" ;
+		}		
+		
+		return (implode('',$ret));
 	}	
 
     public function getCurrentList() {
@@ -831,24 +859,8 @@ class rccrmtree {
         else
 			$list = $this->savedlist;	
 		
-		//$list = $plist ? $plist : $this->savedlist;
 		if (!$list) return ;
-		/*
-		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
-		$sSQL .= ' id in (' . $this->savedlist . ')';
-		//$sSQL .= " and itmactive>0 and active>0";			   
-		$sSQL .= " ORDER BY FIELD(id,".  $this->savedlist .")";
 
-		if ($this->echoSQL)
-			echo $sSQL . '<br/>';
-		
-	    $resultset = $db->Execute($sSQL,2);	
-		
-		//print_r($resultset);
-		foreach ($resultset as $n=>$rec) {
-			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
-        }		
-        */
 		$resultset = (!empty($list)) ? explode(',', $list) : array();
 		foreach ($resultset as $n=>$email) {
 			$ret[] = "<option value='".$email."'>". $email."</option>" ;
@@ -862,29 +874,15 @@ class rccrmtree {
 	    $lan = getlocal();	
 		$code = $this->fid ? $this->fid : 'email';
 		$tid = GetParam('id');
+		
+		//if not users tree return
+		if ($this->currentSelectedTreeType()!=2) return null; 		
 			
 		//check session	
 		if (!empty($_POST[$this->listName]))  
 			$list = implode(',', $_POST[$this->listName]);	
         else
 			$list = $this->savedlist;	
-		
-		/*$list = $plist ? $plist : $this->savedlist;
-		if ($list)
-			$sesSQL = ' id in (' . $list . ')';
-			
-        $sSQL = 'select id,'.$code.',' . $itmname .' from products where '; 		
-		
-		//check tree maps
-		if (isset($tid)) {
-			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);			
-			$sSQL .= $sesSQL ? $sesSQL . ' OR id in (' . $treeSQL . ')' : ' id in (' . $treeSQL . ')';
-		}
-		else
-			$sSQL .= $sesSQL;
-					   
-		$sSQL .= " ORDER BY " . $code; //FIELD(id,".  $this->savedlist .")";
-        */
 		
 		$sSQL = "select code from ctreemap where tid=" . $db->qstr($tid);
 		$resultset = $db->Execute($sSQL);	
