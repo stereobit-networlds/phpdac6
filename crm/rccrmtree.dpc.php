@@ -221,6 +221,9 @@ class rccrmtree {
 			case 'ulist'    :   $bodyurl = seturl("t=cpcrmtreeusers&mode=ulist&id=". $id); break;
 			case 'campaign' :   $bodyurl = seturl("t=cpcrmtreeusers&mode=campaign&id=". $id); break;			
 			case 'users'    :   $bodyurl = seturl("t=cpcrmtreeusers&mode=users&id=". $id); break;	
+			case 'contacts' :   $bodyurl = seturl("t=cpcrmtreeusers&mode=contacts&id=". $id); break;
+			case 'customers':   $bodyurl = seturl("t=cpcrmtreeusers&mode=customers&id=". $id); break;
+			case 'sales'    :   $bodyurl = seturl("t=cpcrmtreeusers&mode=sales&id=". $id); break;
             case 'email'    :   $bodyurl = seturl("t=cpcrmtreeusers&mode=email&id=". $id); break;			
 			case 'tree'     : 
 			default         :   $bodyurl = seturl("t=cpcrmtreeitems&mode=tree&id=". $id);// . $fidparam);
@@ -395,8 +398,8 @@ class rccrmtree {
         $xsSQL = "SELECT * from (select id,date,udate,code,type,email,firstname,lastname,address,country,birthday,occupation,mobile,phone,skype,website,facebook,twitter from crmcontacts) o ";		   
 		   
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|0|");	   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+udate|".localize('_date',getlocal())."|5|1|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|10|"."javascript:tcontacts(\"{date}\");".'||');//"|5|0|");	   
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+udate|".localize('_date',getlocal())."|10|1|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|2|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|link|10|"."javascript:tmail(\"{email}\");".'||');
@@ -450,8 +453,8 @@ class rccrmtree {
 
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|5|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cid|".localize('_user',getlocal())."|link|20|"."javascript:tmail(\"{cid}\");".'||');			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+timein|".localize('_date',getlocal())."|10|0|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+timein|".localize('_date',getlocal())."|link|10|"."javascript:tsales(\"{timein}\");".'||');//"|10|0|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cid|".localize('_user',getlocal())."|link|10|"."javascript:tmail(\"{cid}\");".'||');			
 		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|2|0|||||right");	
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|20|0|");		
@@ -482,7 +485,7 @@ class rccrmtree {
         $xsSQL = "SELECT * from (select id,timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users) o ";		   
 		   
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|5|"."javascript:tusers(\"{timein}\");".'||');//"|5|0|");	   
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|5|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|link|10|"."javascript:tmail(\"{username}\");".'||');						
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|19|1|");
@@ -512,8 +515,8 @@ class rccrmtree {
 		$xsSQL = "SELECT * FROM (SELECT id,timein,active,code2,name,afm,eforia,prfdescr,street,address,number,area,city,zip,voice1,voice2,fax,mail,attr1,attr2,attr3,attr4 FROM customers) x";
 		//$out.= $xsSQL;
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('id',getlocal())."|5|0|||1");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+timein|".localize('_date',getlocal()). "|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal())."|boolean|1|");	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+timein|".localize('_date',getlocal())."|link|10|"."javascript:tcustomers(\"{timein}\");".'||');// "|10|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal())."|2|0|");	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+code2|".localize('_code2',getlocal())."|link|10|"."javascript:tmail(\"{code2}\");".'||');
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+mail|".localize('_mail',getlocal())."|link|10|"."javascript:tmail(\"{mail}\");".'||');		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+name|".localize('_name',getlocal())."|19|1|");
@@ -678,7 +681,7 @@ class rccrmtree {
 		
 		switch ($field) {
 			case 'qty' :
-			default    : $fid = $field ? $field : 'email';
+			default    : $fid = $field ? $field : null;
 		}
 		
 		$ret = seturl("t=$t&mode=$mode&id=$id&fid=". $fid);
@@ -688,21 +691,28 @@ class rccrmtree {
 	
 	public function selectFieldButton() {
 		$mode = GetParam('mode');
-		
+		//echo $mode;
 		switch ($mode) {
-			case 'ulist' :  $fields = 'startdate,datein,active,failed,name,email,listname';
+			case 'ulist' :  $fields = 'startdate,datein,active,failed,name,listname';
 							break;
 					  
 			case 'campaign' : $fields = 'subject,reply,status,mailstatus';
 							break;		  
 		
-			case 'users' :	$fields = 'timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid';
+			case 'users' :	$fields = 'timein,code2,ageid,cntryid,lanid,timezone,notes,fname,lname,seclevid';
 							break;	
+							
+			case 'customers' :	$fields = 'timein,active,name,afm,eforia,prfdescr,street,address,number,area,city,zip,voice1,voice2,fax,attr1,attr2,attr3,attr4';
+							break;
+
+			case 'sales' :	$fields = 'tstatus,qty,cost,costpt';
+							break;							
 	
 	        case 'email' : 	break; //direct input in session
 
+			case 'contacts'  :  
 			case 'tree'  :  
-		    default      :  $fields = 'type,email,firstname,lastname,address,country,birthday,occupation,mobile,phone';
+		    default      :  $fields = 'type,firstname,lastname,address,country,birthday,occupation,mobile,phone';
 		}		
 		if (!$fields) return null;
 		$f = explode(',', $fields);
@@ -722,32 +732,46 @@ class rccrmtree {
     protected function getCurrentSessionList() {
 		$db = GetGlobal('db');
 	    $lan = getlocal();	
-		$code = $this->fid ? $this->fid : 'email';
+		$f = $this->fid ? ',' . $this->fid : null;
 		$mode = GetParam('mode');
 		$ret = null;	
 		
 		$and = false;
 		$where = false;
+		$group = false;
 		$email = 'email';
 		
 		switch ($mode) {
-			case 'ulist' :  $sSQL = GetReq('id') ? "select $email from ulists where listname=" . $db->qstr(GetReq('id')) : null;
+			case 'ulist' :  $sSQL = GetReq('id') ? "select $email $f from ulists where listname=" . $db->qstr(GetReq('id')) : null;
 							$and = true;
 							break;
 					  
 			case 'campaign' : $email = 'receiver'; 
-			                $sSQL = GetReq('id') ? "select $email from mailqueue where cid=" . $db->qstr(GetReq('id')) : null;
+			                $sSQL = GetReq('id') ? "select $email $f from mailqueue where cid=" . $db->qstr(GetReq('id')) : null;
 			                $and = true;
 							break;		  
 		
-			case 'users' :	$sSQL = "select $email from users";
+			case 'users' :	$sSQL = "select $email $f from users";
 							$where = true;
 							break;	
+							
+			case 'customers' : $email = 'mail';	
+			                $sSQL = "select $email $f from customers";
+							$where = true;
+							break;
+
+			case 'sales' :	$email = 'cid';
+			                $sSQL = "select $email ". str_replace($this->fid, "sum($this->fid) as $this->fid", $f) . " from transactions";
+							$where = true;
+							$group = " GROUP BY $email";
+							//$group.= $f ? $f : null;
+							break;						
 	
 	        case 'email' : 	break; //direct input in session
 
+			case 'contacts':
 			case 'tree'  :  
-		    default      :  $sSQL = "select $email from crmcontacts";
+		    default      :  $sSQL = "select $email $f from crmcontacts";
 			                $where = true;
 		}
 
@@ -763,12 +787,15 @@ class rccrmtree {
 			$sSQL .= $where ? " WHERE $email NOT REGEXP '" . str_replace(',','|',$list) . "'" :
 		                      ($and ? " and $email NOT REGEXP '" . str_replace(',','|',$list) . "'" : null);
 		
+		$sSQL .= $group ? $group : null;
+		
 		if ($this->echoSQL)
 			echo $sSQL . '<br/>';
 		
 		$resultset = $db->Execute($sSQL);	
 		foreach ($resultset as $n=>$rec) {
-			$ret[] = "<option value='".$rec[0]."'>". $rec[0]."</option>" ;
+			$title = $this->fid ? $rec[$this->fid] .'-'. $rec[0] : $rec[0];
+			$ret[] = "<option value='".$rec[0]."'>". $title."</option>" ;
 		}		
 		
 		return (implode('',$ret));	
@@ -778,7 +805,7 @@ class rccrmtree {
     protected function getCurrentTreeList() {
 		$db = GetGlobal('db');
 	    $lan = getlocal();	
-		$code = $this->fid ? $this->fid : 'email';
+		$f = $this->fid ? ',' . $this->fid : null;
 		$tid = GetParam('id');
 		$mode = GetParam('mode');		
 		$ret = null;
@@ -788,23 +815,8 @@ class rccrmtree {
 		$email = 'email';
 		
 		switch ($mode) {
-			/*case 'ulist' :  $sSQL = GetReq('id') ? "select $email from ulists where listname=" . $db->qstr(GetReq('id')) : null;
-							$and = true;
-							break;
-					  
-			case 'campaign' :$email = 'receiver';  
-			                 $sSQL = GetReq('id') ? "select $email from mailqueue where cid=" . $db->qstr(GetReq('id')) : null;
-			                $and = true;
-							break;		  
-		
-			case 'users' :	$sSQL = "select $email from users";
-							$where = true;
-							break;	
-	
-	        case 'email' : 	break; //direct input in session
-            */
 			case 'tree'  :  
-		    default      :  $sSQL = "select $email from crmcontacts";
+		    default      :  $sSQL = "select $email $f from crmcontacts";
 			                $where = true;
 		}
 		
@@ -831,7 +843,8 @@ class rccrmtree {
 		
 		$resultset = $db->Execute($sSQL);	
 		foreach ($resultset as $n=>$rec) {
-			$ret[] = "<option value='".$rec[0]."'>". $rec[0]."</option>" ;
+			$title = $this->fid ? $rec[$this->fid] .'-'. $rec[0] : $rec[0];
+			$ret[] = "<option value='".$rec[0]."'>". $title."</option>" ;
 		}		
 		
 		return (implode('',$ret));
@@ -850,9 +863,8 @@ class rccrmtree {
 	
 	//include session items	
 	protected function viewSessionList() {
-		$db = GetGlobal('db');
-	    $lan = getlocal();		
-		$code = $this->fid ? $this->fid : 'email';
+		$db = GetGlobal('db');		
+		$f = $this->fid ? ',' . $this->fid : null;
 		
 		if (!empty($_POST[$this->listName]))  
 			$list = implode(',', $_POST[$this->listName]);	
@@ -871,8 +883,7 @@ class rccrmtree {
 	//include tree map items or session items
 	protected function viewTreeList() {
 		$db = GetGlobal('db');
-	    $lan = getlocal();	
-		$code = $this->fid ? $this->fid : 'email';
+		$f = $this->fid ? ',' . $this->fid : null;
 		$tid = GetParam('id');
 		
 		//if not users tree return
