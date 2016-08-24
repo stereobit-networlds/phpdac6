@@ -77,7 +77,7 @@ $__LOCALE['RCCRMTREE_DPC'][50]='_orderid;Order;Σειρά';
 $__LOCALE['RCCRMTREE_DPC'][51]='_title0;Title L1;Τίτλος L1';
 $__LOCALE['RCCRMTREE_DPC'][52]='_title1;Title L2;Τίτλος L2';
 $__LOCALE['RCCRMTREE_DPC'][53]='_title2;Title L3;Τίτλος L3';
-$__LOCALE['RCCRMTREE_DPC'][54]='_fields;Fields;Πεδία';
+$__LOCALE['RCCRMTREE_DPC'][54]='_fields;Identifier;Πρόθεμα';
 $__LOCALE['RCCRMTREE_DPC'][55]='_id;ID;ID';
 $__LOCALE['RCCRMTREE_DPC'][56]='_zip;Zip;Τ.Κ.';
 $__LOCALE['RCCRMTREE_DPC'][57]='_dateins;Start at;Εκκίνηση';
@@ -253,6 +253,7 @@ class rccrmtree {
 											  localize('_campaigns', getlocal())=>$turl4,
 											  localize('_sales', getlocal())=>$turl5,
 											  localize('_visitors', getlocal())=>$turl6,
+											  0=>null,
 											  localize('_tree', getlocal())=>$turl7,
 		                                ),'success');
 													
@@ -607,7 +608,7 @@ class rccrmtree {
 		
 		if (!empty($urls)) {
 			foreach ($urls as $n=>$url)
-				$links .= '<li><a href="'.$url.'">'.$n.'</a></li>';
+				$links .= $url ? '<li><a href="'.$url.'">'.$n.'</a></li>' : '<li class="divider"></li>';
 			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
 		} 
 		

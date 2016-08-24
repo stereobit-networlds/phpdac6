@@ -76,7 +76,7 @@ $__LOCALE['RCTREEDESCR_DPC'][50]='_orderid;Order;Σειρά';
 $__LOCALE['RCTREEDESCR_DPC'][51]='_title0;Title L1;Τίτλος L1';
 $__LOCALE['RCTREEDESCR_DPC'][52]='_title1;Title L2;Τίτλος L2';
 $__LOCALE['RCTREEDESCR_DPC'][53]='_title2;Title L3;Τίτλος L3';
-$__LOCALE['RCTREEDESCR_DPC'][54]='_fields;Fields;Πεδία';
+$__LOCALE['RCTREEDESCR_DPC'][54]='_fields;Identifier;Πρόθεμα';
 
 class rctreedescr {
 	
@@ -140,7 +140,7 @@ class rctreedescr {
         $this->savedlist = GetSessionParam($this->listName) ? GetSessionParam($this->listName) : null;
 	
 		$this->fid = GetSessionParam('fid') ? GetSessionParam('fid') : GetReq('fid');
-		$this->echoSQL = false; //true;
+		$this->echoSQL = false;//true;
 	}
 	
     function event($event=null) {
@@ -237,6 +237,7 @@ class rctreedescr {
 										array(localize('_items', getlocal())=>$turl0,
 											  localize('_cats', getlocal())=>$turl1,
 										      //localize('_users', getlocal())=>$turl2,
+											  0=>'',
 											  localize('_tree', getlocal())=>$turl3,
 		                                ),'success');		
 																	
@@ -374,7 +375,7 @@ class rctreedescr {
 		
 		if (!empty($urls)) {
 			foreach ($urls as $n=>$url)
-				$links .= '<li><a href="'.$url.'">'.$n.'</a></li>';
+				$links .= $url ? '<li><a href="'.$url.'">'.$n.'</a></li>' : '<li class="divider"></li>';
 			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
 		} 
 		
@@ -458,37 +459,14 @@ class rctreedescr {
 	
 	public function selectFieldButton() {
 		
-		$turl0 = $this->selectFieldUrl('datein');		
-		$turl1 = $this->selectFieldUrl('code1');
-		$turl2 = $this->selectFieldUrl('code2');
-		$turl3 = $this->selectFieldUrl('code3');
-		$turl4 = $this->selectFieldUrl('code4');
-		$turl5 = $this->selectFieldUrl('code5');		
+        $fields = 'date,code0,code1,code2,code3,code4,code5,active,itmactive,uniname1,uniname2,price0,price1,ypoloipo1,ypoloipo2,weight,volume,dimensions,size,color,manufacturer,xml';
+		$f = explode(',', $fields);
 		
-		$turl6 = $this->selectFieldUrl('itmactive');
-		$turl7 = $this->selectFieldUrl('active');
-		$turl8 = $this->selectFieldUrl('uniname1');
-		$turl9 = $this->selectFieldUrl('uniname2');
-		$turl10 = $this->selectFieldUrl('price0');
-		$turl11 = $this->selectFieldUrl('price1');
+		foreach ($f as $i=>$field) {
+			$myfields[$field] = $this->selectFieldUrl($field);
+		}
 		
-		$turl12 = $this->selectFieldUrl('id');
-		
-		$button = $this->createButton(localize('_fields', getlocal()), 
-										array(localize('date', getlocal())=>$turl0,
-										      localize('code0', getlocal())=>$turl12,
-											  localize('code1', getlocal())=>$turl1,
-										      localize('code2', getlocal())=>$turl2,
-											  localize('code3', getlocal())=>$turl3,
-											  localize('code4', getlocal())=>$turl4,
-											  localize('code5', getlocal())=>$turl5,
-											  localize('active', getlocal())=>$turl6,
-										      localize('itmactive', getlocal())=>$turl7,
-											  localize('uniname1', getlocal())=>$turl8,
-											  localize('uniname2', getlocal())=>$turl9,
-											  localize('price0', getlocal())=>$turl10,											  
-											  localize('price1', getlocal())=>$turl11,
-		                                ));//,'success');		
+		$button = $this->createButton(localize('_fields', getlocal()), $myfields);			
 		
 		return ($button);
 	}	
@@ -673,6 +651,8 @@ class rctreedescr {
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
 		$code = $this->fid ? $this->fid : $this->getmapf('code');
 		
+		//check session	
+		/*
 		if (!empty($_POST[$this->listName]))  
 			$plist = implode(',', $_POST[$this->listName]);	
         else
@@ -680,6 +660,12 @@ class rctreedescr {
 		
 		//$list = $this->savedlist ? $this->savedlist . ',' . $plist : $plist;
 		$list = $plist ? $this->savedlist . ',' . $plist : $this->savedlist;
+		*/
+		if (!empty($_POST[$this->listName]))  
+			$list = implode(',', $_POST[$this->listName]);	
+        else
+			$list = $this->savedlist;
+		
 		if (!$list) return ;
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
@@ -709,10 +695,13 @@ class rctreedescr {
 		$code = $this->fid ? $this->fid : $this->getmapf('code');
 		$tid = GetParam('id');
 		
+		//if not items tree return
+		if ($this->currentSelectedTreeType()!=1) return null; 	
+		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 			
 		//check session	
-		if (!empty($_POST[$this->listName]))  
+		/*if (!empty($_POST[$this->listName]))  
 			$plist = implode(',', $_POST[$this->listName]);	
         else
 			$plist = null;	
@@ -720,7 +709,14 @@ class rctreedescr {
 		//$list = $this->savedlist ? $this->savedlist .','.$plist : $plist;
 		$list = $plist ? $this->savedlist . ',' . $plist : $this->savedlist;
 		if ($list)
-			$sesSQL = ' id in (' . $this->savedlist . ')';
+			$sesSQL = ' id in (' . $this->savedlist . ')';*/
+		if (!empty($_POST[$this->listName]))  
+			$list = implode(',', $_POST[$this->listName]);	
+        else
+			$list = $this->savedlist;
+		
+        if ($list)
+			$sesSQL = ' id in (' . $list . ')';		
 			
 		//check tree maps
 		if (isset($tid)) {
@@ -739,10 +735,10 @@ class rctreedescr {
 		$resultset = $db->Execute($sSQL,2);	
 		
 		//print_r($resultset);
-		$insessionlist = explode(',', $this->savedlist);
+		$insessionlist = explode(',', $list);//$this->savedlist);
 		//print_r($insessionlist);
 		foreach ($resultset as $n=>$rec) {
-			$check = in_array($rec['id'], $insessionlist) ? '[+]' : null;
+			$check = ((empty($_POST[$this->listName])) && (in_array($rec['id'], $insessionlist))) ? '[+]' : null;
 			$ret[] = "<option value='".$rec['id']."'>". $check . $rec[$code].'-'.$rec[$itmname]."</option>" ;
 		}		
 		
