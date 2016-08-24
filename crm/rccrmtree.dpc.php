@@ -154,8 +154,8 @@ class rccrmtree {
 			case 'cpcrmtreeusers' : //direct saving to list when grid click on email
 			                        if ((GetReq('mode')=='email') && ($email= GetReq('id'))) {
 										$this->addtoSessionList($email);
-										echo 'add to session:'.$email;
-										print_r(explode(',',$this->savedlist));
+										//echo 'add to session:'.$email;
+										//print_r(explode(',',$this->savedlist));
 									}	
 			                        break;
 			case 'cpcrmtreeitems' : /*if ($fid = $this->fid) {
@@ -827,11 +827,11 @@ class rccrmtree {
 		$code = $this->fid ? $this->fid : 'email';
 		
 		if (!empty($_POST[$this->listName]))  
-			$plist = implode(',', $_POST[$this->listName]);	
+			$list = implode(',', $_POST[$this->listName]);	
         else
-			$plist = null;	
+			$list = $this->savedlist;	
 		
-		$list = $this->savedlist ? $this->savedlist .','.$plist : $plist;
+		//$list = $plist ? $plist : $this->savedlist;
 		if (!$list) return ;
 		/*
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
@@ -849,7 +849,7 @@ class rccrmtree {
 			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
         }		
         */
-		$resultset = explode(',', $list);
+		$resultset = (!empty($list)) ? explode(',', $list) : array();
 		foreach ($resultset as $n=>$email) {
 			$ret[] = "<option value='".$email."'>". $email."</option>" ;
         }		
@@ -862,19 +862,19 @@ class rccrmtree {
 	    $lan = getlocal();	
 		$code = $this->fid ? $this->fid : 'email';
 		$tid = GetParam('id');
-		
-		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 			
 		//check session	
 		if (!empty($_POST[$this->listName]))  
-			$plist = implode(',', $_POST[$this->listName]);	
+			$list = implode(',', $_POST[$this->listName]);	
         else
-			$plist = null;	
+			$list = $this->savedlist;	
 		
-		$list = $this->savedlist ? $this->savedlist .','.$plist : $plist;
+		/*$list = $plist ? $plist : $this->savedlist;
 		if ($list)
-			$sesSQL = ' id in (' . $this->savedlist . ')';
+			$sesSQL = ' id in (' . $list . ')';
 			
+        $sSQL = 'select id,'.$code.',' . $itmname .' from products where '; 		
+		
 		//check tree maps
 		if (isset($tid)) {
 			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);			
@@ -882,24 +882,27 @@ class rccrmtree {
 		}
 		else
 			$sSQL .= $sesSQL;
-			
-		//$sSQL .= " and itmactive>0 and active>0";			   
+					   
 		$sSQL .= " ORDER BY " . $code; //FIELD(id,".  $this->savedlist .")";
-
-		if ($this->echoSQL)
-			echo $sSQL . '<br/>';	
-		/*
-		$resultset = $db->Execute($sSQL,2);	
+        */
 		
-		//print_r($resultset);
+		$sSQL = "select code from ctreemap where tid=" . $db->qstr($tid);
+		$resultset = $db->Execute($sSQL);	
+		
+		if ($this->echoSQL)
+			echo $sSQL . '<br/>';			
+		
+		$intreelist = array();
 		foreach ($resultset as $n=>$rec) {
-			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
+			$ret[] = "<option value='".$rec[0]."'>". $rec[0]."</option>" ;
+			$intreelist[] = $rec[0];
 		}		
-		*/
-		$resultset = explode(',', $list);
-		foreach ($resultset as $n=>$email) {
-			$ret[] = "<option value='".$email."'>". $email."</option>" ;
-        }				
+		
+		$insessionlist = (!empty($list)) ? explode(',', $list) : array();		
+		foreach ($insessionlist as $n=>$email) {
+			$ret[] = in_array($email, $intreelist) ? null : "<option value='".$email."'>". '[+]' . $email."</option>" ;
+		}				
+
 		return (implode('',$ret));				
 	}
 
@@ -978,7 +981,6 @@ class rccrmtree {
 				foreach ($result as $r=>$rec) {
 					if (in_array($rec['code'], $ids)) {
 						//dont remove
-						//if ($this->echoSQL) echo '0<br/>';
 						continue;						
 					}
 					else {
@@ -996,27 +998,28 @@ class rccrmtree {
 					
 	
 	protected function saveList() {
-		$mode = GetParam('mode');		
+		$mode = GetParam('mode');
+		$list = null;	
 		
 		if (!empty($_POST[$this->listName])) { 
 		
 			$plist = implode(',', $_POST[$this->listName]); //post list
-			$slist = GetSessionParam($this->listName); //current session list			
-			$list = $slist ? $slist . ',' . $plist : $plist;
 			
 			switch (GetReq('mode')) { 
 			
 				case 'tree'  :  if ($this->currentSelectedTreeType()==2) { //users tree
 									$this->remTreeList($plist); //remove post list
-									$this->saveTreeList($list); //save list at table
+									$this->saveTreeList($plist); //save list at table
 									SetSessionParam($this->listName, ''); //reset session list
 				                }	
 								break;		
 					
-				default      :	SetSessionParam($this->listName, $list); //save session list
+				default      :	SetSessionParam($this->listName, $plist); //save session list
 			}	
 			
 		}
+		else
+			SetSessionParam($this->listName, '');
 		  
 		return ($list);
 	}

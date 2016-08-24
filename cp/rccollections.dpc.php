@@ -568,7 +568,8 @@ class rccollections {
         else
 			$plist = null;	
 		
-		$list = $this->savedlist ? $this->savedlist .','.$plist : $plist;
+		//$list = $this->savedlist ? $this->savedlist .','.$plist : $plist;
+		$list = $plist ? $this->savedlist . ',' . $plist : $this->savedlist;
 		if (!$list) return ;
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';

@@ -678,7 +678,8 @@ class rctreedescr {
         else
 			$plist = null;	
 		
-		$list = $this->savedlist ? $this->savedlist .','.$plist : $plist;
+		//$list = $this->savedlist ? $this->savedlist . ',' . $plist : $plist;
+		$list = $plist ? $this->savedlist . ',' . $plist : $this->savedlist;
 		if (!$list) return ;
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
@@ -716,7 +717,8 @@ class rctreedescr {
         else
 			$plist = null;	
 		
-		$list = $this->savedlist ? $this->savedlist .','.$plist : $plist;
+		//$list = $this->savedlist ? $this->savedlist .','.$plist : $plist;
+		$list = $plist ? $this->savedlist . ',' . $plist : $this->savedlist;
 		if ($list)
 			$sesSQL = ' id in (' . $this->savedlist . ')';
 			
@@ -737,8 +739,11 @@ class rctreedescr {
 		$resultset = $db->Execute($sSQL,2);	
 		
 		//print_r($resultset);
+		$insessionlist = explode(',', $this->savedlist);
+		//print_r($insessionlist);
 		foreach ($resultset as $n=>$rec) {
-			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
+			$check = in_array($rec['id'], $insessionlist) ? '[+]' : null;
+			$ret[] = "<option value='".$rec['id']."'>". $check . $rec[$code].'-'.$rec[$itmname]."</option>" ;
 		}		
 		
 		return (implode('',$ret));				
