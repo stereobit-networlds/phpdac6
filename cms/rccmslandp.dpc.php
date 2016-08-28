@@ -1,82 +1,88 @@
 <?php
 
-$__DPCSEC['RCTREEDESCR_DPC']='1;1;1;1;1;1;2;2;9;9;9';
+$__DPCSEC['RCCMSLANDP_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
-if ( (!defined("RCTREEDESCR_DPC")) && (seclevel('RCTREEDESCR_DPC',decode(GetSessionParam('UserSecID')))) ) {
-define("RCTREEDESCR_DPC",true);
+if ( (!defined("RCCMSLANDP_DPC")) && (seclevel('RCCMSLANDP_DPC',decode(GetSessionParam('UserSecID')))) ) {
+define("RCCMSLANDP_DPC",true);
 
-$__DPC['RCTREEDESCR_DPC'] = 'rctreedescr';
+$__DPC['RCCMSLANDP_DPC'] = 'rccmslandp';
 
 
-$__EVENTS['RCTREEDESCR_DPC'][0]='cptreedescr';
-$__EVENTS['RCTREEDESCR_DPC'][1]='cpsavetree';
-$__EVENTS['RCTREEDESCR_DPC'][2]='cploadtree';
-$__EVENTS['RCTREEDESCR_DPC'][3]='cptreeframe';
-$__EVENTS['RCTREEDESCR_DPC'][4]='cptreeitems';
+$__EVENTS['RCCMSLANDP_DPC'][0]='cpcmslandp';
+$__EVENTS['RCCMSLANDP_DPC'][1]='cpsavelandp';
+$__EVENTS['RCCMSLANDP_DPC'][2]='cplandframe';
+$__EVENTS['RCCMSLANDP_DPC'][3]='cplanditems';
+$__EVENTS['RCCMSLANDP_DPC'][4]='cplandpage';
+$__EVENTS['RCCMSLANDP_DPC'][5]='cpsortpage';
+$__EVENTS['RCCMSLANDP_DPC'][6]='cpsortsave';
 
-$__ACTIONS['RCTREEDESCR_DPC'][0]='cptreedescr';
-$__ACTIONS['RCTREEDESCR_DPC'][1]='cpsavetree';
-$__ACTIONS['RCTREEDESCR_DPC'][2]='cploadtree';
-$__ACTIONS['RCTREEDESCR_DPC'][3]='cptreeframe';
-$__ACTIONS['RCTREEDESCR_DPC'][4]='cptreeitems';
+$__ACTIONS['RCCMSLANDP_DPC'][0]='cpcmslandp';
+$__ACTIONS['RCCMSLANDP_DPC'][1]='cpsavelandp';
+$__ACTIONS['RCCMSLANDP_DPC'][2]='cplandframe';
+$__ACTIONS['RCCMSLANDP_DPC'][3]='cplanditems';
+$__ACTIONS['RCCMSLANDP_DPC'][4]='cplandpage';
+$__ACTIONS['RCCMSLANDP_DPC'][5]='cpsortpage';
+$__ACTIONS['RCCMSLANDP_DPC'][6]='cpsortsave';
 
-$__LOCALE['RCTREEDESCR_DPC'][0]='RCTREEDESCR_DPC;Tree descriptor;Προσδιοριστικά χαρακτηριστικά';
-$__LOCALE['RCTREEDESCR_DPC'][1]='_date;Date;Ημερ.';
-$__LOCALE['RCTREEDESCR_DPC'][2]='_time;Time;Ώρα';
-$__LOCALE['RCTREEDESCR_DPC'][3]='_qty;Quantity;Ποσότητα';
-$__LOCALE['RCTREEDESCR_DPC'][4]='_items;Items;Είδη';
-$__LOCALE['RCTREEDESCR_DPC'][5]='_active;Active;Ενεργό';
-$__LOCALE['RCTREEDESCR_DPC'][6]='_title;Title;Τίτλος';
-$__LOCALE['RCTREEDESCR_DPC'][7]='_descr;Description;Περιγραφή';
-$__LOCALE['RCTREEDESCR_DPC'][8]='_xml;Xml;Xml';
-$__LOCALE['RCTREEDESCR_DPC'][9]='_color;Color;Χρώμα';
-$__LOCALE['RCTREEDESCR_DPC'][10]='_code;Code;Κωδικός';
-$__LOCALE['RCTREEDESCR_DPC'][11]='_dimensions;Dimension;Διαστάσεις';
-$__LOCALE['RCTREEDESCR_DPC'][12]='_size;Size;Μέγεθος';
-$__LOCALE['RCTREEDESCR_DPC'][13]='_dimensions;Dimensions;Διαστάσεις';
-$__LOCALE['RCTREEDESCR_DPC'][14]='_xmlcreate;Create XML;Δημιούργησε XML';
-$__LOCALE['RCTREEDESCR_DPC'][15]='_xml;XML item;Είδος XML';
-$__LOCALE['RCTREEDESCR_DPC'][16]='_manufacturer;Manufacturer;Κατασκευαστής';
-$__LOCALE['RCTREEDESCR_DPC'][17]='_uniname1;Unit;Μον.μετρ.';
-$__LOCALE['RCTREEDESCR_DPC'][18]='_ypoloipo1;Qty;Υπόλοιπο';
-$__LOCALE['RCTREEDESCR_DPC'][19]='_price0;Price 1;Αξία 1';
-$__LOCALE['RCTREEDESCR_DPC'][20]='_price1;Price 2;Αξία 2';
-$__LOCALE['RCTREEDESCR_DPC'][21]='_treedescr;Tree descriptors;Προσδιοριστικά χαρακτηριστικά';
-$__LOCALE['RCTREEDESCR_DPC'][22]='_treeattach;Map objects;Επισύναψη χαρακτηριστικού';
-$__LOCALE['RCTREEDESCR_DPC'][23]='_items;Items;Προϊόντα';
-$__LOCALE['RCTREEDESCR_DPC'][24]='_users;Users;Χρήστες';
-$__LOCALE['RCTREEDESCR_DPC'][25]='_mode;Select;Επιλογή';
-$__LOCALE['RCTREEDESCR_DPC'][26]='_cats;Categories;Κατηγορίες';
-$__LOCALE['RCTREEDESCR_DPC'][27]='_ctgid;Id;A/A';
-$__LOCALE['RCTREEDESCR_DPC'][28]='_ctgoutline;Branch;Κλαδί';
-$__LOCALE['RCTREEDESCR_DPC'][29]='_ctgoutlnorder;Branch order;Ταξινόμηση';
-$__LOCALE['RCTREEDESCR_DPC'][30]='_search;Search;Αναζητήσιμο';
-$__LOCALE['RCTREEDESCR_DPC'][31]='_active;Active;Ενεργό';
-$__LOCALE['RCTREEDESCR_DPC'][32]='_view;Show;Εμφανές';
-$__LOCALE['RCTREEDESCR_DPC'][33]='_OK;Success;Επιτυχώς';
-$__LOCALE['RCTREEDESCR_DPC'][34]='_cat0;Category 1;Κατηγορία 1';
-$__LOCALE['RCTREEDESCR_DPC'][35]='_cat1;Category 2;Κατηγορία 2';
-$__LOCALE['RCTREEDESCR_DPC'][36]='_cat2;Category 3;Κατηγορία 3';
-$__LOCALE['RCTREEDESCR_DPC'][37]='_cat3;Category 4;Κατηγορία 4';
-$__LOCALE['RCTREEDESCR_DPC'][38]='_cat4;Category 5;Κατηγορία 5';
-$__LOCALE['RCTREEDESCR_DPC'][39]='_id;ID;ID';
-$__LOCALE['RCTREEDESCR_DPC'][40]='_tree;Tree;Δέντρο';
-$__LOCALE['RCTREEDESCR_DPC'][41]='_leaf;Childs;Παιδιά';
-$__LOCALE['RCTREEDESCR_DPC'][42]='_rel;Relation;Σχέση';
-$__LOCALE['RCTREEDESCR_DPC'][43]='_active;Active;Ενεργό';
-$__LOCALE['RCTREEDESCR_DPC'][44]='_timein;Date;Ημερομηνία';
-$__LOCALE['RCTREEDESCR_DPC'][45]='_id;ID;ID';
-$__LOCALE['RCTREEDESCR_DPC'][46]='_title;Title;Τίτλος';
-$__LOCALE['RCTREEDESCR_DPC'][47]='_descr;Description;Περιγραφή';
-$__LOCALE['RCTREEDESCR_DPC'][48]='_code;Code;Κωδικός';
-$__LOCALE['RCTREEDESCR_DPC'][49]='_parent;Parent;Σχέση';
-$__LOCALE['RCTREEDESCR_DPC'][50]='_orderid;Order;Σειρά';
-$__LOCALE['RCTREEDESCR_DPC'][51]='_title0;Title L1;Τίτλος L1';
-$__LOCALE['RCTREEDESCR_DPC'][52]='_title1;Title L2;Τίτλος L2';
-$__LOCALE['RCTREEDESCR_DPC'][53]='_title2;Title L3;Τίτλος L3';
-$__LOCALE['RCTREEDESCR_DPC'][54]='_fields;Identifier;Πρόθεμα';
+$__LOCALE['RCCMSLANDP_DPC'][0]='RCCMSLANDP_DPC;Landing pages;Landing pages';
+$__LOCALE['RCCMSLANDP_DPC'][1]='_date;Date;Ημερ.';
+$__LOCALE['RCCMSLANDP_DPC'][2]='_time;Time;Ώρα';
+$__LOCALE['RCCMSLANDP_DPC'][3]='_qty;Quantity;Ποσότητα';
+$__LOCALE['RCCMSLANDP_DPC'][4]='_items;Items;Είδη';
+$__LOCALE['RCCMSLANDP_DPC'][5]='_active;Active;Ενεργό';
+$__LOCALE['RCCMSLANDP_DPC'][6]='_title;Title;Τίτλος';
+$__LOCALE['RCCMSLANDP_DPC'][7]='_descr;Description;Περιγραφή';
+$__LOCALE['RCCMSLANDP_DPC'][8]='_xml;Xml;Xml';
+$__LOCALE['RCCMSLANDP_DPC'][9]='_color;Color;Χρώμα';
+$__LOCALE['RCCMSLANDP_DPC'][10]='_code;Code;Κωδικός';
+$__LOCALE['RCCMSLANDP_DPC'][11]='_dimensions;Dimension;Διαστάσεις';
+$__LOCALE['RCCMSLANDP_DPC'][12]='_size;Size;Μέγεθος';
+$__LOCALE['RCCMSLANDP_DPC'][13]='_dimensions;Dimensions;Διαστάσεις';
+$__LOCALE['RCCMSLANDP_DPC'][14]='_xmlcreate;Create XML;Δημιούργησε XML';
+$__LOCALE['RCCMSLANDP_DPC'][15]='_xml;XML item;Είδος XML';
+$__LOCALE['RCCMSLANDP_DPC'][16]='_manufacturer;Manufacturer;Κατασκευαστής';
+$__LOCALE['RCCMSLANDP_DPC'][17]='_uniname1;Unit;Μον.μετρ.';
+$__LOCALE['RCCMSLANDP_DPC'][18]='_ypoloipo1;Qty;Υπόλοιπο';
+$__LOCALE['RCCMSLANDP_DPC'][19]='_price0;Price 1;Αξία 1';
+$__LOCALE['RCCMSLANDP_DPC'][20]='_price1;Price 2;Αξία 2';
+$__LOCALE['RCCMSLANDP_DPC'][21]='_landpage;Land page;Land page';
+$__LOCALE['RCCMSLANDP_DPC'][22]='_selecto;Select objects;Επιλογή στοιχείων';
+$__LOCALE['RCCMSLANDP_DPC'][23]='_items;Items;Προϊόντα';
+$__LOCALE['RCCMSLANDP_DPC'][24]='_users;Users;Χρήστες';
+$__LOCALE['RCCMSLANDP_DPC'][25]='_mode;Select;Επιλογή';
+$__LOCALE['RCCMSLANDP_DPC'][26]='_cats;Categories;Κατηγορίες';
+$__LOCALE['RCCMSLANDP_DPC'][27]='_ctgid;Id;A/A';
+$__LOCALE['RCCMSLANDP_DPC'][28]='_ctgoutline;Branch;Κλαδί';
+$__LOCALE['RCCMSLANDP_DPC'][29]='_ctgoutlnorder;Branch order;Ταξινόμηση';
+$__LOCALE['RCCMSLANDP_DPC'][30]='_search;Search;Αναζητήσιμο';
+$__LOCALE['RCCMSLANDP_DPC'][31]='_active;Active;Ενεργό';
+$__LOCALE['RCCMSLANDP_DPC'][32]='_view;Show;Εμφανές';
+$__LOCALE['RCCMSLANDP_DPC'][33]='_OK;Success;Επιτυχώς';
+$__LOCALE['RCCMSLANDP_DPC'][34]='_cat0;Category 1;Κατηγορία 1';
+$__LOCALE['RCCMSLANDP_DPC'][35]='_cat1;Category 2;Κατηγορία 2';
+$__LOCALE['RCCMSLANDP_DPC'][36]='_cat2;Category 3;Κατηγορία 3';
+$__LOCALE['RCCMSLANDP_DPC'][37]='_cat3;Category 4;Κατηγορία 4';
+$__LOCALE['RCCMSLANDP_DPC'][38]='_cat4;Category 5;Κατηγορία 5';
+$__LOCALE['RCCMSLANDP_DPC'][39]='_id;ID;ID';
+$__LOCALE['RCCMSLANDP_DPC'][40]='_tree;Tree;Δέντρο';
+$__LOCALE['RCCMSLANDP_DPC'][41]='_leaf;Childs;Παιδιά';
+$__LOCALE['RCCMSLANDP_DPC'][42]='_rel;Relation;Σχέση';
+$__LOCALE['RCCMSLANDP_DPC'][43]='_active;Active;Ενεργό';
+$__LOCALE['RCCMSLANDP_DPC'][44]='_timein;Date;Ημερομηνία';
+$__LOCALE['RCCMSLANDP_DPC'][45]='_id;ID;ID';
+$__LOCALE['RCCMSLANDP_DPC'][46]='_title;Title;Τίτλος';
+$__LOCALE['RCCMSLANDP_DPC'][47]='_descr;Description;Περιγραφή';
+$__LOCALE['RCCMSLANDP_DPC'][48]='_code;Code;Κωδικός';
+$__LOCALE['RCCMSLANDP_DPC'][49]='_parent;Parent;Σχέση';
+$__LOCALE['RCCMSLANDP_DPC'][50]='_orderid;Order;Σειρά';
+$__LOCALE['RCCMSLANDP_DPC'][51]='_title0;Title L1;Τίτλος L1';
+$__LOCALE['RCCMSLANDP_DPC'][52]='_title1;Title L2;Τίτλος L2';
+$__LOCALE['RCCMSLANDP_DPC'][53]='_title2;Title L3;Τίτλος L3';
+$__LOCALE['RCCMSLANDP_DPC'][54]='_fields;Identifier;Πρόθεμα';
+$__LOCALE['RCCMSLANDP_DPC'][55]='_relatives;Relations;Συσχετισμοί';
+$__LOCALE['RCCMSLANDP_DPC'][56]='_sortitems;Sort objects;Ταξινόμηση στοιχείων';
 
-class rctreedescr {
+class rccmslandp {
 	
 	var $title, $prpath, $urlpath, $url;
 	var $map_t, $map_f, $cseparator, $onlyincategory;
@@ -93,7 +99,7 @@ class rctreedescr {
 		$this->prpath = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');	
 		$this->url = paramload('SHELL','urlbase');
-		$this->title = localize('RCTREEDESCR_DPC',getlocal());
+		$this->title = localize('RCCMSLANDP_DPC',getlocal());
 
 		$this->owner = GetSessionParam('LoginName');	
 		
@@ -134,7 +140,7 @@ class rctreedescr {
 		
 		$this->selected_items = null;		
 		
-        $this->listName = 'mytreelist';
+        $this->listName = 'mylandlist';
         $this->savedlist = GetSessionParam($this->listName) ? GetSessionParam($this->listName) : null;
 	
 		$this->fid = GetSessionParam('fid') ? GetSessionParam('fid') : GetReq('fid');
@@ -150,17 +156,19 @@ class rctreedescr {
   
 	     switch ($event) {
 			 
-			case 'cptreeframe'    : echo $this->loadframe();
-		                            die();  
-			case 'cptreeitems'    : if ($fid = $this->fid) {
+			case 'cpsortsave'     : $this->savedlist = $this->saveList();
+			                        break;  
+			case 'cpsortpage'     : break; 
+			case 'cplandpage'     : break;			
+			case 'cplandframe'    : echo $this->loadframe();
+		                            die(); 
+			case 'cplanditems'    : if ($fid = $this->fid) {
 										SetSessionParam('fid', $fid); //save fid 
 									}
-			                        break;			  
-		    case 'cploadtree'     : 
-			                        break;			 
-		    case 'cpsavetree'     : $this->savedlist = $this->saveList();				
+			                        break;			 		 
+		    case 'cpsavelandp'    : $this->savedlist = $this->saveList();				
 	                                break;									
-			case 'cptreedescr'    :
+			case 'cpcmslandp'     :
 			default               :							  
          }
       }
@@ -173,12 +181,25 @@ class rctreedescr {
 
 	     switch ($action) {
 			 
-		   case 'cptreeframe'    :  break;	 
-		   case 'cptreeitems'    :  break;			 	 
-		   case 'cploadtree'     :  break;		   
-		   case 'cpsavetree'     :  break;
+		   case 'cpsortsave'     :  break;	 
+		   case 'cpsortpage'     :  break;
+		   case 'cplandpage'     :  break;		   
+		   case 'cplandframe'    :  break;	 
+		   case 'cplanditems'    :  break;			 	 	   
+		   
+		   case 'cpsavelandp'    :  $out = 'Filename:' . $this->filename . '<br/>';
+		                            $out .= 'SessionList:' . $this->savedList . '<br/>';
+								    $out .= implode('<br/>', $_POST);
+								    $out .= implode('<br/>', array_keys($_POST));
+		                            /*$out .= $this->listName . ':'; //implode('<br/>', $_POST); 
+								    foreach ($_POST[$this->listName] as $s)
+									$out .= $s.'|';
+								   $out .= '<br/><br/>tlist:';	
+								   foreach ($_POST['tlist'] as $t)
+									$out .= $t.'|';	*/
+		                            break;
 								   
-		   case 'cptreedescr'    :						   
+		   case 'cpcmdlandp'     :						   
 		   default               :  $out = $this->gridMode();
 		 }			 
 
@@ -192,10 +213,13 @@ class rctreedescr {
 		$fidparam = $this->fid ? "&fid=" . $this->fid : null;
 		
 		switch ($selectmode) {
-			case 'cats'  : $bodyurl = seturl("t=cptreeitems&mode=cats&id=". $id . $fidparam); break;
-			case 'items' : $bodyurl = seturl("t=cptreeitems&mode=items&id=". $id . $fidparam); break;
-			case 'tree'  : 
-			default      : $bodyurl = seturl("t=cptreeitems&mode=tree&id=". $id . $fidparam);
+			case 'order' : $bodyurl = seturl("t=cpsortpage"); break;
+			
+			case 'rels'  : $bodyurl = seturl("t=cplanditems&mode=rels&id=". $id . $fidparam); break;
+			case 'cats'  : $bodyurl = seturl("t=cplanditems&mode=cats&id=". $id . $fidparam); break;
+			case 'items' : $bodyurl = seturl("t=cplanditems&mode=items&id=". $id . $fidparam); break;
+			case 'tree'  : $bodyurl = seturl("t=cplanditems&mode=tree&id=". $id . $fidparam); break;
+			default      : $bodyurl = seturl("t=cplanditems&mode=landpage&id=". $id . $fidparam);
 		}
 			
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"500px\"><p>Your browser does not support iframes</p></iframe>";    
@@ -206,27 +230,68 @@ class rctreedescr {
 	protected function gridMode() {
 		$mode = GetReq('mode') ? GetReq('mode') : 'tree';
         
-		$turl0 = seturl('t=cptreedescr&mode=items');		
-		$turl1 = seturl('t=cptreedescr&mode=cats');
-		$turl2 = seturl('t=cptreedescr&mode=tree');
+		$turl0 = seturl('t=cpcmslandp&mode=items');		
+		$turl1 = seturl('t=cpcmslandp&mode=cats');
+		$turl2 = seturl('t=cpcmslandp&mode=rel');
+		$turl3 = seturl('t=cpcmslandp&mode=tree');
+		$turl4 = seturl('t=cpcmslandp&mode=landpage');
+		$turl5 = "javascript:torder();";
 		$button = $this->createButton(localize('_mode', getlocal()), 
 										array(localize('_items', getlocal())=>$turl0,
-											  localize('_cats', getlocal())=>$turl1,
+										      localize('_relatives', getlocal())=>$turl2,
+											  localize('_cats', getlocal())=>$turl1,											  
+											  localize('_tree', getlocal())=>$turl3,
 											  0=>'',
-											  localize('_tree', getlocal())=>$turl2,
+											  localize('_sortitems', getlocal())=>$turl5,
+											  1=>'',
+											  localize('RCCMSLANDP_DPC', getlocal())=>$turl4,
 		                                ),'success');		
 																	
 		switch ($mode) {
+			case 'rel'      : $content = $this->relatives_grid(null,140,5,'r', true); break;
 	        case 'tree'     : $content = $this->tree_grid(null,140,5,'r', true); break;
 	        case 'cats'     : $content = $this->categories_grid(null,140,5,'r', true); break;
 			case 'items'    : $content = $this->items_grid(null,140,5,'r', true); break;  
-			default         : $content = $this->tree_grid(null,140,5,'r', true);
+			case 'landpage' : 		
+			default         : $content = $this->landpages_grid(null,140,5,'r', true); break;	
 		}			
 					
-		$ret = $this->window(localize('_treedescr', getlocal()).': '.localize('_'.$mode, getlocal()), $button, $content);
+		$ret = $this->window(localize('RCCMSLANDP_DPC', getlocal()).': '.localize('_'.$mode, getlocal()), $button, $content);
 		
 		return ($ret);
 	}	
+	
+	protected function landpages_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;				   
+	    $lan = getlocal() ? getlocal() : 0;  
+		$title = localize('_tree', getlocal()); 
+		
+        $xsSQL = "SELECT * from (select id,timein,active,tid,pid,tname,tdescr,tname0,tname1,tname2,items,users,orderid from ctree) o ";		   
+					
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");		
+		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|1:0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tid|".localize('_code',getlocal())."|5|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|5|1|");			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|10|"."javascript:ttree(\"{tid}\");".'||');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|5|0|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname0|".localize('_title0',getlocal())."|5|1|");			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
+		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+items|".localize('_items',getlocal())."|boolean|1|1:0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+users|".localize('_users',getlocal())."|boolean|1|1:0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
+
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		
+		return ($out);  	
+	}		
 
 	protected function tree_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 800;
@@ -251,8 +316,8 @@ class rctreedescr {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
 		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+items|".localize('_items',getlocal())."|2|1|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+users|".localize('_users',getlocal())."|2|1|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+items|".localize('_items',getlocal())."|2|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+users|".localize('_users',getlocal())."|2|0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
 
 		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
@@ -276,8 +341,8 @@ class rctreedescr {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|link|10|"."javascript:titems(\"{id}\");".'||');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|link|5|"."javascript:titems(\"{id}\");".'||');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|10|0|");	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
@@ -288,6 +353,34 @@ class rctreedescr {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{code5}\");".'||');
 
 		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		
+		return ($out);  	
+	}
+	
+	protected function relatives_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;				   
+	    $lan = getlocal() ? getlocal() : 0;  
+        $active_code = 	$this->getmapf('code');
+		$name_active = $lan?'itmname':'itmfname'; 		
+		$title = localize('_relatives', $lan);
+        $myfields = "id,$active_code,cat0,cat1,cat2,cat3,$name_active,itmactive,active";  		
+
+		$xsSQL = 'select * from (select '.$myfields . ' from products) as o';
+		  
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0|");	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$active_code|".localize('_code',getlocal())."|link|5|"."javascript:trels(\"{".$active_code."}\");".'||');		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|10|0|");
+	    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|10|0|");				
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|10|0|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat3|".localize('_cat3',getlocal())."|10|0|");
+	    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$name_active|".localize('_title',getlocal()).'|20|0');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal()).'|boolean|1:0|');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|1|101:0');		
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 		
 		return ($out);  	
 	}
@@ -378,7 +471,7 @@ class rctreedescr {
                         <div class="widget-body">
 							<div class="btn-toolbar">
 							'. $buttons .'
-							<hr/><div id="crmform"></div>
+							<hr/><div id="cmsframe"></div>
 							</div>
 							'.  $content .'
                         </div>
@@ -521,49 +614,21 @@ class rctreedescr {
 		return (implode('',$ret));	
 	}
 	
-	//exclude existed tree map items and session items
+	//exclude session items
     protected function getCurrentTreeList() {
 		$db = GetGlobal('db');
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
 		$code = $this->fid ? $this->fid : $this->getmapf('code');
-		$tid = GetParam('id');
-		
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
-		$id = $cpGet['id'];
-		$cat = $cpGet['cat'];		
+		$id = GetParam('id');
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		
 		if ($id) {
-			$sSQL .= $code . '=' . $db->qstr($id);
+			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($id);			
+			$sSQL .= ' id in (' . $treeSQL . ')';
 		}	
-		elseif ($cat) {
-			
-			$cat_tree = explode($this->cseparator,str_replace('_',' ',$cat));
-			/////////////////////////////////// $db->qstr($this->replace_spchars($cat_tree[0],1))...
-			if ($cat_tree[0])
-				$whereClause .= ' cat0=' . $db->qstr(str_replace('_',' ',$cat_tree[0]));		
-			elseif ($this->onlyincategory)
-				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
-			if ($cat_tree[1])	
-				$whereClause .= ' and cat1=' . $db->qstr(str_replace('_',' ',$cat_tree[1]));	
-			elseif ($this->onlyincategory)
-				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
-			if ($cat_tree[2])	
-				$whereClause .= ' and cat2=' . $db->qstr(str_replace('_',' ',$cat_tree[2]));	
-			elseif ($this->onlyincategory)
-			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
-			if ($cat_tree[3])	
-				$whereClause .= ' and cat3=' . $db->qstr(str_replace('_',' ',$cat_tree[3]));
-			elseif ($this->onlyincategory)
-				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
-		   		
-		    
-			$sSQL .= $whereClause;	
-
-		}
         else
 			return null;	
 		
@@ -577,11 +642,49 @@ class rctreedescr {
 		if ($plist)
 			$sSQL .= ' and id not in (' . $plist . ')';
 		
-		//check tree maps
-		if (isset($tid)) {
-			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);
-			$sSQL .= ' and id not in (' . $treeSQL . ')';
+		//$sSQL .= " and itmactive>0 and active>0";			   
+		$sSQL .= " ORDER BY " . $code;	//order unselected list by name	
+		
+		if ($this->echoSQL)
+			echo $sSQL . '<br/>';
+		
+	    $resultset = $db->Execute($sSQL,2);	
+		//print_r($resultset);
+		foreach ($resultset as $n=>$rec) {
+			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
+        }		
+
+		return (implode('',$ret));	
+	}	
+
+	//exclude session items
+    protected function getCurrentRelationList() {
+		$db = GetGlobal('db');
+	    $lan = getlocal();
+	    $itmname = $lan ? 'itmname':'itmfname';
+	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
+		$code = $this->fid ? $this->fid : $this->getmapf('code');
+		$active_code = 	$this->getmapf('code');
+		$id = GetParam('id');	
+		
+		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
+		
+		if ($id) {
+			$relSQL = "select relation from relatives WHERE isitem=1 and relative=" . $db->qstr($id);			
+			$sSQL .= $active_code . ' in (' . $relSQL . ')';
 		}	
+        else
+			return null;	
+		
+		//check session
+        if (!empty($_POST[$this->listName]))    
+            $plist = implode(',',$_POST[$this->listName]);
+
+        if ($sl = GetSessionParam($this->listName)) 
+			$plist .= ($plist ? ','. $sl : $sl);			
+			
+		if ($plist)
+			$sSQL .= ' and id not in (' . $plist . ')';
 		
 		//$sSQL .= " and itmactive>0 and active>0";			   
 		$sSQL .= " ORDER BY " . $itmname;	//order unselected list by name	
@@ -590,16 +693,18 @@ class rctreedescr {
 			echo $sSQL . '<br/>';
 		
 	    $resultset = $db->Execute($sSQL,2);	
+		//print_r($resultset);
 		foreach ($resultset as $n=>$rec) {
 			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
         }		
 
 		return (implode('',$ret));	
 	}	
-
+	
     public function getCurrentList() {
 		
         switch (GetReq('mode')) { 
+		    case 'rels'  : $ret = $this->getCurrentRelationList(); break;		
 			case 'tree'  : $ret = $this->getCurrentTreeList(); break;		
 			case 'cats'  : 
 			case 'items' : 
@@ -629,71 +734,26 @@ class rctreedescr {
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		$sSQL .= ' id in (' . $list . ')';
 		//$sSQL .= " and itmactive>0 and active>0";			   
-		$sSQL .= " ORDER BY FIELD(id,".  $list .")";
+		$sSQL .= " ORDER BY FIELD(id,".  $this->savedlist .")";
 
 		if ($this->echoSQL)
 			echo $sSQL . '<br/>';
 		
 	    $resultset = $db->Execute($sSQL,2);	
+		
+		//print_r($resultset);
 		foreach ($resultset as $n=>$rec) {
 			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
         }		
 
 		return (implode('',$ret));			
 	}	
-	
-	//include tree map items or session items
-	protected function viewTreeList() {
-		$db = GetGlobal('db');
-	    $lan = getlocal();
-	    $itmname = $lan ? 'itmname':'itmfname';
-	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->fid ? $this->fid : $this->getmapf('code');
-		$tid = GetParam('id');
-		
-		//if not items tree return
-		if ($this->currentSelectedTreeType()!=1) return null; 	
-		
-		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
-			
-		//check session	
-		if (!empty($_POST[$this->listName]))  
-			$list = implode(',', $_POST[$this->listName]);	
-        else
-			$list = $this->savedlist;
-		
-        if ($list)
-			$sesSQL = ' id in (' . $list . ')';		
-			
-		//check tree maps
-		if (isset($tid)) {
-			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);			
-			$sSQL .= $sesSQL ? $sesSQL . ' OR id in (' . $treeSQL . ')' : ' id in (' . $treeSQL . ')';
-		}
-		else
-			$sSQL .= $sesSQL;
-			
-		//$sSQL .= " and itmactive>0 and active>0";			   
-		$sSQL .= " ORDER BY " . $code; //FIELD(id,".  $this->savedlist .")";
-
-		if ($this->echoSQL)
-			echo $sSQL . '<br/>';	
-		
-		$resultset = $db->Execute($sSQL,2);			
-		$insessionlist = explode(',', $list);
-		//print_r($insessionlist);		
-		foreach ($resultset as $n=>$rec) {
-			$check = ((empty($_POST[$this->listName])) && (in_array($rec['id'], $insessionlist))) ? '[+]' : null;
-			$ret[] = "<option value='".$rec['id']."'>". $check . $rec[$code].'-'.$rec[$itmname]."</option>" ;
-		}		
-		
-		return (implode('',$ret));				
-	}
 
 	public function viewList() {
 		
         switch (GetReq('mode')) { 
-			case 'tree'  : $ret = $this->viewTreeList(); break;		
+			case 'rels'  :
+			case 'tree'  :	
 			case 'cats'  : 
 			case 'items' : 
 			default      : $ret = $this->viewSessionList();	
@@ -880,27 +940,24 @@ class rctreedescr {
 			$list = $slist ? $slist . ',' . $plist : $plist;
 			
 			switch (GetReq('mode')) { 
-				case 'tree'  :  if ($this->currentSelectedTreeType()==1) { //items tree
+			
+				case 'landpage' :  /*if ($this->currentSelectedTreeType()==1) { //items tree
 									$this->remTreeList($plist); //remove post list
 									$this->saveTreeList($list); //save list at table
 									SetSessionParam($this->listName, ''); //reset session list
-				                }	
-								break;		
-			
+				                   }*/	
+								   break;		
+			 
+			    case 'tree'  :
+			    case 'rels'  :
 				case 'cats'  :
 				case 'items' : 		
 				default      :	SetSessionParam($this->listName, $list); //save session list
 			}	
 			
 		}
-		else {
-			switch (GetReq('mode')) {
-				case 'tree'  :  break;
-				case 'cats'  :
-				case 'items' :				
-				default      :	SetSessionParam($this->listName, ''); //set null
-			}
-		}	
+		else
+			SetSessionParam($this->listName, ''); //empty]	
 		  
 		return ($list);
 	}	

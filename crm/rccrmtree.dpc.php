@@ -12,15 +12,13 @@ $__EVENTS['RCCRMTREE_DPC'][0]='cpcrmtree';
 $__EVENTS['RCCRMTREE_DPC'][1]='cpcrmsavetree';
 $__EVENTS['RCCRMTREE_DPC'][2]='cpcrmloadtree';
 $__EVENTS['RCCRMTREE_DPC'][3]='cpcrmtreeframe';
-$__EVENTS['RCCRMTREE_DPC'][4]='cpcrmtreeitems';
-$__EVENTS['RCCRMTREE_DPC'][5]='cpcrmtreeusers';
+$__EVENTS['RCCRMTREE_DPC'][4]='cpcrmtreeusers';
 
 $__ACTIONS['RCCRMTREE_DPC'][0]='cpcrmtree';
 $__ACTIONS['RCCRMTREE_DPC'][1]='cpcrmsavetree';
 $__ACTIONS['RCCRMTREE_DPC'][2]='cpcrmloadtree';
 $__ACTIONS['RCCRMTREE_DPC'][3]='cpcrmtreeframe';
-$__ACTIONS['RCCRMTREE_DPC'][4]='cpcrmtreeitems';
-$__ACTIONS['RCCRMTREE_DPC'][5]='cpcrmtreeusers';
+$__ACTIONS['RCCRMTREE_DPC'][4]='cpcrmtreeusers';
 
 $__LOCALE['RCCRMTREE_DPC'][0]='RCCRMTREE_DPC;e-CRM Tree;e-CRM Προσδιοριστικά χαρακτηριστικά';
 $__LOCALE['RCCRMTREE_DPC'][1]='_date;Date;Ημερ.';
@@ -135,7 +133,7 @@ class rccrmtree {
         $this->listName = 'mycrmtreelist';
         $this->savedlist = GetSessionParam($this->listName) ? GetSessionParam($this->listName) : null;
 	
-		$this->fid = GetReq('fid');//GetSessionParam('fid') ? GetSessionParam('fid') : GetReq('fid');
+		$this->fid = GetReq('fid');
 		$this->echoSQL = false; //true;
 	}
 	
@@ -150,23 +148,14 @@ class rccrmtree {
 			 
 			case 'cpcrmtreeframe' : echo $this->loadframe();
 		                            die(); 
-			 
 			case 'cpcrmtreeusers' : //direct saving to list when grid click on email
 			                        if ((GetReq('mode')=='email') && ($email= GetReq('id'))) {
 										$this->addtoSessionList($email);
 										//echo 'add to session:'.$email;
 										//print_r(explode(',',$this->savedlist));
 									}	
-			                        break;
-			case 'cpcrmtreeitems' : /*if ($fid = $this->fid) {
-										SetSessionParam('fid', $fid); //save fid 
-										//$fidparam = "&fid=" . $fid;
-									}*/
-			                        break;			 
-			 
-		    case 'cpcrmloadtree'  : //$this->savedlist = $this->loadList(); 
-			                        break;			 
-		 
+			                        break;	 	 
+		    case 'cpcrmloadtree'  : break;			 
 		    case 'cpcrmsavetree'  : $this->savedlist = $this->saveList();				
 	                                break;									
 			case 'cpcrmtree'      :
@@ -183,24 +172,9 @@ class rccrmtree {
 	     switch ($action) {
 			 
 		   case 'cpcrmtreeframe' :  break;	 
-			 
-		   case 'cpcrmtreeusers' :  break;
-		   case 'cpcrmtreeitems' :  break;			 	 
-		   
+		   case 'cpcrmtreeusers' :  break;		 	 
 		   case 'cpcrmloadtree'  :  break;		   
-		   
-		   case 'cpcrmsavetree'  :  
-		                            $out .= 'SessionList:' . $this->savedList . '<br/>';
-								    $out .= implode('<br/>', $_POST);
-								    $out .= implode('<br/>', array_keys($_POST));
-		                            /*$out .= $this->listName . ':'; //implode('<br/>', $_POST); 
-								    foreach ($_POST[$this->listName] as $s)
-									$out .= $s.'|';
-								   $out .= '<br/><br/>tlist:';	
-								   foreach ($_POST['tlist'] as $t)
-									$out .= $t.'|';	*/
-		                            break;
-								   
+		   case 'cpcrmsavetree'  :  break;			   
 		   case 'cpcrmtree'      :						   
 		   default               :  $out = $this->gridMode();
 		 }			 
@@ -215,7 +189,6 @@ class rccrmtree {
 	protected function loadframe($mode=null) {
 		$selectmode = $mode ? $mode : GetReq('mode');
 		$id = GetReq('id');
-		//$fidparam = $this->fid ? "&fid=" . $this->fid : null;
 		
 		switch ($selectmode) {
 			case 'ulist'    :   $bodyurl = seturl("t=cpcrmtreeusers&mode=ulist&id=". $id); break;
@@ -226,7 +199,7 @@ class rccrmtree {
 			case 'sales'    :   $bodyurl = seturl("t=cpcrmtreeusers&mode=sales&id=". $id); break;
             case 'email'    :   $bodyurl = seturl("t=cpcrmtreeusers&mode=email&id=". $id); break;			
 			case 'tree'     : 
-			default         :   $bodyurl = seturl("t=cpcrmtreeitems&mode=tree&id=". $id);// . $fidparam);
+			default         :   $bodyurl = seturl("t=cpcrmtreeusers&mode=tree&id=". $id);
 		}
 			
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"500px\"><p>Your browser does not support iframes</p></iframe>";    
@@ -603,8 +576,6 @@ class rccrmtree {
 			case 'mini'  : $size = 'btn-mini '; break;
 			default      : $size = null;
 		}
-		
-		//$ret = "<button class=\"btn  btn-primary\" type=\"button\">Primary</button>";
 		
 		if (!empty($urls)) {
 			foreach ($urls as $n=>$url)
