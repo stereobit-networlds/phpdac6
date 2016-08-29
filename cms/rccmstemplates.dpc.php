@@ -1,41 +1,42 @@
 <?php
-$__DPCSEC['RCCRMFORMS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCCMSTEMPLATES_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ((!defined("RCCRMFORMS_DPC")) && (seclevel('RCCRMFORMS_DPC',decode(GetSessionParam('UserSecID')))) ) {
-define("RCCRMFORMS_DPC",true);
+if ((!defined("RCCMSTEMPLATES_DPC")) && (seclevel('RCCMSTEMPLATES_DPC',decode(GetSessionParam('UserSecID')))) ) {
+define("RCCMSTEMPLATES_DPC",true);
 
-$__DPC['RCCRMFORMS_DPC'] = 'rccrmforms';
+$__DPC['RCCMSTEMPLATES_DPC'] = 'rccmstemplates';
 
-$__EVENTS['RCCRMFORMS_DPC'][0]='cpcrmforms';
-$__EVENTS['RCCRMFORMS_DPC'][1]='cpcrmfshow';
-$__EVENTS['RCCRMFORMS_DPC'][2]='cpcrmshowform';
-$__EVENTS['RCCRMFORMS_DPC'][3]='cpcrmformdetail';
-$__EVENTS['RCCRMFORMS_DPC'][4]='cpcrmformdata';
-$__EVENTS['RCCRMFORMS_DPC'][5]='cpcrmformsubdetail';
+$__EVENTS['RCCMSTEMPLATES_DPC'][0]='cpcmstemplates';
+$__EVENTS['RCCMSTEMPLATES_DPC'][1]='cpcmsfshow';
+$__EVENTS['RCCMSTEMPLATES_DPC'][2]='cpcmsshowform';
+$__EVENTS['RCCMSTEMPLATES_DPC'][3]='cpcmsformdetail';
+$__EVENTS['RCCMSTEMPLATES_DPC'][4]='cpcmsformdata';
+$__EVENTS['RCCMSTEMPLATES_DPC'][5]='cpcmsformsubdetail';
 
-$__ACTIONS['RCCRMFORMS_DPC'][0]='cpcrmforms';
-$__ACTIONS['RCCRMFORMS_DPC'][1]='cpcrmfshow';
-$__ACTIONS['RCCRMFORMS_DPC'][2]='cpcrmshowform';
-$__ACTIONS['RCCRMFORMS_DPC'][3]='cpcrmformdetail';
-$__ACTIONS['RCCRMFORMS_DPC'][4]='cpcrmformdata';
-$__ACTIONS['RCCRMFORMS_DPC'][5]='cpcrmformsubdetail';
+$__ACTIONS['RCCMSTEMPLATES_DPC'][0]='cpcmstemplates';
+$__ACTIONS['RCCMSTEMPLATES_DPC'][1]='cpcmsfshow';
+$__ACTIONS['RCCMSTEMPLATES_DPC'][2]='cpcmsshowform';
+$__ACTIONS['RCCMSTEMPLATES_DPC'][3]='cpcmsformdetail';
+$__ACTIONS['RCCMSTEMPLATES_DPC'][4]='cpcmsformdata';
+$__ACTIONS['RCCMSTEMPLATES_DPC'][5]='cpcmsformsubdetail';
 
-$__LOCALE['RCCRMFORMS_DPC'][0]='RCCRMFORMS_DPC;Crm forms;Crm forms';
-$__LOCALE['RCCRMFORMS_DPC'][1]='_date;Date;Ημερ.';
-$__LOCALE['RCCRMFORMS_DPC'][2]='_time;Time;Ώρα';
-$__LOCALE['RCCRMFORMS_DPC'][3]='_forms;Forms;Φόρμες';
-$__LOCALE['RCCRMFORMS_DPC'][4]='_owner;Owner;Καταχώρητης';
-$__LOCALE['RCCRMFORMS_DPC'][5]='_active;Active;Ενεργό';
-$__LOCALE['RCCRMFORMS_DPC'][6]='_title;Title;Τίτλος';
-$__LOCALE['RCCRMFORMS_DPC'][7]='_descr;Description;Περιγραφή';
-$__LOCALE['RCCRMFORMS_DPC'][8]='_cat;Category;Κατηγορία';
-$__LOCALE['RCCRMFORMS_DPC'][9]='_class;Class;Κλάση';
-$__LOCALE['RCCRMFORMS_DPC'][10]='_code;Code;Κωδικός';
-$__LOCALE['RCCRMFORMS_DPC'][11]='_messages;Messages;Μηνύματα';
-$__LOCALE['RCCRMFORMS_DPC'][12]='_offers;Offers;Προσφορές';
+$__LOCALE['RCCMSTEMPLATES_DPC'][0]='RCCMSTEMPLATES_DPC;Templates;Templates';
+$__LOCALE['RCCMSTEMPLATES_DPC'][1]='_date;Date;Ημερ.';
+$__LOCALE['RCCMSTEMPLATES_DPC'][2]='_time;Time;Ώρα';
+$__LOCALE['RCCMSTEMPLATES_DPC'][3]='_templates;Templates;Templates';
+$__LOCALE['RCCMSTEMPLATES_DPC'][4]='_owner;Owner;Καταχώρητης';
+$__LOCALE['RCCMSTEMPLATES_DPC'][5]='_active;Active;Ενεργό';
+$__LOCALE['RCCMSTEMPLATES_DPC'][6]='_title;Title;Τίτλος';
+$__LOCALE['RCCMSTEMPLATES_DPC'][7]='_descr;Description;Περιγραφή';
+$__LOCALE['RCCMSTEMPLATES_DPC'][8]='_cat;Category;Κατηγορία';
+$__LOCALE['RCCMSTEMPLATES_DPC'][9]='_class;Class;Κλάση';
+$__LOCALE['RCCMSTEMPLATES_DPC'][10]='_code;Code;Κωδικός';
+$__LOCALE['RCCMSTEMPLATES_DPC'][11]='_webpages;Web pages;Ιστοσελίδες';
+$__LOCALE['RCCMSTEMPLATES_DPC'][12]='_catalogs;Catalogs;Κατάλογοι';
+$__LOCALE['RCCMSTEMPLATES_DPC'][13]='_landpages;Landing pages;Landing pages';
 
 
-class rccrmforms {
+class rccmstemplates {
 	
     var $title, $path, $urlpath;
 	var $seclevid, $userDemoIds;
@@ -46,7 +47,7 @@ class rccrmforms {
 
 		$this->path = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');
-		$this->title = localize('RCCRMFORMS_DPC',getlocal());	 
+		$this->title = localize('RCCMSTEMPLATES_DPC',getlocal());	 
 	  
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); 		  
@@ -65,19 +66,19 @@ class rccrmforms {
 		if ($login!='yes') return null;		 
 	
 		switch ($event) {
-			case 'cpcrmformsubdetail': break;				
+			case 'cpcmsformsubdetail': break;				
 			
-			case 'cpcrmformdata': echo $this->loadsubframe();
+			case 'cpcmsformdata': echo $this->loadsubframe();
 		                          die();
 		                          break;
 							   
-			case 'cpcrmformdetail':
+			case 'cpcmsformdetail':
 			                      break;		
-			case 'cpcrmshowform': break;
-			case 'cpcrmfshow'   : echo $this->loadframe();
+			case 'cpcmsshowform': break;
+			case 'cpcmsfshow'   : echo $this->loadframe();
 		                          die();
 							      break;
-			case 'cpcrmforms'   :
+			case 'cpcmstemplates':
 			default             :    
 		                      
 		}
@@ -90,49 +91,52 @@ class rccrmforms {
 		if ($login!='yes') return null;	
 	 
 		switch ($action) {	
-			case 'cpcrmformsubdetail': $out = $this->showFormDetail(); 
+			case 'cpcmsformsubdetail': $out = $this->showFormDetail(); 
 			                           break;		
 		
-		    case 'cpcrmformdata': break;
+		    case 'cpcmsformdata': break;
 			
-			case 'cpcrmformdetail': 
+			case 'cpcmsformdetail': 
 			                      break;
-			case 'cpcrmshowform': $out = $this->show(); 
+			case 'cpcmsshowform': $out = $this->show(); 
 			                      break;	
-			case 'cpcrmfshow'   : break;
-			case 'cpcrmforms'   :
-			default             : $out = $this->crmFormsMode();
+			case 'cpcmsfshow'   : break;
+			case 'cpcmstemplates':
+			default             : $out = $this->cmsTemplatesMode();
 		}	 
 
 		return ($out);
     }
 	
-	protected function crmFormsMode() {
-		$mode = GetReq('mode') ? GetReq('mode') : 'forms';
+	protected function cmsTemplatesMode() {
+		$mode = GetReq('mode') ? GetReq('mode') : 'templates';
         
-		$turl0 = seturl('t=cpcrmforms&mode=messages');		
-		$turl1 = seturl('t=cpcrmforms&mode=offers');
-		$button = $this->createButton(localize('_forms', getlocal()), 
-										array(localize('_messages', getlocal())=>$turl0,
-										      localize('_offers', getlocal())=>$turl1,
+		$turl0 = seturl('t=cpcmstemplates&mode=landpages');		
+		$turl1 = seturl('t=cpcmstemplates&mode=catalogs');
+		$turl2 = seturl('t=cpcmstemplates&mode=webpages');
+		$button = $this->createButton(localize('_templates', getlocal()), 
+										array(localize('_landpages', getlocal())=>$turl0,
+										      localize('_catalogs', getlocal())=>$turl1,
+											  localize('_webpages', getlocal())=>$turl2,
 		                                ),'success');		
 																	
 		switch ($mode) {
 			
-			case 'messages' :
-			case 'offers'   :
-			case 'forms'    :   
-			default         :   $content = $this->forms_grid(null,140,5,'d', true); 
+			case 'landpages':
+			case 'webpages' :
+			case 'catalogs' :
+			case 'templates':   
+			default         :   $content = $this->templates_grid(null,140,5,'d', true); 
 		}			
 					
-		$ret = $this->window('e-CRM: '.localize('_'.$mode, getlocal()), $button, $content);
+		$ret = $this->window('e-CMS: '.localize('_'.$mode, getlocal()), $button, $content);
 		
 		return ($ret);
 	}	
 	
 	protected function loadframe($ajaxdiv=null, $mode=null) {
 		$id = GetParam('id');
-		$cmd = 'cpcrmshowform&id='.$id ;//$mode not used
+		$cmd = 'cpcmsshowform&id='.$id ;//$mode not used
 		$bodyurl = seturl("t=$cmd&iframe=1");
 			
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"460px\"><p>Your browser does not support iframes</p></iframe>";    
@@ -148,9 +152,9 @@ class rccrmforms {
 		$id = GetParam('id'); //form id
 		
 		if ($init)
-			$bodyurl = seturl("t=cpcrmformdetail&iframe=1&id=$id&module=$module");
+			$bodyurl = seturl("t=cpcmsformdetail&iframe=1&id=$id&module=$module");
 		else
-			$bodyurl = seturl("t=cpcrmformsubdetail&iframe=1&id=$id&module=$module");
+			$bodyurl = seturl("t=cpcmsformsubdetail&iframe=1&id=$id&module=$module");
 	
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"460px\"><p>Your browser does not support iframes</p></iframe>";    
 
@@ -179,6 +183,7 @@ class rccrmforms {
 			                    die($ret);
 			case 'formcode'   :
 			case 'formhtml'   :
+			case 'formscript' :
 			default           :
 		}
 		
@@ -189,7 +194,7 @@ class rccrmforms {
 		if ((!$id) || (!$field)) return null;
 		
 		$db = GetGlobal('db');
-		$sSQL = "select $field from crmforms where id=".$id;
+		$sSQL = "select $field from cmstemplates where id=".$id;
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
 		return $res->fields[0];
@@ -199,10 +204,10 @@ class rccrmforms {
 		if ((!$id) || (!$data)) return null;
 		
 		$db = GetGlobal('db');
-		$sSQL = "update crmforms set formdata=" . $db->qstr($data);
+		$sSQL = "update cmstemplates set data=" . $db->qstr($data);
 		$sSQL.= " where id=" . $id;
 		$res = $db->Execute($sSQL);
-		return $res->fields[0];
+		return true;
 	}	
 	
 	public function fetchFormData() {
@@ -211,18 +216,18 @@ class rccrmforms {
 		if (isset($_POST['formdata'])) 
 			$ret = $this->saveFormData($id, base64_encode($_POST['formdata']));
 		
-		return base64_decode($this->fetchField($id, 'formdata'));
+		return base64_decode($this->fetchField($id, 'data'));
 	}
 	
 	protected function saveCodeData($id, $data=null) {
 		if ((!$id) || (!$data)) return null;
 		
 		$db = GetGlobal('db');
-		$sSQL = "update crmforms set codedata=" . $db->qstr($data);
+		$sSQL = "update cmstemplates set code=" . $db->qstr($data);
 		$sSQL.= " where id=" . $id;
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);
-		return $res->fields[0];
+		return true;
 	}		
 	
 	public function fetchCodeData() {
@@ -231,30 +236,49 @@ class rccrmforms {
 		if (isset($_POST['codedata'])) 
 			$ret = $this->saveCodeData($id, base64_encode($_POST['codedata']));
 		
-		return base64_decode($this->fetchField($id, 'codedata'));
+		return base64_decode($this->fetchField($id, 'code'));
 	}	
 	
-	protected function forms_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	protected function saveScriptData($id, $data=null) {
+		if ((!$id) || (!$data)) return null;
+		
+		$db = GetGlobal('db');
+		$sSQL = "update cmstemplates set script=" . $db->qstr($data);
+		$sSQL.= " where id=" . $id;
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);
+		return true;
+	}		
+	
+	public function fetchScriptData() {
+		$id = GetParam('id');
+		
+		if (isset($_POST['scriptdata'])) 
+			$ret = $this->saveScriptData($id, base64_encode($_POST['scriptdata']));
+		
+		return base64_decode($this->fetchField($id, 'script'));
+	}	
+	
+	protected function templates_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 800;
         $rows = $rows ? $rows : 36;
         $width = $width ? $width : null; //wide	
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('_forms', getlocal()); 
+		$title = localize('_templates', getlocal()); 
 		
-        $xsSQL = "SELECT * from (select id,active,date,title,descr,code,class,type from crmforms) o ";		   
+        $xsSQL = "SELECT * from (select id,active,date,name,descr,class,type from cmstemplates) o ";		   
 		   							
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|5|"."javascript:editform(\"{id}\");".'||'); //"|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+title|".localize('_title',getlocal())."|10|1|");
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|5|"."javascript:editform(\"{id}\");".'||'); //"|5|0|");			
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_title',getlocal())."|10|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|1|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+crmforms+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+cmstemplates+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	
@@ -300,7 +324,7 @@ class rccrmforms {
                         <div class="widget-body">
 							<div class="btn-toolbar">
 							'. $buttons .'
-							<hr/><div id="crmform"></div>
+							<hr/><div id="cmsform"></div>
 							</div>
 							'.  $content .'
                         </div>
@@ -315,28 +339,8 @@ class rccrmforms {
 		if (!GetReq('id')) return false;		
 		
 		$id = "&id=" . GetReq('id');
-		$treeTitle = $this->fetchField(GetReq('id'), 'code');
-		/*
-		$this->crmplus = (defined('CRMPLUS_DPC')) ? true : false;		
-		$crmplustree = $this->crmplus ? '
-										<li>
-											<a data-value="gh_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Plus</a>
-                                            <ul class="branch">
-											<li><a href="#">Actions</a></li>
-                                            <li><a href="javascript:subdetails(\'plus'.$id.'\')">Projects</a></li>
-                                            <li>
-                                                <a data-value="GitHub_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">Automations</a>
-                                                <ul class="branch">
-                                                    <li><a href="#">Events</a></li>
-                                                    <li><a href="#">Users</a></li>
-                                                    <li><a href="#">Feedbacks</a></li>
-                                                    <li><a href="#">Reports</a></li>
-                                                    <li><a href="#">Sales</a></li>
-                                                    <li><a href="#">Revenue</a></li>
-                                                </ul>
-                                            </li></ul>
-                                        </li>' : null;		
-		*/
+		$treeTitle = $this->fetchField(GetReq('id'), 'name');
+
 		$ret = '	
                             <ul id="tree_2" class="tree">
                                 <li>
@@ -344,12 +348,8 @@ class rccrmforms {
                                     <ul class="branch in">
 										<li><a data-role="leaf" href="javascript:subdetails(\'formhtml'.$id.'\')"><i class="icon-user"></i> Html</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'formcode'.$id.'\')"><i class=" icon-book"></i> Code</a></li>
-                                        <li><a data-role="leaf" href="javascript:subdetails(\'formrender'.$id.'\')"><i class="icon-share"></i> View</a></li>										
-                                        <!--li><a data-role="leaf" href="javascript:subdetails(\'customers'.$id.'\')"><i class=" icon-bullhorn"></i> Customers</a></li>
-                                        <li><a data-role="leaf" href="javascript:subdetails(\'items'.$id.'\')"><i class="icon-tasks"></i> Items</a></li>
-										<li><a data-role="leaf" href="javascript:subdetails(\'tasks'.$id.'\')"><i class="icon-share"></i> Tasks</a></li-->
-											
-										'.$crmplustree.'												
+										<li><a data-role="leaf" href="javascript:subdetails(\'formscript'.$id.'\')"><i class=" icon-book"></i> Script</a></li>
+                                        <li><a data-role="leaf" href="javascript:subdetails(\'formrender'.$id.'\')"><i class="icon-share"></i> View</a></li>											
                                     </ul>
                                 </li>
                             </ul>		
@@ -422,7 +422,7 @@ class rccrmforms {
                });			   
 		    </script>		
 ";
-		//     CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
+
 		return ($ret);
 	}
 
@@ -453,7 +453,7 @@ class rccrmforms {
 		$db = GetGlobal('db');		
 		if (!$id) return null;	
 		
-		$sSQL = "select type from crmforms where id=$id";
+		$sSQL = "select type from cmstemplates where id=$id";
 		$res = $db->Execute($sSQL);
 		
 		return ($res->fields[0]);	
@@ -462,13 +462,13 @@ class rccrmforms {
 	public function renderForm($id=null) {
 		$db = GetGlobal('db');		
 		if (!$id) return null;
-		//$template = GetReq('stemplate');		
-		$sSQL = "select id,title,descr,formdata,codedata from crmforms where id=$id";// . $db->qstr($template);
+	
+		$sSQL = "select id,name,descr,data,code,script from cmstemplates where id=$id";
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);			
-		$form = base64_decode($res->fields['formdata']);		
-		$code = base64_decode($res->fields['codedata']);
-		$template = $res->fields['title'];
+		$form = base64_decode($res->fields['data']);		
+		$code = base64_decode($res->fields['code']);
+		$template = $res->fields['name'];
 		
 		if ($code)  {
 			$pf = explode('>|',$code);
@@ -530,14 +530,14 @@ class rccrmforms {
 			}//has pattern data
 		}//has pattern
 		
-		$sSQL = "select formdata from crmforms where title=" . $db->qstr($template.'-sub');
+		$sSQL = "select data from cmstemplates where name=" . $db->qstr($template.'-sub');
 		$res = $db->Execute($sSQL);
 		//echo $sSQL;	
 		if (isset($res->fields['formdata'])) {		
 			$itms[] = (!empty($gr)) ? implode('',$gr) : null;  
 
 			if (!empty($itms))			
-			    $ret = $this->combine_tokens(base64_decode($res->fields['formdata']), $itms, true);
+			    $ret = $this->combine_tokens(base64_decode($res->fields['data']), $itms, true);
 		}	
 		else
 			$ret = (!empty($gr)) ? implode('',$gr) : null;
@@ -554,7 +554,7 @@ class rccrmforms {
 		$db = GetGlobal('db');
 
 		//type 2 sub template data into html/body text
-		$sSQL = "select formdata from crmforms where type=2 and title=" . $db->qstr($template);
+		$sSQL = "select data from cmstemplates where type=2 and name=" . $db->qstr($template);
 		$res = $db->Execute($sSQL);			
 		$template_contents = base64_decode($res->fields['formdata']);		
 		

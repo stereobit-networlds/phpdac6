@@ -213,7 +213,7 @@ class rccmslandp {
 		$fidparam = $this->fid ? "&fid=" . $this->fid : null;
 		
 		switch ($selectmode) {
-			case 'order' : $bodyurl = seturl("t=cpsortpage"); break;
+			case 'sort'  : $bodyurl = seturl("t=cpsortpage"); break;
 			
 			case 'rels'  : $bodyurl = seturl("t=cplanditems&mode=rels&id=". $id . $fidparam); break;
 			case 'cats'  : $bodyurl = seturl("t=cplanditems&mode=cats&id=". $id . $fidparam); break;
@@ -228,14 +228,14 @@ class rccmslandp {
 	}		
 		
 	protected function gridMode() {
-		$mode = GetReq('mode') ? GetReq('mode') : 'tree';
+		$mode = GetReq('mode') ? GetReq('mode') : 'landpage';
         
 		$turl0 = seturl('t=cpcmslandp&mode=items');		
 		$turl1 = seturl('t=cpcmslandp&mode=cats');
 		$turl2 = seturl('t=cpcmslandp&mode=rel');
 		$turl3 = seturl('t=cpcmslandp&mode=tree');
 		$turl4 = seturl('t=cpcmslandp&mode=landpage');
-		$turl5 = "javascript:torder();";
+		$turl5 = "javascript:tsort();";
 		$button = $this->createButton(localize('_mode', getlocal()), 
 										array(localize('_items', getlocal())=>$turl0,
 										      localize('_relatives', getlocal())=>$turl2,
@@ -268,7 +268,27 @@ class rccmslandp {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('_tree', getlocal()); 
+		$title = str_replace(' ', '_', $this->title); //localize('_landpage', getlocal()); 
+		
+	    if (defined('MYGRID_DPC')) {
+		
+			$xSQL2 = "SELECT * from (select id,active,date,name,descr,class,type from cmstemplates) o ";		   
+		   							
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|1|");			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|5|"."javascript:ttemp(\"{id}\");".'||');			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_title',getlocal())."|10|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
+
+			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+cmstemplates+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+
+	    }
+		else 
+		   $ret .= 'Initialize jqgrid.';
+        
+        return ($ret);		
 		
         $xsSQL = "SELECT * from (select id,timein,active,tid,pid,tname,tdescr,tname0,tname1,tname2,items,users,orderid from ctree) o ";		   
 					
