@@ -40,19 +40,19 @@ class rccmstemplates {
 	
     var $title, $path, $urlpath;
 	var $seclevid, $userDemoIds;
-	var $crmplus, $ckeditver;	
+	var $ckeditver, $url;	
 	var $appname, $urkRedir, $isHostedApp; 
 	
 	function __construct() {
 
 		$this->path = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');
+		$this->url = paramload('SHELL','urlbase');
 		$this->title = localize('RCCMSTEMPLATES_DPC',getlocal());	 
 	  
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); 		  
 		
-		$this->crmplus = false;	
 		$this->ckeditver = 3;
 		
 		$this->appname = paramload('ID','instancename');
@@ -150,6 +150,17 @@ class rccmstemplates {
 	protected function loadsubframe($ajaxdiv=null, $module=null, $init=false) {
 		$module = $module ? $module : GetParam('module'); //module details
 		$id = GetParam('id'); //form id
+		
+		if ($module=='formtest') {
+			//return 'test';
+			$this->renderForm($id, '_test.html');
+			if (is_readable($this->urlpath . '/_test.html')) {
+				$frame = "<iframe src =\"{$this->url}/_test.html\" width=\"100%\" height=\"460px\"><p>Your browser does not support iframes</p></iframe>";    
+				return ($frame);
+			}
+		}
+		else
+			@unlink($this->urlpath . '/_test.html'); //erase test file
 		
 		if ($init)
 			$bodyurl = seturl("t=cpcmsformdetail&iframe=1&id=$id&module=$module");
@@ -350,6 +361,7 @@ class rccmstemplates {
                                         <li><a data-role="leaf" href="javascript:subdetails(\'formcode'.$id.'\')"><i class=" icon-book"></i> Code</a></li>
 										<li><a data-role="leaf" href="javascript:subdetails(\'formscript'.$id.'\')"><i class=" icon-book"></i> Script</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'formrender'.$id.'\')"><i class="icon-share"></i> View</a></li>											
+										<li><a data-role="leaf" href="javascript:subdetails(\'formtest'.$id.'\')"><i class="icon-share"></i> Test</a></li>
                                     </ul>
                                 </li>
                             </ul>		
@@ -457,17 +469,20 @@ class rccmstemplates {
 		$res = $db->Execute($sSQL);
 		
 		return ($res->fields[0]);	
-	}	
+	}
 	
-	public function renderForm($id=null) {
+	
+	public function renderForm($id=null, $fsave=null) {
 		$db = GetGlobal('db');		
 		if (!$id) return null;
 	
-		$sSQL = "select id,name,descr,data,code,script from cmstemplates where id=$id";
+		$sSQL = "select id,name,descr,data,code,script,objects from cmstemplates where id=$id";
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);			
 		$form = base64_decode($res->fields['data']);		
 		$code = base64_decode($res->fields['code']);
+		$script = base64_decode($res->fields['script']);
+		$objects = base64_decode($res->fields['objects']);
 		$template = $res->fields['name'];
 		
 		if ($code)  {
@@ -533,7 +548,7 @@ class rccmstemplates {
 		$sSQL = "select data from cmstemplates where name=" . $db->qstr($template.'-sub');
 		$res = $db->Execute($sSQL);
 		//echo $sSQL;	
-		if (isset($res->fields['formdata'])) {		
+		if (isset($res->fields['data'])) {		
 			$itms[] = (!empty($gr)) ? implode('',$gr) : null;  
 
 			if (!empty($itms))			
@@ -545,9 +560,24 @@ class rccmstemplates {
 		//echo $template.'-sub:' . $ret;				
 		$data = ($ret) ? str_replace('<!--?'.$template.'-sub'.'?-->', $ret, $form) : $form;
 		
-		return $data;
+		if ($script) {
+			//create dynamic phpdac page
+			$page = $data;
+		}
+		else {
+			//create static page
+			$page = $data;
+		}
+		
+		if ($fsave) {
+			$ret = @file_put_contents($this->urlpath . '/' . $fsave, preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
+			return $ret;
+		}	
+		else
+			return $page;
+		
 	}		
-
+     
     //combine tokens with load tmpl data inside	
 	public function ct($template, $tokens, $execafter=null) {
 	    //if (!is_array($tokens)) return;

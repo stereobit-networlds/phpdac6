@@ -1,0 +1,31 @@
+<?php
+$__DPCSEC['CMS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+
+if ((!defined("CMS_DPC")) && (seclevel('CMS_DPC',decode(GetSessionParam('UserSecID')))) ) {
+define("CMS_DPC",true);
+
+$__DPC['CMS_DPC'] = 'cms';
+
+class cms {
+
+    var $appname, $prpath, $urlpath, $prpath;
+	var $seclevid, $userDemoIds;
+		
+	function __construct() {
+		
+		$this->appname = paramload('ID','instancename');		
+	
+		$this->urlpath = paramload('SHELL','urlpath');
+		$this->url = paramload('SHELL','urlbase');	
+		$this->prpath = paramload('SHELL','prpath'); 
+	  
+		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
+		$this->userDemoIds = array(5,6,7,8); //8 
+	}
+	
+	public function isDemoUser() {
+		return (in_array($this->seclevid, $this->userDemoIds));
+	}		
+};
+}
+?>

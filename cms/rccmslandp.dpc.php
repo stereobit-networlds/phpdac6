@@ -186,19 +186,7 @@ class rccmslandp {
 		   case 'cplandpage'     :  break;		   
 		   case 'cplandframe'    :  break;	 
 		   case 'cplanditems'    :  break;			 	 	   
-		   
-		   case 'cpsavelandp'    :  $out = 'Filename:' . $this->filename . '<br/>';
-		                            $out .= 'SessionList:' . $this->savedList . '<br/>';
-								    $out .= implode('<br/>', $_POST);
-								    $out .= implode('<br/>', array_keys($_POST));
-		                            /*$out .= $this->listName . ':'; //implode('<br/>', $_POST); 
-								    foreach ($_POST[$this->listName] as $s)
-									$out .= $s.'|';
-								   $out .= '<br/><br/>tlist:';	
-								   foreach ($_POST['tlist'] as $t)
-									$out .= $t.'|';	*/
-		                            break;
-								   
+		   case 'cpsavelandp'    :  break;
 		   case 'cpcmdlandp'     :						   
 		   default               :  $out = $this->gridMode();
 		 }			 
@@ -274,13 +262,13 @@ class rccmslandp {
 		
 			$xSQL2 = "SELECT * from (select id,active,date,name,descr,class,type from cmstemplates) o ";		   
 		   							
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|1|");			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|5|"."javascript:ttemp(\"{id}\");".'||');			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_title',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|0|");			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_title',getlocal())."|link|10|"."javascript:ttemp(\"{id}\");".'||');
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|0|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|0|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|0|");
 
 			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+cmstemplates+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 
@@ -783,7 +771,7 @@ class rccmslandp {
 	}	
 	
 
-	
+	/*
 	protected function get_selected_session_items($preset=null, $limit=null) {
         $db = GetGlobal('db');		
 	    $lan = $lang?$lang:getlocal();
@@ -867,7 +855,7 @@ class rccmslandp {
 		
 		$ret = $this->get_selected_session_items($preset, $asis);
 		return ($ret);
-	}		
+	}*/		
 	
 	public function postSubmit($action, $title=null, $class=null) {
 		if (!$action) return;
