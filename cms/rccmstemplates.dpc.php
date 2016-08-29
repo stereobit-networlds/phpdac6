@@ -34,6 +34,11 @@ $__LOCALE['RCCMSTEMPLATES_DPC'][10]='_code;Code;Κωδικός';
 $__LOCALE['RCCMSTEMPLATES_DPC'][11]='_webpages;Web pages;Ιστοσελίδες';
 $__LOCALE['RCCMSTEMPLATES_DPC'][12]='_catalogs;Catalogs;Κατάλογοι';
 $__LOCALE['RCCMSTEMPLATES_DPC'][13]='_landpages;Landing pages;Landing pages';
+$__LOCALE['RCCMSTEMPLATES_DPC'][14]='_cat0;Category 1;Κατηγορία 1';
+$__LOCALE['RCCMSTEMPLATES_DPC'][15]='_cat1;Category 2;Κατηγορία 2';
+$__LOCALE['RCCMSTEMPLATES_DPC'][16]='_cat2;Category 3;Κατηγορία 3';
+$__LOCALE['RCCMSTEMPLATES_DPC'][17]='_cat3;Category 4;Κατηγορία 4';
+$__LOCALE['RCCMSTEMPLATES_DPC'][18]='_cat4;Category 5;Κατηγορία 5';
 
 
 class rccmstemplates {
@@ -152,8 +157,7 @@ class rccmstemplates {
 		$id = GetParam('id'); //form id
 		
 		if ($module=='formtest') {
-			//return 'test';
-			$this->renderForm($id, '_test.html');
+			GetGlobal('controller')->calldpc_method("crmrt.renderTemplate use ". $id . "++_test.html");
 			if (is_readable($this->urlpath . '/_test.html')) {
 				$frame = "<iframe src =\"{$this->url}/_test.html\" width=\"100%\" height=\"460px\"><p>Your browser does not support iframes</p></iframe>";    
 				return ($frame);
@@ -190,7 +194,10 @@ class rccmstemplates {
 		$formid = GetReq('id');
 		
 		switch ($module) {
-			case 'formrender' : $ret = $this->renderForm($formid);
+			case 'formitems'  : $ret = $this->items_grid(null,360,15,'r', true); 
+			                    break; 
+			case 'formscript' : break; //see loadsubframe
+			case 'formrender' : $ret = GetGlobal('controller')->calldpc_method("crmrt.renderTemplate use ". $formid); 
 			                    die($ret);
 			case 'formcode'   :
 			case 'formhtml'   :
@@ -212,7 +219,7 @@ class rccmstemplates {
 	}
 	
 	protected function saveFormData($id, $data=null) {
-		if ((!$id) || (!$data)) return null;
+		if (!$id) return null;
 		
 		$db = GetGlobal('db');
 		$sSQL = "update cmstemplates set data=" . $db->qstr($data);
@@ -224,14 +231,14 @@ class rccmstemplates {
 	public function fetchFormData() {
 		$id = GetParam('id');
 		
-		if (isset($_POST['formdata'])) 
+		if ($_POST['id'])
 			$ret = $this->saveFormData($id, base64_encode($_POST['formdata']));
 		
 		return base64_decode($this->fetchField($id, 'data'));
 	}
 	
 	protected function saveCodeData($id, $data=null) {
-		if ((!$id) || (!$data)) return null;
+		if (!$id) return null;
 		
 		$db = GetGlobal('db');
 		$sSQL = "update cmstemplates set code=" . $db->qstr($data);
@@ -244,14 +251,14 @@ class rccmstemplates {
 	public function fetchCodeData() {
 		$id = GetParam('id');
 		
-		if (isset($_POST['codedata'])) 
+		if ($_POST['id'])
 			$ret = $this->saveCodeData($id, base64_encode($_POST['codedata']));
 		
 		return base64_decode($this->fetchField($id, 'code'));
 	}	
 	
 	protected function saveScriptData($id, $data=null) {
-		if ((!$id) || (!$data)) return null;
+		if (!$id) return null;
 		
 		$db = GetGlobal('db');
 		$sSQL = "update cmstemplates set script=" . $db->qstr($data);
@@ -264,7 +271,7 @@ class rccmstemplates {
 	public function fetchScriptData() {
 		$id = GetParam('id');
 		
-		if (isset($_POST['scriptdata'])) 
+		if ($_POST['id'])
 			$ret = $this->saveScriptData($id, base64_encode($_POST['scriptdata']));
 		
 		return base64_decode($this->fetchField($id, 'script'));
@@ -360,6 +367,7 @@ class rccmstemplates {
 										<li><a data-role="leaf" href="javascript:subdetails(\'formhtml'.$id.'\')"><i class="icon-user"></i> Html</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'formcode'.$id.'\')"><i class=" icon-book"></i> Code</a></li>
 										<li><a data-role="leaf" href="javascript:subdetails(\'formscript'.$id.'\')"><i class=" icon-book"></i> Script</a></li>
+										<li><a data-role="leaf" href="javascript:subdetails(\'formitems'.$id.'\')"><i class=" icon-book"></i> Items</a></li>
                                         <li><a data-role="leaf" href="javascript:subdetails(\'formrender'.$id.'\')"><i class="icon-share"></i> View</a></li>											
 										<li><a data-role="leaf" href="javascript:subdetails(\'formtest'.$id.'\')"><i class="icon-share"></i> Test</a></li>
                                     </ul>
@@ -471,183 +479,57 @@ class rccmstemplates {
 		return ($res->fields[0]);	
 	}
 	
-	
-	public function renderForm($id=null, $fsave=null) {
+	protected function getTemplateItems($id=null) {
 		$db = GetGlobal('db');		
-		if (!$id) return null;
-	
-		$sSQL = "select id,name,descr,data,code,script,objects from cmstemplates where id=$id";
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);			
-		$form = base64_decode($res->fields['data']);		
-		$code = base64_decode($res->fields['code']);
-		$script = base64_decode($res->fields['script']);
-		$objects = base64_decode($res->fields['objects']);
-		$template = $res->fields['name'];
+		if (!$id) return null;			
+		$objSQL = "select objects from cmstemplates WHERE id=" . $db->qstr($id);
 		
-		if ($code)  {
-			$pf = explode('>|',$code);
-			//search last edited line
-			foreach ($pf as $line) {
-				if (trim($line)) {
-					$joins = explode(',', array_pop($pf)); 
-					break;
-				}
-			}
-			//rest lines
-			foreach ($pf as $line) {
-				$subtemplates .= trim($line);
-			}
-			$_pattern[0] = explode(',', $subtemplates);
-			$_pattern[1] = (array) $joins;
-			//print_r($_pattern);
-			//return ($_pattern);
-			
-			//render pattern
-			if (is_array($_pattern)) {
-				$pattern = (array) $_pattern[0];
-				$join = (array) $_pattern[1];				
-				
-				//make pseudo-items arrray
-				$maxitm = count($pattern); 
-				//echo count($pattern) . '>';
-				for($i=1;$i<=$maxitm;$i++)
-					$items[] = array(0=>$i, 1=>'test item title'.$i, 2=>'test decr'.$i, 14=>'http://placehold.it/680x300');
-				//print_r($items);
-				
-				//render
-				$out = null;
-				$tts = array();
-				$gr = array();
-				$itms = array();
-				$cc = array_chunk($items, count($pattern));//, true);
-
-				foreach ($cc as $i=>$group) {
-					//print_r($group);
-					foreach ($group as $j=>$child) {
-						//echo $pattern[$j] . '<br>';// . print_r($child, true) . '<br>';
-						$tts[] = $this->ct($pattern[$j], $child, true);
-						if ($cmd = trim($join[$j])) {
-							//echo $j . '>' . $join[$j] . '!<br>';
-							switch ($cmd) {
-							    case '_break' : $out .= implode('', $tts); break;
-								default       : $out .= $this->ct($cmd, $tts, true); 
-								                //echo $j; print_r($tts);
-							} 
-							unset($tts);
-						}
-					}
-					
-					$gr[] = (empty($tts)) ? $out : $out . implode('', $tts) ;
-					unset($tts);
-					$out = null;
-				}
-			}//has pattern data
-		}//has pattern
-		
-		$sSQL = "select data from cmstemplates where name=" . $db->qstr($template.'-sub');
-		$res = $db->Execute($sSQL);
-		//echo $sSQL;	
-		if (isset($res->fields['data'])) {		
-			$itms[] = (!empty($gr)) ? implode('',$gr) : null;  
-
-			if (!empty($itms))			
-			    $ret = $this->combine_tokens(base64_decode($res->fields['data']), $itms, true);
-		}	
-		else
-			$ret = (!empty($gr)) ? implode('',$gr) : null;
-		
-		//echo $template.'-sub:' . $ret;				
-		$data = ($ret) ? str_replace('<!--?'.$template.'-sub'.'?-->', $ret, $form) : $form;
-		
-		if ($script) {
-			//create dynamic phpdac page
-			$page = $data;
-		}
-		else {
-			//create static page
-			$page = $data;
-		}
-		
-		if ($fsave) {
-			$ret = @file_put_contents($this->urlpath . '/' . $fsave, preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
-			return $ret;
-		}	
-		else
-			return $page;
-		
+		$oret = $db->Execute($objSQL);
+		return ($oret->fields[0]);			
 	}		
-     
-    //combine tokens with load tmpl data inside	
-	public function ct($template, $tokens, $execafter=null) {
-	    //if (!is_array($tokens)) return;
-		$db = GetGlobal('db');
-
-		//type 2 sub template data into html/body text
-		$sSQL = "select data from cmstemplates where type=2 and name=" . $db->qstr($template);
-		$res = $db->Execute($sSQL);			
-		$template_contents = base64_decode($res->fields['formdata']);		
+	
+	protected function items_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $selected = urldecode(GetReq('id'));
 		
-		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
-		}		  		
-		else
-		  $ret = $template_contents; 
-		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;	
+	    $lan = getlocal() ? getlocal() : 0;  
+		$title = localize('_items',getlocal());
+	
+	    if (defined('MYGRID_DPC')) {
+			
+			$ilist = $this->getTemplateItems($selected);
+			if (!empty($ilist)) {
+				$dSQL = " id in (". $ilist . ")";
+			}	
+			else
+				$dSQL = ' code5=0'; //dummy, null grid			
+			
+			$xsSQL2 = "SELECT * FROM (SELECT id,datein,code5,itmactive,active,itmname,sysins,cat0,cat1,cat2,cat3,cat4 FROM products WHERE $dSQL) x";
+			//echo $xsSQL2;
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+datein|".localize('_date',getlocal()). "|5|0|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|link|4|"."javascript:showdetails(\"{code5}~$selected\");".'||');
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");		
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");			
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|10|0|");	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|5|0|");	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|5|0|");	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|5|0|");	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat3|".localize('_cat3',getlocal())."|5|0|");	
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat4|".localize('_cat4',getlocal())."|5|0|");	
+			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+
 	    }
-		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);	
-		
-		//execute after replace tokens
-		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          
-		  return ($retout);
-		}		
-		
-		return ($ret);
-	}
-
-	//tokens method	
-	protected function combine_tokens($template, $tokens, $execafter=null) {
-	    if (!is_array($tokens)) return;		
-
-		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template);
-		  unset ($fp);		  		
-		}		  		
-		else
-		  $ret = $template;
-		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
-		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
-		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
-		
-		//execute after replace tokens
-		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          
-		  return ($retout);
-		}		
-		
-		return ($ret);
+		else 
+		   $ret .= 'Initialize jqgrid.';
+        
+        return ($ret);
+  	
 	}	
 	
 };

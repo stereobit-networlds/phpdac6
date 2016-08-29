@@ -8,7 +8,7 @@ $__DPC['CMS_DPC'] = 'cms';
 
 class cms {
 
-    var $appname, $prpath, $urlpath, $prpath;
+    var $appname, $urlpath, $prpath, $url;
 	var $seclevid, $userDemoIds;
 		
 	function __construct() {

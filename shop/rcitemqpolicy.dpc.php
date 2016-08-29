@@ -140,9 +140,10 @@ class rcitemqpolicy {
 	}	
 	
 	protected function saveFormData($id, $data=null) {
-		if ((!$id) || (!$data)) return null;
+		if (!$id) return null;
 		
-		$ret = file_put_contents($this->path . $id.'.txt', $data);
+		$ret = ($data) ? file_put_contents($this->path . $id.'.txt', $data) :
+		                 unlink($this->path . $id.'.txt');
 		
 		return ($ret);
 	}
@@ -159,10 +160,9 @@ class rcitemqpolicy {
 	public function fetchFormData() {
 		$id = GetParam('id');
 		
-		if (isset($_POST['formdata'])) {
-			//save
+		if ($id) {
 			//echo 'save';
-			$ret = $this->saveFormData($id, $_POST['formdata']);
+			$ret = $this->saveFormData($id, trim($_POST['formdata']));
 		}
 		
 		$data = @file_get_contents($this->path . $id.'.txt');

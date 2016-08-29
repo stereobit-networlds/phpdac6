@@ -81,6 +81,7 @@ $__LOCALE['RCCMSLANDP_DPC'][53]='_title2;Title L3;Τίτλος L3';
 $__LOCALE['RCCMSLANDP_DPC'][54]='_fields;Identifier;Πρόθεμα';
 $__LOCALE['RCCMSLANDP_DPC'][55]='_relatives;Relations;Συσχετισμοί';
 $__LOCALE['RCCMSLANDP_DPC'][56]='_sortitems;Sort objects;Ταξινόμηση στοιχείων';
+$__LOCALE['RCCMSLANDP_DPC'][57]='_class;Class;Κλάση';
 
 class rccmslandp {
 	
@@ -207,6 +208,7 @@ class rccmslandp {
 			case 'cats'  : $bodyurl = seturl("t=cplanditems&mode=cats&id=". $id . $fidparam); break;
 			case 'items' : $bodyurl = seturl("t=cplanditems&mode=items&id=". $id . $fidparam); break;
 			case 'tree'  : $bodyurl = seturl("t=cplanditems&mode=tree&id=". $id . $fidparam); break;
+			case 'landpage':
 			default      : $bodyurl = seturl("t=cplanditems&mode=landpage&id=". $id . $fidparam);
 		}
 			
@@ -260,13 +262,14 @@ class rccmslandp {
 		
 	    if (defined('MYGRID_DPC')) {
 		
-			$xSQL2 = "SELECT * from (select id,active,date,name,descr,class,type from cmstemplates) o ";		   
+			$xSQL2 = "SELECT * from (select id,active,date,name,descr,objects,class,type from cmstemplates) o ";		   
 		   							
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");		
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|0|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_title',getlocal())."|link|10|"."javascript:ttemp(\"{id}\");".'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|0|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|0|");//"|link|19|"."javascript:tsave(\"{id}\");".'||');
+			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+objects|".localize('_items',getlocal())."|10|0|");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|0|");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|0|");
 
@@ -490,19 +493,14 @@ class rccmslandp {
 		return ($ret);
 	}	
 	
-	public function currentSelectedTreeType() {
+	public function currentSelectedPageType() {
 		$db = GetGlobal('db');		
-		$tid = GetParam('id');
+		$id = GetParam('id');
 		
-		$sSQL = 'select items,users from ctree where tid=' . $db->qstr($tid);
+		$sSQL = 'select type from cmstemplates where id=' . $db->qstr($id);
 		$result = $db->Execute($sSQL);
 		
-		$isitemstype = $result->fields[0];
-		$isuserstype = $result->fields[1];
-		
-		$ret = $isitemstype ? 1 : ($isuserstype ? 2 : 0);
-		//echo $ret;
-		return ($ret);
+		return ($result->fields[0]);
 	}	
 	
 	public function currentSelectedTree() {
@@ -555,19 +553,34 @@ class rccmslandp {
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
 		$code = $this->fid ? $this->fid : $this->getmapf('code');
+		$landpage = false;
 		
 		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
 
         switch (GetReq('mode')) { 
-			case 'cats'  : $cat = GetReq('id'); break;
-			case 'items' : $id = GetReq('id'); break;		
-			default      : $id = $cpGet['id'];
-					       $cat = $cpGet['cat'];	
+		
+			case 'cats'     : $cat = GetReq('id'); break;
+			case 'items'    : $id = GetReq('id'); break;		
+			
+		    case 'landpage' : 	//check existed objects in landpage
+			                    if ($landpage = GetReq('id')) {
+									$objSQL = "select objects from cmstemplates WHERE id=" . $db->qstr($landpage);
+									if ($this->echoSQL)	echo $objSQL . '<br/>';
+									$oret = $db->Execute($objSQL);
+									$objects = $oret->fields[0];								
+								} 
+								//break;
+								
+			default         : $id = $cpGet['id'];
+					          $cat = $cpGet['cat'];	
 		}		
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		
-		if ($id) {
+		if ($objects) {//check existed objects in landpage
+			$sSQL .= " id in (" . $objects . ')';
+		}
+		elseif ($id) {
 			//$sSQL .= $code . '=' . $db->qstr($id);
 			$sSQL .= 'id =' . $db->qstr($id);
 		}	
@@ -596,7 +609,7 @@ class rccmslandp {
 			$sSQL .= $whereClause;	
 
 		}
-        else
+		else
 			return null;	
 		
         if (!empty($_POST[$this->listName]))    
@@ -710,12 +723,13 @@ class rccmslandp {
 	}	
 	
     public function getCurrentList() {
-		
-        switch (GetReq('mode')) { 
+		//echo GetReq('mode');
+        switch (GetReq('mode')) {   
 		    case 'rels'  : $ret = $this->getCurrentRelationList(); break;		
 			case 'tree'  : $ret = $this->getCurrentTreeList(); break;		
 			case 'cats'  : 
-			case 'items' : 
+			case 'items' : 			
+			case 'landpage'  : 
 			default      : $ret = $this->getCurrentSessionList();
 		}	
 		
@@ -763,7 +777,8 @@ class rccmslandp {
 			case 'rels'  :
 			case 'tree'  :	
 			case 'cats'  : 
-			case 'items' : 
+			case 'items' :
+		    case 'landpage'  :			
 			default      : $ret = $this->viewSessionList();	
 		}			
 			
@@ -873,69 +888,53 @@ class rccmslandp {
         return ($c);   		   
 	}
 
-	protected function saveTreeList($data=null) {
+	protected function saveTemplateList($data=null) {
 		$db = GetGlobal('db');		
-		$tid = GetParam('id');
-		$m=0;
+		$id = GetParam('id');
+		if (!$id) return false;
 		
 		if ($data) {
-			$ids = explode(',', $data);
+			$sSQL = 'update cmstemplates set objects=' . $db->qstr($data) . ' WHERE id=' . $id;
+			$db->Execute($sSQL);
+			if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";		
 			
-			//insert if not in tree
-			foreach ($ids as $i=>$item) {
-				$existSQL = "select code from ctreemap WHERE code=" . $db->qstr($item) . " and tid=" . $db->qstr($tid);	
-				$resultset = $db->Execute($existSQL);
-				
-				if ($this->echoSQL)	echo $existSQL;
-				
-				if ($resultset->fields[0]) {
-					//dont insert
-					if ($this->echoSQL)	echo '0<br/>';
-					continue;
-				}
-				else {
-					$sSQL = 'insert into ctreemap (tid, code) values';
-					$sSQL .= ' ('. $db->qstr($tid) . ',' . $db->qstr($item) . ')';		   
-					$db->Execute($sSQL);
-					$m+=1;	
-					if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";
-				}
-			}			
+			return true;
 		}
 		
-		return ($m);
+		return false;
 	}	
-	
-	protected function remTreeList($data=null) {
+
+	protected function saveTemplateFile() {
 		$db = GetGlobal('db');		
-		$tid = GetParam('id');
-		$m=0;	
+		$id = GetParam('id');
+		if (!$id) return false;
 		
 		if ($data) {
-			$ids = explode(',', $data);
+			$sSQL = 'select active,date,name,descr,class,type,script,objects from cmstemplates' . ' WHERE id=' . $id;
+			$res = $db->Execute($sSQL);
+			//if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";		
 			
-			//delete if not in post list
-			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
-			$result = $db->Execute($treeSQL);
-			if (!empty($result->fields)) {
-				foreach ($result as $r=>$rec) {
-					if (in_array($rec['code'], $ids)) {
-						//dont remove
-						//if ($this->echoSQL) echo '0<br/>';
-						continue;						
-					}
-					else {
-						$sSQL = 'delete from ctreemap where tid='. $db->qstr($tid) . ' and code=' . $db->qstr($rec['code']);		   
-						$db->Execute($sSQL);
-						$m+=1;	
-						if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";						
-					}
-				}
-			}
+			if (!$res->fields[0]) return false; //return if inactive
 		}
 		
-		return ($m);
-	}				
+		if ($script = $res->fields['script']) {
+			//create dynamic phpdac page
+			$page = $data;
+		}
+		else {
+			//create static page
+			$page = $data;
+		}
+		
+		if ($fsave) {
+			$ret = @file_put_contents($this->urlpath . '/' . $fsave, preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
+			return $ret;
+		}	
+		else
+			return $page;		
+		
+		return false;
+	}		
 					
 	
 	protected function saveList() {
@@ -949,11 +948,12 @@ class rccmslandp {
 			
 			switch (GetReq('mode')) { 
 			
-				case 'landpage' :  /*if ($this->currentSelectedTreeType()==1) { //items tree
-									$this->remTreeList($plist); //remove post list
-									$this->saveTreeList($list); //save list at table
-									SetSessionParam($this->listName, ''); //reset session list
-				                   }*/	
+				case 'landpage' :  //if ($this->currentSelectedType()==1) { //landpage
+									if ($this->saveTemplateList($list)) {
+										$this->saveTemplateFile();
+										SetSessionParam($this->listName, ''); //reset session list
+									}	
+				                   //}	
 								   break;		
 			 
 			    case 'tree'  :

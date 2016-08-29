@@ -226,7 +226,7 @@ class rccrm  {
 	}	
 
 	protected function crmMode() {
-		$mode = GetReq('mode') ? GetReq('mode') : 'users';
+		$mode = GetReq('mode') ? GetReq('mode') : 'contacts';
 		
 		$turl0 = seturl('t=cpcrm&mode=contacts');
 		$turl1 = seturl('t=cpcrm&mode=users');

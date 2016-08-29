@@ -61,34 +61,36 @@ class cmsrt extends cms  {
 		$this->csvitems = null;		  
 	}
 	
-	public function renderTemplate($name=null, $items=null) {
+	public function renderTemplate($id=null, $items=null, $fsave=null) {
 		$db = GetGlobal('db');		
-		if (!$name) return null;
+		if (!$id) return null;
 	
-		$sSQL = "select id,name,descr,data,code,script,objects from cmstemplates where name=$name";
+		$sSQL = "select id,name,descr,data,code,script,objects from cmstemplates where ";
+		$sSQL.= is_numeric($id) ? "id=" . $id : "name=$id";
 		//echo $sSQL;
 		$res = $db->Execute($sSQL);			
 		$form = base64_decode($res->fields['data']);		
 		$code = base64_decode($res->fields['code']);
 		$script = base64_decode($res->fields['script']);
-		$objects = base64_decode($res->fields['objects']);
+		$objects = $items ? $items : $res->fields['objects'];
 		$template = $res->fields['name'];
+		$descr = $res->fields['descr'];
 		
 		if (strstr($code, '>|')) { //pattern code
-			$ret = $this->renderPattern($template, $form, $code, $objects);
+			$ret = $this->renderPattern($template, $form, $code, $script, $objects, $fsave);
 		}
 		else 
-		    $ret = $this->renderTwing($template, $form, $code, $objects);	
+		    $ret = $this->renderTwing($template, $form, $code, $script, $objects, $fsave);	
 	
 		return ($ret);
 		
 	}
 
-	protected function renderPattern($template, $form=null, $code=null, $items=null) {
+	protected function renderPattern($template, $form=null, $code=null, $script=null, $items=null, $fsave=null) {
 		$db = GetGlobal('db');	
 		if (!$template) return false;
 		
-		$this->items = $this->get_items();
+		$this->items = $this->get_items($items);
 		
 		if (strstr($code, '>|')) {
 		//if ($code)  {
@@ -107,10 +109,10 @@ class cmsrt extends cms  {
 				$subtemplates .= trim($line);
 
 			$_pattern[0] = explode(',', $subtemplates);
-			$_pattern[1] = (array) $joins;
+			$_pattern[1] = (array) $joins;			
 			
 			//render pattern
-			if ((!empty($items)) && (is_array($_pattern))) {
+			if ((!empty($this->items)) && (is_array($_pattern))) {
 				$pattern = (array) $_pattern[0];
 				$join = (array) $_pattern[1];				
 
@@ -119,7 +121,7 @@ class cmsrt extends cms  {
 				$tts = array();
 				$gr = array();
 				$itms = array();
-				$cc = array_chunk($items, count($pattern));//, true);
+				$cc = array_chunk($this->items, count($pattern));//, true);
 
 				foreach ($cc as $i=>$group) {
 					foreach ($group as $j=>$child) {
@@ -177,25 +179,13 @@ class cmsrt extends cms  {
 
 		//csv array of fields
 		foreach ($items as $i=>$rec) {
-			//$ritems[] = implode(';', $rec);
-			$ret = array();
-			foreach ($rec as $field=>$value) {
-				if (($field==5) || ($field==6)) 
-					$ret[] = GetParam('price'.$i) ? str_replace(',','.', GetParam('price'.$i)) : str_replace(',','.', $value); //price	
-				else
-					$ret[] = $value;
-			}
-			
-			//add qty as last element
-			$ret[] = (GetParam('qty'.$i)) ? str_replace(',','.', GetParam('qty'.$i)) : 1;
-			
-			$ritems[] = implode(';', $ret); //filtered
+			$ritems[] = implode(';', $rec);
 		}	
 			
 		return $ritems; 	
 	}	
 
-	protected function renderTwing($template, $form=null, $code=null, $items=null) {
+	protected function renderTwing($template, $form=null, $code=null, $script=null, $items=null, $fsave=null) {
 		$db = GetGlobal('db');	
 		if (!$template) return false;		
 		
@@ -221,7 +211,23 @@ class cmsrt extends cms  {
 				$ret = 'twig cache error!';
 		}
 		else 
-			$ret = $form;		
+			$ret = $form;
+
+		if ($script) {
+			//create dynamic phpdac page
+			$page = $data;
+		}
+		else {
+			//create static page
+			$page = $data;
+		}
+		
+		if ($fsave) {
+			$ret = @file_put_contents($this->urlpath . '/' . $fsave, preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
+			return $ret;
+		}	
+		else
+			return $page;		
 		
 		return ($ret);
 	}

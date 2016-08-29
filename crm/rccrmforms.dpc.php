@@ -196,7 +196,7 @@ class rccrmforms {
 	}
 	
 	protected function saveFormData($id, $data=null) {
-		if ((!$id) || (!$data)) return null;
+		if (!$id) return null;
 		
 		$db = GetGlobal('db');
 		$sSQL = "update crmforms set formdata=" . $db->qstr($data);
@@ -208,14 +208,14 @@ class rccrmforms {
 	public function fetchFormData() {
 		$id = GetParam('id');
 		
-		if (isset($_POST['formdata'])) 
-			$ret = $this->saveFormData($id, base64_encode($_POST['formdata']));
+		if ($_POST['id'])
+			$ret = $this->saveFormData($id, base64_encode(trim($_POST['formdata'])));
 		
 		return base64_decode($this->fetchField($id, 'formdata'));
 	}
 	
 	protected function saveCodeData($id, $data=null) {
-		if ((!$id) || (!$data)) return null;
+		if (!$id) return null;
 		
 		$db = GetGlobal('db');
 		$sSQL = "update crmforms set codedata=" . $db->qstr($data);
@@ -228,8 +228,8 @@ class rccrmforms {
 	public function fetchCodeData() {
 		$id = GetParam('id');
 		
-		if (isset($_POST['codedata'])) 
-			$ret = $this->saveCodeData($id, base64_encode($_POST['codedata']));
+		if ($_POST['id'])
+			$ret = $this->saveCodeData($id, base64_encode(trim($_POST['codedata'])));
 		
 		return base64_decode($this->fetchField($id, 'codedata'));
 	}	
