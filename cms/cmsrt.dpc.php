@@ -320,9 +320,10 @@ class cmsrt extends cms  {
 
 	
     //combine tokens with load tmpl data inside	
-	public function ct($template, $tokens, $execafter=null) {
+	public function ct($template, $toks, $execafter=null) {
 	    //if (!is_array($tokens)) return;
 		$db = GetGlobal('db');
+		$tokens = (array) unserialize($toks);
 
 		//type 2 sub template data into html/body text
 		$sSQL = "select data from cmstemplates where type=2 and name=" . $db->qstr($template);
@@ -358,7 +359,8 @@ class cmsrt extends cms  {
 	}
 
 	//tokens method	
-	public function combine_tokens($template, $tokens, $execafter=null) {
+	public function combine_tokens($template, $toks, $execafter=null) {
+		$tokens = (array) unserialize($toks);
 	    if (!is_array($tokens)) return;		
 
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
@@ -390,6 +392,17 @@ class cmsrt extends cms  {
 		
 		return ($ret);
 	}
+	
+	public function select_template($tfile=null) {
+		if (!$tfile) return;
+	  
+		$template = $tfile . '.htm';	
+		$t = $this->path . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
+		if (is_readable($t)) 
+			$mytemplate = file_get_contents($t);
+
+		return ($mytemplate);	 
+    }	
 
 	public function createButton($name=null, $urls=null, $t=null, $s=null) {
 		$type = $t ? $t : 'primary'; //danger /warning / info /success
@@ -399,9 +412,9 @@ class cmsrt extends cms  {
 			case 'mini'  : $size = 'btn-mini '; break;
 			default      : $size = null;
 		}
-		
-		if (!empty($urls)) {
-			foreach ($urls as $n=>$url)
+		$u = unserialize($urls);
+		if (!empty($u)) {
+			foreach ($u as $n=>$url)
 				$links .= $url ? '<li><a href="'.$url.'">'.$n.'</a></li>' : '<li class="divider"></li>';
 			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
 		} 
@@ -425,6 +438,21 @@ class cmsrt extends cms  {
 	  $ret = $this->map_f[$id];
 	  return ($ret);
 	}	
+	
+	public function getItemCode($id=null) {
+		$db = GetGlobal('db');		
+		if (!$id) return null;			
+		
+		$code = $this->getmapf("code");
+		$objSQL = "select $code from products WHERE id=" . $id;
+		
+		$oret = $db->Execute($objSQL);
+		return ($oret->fields[0]);			
+	}	
+
+	public function nformat($n, $dec=0) {
+		return (number_format($n,$dec,',','.'));
+	}		
 
 	public function replace_spchars($string, $reverse=false) {
 	
@@ -444,4 +472,13 @@ class cmsrt extends cms  {
 	
 };
 }
+
+function _v($v=null) {
+	return $v ? GetGlobal('controller')->calldpc_var($v) : null;
+}
+
+function _m($m=null) {
+	return $m ? GetGlobal('controller')->calldpc_method($m) : null;
+}
+
 ?>

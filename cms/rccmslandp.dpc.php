@@ -375,7 +375,7 @@ class rccmslandp {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
-        $active_code = 	$this->getmapf('code');
+        $active_code = 	GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
 		$name_active = $lan?'itmname':'itmfname'; 		
 		$title = localize('_relatives', $lan);
         $myfields = "id,$active_code,cat0,cat1,cat2,cat3,$name_active,itmactive,active";  		
@@ -523,7 +523,7 @@ class rccmslandp {
 		
 		switch ($field) {
 			case 'code0': $fid = 'id'; break;
-			default     : $fid = $field ? $field : $this->getmapf('code');
+			default     : $fid = $field ? $field : GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
 		}
 		
 		$ret = seturl("t=$t&mode=$mode&id=$id&fid=". $fid);
@@ -552,7 +552,7 @@ class rccmslandp {
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->fid ? $this->fid : $this->getmapf('code');
+		$code = $this->fid ? $this->fid : GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
 		$landpage = false;
 		
 		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
@@ -587,7 +587,7 @@ class rccmslandp {
 		elseif ($cat) {
 			
 			$cat_tree = explode($this->cseparator,str_replace('_',' ',$cat));
-			/////////////////////////////////// $db->qstr($this->replace_spchars($cat_tree[0],1))...
+			/////////////////////////////////// $db->qstr(calldpc_method(cmsrt.replace_spchars use $cat_tree[0]+1))...
 			if ($cat_tree[0])
 				$whereClause .= ' cat0=' . $db->qstr(str_replace('_',' ',$cat_tree[0]));		
 			elseif ($this->onlyincategory)
@@ -641,7 +641,7 @@ class rccmslandp {
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->fid ? $this->fid : $this->getmapf('code');
+		$code = $this->fid ? $this->fid : GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
 		$id = GetParam('id');
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
@@ -684,8 +684,8 @@ class rccmslandp {
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->fid ? $this->fid : $this->getmapf('code');
-		$active_code = 	$this->getmapf('code');
+		$active_code = 	GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");		
+		$code = $this->fid ? $this->fid : $active_code;
 		$id = GetParam('id');	
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
@@ -743,7 +743,7 @@ class rccmslandp {
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->fid ? $this->fid : $this->getmapf('code');
+		$code = $this->fid ? $this->fid : GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
 		
 		//check session	
 		if (!empty($_POST[$this->listName]))  
@@ -783,94 +783,7 @@ class rccmslandp {
 		}			
 			
 		return ($ret);
-	}	
-	
-
-	/*
-	protected function get_selected_session_items($preset=null, $limit=null) {
-        $db = GetGlobal('db');		
-	    $lan = $lang?$lang:getlocal();
-	    $itmname = $lan?'itmname':'itmfname';
-	    $itmdescr = $lan?'itmdescr':'itmfdescr';	
-        $codefield = $this->getmapf('code');
-		$tid = $preset ? $preset : GetParam('id');	
-		
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->getmapf('code').
-				" from products WHERE ";
-
-		if (isset($tid)) {
-			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
-			$sSQL .=  ' id in (' . $treeSQL . ')';	
-		}	
-        else
-			return null;
-		
-	    //$sSQL .= " and itmactive>0 and active>0";	
-		$sSQL .= " ORDER BY " . $codefield;//FIELD(id,".  $itemsIdList .")";
-        $sSQL .= $limit ? " limit " . $limit : null;		
-		
-		//echo $sSQL;	
-	    $resultset = $db->Execute($sSQL,2);	
-		if (empty($resultset)) return null;
-		
-		$ix =1;
-		foreach ($resultset as $n=>$rec) {
-		
-		    $id = $rec[$codefield];
-			
-			$cat = $rec['cat0'] ? str_replace(' ','_',$rec['cat0']) : null;
-			$cat .= $rec['cat1'] ? $this->cseparator . str_replace(' ','_',$rec['cat1']) : null;
-			$cat .= $rec['cat2'] ? $this->cseparator . str_replace(' ','_',$rec['cat2']) : null;
-			$cat .= $rec['cat3'] ? $this->cseparator . str_replace(' ','_',$rec['cat3']) : null;
-			$cat .= $rec['cat4'] ? $this->cseparator . str_replace(' ','_',$rec['cat4']) : null;
-			
-			$item_url = $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$id,null,null,null,null,1);
-			$item_name_url = seturl('t=kshow&cat='.$cat.'&id='.$id,$rec['itmname'],null,null,null,1);			   
-		    $item_name_url_base = "<a href='$item_url'>".$rec['itmname']."</a>";
-			
-			$imgfile = $this->urlpath . $this->image_size_path . '/' . $id . $this->restype;
-
-			if (file_exists($imgfile)) 	 
-				$item_photo_url = $this->url . $this->image_size_path . '/' . $id . $this->restype;
-			else 
-				$item_photo_url = $this->url .'/'. $this->photodb . '?id='.$id.'&stype='.$this->sizeDB;
-
-			$item_photo_html = "<img src=\"" . $item_photo_url . "\">";
-			$item_photo_link = "<a href='$item_url'><img src=\"" . $item_photo_url . "\"></a>";			
-
-			$attachment = null;
-			$i = $ix++;
-			$ret_array[$i] = array(
-			                'code'=>$id,
-			                'itmname'=>$rec[$itmname],
-							'itmdescr'=>$rec[$itmdescr],
-							'itmremark'=>$rec['itmremark'],
-							'uniname1'=>$rec['uniname1'],
-							'price0'=> number_format(floatval($rec['price0']),2,',','.'),
-							'price1'=> number_format(floatval($rec['price1']),2,',','.'), 
-							'cat0'=>$rec['cat0'],
-							'cat1'=>$rec['cat1'],
-							'cat2'=>$rec['cat2'],
-							'cat3'=>$rec['cat3'],
-							'cat4'=>$rec['cat4'],
-							'item_url'=>$item_url,
-							'item_name_url'=>$item_name_url_base,
-							'photo_url'=>$item_photo_url,
-							'photo_html'=>$item_photo_html,
-							'photo_link'=>$item_photo_link,
-							'attachment'=>$attachment,
-							);
-		}
-		
-		return ($ret_array);
 	}		
-	
-	public function get_selected_items($preset=null, $asis=false) {
-		
-		$ret = $this->get_selected_session_items($preset, $asis);
-		return ($ret);
-	}*/		
 	
 	public function postSubmit($action, $title=null, $class=null) {
 		if (!$action) return;
@@ -968,34 +881,6 @@ class rccmslandp {
 			SetSessionParam($this->listName, ''); //empty]	
 		  
 		return ($list);
-	}	
-	
-	
-	protected function getmapf($name) {
-	
-	  if (empty($this->map_t)) return 0;
-	  
-	  foreach ($this->map_t as $id=>$elm)
-	    if ($elm==$name) break;
-				
-	  $ret = $this->map_f[$id];
-	  return ($ret);
-	}	
-
-	protected function replace_spchars($string, $reverse=false) {
-	
-	  if ($reverse) {
-	     $g1 = array("'",',','"','+','/',' ',' & ');
-	     $g2 = array('_','~',"*","plus",":",'-',' n ');		  
-		 $ret = str_replace($g2,$g1,$string);
-	  }	 
-	  else {
-	    $g1 = array("'",',','"','+','/',' ','-&-');
-	    $g2 = array('_','~',"*","plus",":",'-','-n-');		  
-		$ret = str_replace($g1,$g2,$string);
-	  }	
-	
-	  return ($ret);
 	}		
 					
 };

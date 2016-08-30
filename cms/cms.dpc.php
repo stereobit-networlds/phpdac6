@@ -10,6 +10,7 @@ class cms {
 
     var $appname, $urlpath, $prpath, $url;
 	var $seclevid, $userDemoIds;
+	var $cptemplate;
 		
 	function __construct() {
 		
@@ -21,6 +22,9 @@ class cms {
 	  
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); //8 
+		
+	    $tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);  
+	    $this->cptemplate = $tmpl ? $tmpl : 'metro';			
 	}
 	
 	public function isDemoUser() {

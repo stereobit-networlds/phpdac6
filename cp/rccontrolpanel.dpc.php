@@ -2634,6 +2634,17 @@ function handleResponse() {if(http.readyState == 4){
         return $res->fields[0];		
 	}
 	
+	public function getItemActiveCode($id) {
+		if (!$id) return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+		$code = $this->getmapf('code');
+		
+		$sSQL = "select $code from products where id=" . $id;
+		$res = $db->Execute($sSQL,2);
+        return $res->fields[0];		
+	}	
+	
 	public function getRefName($id) {
 		if (!$id) return null;
 		$db = GetGlobal('db');
