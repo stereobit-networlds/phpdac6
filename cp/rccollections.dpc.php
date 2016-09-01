@@ -509,22 +509,22 @@ class rccollections {
 		}	
 		elseif ($this->cat) {
 			
-			$cat_tree = explode($this->cseparator,str_replace('_',' ',$this->cat));
-			/////////////////////////////////// $db->qstr($this->replace_spchars($cat_tree[0],1))...
+			$cat_tree = explode($this->cseparator, str_replace('_',' ',$this->cat));
+
 			if ($cat_tree[0])
-				$whereClause .= ' cat0=' . $db->qstr(str_replace('_',' ',$cat_tree[0]));		
+				$whereClause .= ' cat0=' . $db->qstr($cat_tree[0]);		
 			elseif ($this->onlyincategory)
 				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
 			if ($cat_tree[1])	
-				$whereClause .= ' and cat1=' . $db->qstr(str_replace('_',' ',$cat_tree[1]));	
+				$whereClause .= ' and cat1=' . $db->qstr($cat_tree[1]);	
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
 			if ($cat_tree[2])	
-				$whereClause .= ' and cat2=' . $db->qstr(str_replace('_',' ',$cat_tree[2]));	
+				$whereClause .= ' and cat2=' . $db->qstr($cat_tree[2]);	
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
 			if ($cat_tree[3])	
-				$whereClause .= ' and cat3=' . $db->qstr(str_replace('_',' ',$cat_tree[3]));
+				$whereClause .= ' and cat3=' . $db->qstr($cat_tree[3]);
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		
@@ -1057,23 +1057,6 @@ class rccollections {
 		return ($ret);
 	}		
 	
-	
-	protected function replace_spchars($string, $reverse=false) {
-	
-	  if ($reverse) {
-	     $g1 = array("'",',','"','+','/',' ',' & ');
-	     $g2 = array('_','~',"*","plus",":",'-',' n ');		  
-		 $ret = str_replace($g2,$g1,$string);
-	  }	 
-	  else {
-	    $g1 = array("'",',','"','+','/',' ','-&-');
-	    $g2 = array('_','~',"*","plus",":",'-','-n-');		  
-		$ret = str_replace($g1,$g2,$string);
-	  }	
-	
-	  return ($ret);
-	}	
-
 	//tokens method	
 	protected function combine_tokens($template_contents, $tokens, $execafter=null) {
 	

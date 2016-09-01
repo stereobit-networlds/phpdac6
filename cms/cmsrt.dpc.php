@@ -455,8 +455,6 @@ class cmsrt extends cms  {
 	}		
 
 	public function replace_spchars($string, $reverse=false) {
-	
-		$replacepolicy = '_';	
 		
 		switch ($this->replacepolicy) {	
 	
