@@ -407,8 +407,9 @@ class rccmslandp {
 	
 		$myfields = 'id,ctgid,';
 		$mytitles = localize('id',getlocal()) . ',' . localize('_ctgid',getlocal()) . ',';
-		$myfields .= "cat1,cat2,cat3,cat4,cat{$lan}1,";
-		$myfields .= "cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5,";
+		//$myfields .= "REPLACE(cat1,cat2,cat3,cat4,cat5,";
+		$myfields .= "REPLACE(cat1,'&','~') as cat1, REPLACE(cat2,'&','~') as cat2, REPLACE(cat3,'&','~') as cat3, REPLACE(cat4,'&','~') as cat4, REPLACE(cat5,'&','~') as cat5,";
+		$myfields .= "cat{$lan}1,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5,";
 		$mytitles .= localize('_cat0',$lan).','.localize('_cat1',$lan).','.localize('_cat2',$lan).','.localize('_cat3',$lan).','.localize('_cat4',$lan).','.localize('_cat0',$lan).',';
 		$mytitles .= localize('_cat1',getlocal()) .','.localize('_cat2',$lan).','.localize('_cat3',$lan).','.localize('_cat4',$lan).',';		
 		
@@ -584,9 +585,9 @@ class rccmslandp {
 			//$sSQL .= $code . '=' . $db->qstr($id);
 			$sSQL .= 'id =' . $db->qstr($id);
 		}	
-		elseif ($this->cat) {
+		elseif ($cat) {
 			
-			$cat_tree = explode($this->cseparator, _m('cmsrt.replace_spchars use ' . $this->cat . '+1'));
+			$cat_tree = explode($this->cseparator, str_replace('~', '&' ,$cat));//_m('cmsrt.replace_spchars use ' . $cat . '+1'));
 
 			if ($cat_tree[0])
 				$whereClause .= ' cat0=' . $db->qstr($cat_tree[0]);		
