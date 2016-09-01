@@ -35,7 +35,7 @@ class shkategories {
 	var $max_selection;
 	var $rewrite, $notencodeurl;
 	var $result_in_table;
-	var $cseparator, $cat_result;
+	var $cseparator, $cat_result, $replacepolicy;
 	var $imagex, $imagey;
 	var $encodeimageid;
 	var $tmpl_path, $tmpl_name;
@@ -98,11 +98,14 @@ class shkategories {
 	  
 	  //thumb xy ..overwriten by shkatalog/shkatlogmedia
 	  $this->imagex = remote_paramload('SHKATEGORIES','imagex',$this->path);	
-	  $this->imagey = remote_paramload('SHKATEGORIES','imagey',$this->path);		  
+	  $this->imagey = remote_paramload('SHKATEGORIES','imagey',$this->path);	
+
+	  //replace policy
+	  $this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);	
 	  
 	  $this->encodeimageid = remote_paramload('SHKATEGORIES','encodeimageid',$this->path);	  
 	  $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	  $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);
+	  $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	
 	  
 	  //on all pages
       $this->search_javascript();		  
@@ -755,9 +758,9 @@ class shkategories {
 		}
 	  }
 		    
-	  /*if ($showroot) 
+	  if ($showroot) 
 	    $ddir = $this->read_tree(null,null,1);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-	  else*/if ($myselcat) 	
+	  elseif ($myselcat) 	
 	    $ddir = $this->read_tree($myselcat,null,1);	
 		
 	  $i=0;	 
@@ -999,30 +1002,26 @@ class shkategories {
 	     $group = explode($this->cseparator,$g);   //print_r($group);
 	     $mg = count($group);
 	     $depth = ($mg ? $mg : 0); //echo 'DEPTH:',$depth;
-		 //if ($depth>3) return null; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			 
-	     switch ($depth) {
+		 //if ($depth>3) return null; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 		 
+	   }
+
+	   switch ($depth) {
 	       case 1 : $sSQL = "select cat3,cat{$f}3,cat2,cat{$f}2 from categories where "; break;
 		   case 2 : $sSQL = "select cat4,cat{$f}4,cat3,cat{$f}3,cat2,cat{$f}2 from categories where "; break;
 		   case 3 : $sSQL = "select cat5,cat{$f}5,cat4,cat{$f}4,cat3,cat{$f}3,cat2,cat{$f}2 from categories where "; break;
 		   case 4 : $sSQL = "select null from categories"; break;
 		   default: $sSQL = "select cat2,cat{$f}2 from categories where "; break;
-	     }
-	     //$sSQL .= ' where '; 
-	     switch ($depth) {
+	   }
+	   //$sSQL .= ' where '; 
+	   switch ($depth) {
 	       case 4 : 
 	       case 3 : $sSQL .= "(cat4='" . $this->replace_spchars($group[2],1) . "' or cat{$f}4='" . $this->replace_spchars($group[2],1) . "') and ";
 		   case 2 : $sSQL .= "(cat3='" . $this->replace_spchars($group[1],1) . "' or cat{$f}3='" . $this->replace_spchars($group[1],1) . "') and ";
 		   case 1 : $sSQL .= "(cat2='" . $this->replace_spchars($group[0],1) . "' or cat{$f}2='" . $this->replace_spchars($group[0],1) . "') and "; //break;
 		   default: $sSQL .= "ctgid>0 and active>0 and view>0";
-		 }  		 
-	   }
-	   else
-	     //$depth = 0;	
-	     //return null; /********************/
-		 $sSQL =  "select distinct cat2,cat{$f}2 from categories where cat1='ITEMS'"; 		     
+	   } 	   
 		 
-	     $sSQL .= " order by ctgid"; /*ctgoutlnorder";//,ctgid asc"; ***************************/
+	   $sSQL .= " order by ctgid"; /*ctgoutlnorder";//,ctgid asc"; ***************************/
 		 
          //if ($g) echo $sSQL; 
 	   $result = $db->Execute($sSQL,2);
@@ -1950,18 +1949,23 @@ function gocatsearch(url)
     }	
 	
 	function replace_spchars($string, $reverse=false) {
+		
+	  switch ($this->replacepolicy) {	
 	
-	  if ($reverse) {
-	     $g1 = array("'",'"','+','/',' ',' & ');
-	     $g2 = array('_',"*","plus",":",'-',' n ');		  
-		 $ret = str_replace($g2,$g1,$string);
-	  }	 
-	  else {
-	    $g1 = array("'",'"','+','/',' ','-&-');
-	    $g2 = array('_',"*","plus",":",'-','-n-');		  
-		$ret = str_replace($g1,$g2,$string);
-	  }	
-	
+	    case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+		case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+	    default :
+	    if ($reverse) {
+			$g1 = array("'",'"','+','/',' ',' & ');
+			$g2 = array('_',"*","plus",":",'-',' n ');		  
+			$ret = str_replace($g2,$g1,$string);
+	    }	 
+	    else {
+			$g1 = array("'",'"','+','/',' ','-&-');
+			$g2 = array('_',"*","plus",":",'-','-n-');		  
+			$ret = str_replace($g1,$g2,$string);
+		}	
+	  }
 	  return ($ret);
 	}	
 	

@@ -1052,6 +1052,7 @@ class shkatalogmedia extends shkatalog {
 	   $ydist = $this->imagey?$this->imagey:null;//free y 75;	
        $cat = GetReq('cat');   
 	   $custom_template=false;
+	   $page = GetReq('page') ? GetReq('page') : 0;
 
 	   $mylinemax = ($nolinemax) ? null : $this->linemax;   
 	   $myimageclick = ($this->imageclick>0) ? 1 : $imageclick;
@@ -1117,14 +1118,14 @@ class shkatalogmedia extends shkatalog {
 		     $price = $this->zeroprice_msg;		
 		 
 			 if (defined("SHCART_DPC")) {
-				$cart_code = $rec[$this->getmapf('code')];
-				$cart_title = $this->replace_spchars($rec[$itmname]);
+				$cart_code  = $rec[$this->getmapf('code')];
+				$cart_title = $this->replace_cartchars($rec[$itmname]);
 				$cart_group = $cat;
-				$cart_page = GetReq('page')?GetReq('page'):0;
-				$cart_descr = $this->replace_spchars($rec[$itmdescr]);
+				$cart_page  = $page;
+				$cart_descr = $this->replace_cartchars($rec[$itmdescr]);
 				$cart_photo = $rec[$this->getmapf('code')];//$this->get_photo_url($rec[$this->getmapf('code')],$pz);
 				$cart_price = $price;
-				$cart_qty = 1;//???				 
+				$cart_qty   = 1;//???				 
 				$cart = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
 				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				$in_cart = GetGlobal('controller')->calldpc_method("shcart.getCartItemQty use ".$rec[$item_code]);
@@ -1211,7 +1212,7 @@ class shkatalogmedia extends shkatalog {
 	   $xdist = ($imgx?$imgx:160);
 	   $ydist = ($imgy?$imgy:120);
 	   $cat = GetReq('cat');
-	   //$cat = GetGlobal('controller')->calldpc_var('shtags.tagcat');
+	   $page = GetReq('page') ? GetReq('page') : 0;
 
 	   if (remote_paramload('SHKATALOG','imageclick',$this->path)>0)
 	     $myimageclick = 1;
@@ -1256,15 +1257,15 @@ class shkatalogmedia extends shkatalog {
 		     $price = $this->zeroprice_msg;
 		   		   
 			 if (defined("SHCART_DPC")) {
-				$cart_qty = 1;
-				$cart_code = $rec[$item_code];
-				$cart_title = $this->replace_spchars($rec[$itmname]);
+				$cart_qty   = 1;
+				$cart_code  = $rec[$item_code];
+				$cart_title = $this->replace_cartchars($rec[$itmname]);
 				$cart_group = $cat;
-				$cart_page = GetReq('page')?GetReq('page'):0;
-				$cart_descr = $this->replace_spchars($rec[$itmdescr]);
+				$cart_page  = $page;
+				$cart_descr = $this->replace_cartchars($rec[$itmdescr]);
 				$cart_photo = $rec[$item_code];//$this->get_photo_url($rec[$this->getmapf('code')],$pz);
 				$cart_price = $price;				 
-				$icon_cart = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
+				$icon_cart  = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
 				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				$in_cart = GetGlobal('controller')->calldpc_method("shcart.getCartItemQty use ".$rec[$item_code]);
 			 }	
@@ -1362,10 +1363,10 @@ class shkatalogmedia extends shkatalog {
 			 
 		   //if ((GetGlobal('UserID')) || (seclevel('SHKATALOG_CART',$this->userLevelID))) {//logged in or sec ok
 		     $cart_code = $rec[$item_code];
-			 $cart_title = $this->replace_spchars($rec[$itmname]);
+			 $cart_title = $this->replace_cartchars($rec[$itmname]);
 			 $cart_group = $cat;
 			 $cart_page = GetReq('page')?GetReq('page'):0;
-			 $cart_descr = $this->replace_spchars($rec[$itmdescr]);
+			 $cart_descr = $this->replace_cartchars($rec[$itmdescr]);
 			 $cart_photo = $rec[$item_code];//$this->get_photo_url($rec[$this->getmapf('code')],1);
 			 $cart_price = $price;
 			 $cart_qty = 1;//???
@@ -3254,27 +3255,39 @@ class shkatalogmedia extends shkatalog {
 	//override
 	function replace_spchars($string, $reverse=false) {
 	
-	  if ($reverse) {
-	     $g1 = array("'",',','"','+','/',' ',' & ');
-	     $g2 = array('_','~',"*","plus",":",'-',' n ');		  
-		 $ret = str_replace($g2,$g1,$string);
-	  }	 
-	  else {
-	    $g1 = array("'",',','"','+','/',' ','-&-');
-	    $g2 = array('_','~',"*","plus",":",'-','-n-');		  
-		$ret = str_replace($g1,$g2,$string);
-	  }	
+		switch ($this->replacepolicy) {	
 	
-	  return ($ret);
+			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+			default :	
+			if ($reverse) {
+				$g1 = array("'",',','"','+','/',' ',' & ');
+				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
+				$ret = str_replace($g2,$g1,$string);
+			}	 
+			else {
+				$g1 = array("'",',','"','+','/',' ','-&-');
+				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
+				$ret = str_replace($g1,$g2,$string);
+			}	
+	    }
+		return ($ret);
 	}
 	
 	/*OVERRITE */
     /*not an sql at categories table, use cat fields of readed record*/	
 	//public function getkategories($categories) {
-	protected function getkategoriesS($categories) {		
+	protected function getkategoriesS($categories) {	
 		$c = $this->cseparator;
-	    $g1 = array("'",',','"','+','/',' ','-&-');
-	    $g2 = array('_','~',"*","plus",":",'-','-n-');		
+					
+		switch ($this->replacepolicy) {
+			
+			case '_' : $g1 = ' '; $g2 ='_'; break;
+			case '-' : $g1 = ' '; $g2 ='-'; break;			
+			default :
+					$g1 = array("'",',','"','+','/',' ','-&-');
+					$g2 = array('_','~',"*","plus",":",'-','-n-');		
+		}
 		
 		if (empty($categories)) return null;
 		foreach ($categories as $i=>$cat)

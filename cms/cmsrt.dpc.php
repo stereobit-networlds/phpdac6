@@ -13,7 +13,7 @@ class cmsrt extends cms  {
 	
 	var $map_t, $map_f, $cseparator, $onlyincategory;
 	var $imgxval, $imgyval, $image_size_path;
-	var $autoresize, $restype;	
+	var $autoresize, $restype, $replacepolicy;	
 	var $items, $csvitems;
 	
 	function __construct() {
@@ -27,8 +27,8 @@ class cmsrt extends cms  {
 		
 		$csep = remote_paramload('RCITEMS','csep',$this->prpath); 
 		$this->cseparator = $csep ? $csep : '^';	
-
 		$this->onlyincategory = remote_paramload('SHKATALOGMEDIA','onlyincategory',$this->prpath);
+		$this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);		
 		
 		$this->autoresize = remote_arrayload('RCITEMS','autoresize',$this->prpath);
 		$this->restype = remote_paramload('RCITEMS','restype',$this->prpath);
@@ -456,22 +456,28 @@ class cmsrt extends cms  {
 
 	public function replace_spchars($string, $reverse=false) {
 	
-	  if ($reverse) {
-	     $g1 = array("'",',','"','+','/',' ',' & ');
-	     $g2 = array('_','~',"*","plus",":",'-',' n ');		  
-		 $ret = str_replace($g2,$g1,$string);
-	  }	 
-	  else {
-	    $g1 = array("'",',','"','+','/',' ','-&-');
-	    $g2 = array('_','~',"*","plus",":",'-','-n-');		  
-		$ret = str_replace($g1,$g2,$string);
-	  }	
+		$replacepolicy = '_';	
+		
+		switch ($this->replacepolicy) {	
 	
-	  return ($ret);
+			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+			default  :	
+			if ($reverse) {
+				$g1 = array("'",',','"','+','/',' ',' & ');
+				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
+				$ret = str_replace($g2,$g1,$string);
+			}	 
+			else {
+				$g1 = array("'",',','"','+','/',' ','-&-');
+				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
+				$ret = str_replace($g1,$g2,$string);
+			}	
+	    }
+		return ($ret);
 	}	
 	
 };
-}
 
 function _v($v=null) {
 	return $v ? GetGlobal('controller')->calldpc_var($v) : null;
@@ -481,4 +487,5 @@ function _m($m=null) {
 	return $m ? GetGlobal('controller')->calldpc_method($m) : null;
 }
 
+}
 ?>

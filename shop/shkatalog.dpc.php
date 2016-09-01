@@ -965,10 +965,10 @@ class shkatalog extends shkategories {
 				   
 		   if ((GetGlobal('UserID')) || (seclevel('SHKATALOG_CART',$this->userLevelID))) {//logged in or sec ok
 		     $cart_code = $rec[$this->getmapf('code')];
-			 $cart_title = $this->replace_spchars($rec[$itmname]);
+			 $cart_title = $this->replace_cartchars($rec[$itmname]);
 			 $cart_group = $cat;
 			 $cart_page = GetReq('page')?GetReq('page'):0;
-			 $cart_descr = $this->replace_spchars($rec[$itmdescr]);
+			 $cart_descr = $this->replace_cartchars($rec[$itmdescr]);
 			 $cart_photo = $this->get_photo_url($rec[$this->getmapf('code')],$pz);
 			 $cart_price = $price;
 			 $cart_qty = 1;//???
@@ -1185,10 +1185,10 @@ class shkatalog extends shkategories {
 */			 
 		   if (($user=GetGlobal('UserID')) || (seclevel('SHKATALOG_CART',$this->userLevelID))) {//logged in or sec ok		   
 		     $cart_code = $rec[$this->getmapf('code')];
-			 $cart_title = $this->replace_spchars($rec[$itmname]);
+			 $cart_title = $this->replace_cartchars($rec[$itmname]);
 			 $cart_group = $cat;
 			 $cart_page = GetReq('page')?GetReq('page'):0;
-			 $cart_descr = $this->replace_spchars($rec[$itmdescr]);
+			 $cart_descr = $this->replace_cartchars($rec[$itmdescr]);
 			 $cart_photo = $this->get_photo_url($rec[$this->getmapf('code')],$pz);
 			 $cart_price = $price;
 			 $cart_qty = 1;//???
@@ -1460,10 +1460,10 @@ class shkatalog extends shkategories {
 
 		   if ((GetGlobal('UserID')) || (seclevel('SHKATALOG_CART',$this->userLevelID))) {//logged in or sec ok
 		     $cart_code = $rec[$this->getmapf('code')];
-			 $cart_title = $this->replace_spchars($rec[$itmname]);
+			 $cart_title = $this->replace_cartchars($rec[$itmname]);
 			 $cart_group = $cat;
 			 $cart_page = GetReq('page')?GetReq('page'):0;
-			 $cart_descr = $this->replace_spchars($rec[$itmdescr]);
+			 $cart_descr = $this->replace_cartchars($rec[$itmdescr]);
 			 $cart_photo = $this->get_photo_url($rec[$this->getmapf('code')],1);
 			 $cart_price = $price;
 			 $cart_qty = 1;//???
@@ -2616,29 +2616,14 @@ class shkatalog extends shkategories {
 	
 	}	
 	
-	/*function replace_spchars($string) {
+	function replace_cartchars($string) {
 	
 	  $r1 = str_replace('"',"'",$string);
 	  $r2 = str_replace('+',"plus",$r1);	  
 	  //$r3 = str_replace(')',"-",$r2);
 	  
 	  return ($r2);
-	}*/
-	function replace_spchars($string, $reverse=false) {
-	
-	  if ($reverse) {
-	     $g1 = array("'",'"','+','/',' ',' & ');
-	     $g2 = array('_',"*","plus",":",'-',' n ');		  
-		 $ret = str_replace($g2,$g1,$string);
-	  }	 
-	  else {
-	    $g1 = array("'",'"','+','/',' ','-&-');
-	    $g2 = array('_',"*","plus",":",'-','-n-');		  
-		$ret = str_replace($g1,$g2,$string);
-	  }	
-	
-	  return ($ret);
-	}		
+	}	
 	
 	function combine_template($template_contents,$p0=null,$p1=null,$p2=null,$p3=null,$p4=null,$p5=null,$p6=null,$p7=null,$p8=null,$p9=null) {
 	
