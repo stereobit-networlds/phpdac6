@@ -509,22 +509,22 @@ class rccollections {
 		}	
 		elseif ($this->cat) {
 			
-			$cat_tree = explode($this->cseparator, _m('cmsrt.replace_spchars use ' . $this->cat . '+1'));
+			$cat_tree = explode($this->cseparator, $this->cat);
 
 			if ($cat_tree[0])
-				$whereClause .= ' cat0=' . $db->qstr($cat_tree[0]);		
+				$whereClause .= ' cat0=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[0]. '+1'));		
 			elseif ($this->onlyincategory)
 				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
 			if ($cat_tree[1])	
-				$whereClause .= ' and cat1=' . $db->qstr($cat_tree[1]);	
+				$whereClause .= ' and cat1=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[1]. '+1'));	
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
 			if ($cat_tree[2])	
-				$whereClause .= ' and cat2=' . $db->qstr($cat_tree[2]);	
+				$whereClause .= ' and cat2=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[2]. '+1'));	
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
 			if ($cat_tree[3])	
-				$whereClause .= ' and cat3=' . $db->qstr($cat_tree[3]);
+				$whereClause .= ' and cat3=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[3]. '+1'));
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		

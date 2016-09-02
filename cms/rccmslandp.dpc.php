@@ -299,7 +299,7 @@ class rccmslandp {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+users|".localize('_users',getlocal())."|boolean|1|1:0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}		
@@ -331,7 +331,7 @@ class rccmslandp {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+users|".localize('_users',getlocal())."|2|0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	
@@ -343,9 +343,11 @@ class rccmslandp {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('_items', getlocal()); 
+		$title = localize('_items', getlocal());
+	    $itmname = $lan ? 'itmname' : 'itmfname';
+	    $itmdescr = $lan ? 'itmdescr' : 'itmfdescr';		
 		
-        $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,itmname,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
+        $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,$itmname,$itmdescr,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
 		//code3,cat0,cat1,cat2,cat3,cat4,resources
 		   							
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
@@ -353,7 +355,8 @@ class rccmslandp {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|link|5|"."javascript:titems(\"{id}\");".'||');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|10|0|");	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$itmname|".localize('_title',getlocal())."|10|0|");	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$itmdescr|".localize('_descr',getlocal())."|10|0|");	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
@@ -363,7 +366,7 @@ class rccmslandp {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{code5}\");".'||');
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}
@@ -391,7 +394,7 @@ class rccmslandp {
 	    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$name_active|".localize('_title',getlocal()).'|20|0');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal()).'|boolean|1:0|');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|1|101:0');		
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+		$out = _m("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 		
 		return ($out);  	
 	}
@@ -436,7 +439,7 @@ class rccmslandp {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
 		
-		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+		$out .= _m("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 			
 		return ($out);
 	
@@ -556,7 +559,7 @@ class rccmslandp {
 		$code = $this->fid ? $this->fid : GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
 		$landpage = false;
 		
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 
         switch (GetReq('mode')) { 
 		
@@ -587,22 +590,22 @@ class rccmslandp {
 		}	
 		elseif ($cat) {
 			
-			$cat_tree = explode($this->cseparator, str_replace('~', '&' ,$cat));//_m('cmsrt.replace_spchars use ' . $cat . '+1'));
+			$cat_tree = explode($this->cseparator, str_replace('~', '&' ,$cat)); //js url
 
 			if ($cat_tree[0])
-				$whereClause .= ' cat0=' . $db->qstr($cat_tree[0]);		
+				$whereClause .= ' cat0=' . $db->qstr(_m('cmsrt.replace_spchars use ' .$cat_tree[0]. '+1'));		
 			elseif ($this->onlyincategory)
 				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
 			if ($cat_tree[1])	
-				$whereClause .= ' and cat1=' . $db->qstr($cat_tree[1]);	
+				$whereClause .= ' and cat1=' . $db->qstr(_m('cmsrt.replace_spchars use ' .$cat_tree[1]. '+1'));	
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
 			if ($cat_tree[2])	
-				$whereClause .= ' and cat2=' . $db->qstr($cat_tree[2]);	
+				$whereClause .= ' and cat2=' . $db->qstr(_m('cmsrt.replace_spchars use ' .$cat_tree[2]. '+1'));	
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
 			if ($cat_tree[3])	
-				$whereClause .= ' and cat3=' . $db->qstr($cat_tree[3]);
+				$whereClause .= ' and cat3=' . $db->qstr(_m('cmsrt.replace_spchars use ' .$cat_tree[3]. '+1'));
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		
@@ -642,7 +645,7 @@ class rccmslandp {
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->fid ? $this->fid : GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
+		$code = $this->fid ? $this->fid : _m("cmsrt.getmapf use code");
 		$id = GetParam('id');
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
@@ -685,7 +688,7 @@ class rccmslandp {
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$active_code = 	GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");		
+		$active_code = 	_m("cmsrt.getmapf use code");		
 		$code = $this->fid ? $this->fid : $active_code;
 		$id = GetParam('id');	
 		
@@ -744,7 +747,7 @@ class rccmslandp {
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->fid ? $this->fid : GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
+		$code = $this->fid ? $this->fid : _m("cmsrt.getmapf use code");
 		
 		//check session	
 		if (!empty($_POST[$this->listName]))  

@@ -26,8 +26,9 @@ $__LOCALE['RCXMLFEEDS_DPC'][8]='_manufacturer;Manufacturer;Κατασκευασ�
 class rcxmlfeeds {
 
     var $prpath, $title, $select_fields, $xmlindex, $cdate, $savepath;
-	var $cseparator, $url, $imgpath, $map_t, $map_f, $restype;
+	var $cseparator, $url, $imgpath, $restype;
 	var $pricef, $pricevat, $decimal;
+	//var $map_t, $map_f;
 
     function __construct() {
 	  
@@ -55,8 +56,8 @@ class rcxmlfeeds {
 
        $murl = arrayload('SHELL','ip');
        $this->url = $murl[0]; 	 
-	   $this->map_t = remote_arrayload('RCITEMS','maptitle',$this->path);	
-	   $this->map_f = remote_arrayload('RCITEMS','mapfields',$this->path);
+	   //$this->map_t = remote_arrayload('RCITEMS','maptitle',$this->path);	
+	   //$this->map_f = remote_arrayload('RCITEMS','mapfields',$this->path);
        $this->restype = remote_paramload('RCITEMS','restype',$this->path);	   
 	}
 	
@@ -218,10 +219,8 @@ class rcxmlfeeds {
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';
+		$code = _m('cmsrt.getmapf use code');
 		
-        /*$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->getmapf('code').
-				",stats.id,stats.tid from products";*/
 		$myfields = implode(',', $this->select_fields);	
 
 		$sSQL = "select id," . $myfields . " from products";			
@@ -239,14 +238,14 @@ class rcxmlfeeds {
 			foreach ($this->select_fields as $i=>$f) {
 				$recarray[$f] = $rec[$f];
 			} 
-		    $id = $rec[$this->getmapf('code')];	
+		    $id = $rec[$code];	
 			$cat = $rec['cat0'] ? $rec['cat0'] : null;
 			$cat .= $rec['cat1'] ? $this->cseparator.$rec['cat1'] : null;
 			$cat .= $rec['cat2'] ? $this->cseparator.$rec['cat2'] : null;
 			$cat .= $rec['cat3'] ? $this->cseparator.$rec['cat3'] : null;
 			$cat .= $rec['cat4'] ? $this->cseparator.$rec['cat4'] : null;
 			
-			$_cat = str_replace(' ','_', $cat);
+			$_cat = _m('cmsrt.replace_spchars use '.$cat);//str_replace(' ','_', $cat);
 			
 			$recarray['itemurl'] = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$_cat.'&id='.$id,null,null,null,null,1);
 			$recarray['itemimg'] = 'http://' . $this->url . '/' . $this->imgpath . $id . $this->restype;
@@ -330,7 +329,7 @@ class rcxmlfeeds {
 		
 		return ($ret);
 	}
-
+    /*
 	protected function getmapf($name) {
 	
 	  if (empty($this->map_t)) return 0;
@@ -342,7 +341,7 @@ class rcxmlfeeds {
 	  $ret = $this->map_f[$id];
 	  return ($ret);
 	}
-	
+	*/
 	
 	
 	public function fnum($n, $dec_digits, $dp=null, $tp=null) {
@@ -360,7 +359,7 @@ class rcxmlfeeds {
 	  else
 	     $value = $price;
 	 
-	  $ret = $this->fnum($value,2,',');//'.'
+	  $ret = $this->fnum($value,2,',',''); //'.'
 	
 	  return ($ret);
 	}	

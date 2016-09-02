@@ -255,7 +255,7 @@ class rctreedescr {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+users|".localize('_users',getlocal())."|2|1|0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	
@@ -268,8 +268,10 @@ class rctreedescr {
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
 		$title = localize('_items', getlocal()); 
+	    $itmname = $lan ? 'itmname' : 'itmfname';
+	    $itmdescr = $lan ? 'itmdescr' : 'itmfdescr';		
 		
-        $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,itmname,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
+        $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,$itmname,$itmdescr,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
 		//code3,cat0,cat1,cat2,cat3,cat4,resources
 		   							
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
@@ -277,7 +279,8 @@ class rctreedescr {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|link|10|"."javascript:titems(\"{id}\");".'||');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$itmname|".localize('_title',getlocal())."|link|10|"."javascript:titems(\"{id}\");".'||');	
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$itmdescr|".localize('_descr',getlocal())."|10|0|");	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
@@ -287,7 +290,7 @@ class rctreedescr {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{code5}\");".'||');
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}
@@ -332,7 +335,7 @@ class rctreedescr {
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
 		
-		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+		$out .= _m("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 			
 		return ($out);
 	
@@ -473,22 +476,22 @@ class rctreedescr {
 		}	
 		elseif ($cat) {
 			
-			$cat_tree = explode($this->cseparator, str_replace('~', '&' ,$cat));//_m('cmsrt.replace_spchars use ' . $cat . '+1'));
+			$cat_tree = explode($this->cseparator, str_replace('~', '&' ,$cat));//js url
 			
 			if ($cat_tree[0])
-				$whereClause .= ' cat0=' . $db->qstr($cat_tree[0]);		
+				$whereClause .= ' cat0=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[0]. '+1'));		
 			elseif ($this->onlyincategory)
 				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
 			if ($cat_tree[1])	
-				$whereClause .= ' and cat1=' . $db->qstr($cat_tree[1]);	
+				$whereClause .= ' and cat1=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[1]. '+1'));	
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
 			if ($cat_tree[2])	
-				$whereClause .= ' and cat2=' . $db->qstr($cat_tree[2]);	
+				$whereClause .= ' and cat2=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[2]. '+1'));	
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
 			if ($cat_tree[3])	
-				$whereClause .= ' and cat3=' . $db->qstr($cat_tree[3]);
+				$whereClause .= ' and cat3=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[3]. '+1'));
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		
@@ -531,7 +534,7 @@ class rctreedescr {
 		$code = $this->fid ? $this->fid : $this->getmapf('code');
 		$tid = GetParam('id');
 		
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		$id = $cpGet['id'];
 		$cat = $cpGet['cat'];		
 		
@@ -545,19 +548,19 @@ class rctreedescr {
 			$cat_tree = explode($this->cseparator, _m('cmsrt.replace_spchars use ' . $cat . '+1'));
 
 			if ($cat_tree[0])
-				$whereClause .= ' cat0=' . $db->qstr($cat_tree[0]);		
+				$whereClause .= ' cat0=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[0]. '+1'));		
 			elseif ($this->onlyincategory)
 				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
 			if ($cat_tree[1])	
-				$whereClause .= ' and cat1=' . $db->qstr($cat_tree[1]);	
+				$whereClause .= ' and cat1=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[1]. '+1'));	
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
 			if ($cat_tree[2])	
-				$whereClause .= ' and cat2=' . $db->qstr($cat_tree[2]);	
+				$whereClause .= ' and cat2=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[2]. '+1'));	
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
 			if ($cat_tree[3])	
-				$whereClause .= ' and cat3=' . $db->qstr($cat_tree[3]);
+				$whereClause .= ' and cat3=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[3]. '+1'));
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		
