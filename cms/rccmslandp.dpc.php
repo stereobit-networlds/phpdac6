@@ -94,6 +94,8 @@ class rccmslandp {
 	
 	var $filename, $fields, $photodb, $sizeDB;
 	var $owner, $fid, $echoSQL;
+	
+	var $tpath, $template;
 
     function __construct() {
 	  
@@ -102,7 +104,10 @@ class rccmslandp {
 		$this->url = paramload('SHELL','urlbase');
 		$this->title = localize('RCCMSLANDP_DPC',getlocal());
 
-		$this->owner = GetSessionParam('LoginName');	
+		$this->owner = GetSessionParam('LoginName');
+
+		$this->tpath = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);	
+		$this->template = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);		
 		
 		$this->map_t = remote_arrayload('RCITEMS','maptitle',$this->prpath);	
 		$this->map_f = remote_arrayload('RCITEMS','mapfields',$this->prpath);		
@@ -280,28 +285,6 @@ class rccmslandp {
 		   $ret .= 'Initialize jqgrid.';
         
         return ($ret);		
-		
-        $xsSQL = "SELECT * from (select id,timein,active,tid,pid,tname,tdescr,tname0,tname1,tname2,items,users,orderid from ctree) o ";		   
-					
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");		
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|1:0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tid|".localize('_code',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|10|"."javascript:ttree(\"{tid}\");".'||');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname0|".localize('_title0',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+items|".localize('_items',getlocal())."|boolean|1|1:0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+users|".localize('_users',getlocal())."|boolean|1|1:0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
-
-		$out = _m("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
-		
-		return ($out);  	
 	}		
 
 	protected function tree_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
@@ -550,7 +533,7 @@ class rccmslandp {
 	}	
 	
 
-	//exclude existed session items
+	//exclude existed template objects and posted items
     protected function getCurrentSessionList() {
 		$db = GetGlobal('db');
 	    $lan = getlocal();
@@ -581,10 +564,10 @@ class rccmslandp {
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		
-		if ($objects) {//check existed objects in landpage
-			$sSQL .= " id in (" . $objects . ')';
+		/*if ($objects) {//check existed objects in landpage
+			$sSQL .= " NOT id in (" . $objects . ')';
 		}
-		elseif ($id) {
+		else*/if ($id) {
 			//$sSQL .= $code . '=' . $db->qstr($id);
 			$sSQL .= 'id =' . $db->qstr($id);
 		}	
@@ -616,19 +599,21 @@ class rccmslandp {
 		else
 			return null;	
 		
+		//check existed post objects
         if (!empty($_POST[$this->listName]))    
             $plist = implode(',',$_POST[$this->listName]);
-
-        if ($sl = GetSessionParam($this->listName)) 
-			$plist .= ($plist ? ','. $sl : $sl);			
-			
+        /*if ($sl = GetSessionParam($this->listName)) 
+			$plist .= ($plist ? ','. $sl : $sl);*/			
 		if ($plist)
-			$sSQL .= ' and id not in (' . $plist . ')';
+			$sSQL .= ' and id NOT in (' . $plist . ')';
+		elseif ($objects) //check existed objects in landpage
+			$sSQL .= " and id NOT in (" . $objects . ')';
+		
 		
 		//$sSQL .= " and itmactive>0 and active>0";			   
 		$sSQL .= " ORDER BY " . $itmname;	//order unselected list by name	
 		
-		if ($this->echoSQL)
+		//if ($this->echoSQL)
 			echo $sSQL . '<br/>';
 		
 	    $resultset = $db->Execute($sSQL,2);	
@@ -749,20 +734,43 @@ class rccmslandp {
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
 		$code = $this->fid ? $this->fid : _m("cmsrt.getmapf use code");
 		
+        switch (GetReq('mode')) { 
+		
+			case 'cats'     : break;
+			case 'items'    : break;		
+			
+		    case 'landpage' : 	//check existed objects in landpage
+			                    if ($landpage = GetReq('id')) {
+									$oSQL = "select objects from cmstemplates WHERE id=" . $db->qstr($landpage);
+									if ($this->echoSQL)	echo $oSQL . '<br/>';
+									$oret = $db->Execute($oSQL);
+									$objects = $oret->fields[0];								
+								} 
+								break;
+			default         : 	
+		}			
+		
 		//check session	
 		if (!empty($_POST[$this->listName]))  
 			$list = implode(',', $_POST[$this->listName]);	
-        else
-			$list = $this->savedlist;
+        //else
+			//$list = $this->savedlist;
 		
-		if (!$list) return ;
+		//if (!$list) return ;
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
-		$sSQL .= ' id in (' . $list . ')';
-		//$sSQL .= " and itmactive>0 and active>0";			   
-		$sSQL .= " ORDER BY FIELD(id,".  $this->savedlist .")";
+		if ($list) {
+			$lstSQL = ' id in (' . $list . ')';
+			//$sSQL .= " and itmactive>0 and active>0";			   
+			$sSQL .= $lstSQL . " ORDER BY FIELD(id,".  $list .")";			
+		}	
+		elseif ($objects) {
+			$objSQL = 'id in (' . $objects . ')';
+			//$sSQL .= " and itmactive>0 and active>0";			   
+			$sSQL .= $objSQL . " ORDER BY FIELD(id,".  $objects .")";			
+		}	
 
-		if ($this->echoSQL)
+		//if ($this->echoSQL)
 			echo $sSQL . '<br/>';
 		
 	    $resultset = $db->Execute($sSQL,2);	
@@ -826,30 +834,40 @@ class rccmslandp {
 		$id = GetParam('id');
 		if (!$id) return false;
 		
-		if ($data) {
-			$sSQL = 'select active,date,name,descr,class,type,script,objects from cmstemplates' . ' WHERE id=' . $id;
+		if ($id) {
+			$sSQL = 'select active,date,name,descr,class,type,script,objects,data from cmstemplates' . ' WHERE id=' . $id;
 			$res = $db->Execute($sSQL);
 			//if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";		
 			
 			if (!$res->fields[0]) return false; //return if inactive
-		}
 		
-		if ($script = $res->fields['script']) {
-			//create dynamic phpdac page
-			$page = $data;
-		}
-		else {
-			//create static page
-			$page = $data;
-		}
+		    $template = $res->fields['class'] ? $res->fields['class'] : $this->template;
+		    $filename = $res->fields['descr'] ? str_replace(' ','-',$res->fields['descr']) : str_replace(' ','-',$res->fields['name']);			
 		
-		if ($fsave) {
-			$ret = @file_put_contents($this->urlpath . '/' . $fsave, preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
-			return $ret;
-		}	
-		else
-			return $page;		
+			if ($script = $res->fields['script']) {
+				//create dynamic phpdac page
+				$page = base64_decode($script);// . base64_decode($res->fields['data']);
+				
+				//save template file
+				$templatefilepath = $this->prpath . $this->tpath . "/" . $template; 
+				//echo $templatefilepath . '/pages/' . $filename.'.php';
+				$ret = @file_put_contents($templatefilepath . '/pages/' . $filename.'.php', 
+				        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", base64_decode($res->fields['data'])));
+			}
+			else {
+				//create static page
+				$page = base64_decode($res->fields['data']);
+			}
 		
+			if ($filename) {
+				//save public file
+				$ret = @file_put_contents($this->urlpath . '/' . $filename.'.php', 
+				        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
+				return $ret;
+			}	
+			else
+				return $page;		
+		}		
 		return false;
 	}		
 					

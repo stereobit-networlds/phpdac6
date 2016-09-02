@@ -158,7 +158,8 @@ class shkatalogmedia extends shkatalog {
 								 die($xml);	//xml output
 		                         break;
 								 
-		  case 'xmlout'        : $this->xmlread_list();
+		  case 'xmlout'        : GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //..to do also in cp chars etc //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
+		                         $this->xmlread_list();
 								 $xml = $this->xml_feed();
 								 die($xml);	//xml output
 		                         break;
@@ -180,7 +181,7 @@ class shkatalogmedia extends shkatalog {
 								GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use $_filter+filter");		  
 		                        break;		
 		  case 'klist'        : $this->my_one_item = $this->read_list(); 
-		                        GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use ".GetReq('cat'));		  
+		                        GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use ".GetReq('cat'));//$this->replace_spchars(GetReq('cat'),1));		  
 		                        break;	
 
 		  case 'kshow'        : $this->read_item(); 

@@ -8,40 +8,23 @@ define("CMSVSTATS_DPC",true);
 $__DPC['CMSVSTATS_DPC'] = 'cmsvstats';
 
 $__EVENTS['CMSVSTATS_DPC'][0]='cmsvstats';
-$__EVENTS['CMSVSTATS_DPC'][1]='cmsvstatsshow';
-$__EVENTS['CMSVSTATS_DPC'][2]='cnsvmcstart';
+$__EVENTS['CMSVSTATS_DPC'][1]='cnsvmcstart';
 
 $__ACTIONS['CMSVSTATS_DPC'][0]='cmsvstats';
-$__ACTIONS['CMSVSTATS_DPC'][1]='cmsvstatsshow';
-$__ACTIONS['CMSVSTATS_DPC'][2]='cmsvmcstart';
+$__ACTIONS['CMSVSTATS_DPC'][1]='cmsvmcstart';
 
 $__DPCATTR['CMSVSTATS_DPC']['cmsvstats'] = 'cmsvstats,1,0,0,0,0,0,0,0,0,0,0,1';
 
 $__LOCALE['CMSVSTATS_DPC'][0]='CMSVSTATS_DPC;Statistics;Στατιστική';
-$__LOCALE['CMSVSTATS_DPC'][1]='_GNAVAL;Chart not available!;Στατιστική μή διαθέσιμη!';
 
 class cmsvstats  {
 
     var $title;
-	var $_grids, $charts;
-	var $ajaxLink;
-	var $hasgraph;
-	var $graphx, $graphy;
-	
 	var $mc, $cid, $hashtag;
 		
 	function __construct() {
 
 	  $this->title = localize('CMSVSTATS_DPC',getlocal());			
-
-	  $this->ajaxLink = seturl('t=cpvstatsshow&statsid='); //for use with...	      
-
-	  $this->hasgraph = false;
-	  $this->graphx = remote_paramload('RCVSTATS','graphx',$this->path);
-	  $this->graphy = remote_paramload('RCVSTATS','graphy',$this->path);
-	  
-	  //$u = $_SERVER['REQUEST_URI'].$_SERVER['QUERY_STRING']; //basename($_SERVER['REQUEST_URI']);
-	  //echo $u;
 	  
 	  $this->hashtag = $_COOKIE['hashtag']; //fetch generic hashtag if any
 	  $this->cid = $_COOKIE['cid']; //fetch mail campaign id	  
@@ -55,21 +38,12 @@ class cmsvstats  {
 
 	   switch ($event) {
 		   
-		 case 'cpvmcstart'  : $this->callback_update_first_referece_record();
+		 case 'cmsvmcstart'  : $this->callback_update_first_referece_record();
 							  die();// $this->mc.','.$this->cid.','.$this->hashtag);
-							  break;
+							  break; 
 
-		 case 'cpvstatsshow': if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");
-		                      if (!$cvid = GetParam('statsid')) $cvid=-1; 
-		                      $this->charts = new swfcharts;	
-		                      $this->hasgraph = $this->charts->create_chart_data('statistics',"where tid='".$cvid . "' and year>=2000");
-							  break; 	   
-
-	     case 'cpvstats'    :
-		 default            : if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");
-		                      $this->graph_javascript();		 
-		                      $this->charts = new swfcharts;	
-		                      $this->hasgraph = $this->charts->create_chart_data('statisticscat',"where year>=2000 and attr1='".urldecode(GetReq('cat'))."'");
+	     case 'cmsvstats'   :
+		 default            : 
 	   }
 		
     }   
@@ -78,16 +52,8 @@ class cmsvstats  {
 
 	  switch ($action) {
 		  
-		 case 'cpvmcstart'  : break;  
-
-		 case 'cpvstatsshow': if ($this->hasgraph)
-		                        $out = $this->show_graph('statistics','Product statistics',$this->ajaxLink,'stats');
-							  else
-							    $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
-							  die('stats|'.$out); //ajax return
-							  break; 
-	     case 'cpvstats'    :
-
+		 case 'cmsvmcstart' : break;  
+	     case 'cmsvstats'   :
 		 default            : $out .= $this->show_statistics();
 
 	  }	 
@@ -181,44 +147,7 @@ EOF;
       return ($jscript);
    }		
 	
-
-	function graph_javascript() {
-
-      if (iniload('JAVASCRIPT')) {
- 		      
-	       $code = $this->update_stats();			
-		   $js = new jscript;	   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-
-	  }		
-	}
 	
-	protected function init_grids() {	
-		$out = "
-function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  var str2 = arguments[2]; statsid.value = str;
-  sndReqArg('$this->ajaxLink'+statsid.value,'stats');
-  return str1+' '+str2; }
-";
-		return ($out);
-    }	
-
-	function show_graph($xmlfile,$title=null,$url=null,$ajaxid=null,$xmax=null,$ymax=null) {
-	  $gx = $this->graphx?$this->graphx:$xmax?$xmax:550;
-	  $gy = $this->graphy?$this->graphy:$ymax?$ymax:250;
-	 
-      $ret = $title;
-	  $ret .= $this->charts->show_chart($xmlfile,$gx,$gy,$url,$ajaxid);
-
-	  return ($ret);
-	}
-	
-	function show_statistics() {
-
-	   //HIDDEN FIELD TO HOLD STATS ID FOR AJAX HANDLE
-	   $out .= "<INPUT TYPE= \"hidden\" ID= \"statsid\" VALUE=\"0\" >";	   	    
-	   return ($out);		   
-	}		
 	
 	//hash can't fetched for first time by php (not yet saved in cookies)
 	//this function update the last rec were no tag info = first in tags history
@@ -292,7 +221,6 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : ($iref ? $iref : ''));
 		$cmail = $this->mc ? base64_decode($this->mc) : '';
 
-		//$sSQL = "insert into stats (date,day,month,year,attr1,attr2,attr3,ref,tid,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
 		$sSQL = "insert into stats (day,month,year,attr1,attr2,attr3,ref,tid,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
 		//$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
@@ -313,7 +241,38 @@ function update_stats_id() { var str = arguments[0]; var str1 = arguments[1];  v
 		}  
 		else 
 		  return false;		
-	}				
+	}	
+
+	public function update_page_statistics($id, $attr1=null, $iref=null) {
+        $db = GetGlobal('db'); 
+        $UserName = GetGlobal('UserName');	
+		$name = $UserName ? decode($UserName) : session_id();
+	
+	    $myday  = date('d',$currentdate);	
+	    $mymonth= date('m',$currentdate);	
+	    $myyear = date('Y',$currentdate);
+
+		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : ($iref ? $iref : ''));
+		$cmail = $this->mc ? base64_decode($this->mc) : '';		
+						
+		$sSQL = "insert into stats (day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
+		$sSQL.= $myday . ",";
+		$sSQL.= $mymonth . ",";
+		$sSQL.= $myyear . ",";						
+		$sSQL.= $db->qstr($id) . ',';
+        $sSQL.= $db->qstr($name) . ','; 
+		$sSQL.= $db->qstr($cmail) . ',';
+		$sSQL.= $db->qstr($ref) . ",";		
+		$sSQL.= $db->qstr($attr1) . ",";
+		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
+		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ")";			
+		//echo $sSQL;
+		$db->Execute($sSQL,1);	 		
+		if ($db->Affected_Rows()) 
+		  return true;
+		else 
+		  return false;		
+	}	
 };
 }
 ?>
