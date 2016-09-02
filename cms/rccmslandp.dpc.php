@@ -270,16 +270,16 @@ class rccmslandp {
 		
 			$xSQL2 = "SELECT * from (select id,active,date,name,descr,objects,class,type from cmstemplates) o ";		   
 		   							
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");		
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|0|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_title',getlocal())."|link|10|"."javascript:ttemp(\"{id}\");".'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|link|19|"."javascript:tsort(\"{id}\");".'||');
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+objects|".localize('_items',getlocal())."|10|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|0|");
+			_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");			
+			_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");		
+			_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|0|");			
+			_m("mygrid.column use grid1+name|".localize('_title',getlocal())."|link|10|"."javascript:ttemp(\"{id}\");".'||');
+			_m("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|link|19|"."javascript:tsort(\"{id}\");".'||');
+			//_m("mygrid.column use grid1+objects|".localize('_items',getlocal())."|10|0|");
+			_m("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|0|");
+			_m("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|0|");
 
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+cmstemplates+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+			$ret .= _m("mygrid.grid use grid1+cmstemplates+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 
 	    }
 		else 
@@ -299,21 +299,21 @@ class rccmslandp {
 		
         $xsSQL = "SELECT * from (select id,timein,active,tid,pid,tname,tdescr,tname0,tname1,tname2,items,users,orderid from ctree) o ";		   
 					
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");		
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tid|".localize('_code',getlocal())."|2|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|2|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|10|"."javascript:ttree(\"{tid}\");".'||');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname0|".localize('_title0',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+items|".localize('_items',getlocal())."|2|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+users|".localize('_users',getlocal())."|2|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");		
+		//_m("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
+		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+tid|".localize('_code',getlocal())."|2|0|");
+		_m("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|2|1|");			
+		_m("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|10|"."javascript:ttree(\"{tid}\");".'||');	
+		_m("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+tname0|".localize('_title0',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
+		_m("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
+		//_m("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
+		_m("mygrid.column use grid1+items|".localize('_items',getlocal())."|2|0|");
+		_m("mygrid.column use grid1+users|".localize('_users',getlocal())."|2|0|");
+		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
 
 		$out = _m("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
@@ -334,21 +334,21 @@ class rccmslandp {
         $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,$itmname,$itmdescr,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
 		//code3,cat0,cat1,cat2,cat3,cat4,resources
 		   							
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|link|5|"."javascript:titems(\"{id}\");".'||');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$itmname|".localize('_title',getlocal())."|10|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$itmdescr|".localize('_descr',getlocal())."|10|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price1|".localize('_price1',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{code5}\");".'||');
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
+		_m("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
+		_m("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+code5|".localize('_code',getlocal())."|link|5|"."javascript:titems(\"{id}\");".'||');	
+		_m("mygrid.column use grid1+$itmname|".localize('_title',getlocal())."|10|0|");	
+		_m("mygrid.column use grid1+$itmdescr|".localize('_descr',getlocal())."|10|0|");	
+		_m("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
+		_m("mygrid.column use grid1+price1|".localize('_price1',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
+		_m("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|0|");
+		_m("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
+		_m("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{code5}\");".'||');
 
 		$out = _m("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
@@ -362,22 +362,22 @@ class rccmslandp {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
-        $active_code = 	GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
+        $active_code = 	_m("cmsrt.getmapf use code");
 		$name_active = $lan?'itmname':'itmfname'; 		
 		$title = localize('_relatives', $lan);
         $myfields = "id,$active_code,cat0,cat1,cat2,cat3,$name_active,itmactive,active";  		
 
 		$xsSQL = 'select * from (select '.$myfields . ' from products) as o';
 		  
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$active_code|".localize('_code',getlocal())."|link|5|"."javascript:trels(\"{".$active_code."}\");".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|10|0|");
-	    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|10|0|");				
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|10|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat3|".localize('_cat3',getlocal())."|10|0|");
-	    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$name_active|".localize('_title',getlocal()).'|20|0');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal()).'|boolean|1:0|');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|1|101:0');		
+		_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0|");	
+		_m("mygrid.column use grid1+$active_code|".localize('_code',getlocal())."|link|5|"."javascript:trels(\"{".$active_code."}\");".'||');		
+		_m("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|10|0|");
+	    _m("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|10|0|");				
+		_m("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|10|0|");
+		_m("mygrid.column use grid1+cat3|".localize('_cat3',getlocal())."|10|0|");
+	    _m("mygrid.column use grid1+$name_active|".localize('_title',getlocal()).'|20|0');	
+		_m("mygrid.column use grid1+itmactive|".localize('_active',getlocal()).'|boolean|1:0|');	
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|1|101:0');		
 		$out = _m("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 		
 		return ($out);  	
@@ -407,21 +407,21 @@ class rccmslandp {
 
 		$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
 		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|2|1|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|2|1|");
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat1|".localize('_cat0',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat2|".localize('_cat1',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat3|".localize('_cat2',getlocal())."|5|1|");				
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat4|".localize('_cat3',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat5|".localize('_cat4',getlocal())."|5|1|");			
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}1|".localize('_cat0',getlocal())."|link|10|"."javascript:tcats(\"{cat1}\");".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|link|10|"."javascript:tcats(\"{cat2}\");".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|link|10|"."javascript:tcats(\"{cat2}$CS{cat3}\");".'||');				
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|link|10|"."javascript:tcats(\"{cat2}$CS{cat3}$CS{cat4}\");".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|link|10|"."javascript:tcats(\"{cat2}$CS{cat3}$CS{cat4}$CS{cat5}\");".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
+		_m("mygrid.column use grid2+id|".localize('_id',getlocal())."|2|1|");	
+		_m("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|2|1|");
+		//_m("mygrid.column use grid2+cat1|".localize('_cat0',getlocal())."|5|1|");
+		_m("mygrid.column use grid2+cat2|".localize('_cat1',getlocal())."|5|1|");
+		_m("mygrid.column use grid2+cat3|".localize('_cat2',getlocal())."|5|1|");				
+		_m("mygrid.column use grid2+cat4|".localize('_cat3',getlocal())."|5|1|");
+		_m("mygrid.column use grid2+cat5|".localize('_cat4',getlocal())."|5|1|");			
+		//_m("mygrid.column use grid2+cat{$lan}1|".localize('_cat0',getlocal())."|link|10|"."javascript:tcats(\"{cat1}\");".'||');
+		_m("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|link|10|"."javascript:tcats(\"{cat2}\");".'||');
+		_m("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|link|10|"."javascript:tcats(\"{cat2}$CS{cat3}\");".'||');				
+		_m("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|link|10|"."javascript:tcats(\"{cat2}$CS{cat3}$CS{cat4}\");".'||');
+		_m("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|link|10|"."javascript:tcats(\"{cat2}$CS{cat3}$CS{cat4}$CS{cat5}\");".'||');
+		_m("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
+		_m("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
+		_m("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
 		
 		$out .= _m("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 			
@@ -511,7 +511,7 @@ class rccmslandp {
 		
 		switch ($field) {
 			case 'code0': $fid = 'id'; break;
-			default     : $fid = $field ? $field : GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
+			default     : $fid = $field ? $field : _m("cmsrt.getmapf use code");
 		}
 		
 		$ret = seturl("t=$t&mode=$mode&id=$id&fid=". $fid);
@@ -540,7 +540,7 @@ class rccmslandp {
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->fid ? $this->fid : GetGlobal('controller')->calldpc_method("cmsrt.getmapf use code");
+		$code = $this->fid ? $this->fid : _m("cmsrt.getmapf use code");
 		$landpage = false;
 		
 		$cpGet = _v('rcpmenu.cpGet');
@@ -853,7 +853,8 @@ class rccmslandp {
 			}
 			else {
 				//create static page
-				$page = base64_decode($res->fields['data']);
+				//$page = base64_decode($res->fields['data']);
+				$page = _m('crmrt.renderTemplate use '.$id.'+'.$res->fields['class']);
 			}
 		
 			if ($filename) {
