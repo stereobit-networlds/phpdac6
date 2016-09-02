@@ -1030,7 +1030,7 @@ function addtocart(id,cartdetails)
 			   ($this->allowqtyover)) { //enable - disable check over qty selection
 
 		      $stockout = ($param[14]-$selectedqty);
-		      $stock_message = $param[0].",".$param[1].localize('_STOCKOUT',getlocal()) . "(" . $stockout . ")";
+		      $stock_message = $param[0] . ",". $this->unreplace_cartchars($param[1]) . localize('_STOCKOUT',getlocal()) . "(" . $stockout . ")";
 			  $this->stock_msg .= $stock_message . "<br>";
 	          $jcode .= "alert('$stock_message');";
 
@@ -1687,10 +1687,10 @@ function addtocart(id,cartdetails)
 
 		     if (($product) && ($product!='x')) {
                $aa+=1;
-		       $param = explode(";",$product); //echo $param[8],"<br>";
-		       $gr = $param[4];//urlencode($param[4]);
-			   $ar = $param[1];//urlencode($param[1]);
-	           $link = seturl("t=$command&cat=$gr&id=".$param[0] , $param[1],null,null,null,true);//rewrite);
+		       $param = explode(";",$product); 
+		       $gr = $param[4];
+			   $ar = $param[1];
+	           $link = seturl("t=$command&cat=$gr&id=".$param[0] , $this->unreplace_cartchars($param[1]),null,null,null,true);//rewrite);
 			   
 			   if (defined("SHKATALOGMEDIA_DPC")) {
 			     $itemphoto = GetGlobal('controller')->calldpc_method("shkatalogmedia.get_photo_url use ".$param[7].'+1');
@@ -1709,16 +1709,16 @@ function addtocart(id,cartdetails)
 		       }
 			   
 			   if ($this->cartlinedetails)
-			     $details = $param[6]? '&nbsp;' . $param[6]:null;
+			     $details = $param[6]? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null;
 			   else
 			     $details = null;	 
 
 			   switch ($this->status) {
 				   default :
 				   case 0 : $data[] = $param[0] . "<br/>" . $link . "&nbsp;" . $details;  break;
-				   case 1 : $data[] = $param[0] . "&nbsp;" . $param[1] . $details;  break;
-                   case 2 : $data[] = $param[0] . "&nbsp;" . $param[1] . $details; break;
-                   case 3 : $data[] = $param[0] . "&nbsp;" . $param[1] . $details; break;				   
+				   case 1 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details;  break;
+                   case 2 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details; break;
+                   case 3 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details; break;				   
 			   }
 
                if (!$this->status) {
@@ -1872,8 +1872,8 @@ function addtocart(id,cartdetails)
                $aa+=1;
 		       $param = explode(";",$product);
 
-		       $gr = $param[4];//urlencode($param[4]);
-			   $ar = $param[1];//urlencode($param[1]);
+		       $gr = $param[4];
+			   $ar = $param[1];
 			   $page = $param[5];
 			   $id = $param[0];
 	           $link = seturl("t=$pview&id=$id&cat=$gr&page=" , $param[1]);
@@ -1952,9 +1952,9 @@ function addtocart(id,cartdetails)
 		     if (($product) && ($product!='x')) {
                $aa+=1;
 		       $param = explode(";",$product); //echo $param[8],"<br>";
-		       $gr = $param[4];//urlencode($param[4]);
-			   $ar = $param[1];//urlencode($param[1]);
-	           $link = seturl("t=$pview&id=$ar&cat=$gr&id=".$param[0] , $param[1]);
+		       $gr = $param[4];
+			   $ar = $param[1];
+	           $link = seturl("t=$pview&id=$ar&cat=$gr&id=".$param[0] , $this->unreplace_cartchars($param[1]));
 			   
 			   if (defined("SHKATALOGMEDIA_DPC")) {
 			     $itemphoto = GetGlobal('controller')->calldpc_method("shkatalogmedia.get_photo_url use ".$param[7].'+1');
@@ -1974,16 +1974,16 @@ function addtocart(id,cartdetails)
 		       }
 			   
 			   if ($this->cartlinedetails)
-			     $details = $param[6]? '&nbsp;' . $param[6]:null;
+			     $details = $param[6]? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null;
 			   else
 			     $details = null;	 
 
 			   switch ($this->status) {
 				   default :
 				   case 0 : $data[] = $param[0] . "<br/>" . $link . "&nbsp;" . $details;  break;
-				   case 1 : $data[] = $param[0] . "&nbsp;" . $param[1] . $details;  break;
-                   case 2 : $data[] = $param[0] . "&nbsp;" . $param[1] . $details; break;
-                   case 3 : $data[] = $param[0] . "&nbsp;" . $param[1] . $details; break;				   
+				   case 1 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details;  break;
+                   case 2 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details; break;
+                   case 3 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details; break;				   
 			   }
 
                if (!$this->status) {
@@ -2275,9 +2275,6 @@ function addtocart(id,cartdetails)
 		   $defpay = remote_arrayload('SHCART','payway_default',$this->path);
 		   $default_pay = $defpay ? $defpay : 0;
            $payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');		   
-		   
-		   //print_r($pways);
-		   //echo "-". $payway;
 		   		   
 		   foreach ($pways as $i=>$w) {
 		     $lans_titles = explode('/',$w);
@@ -2289,7 +2286,6 @@ function addtocart(id,cartdetails)
 			 else
 				 $default_pay = 0;  
 		   }
-		   //print_r($choices);
 		   $params = implode(',',$choices);
 
            switch ($this->status) {
@@ -2345,10 +2341,7 @@ function addtocart(id,cartdetails)
 
 	//overwrite
 	function roadway($token=null) {
-
-		  // $ways = paramload('SHCART','roadways');
 	       $ways = remote_arrayload('SHCART','roadways',$this->path);
-		   //echo '+++'; print_r($ways);
 		   if (!$ways) return null;
 		   
 		   $defway = remote_arrayload('SHCART','roadway_default',$this->path);
@@ -2370,7 +2363,6 @@ function addtocart(id,cartdetails)
 					 $subtokens[] = $radios;
 
    		             if ($message = remote_arrayload('SHCART','roadwaystext',$this->path)) {
-		               //$out .= $message;
 					   $subtokens[] = $message[getlocal()];
 					 }
 					 else
@@ -2412,8 +2404,7 @@ function addtocart(id,cartdetails)
 					 }
 					 else  					 
 						$out = $this->get_selection_text('roadway',$subtokens,1,localize('_RWAY',getlocal()));	
-					 							 
-		             //$out .= "<hr>";						 
+					 							 					 
 			         break;
 
 			 default : $tokens[] = '&nbsp;';
@@ -2428,25 +2419,11 @@ function addtocart(id,cartdetails)
 	   $ways = remote_arrayload('SHCART','invways',$this->path);
 	   $defway = remote_paramload('SHCART','invway_default',$this->path); 	
 	   $default_invoice = $defway?$defway:0;//override customers default invoice ??
-	   //echo '+++'; print_r($ways);	      	
-	   //echo '>',$default_invoice;
 
-	   //$ret = seturl('t='.$t.'&invtype=1',localize('_INVOICE',getlocal()));
-	   //$ret .= "&nbsp;/&nbsp;";
-	   //$ret .= seturl('t='.$t.'&invtype=0',localize('_APODEIXI',getlocal()));		
-	
        if (defined('SHCUSTOMERS_DPC'))  {
-		 //echo 'z';
 	     $choose_invoice = GetGlobal('controller')->calldpc_var('shcustomers.allow_inv_selection');
 		 $default_invoice = GetGlobal('controller')->calldpc_var('shcustomers.invtype');
 	   }   
-	   //echo '>',$default_invoice;	   
-	   /*if ((!$choose_invoice) && (!is_array($ways))) {
-	     //when no value and if token fill the empty value
-		 $tokens[] = '&nbsp;';
-		 $tokens[] = '&nbsp;';
-		 return ($token ? $tokens : null);
-	   }*/	
 		   
 	   if (empty($ways)) {//return null;...get ttile by shcustomers vars
 	     $ways[0] = localize('_APODEIXI',0).'/'.localize('_APODEIXI',1);//'_APODEIXI/_APODEIXI';
@@ -2664,8 +2641,6 @@ function addtocart(id,cartdetails)
 	         case 3 :					 	 
 		     case 2 :$mycway = GetParam("customerway")?GetParam("customerway"):GetSessionParam("customerway");
                      //$out = localize('_CUSTOMERSLIST',getlocal()) . " : " . $myiway; //NOT VIEW
-		 	         //hold param
-					 //echo $mycway,'>';
                      SetSessionParam('customerway',$mycway);	
 					 
 					 //$subtokens[] = $mycway;
@@ -2702,24 +2677,9 @@ function addtocart(id,cartdetails)
 	
 	//override
 	function comments($token=null) {
-	       /*$mylan = getlocal();
-	       $a = localize('_SXOLIA',getlocal());	
-		   $mysxolia = remote_arrayload('SHCART','comments',$this->path); 
-		   //text in config
-		   $say = $mysxolia[$mylan]; 
-		   //text in project dir file		   
-		   $say.= @file_get_contents($this->path.'sxolia'.$mylan.'.txt'); 
-		   //html text in cp
-		   //.....*/
 	
            switch ($this->status) {
-			 case 1 :	   
-                     /*$sxolia = "<input style=\"width:100%\" type=\"text\" name=\"sxolia\" maxlenght=\"255\" value=\"$this->sxolia\">"; 		   
-                     if ($say) {
-			           $sxolia .= '<br/>' . $say;
-			         }*/
-					 //$hastitle = 0;
-					 $subtokens[] = "<input class=\"myf_input\" type=\"text\" name=\"sxolia\" maxlenght=\"255\" value=\"$this->sxolia\">";
+			 case 1 :$subtokens[] = "<input class=\"myf_input\" type=\"text\" name=\"sxolia\" maxlenght=\"255\" value=\"$this->sxolia\">";
 					 
 					 if ($token) {
 						$s1 = $this->get_selection_text('sxolia',$subtokens,1,localize('_SXOLIA',getlocal()),true);	
@@ -2733,11 +2693,7 @@ function addtocart(id,cartdetails)
 					 
 		             //$out .= "<hr>";						  
 		             break;
-	         case 3 ://echo '>',GetSessionParam("sxolia");
-			         /*$sxolia = GetSessionParam("sxolia");
-					 $out = localize('_SXOLIA',getlocal()) . " : " . $sxolia; */
-					 
-					 $subtokens[] = GetSessionParam("sxolia");
+	         case 3 :$subtokens[] = GetSessionParam("sxolia");
 					 
 					 if ($token) {
 						$s1 = $this->get_selection_text('sxolia',$subtokens,1,localize('_SXOLIA',getlocal()),true);	
@@ -2749,16 +2705,8 @@ function addtocart(id,cartdetails)
 					 else					 
 						$out = $this->get_selection_text('sxolia',$subtokens,1);	
 					 
-					 //SetSessionParam('sxolia',null);//<<<<<<<<<<<<<<<<< why
-		             //$out .= "<hr>";	
 			         break;
-		     case 2 :/*$sxolia = GetParam("sxolia")?GetParam("sxolia"):GetSessionParam("sxolia");
-			         if ($say) {
-			           $sxolia .= '<br/>' . $say;
-			         }	
-			         $out = localize('_SXOLIA',getlocal()) . " : " . $sxolia; 
-					 */
-					 $sxolia = GetParam("sxolia")?GetParam("sxolia"):GetSessionParam("sxolia");
+		     case 2 :$sxolia = GetParam("sxolia")?GetParam("sxolia"):GetSessionParam("sxolia");
 					 $subtokens[] = $sxolia;
 					 
 					 if ($token) {
@@ -2772,8 +2720,7 @@ function addtocart(id,cartdetails)
 						$out = $this->get_selection_text('sxolia',$subtokens,1);	
 					 
      		 	     //hold param
-                     SetSessionParam('sxolia',$sxolia);
-		             //$out .= "<hr>";						 
+                     SetSessionParam('sxolia',$sxolia);					 
 			         break;		     
 					 
 			 default : $tokens[] = '&nbsp;';
@@ -4615,6 +4562,15 @@ function addtocart(id,cartdetails)
 		  
 	   return ($ret);
 	}
+	
+	protected function unreplace_cartchars($string) {
+		if (!$string) return null;
+
+		$g1 = array("'",',','"','+','/',' ','-&-');
+		$g2 = array('_','~',"*","plus",":",'-','-n-');		
+	  
+		return str_replace($g2,$g1,$string);
+	}	
 
 };
 }

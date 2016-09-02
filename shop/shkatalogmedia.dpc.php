@@ -879,8 +879,8 @@ class shkatalogmedia extends shkatalog {
 		$cat = GetReq('cat');				
 		$xmlitems = GetReq('xml');	
 			
-		if (!defined('RCXMLFEEDS_DPC')) return 'RCXMLFEEDS DPC not loaded';
-		$sf = _v('rcxmlfeeds.select_fields');			
+		if (!defined('RCXMLFEEDS_DPC')) return 'RCXMLFEEDS DPC not loaded'; //dpc cmds needed
+		$sf = _v('rcxmlfeeds.select_fields'); //remote_arrayload('RCXMLFEEDS','selectfields',$this->path);			
 		$myfields = implode(',', $sf);	
 		$sSQL = "select id," . $myfields . " from products";
 		
@@ -1437,7 +1437,7 @@ class shkatalogmedia extends shkatalog {
 			
 			 $itemlink = seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,$this->rewrite); 
 		     $availability = null;//$this->show_availability($rec['ypoloipo1']);	 
-		     $detailink = null;//seturl("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code],null,null,null,null,$this->rewrite).'#DETAILS';//,$this->details_button);		   
+		     $detailink = seturl("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code],null,null,null,null,$this->rewrite).'#details';//,$this->details_button);		   
 			 
 	         $linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$itmname]);	
 
@@ -2942,13 +2942,12 @@ class shkatalogmedia extends shkatalog {
 		$lan = getlocal();	  
 		$itmname = $lan?'itmname':'itmfname';
 		$itmdescr = $lan?'itmdescr':'itmfdescr';	  
-		$format = GetReq('format')?GetReq('format'):'rss2';		
+		$format = GetReq('format') ? GetReq('format') : 'sitemap';		
 		$code = $this->getmapf('code');	
-		$format = GetReq('format')?GetReq('format'):'rss2';
 
-		if (!defined('RCXMLFEEDS_DPC')) return 'RCXMLFEEDS DPC not loaded';
-		$sf = _v('rcxmlfeeds.select_fields');
-		$sp = _v('rcxmlfeeds.savepath');
+		if (!defined('RCXMLFEEDS_DPC')) return 'RCXMLFEEDS DPC not loaded'; //dpc cmds needed
+		$sf = _v('rcxmlfeeds.select_fields'); //remote_arrayload('RCXMLFEEDS','selectfields',$this->path); 
+		$sp = _v('rcxmlfeeds.savepath'); //$this->urlpath . remote_paramload('RCXMLFEEDS','savepath',$this->path);
 	    if (($format) && (is_readable($sp .'/'. $format.'.xht'))) {
 	        $xmltemplate = @file_get_contents($sp .'/'. $format.'.xht');
 			$xmltemplate_products = @file_get_contents($sp .'/'. $format.'.xhm');
@@ -3380,9 +3379,16 @@ class shkatalogmedia extends shkatalog {
 		return ($ret);
 	}
 	
-	/*OVERRITE */
-    /*not an sql at categories table, use cat fields of readed record*/	
-	//public function getkategories($categories) {
+	//override
+	public function replace_cartchars($string) {
+		if (!$string) return null;
+
+		$g1 = array("'",',','"','+','/',' ','-&-');
+		$g2 = array('_','~',"*","plus",":",'-','-n-');		
+	  
+		return str_replace($g1,$g2,$string);
+	}
+	
 	protected function getkategoriesS($categories) {	
 		$c = $this->cseparator;
 					
