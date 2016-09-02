@@ -207,7 +207,7 @@ class rccmslandp {
 		$fidparam = $this->fid ? "&fid=" . $this->fid : null;
 		
 		switch ($selectmode) {
-			case 'sort'  : $bodyurl = seturl("t=cpsortpage"); break;
+			case 'sort'  : $bodyurl = seturl("t=cpsortpage&mode=sort&id=". $id . $fidparam); break;
 			
 			case 'rels'  : $bodyurl = seturl("t=cplanditems&mode=rels&id=". $id . $fidparam); break;
 			case 'cats'  : $bodyurl = seturl("t=cplanditems&mode=cats&id=". $id . $fidparam); break;
@@ -247,7 +247,8 @@ class rccmslandp {
 	        case 'tree'     : $content = $this->tree_grid(null,140,5,'r', true); break;
 	        case 'cats'     : $content = $this->categories_grid(null,140,5,'r', true); break;
 			case 'items'    : $content = $this->items_grid(null,140,5,'r', true); break;  
-			case 'landpage' : 		
+			case 'sort'     :
+			case 'landpage' : 			
 			default         : $content = $this->landpages_grid(null,140,5,'r', true); break;	
 		}			
 					
@@ -273,7 +274,7 @@ class rccmslandp {
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");		
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|0|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_title',getlocal())."|link|10|"."javascript:ttemp(\"{id}\");".'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|0|");//"|link|19|"."javascript:tsave(\"{id}\");".'||');
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|link|19|"."javascript:tsort(\"{id}\");".'||');
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+objects|".localize('_items',getlocal())."|10|0|");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|0|");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|0|");
@@ -548,7 +549,7 @@ class rccmslandp {
 		
 			case 'cats'     : $cat = GetReq('id'); break;
 			case 'items'    : $id = GetReq('id'); break;		
-			
+			case 'sort'     : 
 		    case 'landpage' : 	//check existed objects in landpage
 			                    if ($landpage = GetReq('id')) {
 									$objSQL = "select objects from cmstemplates WHERE id=" . $db->qstr($landpage);
@@ -564,10 +565,7 @@ class rccmslandp {
 		
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		
-		/*if ($objects) {//check existed objects in landpage
-			$sSQL .= " NOT id in (" . $objects . ')';
-		}
-		else*/if ($id) {
+		if ($id) {
 			//$sSQL .= $code . '=' . $db->qstr($id);
 			$sSQL .= 'id =' . $db->qstr($id);
 		}	
@@ -602,8 +600,8 @@ class rccmslandp {
 		//check existed post objects
         if (!empty($_POST[$this->listName]))    
             $plist = implode(',',$_POST[$this->listName]);
-        /*if ($sl = GetSessionParam($this->listName)) 
-			$plist .= ($plist ? ','. $sl : $sl);*/			
+        if ($sl = GetSessionParam($this->listName)) 
+			$plist .= ($plist ? ','. $sl : $sl);
 		if ($plist)
 			$sSQL .= ' and id NOT in (' . $plist . ')';
 		elseif ($objects) //check existed objects in landpage
@@ -613,7 +611,7 @@ class rccmslandp {
 		//$sSQL .= " and itmactive>0 and active>0";			   
 		$sSQL .= " ORDER BY " . $itmname;	//order unselected list by name	
 		
-		//if ($this->echoSQL)
+		if ($this->echoSQL)
 			echo $sSQL . '<br/>';
 		
 	    $resultset = $db->Execute($sSQL,2);	
@@ -738,7 +736,7 @@ class rccmslandp {
 		
 			case 'cats'     : break;
 			case 'items'    : break;		
-			
+			case 'sort'     :
 		    case 'landpage' : 	//check existed objects in landpage
 			                    if ($landpage = GetReq('id')) {
 									$oSQL = "select objects from cmstemplates WHERE id=" . $db->qstr($landpage);
@@ -750,34 +748,32 @@ class rccmslandp {
 			default         : 	
 		}			
 		
+		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
+		
 		//check session	
 		if (!empty($_POST[$this->listName]))  
 			$list = implode(',', $_POST[$this->listName]);	
-        //else
-			//$list = $this->savedlist;
+        else
+			$list = $this->savedlist;
 		
+		//echo 'savedlist:'.$this->savedlist;
 		//if (!$list) return ;
 		
-		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
-		if ($list) {
-			$lstSQL = ' id in (' . $list . ')';
-			//$sSQL .= " and itmactive>0 and active>0";			   
-			$sSQL .= $lstSQL . " ORDER BY FIELD(id,".  $list .")";			
-		}	
-		elseif ($objects) {
-			$objSQL = 'id in (' . $objects . ')';
-			//$sSQL .= " and itmactive>0 and active>0";			   
-			$sSQL .= $objSQL . " ORDER BY FIELD(id,".  $objects .")";			
-		}	
-
-		//if ($this->echoSQL)
+		$olist = $list ? ($objects ? $objects.','.$list : $list) : $objects;
+		$sSQL .= ' id in (' . $olist . ')';
+		//$sSQL .= " and itmactive>0 and active>0";		
+		$sSQL .= " ORDER BY FIELD(id,".  $olist .")";
+		
+		if ($this->echoSQL)
 			echo $sSQL . '<br/>';
 		
 	    $resultset = $db->Execute($sSQL,2);	
 		
-		//print_r($resultset);
+		$objarr = explode(',',$objects);
 		foreach ($resultset as $n=>$rec) {
-			$ret[] = "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" ;
+			$ret[] = ((!empty($objarr)) && (in_array($rec[0], $objarr))) ? 
+			            "<option value='".$rec['id']."'>". $rec[$code].'-'.$rec[$itmname]."</option>" :
+			            "<option value='".$rec['id']."'>". '[+]' .$rec[$code].'-'.$rec[$itmname]."</option>";
         }		
 
 		return (implode('',$ret));			
@@ -790,6 +786,7 @@ class rccmslandp {
 			case 'tree'  :	
 			case 'cats'  : 
 			case 'items' :
+			case 'sort'  :
 		    case 'landpage'  :			
 			default      : $ret = $this->viewSessionList();	
 		}			
@@ -818,15 +815,15 @@ class rccmslandp {
 		$id = GetParam('id');
 		if (!$id) return false;
 		
-		if ($data) {
+		//if ($data) { //when empty update
 			$sSQL = 'update cmstemplates set objects=' . $db->qstr($data) . ' WHERE id=' . $id;
 			$db->Execute($sSQL);
 			if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";		
 			
 			return true;
-		}
+		//}
 		
-		return false;
+		//return false;
 	}	
 
 	protected function saveTemplateFile() {
@@ -870,7 +867,38 @@ class rccmslandp {
 		}		
 		return false;
 	}		
-					
+	
+	protected function deleteTemplateFile() {	
+		$db = GetGlobal('db');		
+		$id = GetParam('id');
+		if (!$id) return false;
+		
+		if ($id) {
+			$sSQL = 'select active,date,name,descr,class,type,script,objects,data from cmstemplates' . ' WHERE id=' . $id;
+			$res = $db->Execute($sSQL);
+			//if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";		
+			
+			if (!$res->fields[0]) return false; //return if inactive
+		
+		    $template = $res->fields['class'] ? $res->fields['class'] : $this->template;
+		    $filename = $res->fields['descr'] ? str_replace(' ','-',$res->fields['descr']) : str_replace(' ','-',$res->fields['name']);			
+		
+			if ($script = $res->fields['script']) {
+				//remove template file
+				$templatefilepath = $this->prpath . $this->tpath . "/" . $template; 
+				//echo $templatefilepath . '/pages/' . $filename.'.php';
+				$ret = @unlink($templatefilepath . '/pages/' . $filename.'.php');
+			}
+		
+			if ($filename) {
+				//remove public file
+				$ret = @unlink($this->urlpath . '/' . $filename.'.php');
+				return $ret;
+			}	
+	
+		}		
+		return false;
+	}	
 	
 	protected function saveList() {
 		$mode = GetParam('mode');		
@@ -879,10 +907,12 @@ class rccmslandp {
 		
 			$plist = implode(',', $_POST[$this->listName]); //post list
 			$slist = GetSessionParam($this->listName); //current session list			
-			$list = $slist ? $slist . ',' . $plist : $plist;
+			//$list = $slist ? $slist . ',' . $plist : $plist;
+			$list = $plist ? $plist : $slist; //as post sort
+			//$list = $slist ? $slist : $plist; //order be session (not usable)
 			
 			switch (GetReq('mode')) { 
-			
+			    case 'sort'     :  //echo 'sort';
 				case 'landpage' :  //if ($this->currentSelectedType()==1) { //landpage
 									if ($this->saveTemplateList($list)) {
 										$this->saveTemplateFile();
@@ -894,14 +924,28 @@ class rccmslandp {
 			    case 'tree'  :
 			    case 'rels'  :
 				case 'cats'  :
-				case 'items' : 		
+				case 'items' : 	//break;	
 				default      :	SetSessionParam($this->listName, $list); //save session list
 			}	
 			
 		}
-		else
-			SetSessionParam($this->listName, ''); //empty]	
-		  
+		elseif (($_POST) && (empty($_POST[$this->listName]))) {
+			
+			switch (GetReq('mode')) { 
+			
+				case 'landpage' : 	if ($this->saveTemplateList($list)) {
+										$this->deleteTemplateFile();
+										SetSessionParam($this->listName, ''); //empty when post has no items
+									}	
+			
+			    case 'tree'  :
+			    case 'rels'  :
+				case 'cats'  :
+				case 'items' : 	//break;	
+				default      :	SetSessionParam($this->listName, ''); //save session list
+			}	
+			
+		}		  
 		return ($list);
 	}		
 					
