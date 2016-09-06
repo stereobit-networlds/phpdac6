@@ -10,7 +10,7 @@ class cms {
 
     var $appname, $urlpath, $prpath, $url;
 	var $seclevid, $userDemoIds;
-	var $cptemplate;
+	var $cptemplate, $tpath, $template;
 		
 	function __construct() {
 		
@@ -24,11 +24,17 @@ class cms {
 		$this->userDemoIds = array(5,6,7,8); //8 
 		
 	    $tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);  
-	    $this->cptemplate = $tmpl ? $tmpl : 'metro';			
+	    $this->cptemplate = $tmpl ? $tmpl : 'metro';
+		$this->tpath = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);	
+		$this->template = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);			
 	}
 	
 	public function isDemoUser() {
 		return (in_array($this->seclevid, $this->userDemoIds));
+	}	
+
+	public function isLevelUser($level=6) {
+		return ($this->seclevid>=$level ? true : false);
 	}		
 };
 }

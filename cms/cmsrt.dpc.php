@@ -56,7 +56,7 @@ class cmsrt extends cms  {
         }
 		else
 			$this->image_size_path = $ipath; //absolute path
-
+		
 		$this->items = null;
 		$this->csvitems = null;		  
 	}
@@ -143,7 +143,7 @@ class cmsrt extends cms  {
 			}//has pattern data
 		}//has pattern
 		
-		$sSQL = "select data from cmstemplates where name=" . $db->qstr($template.'-sub');
+		$sSQL = "select data,class from cmstemplates where name=" . $db->qstr($template.'-sub');
 		$res = $db->Execute($sSQL);
 		//echo $sSQL;	
 		if (isset($res->fields['data'])) {			
@@ -158,8 +158,13 @@ class cmsrt extends cms  {
 		$data = ($ret) ? str_replace('<!--?'.$template.'-sub'.'?-->', $ret, $form) : $form;
 		
 		if ($script) {
-			//create dynamic phpdac page
-			$page = $data;
+			//create dynamic phpdac page		
+			
+			//save template file with pattern data
+			$savedTemplate = @file_put_contents($this->urlpath .'/cp/'.$this->tpath."/".$res->fields['class'].'/pages/'.$fsave, 
+							  preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $data));
+						
+			$page = $script;
 		}
 		else {
 			//create static page
@@ -167,7 +172,8 @@ class cmsrt extends cms  {
 		}
 		
 		if ($fsave) {
-			$ret = @file_put_contents($this->urlpath . '/' . $fsave, preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
+			$ret = @file_put_contents($this->urlpath . '/' . $fsave, 
+			        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
 			return $ret;
 		}	
 		else
@@ -235,15 +241,16 @@ class cmsrt extends cms  {
 	
 	protected function _get_items($preset=null, $limit=null) {
         $db = GetGlobal('db');		
-	    $lan = $lang?$lang:getlocal();
+	    $lan = $lang ? $lang : getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';	
         $codefield = $this->getmapf('code');
+		$lastprice = $this->getmapf('lastprice');
 		$tid = $preset ? $preset : GetParam('id');	
 		
         $sSQL = "select id,datein,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,".
-				"volume,dimensions,size,color,manufacturer,xml,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%a') as monthname" . 
+				"volume,dimensions,size,color,manufacturer,xml,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%a') as monthname," . 
 				$this->getmapf('code') . " from products WHERE ";
 	
 		if (isset($tid)) {
@@ -289,26 +296,6 @@ class cmsrt extends cms  {
 
 			$attachment = null;
 			$i = $ix++;
-			/*$ret_array[$i] = array(
-			                'code'=>$id,
-			                'itmname'=>$rec[$itmname],
-							'itmdescr'=>$rec[$itmdescr],
-							'itmremark'=>$rec['itmremark'],
-							'uniname1'=>$rec['uniname1'],
-							'price0'=> number_format(floatval($rec['price0']),2,',','.'),
-							'price1'=> number_format(floatval($rec['price1']),2,',','.'), 
-							'cat0'=>$rec['cat0'],
-							'cat1'=>$rec['cat1'],
-							'cat2'=>$rec['cat2'],
-							'cat3'=>$rec['cat3'],
-							'cat4'=>$rec['cat4'],
-							'item_url'=>$item_url,
-							'item_name_url'=>$item_name_url_base,
-							'photo_url'=>$item_photo_url,
-							'photo_html'=>$item_photo_html,
-							'photo_link'=>$item_photo_link,
-							'attachment'=>$attachment,
-							);*/
 			$ret_array[$i] = array(
 			                0=>$id,
 			                1=>$rec[$itmname],
@@ -327,8 +314,8 @@ class cmsrt extends cms  {
 							14=>$item_photo_url,
 							15=>$item_photo_html,
 							16=>$item_photo_link,
-							17=>$rec[$this->getmapf('code')],
-							18=>$rec[$this->getmapf('lastprice')],
+							17=>$rec[$codefield],
+							18=>$rec[$lastprice],
 							19=>$rec['ypoloipo1'],
 							20=>$rec['resources'],
 							21=>$rec['weight'],
@@ -341,7 +328,7 @@ class cmsrt extends cms  {
 							28=>$rec['month'],
 							29=>$rec['day'],
 							30=>$rec['time'],
-							31=>localize($rec['monthname'], getlocal()),
+							31=>localize($rec['monthname'], $lan),
 							);							
 		}
 		

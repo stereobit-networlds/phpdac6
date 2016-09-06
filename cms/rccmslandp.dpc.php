@@ -841,31 +841,50 @@ class rccmslandp {
 		    $template = $res->fields['class'] ? $res->fields['class'] : $this->template;
 		    $filename = $res->fields['descr'] ? str_replace(' ','-',$res->fields['descr']) : str_replace(' ','-',$res->fields['name']);			
 		
-			//if ($script = $res->fields['script']) {
-			if ($res->fields['type']==2) {	
+			if ($script = $res->fields['script']) {
+			//if ($res->fields['type']==2) {	
 				//create dynamic phpdac page
-				$page = base64_decode($script);// . base64_decode($res->fields['data']);
+				/*$page = base64_decode($script);// . base64_decode($res->fields['data']);
+				//save public file
+				$ret = @file_put_contents($this->urlpath . '/' . $filename.'.php', 
+				        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));				
 				
 				//save template file
 				$templatefilepath = $this->prpath . $this->tpath . "/" . $template; 
 				//echo $templatefilepath . '/pages/' . $filename.'.php';
+				
+				//build template and return static page saved to the pages/ path of template as filename.php
+				$template_page = _m('crmrt.renderTemplate use '.$id.'+'.$res->fields['objects']);	
+				
 				$ret = @file_put_contents($templatefilepath . '/pages/' . $filename.'.php', 
-				        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", base64_decode($res->fields['data'])));
+				        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $template_page));//base64_decode($res->fields['data'])));
+				*/	
+				$ret = _m('crmrt.renderTemplate use '.$id.'+'.$res->fields['objects'].'+'.$filename.'.php');			
+				
+				//return true if filename is set to save else page contents
+				return $ret;						
 			}
 			else {
-				//create static page
-				//$page = base64_decode($res->fields['data']);
-				$page = _m('crmrt.renderTemplate use '.$id.'+'.$res->fields['objects']);
+				/*$page = base64_decode($res->fields['data']);
+				//save public file
+				$ret = @file_put_contents($this->urlpath . '/' . $filename.'.php', 
+				        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));*/
+						
+				//build template and create static page saved to the root path as filename.php
+				$ret = _m('crmrt.renderTemplate use '.$id.'+'.$res->fields['objects'].'+'.$filename.'.php');
+				
+				//return true if filename is set to save else page contents
+				return ($ret); 
 			}
 		
-			if ($filename) {
+			/*if ($filename) {
 				//save public file
 				$ret = @file_put_contents($this->urlpath . '/' . $filename.'.php', 
 				        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
 				return $ret;
 			}	
 			else
-				return $page;		
+				return $page;*/
 		}		
 		return false;
 	}		
