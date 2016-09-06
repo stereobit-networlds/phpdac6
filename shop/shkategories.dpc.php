@@ -1849,7 +1849,7 @@ function gocatsearch(url)
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
+		for ($x=$i;$x<40;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
 		//echo $ret;
 		

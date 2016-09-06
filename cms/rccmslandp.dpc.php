@@ -841,7 +841,8 @@ class rccmslandp {
 		    $template = $res->fields['class'] ? $res->fields['class'] : $this->template;
 		    $filename = $res->fields['descr'] ? str_replace(' ','-',$res->fields['descr']) : str_replace(' ','-',$res->fields['name']);			
 		
-			if ($script = $res->fields['script']) {
+			//if ($script = $res->fields['script']) {
+			if ($res->fields['type']==2) {	
 				//create dynamic phpdac page
 				$page = base64_decode($script);// . base64_decode($res->fields['data']);
 				
@@ -854,7 +855,7 @@ class rccmslandp {
 			else {
 				//create static page
 				//$page = base64_decode($res->fields['data']);
-				$page = _m('crmrt.renderTemplate use '.$id.'+'.$res->fields['class']);
+				$page = _m('crmrt.renderTemplate use '.$id.'+'.$res->fields['objects']);
 			}
 		
 			if ($filename) {
@@ -933,7 +934,7 @@ class rccmslandp {
 		elseif (($_POST) && (empty($_POST[$this->listName]))) {
 			
 			switch (GetReq('mode')) { 
-			
+			    case 'sort'     :
 				case 'landpage' : 	if ($this->saveTemplateList($list)) {
 										$this->deleteTemplateFile();
 										SetSessionParam($this->listName, ''); //empty when post has no items

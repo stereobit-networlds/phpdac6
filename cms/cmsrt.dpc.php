@@ -44,7 +44,7 @@ class cmsrt extends cms  {
 		$ia = remote_paramload('RCCOLLECTIONS','imageabs',$this->prpath);
 		if (!$ia) {
 			$pt = remote_paramload('RCITEMS','phototype',$this->prpath);	
-			$csize = remote_paramload('RCCOLLECTIONS','itemphotosize',$this->prpath);
+			$csize = null;//remote_paramload('RCCOLLECTIONS','itemphotosize',$this->prpath);
 			$phototype = $csize ? $csize : ( $pt ? $pt : 0); 		
 			switch ($phototype) {
 				case 3  : $this->image_size_path = $ipath . remote_paramload('RCITEMS','photobgpath',$this->prpath); $this->sizeDB = 'LARGE'; break;
@@ -91,7 +91,7 @@ class cmsrt extends cms  {
 		if (!$template) return false;
 		
 		$this->items = $this->get_items($items);
-		
+		//print_r($this->items);
 		if (strstr($code, '>|')) {
 		//if ($code)  {
 			$pf = explode('>|',$code);
@@ -110,9 +110,9 @@ class cmsrt extends cms  {
 
 			$_pattern[0] = explode(',', $subtemplates);
 			$_pattern[1] = (array) $joins;			
-			
+
 			//render pattern
-			if ((!empty($this->items)) && (is_array($_pattern))) {
+			if ((!empty($this->items)) && (!empty($_pattern[1]))) {
 				$pattern = (array) $_pattern[0];
 				$join = (array) $_pattern[1];				
 
@@ -126,12 +126,12 @@ class cmsrt extends cms  {
 				foreach ($cc as $i=>$group) {
 					foreach ($group as $j=>$child) {
 						//echo $pattern[$j] . '<br>';
-						$tts[] = $this->ct($pattern[$j], $child, true);
+						$tts[] = $this->ct($pattern[$j], serialize($child), true);
 						if ($cmd = trim($join[$j])) {
 							//echo $join[$j] . '<br>';
 							switch ($cmd) {
 							    case '_break' : $out .= implode('', $tts); break;
-								default       : $out .= $this->ct($cmd, $tts, true);		
+								default       : $out .= $this->ct($cmd, serialize($tts), true);		
 							} 
 							unset($tts);
 						}
@@ -149,7 +149,7 @@ class cmsrt extends cms  {
 		if (isset($res->fields['data'])) {			
 			$itms[] = (!empty($gr)) ? implode('',$gr) : null; 
 			if (!empty($itms))			
-				$ret = $this->combine_tokens(base64_decode($res->fields['data']), $itms, true);
+				$ret = $this->combine_tokens(base64_decode($res->fields['data']), serialize($itms), true);
 		}	
 		else
 			$ret = (!empty($gr)) ? implode('',$gr) : null;
@@ -241,19 +241,21 @@ class cmsrt extends cms  {
         $codefield = $this->getmapf('code');
 		$tid = $preset ? $preset : GetParam('id');	
 		
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->getmapf('code').
-				" from products WHERE ";
-
+        $sSQL = "select id,datein,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
+	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,".
+				"volume,dimensions,size,color,manufacturer,xml,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%a') as monthname" . 
+				$this->getmapf('code') . " from products WHERE ";
+	
 		if (isset($tid)) {
-			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
-			$sSQL .=  ' id in (' . $treeSQL . ')';	
+			//$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
+			//$sSQL .=  ' id in (' . $treeSQL . ')';	
+			$sSQL .=  (strstr($tid, ',')) ?  ' id in (' . $tid . ')' : 'id='.$tid;		
 		}	
         else
 			return null;
 		
 	    //$sSQL .= " and itmactive>0 and active>0";	
-		$sSQL .= " ORDER BY " . $codefield;//FIELD(id,".  $itemsIdList .")";
+		$sSQL .= " ORDER BY " . "FIELD(id,".  $tid .")"; //$codefield; //orderid
         $sSQL .= $limit ? " limit " . $limit : null;		
 		
 		//echo $sSQL;	
@@ -287,7 +289,7 @@ class cmsrt extends cms  {
 
 			$attachment = null;
 			$i = $ix++;
-			$ret_array[$i] = array(
+			/*$ret_array[$i] = array(
 			                'code'=>$id,
 			                'itmname'=>$rec[$itmname],
 							'itmdescr'=>$rec[$itmdescr],
@@ -306,7 +308,41 @@ class cmsrt extends cms  {
 							'photo_html'=>$item_photo_html,
 							'photo_link'=>$item_photo_link,
 							'attachment'=>$attachment,
-							);
+							);*/
+			$ret_array[$i] = array(
+			                0=>$id,
+			                1=>$rec[$itmname],
+							2=>$rec[$itmdescr],
+							3=>$rec['itmremark'],
+							4=>$rec['uniname1'],
+							5=> number_format(floatval($rec['price0']),2,',','.'),
+							6=> number_format(floatval($rec['price1']),2,',','.'), 
+							7=>$rec['cat0'],
+							8=>$rec['cat1'],
+							9=>$rec['cat2'],
+							10=>$rec['cat3'],
+							11=>$rec['cat4'],
+							12=>$item_url,
+							13=>$item_name_url_base,
+							14=>$item_photo_url,
+							15=>$item_photo_html,
+							16=>$item_photo_link,
+							17=>$rec[$this->getmapf('code')],
+							18=>$rec[$this->getmapf('lastprice')],
+							19=>$rec['ypoloipo1'],
+							20=>$rec['resources'],
+							21=>$rec['weight'],
+							22=>$rec['volume'],
+							23=>$rec['dimensions'],
+							24=>$rec['size'],
+							25=>$rec['color'],
+			                26=>$rec['manufacturer'],
+							27=>$rec['year'],			
+							28=>$rec['month'],
+							29=>$rec['day'],
+							30=>$rec['time'],
+							31=>localize($rec['monthname'], getlocal()),
+							);							
 		}
 		
 		return ($ret_array);
@@ -321,14 +357,15 @@ class cmsrt extends cms  {
 	
     //combine tokens with load tmpl data inside	
 	public function ct($template, $toks, $execafter=null) {
-	    //if (!is_array($tokens)) return;
 		$db = GetGlobal('db');
-		$tokens = (array) unserialize($toks);
-
-		//type 2 sub template data into html/body text
-		$sSQL = "select data from cmstemplates where type=2 and name=" . $db->qstr($template);
-		$res = $db->Execute($sSQL);			
-		$template_contents = base64_decode($res->fields['formdata']);		
+		$tokens = (array) unserialize($toks); //array(0=>'a',1=>'test'); 	
+		//print_r($tokens);
+        //return;
+		//sub template data into html/body text
+		$sSQL = "select data from cmstemplates where name=" . $db->qstr($template);
+		$res = $db->Execute($sSQL);				
+		$template_contents = base64_decode($res->fields['data']);		
+	    if (!is_array($tokens)) return ($template_contents);			
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
 		  $fp = new fronthtmlpage(null);
@@ -337,13 +374,13 @@ class cmsrt extends cms  {
 		}		  		
 		else
 		  $ret = $template_contents; 
-		  
+		 		 
 		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
+		for ($x=$i;$x<40;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);	
 		
 		//execute after replace tokens
@@ -361,7 +398,7 @@ class cmsrt extends cms  {
 	//tokens method	
 	public function combine_tokens($template, $toks, $execafter=null) {
 		$tokens = (array) unserialize($toks);
-	    if (!is_array($tokens)) return;		
+	    if (!is_array($tokens)) return ($template);		
 
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
 		  $fp = new fronthtmlpage(null);
@@ -377,7 +414,7 @@ class cmsrt extends cms  {
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
+		for ($x=$i;$x<40;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
 		//echo $ret;
 		

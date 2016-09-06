@@ -1187,7 +1187,7 @@ class shkatalogmedia extends shkatalog {
 			 else
                 $cart = null;  			 
 		   
-		     $availability = null;//$this->show_availability($rec['ypoloipo1']);	
+		     $availability = $this->show_availability($rec['ypoloipo1']);	
 		     $details = null;//seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code].'#DETAILS',$this->details_button,null,null,null,$this->rewrite);	   
              $detailink = null;//seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code].'#DETAILS',$this->details_button,null,null,null,$this->rewrite);		   
 		     $itemlink = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,$this->rewrite);
@@ -1326,7 +1326,7 @@ class shkatalogmedia extends shkatalog {
 			 else	
 			    $icon_cart = null;
 		   
-		   $availability = null;//$this->show_availability($rec['ypoloipo1']);		
+		   $availability = $this->show_availability($rec['ypoloipo1']);		
 		   $details = null;//seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code].'#DETAILS',$this->details_button,null,null,null,$this->rewrite);	   
            $detailink = null;//eturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code].'#DETAILS',$this->details_button,null,null,null,$this->rewrite);		   
 		   $itemlink = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,$this->rewrite);
@@ -1437,7 +1437,7 @@ class shkatalogmedia extends shkatalog {
                 $icon_cart = null;	
 			
 			 $itemlink = seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,$this->rewrite); 
-		     $availability = null;//$this->show_availability($rec['ypoloipo1']);	 
+		     $availability = $this->show_availability($rec['ypoloipo1']);	 
 		     $detailink = seturl("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code],null,null,null,null,$this->rewrite).'#details';//,$this->details_button);		   
 			 
 	         $linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$itmname]);	
