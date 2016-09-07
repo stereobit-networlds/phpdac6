@@ -143,7 +143,7 @@ class phpdac {
 	
     public static function _2($n) {
 	   $parts = explode(';', $n);
-	   return ($parts[1]);
+	   return (phpdac::unreplace_cartchars($parts[1]));
     }	
 	
     public static function _3($n) {
@@ -244,7 +244,15 @@ class phpdac {
         return (array($s)); 		
     }	
 	
-	
+    //unreplace_cartchars
+	public static function unreplace_cartchars($string) {
+		if (!$string) return null;
+
+		$g1 = array("'",',','"','+','/',' ','-&-');
+		$g2 = array('_','~',"*","plus",":",'-','-n-');		
+	  
+		return str_replace($g2,$g1,$string);
+	}		
    
 	/*public function __get($name) {
 		if ('title' == $name) {

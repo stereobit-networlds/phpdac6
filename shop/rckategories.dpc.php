@@ -269,15 +269,10 @@ class rckategories extends shkategories {
 	   //$sSQL .= ' where '; 
 	   switch ($depth) {
 	       case 4 : 
-	       case 3 : $sSQL .= "cat4='" . str_replace('_',' ',$group[2]) . "' and ";
-		   case 2 : $sSQL .= "cat3='" . str_replace('_',' ',$group[1]) . "' and ";
-		   case 1 : $sSQL .= "cat2='" . str_replace('_',' ',$group[0]) . "' and "; //break;
-		   default: $sSQL .= "ctgid>0";//"cat1='ΚΑΤΗΓΟΡΙΕΣ ΕΙΔΩΝ'";/*if (seclevel('SENPTREEADMIN_',$this->userLevelID)) {
-/*		              $sSQL .= "CTGLEVEL1='ΚΑΤΗΓΟΡΙΕΣ ΕΙΔΩΝ'";
-					}
-					else {*/
-					  //$sSQL .= " and cat2 not like 'LOST+FOUND')"; 
-					//}  
+	       case 3 : $sSQL .= "cat4='" . $this->replace_spchars($group[2],1) . "' and ";
+		   case 2 : $sSQL .= "cat3='" . $this->replace_spchars($group[1],1) . "' and ";
+		   case 1 : $sSQL .= "cat2='" . $this->replace_spchars($group[0],1) . "' and "; //break;
+		   default: $sSQL .= "ctgid>0";
 	   }	
 	   //echo $sSQL;   
 	   
@@ -402,12 +397,12 @@ class rckategories extends shkategories {
 		   return ($this->add_category()); 
 		   
         $lan = getlocal()?getlocal():0;
-        $root_name = 'ITEMS';	 
+        /*$root_name = 'ITEMS';	 
 	    $selected_cat = GetReq('cat') ? $root_name . $this->cseparator . str_replace('_',' ',GetReq('cat')) : $root_name;	
 	    if (stristr($selected_cat ,$this->cseparator))
 	     $cats = explode($this->cseparator,$selected_cat);  
 	    else
-	     $cats[] = $selected_cat; 
+	     $cats[] = $selected_cat;*/ 
 
 		$myfields = 'id,ctgid,';
 		$mytitles = localize('id',getlocal()) . ',' . localize('_ctgid',getlocal()) . ',';
@@ -428,7 +423,9 @@ class rckategories extends shkategories {
 	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
+		
 		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+		
 	    return ($out);
 	
     }
@@ -474,8 +471,8 @@ class rckategories extends shkategories {
 
 			$myfields = 'id,ctgid,';
 			$mytitles = localize('id',getlocal()) . ',' . localize('_ctgid',getlocal()) . ',';
-			$myfields .= "cat1,cat2,cat3,cat4,cat{$lan}1,";
-			$myfields .= "cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5,";
+			$myfields .= "cat1,cat2,cat3,cat4,cat5,";
+			$myfields .= "cat{$lan}1,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5,";
 			$mytitles .= localize('_cat0',$lan).','.localize('_cat1',$lan).','.localize('_cat2',$lan).','.localize('_cat3',$lan).','.localize('_cat4',$lan).','.localize('_cat0',$lan).',';
 			$mytitles .= localize('_cat1',getlocal()) .','.localize('_cat2',$lan).','.localize('_cat3',$lan).','.localize('_cat4',$lan).',';		
 		
@@ -511,11 +508,13 @@ class rckategories extends shkategories {
  	   
        $root_name = 'ITEMS';
        $mycat = $category ? $category : GetReq('cat');	   
-	   $selected_cat = $mycat ? $root_name . $this->cseparator . str_replace('_',' ',$mycat) : $root_name;	
+	   $selected_cat = $mycat ? $root_name . $this->cseparator . $mycat : $root_name;
+	   
 	   if (stristr($selected_cat ,$this->cseparator))
 	     $cats = explode($this->cseparator,$selected_cat);  
 	   else
 	     $cats[] = $selected_cat;	 
+	 
 	   //print_r($cats);	
 
 
@@ -525,7 +524,7 @@ class rckategories extends shkategories {
 
 	   foreach ($cats as $i=>$c) {
 	     $idx = $i+1;//+2;...root_name added
-	     $where[] = "cat$idx='" . str_replace('_',' ',$c) . "'";	
+	     $where[] = "cat$idx='" . $this->replace_spchars($c,1) . "'";	
 	   }	 
 	   $sSQL .= implode(' and ',$where);
 	   
@@ -553,7 +552,7 @@ class rckategories extends shkategories {
 
 	     foreach ($cats as $iz=>$cz) {
 	       $idy = $iz+1;
-	       $where2[] = "cat$idy='" . str_replace('_',' ',$cz) . "'";	
+	       $where2[] = "cat$idy='" . $this->replace_spchars($cz,1) . "'";	
 	     }	 
 
 	     $sSQL .= implode(' and ',$where2);   
@@ -704,7 +703,7 @@ class rckategories extends shkategories {
 	   
 	   foreach ($cats as $i=>$c) {
 	     $id = $i+1;//+2;...root_name added
-	     $where[] = "cat$id='" . str_replace('_',' ',$c) . "'";	
+	     $where[] = "cat$id='" . $this->replace_spchars($c,1) . "'";	
 	   }	 
 	   $sSQL .= implode(' and ',$where);
 	   $sSQL .= ' LIMIT 1';	 //in case of many recs...???'
@@ -833,7 +832,7 @@ class rckategories extends shkategories {
 		//get all/last cat
 		foreach ($cats as $c) {
 		   if (trim($c)) {//$cat = str_replace(' ','_',$c);
-		       $cat = str_replace(' ','_',$c);
+		       $cat = $this->replace_spchars($c);
 		       $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&editmode=1&id=".$cat;
                $frame .= "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    		   
 		   }
@@ -893,7 +892,7 @@ class rckategories extends shkategories {
 	        $where = null;
 			foreach ($cats as $i=>$c) {
 				$id = $i+2;//+2;...root_name added
-				$where[] = "cat$id='" . str_replace('_',' ',$c) . "'";	
+				$where[] = "cat$id='" . $this->replace_spchars($c,1) . "'";	
 			}	 
 			$sSQL .= implode(' and ',$where);
 			$sSQL .= ' LIMIT 1';// in case of many recs...???'

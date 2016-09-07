@@ -12,13 +12,13 @@ require_once($b);
 	   
 class twigengine extends Twig_Autoloader {
 
-   var $prpath, $tpath, $tcache;
-   var $twig;
-   var $tmpl_path, $tmpl_name;
+    var $prpath, $tpath, $tcache;
+    var $twig;
+    var $tmpl_path, $tmpl_name;
    
-   var $pdac;
+    var $pdac;
    
-   function __construct($cache=false) {
+    function __construct($cache=false) {
    
         $this->prpath = paramload('SHELL','prpath');
 		$this->tcache = paramload('SHELL','cachepath');
@@ -66,9 +66,9 @@ $syntaxe = new Twig_Lexer($twig, array(
 ));
 $twig->setLexer($syntaxe);
 */
-   }
+    }
    
-   public function render($htmlpage=null, $cache=false, $mytokens) {
+    public function render($htmlpage=null, $cache=false, $mytokens=null) {
         if (!$htmlpage) return;
 						   
         $tokens = unserialize($mytokens);
@@ -76,14 +76,14 @@ $twig->setLexer($syntaxe);
 		$ret = $this->twig->render($htmlpage, $tokens);   
 		
 		return ($ret);
-   }
+    }
    
-   public static function tokenize($mytokens) {
+    public static function tokenize($mytokens) {
        $tokens = unserialize($mytokens);
        if (empty($tokens)) return;
    
        return (implode('<twig|twig>',$tokens));
-   }
+    }   
 
 };
 }

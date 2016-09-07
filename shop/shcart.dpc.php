@@ -1830,13 +1830,12 @@ function addtocart(id,cartdetails)
 			if ($transdata) {
 			  //unserialize data
 			  $decodetrans = unserialize($transdata);
-			  //replace cart buffer
-			  //$this->buffer = $decodetrans;//array_merge($this->buffer, $decodetrans);
+			  //print_r($transdata);
 			  
 			  foreach ($decodetrans as $i=>$trcartrec) {
 				  
 				/**** add log records to stats ****/ 
-				$cartstr = explode(';', GetReq('a'));
+				$cartstr = explode(';', $trcartrec);
 		        $item = $cartstr[0];
 		        GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use $item+cartin");				
 				  

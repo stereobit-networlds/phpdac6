@@ -326,11 +326,11 @@ class shtransactions extends transactions {
 	   
 	   if ($this->storetype=='DB') {  //db	
 	   	   
-	     $sSQL = "select * from transactions where tid=" . $db->qstr($trid);
+	     $sSQL = "select tdata from transactions where tid=" . $db->qstr($trid);
 	     $res = $db->Execute($sSQL);
-	     //print_r ($res->fields[5]);
+
 	     if ($res) { 
-	       $out = $res->fields[5]; 
+	       $out = $res->fields[0]; 
 		   return ($out);
 	     }
 	   }
