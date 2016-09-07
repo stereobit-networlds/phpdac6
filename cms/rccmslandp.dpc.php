@@ -268,7 +268,9 @@ class rccmslandp {
 		
 	    if (defined('MYGRID_DPC')) {
 		
-			$xSQL2 = "SELECT * from (select id,active,date,name,descr,objects,class,type from cmstemplates) o ";		   
+		    $ttype = " where type>0";
+		
+			$xSQL2 = "SELECT * from (select id,active,date,name,descr,objects,class,type from cmstemplates $ttype) o ";		   
 		   							
 			_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");			
 			_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");		
@@ -840,7 +842,24 @@ class rccmslandp {
 		
 		    $template = $res->fields['class'] ? $res->fields['class'] : $this->template;
 		    $filename = $res->fields['descr'] ? str_replace(' ','-',$res->fields['descr']) : str_replace(' ','-',$res->fields['name']);			
-		
+			
+			if ($res->fields['type']==3) { //save special dynamic page type 3
+				//echo 'DYN3';
+				//dynamic loaded template items (call php with id=treeid)
+				//$dynpage = _m('crmrt.renderTemplate use '.$id.'+'.$res->fields['objects']);
+				$dynpage = "<phpdac>crmrt.renderTemplate use $id</phpdac>";
+				
+				$templatefilepath = $this->prpath . $this->tpath . "/" . $template; 
+				$ret = @file_put_contents($templatefilepath . '/pages/' . $filename.'.php', 
+				        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $dynpage));	
+			}
+			else //dynamic or static (saved data inside crmrt render)	
+				$ret = _m('crmrt.renderTemplate use '.$id.'+'.$res->fields['objects'].'+'.$filename.'.php');
+			
+			return $ret;
+			
+			
+			//DONT SAVE INSIDE THIS ANYMORE
 			if ($script = $res->fields['script']) {
 			//if ($res->fields['type']==2) {	
 				//create dynamic phpdac page

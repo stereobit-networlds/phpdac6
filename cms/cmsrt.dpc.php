@@ -92,6 +92,7 @@ class cmsrt extends cms  {
 		
 		$this->items = $this->get_items($items);
 		//print_r($this->items);
+		
 		if (strstr($code, '>|')) {
 		//if ($code)  {
 			$pf = explode('>|',$code);
@@ -159,16 +160,19 @@ class cmsrt extends cms  {
 		
 		if ($script) {
 			//create dynamic phpdac page		
-			
-			//save template file with pattern data
-			$savedTemplate = @file_put_contents($this->urlpath .'/cp/'.$this->tpath."/".$res->fields['class'].'/pages/'.$fsave, 
-							  preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $data));
-						
-			$page = $script;
+			if ($fsave) {
+				//save template file with pattern data
+				$saved = @file_put_contents($this->urlpath .'/cp/'.$this->tpath."/".$res->fields['class'].'/pages/'.$fsave, 
+				   		  preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $data));
+						  
+				$page = $script; //script data		  
+			}	
+			else
+				$page = $data; //generated data		
 		}
 		else {
 			//create static page
-			$page = $data;
+			$page = $data; //generated data
 		}
 		
 		if ($fsave) {
@@ -229,7 +233,8 @@ class cmsrt extends cms  {
 		}
 		
 		if ($fsave) {
-			$ret = @file_put_contents($this->urlpath . '/' . $fsave, preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
+			$ret = @file_put_contents($this->urlpath . '/' . $fsave, 
+			        preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $page));
 			return $ret;
 		}	
 		else
@@ -246,7 +251,7 @@ class cmsrt extends cms  {
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';	
         $codefield = $this->getmapf('code');
 		$lastprice = $this->getmapf('lastprice');
-		$tid = $preset ? $preset : GetParam('id');	
+		$tid = GetReq('id') ? GetReq('id') : $preset; //$preset ? $preset : GetReq('id');	
 		
         $sSQL = "select id,datein,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,".
@@ -254,9 +259,12 @@ class cmsrt extends cms  {
 				$this->getmapf('code') . " from products WHERE ";
 	
 		if (isset($tid)) {
-			//$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
-			//$sSQL .=  ' id in (' . $treeSQL . ')';	
-			$sSQL .=  (strstr($tid, ',')) ?  ' id in (' . $tid . ')' : 'id='.$tid;		
+			if (strstr($tid, '.')) { //tree id
+				$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
+				$sSQL .=  ' id in (' . $treeSQL . ')';	
+			} 
+			else
+				$sSQL .=  (strstr($tid, ',')) ?  ' id in (' . $tid . ')' : 'id='.$tid;		
 		}	
         else
 			return null;

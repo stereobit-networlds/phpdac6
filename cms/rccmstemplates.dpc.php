@@ -157,14 +157,14 @@ class rccmstemplates {
 		$id = GetParam('id'); //form id
 		
 		if ($module=='formtest') {
-			_m("crmrt.renderTemplate use ". $id . "++_test.html");
-			if (is_readable($this->urlpath . '/_test.html')) {
-				$frame = "<iframe src =\"{$this->url}/_test.html\" width=\"100%\" height=\"460px\"><p>Your browser does not support iframes</p></iframe>";    
+			_m("crmrt.renderTemplate use ". $id . "++_test.php");
+			if (is_readable($this->urlpath . '/_test.php')) {
+				$frame = "<iframe src =\"{$this->url}/_test.php\" width=\"100%\" height=\"460px\"><p>Your browser does not support iframes</p></iframe>";    
 				return ($frame);
 			}
 		}
 		else
-			@unlink($this->urlpath . '/_test.html'); //erase test file
+			@unlink($this->urlpath . '/_test.php'); //erase test file
 		
 		if ($init)
 			$bodyurl = seturl("t=cpcmsformdetail&iframe=1&id=$id&module=$module");
