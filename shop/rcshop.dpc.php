@@ -404,7 +404,7 @@ class rcshop {
 				$csep = _v('rccontrolpanel.cseparator');
 				$categories = explode($csep, $cat);			
 				foreach ($categories as $i=>$c) 
-                   $ds[] = 'cat'.strval($i)."='".str_replace('_',' ',$c)."'";  
+                   $ds[] = 'cat'.strval($i)."='"._m("cmsrt.replace_spchars use $c+1") . "'";  
 				
 				$dSQL = implode (' AND ', $ds);
 			}	

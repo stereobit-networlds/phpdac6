@@ -676,11 +676,11 @@ class rccollections {
 		
 		    $id = $rec[$codefield];
 			
-			$cat = $rec['cat0'] ? str_replace(' ','_',$rec['cat0']) : null;
-			$cat .= $rec['cat1'] ? $this->cseparator . str_replace(' ','_',$rec['cat1']) : null;
-			$cat .= $rec['cat2'] ? $this->cseparator . str_replace(' ','_',$rec['cat2']) : null;
-			$cat .= $rec['cat3'] ? $this->cseparator . str_replace(' ','_',$rec['cat3']) : null;
-			$cat .= $rec['cat4'] ? $this->cseparator . str_replace(' ','_',$rec['cat4']) : null;
+			$cat = $rec['cat0'] ? _m("cmsrt.replace_spchars use ".$rec['cat0']) : null;
+			$cat .= $rec['cat1'] ? $this->cseparator . _m("cmsrt.replace_spchars use ".$rec['cat1']) : null;
+			$cat .= $rec['cat2'] ? $this->cseparator . _m("cmsrt.replace_spchars use ".$rec['cat2']) : null;
+			$cat .= $rec['cat3'] ? $this->cseparator . _m("cmsrt.replace_spchars use ".$rec['cat3']) : null;
+			$cat .= $rec['cat4'] ? $this->cseparator . _m("cmsrt.replace_spchars use ".$rec['cat4']) : null;
 			
 			$item_url = $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$id,null,null,null,null,1);
 			$item_name_url = seturl('t=kshow&cat='.$cat.'&id='.$id,$rec['itmname'],null,null,null,1);			   

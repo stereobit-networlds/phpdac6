@@ -282,11 +282,11 @@ class cmsrt extends cms  {
 		
 		    $id = $rec[$codefield];
 			
-			$cat = $rec['cat0'] ? str_replace(' ','_',$rec['cat0']) : null; //...replace_spchars
-			$cat .= $rec['cat1'] ? $this->cseparator . str_replace(' ','_',$rec['cat1']) : null;
-			$cat .= $rec['cat2'] ? $this->cseparator . str_replace(' ','_',$rec['cat2']) : null;
-			$cat .= $rec['cat3'] ? $this->cseparator . str_replace(' ','_',$rec['cat3']) : null;
-			$cat .= $rec['cat4'] ? $this->cseparator . str_replace(' ','_',$rec['cat4']) : null;
+			$cat = $rec['cat0'] ? $this->replace_spcahrs($rec['cat0']) : null; 
+			$cat .= $rec['cat1'] ? $this->cseparator . $this->replace_spchars($rec['cat1']) : null;
+			$cat .= $rec['cat2'] ? $this->cseparator . $this->replace_spchars($rec['cat2']) : null;
+			$cat .= $rec['cat3'] ? $this->cseparator . $this->replace_spchars($rec['cat3']) : null;
+			$cat .= $rec['cat4'] ? $this->cseparator . $this->replace_spchars($rec['cat4']) : null;
 			
 			$item_url = $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$id,null,null,null,null,1);
 			$item_name_url = seturl('t=kshow&cat='.$cat.'&id='.$id,$rec['itmname'],null,null,null,1);			   

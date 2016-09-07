@@ -509,22 +509,22 @@ class rccollections {
 		}	
 		elseif ($this->cat) {
 			
-			$cat_tree = explode($this->cseparator, str_replace('_',' ',$this->cat));
+			$cat_tree = explode($this->cseparator, $this->cat);
 
 			if ($cat_tree[0])
-				$whereClause .= ' cat0=' . $db->qstr($cat_tree[0]);		
+				$whereClause .= ' cat0=' . $db->qstr(_m("cmsrt.replace_spchars use ".$cat_tree[0]."+1"));		
 			elseif ($this->onlyincategory)
 				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
 			if ($cat_tree[1])	
-				$whereClause .= ' and cat1=' . $db->qstr($cat_tree[1]);	
+				$whereClause .= ' and cat1=' . $db->qstr(_m("cmsrt.replace_spchars use ".$cat_tree[1]."+1"));	
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
 			if ($cat_tree[2])	
-				$whereClause .= ' and cat2=' . $db->qstr($cat_tree[2]);	
+				$whereClause .= ' and cat2=' . $db->qstr(_m("cmsrt.replace_spchars use ".$cat_tree[2]."+1"));	
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
 			if ($cat_tree[3])	
-				$whereClause .= ' and cat3=' . $db->qstr($cat_tree[3]);
+				$whereClause .= ' and cat3=' . $db->qstr(_m("cmsrt.replace_spchars use ".$cat_tree[3]."+1"));
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		
@@ -676,11 +676,11 @@ class rccollections {
 		
 		    $id = $rec[$codefield];
 			
-			$cat = $rec['cat0'] ? str_replace(' ','_',$rec['cat0']) : null;
-			$cat .= $rec['cat1'] ? $this->cseparator . str_replace(' ','_',$rec['cat1']) : null;
-			$cat .= $rec['cat2'] ? $this->cseparator . str_replace(' ','_',$rec['cat2']) : null;
-			$cat .= $rec['cat3'] ? $this->cseparator . str_replace(' ','_',$rec['cat3']) : null;
-			$cat .= $rec['cat4'] ? $this->cseparator . str_replace(' ','_',$rec['cat4']) : null;
+			$cat = $rec['cat0'] ? _m("cmsrt.replace_spchars use ".$rec['cat0']) : null;
+			$cat .= $rec['cat1'] ? $this->cseparator . _m("cmsrt.replace_spchars use ".$rec['cat1']) : null;
+			$cat .= $rec['cat2'] ? $this->cseparator . _m("cmsrt.replace_spchars use ".$rec['cat2']) : null;
+			$cat .= $rec['cat3'] ? $this->cseparator . _m("cmsrt.replace_spchars use ".$rec['cat3']) : null;
+			$cat .= $rec['cat4'] ? $this->cseparator . _m("cmsrt.replace_spchars use ".$rec['cat4']) : null;
 			
 			$item_url = $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$id,null,null,null,null,1);
 			$item_name_url = seturl('t=kshow&cat='.$cat.'&id='.$id,$rec['itmname'],null,null,null,1);			   

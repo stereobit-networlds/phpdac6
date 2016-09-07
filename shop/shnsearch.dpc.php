@@ -37,7 +37,7 @@ class shnsearch extends shsearch {
 	var $attachsearch;
 	
     var $tmpl_path, $tmpl_name;	
-	var $cseparator;
+	var $cseparator, $replacepolicy;
 
 	function shnsearch() {
 
@@ -59,6 +59,7 @@ class shnsearch extends shsearch {
 	  $fp = array('.htm','.txt');//htm includes html
 	  $this->searchfiletypes = $ft?$ft:$fp; 
 	  
+	  $this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);
 	  $csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
 	  $this->cseparator = $csep ? $csep : '^';
 
@@ -711,7 +712,7 @@ function get_stype()
         if ($incategory) {	
 		    $cats = explode($this->cseparator, GetReq('cat'));
 		    foreach ($cats as $c=>$mycat)
-		      $s[] = 'cat'.$c ." ='" . str_replace('_',' ',$mycat) . "'";		  	  
+		      $s[] = 'cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
 		}		
 
 		$sSQL .= implode(" AND ", $s);
@@ -792,7 +793,26 @@ function get_stype()
 		return ($ret);
 	}	
 		
+	protected function replace_spchars($string, $reverse=false) {
+		
+		switch ($this->replacepolicy) {	
 	
+			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+			default  :	
+			if ($reverse) {
+				$g1 = array("'",',','"','+','/',' ',' & ');
+				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
+				$ret = str_replace($g2,$g1,$string);
+			}	 
+			else {
+				$g1 = array("'",',','"','+','/',' ','-&-');
+				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
+				$ret = str_replace($g1,$g2,$string);
+			}	
+	    }
+		return ($ret);
+	}	
 };
 }
 ?>

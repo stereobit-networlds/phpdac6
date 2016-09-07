@@ -190,7 +190,7 @@ class rcitems {
 	var $photodb, $erase2db;
 	var $mixphoto, $photoquality, $mixx, $mixy;
 	var $url;
-	var $cseparator, $encodeimageid;
+	var $cseparator, $encodeimageid, $replacepolicy;
     var $editimage, $phototype;	
 	var $eshop, $cptemplate;
 	
@@ -292,6 +292,7 @@ class rcitems {
 	  $this->mixx = $mixx?$mixx:'CENTER';	 
 	  $this->mixy = $mixy?$mixy:'MIDDLE';
 
+	  $this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);	
 	  $csep = remote_paramload('RCITEMS','csep',$this->path); 
       $this->cseparator = $csep ? $csep : '^';	
       $this->encodeimageid = remote_paramload('RCITEMS','encodeimageid',$this->path);	  
@@ -1194,14 +1195,14 @@ class rcitems {
 			  $options = null; 
 			  $align = 'left';
 			  /*switch ($t) {//depth cat1,2,3 depends on selected cat...
-			    case 'cat4'  : $options = str_replace('_',' ',$cats[4]);break;////$options = $cats[3] ? $cats[3].":".$cats[3] :null; break;
-				case 'cat3'  : $options = str_replace('_',' ',$cats[3]);break;////$options = $cats[2] ? $cats[2].":".$cats[2] :null; break;
-			    case 'cat2'  : $options = str_replace('_',' ',$cats[2]);break;////$options = $cats[1] ? $cats[1].":".$cats[1] :null; break;
+			    case 'cat4'  : $options = $this->replace_spchars($cats[4],1);break;////$options = $cats[3] ? $cats[3].":".$cats[3] :null; break;
+				case 'cat3'  : $options = $this->replace_spchars($cats[3],1);break;////$options = $cats[2] ? $cats[2].":".$cats[2] :null; break;
+			    case 'cat2'  : $options = $this->replace_spchars($cats[2],1);break;////$options = $cats[1] ? $cats[1].":".$cats[1] :null; break;
 			    case 'cat1'  : //$options = $cat1.':Male;F:Female;D:'.str_replace('_',' ',$cats[1]);break;
 				               //$options = $cats[0] ? $cats[0].":".$cats[0] :null; break;
 				               $options = GetGlobal('controller')->calldpc_method("mygrid.mylookup use select distinct cat3 from categories");
 				               break;
-			    case 'cat0'  : $options = str_replace('_',' ',$cats[0]);break;////break;
+			    case 'cat0'  : $options = $this->replace_spchars($cats[0],1);break;////break;
                 default      : $options = null;			  
 			  }*/
 		   }
@@ -1498,13 +1499,13 @@ class rcitems {
 	  }
 	  elseif ($cat) {//cat items 
 	  
-	    $cat_tree = explode($this->cseparator,str_replace('_',' ',$cat));
+	    $cat_tree = explode($this->cseparator,$this->replace_spchars($cat,1));
 	  
 	    $code = $this->getmapf('code'); 
         $sSQL = "select id,".$code." from products WHERE ";
 		
 		foreach ($cat_tree as $c=>$cc)
-	      $whereClause[] = "cat$c=" . $db->qstr(rawurldecode(str_replace('_',' ',$cc)));	
+	      $whereClause[] = "cat$c=" . $db->qstr(rawurldecode($this->replace_spchars($cc,1)));	
 		  
 		$sSQL .= implode(' and ', $whereClause);
 	    $sSQL .= " and itmactive>0 and active>0";	
@@ -1742,10 +1743,10 @@ class rcitems {
 	  if ($id = GetReq('id')) 
 	    $sSQL .= $code . "='" . $id . "' and ";	
 	  elseif ($cat = GetReq('cat')) {
-	    $cat_tree = explode($this->cseparator,str_replace('_',' ',$cat));
+	    $cat_tree = explode($this->cseparator,$this->replace_spchars($cat,1));
 		
 		foreach ($cat_tree as $c=>$cc)
-	      $whereClause[] = "cat$c=" . $db->qstr(rawurldecode(str_replace('_',' ',$cc)));	
+	      $whereClause[] = "cat$c=" . $db->qstr(rawurldecode($this->replace_spchars($cc,1)));	
 		  
 		$sSQL .= implode(' and ', $whereClause) . ' and ';	  	
 	  }	
@@ -2062,10 +2063,10 @@ class rcitems {
 	  if ($id = GetReq('id'))
 	    $sSQL .= $code . "='" . $id . "' and ";	
 	  elseif ($cat = GetReq('cat')) {
-	    $cat_tree = explode($this->cseparator,str_replace('_',' ',$cat));
+	    $cat_tree = explode($this->cseparator,$this->replace_spchars($cat,1));
 		
 		foreach ($cat_tree as $c=>$cc)
-	      $whereClause[] = "cat$c=" . $db->qstr(rawurldecode(str_replace('_',' ',$cc)));	
+	      $whereClause[] = "cat$c=" . $db->qstr(rawurldecode($this->replace_spchars($cc,1)));	
 		  
 		$sSQL .= implode(' and ', $whereClause) . ' and ';	  	
 	  }	
@@ -2095,15 +2096,15 @@ class rcitems {
 	    foreach ($result as $n=>$rec) {
             //$i+=1;
             if ($rec['cat0'])
-              $ck[0] = str_replace(' ','_',$rec['cat0']);
+              $ck[0] = $this->replace_spchars($rec['cat0']);
             if ($rec['cat1'])
-              $ck[1] = str_replace(' ','_',$rec['cat1']);
+              $ck[1] = $this->replace_spchars($rec['cat1']);
             if ($rec['cat2'])
-              $ck[2] = str_replace(' ','_',$rec['cat2']);
+              $ck[2] = $this->replace_spchars($rec['cat2']);
             if ($rec['cat3'])
-              $ck[3] = str_replace(' ','_',$rec['cat3']);
+              $ck[3] = $this->replace_spchars($rec['cat3']);
             if ($rec['cat4'])
-              $ck[4] = str_replace(' ','_',$rec['cat4']);
+              $ck[4] = $this->replace_spchars($rec['cat4']);
 			  
             if (!empty($ck))
               $cat = implode($this->cseparator,$ck);
@@ -2252,8 +2253,8 @@ class rcitems {
              switch ($format) {
 	           case 'skroutz' : 
 			   $cats = explode($this->cseparator,$params[3]);	
-			   $manufacturer = str_replace('_',' ',array_shift($cats));
-			   $category = str_replace('_',' ',$params[3]);
+			   $manufacturer = $this->replace_spchars(array_shift($cats),1);
+			   $category = $this->replace_spchars($params[3],1);
 			   $category = str_replace($this->cseparator,'/',$category);
 	           $xf = ($this->itemfimagex?$this->itemfimagex:640);
 	           $yf = ($this->itemfimagey?$this->itemfimagey:480);	
@@ -3280,6 +3281,27 @@ function submitform()
         //echo $sSQL;
 		$result = $db->Execute($sSQL);
         return ($result);		
+	}	
+
+	protected function replace_spchars($string, $reverse=false) {
+		
+		switch ($this->replacepolicy) {	
+	
+			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+			default  :	
+			if ($reverse) {
+				$g1 = array("'",',','"','+','/',' ',' & ');
+				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
+				$ret = str_replace($g2,$g1,$string);
+			}	 
+			else {
+				$g1 = array("'",',','"','+','/',' ','-&-');
+				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
+				$ret = str_replace($g1,$g2,$string);
+			}	
+	    }
+		return ($ret);
 	}		
 		
 };

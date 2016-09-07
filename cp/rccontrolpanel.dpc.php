@@ -1291,7 +1291,7 @@ function handleResponse() {if(http.readyState == 4){
 			$activecode = 	$this->getmapf('code');
 			$mcat = explode($this->cseparator, $cat);
 			foreach ($mcat as $c=>$category)
-				$catSQL .= " AND cat$c = " . $db->qstr(str_replace('_', ' ', $category));
+				$catSQL .= " AND cat$c = " . $db->qstr(_m("cmsrt.replace_spchars use $category+1"));
 			
 			//items
 			$sSQL = "select $activecode from products where active>0 AND itmactive>0 " . $catSQL;
@@ -1887,7 +1887,7 @@ function handleResponse() {if(http.readyState == 4){
 			if ($id = $cpGet['id'])
 				$section = ' &gt ' . $this->getItemName($id);
 			elseif ($cat = $cpGet['cat'])
-				$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', str_replace('_', ' ', $cat));
+				$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', _m("cmsrt.replace_spchars use $cat+1"));
 			else
 				$section = null;
 	  

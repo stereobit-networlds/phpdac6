@@ -260,7 +260,7 @@ class cpflotcharts {
 			  $res = $db->Execute($sSQL,2);
 			  
 			  $ix = $i + 1;
-			  $this->make_chart_data('Visits'.$ix, $res, array('day','hits'), str_replace('_', ' ', $cat), array('day',$diff));	
+			  $this->make_chart_data('Visits'.$ix, $res, array('day','hits'), _m("cmsrt.replace_spchars use $cat+1"), array('day',$diff));	
 			  //echo '<br/>' . $this->callChart('VisitsCat'.$i);
 			}
 			
@@ -291,7 +291,7 @@ class cpflotcharts {
 			  $sSQL = "select count(id) as hits, DAY(date) as day from stats where attr1='". $csepcat ."' ". $timeins ." group by DAY(date) order by DAY(date)";
 			  $res = $db->Execute($sSQL,2);
 			  
-			  $this->make_chart_data('Visits'.$i, $res, array('day','hits'), str_replace('_', ' ', $cat), array('day',$diff));	
+			  $this->make_chart_data('Visits'.$i, $res, array('day','hits'), _m("cmsrt.replace_spchars use $cat+1"), array('day',$diff));	
 			}
 			
 			$this->chartGroup = array('Visits0','Visits1','Visits2','Visits3','Visits4');			
@@ -301,7 +301,7 @@ class cpflotcharts {
 			/**** find category's items ***/
 			$activecode = GetGlobal('controller')->calldpc_method('rccontrolpanel.getmapf use code');
 			foreach ($categories as $c=>$category)
-				$catSQL .= " AND cat$c = " . $db->qstr(str_replace('_', ' ', $category));
+				$catSQL .= " AND cat$c = " . $db->qstr(_m("cmsrt.replace_spchars use $category+1"));
 			
 			//items group
 			$sSQL = "select $activecode from products where active>0 AND itmactive>0 " . $catSQL;

@@ -29,7 +29,7 @@ class shtags {
    var $prpath;
    var $item,$descr,$price,$keywords;
    var $metadb, $tagcat, $tagid;
-   var $cseparator;
+   var $cseparator, $replacepolicy;
    
    var $tmpl_path, $tmpl_name;   
 
@@ -52,6 +52,7 @@ class shtags {
 	 //read at init if there is tags in url...???
      $this->save_global_tag_vars();
 
+	 $this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);	 
 	 $csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
      $this->cseparator = $csep ? $csep : '^';	
 
@@ -84,11 +85,13 @@ class shtags {
      $cat = GetReq('cat');
    
      if ($cat) {
+		$mycat = $this->replace_spchars($cat,1);
+				
        if (defined("RCCATEGORIES_DPC")) {
-	     	$cstring = explode($this->cseparator,str_replace('_',' ',$cat));
+	     	$cstring = explode($this->cseparator,$mycat);
 	   }
        elseif (defined("RCKATEGORIES_DPC")) {	
-	     	$cstring = rawurldecode(explode($this->cseparator,str_replace('_',' ',$cat)));	   	        
+	     	$cstring = rawurldecode(explode($this->cseparator,$mycat));	   	        
 	   }
 	   
 	   $ret = implode(',',$cstring);
@@ -145,7 +148,7 @@ class shtags {
 		elseif ($cat) {//echo 'z'; print_r($mytree);
 		  $cc = explode($this->cseparator, $cat);
 		  $xcat = array_pop($cc);
-		  $this->item = (!empty($mytree))? array_pop($mytree) : str_replace('_',' ', $xcat);
+		  $this->item = (!empty($mytree))? array_pop($mytree) : $this->replace_spchars($xcat,1);
 		  $this->descr = $this->item .',' . $thetree;
 		  $this->price = null;
 		  $this->keywords = $this->item .',' . $thetree;		
@@ -373,7 +376,28 @@ class shtags {
 		}		
 		
 		return ($ret);
-	}   
+	}
+
+	protected function replace_spchars($string, $reverse=false) {
+		
+		switch ($this->replacepolicy) {	
+	
+			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+			default  :	
+			if ($reverse) {
+				$g1 = array("'",',','"','+','/',' ',' & ');
+				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
+				$ret = str_replace($g2,$g1,$string);
+			}	 
+			else {
+				$g1 = array("'",',','"','+','/',' ','-&-');
+				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
+				$ret = str_replace($g1,$g2,$string);
+			}	
+	    }
+		return ($ret);
+	}	
    
 };
 }

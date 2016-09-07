@@ -22,6 +22,20 @@ $__LOCALE['RCXMLFEEDS_DPC'][5]='_dimensions;Dimensions;Διαστάσεις';
 $__LOCALE['RCXMLFEEDS_DPC'][6]='_xmlcreate;Create XML;Δημιούργησε XML';
 $__LOCALE['RCXMLFEEDS_DPC'][7]='_xml;XML item;Είδος XML';
 $__LOCALE['RCXMLFEEDS_DPC'][8]='_manufacturer;Manufacturer;Κατασκευαστής';
+$__LOCALE['RCXMLFEEDS_DPC'][9]='_active;Active;Ενεργό';
+$__LOCALE['RCXMLFEEDS_DPC'][10]='_code5;Code;Κωδικός';
+$__LOCALE['RCXMLFEEDS_DPC'][11]='_itmname;Name;Όνομα';
+$__LOCALE['RCXMLFEEDS_DPC'][12]='_uniname1;Uniname;Μ.μ.';
+$__LOCALE['RCXMLFEEDS_DPC'][13]='_ypoloipo1;Qty;Ποσότητα';
+$__LOCALE['RCXMLFEEDS_DPC'][14]='_price0;Price;Αξία';
+$__LOCALE['RCXMLFEEDS_DPC'][15]='_cat0;Category;Κατηγορία';
+$__LOCALE['RCXMLFEEDS_DPC'][16]='_cat1;Category;Κατηγορία';
+$__LOCALE['RCXMLFEEDS_DPC'][17]='_cat2;Category;Κατηγορία';
+$__LOCALE['RCXMLFEEDS_DPC'][18]='_cat3;Category;Κατηγορία';
+$__LOCALE['RCXMLFEEDS_DPC'][19]='_code3;Code;Κωδικός';
+$__LOCALE['RCXMLFEEDS_DPC'][20]='_color;Color;Χρώμα';
+$__LOCALE['RCXMLFEEDS_DPC'][21]='_price1;Price;Αξία';
+$__LOCALE['RCXMLFEEDS_DPC'][22]='_cat4;Category;Κατηγορία';
 
 class rcxmlfeeds {
 
@@ -246,7 +260,7 @@ class rcxmlfeeds {
 			$cat .= $rec['cat3'] ? $this->cseparator.$rec['cat3'] : null;
 			$cat .= $rec['cat4'] ? $this->cseparator.$rec['cat4'] : null;
 			
-			$_cat = str_replace(' ','_', $cat);
+			$_cat = _m("cmsrt.replace_spchars use ".$cat);//"str_replace(' ','_', $cat);
 			
 			$recarray['itemurl'] = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$_cat.'&id='.$id,null,null,null,null,1);
 			$recarray['itemimg'] = 'http://' . $this->url . '/' . $this->imgpath . $id . $this->restype;
