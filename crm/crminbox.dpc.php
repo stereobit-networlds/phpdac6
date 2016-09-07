@@ -39,11 +39,11 @@ class crminbox extends crmmodule  {
 			
 			$xSQL2 = "select id,date,email from cform where email='$selected'";	
 		
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|10|"."javascript:showdetails({id});".'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|5|0|");
+			_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");
+			_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|10|"."javascript:showdetails({id});".'||');
+			_m("mygrid.column use grid1+email|".localize('_email',getlocal())."|5|0|");
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+cform+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid1+cform+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 

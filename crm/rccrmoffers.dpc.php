@@ -149,7 +149,7 @@ class rccrmoffers {
 			case 'cpaddcollection' : $this->addListToCollection(); //no break;
 			case 'cpsortcollection': if (!empty($_POST['colsort'])) { 
 										$slist = implode(',', $_POST['colsort']);	
-										GetGlobal('controller')->calldpc_method("rccollections.saveSortedlist use " . $slist);
+										_m("rccollections.saveSortedlist use " . $slist);
 									  }
 									  $this->loadTemplate(); 	
                                       break;			
@@ -223,7 +223,7 @@ class rccrmoffers {
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 
 		//into current date range
-		//$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		//$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 		
 		//back one month from now
 		//$timein = "AND DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) ";		
@@ -266,27 +266,27 @@ class rccrmoffers {
 		$resolve = false;//GetReq('resolved') ? true : false;
 		$limit = ($recognize) ? null : ( $resolve ? " LIMIT 5000" : " LIMIT 500" ); //????
 		
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		
 		
         if ($id = $cpGet['id']) {
 			$cat = $cpGet['cat'];
-			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+			$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where (tid='$id' OR attr1='$cat') $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		elseif ($cat = $cpGet['cat']) {
-			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+			$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		else {
-			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+0');
+			$timein = _m('rccontrolpanel.sqlDateRange use date+1+0');
 			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		//echo $sSQL;	
         $result = $db->Execute($sSQL);
 		if (!$result) return ;
 		
-		$t = $template ? GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template) : null;
+		$t = $template ? _m('rccontrolpanel.select_template use '.$template) : null;
 
 		foreach ($result as $i=>$rec) {
 			$rtokens = array();
@@ -306,12 +306,12 @@ class rccrmoffers {
 			$name = $recognize ? $visitor/* . " -&gt resolved : " . $visitor*/ : $visitor; 
 
 			$rtokens[] = $name; //$resolved ? $name . " -&gt resolved : " . $resolved : $name; 
-			$rtokens[] = GetGlobal('controller')->calldpc_method('rccontrolpanel.timeSayWhen use '. strtotime($rec['date'])); 
+			$rtokens[] = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec['date'])); 
 			$rtokens[] = ($resolved || $recognize) ? 'cpcrmoffers.php?v=' . $visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
 			
 			$rtokens[] = (filter_var($visitor, FILTER_VALIDATE_EMAIL)) ? 
-							GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
+							_m("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
 									
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
@@ -516,10 +516,10 @@ class rccrmoffers {
 		if (defined('RCCOLLECTIONS_DPC')) {
 		    if ($template) {
 				$template_file = $this->templatepath . $template;
-				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page use ".$template_file.'+'.$this->templatepath);
+				$mailbody = _m("rccollections.create_page use ".$template_file.'+'.$this->templatepath);
 			}
 			else
-				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page");
+				$mailbody = _m("rccollections.create_page");
 		}									   
 	 
 		return ($mailbody);	 
@@ -541,17 +541,17 @@ class rccrmoffers {
 			}
 		}	
 		else {
-			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items")); 
+			//$data = $this->renderForm($template, _m("rccollections.get_collected_items")); 
 			
 			//with visitor (price selection)
 			if (defined('RCCOLLECTIONS_DPC')) 
-				$this->items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);
+				$this->items = _m("rccollections.get_collected_items use ". $this->visitor);
 			$data = $this->renderForm($template, $this->items); 
 			
 			//with visitor and preset (collection must have at least one item in this phase)
-			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor . '+test50')); 
+			//$data = $this->renderForm($template, _m("rccollections.get_collected_items use ". $this->visitor . '+test50')); 
 			//with visitor and source preset (collection must have at least one item in this phase)
-			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor . '+4,5,6,7+1'));			
+			//$data = $this->renderForm($template, _m("rccollections.get_collected_items use ". $this->visitor . '+4,5,6,7+1'));			
 		}
 		return ($data);		
 	}		
@@ -705,7 +705,7 @@ class rccrmoffers {
 						   'mydate'=>date('m.d.y'));
 							
 				$tokens = serialize($t);
-				$ret = GetGlobal('controller')->calldpc_method('twigengine.render use '.$tempfile.'++'.$tokens);
+				$ret = _m('twigengine.render use '.$tempfile.'++'.$tokens);
 			}
 			else
 				$ret = 'twig cache error!';
@@ -801,7 +801,7 @@ class rccrmoffers {
 			foreach ($res as $i=>$rec) 
 				$codes[] = $rec[0];
 				
-			GetGlobal('controller')->calldpc_method("rccollections.addtoList use " . implode(',', $codes));
+			_m("rccollections.addtoList use " . implode(',', $codes));
 
 			$ret = localize('_addcollection', getlocal()) . ' list:' . $listID;// . " [$visitor]";
 			return ($ret);
@@ -832,7 +832,7 @@ class rccrmoffers {
 	public function editItems() {
 		
 		//if (defined('RCCOLLECTIONS_DPC')) //already called by content
-			//$this->items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);
+			//$this->items = _m("rccollections.get_collected_items use ". $this->visitor);
 			
 		if (is_array($this->items)) {
 			
@@ -874,7 +874,7 @@ class rccrmoffers {
 	
 	public function viewMessages($template=null) {
 		if (empty($this->messages)) return;
-	    $t = ($template!=null) ? GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template) : null;
+	    $t = ($template!=null) ? _m('rccontrolpanel.select_template use '.$template) : null;
 		
 		foreach ($this->messages as $m=>$message) {
 			if ($t) 	
@@ -910,8 +910,8 @@ class rccrmoffers {
 		//return;	
 		
 		if (defined('RCCOLLECTIONS_DPC')) {
-			$collection = GetGlobal('controller')->calldpc_var("rccollections.savedlist");
-			$items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);
+			$collection = _v("rccollections.savedlist");
+			$items = _m("rccollections.get_collected_items use ". $this->visitor);
 			$csvitems = $this->getcsvItems($items);
 		}	
 		
@@ -1062,7 +1062,7 @@ class rccrmoffers {
 							$db->qstr($visitor) .",'$listname'".
 							")";				 
 					$res = $db->Execute($sSQL);		
-					$ret = localize('_favadded', getlocal()) . ' ' . $item . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$item);
+					$ret = localize('_favadded', getlocal()) . ' ' . $item . ' ' . _m('rccontrolpanel.getItemName use '.$item);
 					$this->addActivity($visitor, $ret);
 				}
 			}	

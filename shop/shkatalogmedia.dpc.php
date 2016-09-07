@@ -2246,6 +2246,8 @@ class shkatalogmedia extends shkatalog {
 	   $start = GetReq('start');
 	   $headcat = GetReq('headcat')?GetReq('headcat'):"";	   
 	   $meter = $start?$start-1:0;  
+	   
+	   return null; //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< DISABLED
 
        $mytemplate = $template ? $this->select_template($template) : null;	   
 	   

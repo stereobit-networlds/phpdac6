@@ -85,20 +85,20 @@ class crmwishcmp extends crmmodule  {
 			
 			$xsSQL2 = "SELECT * FROM (SELECT w.recid,w.timein,w.tid,p.itmactive,p.active,p.itmname,p.sysins,p.cat0,p.cat1,p.cat2,p.cat3,p.cat4 FROM wishlist w, products p WHERE w.tid=p.code5 AND w.cid='$selected' and w.listname='compare') x";
 			//echo $xsSQL2;
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+recid|".localize('id',getlocal())."|2|0|||1");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal()). "|5|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tid|".localize('_code',getlocal())."|link|4|"."javascript:showdetails(\"{tid}~$selected\");".'||');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");		
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|10|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|5|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|5|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|5|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat3|".localize('_cat3',getlocal())."|5|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat4|".localize('_cat4',getlocal())."|5|0|");	
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+wishlist+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+1+1+1");
+			_m("mygrid.column use grid1+recid|".localize('id',getlocal())."|2|0|||1");
+			_m("mygrid.column use grid1+timein|".localize('_date',getlocal()). "|5|0|");
+			_m("mygrid.column use grid1+tid|".localize('_code',getlocal())."|link|4|"."javascript:showdetails(\"{tid}~$selected\");".'||');
+		    _m("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");		
+			_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
+			_m("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
+			//_m("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
+			_m("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|10|0|");	
+			_m("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|5|0|");	
+			_m("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|5|0|");	
+			_m("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|5|0|");	
+			_m("mygrid.column use grid1+cat3|".localize('_cat3',getlocal())."|5|0|");	
+			_m("mygrid.column use grid1+cat4|".localize('_cat4',getlocal())."|5|0|");	
+			$ret .= _m("mygrid.grid use grid1+wishlist+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 
@@ -164,19 +164,19 @@ class crmwishcmp extends crmmodule  {
 			$xsSQL2 = "SELECT * FROM (SELECT DISTINCT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i WHERE i.cid='$cid' $dSQL) x";
 			//echo $xsSQL2;
 
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|link|5|"."javascript:showdetails({tid});".'||');
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cid|".localize('_user',getlocal())."|20|1|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tdate|".localize('_date',getlocal())."|date|0|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|5|0|||||right");	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|20|1|");			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+rw|".localize('_roadway',getlocal())."|20|1|");
-	        GetGlobal('controller')->calldpc_method("mygrid.column use grid3+qty|".localize('_qty',getlocal())."|5|0|||||right");				
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
+			_m("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
+			_m("mygrid.column use grid3+tid|".localize('id',getlocal())."|link|5|"."javascript:showdetails({tid});".'||');
+			//_m("mygrid.column use grid3+cid|".localize('_user',getlocal())."|20|1|");			
+			_m("mygrid.column use grid3+tdate|".localize('_date',getlocal())."|date|0|");
+		    _m("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
+			_m("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|5|0|||||right");	
+		    _m("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|20|1|");			
+		    _m("mygrid.column use grid3+rw|".localize('_roadway',getlocal())."|20|1|");
+	        _m("mygrid.column use grid3+qty|".localize('_qty',getlocal())."|5|0|||||right");				
+			_m("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
+			_m("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 

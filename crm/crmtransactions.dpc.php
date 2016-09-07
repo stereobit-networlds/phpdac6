@@ -79,19 +79,19 @@ class crmtransactions extends crmmodule  {
 				//echo $xsSQL2;
 			}
 
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|link|5|"."javascript:showdetails({tid});".'||');
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cid|".localize('_user',getlocal())."|20|0|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+timein|".localize('_date',getlocal())."|10|0|");
-		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|5|0|||||right");	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|20|1|");			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+rw|".localize('_roadway',getlocal())."|20|1|");
-	        GetGlobal('controller')->calldpc_method("mygrid.column use grid3+qty|".localize('_qty',getlocal())."|5|0|||||right");				
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
+			_m("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
+			_m("mygrid.column use grid3+tid|".localize('id',getlocal())."|link|5|"."javascript:showdetails({tid});".'||');
+			//_m("mygrid.column use grid3+cid|".localize('_user',getlocal())."|20|0|");			
+			_m("mygrid.column use grid3+timein|".localize('_date',getlocal())."|10|0|");
+		    //_m("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
+			_m("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|5|0|||||right");	
+		    _m("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|20|1|");			
+		    _m("mygrid.column use grid3+rw|".localize('_roadway',getlocal())."|20|1|");
+	        _m("mygrid.column use grid3+qty|".localize('_qty',getlocal())."|5|0|||||right");				
+			_m("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
+			_m("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 

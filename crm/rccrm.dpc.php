@@ -156,7 +156,7 @@ class rccrm  {
 		   
 		 case 'cpcrmrun'     : /*if ($crm_module = GetReq('mod')) {//module calls inside mod.showdetails
 								$m = explode('.', $crm_module);
-								GetGlobal('controller')->calldpc_method($m[0].".event use ".$m[1]);		
+								_m($m[0].".event use ".$m[1]);		
 		                       }*/
 		                       break;   
 		   
@@ -203,7 +203,7 @@ class rccrm  {
 		 case 'crmstats'       : break;	  
 	  
 		 case 'cpcrmrun'       : if ($crm_module = GetReq('mod')) //module calls inside mod.showdetails 
-									$out = 	GetGlobal('controller')->calldpc_method($crm_module);		
+									$out = 	_m($crm_module);		
 							     break;  	  
 			
 		 case 'cpcrmmoduledtl' : break;	
@@ -314,7 +314,7 @@ class rccrm  {
 			//crm module
 			$class = 'crm' . $module;
 			$method = $module . '_grid'; 
-			$ret = GetGlobal('controller')->calldpc_method("$class.$method use +360+15+r+1");
+			$ret = _m("$class.$method use +360+15+r+1");
 		//}	
 		
 		return ($ret);
@@ -327,7 +327,7 @@ class rccrm  {
 		
 		$class = 'crm' . $module;
 		$method = 'showdetails'; 
-		$ret = GetGlobal('controller')->calldpc_method("$class.$method use $data");		
+		$ret = _m("$class.$method use $data");		
 		
 		return ($ret);
 	}
@@ -340,7 +340,7 @@ class rccrm  {
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 
 		//into current date range
-		//$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		//$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 		
 		//back one month from now
 		//$timein = "AND DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) ";		
@@ -390,7 +390,7 @@ class rccrm  {
 		$resolve = false;
 		$limit = ($recognize) ? null : ( $resolve ? " LIMIT 5000" : " LIMIT 500" ); //????
 		
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		
 		
         if ($id = $cpGet['id']) {
@@ -436,35 +436,35 @@ class rccrm  {
 		
         /*$xsSQL = "SELECT * from (select id,timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users $uSQL) o ";	
 		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|link|10|"."javascript:udetails(\"{username}\");".'||');						
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|19|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|19|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={email}".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code2|".localize('_code',getlocal())."|10|0|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");	
+		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
+		_m("mygrid.column use grid1+notes|".localize('_active',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+username|".localize('_username',getlocal())."|link|10|"."javascript:udetails(\"{username}\");".'||');						
+		_m("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|19|1|");
+		_m("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|19|1|");
+		_m("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+email|".localize('_email',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={email}".'||');
+		_m("mygrid.column use grid1+code2|".localize('_code',getlocal())."|10|0|");			
+		_m("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");
 		*/   		
 		
 		$xsSQL = "select * from (";
 		$xsSQL.= "SELECT id,startdate,datein,active,failed,name,email,listname FROM ulists " . $uSQL;
 		$xsSQL .= ') as o'; 
 		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|5|0");
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_mail',getlocal())."|link|10|"."javascript:udetails(\"{email}\");".'||');
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+startdate|".localize('_dateins',getlocal()).'|10|0');		   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+datein|".localize('_dateupd',getlocal())."|10|0|");			
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_lname',getlocal()).'|19|1');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|0');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+failed|".localize('_failed',getlocal()).'|5|0');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+listname|".localize('_listname',getlocal()).'|10|0');			
+		_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|5|0");
+        _m("mygrid.column use grid1+email|".localize('_mail',getlocal())."|link|10|"."javascript:udetails(\"{email}\");".'||');
+        _m("mygrid.column use grid1+startdate|".localize('_dateins',getlocal()).'|10|0');		   
+		_m("mygrid.column use grid1+datein|".localize('_dateupd',getlocal())."|10|0|");			
+        _m("mygrid.column use grid1+name|".localize('_lname',getlocal()).'|19|1');	
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|0');	
+		_m("mygrid.column use grid1+failed|".localize('_failed',getlocal()).'|5|0');	
+		_m("mygrid.column use grid1+listname|".localize('_listname',getlocal()).'|10|0');			
 		   		
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+users+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  		
 		
@@ -483,26 +483,26 @@ class rccrm  {
 		
         $xsSQL = "SELECT * from (select id,date,udate,code,type,email,firstname,lastname,address,country,birthday,occupation,mobile,phone,skype,website,facebook,twitter from crmcontacts) o ";		   
 		   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|0|");	   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+udate|".localize('_date',getlocal())."|5|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+firstname|".localize('_firstname',getlocal())."|link|10|"."javascript:udetails(\"{email}\");".'||');						
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lastname|".localize('_lastname',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={email}".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+adderss|".localize('_address',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+country|".localize('_country',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+birthday|".localize('_birthday',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+occupation|".localize('_occupation',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+mobile|".localize('_tel',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+phone|".localize('_tel',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+skype|".localize('Skype',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+website|".localize('Website',getlocal())."|link|5|"."{website}".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+facebook|".localize('Facebook',getlocal())."|link|5|"."{facebook}".'||');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+twitter|".localize('Twitter',getlocal())."|link|5|"."{twitter}".'||');
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");	
+		_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|0|");	   
+		_m("mygrid.column use grid1+udate|".localize('_date',getlocal())."|5|1|");		
+		_m("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");		
+		_m("mygrid.column use grid1+type|".localize('_type',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+email|".localize('_email',getlocal())."|10|1|");
+		_m("mygrid.column use grid1+firstname|".localize('_firstname',getlocal())."|link|10|"."javascript:udetails(\"{email}\");".'||');						
+		_m("mygrid.column use grid1+lastname|".localize('_lastname',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={email}".'||');
+		_m("mygrid.column use grid1+adderss|".localize('_address',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+country|".localize('_country',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+birthday|".localize('_birthday',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+occupation|".localize('_occupation',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+mobile|".localize('_tel',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+phone|".localize('_tel',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+skype|".localize('Skype',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+website|".localize('Website',getlocal())."|link|5|"."{website}".'||');		
+		_m("mygrid.column use grid1+facebook|".localize('Facebook',getlocal())."|link|5|"."{facebook}".'||');			
+		_m("mygrid.column use grid1+twitter|".localize('Twitter',getlocal())."|link|5|"."{twitter}".'||');
 		   
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+crmcontacts+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+crmcontacts+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  
 	}	
@@ -537,19 +537,19 @@ class rccrm  {
 			$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.timein,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i) x";
 				//echo $xsSQL2;
 
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tid|".localize('id',getlocal())."|link|5|"."javascript:showdetails({tid});".'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cid|".localize('_user',getlocal())."|10|0|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+timein|".localize('_date',getlocal())."|10|0|");
-		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|2|0|||||right");	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|link|20|"."javascript:udetails(\"{cid}\");".'||');		
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+rw|".localize('_roadway',getlocal())."|link|20|"."cpcrmtrace.php?t=cpcrmprofile&v={cid}".'||');
-	        GetGlobal('controller')->calldpc_method("mygrid.column use grid3+qty|".localize('_qty',getlocal())."|5|0|||||right");				
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
+			_m("mygrid.column use grid3+recid|".localize('id',getlocal())."|5|0|||1|1");
+			_m("mygrid.column use grid3+tid|".localize('id',getlocal())."|link|5|"."javascript:showdetails({tid});".'||');
+			_m("mygrid.column use grid3+cid|".localize('_user',getlocal())."|10|0|");			
+			_m("mygrid.column use grid3+timein|".localize('_date',getlocal())."|10|0|");
+		    //_m("mygrid.column use grid3+ttime|".localize('_time',getlocal())."|9|0|");	
+			_m("mygrid.column use grid3+tstatus|".localize('_status',getlocal())."|2|0|||||right");	
+		    _m("mygrid.column use grid3+pw|".localize('_payway',getlocal())."|link|20|"."javascript:udetails(\"{cid}\");".'||');		
+		    _m("mygrid.column use grid3+rw|".localize('_roadway',getlocal())."|link|20|"."cpcrmtrace.php?t=cpcrmprofile&v={cid}".'||');
+	        _m("mygrid.column use grid3+qty|".localize('_qty',getlocal())."|5|0|||||right");				
+			_m("mygrid.column use grid3+cost|".localize('_cost',getlocal())."|5|0|||||right");
+			_m("mygrid.column use grid3+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+0+1+1");
+			$ret .= _m("mygrid.grid use grid3+transactions+$xsSQL2+$mode+$title+recid+$noctrl+1+$rows+$height+$width+0+1+1");
 
 	    }
 		else 
@@ -570,21 +570,21 @@ class rccrm  {
 		
         $xsSQL = "SELECT * from (select id,timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users) o ";		   
 		   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|link|10|"."javascript:udetails(\"{username}\");".'||');						
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|19|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|19|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={email}".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code2|".localize('_code',getlocal())."|10|0|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");	
+		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
+		_m("mygrid.column use grid1+notes|".localize('_active',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+username|".localize('_username',getlocal())."|link|10|"."javascript:udetails(\"{username}\");".'||');						
+		_m("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|19|1|");
+		_m("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|19|1|");
+		_m("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+email|".localize('_email',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={email}".'||');
+		_m("mygrid.column use grid1+code2|".localize('_code',getlocal())."|10|0|");			
+		_m("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");
 		   
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+users+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}
@@ -600,30 +600,30 @@ class rccrm  {
 		
 		$xsSQL = "SELECT * FROM (SELECT id,timein,active,code2,name,afm,eforia,prfdescr,street,address,number,area,city,zip,voice1,voice2,fax,mail,attr1,attr2,attr3,attr4 FROM customers) x";
 		//$out.= $xsSQL;
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('id',getlocal())."|5|0|||1");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+timein|".localize('_date',getlocal()). "|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal())."|boolean|1|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+code2|".localize('_code2',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={code2}".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+mail|".localize('_mail',getlocal())."|link|10|"."javascript:cdetails(\"{mail}\");".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+name|".localize('_name',getlocal())."|19|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+prfdescr|".localize('_prfdescr',getlocal())."|20|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+afm|".localize('_afm',getlocal())."|10|1|");
-	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+eforia|".localize('_doy',getlocal())."|10|1|");				
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+street|".localize('_street',getlocal())."|19|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+address|".localize('_address',getlocal())."|10|1");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+number|".localize('_number',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+area|".localize('_area',getlocal())."|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+city|".localize('_city',getlocal())."|10|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+zip|".localize('_zip',getlocal())."|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+voice1|".localize('_tel',getlocal())."|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+voice2|".localize('_tel',getlocal())."|10|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+fax|".localize('_fax',getlocal())."|10|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr1|".localize('_attr1',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr2|".localize('_attr2',getlocal())."|5|1|");							
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr3|".localize('_attr3',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr4|".localize('_attr4',getlocal())."|5|1|");
+		_m("mygrid.column use grid2+id|".localize('id',getlocal())."|5|0|||1");
+		_m("mygrid.column use grid2+timein|".localize('_date',getlocal()). "|5|0|");
+		_m("mygrid.column use grid2+active|".localize('_active',getlocal())."|boolean|1|");	
+		_m("mygrid.column use grid2+code2|".localize('_code2',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={code2}".'||');
+		_m("mygrid.column use grid2+mail|".localize('_mail',getlocal())."|link|10|"."javascript:cdetails(\"{mail}\");".'||');		
+		_m("mygrid.column use grid2+name|".localize('_name',getlocal())."|19|1|");
+		_m("mygrid.column use grid2+prfdescr|".localize('_prfdescr',getlocal())."|20|1|");			
+		_m("mygrid.column use grid2+afm|".localize('_afm',getlocal())."|10|1|");
+	    _m("mygrid.column use grid2+eforia|".localize('_doy',getlocal())."|10|1|");				
+		_m("mygrid.column use grid2+street|".localize('_street',getlocal())."|19|1|");
+		_m("mygrid.column use grid2+address|".localize('_address',getlocal())."|10|1");
+		_m("mygrid.column use grid2+number|".localize('_number',getlocal())."|5|1|");
+		_m("mygrid.column use grid2+area|".localize('_area',getlocal())."|10|1|");
+		_m("mygrid.column use grid2+city|".localize('_city',getlocal())."|10|1|");			
+		_m("mygrid.column use grid2+zip|".localize('_zip',getlocal())."|10|1|");
+		_m("mygrid.column use grid2+voice1|".localize('_tel',getlocal())."|10|1|");
+		_m("mygrid.column use grid2+voice2|".localize('_tel',getlocal())."|10|1|");			
+		_m("mygrid.column use grid2+fax|".localize('_fax',getlocal())."|10|1|");			
+		_m("mygrid.column use grid2+attr1|".localize('_attr1',getlocal())."|5|1|");
+		_m("mygrid.column use grid2+attr2|".localize('_attr2',getlocal())."|5|1|");							
+		_m("mygrid.column use grid2+attr3|".localize('_attr3',getlocal())."|5|1|");
+		_m("mygrid.column use grid2+attr4|".localize('_attr4',getlocal())."|5|1|");
 		
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+customers+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid2+customers+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}
@@ -641,16 +641,16 @@ class rccrm  {
 		$xsSQL.= "SELECT id,startdate,datein,active,failed,name,email,listname FROM ulists";
 		$xsSQL .= ') as o';
 		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|5|0");
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_mail',getlocal())."|link|10|"."javascript:udetails(\"{email}\");".'||');
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+startdate|".localize('_dateins',getlocal()).'|10|0');		   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+datein|".localize('_dateupd',getlocal())."|10|0|");			
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_lname',getlocal()).'|19|1');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|0');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+failed|".localize('_failed',getlocal()).'|5|0');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+listname|".localize('_listname',getlocal()).'|10|0');			
+		_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|5|0");
+        _m("mygrid.column use grid1+email|".localize('_mail',getlocal())."|link|10|"."javascript:udetails(\"{email}\");".'||');
+        _m("mygrid.column use grid1+startdate|".localize('_dateins',getlocal()).'|10|0');		   
+		_m("mygrid.column use grid1+datein|".localize('_dateupd',getlocal())."|10|0|");			
+        _m("mygrid.column use grid1+name|".localize('_lname',getlocal()).'|19|1');	
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal()).'|boolean|0');	
+		_m("mygrid.column use grid1+failed|".localize('_failed',getlocal()).'|5|0');	
+		_m("mygrid.column use grid1+listname|".localize('_listname',getlocal()).'|10|0');			
 		   
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ulists+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+ulists+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	
@@ -666,16 +666,16 @@ class rccrm  {
 				   
 		$xsSQL = "SELECT * from (select id,timein,receiver,subject,reply,status,mailstatus,cid from mailqueue) o ";		   
 		   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+receiver|".localize('_mail',getlocal())."|link|10|"."javascript:udetails(\"{receiver}\");".'||');						
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+subject|".localize('_subject',getlocal())."|19|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+reply|".localize('_reply',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+mailstatus|".localize('_failed',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cid|".localize('_cid',getlocal())."|10|1|");
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");
+		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
+		_m("mygrid.column use grid1+receiver|".localize('_mail',getlocal())."|link|10|"."javascript:udetails(\"{receiver}\");".'||');						
+		_m("mygrid.column use grid1+subject|".localize('_subject',getlocal())."|19|1|");
+		_m("mygrid.column use grid1+reply|".localize('_reply',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+status|".localize('_status',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+mailstatus|".localize('_failed',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+cid|".localize('_cid',getlocal())."|10|1|");
 		   
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+mailqueue+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+mailqueue+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	
@@ -968,7 +968,7 @@ function handleResponse() {if(http.readyState == 4){
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 		$daterange = GetParam('rdate');
 		
-		$t = ($template!=null) ? GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template) : null;		
+		$t = ($template!=null) ? _m('rccontrolpanel.select_template use '.$template) : null;		
 	    if ($t) {
 			for ($y=2015;$y<=intval(date('Y'));$y++) {
 				$yearsli .= '<li>'. seturl("t=crmstats&id=$user&month=".$month.'&year='.$y, $y) .'</li>';

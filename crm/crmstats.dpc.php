@@ -80,15 +80,15 @@ class crmstats extends crmmodule  {
 		   		   
 		    //echo $sSQL2;
 
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0|');				
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0|'); //."|link|5|"."javascript:showdetails(\"{tid}\");".'||');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_attr',getlocal()).'|30|0|');//."|link|5|"."javascript:showdetails(\"{attr1}\");".'||');			
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr2|".localize('_attr',getlocal()).'|10|0|');
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_attr',getlocal()).'|10|0|');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal())."|link|10|"."javascript:showdetails(\"{REMOTE_ADDR}\");".'||');
+		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
+			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0|');				
+            _m("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0|'); //."|link|5|"."javascript:showdetails(\"{tid}\");".'||');
+            _m("mygrid.column use grid9+attr1|".localize('_attr',getlocal()).'|30|0|');//."|link|5|"."javascript:showdetails(\"{attr1}\");".'||');			
+			//_m("mygrid.column use grid9+attr2|".localize('_attr',getlocal()).'|10|0|');
+			//_m("mygrid.column use grid9+attr3|".localize('_attr',getlocal()).'|10|0|');
+			_m("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal())."|link|10|"."javascript:showdetails(\"{REMOTE_ADDR}\");".'||');
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+stats+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid9+stats+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 
@@ -115,15 +115,15 @@ class crmstats extends crmmodule  {
 		   		   
 		    //echo $sSQL2;
 
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0|');				
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0|'); 
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_attr',getlocal()).'|30|0|');	
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr2|".localize('_attr',getlocal()).'|10|0|');
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_attr',getlocal()).'|10|0|');			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal())."|10|0|");
+		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
+			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0|');				
+            _m("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0|'); 
+            _m("mygrid.column use grid9+attr1|".localize('_attr',getlocal()).'|30|0|');	
+			//_m("mygrid.column use grid9+attr2|".localize('_attr',getlocal()).'|10|0|');
+			//_m("mygrid.column use grid9+attr3|".localize('_attr',getlocal()).'|10|0|');			
+			_m("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal())."|10|0|");
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+stats+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid9+stats+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 

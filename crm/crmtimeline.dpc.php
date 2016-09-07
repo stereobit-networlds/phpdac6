@@ -63,11 +63,11 @@ class crmtimeline extends crmmodule  {
 			
 			$xSQL2 = "select id,date,email from cform where email='$selected'";	
 		
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|10|"."javascript:showdetails({id});".'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|5|0|");
+			_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");
+			_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|10|"."javascript:showdetails({id});".'||');
+			_m("mygrid.column use grid1+email|".localize('_email',getlocal())."|5|0|");
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+cform+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid1+cform+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 
@@ -115,7 +115,7 @@ class crmtimeline extends crmmodule  {
 		else 
 			return;			
 
-		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 
 		if ($visitorIP) $iSQL = " REMOTE_ADDR=" . $db->qstr($visitorIP);		
 		if (($visitor) && filter_var($visitor, FILTER_VALIDATE_EMAIL))
@@ -144,7 +144,7 @@ class crmtimeline extends crmmodule  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);
+			$t = _m('rccontrolpanel.select_template use '.$template);
 				
 			$meter = 0;	
 			
@@ -168,29 +168,29 @@ class crmtimeline extends crmmodule  {
 					default       : if ($itemcode = $rec['tid']) {
 										$c = 'purple'; 
 										$title = localize('_itemin', getlocal());
-										$item = $rec['tid'] . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']);
+										$item = $rec['tid'] . ' ' . _m('rccontrolpanel.getItemName use '.$rec['tid']);
 										$link = $this->url . "/kshow/0/0/{$rec['tid']}/"; //seturl('t=kshow&id='.$rec['tid']);
 									}	
 					
 					                switch ($rec['attr1']) {
 										case 'cartin'  : $c = 'green'; 
 														 $title = localize('_cartin', getlocal());
-										                 $item = $rec['tid'] . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); 
+										                 $item = $rec['tid'] . ' ' . _m('rccontrolpanel.getItemName use '.$rec['tid']); 
 														 $link = $this->url . "/kshow/0/0/{$rec['tid']}/";
 														 break;
 										case 'cartout' : $c = 'red';   
 										                 $title = localize('_cartout', getlocal());
-										                 $item = $rec['tid'] . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); 
+										                 $item = $rec['tid'] . ' ' . _m('rccontrolpanel.getItemName use '.$rec['tid']); 
 														 $link = $this->url . "/kshow/0/0/{$rec['tid']}/";
 														 break;
 										case 'checkout': $c = 'gray';  
 										                 $title = localize('_checkout', getlocal());
-										                 $item = $rec['tid'] . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); break;
+										                 $item = $rec['tid'] . ' ' . _m('rccontrolpanel.getItemName use '.$rec['tid']); break;
 														 $link = $this->url . "/kshow/0/0/{$rec['tid']}/";
 										default        : if ($rec['attr1']) {
 															$c = 'yellow'; 
 															$title = localize('_categorin', getlocal());
-															$item = str_replace('_', ' ', $rec['attr1']);
+															$item = _m("cmsrt.replace_spchars use ".$rec['attr1']."+1");
 															$link = $this->url . "/klist/{$rec['attr1']}/"; //seturl('t=klist&cat='.$rec['attr1']);
 										                 }	
 					                } 
@@ -199,7 +199,7 @@ class crmtimeline extends crmmodule  {
 				
 				//common for all
 				if ((defined('CRMFORMS_DPC')) && (filter_var($visitor, FILTER_VALIDATE_EMAIL)))
-					$details =	GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") . "&nbsp;";
+					$details =	_m("crmforms.formsMenu use ".$visitor."+crmdoc") . "&nbsp;";
 					
 				//if link	
 				if ($link) {
@@ -218,7 +218,7 @@ class crmtimeline extends crmmodule  {
 					$details .= $this->timelineMenu($visitor, $meter, $itemcode);	
 				}
 				//else	
-					$details .= $rec['attr3'] ? localize('_reference', getlocal()).':' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getRefName use '.$rec['ref']) .' ('.$rec['REMOTE_ADDR']. ')' : ' ip:' . $rec['REMOTE_ADDR'];
+					$details .= $rec['attr3'] ? localize('_reference', getlocal()).':' . _m('rccontrolpanel.getRefName use '.$rec['ref']) .' ('.$rec['REMOTE_ADDR']. ')' : ' ip:' . $rec['REMOTE_ADDR'];
 				
 				$details .= "<div id=\"urldetails{$meter}\"></div>"; //last (common)
 								
@@ -283,7 +283,7 @@ class crmtimeline extends crmmodule  {
 
 	public function selectTimelineButton() {
 		$l = getlocal();
-		$daterange = GetGlobal('controller')->calldpc_method('rccrmtrace.getDateRange');
+		$daterange = _m('rccrmtrace.getDateRange');
 		$v = GetParam('v') ? "v=" . urldecode(GetParam('v')) : null;
 		
 		$turl0 = seturl('t=cpcrmtimeline&mode=0&').$v.'&'.$daterange;

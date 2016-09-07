@@ -245,16 +245,16 @@ class rccrmforms {
 		
         $xsSQL = "SELECT * from (select id,active,date,title,descr,code,class,type from crmforms) o ";		   
 		   							
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|5|"."javascript:editform(\"{id}\");".'||'); //"|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+title|".localize('_title',getlocal())."|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
+		_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|5|"."javascript:editform(\"{id}\");".'||'); //"|5|0|");		
+		_m("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");		
+		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|10|1|");
+		_m("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|1|");
+		_m("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+crmforms+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+crmforms+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	

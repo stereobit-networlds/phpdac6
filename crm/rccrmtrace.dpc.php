@@ -271,7 +271,7 @@ class rccrmtrace  {
 		if (!$this->iseMailUser($visitor)) return null;		
 		
 		if (defined('CRMFORMS_DPC')) 
-			$ret = GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc");
+			$ret = _m("crmforms.formsMenu use ".$visitor."+crmdoc");
 		//else
 			//$ret = "<a href='cpcrmoffers.php?v=".$visitor."'>".$visitor."</a>";
 		
@@ -602,11 +602,11 @@ class rccrmtrace  {
 					$db->qstr($visitor) .",'$listname'".
 					")";				 
 				$res = $db->Execute($sSQL);		
-				$ret = localize('_favadded', getlocal()) . ' ' . $item . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$item);
+				$ret = localize('_favadded', getlocal()) . ' ' . $item . ' ' . _m('rccontrolpanel.getItemName use '.$item);
 				$this->addActivity($visitor, $ret);
 			}
 			else
-				$ret = localize('_favexist', getlocal()) . ' ' . $item . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$item);
+				$ret = localize('_favexist', getlocal()) . ' ' . $item . ' ' . _m('rccontrolpanel.getItemName use '.$item);
 			
 			return ($ret);
 		}
@@ -624,7 +624,7 @@ class rccrmtrace  {
 					" and listname='$listname'";				 
 			$res = $db->Execute($sSQL);		
 			
-			$ret = localize('_favremoved', getlocal()) . ' ' . $item . ' ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$item);
+			$ret = localize('_favremoved', getlocal()) . ' ' . $item . ' ' . _m('rccontrolpanel.getItemName use '.$item);
 			$this->addActivity($visitor, $ret);
 			return ($ret);
 		}
@@ -637,7 +637,7 @@ class rccrmtrace  {
 		$visitor = GetReq('v');
 		
 		if (defined('RCCOLLECTIONS_DPC')) { 
-			if ($add = GetGlobal('controller')->calldpc_method("rccollections.addtoList use " . $item))
+			if ($add = _m("rccollections.addtoList use " . $item))
 				$ret = localize('_addcollection', getlocal()) . ' ' . $item;// . " [$visitor]";
 				
 			return ($ret);
@@ -654,7 +654,7 @@ class rccrmtrace  {
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 
 		//into current date range
-		//$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		//$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 		
 		//back one month from now
 		//$timein = "AND DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) ";		
@@ -697,7 +697,7 @@ class rccrmtrace  {
 		$resolve = GetReq('resolved') ? true : false;
 		$limit = ($recognize) ? null : ( $resolve ? " LIMIT 5000" : " LIMIT 500" ); //????
 		
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		
 		if ($v = $this->visitor)  //ip / mail / session
 			$vSQL = $this->isIPUser($v) ? " AND REMOTE_ADDR='$v' " : 
@@ -707,22 +707,22 @@ class rccrmtrace  {
 		
         if ($id = $cpGet['id']) {
 			$cat = $cpGet['cat'];
-			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+			$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where (tid='$id' OR attr1='$cat') $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		elseif ($cat = $cpGet['cat']) {
-			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+			$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		else {
-			$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+0');
+			$timein = _m('rccontrolpanel.sqlDateRange use date+1+0');
 			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		//echo $sSQL;	
         $result = $db->Execute($sSQL);
 		if (!$result) return ;
 		
-		$t = $template ? GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template) : null;
+		$t = $template ? _m('rccontrolpanel.select_template use '.$template) : null;
 
 		foreach ($result as $i=>$rec) {
 			$rtokens = array();
@@ -742,13 +742,13 @@ class rccrmtrace  {
 			$name = $recognize ? $visitor . " -&gt resolved : " . $this->resolveProfile($visitor) : $visitor; 
 			//$name.= " -&gt resolved : " . $this->resolveProfile($visitor);
 			$rtokens[] = $resolved ? $name . " -&gt resolved : " . $this->resolveProfile($resolved) : $name; 
-			$rtokens[] = GetGlobal('controller')->calldpc_method('rccontrolpanel.timeSayWhen use '. strtotime($rec['date'])); 
+			$rtokens[] = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec['date'])); 
 			$rtokens[] = 'cpcrmtrace.php?t=cpcrmprofile&v=' . ($resolved ? $resolved.'|'.$visitor : $visitor); //link
 			$rtokens[] = null;//$rec[3]; //hash
 			
-			$rtokens[] = $resolved ? GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$resolved."+crmdoc") : 
+			$rtokens[] = $resolved ? _m("crmforms.formsMenu use ".$resolved."+crmdoc") : 
 			              ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) ? 
-							GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") : null);			
+							_m("crmforms.formsMenu use ".$visitor."+crmdoc") : null);			
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
 			             "<option value=\"$hash\">".$rtokens[1]."</option>";
@@ -809,7 +809,7 @@ class rccrmtrace  {
 	public function showActivities($template=null) {
 		$db = GetGlobal('db');
 		
-		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 
 		$sSQL = "select DATE_FORMAT(date, '%d-%m-%Y %H:%i:%s') as date,memo,type from crmactivities where profile=" . $db->qstr($this->visitor) . $timein;	
 		$sSQL.= "order by date desc LIMIT 100";
@@ -817,7 +817,7 @@ class rccrmtrace  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);			
+			$t = _m('rccontrolpanel.select_template use '.$template);			
 			
 			foreach ($result as $i=>$rec) {
 				$tokens = array($rec['date'], $rec['memo']); //,$rec['type']
@@ -834,7 +834,7 @@ class rccrmtrace  {
 	public function searchTags($template=null) {
 		$db = GetGlobal('db');
 
-		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 		
 		if ($ip = $this->visitorIP)
 			$iSQL = " REMOTE_ADDR=" . $db->qstr($ip);		
@@ -849,7 +849,7 @@ class rccrmtrace  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);
+			$t = _m('rccontrolpanel.select_template use '.$template);
 					
 			foreach ($result as $i=>$rec) {
 				$tokens = array($rec['attr1'], $rec['c'], '#');
@@ -869,7 +869,7 @@ class rccrmtrace  {
 		if (!$v = $this->visitorEmail)
 			return false;
 		
-		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use timeout+1+1');			
+		$timein = _m('rccontrolpanel.sqlDateRange use timeout+1+1');			
 					
 		$sSQL = "select timeout,subject,reply,status from mailqueue where receiver='$v'" . $timein;	
 		$sSQL.= " order by id desc";//" LIMIT 30";
@@ -877,7 +877,7 @@ class rccrmtrace  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);
+			$t = _m('rccontrolpanel.select_template use '.$template);
 
 			foreach ($result as $i=>$rec) {
 				$title = $rec['timeout'];
@@ -901,7 +901,7 @@ class rccrmtrace  {
 		$ic = $icon ? $icon : 'icon-time';
 		$time = $time ? $time : date('Y-m-d H:i');
 
-		$timein = GetGlobal('controller')->calldpc_method('rccontrolpanel.sqlDateRange use date+1+1');
+		$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
 		
 		if ($this->visitorIP) $iSQL = " REMOTE_ADDR=" . $db->qstr($this->visitorIP);		
 		if ($this->visitorEmail) 
@@ -916,7 +916,7 @@ class rccrmtrace  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);
+			$t = _m('rccontrolpanel.select_template use '.$template);
 			
 			foreach ($result as $i=>$rec) {
 				$item = null;
@@ -926,17 +926,17 @@ class rccrmtrace  {
 					case 'filter' : $c = 'blue'; $item = 'Filter: ' . $rec['attr1']; break;
 					default       : if ($rec['tid']) {
 										$c = 'purple'; 
-										$item = GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']);
+										$item = _m('rccontrolpanel.getItemName use '.$rec['tid']);
 										$link = seturl('t=kshow&id='.$rec['tid']);
 									}	
 					
 					                switch ($rec['attr1']) {
-										case 'cartin'  : $c = 'green'; $item = 'Cart in: ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); break;
-										case 'cartout' : $c = 'red';   $item = 'Cart out: ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); break;
-										case 'checkout': $c = 'gray';  $item = 'Checkout: ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$rec['tid']); break;
+										case 'cartin'  : $c = 'green'; $item = 'Cart in: ' . _m('rccontrolpanel.getItemName use '.$rec['tid']); break;
+										case 'cartout' : $c = 'red';   $item = 'Cart out: ' . _m('rccontrolpanel.getItemName use '.$rec['tid']); break;
+										case 'checkout': $c = 'gray';  $item = 'Checkout: ' . _m('rccontrolpanel.getItemName use '.$rec['tid']); break;
 										default        : if ($rec['attr1']) {
 															$c = 'yellow'; 
-															$item = str_replace('_', ' ', $rec['attr1']);
+															$item = _m("cmsrt.replace_spchars use ".$rec['attr1']."+1");
 															$link = seturl('t=klist&cat='.$rec['attr1']);
 										                 }	
 					                } 
@@ -964,7 +964,7 @@ class rccrmtrace  {
 			
 	    if ($template) {
 			
-			$tdata = GetGlobal('controller')->calldpc_method('rccontrolpanel.select_template use '.$template);
+			$tdata = _m('rccontrolpanel.select_template use '.$template);
 			
 			for ($y=2015;$y<=intval(date('Y'));$y++) {
 				$yearsli .= '<li>'. seturl('t='.$t.'&month='.$month.'&year='.$y, $y) .'</li>';
@@ -976,11 +976,15 @@ class rccrmtrace  {
 			}	  
 			
 			//call cpGet from rcpmenu not this (only def action)
-			$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');	
+			$cpGet = _v('rcpmenu.cpGet');	
 			if ($id = $cpGet['id'])
-				$section = ' &gt ' . GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$id);
-			elseif ($cat = $cpGet['cat'])
-				$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', str_replace('_', ' ', $cat));
+				$section = ' &gt ' . _m('rccontrolpanel.getItemName use '.$id);
+			elseif ($cat = $cpGet['cat']) {
+				//$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', _m("cmsrt.replace_spchars use $cat+1"));
+				$ccat = explode($this->cseparator, $cat);
+				foreach ($ccat as $i=>$mycat)
+					$section .= _m("cmsrt.replace_spchars use $mycat+1") . ' &gt ';
+			}	
 			else
 				$section = null;
 	  

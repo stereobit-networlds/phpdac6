@@ -50,16 +50,16 @@ class crmforms extends crmmodule  {
 		
 			$xSQL2 = "SELECT * from (select id,active,date,title,descr,code,class,type from crmforms where class='$selected') o ";		   
 		   							
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|1|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|5|"."javascript:showdetails(\"{id}\");".'||');		
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");		
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+title|".localize('_title',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
+			_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|1|");			
+			_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
+			_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|5|"."javascript:showdetails(\"{id}\");".'||');		
+			_m("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");		
+			_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|10|1|");
+			_m("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|19|1|");
+			_m("mygrid.column use grid1+class|".localize('_class',getlocal())."|5|1|");
+			_m("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
 
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+cform+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid1+cform+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 
@@ -84,17 +84,17 @@ class crmforms extends crmmodule  {
 	*  for cp environment
 	*/
 	
-			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items")); 
+			//$data = $this->renderForm($template, _m("rccollections.get_collected_items")); 
 			
 			//with visitor (price selection)
 			/*if (defined('RCCOLLECTIONS_DPC')) 
-				$this->items = GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor);
+				$this->items = _m("rccollections.get_collected_items use ". $this->visitor);
 			$data = $this->renderForm($template, $this->items); 
 			*/
 			//with visitor and preset (collection must have at least one item in this phase)
-			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor . '+test50')); 
+			//$data = $this->renderForm($template, _m("rccollections.get_collected_items use ". $this->visitor . '+test50')); 
 			//with visitor and source preset (collection must have at least one item in this phase)
-			//$data = $this->renderForm($template, GetGlobal('controller')->calldpc_method("rccollections.get_collected_items use ". $this->visitor . '+4,5,6,7+1'));		
+			//$data = $this->renderForm($template, _m("rccollections.get_collected_items use ". $this->visitor . '+4,5,6,7+1'));		
 	
 	protected function renderPattern($template, $form=null, $code=null, $items=null, $test=false) {
 		$db = GetGlobal('db');	
@@ -207,7 +207,7 @@ class crmforms extends crmmodule  {
 							'mydate'=>date('m.d.y'));
 							
 				$tokens = serialize($t);
-				$ret = GetGlobal('controller')->calldpc_method('twigengine.render use '.$tempfile.'++'.$tokens);
+				$ret = _m('twigengine.render use '.$tempfile.'++'.$tokens);
 			}
 			else
 				$ret = 'twig cache error!';

@@ -40,17 +40,17 @@ class crmtasks extends crmmodule  {
 			
             $xSQL2 = "SELECT * from (select id,timein,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue where receiver='$selected') o ";
 			//echo $xSQL2;
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+id|".localize('_id',getlocal())."|5|0|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid3+timein|".localize('_date',getlocal())."|5|1|");//"|link|5|"."javascript:showdetails({id});".'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+receiver|".localize('_user',getlocal())."|10|1||||1|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+timeout|".localize('_date',getlocal())."|link|5|"."javascript:showdetails(\"{receiver}\");".'||');						
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+subject|".localize('_subject',getlocal())."|link|19|"."javascript:showdetails({id});".'||');//."|19|0|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+reply|".localize('_reply',getlocal())."|2|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid3+status|".localize('_status',getlocal())."|2|0|||||right");	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid3+mailstatus|".localize('_failed',getlocal())."|2|1|");			
-		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid3+cid|".localize('_cid',getlocal())."|link|10|"."javascript:showdetails(\"{cid}\");".'||');
+			_m("mygrid.column use grid3+id|".localize('_id',getlocal())."|5|0|");
+			//_m("mygrid.column use grid3+timein|".localize('_date',getlocal())."|5|1|");//"|link|5|"."javascript:showdetails({id});".'||');
+			_m("mygrid.column use grid3+receiver|".localize('_user',getlocal())."|10|1||||1|");			
+			_m("mygrid.column use grid3+timeout|".localize('_date',getlocal())."|link|5|"."javascript:showdetails(\"{receiver}\");".'||');						
+			_m("mygrid.column use grid3+subject|".localize('_subject',getlocal())."|link|19|"."javascript:showdetails({id});".'||');//."|19|0|");
+		    _m("mygrid.column use grid3+reply|".localize('_reply',getlocal())."|2|0|");	
+			_m("mygrid.column use grid3+status|".localize('_status',getlocal())."|2|0|||||right");	
+		    _m("mygrid.column use grid3+mailstatus|".localize('_failed',getlocal())."|2|1|");			
+		    //_m("mygrid.column use grid3+cid|".localize('_cid',getlocal())."|link|10|"."javascript:showdetails(\"{cid}\");".'||');
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid3+mailqueue+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid3+mailqueue+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 
@@ -75,16 +75,16 @@ class crmtasks extends crmmodule  {
 			
 	        $xSQL2 = "select * from (select id,date,tid,attr1,attr2,attr3,ref,REMOTE_ADDR from stats where ref='$selected') as o";  				
 		   	//echo $xSQL2;	   			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|10|0|');				
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0|'); 
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_attr',getlocal()).'|19|0|');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr2|".localize('_attr',getlocal()).'|10|0|');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_attr',getlocal()).'|10|0|');			
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+ref|".localize('_cid',getlocal()).'|10|0|');			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal())."5|0|");//"|link|10|"."javascript:showdetails(\"{REMOTE_ADDR}\");".'||');
+		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
+			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|10|0|');				
+            _m("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0|'); 
+            _m("mygrid.column use grid9+attr1|".localize('_attr',getlocal()).'|19|0|');
+            _m("mygrid.column use grid9+attr2|".localize('_attr',getlocal()).'|10|0|');
+            _m("mygrid.column use grid9+attr3|".localize('_attr',getlocal()).'|10|0|');			
+            _m("mygrid.column use grid9+ref|".localize('_cid',getlocal()).'|10|0|');			
+			_m("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal())."5|0|");//"|link|10|"."javascript:showdetails(\"{REMOTE_ADDR}\");".'||');
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+stats+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid9+stats+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 
@@ -114,16 +114,16 @@ class crmtasks extends crmmodule  {
 			
 	        $xSQL2 = "select * from (select id,date,tid,attr1,attr2,attr3,ref,REMOTE_ADDR from stats where attr3='$selected') as o";  				
 		   	//echo $xSQL2;	   			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|10|0|');				
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0|'); 
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_attr',getlocal()).'|19|0|');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr2|".localize('_attr',getlocal()).'|10|0|');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_attr',getlocal()).'|10|0|');			
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+ref|".localize('_cid',getlocal()).'|10|0|');			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal())."5|0|");//"|link|10|"."javascript:showdetails(\"{REMOTE_ADDR}\");".'||');
+		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
+			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|10|0|');				
+            _m("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0|'); 
+            _m("mygrid.column use grid9+attr1|".localize('_attr',getlocal()).'|19|0|');
+            _m("mygrid.column use grid9+attr2|".localize('_attr',getlocal()).'|10|0|');
+            _m("mygrid.column use grid9+attr3|".localize('_attr',getlocal()).'|10|0|');			
+            _m("mygrid.column use grid9+ref|".localize('_cid',getlocal()).'|10|0|');			
+			_m("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal())."5|0|");//"|link|10|"."javascript:showdetails(\"{REMOTE_ADDR}\");".'||');
 			
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+stats+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid9+stats+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 

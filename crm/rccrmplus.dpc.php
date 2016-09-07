@@ -6,9 +6,6 @@ define("RCCRMPLUS_DPC",true);
 
 $__DPC['RCCRMPLUS_DPC'] = 'rccrmplus';
 
-//$b = GetGlobal('controller')->require_dpc('crm/rccrm.dpc.php');
-//require_once($b);
-
 $__EVENTS['RCCRMPLUS_DPC'][0]='cpcrmplus';
 $__EVENTS['RCCRMPLUS_DPC'][1]='cpcrmgant';
 $__EVENTS['RCCRMPLUS_DPC'][2]='cpcrmshowgant';
@@ -130,14 +127,14 @@ class rccrmplus extends rccrm  {
 		                                ));										
 		}											  					
 																		
-		$content = null;//GetGlobal('controller')->calldpc_method('mgantti.render_sum');
+		$content = null;//_m('mgantti.render_sum');
 		
 		switch ($mode) {
 			
-			case 'crmpgant' :	$content .= GetGlobal('controller')->calldpc_method('crmacal.render use +1');
-			                    $content .= GetGlobal('controller')->calldpc_method('crmgantti.render_sum'); 
+			case 'crmpgant' :	$content .= _m('crmacal.render use +1');
+			                    $content .= _m('crmgantti.render_sum'); 
 			                    break;
-			case 'crmplist' :   $content .= GetGlobal('controller')->calldpc_method('crmacal.render use +1');
+			case 'crmplist' :   $content .= _m('crmacal.render use +1');
 			                    $content .= $this->projects_grid(null,140,5,'r', true); break;
 			
 			case 'customers':	$content .= $this->customers_grid(null,140,5,'r', true); break;
@@ -177,9 +174,9 @@ class rccrmplus extends rccrm  {
 		//$ret = $this->loadsubframe(null,'dashboard', true);
 		
 		/* render inside ganti for new acal when new project
-		  $ret = GetGlobal('controller')->calldpc_method('crmacal.render use +1'); 
+		  $ret = _m('crmacal.render use +1'); 
 		*/
-		$ret.= GetGlobal('controller')->calldpc_method('crmgantti.show_gantti use '.substr($id,0,9));
+		$ret.= _m('crmgantti.show_gantti use '.substr($id,0,9));
 		
 		return ($ret);
 	}	
@@ -187,9 +184,9 @@ class rccrmplus extends rccrm  {
 	/* call by html
 	protected function javascript() {
 		
-		GetGlobal('controller')->calldpc_method('reservations.javascript');
-		GetGlobal('controller')->calldpc_method('crmacal.javascript');
-		GetGlobal('controller')->calldpc_method('crmgantti.javascript');	
+		_m('reservations.javascript');
+		_m('crmacal.javascript');
+		_m('crmgantti.javascript');	
 	}*/	
 	
 	protected function projects_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
@@ -203,33 +200,33 @@ class rccrmplus extends rccrm  {
 		
         $xsSQL = "SELECT * from (select id,pid,owner,active,date,dateupd,title,descr,code,cat,start,end,class,resclass,type,plan,reswforward,hideusers,private,include,exclude,invsend,remsend,closed from projects) o ";		   
 		   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");	
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+pid|".localize('_pid',getlocal())."|2|1|");
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+owner|".localize('_owner',getlocal())."|5|0|");						
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+dateupd|".localize('_dateupd',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal())."5|1|||||1|");//"|link|10|"."javascript:$(\"#acal\").load(\"cpcrmplus.php?t=acalajax&projectid={id}&ptitle={title}&id={code}&date={start}\");".'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|10|"."javascript:$(\"#acal\").load(\"cpcrmplus.php?t=acalajax&projectid={id}&ptitle={title}&id={code}&date={start}\");".'||');//"|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|15|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat|".localize('_cat',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+start|".localize('_start',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+end|".localize('_end',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+rescalss|".localize('_resclass',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+plan|".localize('_plan',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+reswforward|".localize('_reswforward',getlocal())."|2|1|");
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+hideusers|".localize('_hideusers',getlocal())."|boolean|1|");
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+private|".localize('_private',getlocal())."|boolean|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+include|".localize('_include',getlocal())."|10|1|");
-		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+exclude|".localize('_exclude',getlocal())."|5|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+invsend|".localize('_invsend',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+remsend|".localize('_remsend',getlocal())."|2|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+closed|".localize('_closed',getlocal())."|boolean|1|");
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");	
+		//_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
+		_m("mygrid.column use grid1+pid|".localize('_pid',getlocal())."|2|1|");
+		//_m("mygrid.column use grid1+owner|".localize('_owner',getlocal())."|5|0|");						
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
+		_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+dateupd|".localize('_dateupd',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+code|".localize('_code',getlocal())."5|1|||||1|");//"|link|10|"."javascript:$(\"#acal\").load(\"cpcrmplus.php?t=acalajax&projectid={id}&ptitle={title}&id={code}&date={start}\");".'||');		
+		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|10|"."javascript:$(\"#acal\").load(\"cpcrmplus.php?t=acalajax&projectid={id}&ptitle={title}&id={code}&date={start}\");".'||');//"|10|1|");
+		_m("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|15|1|");
+		_m("mygrid.column use grid1+cat|".localize('_cat',getlocal())."|5|0|");
+		_m("mygrid.column use grid1+start|".localize('_start',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+end|".localize('_end',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+class|".localize('_class',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+rescalss|".localize('_resclass',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+plan|".localize('_plan',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+reswforward|".localize('_reswforward',getlocal())."|2|1|");
+		//_m("mygrid.column use grid1+hideusers|".localize('_hideusers',getlocal())."|boolean|1|");
+		//_m("mygrid.column use grid1+private|".localize('_private',getlocal())."|boolean|1|");
+		_m("mygrid.column use grid1+include|".localize('_include',getlocal())."|10|1|");
+		//_m("mygrid.column use grid1+exclude|".localize('_exclude',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+invsend|".localize('_invsend',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+remsend|".localize('_remsend',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+closed|".localize('_closed',getlocal())."|boolean|1|");
 		   
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+projects+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+projects+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	

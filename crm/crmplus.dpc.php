@@ -61,33 +61,33 @@ class crmplus extends crmmodule  {
 			
 			$xsSQL = "SELECT * from (select id,pid,owner,active,date,dateupd,title,descr,code,cat,start,end,class,resclass,type,plan,reswforward,hideusers,private,include,exclude,invsend,remsend,closed from projects where code='$selected') o ";		   
 		    //echo $xsSQL;
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");	
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+pid|".localize('_pid',getlocal())."|2|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+owner|".localize('_owner',getlocal())."|5|0|");						
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+dateupd|".localize('_dateupd',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|10|"."javascript:showdetails(\"{code}\");".'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|15|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code|".localize('_code',getlocal())."|10|1||||1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cat|".localize('_cat',getlocal())."|5|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+start|".localize('_start',getlocal())."|5|1|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+end|".localize('_end',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+class|".localize('_class',getlocal())."|2|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+rescalss|".localize('_resclass',getlocal())."|2|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+plan|".localize('_plan',getlocal())."|5|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+reswforward|".localize('_reswforward',getlocal())."|5|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+hideusers|".localize('_hideusers',getlocal())."|boolean|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+private|".localize('_private',getlocal())."|boolean|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+include|".localize('_include',getlocal())."|5|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+exclude|".localize('_exclude',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+invsend|".localize('_invsend',getlocal())."|2|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+remsend|".localize('_remsend',getlocal())."|2|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+closed|".localize('_closed',getlocal())."|boolean|1|");
+			_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");	
+			//_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
+			_m("mygrid.column use grid1+pid|".localize('_pid',getlocal())."|2|1|");
+			//_m("mygrid.column use grid1+owner|".localize('_owner',getlocal())."|5|0|");						
+			_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
+			//_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|1|");
+			//_m("mygrid.column use grid1+dateupd|".localize('_dateupd',getlocal())."|5|1|");
+			_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|10|"."javascript:showdetails(\"{code}\");".'||');
+			_m("mygrid.column use grid1+descr|".localize('_descr',getlocal())."|15|1|");
+			_m("mygrid.column use grid1+code|".localize('_code',getlocal())."|10|1||||1|");
+			_m("mygrid.column use grid1+cat|".localize('_cat',getlocal())."|5|0|");
+			_m("mygrid.column use grid1+start|".localize('_start',getlocal())."|5|1|");			
+			_m("mygrid.column use grid1+end|".localize('_end',getlocal())."|5|1|");
+			_m("mygrid.column use grid1+class|".localize('_class',getlocal())."|2|1|");
+			_m("mygrid.column use grid1+rescalss|".localize('_resclass',getlocal())."|2|1|");
+			_m("mygrid.column use grid1+type|".localize('_type',getlocal())."|5|1|");
+			_m("mygrid.column use grid1+plan|".localize('_plan',getlocal())."|5|1|");
+			//_m("mygrid.column use grid1+reswforward|".localize('_reswforward',getlocal())."|5|1|");
+			//_m("mygrid.column use grid1+hideusers|".localize('_hideusers',getlocal())."|boolean|1|");
+			//_m("mygrid.column use grid1+private|".localize('_private',getlocal())."|boolean|1|");
+			//_m("mygrid.column use grid1+include|".localize('_include',getlocal())."|5|1|");
+			//_m("mygrid.column use grid1+exclude|".localize('_exclude',getlocal())."|5|1|");
+			_m("mygrid.column use grid1+invsend|".localize('_invsend',getlocal())."|2|1|");
+			_m("mygrid.column use grid1+remsend|".localize('_remsend',getlocal())."|2|1|");
+			_m("mygrid.column use grid1+closed|".localize('_closed',getlocal())."|boolean|1|");
 		   
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+projects+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid1+projects+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 
