@@ -426,7 +426,7 @@ class shkategories {
 	}		
 	
 	function show_tree($cmd=null,$group=null,$treespaces='',$sp=0,$mode=0,$wordlength=19,$notheme=null,$stylesheet=null) {		
-	   $cat = $this->replace_spchars(GetReq('cat'),1);
+	   $cat = GetReq('cat'); //$this->replace_spchars(GetReq('cat'),1);
 	   if (!$wordlength) $wordlength = 19;//for calldpc purposes
 	   $mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
 	   $mystylesheet_selected = $mystylesheet . '_selected';   
@@ -453,7 +453,7 @@ class shkategories {
 			
 			    if (trim($group)!=null) {
 			      $folder = $group . $this->cseparator . $id; 
-			      $gr = $this->replace_spchars($group . $this->cseparator . $id);			   
+			      $gr = $group . $this->cseparator . $this->replace_spchars($id);			   
 			    }	
 			    else {
 			      $folder = $id;
@@ -470,7 +470,7 @@ class shkategories {
 			  $out .= $mycat . '<br>';
 
 			  //if ($cgroup==$line) {
-			  if (mb_strstr($cgroup,$id)) {	  
+			  if (mb_strstr($cgroup,$this->replace_spchars($id))) {	  
 			  	  $cd+=1;
 				  if ($cd+1<$this->depthview) {//depth view param for hidden categories
 				    $mysp=($cd+1) * 3;
@@ -488,7 +488,7 @@ class shkategories {
 	
 	/*using accordion template*/
 	function show_tree2($cmd=null,$group=null,$treespaces='',$sp=0,$mode=0,$wordlength=19,$notheme=null,$stylesheet=null,$template=null) {		
-	   $cat = $this->replace_spchars(GetReq('cat'),1);
+	   $cat = GetReq('cat'); //$this->replace_spchars(GetReq('cat'),1);
 	   if (!$wordlength) $wordlength = 25;//for calldpc purposes
 	   $mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
 	   $mystylesheet_selected = $mystylesheet . '_selected';	   
@@ -517,7 +517,7 @@ class shkategories {
 			
 			    if (trim($group)!=null) {
 			      $folder = $group . $this->cseparator . $id; 
-			      $gr = $this->replace_spchars($group . $this->cseparator . $id);		   
+			      $gr = $this->replace_spchars($group) . $this->cseparator . $this->replace_spchars($id);		   
 			    }	
 			    else {
 			      $folder = $id;
@@ -537,7 +537,7 @@ class shkategories {
 			  //echo '>>>',$cd,'---',$this->depthview;
 			  //echo $cgroup,':',$line,':',$mode,'<br>';
 			  //if ($cgroup==$line) {
-			  if (mb_strstr($cgroup,$id)) {
+			  if (mb_strstr($cgroup,$this->replace_spchars($id))) {
 			  	  $cd+=1;
 				  if ($cd+1<$this->depthview) {//depth view param for hidden categories
 					    $subcat_tokens = $this->show_tree2($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template);
@@ -576,7 +576,7 @@ class shkategories {
 	
 	/*using accordion template version 3*/
 	function show_tree3($cmd=null,$group=null,$treespaces='',$sp=0,$mode=0,$wordlength=19,$notheme=null,$stylesheet=null,$template=null) {		
-	   $cat = $this->replace_spchars(GetReq('cat'),1);
+	   $cat = GetReq('cat'); //$this->replace_spchars(GetReq('cat'),1);
 	   if (!$wordlength) $wordlength = 25;//for calldpc purposes
 	   $mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
 	   $mystylesheet_selected = $mystylesheet . '_selected';	   
@@ -603,7 +603,7 @@ class shkategories {
 			  
 			    if (trim($group)!=null) {
 			      $folder = $group . $this->cseparator . $id; 
-			      $gr = $this->replace_spchars($group . $this->cseparator . $id);		   
+			      $gr = $this->replace_spchars($group) . $this->cseparator . $this->replace_spchars($id);		   
 			    }	
 			    else {
 			      $folder = $id;
@@ -617,7 +617,7 @@ class shkategories {
 			  $tokens[2] = null;
 
 			  //if ($cgroup==$line) {
-			  if (mb_strstr($cgroup,$id)) {	  
+			  if (mb_strstr($cgroup,$this->replace_spchars($id))) {	  
 			  	  $cd+=1;
 				  if ($cd+1<$this->depthview) {//depth view param for hidden categories
 					    $subcat_tokens = $this->show_tree3($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template);
@@ -740,7 +740,7 @@ class shkategories {
 	
     function show_selected_tree($cmd=null,$group=null,$showroot=null,$expand=null,$viewlevel=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$linksonly=null,$titlesonly=null,$idsonly=null) {
 	  $mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
-      $myselcat = $group ? $this->replace_spchars($group,1) : $this->replace_spchars(GetReq('cat'),1);	  
+      $myselcat = $group ? $group : GetReq('cat'); //$this->replace_spchars($group,1) : $this->replace_spchars(GetReq('cat'),1);	  
 	  //echo $myselcat,'<br/>';
       static $cd = -1;
 	  $wordlength = 19;//for calldpc purposes
@@ -761,7 +761,7 @@ class shkategories {
 	  }
 		    
 	  if ($showroot) 
-	    $ddir = $this->read_tree(null,null,1);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+	    $ddir = $this->read_tree(null,null,1);
 	  elseif ($myselcat) 	
 	    $ddir = $this->read_tree($myselcat,null,1);	
 		
@@ -950,7 +950,7 @@ class shkategories {
 */	
 	
 	function show_submenu($cmd=null,$viewtype=3,$group=null,$notheme=null, $rendertable=false) {
-		$group = $group?$group:$this->replace_spchars(GetReq('cat'),1);	
+		$group = $group ? $group : GetReq('cat');//$this->replace_spchars(GetReq('cat'),1);	
 	
 		$result = $this->read_tree($group);	
 		$out = $this->view_category($result,$viewtype,$mode,$group,$cmd); 
