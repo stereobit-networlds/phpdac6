@@ -2959,6 +2959,7 @@ class shkatalogmedia extends shkatalog {
         else
             return false;		
 		
+		$imgxmlPath = _v('rcxmlfeeds.imgpath'); 
 		$tokens = array();
 		$items = array();		
 		foreach ($this->result as $n=>$rec) {	
@@ -2977,7 +2978,7 @@ class shkatalogmedia extends shkatalog {
 			$_cat = _m('cmsrt.replace_spchars use '.$cat);//str_replace(' ','_', $cat);
 	
 			$tokens[] = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$_cat.'&id='.$id,null,null,null,null,1);
-			$tokens[] = 'http://' . $this->url . '/' . $this->imgpath . $id . $this->restype;
+			$tokens[] = 'http://' . $this->url . '/' . $imgxmlPath . $id . $this->restype;
 			$tokens[] = $cat;
 			//if ($n==0) print_r($tokens);
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					

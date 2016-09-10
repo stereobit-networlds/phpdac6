@@ -469,7 +469,8 @@ class shkategories {
 			  
 			  $out .= $mycat . '<br>';
 
-			  if ($cgroup==$line) {
+			  //if ($cgroup==$line) {
+			  if (mb_strstr($cgroup,$id)) {	  
 			  	  $cd+=1;
 				  if ($cd+1<$this->depthview) {//depth view param for hidden categories
 				    $mysp=($cd+1) * 3;
@@ -535,7 +536,8 @@ class shkategories {
 
 			  //echo '>>>',$cd,'---',$this->depthview;
 			  //echo $cgroup,':',$line,':',$mode,'<br>';
-			  if ($cgroup==$line) {
+			  //if ($cgroup==$line) {
+			  if (mb_strstr($cgroup,$id)) {
 			  	  $cd+=1;
 				  if ($cd+1<$this->depthview) {//depth view param for hidden categories
 					    $subcat_tokens = $this->show_tree2($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template);
@@ -614,7 +616,8 @@ class shkategories {
 			  $tokens[1] = summarize(($wordlength-$sp),$line);//accordion cat name
 			  $tokens[2] = null;
 
-			  if ($cgroup==$line) {
+			  //if ($cgroup==$line) {
+			  if (mb_strstr($cgroup,$id)) {	  
 			  	  $cd+=1;
 				  if ($cd+1<$this->depthview) {//depth view param for hidden categories
 					    $subcat_tokens = $this->show_tree3($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template);
@@ -1023,7 +1026,8 @@ class shkategories {
 		 
 	   $sSQL .= " order by ctgid"; /*ctgoutlnorder";//,ctgid asc"; ***************************/
 		 
-         //if ($g) echo $sSQL; 
+       if ($debug) echo $sSQL; 
+	   
 	   $result = $db->Execute($sSQL,2);
 			   					   
 	   if ($result) {      

@@ -282,7 +282,7 @@ class cmsrt extends cms  {
 		
 		    $id = $rec[$codefield];
 			
-			$cat = $rec['cat0'] ? $this->replace_spcahrs($rec['cat0']) : null; 
+			$cat = $rec['cat0'] ? $this->replace_spchars($rec['cat0']) : null; 
 			$cat .= $rec['cat1'] ? $this->cseparator . $this->replace_spchars($rec['cat1']) : null;
 			$cat .= $rec['cat2'] ? $this->cseparator . $this->replace_spchars($rec['cat2']) : null;
 			$cat .= $rec['cat3'] ? $this->cseparator . $this->replace_spchars($rec['cat3']) : null;
