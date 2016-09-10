@@ -450,14 +450,16 @@ class shkategories {
           foreach ($ddir as $id => $line) {	
 		    
 		    if ($line) {
+				
+				$_id = $this->replace_spchars($id);
 			
 			    if (trim($group)!=null) {
 			      $folder = $group . $this->cseparator . $id; 
-			      $gr = $group . $this->cseparator . $this->replace_spchars($id);			   
+			      $gr = $group . $this->cseparator . $_id;			   
 			    }	
 			    else {
 			      $folder = $id;
-			      $gr = $this->replace_spchars($id); 
+			      $gr = $_id; 
 			    }	
 				
 
@@ -470,7 +472,7 @@ class shkategories {
 			  $out .= $mycat . '<br>';
 
 			  //if ($cgroup==$line) {
-			  if (mb_strstr($cgroup,$this->replace_spchars($id))) {	  
+			  if (mb_strstr($cgroup,$_id)) {	  
 			  	  $cd+=1;
 				  if ($cd+1<$this->depthview) {//depth view param for hidden categories
 				    $mysp=($cd+1) * 3;
@@ -514,48 +516,52 @@ class shkategories {
           foreach ($ddir as $id => $line) {	
 		    
 		    if ($line) {
+				
+				$_id = $this->replace_spchars($id);
 			
 			    if (trim($group)!=null) {
 			      $folder = $group . $this->cseparator . $id; 
-			      $gr = $this->replace_spchars($group) . $this->cseparator . $this->replace_spchars($id);		   
+			      $gr = $this->replace_spchars($group) . $this->cseparator . $_id;		   
 			    }	
 			    else {
 			      $folder = $id;
-			      $gr = $this->replace_spchars($id);
+			      $gr = $_id;
 			    }	
 			  	
-			  //$gr = $current_leaf;		 
-			  $cgroup = $ptree[$cd+1]; //echo '>>',$cgroup;//$ptree[$depth];		 		
+				//$gr = $current_leaf;		 
+				$cgroup = $ptree[$cd+1]; //echo '>>',$cgroup;//$ptree[$depth];		 		
 
-			  //echo '>>>',$cd,'---',$this->depthview;
-		      $tokens[0] = str_replace(' ','-',$line);//accordion id
-			  $tokens[1] = summarize(($wordlength-$sp),$line);//accordion cat name
-			  $tokens[2] = null;//seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //url
+				//echo '>>>',$cd,'---',$this->depthview;
+				$tokens[0] = $_id;//str_replace(' ','-',$line);//accordion id
+				$tokens[1] = summarize(($wordlength-$sp),$line);//accordion cat name
+				$tokens[2] = null;//seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //url
 				//$out .= $this->combine_tokens($template,$tokens,true);
 				//unset($tokens);
 
-			  //echo '>>>',$cd,'---',$this->depthview;
-			  //echo $cgroup,':',$line,':',$mode,'<br>';
-			  //if ($cgroup==$line) {
-			  if (mb_strstr($cgroup,$this->replace_spchars($id))) {
-			  	  $cd+=1;
-				  if ($cd+1<$this->depthview) {//depth view param for hidden categories
+				//echo '>>>',$cd,'---',$this->depthview;
+				//echo $cgroup,':',$line,':',$mode,'<br>';
+				//if ($cgroup==$line) {
+				if (mb_strstr($cgroup,$_id)) {
+					$cd+=1;
+					if ($cd+1<$this->depthview) {//depth view param for hidden categories
 					    $subcat_tokens = $this->show_tree2($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template);
 						//echo $subcat_tokens,'<br/>';
 						$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
-						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
+						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
+						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
 						$out .= $this->combine_tokens($template,$tokens,true);
 						//print_r($tokens);	
 						unset($tokens);
 						unset($subcat_tokens);
-				  }
-			  }//=group
-              else {
+					}
+				}//=group
+				else {
 				        $subcat_tokens = $mode ? $this->show_tree2($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template) : null;
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
+						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
 						
 						if ($mode)
 							$out .= $this->combine_tokens($template,$tokens,true);						
@@ -565,7 +571,7 @@ class shkategories {
 						//print_r($tokens);	
 						unset($tokens);
 						unset($subcat_tokens);	
-              }			  
+				}			  
 			}//if line
 			$i+=1;
 		  }//foreach
@@ -600,43 +606,47 @@ class shkategories {
           foreach ($ddir as $id => $line) {	
 		    
 		    if ($line) {
+				
+				$_id = $this->replace_spchars($id);
 			  
 			    if (trim($group)!=null) {
 			      $folder = $group . $this->cseparator . $id; 
-			      $gr = $this->replace_spchars($group) . $this->cseparator . $this->replace_spchars($id);		   
+			      $gr = $this->replace_spchars($group) . $this->cseparator . $_id;		   
 			    }	
 			    else {
 			      $folder = $id;
-			      $gr = $this->replace_spchars($id);
+			      $gr = $_id;
 			    }	
 						  		 
-			  $cgroup = $ptree[$cd+1]; //echo '>>',$cgroup;//$ptree[$depth];		 		
+				$cgroup = $ptree[$cd+1]; //echo '>>',$cgroup;//$ptree[$depth];		 		
 
-			  $tokens[0] = str_replace(' ','-',$line);//accordion id
-			  $tokens[1] = summarize(($wordlength-$sp),$line);//accordion cat name
-			  $tokens[2] = null;
+				$tokens[0] = $_id;//str_replace(' ','-',$line);//accordion id
+				$tokens[1] = summarize(($wordlength-$sp),$line);//accordion cat name
+				$tokens[2] = null;
 
-			  //if ($cgroup==$line) {
-			  if (mb_strstr($cgroup,$this->replace_spchars($id))) {	  
-			  	  $cd+=1;
-				  if ($cd+1<$this->depthview) {//depth view param for hidden categories
+				//if ($cgroup==$line) {
+				if (mb_strstr($cgroup,$_id)) {	  
+					$cd+=1;
+					if ($cd+1<$this->depthview) {//depth view param for hidden categories
 					    $subcat_tokens = $this->show_tree3($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template);
 						//echo $subcat_tokens,'<br/>';
 						$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
-						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
+						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
+						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
 						$out .= $this->combine_tokens($template,$tokens,true);
 						//print_r($tokens);	
 						unset($tokens);
 						unset($subcat_tokens);
 
-				  }
-			  }//=group
-              else {
+					}
+				}//=group
+				else {
 				        $subcat_tokens = $mode ? $this->show_tree3($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template) : null;
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
+						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
 						
 						if ($mode)
 							$out .= $this->combine_tokens($template,$tokens,true);						
@@ -646,7 +656,7 @@ class shkategories {
 						//print_r($tokens);	
 						unset($tokens);
 						unset($subcat_tokens);	
-              }			  
+				}			  
 			}//if line
 			$i+=1;
 		  }//foreach
