@@ -658,7 +658,7 @@ class shkategories {
 	
 	
 	//  SHOW SELECTED TREE FUNCTIONS
-	function read_selected_tree($group,$cmd=null,$stylesheet=null,$outpoint=null,$br=1,$debug=null) {
+	/*function read_selected_tree($group,$cmd=null,$stylesheet=null,$outpoint=null,$br=1,$debug=null) {
 	    $t = $cmd ? $cmd : 'klist';
 	    $ddir = $this->read_tree($group,$debug,1);		
 		
@@ -691,7 +691,7 @@ class shkategories {
 		}
 		
 		return ($mycat);   			  
-	}
+	}*/
 	
 	function show_selected_branch($id,$line,$t=null,$myselcat=null,$expand=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$linksonly=null,$titlesonly=null,$idsonly=null) {
 	       $mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
@@ -726,12 +726,11 @@ class shkategories {
 			  $mycat .= $line;		
 			  $mycat .= "</a>";	
 			  
-			  $winbody = $this->read_selected_tree($folder,$t,$mystylesheet,$outpoint);
-
-			    			
+			  //$winbody = $this->read_selected_tree($folder,$t,$mystylesheet,$outpoint);
+		
 			  $tokens[] = ($linksonly) ? seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite) :
 				                             ($titlesonly ? $line : ($idsonly ? $id : $mycat));
-			  $tokens[] = $winbody;
+			  $tokens[] = $id;//$winbody;
 			  $out .= $this->combine_tokens($mytemplate, $tokens, true);					
 
 			}//if  	 
@@ -782,7 +781,7 @@ class shkategories {
     }	
 	//.....  SHOW SELECTED TREE FUNCTIONS	
 	
-	
+/*	
 	//  SHOW SELECTED TREE FUNCTIONS 2
 	function read_selected_tree2($group,$cmd=null,$showroot=null,$expand=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$noencodeurl=null,$debug=null) {
 	    $t = $cmd ? $cmd : 'klist';
@@ -948,7 +947,7 @@ class shkategories {
 	  return ($out);
     }	
 	//.....  SHOW SELECTED TREE FUNCTIONS	2
-	
+*/	
 	
 	function show_submenu($cmd=null,$viewtype=3,$group=null,$notheme=null, $rendertable=false) {
 		$group = $group?$group:$this->replace_spchars(GetReq('cat'),1);	
