@@ -142,8 +142,10 @@ class shtags {
 		  $this->item = $this->result->fields[$itmname];
 		  $this->descr = $this->result->fields[$itmdescr];
 		  $this->price = $this->result->fields[$ppol];
-		  $this->keywords = str_replace(' ',',',$this->item) . ',' . str_replace(' ',',',$this->descr) . ',' . $this->price . 
-		                    ',' . $thetree;
+		  $kwords = str_replace(' ',',',$this->item) . ',' ;
+		  //$kwords.= str_replace(' ',',',$this->descr) . ',' . $this->price . ',';
+		  $kwords.= $thetree;
+		  $this->keywords = str_replace(',,',',', $kwords);
 		}
 		elseif ($cat) {//echo 'z'; print_r($mytree);
 		  $cc = explode($this->cseparator, $cat);
@@ -151,7 +153,7 @@ class shtags {
 		  $this->item = (!empty($mytree))? array_pop($mytree) : $this->replace_spchars($xcat,1);
 		  $this->descr = $this->item .',' . $thetree;
 		  $this->price = null;
-		  $this->keywords = $this->item .',' . $thetree;		
+		  $this->keywords = $this->item . ',' . $thetree;		
 		}
         else { //front page
 		  $this->item = null;

@@ -126,8 +126,11 @@ class shkatalogmedia extends shkatalog {
 
       $this->isListView = $_COOKIE['viewmode']=='list' ? 1 : 0;
       
-      $this->siteTitle = remote_paramload('SHELL','urltitle',$this->path);	  
+      $this->siteTitle = remote_paramload('SHELL','urltitle',$this->path);	
+	  $this->siteTwitter = remote_paramload('INDEX','twitter', $this->path);	  
+	  $this->siteFb = remote_paramload('INDEX','facebook', $this->path);
       $this->ogTags = null;	  
+	  $this->twitTags = null;
     }
 	
 	function event($event=null) {
@@ -1495,7 +1498,7 @@ class shkatalogmedia extends shkatalog {
 			                                            1=>$tokens[0],
 														2=>$tokens[1],														
 														3=>$this->httpurl .'/'. $itemlink,
-														4=>$this->httpurl .'/'. $tokens[19],
+														4=>$this->httpurl . $tokens[19],
 												       )
 												  );
 			 
@@ -3416,14 +3419,21 @@ class shkatalogmedia extends shkatalog {
 	protected function openGraphTags($tokens=null) {
 		if (!$tokens) return null;
 		
+		//$self = GetGlobal('controller')->calldpc_method('fronthtmlpage.php_self');
+		
 		$ret = <<<EOF
-<meta property="og:site_name" content="$tokens[0]" />		
-<meta property="og:title" content="$tokens[1]" />
-<meta property="og:description" content="$tokens[2]" />
-<meta property="og:type" content="image/jpeg" />
-<meta property="og:url" content="$tokens[3]" />
-<meta property="og:image" content="$tokens[4]" />
+				
+		<meta property="og:site_name" content="$tokens[0]" />		
+		<meta property="og:title" content="$tokens[1]" />
+		<meta property="og:description" content="$tokens[2]" />
+		<meta property="og:type" content="image/jpeg" />
+		<meta property="og:url" content="$tokens[3]" />
+		<meta property="og:image" content="$tokens[4]" />
 EOF;
+
+		$ret .= $this->twitterTags($tokens);
+		$ret .= $this->ldTags($tokens);
+		
         return $ret;
 	}
 	
@@ -3431,6 +3441,51 @@ EOF;
 		
 		return ($this->ogTags);
 	}
+	
+	//The card type, which will be one of summary, summary_large_image, photo, gallery, product, app, or player			
+	protected function twitterTags($tokens=null) {
+		if (!$tokens) return null;
+		
+		$twitter = explode('/', $this->siteTwitter); //get last token
+		$taddr = '@' . array_pop($twitter);
+		
+		$ret = <<<EOF
+		
+		<meta name="twitter:widgets:csp" content="on">
+		<meta name="twitter:card" content="product">
+		<meta name="twitter:site" content="$taddr">
+		<meta name="twitter:domain" content="$tokens[0]">
+		<meta name="twitter:title" content="$tokens[1]">
+		<meta name="twitter:description" content="$tokens[2]">
+		<meta name="twitter:image" content="$tokens[4]" />	
+		
+EOF;
+        return $ret;
+	}
+	
+	protected function ldTags($tokens=null) {
+		if (!$tokens) return null;
+		
+		$kw = GetGlobal('controller')->calldpc_method('shtags.get_page_info use keywords');
+		$keywords = str_replace(',""','' , '"' . str_replace(',', '","', $kw) . '"');
+		
+		$ret = <<<EOF
+		
+		<script type="application/ld+json">
+		{
+		"@context": "http://schema.org",
+		"@type": "Product",
+		"name": "$tokens[1]",
+		"description: "$tokens[2]",
+		"image:" "$tokens[4]", 
+		"url": "$tokens[3]",
+		"keywords": [$keywords]
+		}
+		</script>	
+EOF;
+        return $ret;
+	}
+	
 };			  
 }
 ?>

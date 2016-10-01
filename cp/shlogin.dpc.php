@@ -254,14 +254,11 @@ class shlogin {
 	                          case 'TEXT' : $this->do_logout();
 							                break;
 						   }
-						   //reset database connection
-						   //$db = null;
                            break;
 			
              case "chpassajax" :			
-			 case "chpass" : //$this->js_password_meter();
-			                 $this->do_reenter_pasword(); 
-			                 break;
+			 case "chpass"     : $this->do_reenter_pasword(); 
+			                     break;
 							 					 
           }
        //}
@@ -280,15 +277,12 @@ class shlogin {
 			                      break;
 								  
 		    case 'rempwd'        :
-		    case 'shremember'    : //$out = $this->title();
-			                     if ($this->formerror!=localize("ok",getlocal())) {
-								   $out .= $this->html_remform();	 
-								 }	 
-								 else {//login
-								   //$tmpl = 'login.htm'; 
-								   $out = $this->html_form();
-								 }  
-								 break;
+		    case 'shremember'    :if ($this->formerror!=localize("ok",getlocal())) 
+									$out .= $this->html_remform();	  
+								  else //login
+									$out = $this->html_form();
+								  break;
+								  
 		    case 'shcaptcha'   : $out .= $this->show_the_captcha(); break;
             case "shlogin"     : $out = $this->form(); break;
 
@@ -296,145 +290,120 @@ class shlogin {
 			                     $goto = $gurl ? '<a href="'.$gurl.'">'.localize('_WELCOME2GO',getlocal()).'</a>' : null;
 			                     die(localize('_WELLCOME',getlocal()) . ' ' . $goto); 
 								 break;
-            case "dologin"     :
-               //goto after login with ses param
-               if (($this->dpc_after_goto) && ($this->login_successfull)) {
-                 //echo $this->dpc_after_goto,'>';
-			     $mydpc = explode('.',$this->dpc_after_goto);//check security
-			     $mydpcname = strtoupper($mydpc[0]).'_DPC';				 
-				 if (seclevel($mydpcname,$this->userLevelID)) 
-                   $out .= GetGlobal('controller')->calldpc_method($this->dpc_after_goto);
-				 else
-				   $out .= $this->form();//default action  
-                 $this->dpc_after_goto = null;
-                 SetSessionParam('afterlogingoto','');
-               }
-               else 
-	             $out = $this->form(); 
+								 
+            case "dologin"     : //goto after login with ses param
+								 if (($this->dpc_after_goto) && ($this->login_successfull)) {
+									//echo $this->dpc_after_goto,'>';
+									$mydpc = explode('.',$this->dpc_after_goto);//check security
+									$mydpcname = strtoupper($mydpc[0]).'_DPC';				 
+									if (seclevel($mydpcname,$this->userLevelID)) 
+										$out .= GetGlobal('controller')->calldpc_method($this->dpc_after_goto);
+									else
+										$out .= $this->form();//default action  
+									$this->dpc_after_goto = null;
+									SetSessionParam('afterlogingoto','');
+								 }
+								 else 
+									$out = $this->form(); 
 
-		       break;
+								break;
 
-            case "dologout": $out = $this->form(); break;
+            case "dologout"    : $out = $this->form(); 
+			                     break;
 			
-		    case "chpass" : $out = $this->html_reset_pass();
-			                break;
+		    case "chpass"      : $out = $this->html_reset_pass();
+			                     break;
 							
-			case "chpassajax" : die($this->formerror); break;				
+			case "chpassajax"  : die($this->formerror); 
+			                     break;				
 		}
 
 		return ($out);
-	}
+	}	
 	
-    function js_password_meter() {
+    protected function refresh_page_js($goto) {
    
-      if (iniload('JAVASCRIPT')) {
-		 
-		   $js = new jscript;
-		   $js->load_css('javascripts/passwordmeter/ext-all.css');
-		   $js->load_js('passwordmeter/ext-base.js');
-		   $js->load_js('passwordmeter/ext-all.js');
-		   $js->load_js('passwordmeter/Ext.ux.PasswordMeter.js');
-		   $js->load_js('passwordmeter/passwordmeter.js');
-		   $js->load_css('javascripts/passwordmeter/passwordmeter.css');
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }   
-    } 		
-	
-    function refresh_page_js($goto) {
-   
-      if (iniload('JAVASCRIPT')) {
+		if (iniload('JAVASCRIPT')) {
 
 	       $code = $this->javascript($goto);
 	   
 		   $js = new jscript;
            $js->load_js($code,"",1);			   
 		   unset ($js);
-	  }   
+		}   
     }   
    
     //after login/logout goto...
-    function javascript($goto) {
-   
-     $ret = "
-function neu()
-{	
-	top.frames.location.href = \"$goto\"
-}
-window.setTimeout(\"neu()\",10);
-";
-	 
-	 return ($ret);
+    protected function javascript($goto) {
+		$ret = "
+function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\",10);
+"; 
+		return ($ret);
     }   	
 
-	function title() {
-	   $UserID = GetGlobal('UserID');
+	protected function title() {
+		$UserID = GetGlobal('UserID');
 
-       $uid = decode($UserID);
+		$uid = decode($UserID);
 
-       //navigation status
-       if ($uid == "")
-  	     $out = setNavigator(localize('SHLOGIN_DPC',getlocal()));
-	   else
-         $out = setNavigator(localize('_SHLOGOUT',getlocal()));
+		//navigation status
+		if ($uid == "")
+			$out = setNavigator(localize('SHLOGIN_DPC',getlocal()));
+		else
+			$out = setNavigator(localize('_SHLOGOUT',getlocal()));
 
-	   return ($out);
+		return ($out);
 	}
 
-	function html_form($tokensout=null) {
-	     $sFormErr = GetGlobal('sFormErr');
-	     $UserID = GetGlobal('UserID');
-         $logonurl = seturl("t=dologin",0,1);	
+	public function html_form($tokensout=null) {
+	    $sFormErr = GetGlobal('sFormErr');
+	    $UserID = GetGlobal('UserID');
+        $logonurl = seturl("t=dologin",0,1);	
 		 
-		 if ($UserID) {
+		if ($UserID) {
 		 
-           //$t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.','logout.htm') ; 
-		   $t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.','logout.htm') ;
-		   //echo $t;
-	       if (is_readable($t)) {
-		     $mytemplate = file_get_contents($t);
-		     $tokensout = 1;
-           }	
+		    $t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.','logout.htm') ;
+		 
+	        if (is_readable($t)) {
+				$mytemplate = file_get_contents($t);
+				$tokensout = 1;
+            }	
 		   
-           if ($tokensout) {
-		     $tokens[] = seturl("t=dologout"); //link
-			 $tokens[] = localize('_SHLOGOUT',getlocal());
-			 $tokens[] = $this->myf_button(localize('_SHLOGOUT',getlocal()), seturl("t=dologout"));
+            if ($tokensout) {
+				$tokens[] = seturl("t=dologout"); //link
+				$tokens[] = localize('_SHLOGOUT',getlocal());
+				$tokens[] = $this->myf_button(localize('_SHLOGOUT',getlocal()), seturl("t=dologout"));
 			 
-			 $ret = $this->combine_tokens($mytemplate,$tokens);
-
-		   }
-		   else	{	   		 
-		     //$ret = '<h2><p align=center>' . seturl("t=dologout",localize('_SHLOGOUT',getlocal())) . '</p></h2>';
-			 $ret = $this->myf_button(localize('_SHLOGOUT',getlocal()), seturl("t=dologout"));
-		   }	 
+				$ret = $this->combine_tokens($mytemplate,$tokens);
+		    }
+		    else	
+				$ret = $this->myf_button(localize('_SHLOGOUT',getlocal()), seturl("t=dologout")); 
 			 	
-		   return ($ret);
-		 }
+		    return ($ret);
+		}
 		 
-		 //NOT FOR PASSWORDS FORM
+		//NOT FOR PASSWORDS FORM
 	     /*if (defined('RECAPTCHA_DPC')) {
 	         $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
 			 //echo $recaptcha;
-	     }	*/		 
+	    }	*/		 
 		 
-         //$t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.','login.htm') ;
-		 $t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.','login.htm') ;
-		 //echo $t;
-	     if (is_readable($t)) {
-		   $mytemplate = file_get_contents($t);
-		   $tokensout = 1;
-         }		 	 
+		$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.','login.htm') ;
 
-	     //SSL tm
-	     if ($this->ssl) {
-		                      //$loginform .= $this->sslscript;
-	                          $sslwin = new window("",$this->sslscript);
-	                          $loginform .= $sslwin->render("center::100%::0::group_article_selected::right::0::0::");
-	                          unset ($sslwin);
-	     }
+	    if (is_readable($t)) {
+			$mytemplate = file_get_contents($t);
+			$tokensout = 1;
+        }		 	 
 
-         if ($tokensout) {
+	    //SSL tm
+	    if ($this->ssl) {
+		    //$loginform .= $this->sslscript;
+	        $sslwin = new window("",$this->sslscript);
+	        $loginform .= $sslwin->render("center::100%::0::group_article_selected::right::0::0::");
+	        unset ($sslwin);
+	    }
+
+        if ($tokensout) {
 		    if (($sFormErr=='ok')||($sFormErr=='Ok')||($sFormErr=='OK')||($sFormErr=='OKREMINDER')) {//fix ok global msg
 			  if (stristr($sFormErr,'ok'))
 			    $tokens[] = localize('_OK', getlocal());
@@ -443,11 +412,9 @@ window.setTimeout(\"neu()\",10);
 			}  
 			else
 		      $tokens[] = $sFormErr;
-		 }
-		 else {	 
-		 
-		    $loginform .= $toprint = $this->title();
-						   		 
+		}
+		else {	 
+		    $loginform .= $toprint = $this->title();		   		 
 		    if (($sFormErr=='ok')||($sFormErr=='Ok')||($sFormErr=='OK')||($sFormErr=='OKREMINDER')) {//fix ok global msg
 			  if (stristr($sFormErr,'ok'))
 			    $loginform .= localize('_OK', getlocal());
@@ -456,176 +423,169 @@ window.setTimeout(\"neu()\",10);
 			}
 			else  //error message
 	          $loginform .= setError($sFormErr);
-		 }				   
-						   //$loginform .= new captcha;
+		}				   
+		//$loginform .= new captcha;
         
-         if ($tokensout) {
-		 
-		   $tokens[] = "<form action=\"$logonurl\" method=\"POST\">";
-		   $tokens[] = "<input type=\"text\" name=\"Username\" maxlenght=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">" ;
-		 }
-		 else { 
-                           //login form
-                           $loginform .= "<form action=\"$logonurl\" method=\"POST\">";
+        if ($tokensout) {
+		    $tokens[] = "<form action=\"$logonurl\" method=\"POST\">";
+		    $tokens[] = "<input type=\"text\" name=\"Username\" maxlenght=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">" ;
+		}
+		else { 
+            //login form
+            $loginform .= "<form action=\"$logonurl\" method=\"POST\">";
 						   		 
-                           $lf1[] = localize('_USERNAME',getlocal());
-		                   $lfat1[] = "right;20%;";
-		                   $lf1[] = "&nbsp;<input type=\"text\" name=\"Username\" maxlenght=\"20\">";
-		                   $lfat1[] = "left;80%";
-		                   $w1 = new window('',$lf1,$lfat1);  $loginform .= $w1->render("center::100%::0::group_article_selected::left::0::0::");   unset ($w1);
-         } 		 
+            $lf1[] = localize('_USERNAME',getlocal());
+		    $lfat1[] = "right;20%;";
+		    $lf1[] = "&nbsp;<input type=\"text\" name=\"Username\" maxlenght=\"20\">";
+		    $lfat1[] = "left;80%";
+		    $w1 = new window('',$lf1,$lfat1);  $loginform .= $w1->render("center::100%::0::group_article_selected::left::0::0::");   unset ($w1);
+        } 		 
 		 
-         if ($tokensout) { 
+        if ($tokensout) { 
 		 
-		   $tokens[] = "<input type=\"password\" name=\"Password\" maxlenght=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">"; 	   
-		   $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize('SHLOGIN_DPC',getlocal()) . "\">";
+		    $tokens[] = "<input type=\"password\" name=\"Password\" maxlenght=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">"; 	   
+		    $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize('SHLOGIN_DPC',getlocal()) . "\">";
 		   
-		   $tokens[] =	//$recaptcha . NOT FOR PASSWORDS FORM 
+		    $tokens[] =	//$recaptcha . NOT FOR PASSWORDS FORM 
                        "<input type=\"hidden\" name=\"FormName\" value=\"Login\">" .					   
 		               "<input type=\"hidden\" name=\"FormAction\" value=\"dologin\">" .
 		               "</form>";	
-		 }
-		 else { 		 
-                           $lf2[] = localize('_PASSWORD',getlocal());
-		                   $lfat2[] = "right;20%";
-		                   $lf2[] = "&nbsp;<input type=\"password\" name=\"Password\" maxlenght=\"20\">";
-		                   $lfat2[] = "left;80%";
-		                   $w2 = new window('',$lf2,$lfat2); $loginform .= $w2->render("center::100%::0::group_article_selected::left::0::0::"); unset ($w2);
+		}
+		else { 		 
+            $lf2[] = localize('_PASSWORD',getlocal());
+		    $lfat2[] = "right;20%";
+		    $lf2[] = "&nbsp;<input type=\"password\" name=\"Password\" maxlenght=\"20\">";
+		    $lfat2[] = "left;80%";
+		    $w2 = new window('',$lf2,$lfat2); $loginform .= $w2->render("center::100%::0::group_article_selected::left::0::0::"); unset ($w2);
 						   
-						   $loginform .= $recaptcha;
-                           $loginform .= "<input type=\"hidden\" name=\"FormName\" value=\"Login\">";         
-                           $loginform .= "<input type=\"hidden\" name=\"FormAction\" value=\"dologin\">";
-                           $loginform .= "<input type=\"submit\" value=\"" . localize('SHLOGIN_DPC',getlocal()) . "\">";
-                           $loginform .= "</form>";
-		 } 				   
+		    $loginform .= $recaptcha;
+            $loginform .= "<input type=\"hidden\" name=\"FormName\" value=\"Login\">";         
+            $loginform .= "<input type=\"hidden\" name=\"FormAction\" value=\"dologin\">";
+            $loginform .= "<input type=\"submit\" value=\"" . localize('SHLOGIN_DPC',getlocal()) . "\">";
+            $loginform .= "</form>";
+		} 				   
 
-         if ($tokensout) {
+        if ($tokensout) {
 		 
-		   //i  forget my password....extension
-		   $tokens[] = $this->iforgotmypassword();
+		    //i  forget my password....extension
+		    $tokens[] = $this->iforgotmypassword();
 		   
-		   //return ($tokens);
-		   $ret = $this->combine_tokens($mytemplate,$tokens);
-		   return ($ret);
-		 }
-		 else {  		 
-						   //i  forget my password....extension
-						   $loginform .= $this->iforgotmypassword();
+		    //return ($tokens);
+		    $ret = $this->combine_tokens($mytemplate,$tokens);
+		    return ($ret);
+		}
+		else {  		 
+			//i  forget my password....extension
+			$loginform .= $this->iforgotmypassword();
 
-                           $data1[] = $loginform;
-                           $attr1[] = "center";
+            $data1[] = $loginform;
+            $attr1[] = "center";
 
-	                       $swin = new window(localize('_SENLOGIN',getlocal()),$data1,$attr1);
-	                       $toprint .= $swin->render("center::40%::0::group_win_body::left::0::0::");
-	                       unset ($swin);
+	        $swin = new window(localize('_SENLOGIN',getlocal()),$data1,$attr1);
+	        $toprint .= $swin->render("center::40%::0::group_win_body::left::0::0::");
+	        unset ($swin);
 
-						   return ($toprint);
-		 }				   
+			return ($toprint);
+		}				   
 	}
 
-    function form($agent='HTML') {
-	   $sFormErr = GetGlobal('sFormErr');
-       $UserID = GetGlobal('UserID');
-       $uid = decode($UserID);
+    public function form($agent='HTML') {
+	    $sFormErr = GetGlobal('sFormErr');
+        $UserID = GetGlobal('UserID');
+        $uid = decode($UserID);
 
-       $sFileName = seturl("t=dologin");
-       $logonurl = seturl("",0,1); //seturl("t=&a=&g=",0,1);
-       $logoffurl = seturl();
+        $sFileName = seturl("t=dologin");
+        $logonurl = seturl("",0,1); //seturl("t=&a=&g=",0,1);
+        $logoffurl = seturl();
 	   
-	   //in case of preint form after login
-       if ($this->login_successfull) {
+	    //in case of preint form after login
+        if ($this->login_successfull) {
 	   
-         //$t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.','welcome.htm') ; 
-		 $t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.','welcome.htm') ;
-	     //echo $t;
-	     if (is_readable($t)) {
-		   $mytemplate = file_get_contents($t);
-           return ($mytemplate);
-         }
-		 else		   
-	       return (localize('_WELLCOME',getlocal()) .' '. decode(GetSessionParam('UserName')));
-	   }	 
+			$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.','welcome.htm') ;
 
-	   switch ($agent) {
+			if (is_readable($t)) {
+				$mytemplate = file_get_contents($t);
+				return ($mytemplate);
+			}
+			else		   
+				return (localize('_WELLCOME',getlocal()) .' '. decode(GetSessionParam('UserName')));
+		}	 
+
+		switch ($agent) {
 	         case 'HTML' : //template form
 			               //$toprint = $this->title();
 			 default     :			   
-			               $toprint .= $this->html_form();
+			               $toprint = $this->html_form();
 		                   break;
+		}
 
-       }
-
-       return ($toprint);
+		return ($toprint);
     }
 
-    function quickform($attr=null,$after_goto=null,$dpc_after_goto=null,$param_name=null,$param=null) {
-       $winattr = $attr?$attr:"center::100%::0::group_win_body::left::0::0::";
-	   $UserID = GetGlobal('UserID');
-       $uid = decode($UserID);
+    public function quickform($attr=null,$after_goto=null,$dpc_after_goto=null,$param_name=null,$param=null) {
+		$winattr = $attr?$attr:"center::100%::0::group_win_body::left::0::0::";
+		$UserID = GetGlobal('UserID');
+		$uid = decode($UserID);
 	   
-       //$t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.','qlogin.htm') ; 
-	   $t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.','qlogin.htm') ;
-	   //echo $t;
-	   if (is_readable($t)) {
-		 $mytemplate = file_get_contents($t);
-		 $tokensout = 1;
-       }	   
+		$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.','qlogin.htm') ;
 
-       $this->after_goto = $after_goto?$after_goto:null;
+		if (is_readable($t)) {
+			$mytemplate = file_get_contents($t);
+			$tokensout = 1;
+		}	   
 
-       //$this->dpc_after_goto = $dpc_after_goto?str_replace('>','.',$dpc_after_goto):null;
-       if ($dpc_after_goto) {
-       	  SetSessionParam('afterlogingoto',str_replace('>','.',$dpc_after_goto));
-       }
-        //echo $dpc_after_goto;
+		$this->after_goto = $after_goto?$after_goto:null;
+
+		if ($dpc_after_goto) 
+			SetSessionParam('afterlogingoto',str_replace('>','.',$dpc_after_goto));
+
 
         if ($this->after_goto) {
-               	  $logonurl = seturl("t=".$this->after_goto."&$param_name=".$param,0,1);
-               	  $this->after_goto = null;
+            $logonurl = seturl("t=".$this->after_goto."&$param_name=".$param,0,1);
+            $this->after_goto = null;
         }
         else
-                  $logonurl = seturl("",0,1); //seturl("t=$a=&g=",0,1);
+            $logonurl = seturl("",0,1); //seturl("t=$a=&g=",0,1);
 				  
-       $logoffurl = seturl('t=dologout',localize('_SHLOGOUT',getlocal()));
+		$logoffurl = seturl('t=dologout',localize('_SHLOGOUT',getlocal()));
 
-	   if (isset($UserID)) {
-	     if ($tokensout) {
-		   return null;
-		 }
-		 else {
-	       $myw = new window($logoffurl,null);
-	       $ret = $myw->render("center::100%::0::group_win_body::left::0::0::");
-	       unset ($myw);
-		   return($ret);
-	       //return($logoffurl);
-		 }
-	   }
+		if (isset($UserID)) {
+			if ($tokensout) {
+				return null;
+			}
+			else {
+				$myw = new window($logoffurl,null);
+				$ret = $myw->render("center::100%::0::group_win_body::left::0::0::");
+				unset ($myw);
+				return($ret);
+			}
+		}
 
-       if ($tokensout) {
+		if ($tokensout) {
 	   
-	     $tokens[] = "<form action=\"$logonurl\" method=\"POST\">";
-		 $tokens[] = "<input type=\"text\" name=\"Username\" maxlenght=\"50\" size=\"20\" class=\"myf_input_front\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";		 
-		 $tokens[] = "<input type=\"password\" name=\"Password\" maxlenght=\"50\" size=\"20\" class=\"myf_input_front\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";
-		 $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize('SHLOGIN_DPC',getlocal()) . "\">";
-         $tokens[] = "<input type=\"hidden\" name=\"FormAction\" value=\"dologin\">" .
+			$tokens[] = "<form action=\"$logonurl\" method=\"POST\">";
+			$tokens[] = "<input type=\"text\" name=\"Username\" maxlenght=\"50\" size=\"20\" class=\"myf_input_front\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";		 
+			$tokens[] = "<input type=\"password\" name=\"Password\" maxlenght=\"50\" size=\"20\" class=\"myf_input_front\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";
+			$tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize('SHLOGIN_DPC',getlocal()) . "\">";
+			$tokens[] = "<input type=\"hidden\" name=\"FormAction\" value=\"dologin\">" .
 					 "<input type=\"hidden\" name=\"FormName\" value=\"Login\">" .
 		             "</form>";
 					 
-		 $ret = $this->combine_tokens($mytemplate,$tokens);
-		 return ($ret);					 
+			$ret = $this->combine_tokens($mytemplate,$tokens);
+			return ($ret);					 
 		             
-	   }
-	   else {
-         $loginform = "<table>".
+		}
+		else {
+			$loginform = "<table>".
                     "<form action=\"$logonurl\" method=\"POST\">" .
                     "<tr><td>" .
                     localize('_USERNAME',getlocal()) . " :<br>" .
                     localize('_PASSWORD',getlocal()) . " :";
 
-         if ( (defined('SHUSERS_DPC')) && (seclevel('SHUSERS_DPC',decode(GetSessionParam('UserSecID')))) ) {
-           $loginform .= '<br>'.seturl('t=signup',localize('_SIGNUP',getlocal()));//GetGlobal('controller')->calldpc_method('shcustomers.register');
-	     }
-         $loginform .= "</td><td>" .
+			if ( (defined('SHUSERS_DPC')) && (seclevel('SHUSERS_DPC',decode(GetSessionParam('UserSecID')))) ) {
+				$loginform .= '<br>'.seturl('t=signup',localize('_SIGNUP',getlocal()));//GetGlobal('controller')->calldpc_method('shcustomers.register');
+			}
+			$loginform .= "</td><td>" .
                        "<input type=\"hidden\" name=\"FormName\" value=\"Login\"><br>" .
                        "<input type=\"text\" name=\"Username\" maxlenght=\"50\" size=\"20\" ><br>".
                        "<input type=\"password\" name=\"Password\" maxlenght=\"50\" size=\"20\" ><br>" .
@@ -633,48 +593,48 @@ window.setTimeout(\"neu()\",10);
                        "<input type=\"submit\" value=\"" . localize('SHLOGIN_DPC',getlocal()) . "\">" .
                        "</td></tr></form></table>";
 					   
-         $toprint .= $loginform;
+			$toprint .= $loginform;
 
-	     $myw = new window($this->title,$toprint);
-	     $out = $myw->render("$winattr");
-	     unset ($myw);
+			$myw = new window($this->title,$toprint);
+			$out = $myw->render("$winattr");
+			unset ($myw);
 
-         return ($out);
-	   }	 
+			return ($out);
+		}	 
     }
 	
-	function isoldpass($username) {
-	   $db = GetGlobal('db');
+	protected function isoldpass($username) {
+	    $db = GetGlobal('db');
 	   
-	   $sSQL = "select password from users where username='".$username."'";// limit 1 desc";//multiple users last
-	   $result = $db->Execute($sSQL,2);
-	   $p = $result->fields['password'];
-	   //echo $p,$sSQL,strlen($p);
-	   if (($p) && (strlen($p)<=10)) //user exist and pass <=10 chars
-	      return true;
+	    $sSQL = "select password from users where username='".$username."'";// limit 1 desc";//multiple users last
+	    $result = $db->Execute($sSQL,2);
+	    $p = $result->fields['password'];
+
+		if (($p) && (strlen($p)<=10)) //user exist and pass <=10 chars
+			return true;
 	
-       return false;	
+        return false;	
 	}
 
-    function do_login($user='',$pwd='',$editmode=null) {
-	   $db = GetGlobal('db');
-	   $sFormErr = GetGlobal('sFormErr');
-	   $UserName = GetGlobal('UserName');
+    public function do_login($user='',$pwd='',$editmode=null) {
+	    $db = GetGlobal('db');
+	    $sFormErr = GetGlobal('sFormErr');
+	    $UserName = GetGlobal('UserName');
 
-       if (!$user) $sUsername = GetParam("Username");
-	          else $sUsername = $user;
-       if (!$pwd) $sPassword = GetParam("Password");
-	         else $sPassword = $pwd;
+        if (!$user) $sUsername = GetParam("Username");
+	        else $sUsername = $user;
+			
+        if (!$pwd) $sPassword = GetParam("Password");
+	        else $sPassword = $pwd;
 
-	   if (($sUsername) && ($sPassword)) {
+	    if (($sUsername) && ($sPassword)) {
 
-		  $sSQL = "SELECT ".$this->actcode.", sesid, notes, seclevid, clogon FROM users" . " WHERE username ='" .
+			$sSQL = "SELECT ".$this->actcode.", sesid, notes, seclevid, clogon FROM users" . " WHERE username ='" .
 				addslashes($sUsername) . "' AND password='" . md5(addslashes($sPassword)) . "'";		  
           
-          $result = $db->Execute($sSQL,2);
-		  //print_r($result->fields);
+			$result = $db->Execute($sSQL,2);
 
-          if (($result->fields[$this->actcode]) && (strcmp(trim($result->fields['notes']),"DELETED")!=0)) {
+			if (($result->fields[$this->actcode]) && (strcmp(trim($result->fields['notes']),"DELETED")!=0)) {
 		  
 				if (intval($result->fields['seclevid'])>=5) { 	 //echo 'admin';
 		            $_SESSION['LOGIN'] = 'yes';
@@ -683,10 +643,10 @@ window.setTimeout(\"neu()\",10);
 				    SetSessionParam('ADMINSecID',$result->fields['seclevid']);
 					SetSessionParam("LoginName", $sUsername); //un-encoded	
 				}  
-                //else {
-                if ($this->load_session)
-				    $this->loadSession($sUsername);
-		        //}
+				
+                //if ($this->load_session)
+				//    $this->loadSession($sUsername);
+				
                 SetSessionParam("UserName", encode($sUsername)); 
                 SetSessionParam("UserID", encode($result->fields[$this->actcode]));
 				$GLOBALS['UserID']=encode($result->fields[$this->actcode]);
@@ -708,40 +668,46 @@ window.setTimeout(\"neu()\",10);
                 
 				//set cookie
 				/*if (paramload('SHELL','cookies')) {
-				    setcookie("cuser",$UserName,time()+$this->time_of_session);//,time()+3600,"","panikidis.gr",0);
+				    setcookie("cuser",$UserName,time()+$this->time_of_session);//,time()+3600,"","stereobit.gr",0);
 					setcookie("csess",session_id(),time()+$this->time_of_session);
 				}*/
+				
+				$this->update_login_statistics('cplogin', $sUsername);
+				
 				return true;
-           }
-           else 
+			}
+			else {
+				$this->update_login_statistics('cplogin-failed', $sUsername);
+				
 				return false;
+			}	
 	   }
 	   
 	   return false;
 	}
 
-    function do_logout() {
-      $UserName = GetGlobal('UserName');
+    public function do_logout() {
+		$UserName = GetGlobal('UserName');
 
-      $un  = decode($UserName);
-      $this->saveSession();
-      //print "save session";
+		$un  = decode($UserName);
+		$this->saveSession();
 
-      setInfo(localize('_SEEYOU',getlocal()) . " $un ...");
+		setInfo(localize('_SEEYOU',getlocal()) . " $un ...");
 
-	  //zero cookie
-	  if (paramload('SHELL','cookies')) {
-	    setcookie("cuser","");//,time()+3600,"",$this->iname,0);
-		setcookie("csess","");
-	  }
+		//zero cookie
+		if (paramload('SHELL','cookies')) {
+			setcookie("cuser","");
+			setcookie("csess","");
+		}
+		
+		$this->update_login_statistics('cplogout', $un);
 	}
 	
-	function getUserName() {
-	  $UserName = GetGlobal('UserName');	
+	public function getUserName() {
+	    $UserName = GetGlobal('UserName');	
+	    $ret = decode($UserName);
 	  
-	  $ret = decode($UserName);
-	  
-	  return ($ret);
+	    return ($ret);
 	}
 	
 	public function recaptcha() {
@@ -750,549 +716,517 @@ window.setTimeout(\"neu()\",10);
 			return $recaptcha;
 	    }	
 		return false;
-	}
-		
+	}		
 
-    function do_reenter_pasword($myusername=null) {
-	   $db = GetGlobal('db');
-	   $sFormErr = GetGlobal('sFormErr');
-	   $UserName = GetGlobal('UserName');
+    protected function do_reenter_pasword($myusername=null) {
+	    $db = GetGlobal('db');
+	    $sFormErr = GetGlobal('sFormErr');
+	    $UserName = GetGlobal('UserName');
 
-	   if ($id = GetParam('sectoken')) {//by mail link or form hidden element ajax call
-		   $toks = explode('|',base64_decode(urldecode($id)));
-		   $currentuser = $toks[0]; 
-	   } 			   
-	   else
-	       $currentuser = $myusername ? $myusername : decode($UserName);
+	    if ($id = GetParam('sectoken')) {//by mail link or form hidden element ajax call
+		    $toks = explode('|',base64_decode(urldecode($id)));
+		    $currentuser = $toks[0]; 
+	    } 			   
+	    else
+	        $currentuser = $myusername ? $myusername : decode($UserName);
 
-	   if (!$currentuser) return false;
+	    if (!$currentuser) return false;
 
-	   $pwd = GetParam("Password");
-	   $pwd2 = GetParam("vPassword");
+	    $pwd = GetParam("Password");
+	    $pwd2 = GetParam("vPassword");
 
-	   //if ($this->valid_recaptcha()) {
-	   if (($pwd!=null) && ($pwd2!=null)) {
+	    //if ($this->valid_recaptcha()) {
+	    if (($pwd!=null) && ($pwd2!=null)) {
 
-	     if  ((strcmp($pwd,$pwd2)==0)) {
+			if  ((strcmp($pwd,$pwd2)==0)) {
 		 
-		   //extra checks
-	       if ((!is_numeric($pwd)) && (strlen($pwd)>=8)) {
+				//extra checks
+				if ((!is_numeric($pwd)) && (strlen($pwd)>=8)) {
 
-            $sSQL = "UPDATE users set " .
-                  "password='" . md5(addslashes($pwd))  . "'," .
-                  "vpass='" . md5(addslashes($pwd2))  . "'," .
-				  "clogon=0";
+					$sSQL = "UPDATE users set " .
+							"password='" . md5(addslashes($pwd))  . "'," .
+							"vpass='" . md5(addslashes($pwd2))  . "'," .
+							"clogon=0";
 
-		    $sSQL .= " WHERE username ='" . $currentuser . "'";
+					$sSQL .= " WHERE username ='" . $currentuser . "'";
 
-	        //echo $sSQL;
-
-            $db->Execute($sSQL,1);
-            //if($db->Affected_Rows()) 
-				$this->formerror = localize('ok2',getlocal());//"ok2";
-	        //else //same pass goes here
-				//$this->formerror = localize('_NOTAFFECTED',getlocal());
-			 
-            SetGlobal('sFormErr',$this->formerror);
-		   }
-		   else {
-		    $this->formerror = localize('_MSGPWD',getlocal());
-		    SetGlobal('sFormErr',$this->formerror);	 	   
-		   } 		   
-         }
-		 else {
-		   $this->formerror = localize('_MSG21',getlocal());
-		   SetGlobal('sFormErr',$this->formerror);
-		 }  
+					$db->Execute($sSQL,1);
+					$this->formerror = localize('ok2',getlocal());
+					SetGlobal('sFormErr',$this->formerror);
+				}
+				else {
+					$this->formerror = localize('_MSGPWD',getlocal());
+					SetGlobal('sFormErr',$this->formerror);	 	   
+				} 		   
+			}
+			else {
+				$this->formerror = localize('_MSG21',getlocal());
+				SetGlobal('sFormErr',$this->formerror);
+			}  
 	   }
 	   //}//recaptcha
 	}
 	
-    function form_reset_pass($tokensout=null,$username=null) {
-	   $sectoken = GetReq('sectoken') ? '&sectoken='.GetReq('sectoken') : null;
-       $url = seturl("t=chpass".$sectoken,0,1);
-		  
-	   //if ((!$currentuser) || ($this->formerror!=localize('ok2',getlocal()))) {
+    public function form_reset_pass($tokensout=null,$username=null) {
+	    $sectoken = GetReq('sectoken') ? '&sectoken='.GetReq('sectoken') : null;
+        $url = seturl("t=chpass".$sectoken,0,1);
 	   
-	     if (defined('RECAPTCHA_DPC')) {
-	         $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
-	     }	
-		 if ($tokensout) {
-		   $tokens[] = $this->formerror;
-		 }
-		 else
-           $loginform .= $this->formerror;
+	    if (defined('RECAPTCHA_DPC')) 
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+		
+		if ($tokensout)
+			$tokens[] = $this->formerror;
+		else
+           $loginform = $this->formerror;
 		   
-		 if ($tokensout) {
-		   $tokens[] = "<form action=\"$url\" method=\"POST\">";
-		   $tokens[] = "<input type=\"password\" autocomplete=\"off\" name=\"Password\" maxlenght=\"50\" size=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";
-		   $tokens[] = "<input type=\"password\" autocomplete=\"off\" name=\"vPassword\" maxlenght=\"50\" size=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";		   
-		   $tokens[] = $recaptcha;		   
-		   $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize('_RESET',getlocal()) . "\">";
+		if ($tokensout) {
+		    $tokens[] = "<form action=\"$url\" method=\"POST\">";
+		    $tokens[] = "<input type=\"password\" autocomplete=\"off\" name=\"Password\" maxlenght=\"50\" size=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";
+		    $tokens[] = "<input type=\"password\" autocomplete=\"off\" name=\"vPassword\" maxlenght=\"50\" size=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";		   
+		    $tokens[] = $recaptcha;		   
+		    $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize('_RESET',getlocal()) . "\">";
 
-		   $tokens[] = "<input type=\"hidden\" name=\"FormAction\" value=\"chpass\">" .
+		    $tokens[] = "<input type=\"hidden\" name=\"FormAction\" value=\"chpass\">" .
 		               "<input type=\"hidden\" name=\"username\" value=\"$username\">" .
 		               "<input type=\"hidden\" name=\"FormName\" value=\"UserChPass\">".
 					   "</form>";
-           $tokens[] = GetReq('sectoken');//use in form hidden element ajax call					   
-		 }
-		 else {		   
-           $loginform .= "<form action=\"$url\" method=\"POST\">";
-           $loginform .= "<input type=\"hidden\" name=\"FormName\" value=\"RemLogin\">";
-           //$loginform .= localize('_USERNAME',getlocal()) . " :<br><input type=\"text\" name=\"myusername\" maxlenght=\"50\" size=\"12\" ><br>";
-           $lf0[] = localize('_PASSWORD',getlocal());
-		   $lfat0[] = "right;40%;";
-		   $lf0[] = "&nbsp;<input type=\"password\" autocomplete=\"off\" name=\"password\" maxlenght=\"20\" size=\"20\" >";
-		   $lfat0[] = "left;60%";
-		   $w0 = new window('',$lf0,$lfat0);  $loginform .= $w0->render("center::100%::0::group_article_selected::left::0::0::");   unset ($w0);
+            $tokens[] = GetReq('sectoken');//use in form hidden element ajax call					   
+		}
+		else {		   
+            $loginform .= "<form action=\"$url\" method=\"POST\">";
+            $loginform .= "<input type=\"hidden\" name=\"FormName\" value=\"RemLogin\">";
+            //$loginform .= localize('_USERNAME',getlocal()) . " :<br><input type=\"text\" name=\"myusername\" maxlenght=\"50\" size=\"12\" ><br>";
+            $lf0[] = localize('_PASSWORD',getlocal());
+		    $lfat0[] = "right;40%;";
+		    $lf0[] = "&nbsp;<input type=\"password\" autocomplete=\"off\" name=\"password\" maxlenght=\"20\" size=\"20\" >";
+		    $lfat0[] = "left;60%";
+		    $w0 = new window('',$lf0,$lfat0);  $loginform .= $w0->render("center::100%::0::group_article_selected::left::0::0::");   unset ($w0);
 		  
-           //$loginform .= localize('_MAIL',getlocal()) . " :<br><input type=\"text\" name=\"myemail\" maxlenght=\"50\" size=\"12\" ><br>";
-           $lf1[] = localize('_VERPASS',getlocal());
-	       $lfat1[] = "right;40%;";
-		   $lf1[] = "&nbsp;<input type=\"password\" autocomplete=\"off\" name=\"VPassword\" maxlenght=\"50\" size=\"20\" >";
-		   $lfat1[] = "left;60%";
-		   $w1 = new window('',$lf1,$lfat1);  $loginform .= $w1->render("center::100%::0::group_article_selected::left::0::0::");   unset ($w1);
+            //$loginform .= localize('_MAIL',getlocal()) . " :<br><input type=\"text\" name=\"myemail\" maxlenght=\"50\" size=\"12\" ><br>";
+            $lf1[] = localize('_VERPASS',getlocal());
+	        $lfat1[] = "right;40%;";
+		    $lf1[] = "&nbsp;<input type=\"password\" autocomplete=\"off\" name=\"VPassword\" maxlenght=\"50\" size=\"20\" >";
+		    $lfat1[] = "left;60%";
+		    $w1 = new window('',$lf1,$lfat1);  $loginform .= $w1->render("center::100%::0::group_article_selected::left::0::0::");   unset ($w1);
 
-		   $loginform .= $recaptcha;
+		    $loginform .= $recaptcha;
 		  
-           $loginform .= "<input type=\"hidden\" name=\"FormAction\" value=\"chpass\">";
-		   $loginform .= "<input type=\"hidden\" name=\"username\" value=\"$username\">";
-           $loginform .= "<input type=\"submit\" value=\"" . localize('_RESET',getlocal()) . "\">";
-           $loginform .= "</form>";
+            $loginform .= "<input type=\"hidden\" name=\"FormAction\" value=\"chpass\">";
+		    $loginform .= "<input type=\"hidden\" name=\"username\" value=\"$username\">";
+            $loginform .= "<input type=\"submit\" value=\"" . localize('_RESET',getlocal()) . "\">";
+            $loginform .= "</form>";
       
-           $toprint .= $loginform;
+            $toprint .= $loginform;
 
-           $swin = new window(localize('_RESETPASS',getlocal()),$toprint);
-           $out .= $swin->render();//"center::40%::0::group_win_body::left::0::0::");
-	       unset ($swin);
-		 }//tokens		   
+            $swin = new window(localize('_RESETPASS',getlocal()),$toprint);
+            $out .= $swin->render();//"center::40%::0::group_win_body::left::0::0::");
+	        unset ($swin);
+		}//tokens		   
 		 
-	     if ($tokensout) 
-	       return ($tokens); 		 
-       //}
+	    if ($tokensout) 
+	        return ($tokens); 		 
 		  
 	   return ($out);
     }	
 	
-	function html_reset_pass($editmode=null) {
-	   $UserName = GetGlobal('UserName');
+	protected function html_reset_pass($editmode=null) {
+	    $UserName = GetGlobal('UserName');
 	   
-	   if ($id = base64_decode(urldecode(GetReq('sectoken')))) {//by mail link
-		   $toks = explode('|',$id);
-		   $timestamp = time(); 
-		   if (is_numeric($toks[1]) && (($timestamp-(intval($toks[1])))<3600)) {//timestamp < 1 hour
-		     $currentuser = $toks[0]; 
-		   }	 
-		   else {//timestamp is invalid	 
-		     $currentuser = null; 
-			 $this->formerror = localize('_ERRSECTOKEN',getlocal());
-			 SetGlobal('sFormErr',$this->formerror);
-		   }	 
-		   //echo $timestamp,intval($toks[1]),'>',$currentuser;
-	   } 			   
-	   elseif ($UserName)	   
-	      $currentuser = decode($UserName);	
-	   else
-          $currentuser = null;	   
+	    if ($id = base64_decode(urldecode(GetReq('sectoken')))) {//by mail link
+		    $toks = explode('|',$id);
+		    $timestamp = time(); 
+		    if (is_numeric($toks[1]) && (($timestamp-(intval($toks[1])))<3600)) {//timestamp < 1 hour
+				$currentuser = $toks[0]; 
+			}	 
+			else {//timestamp is invalid	 
+				$currentuser = null; 
+				$this->formerror = localize('_ERRSECTOKEN',getlocal());
+				SetGlobal('sFormErr',$this->formerror);
+		    }	 
+		    //echo $timestamp,intval($toks[1]),'>',$currentuser;
+	    } 			   
+	    elseif ($UserName)	   
+			$currentuser = decode($UserName);	
+	    else
+			$currentuser = null;	   
 	
-	   if (($currentuser) && ($this->formerror!=localize('ok2',getlocal()))) {
-   		$toks = $this->form_reset_pass(1, $currentuser);
+	    if (($currentuser) && ($this->formerror!=localize('ok2',getlocal()))) {
+			$toks = $this->form_reset_pass(1, $currentuser);
 		
-		$mydata = str_replace('+','<@>',implode('<TOKENS>',$toks));
+			$mydata = str_replace('+','<@>',implode('<TOKENS>',$toks));
 		
-		if (!$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userchpass.htm+".$mydata)) 
-		  $ret = $this->form_reset_pass(null,$currentuser);
+			if (!$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userchpass.htm+".$mydata)) 
+				$ret = $this->form_reset_pass(null,$currentuser);
 		  
-	   }	  
-	   else {//login
-	      if (!$editmode)
-			$ret = $this->html_form(); 
-	   }	
+	    }	  
+	    else {//login
+			if (!$editmode)
+				$ret = $this->html_form(); 
+	    }	
 		  
-	   return ($ret);  
+	    return ($ret);  
 	}		
 
-	function saveSession() {
-	   $db = GetGlobal('db');
-	   $UserName = GetGlobal('UserName');
-	   //$db = GetGlobal('db');
-	   
-	   if ($db) {
+	protected function saveSession() {
+	    $db = GetGlobal('db');
+	    $UserName = GetGlobal('UserName');
 
 		$currentses = session_id();
 		$currentuser = decode($UserName);
 		$session_data = str_replace("\"","<@>",session_encode());
-		//echo '>',$session_data;
+
 		//save ses id
 		$sSQL = "UPDATE users set sesid='" . $currentses .
                     "',sesdata='" . $session_data .
 		       "' WHERE username ='" . $currentuser . "'" ;
 
-		//echo $sSQL;
-
 		$db->Execute($sSQL,1);
-       }
 	   
-	   //unregister all selected session params
-	   ResetSessionParams();
+	    //unregister all selected session params
+	    ResetSessionParams();
 
+        //session_write_close();
 
-       //session_write_close();
+        session_unset();
 
-       session_unset();
-
-	   //session_destroy();
+	    //session_destroy();
 	}
 
-	function loadSession($uname) {
-	 $db = GetGlobal('db');
+	protected function loadSession($uname) {
+		$db = GetGlobal('db');
 
-	   $sSQL = "select sesdata from users where username='" . $uname ."'" ;
-       $res = $db->Execute($sSQL,2);//null,1);
+	    $sSQL = "select sesdata from users where username='" . $uname ."'" ;
+        $res = $db->Execute($sSQL,2);//null,1);
 
-	   session_decode(str_replace("<@>","\"",$res->fields[0]));
-
+	    session_decode(str_replace("<@>","\"",$res->fields[0]));
     }
 
-	function is_reseller($leeid=null) {
-	   $db = GetGlobal('db');
+	public function is_reseller($leeid=null) {
+	    $db = GetGlobal('db');
 
-	   if ($leeid!=null)
-	     $id = $leeid;
-	   else
-	     $id = decode(GetSessionParam('UserID'));
+	    if ($leeid!=null)
+			$id = $leeid;
+	    else
+			$id = decode(GetSessionParam('UserID'));
 
-	   //if is in cuatomers table then....
-	   if ($id) {
+	    //if is in cuatomers table then....
+	    if ($id) {
 
-	     $sSQL = "select attr1 from customers where ".$this->actcode."=" . $id;
-		 //echo $sSQL;
-         $result = $db->Execute($sSQL,2);
-		 //echo $result->fields[0];
+			$sSQL = "select attr1 from customers where ".$this->actcode."=" . $id;
+			$result = $db->Execute($sSQL,2);
 
-		 if ($result->fields[0]==$this->reseller_attr) {//'ΧΟΝΔΡΙΚΗ') {
-		   //echo 'yes';
-		   SetSessionParam('RESELLER','true');
-		   return true;
-		 }
-	   }
+			if ($result->fields[0]==$this->reseller_attr) {
+				SetSessionParam('RESELLER','true');
+				return true;
+			}
+	    }
 
-	   return false;
+	    return false;
 	}
 
-	function iforgotmypassword() {
+	protected function iforgotmypassword() {
 
 	    $ret = $this->message . "&nbsp;" . $this->link;
-
 		return ($ret);
 	}
 
-    function remform($tokensout=null) {
+    public function remform($tokensout=null) {
 
-       $url = seturl("t=shremember",0,1);
+		$url = seturl("t=shremember",0,1);
 
-  	   if ($this->formerror!=localize("ok", getlocal())) {//"ok") {
+		if ($this->formerror!=localize("ok", getlocal())) {//"ok") {
 	   
-	     if (defined('RECAPTCHA_DPC')) {
-	         $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
-	     }		   
+			if (defined('RECAPTCHA_DPC')) 
+				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   	   
 
-		 if ($this->ssl) {
-		    //$loginform .= $this->sslscript;
-	        $sslwin = new window("",$this->sslscript);
-	        $loginform .= $sslwin->render("center::100%::0::group_article_selected::right::0::0::");
-	        unset ($sslwin);
-		 }
+			if ($this->ssl) {
+				//$loginform .= $this->sslscript;
+				$sslwin = new window("",$this->sslscript);
+				$loginform .= $sslwin->render("center::100%::0::group_article_selected::right::0::0::");
+				unset ($sslwin);
+			}
          
-		 if ($tokensout) {
-		   $tokens[] = $this->formerror;
-		 }
-		 else
-           $loginform .= $this->formerror;
+			if ($tokensout) 
+				$tokens[] = $this->formerror;
+			else
+				$loginform .= $this->formerror;
 
-		 if ($tokensout) {
-		   $tokens[] = "<form action=\"$url\" method=\"POST\">";
-		   $tokens[] = "<input type=\"text\" autocomplete=\"off\" name=\"myemail\" maxlenght=\"50\" size=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";
-		   $tokens[] = $recaptcha;		   
-		   $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize("_ok",getlocal()) . "\">";
+			if ($tokensout) {
+				$tokens[] = "<form action=\"$url\" method=\"POST\">";
+				$tokens[] = "<input type=\"text\" autocomplete=\"off\" name=\"myemail\" maxlenght=\"50\" size=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";
+				$tokens[] = $recaptcha;		   
+				$tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize("_ok",getlocal()) . "\">";
 
-		   $tokens[] = "<input type=\"hidden\" name=\"FormAction\" value=\"shremember\">" .
-		               "<input type=\"hidden\" name=\"FormName\" value=\"RemLogin\">".
-					   "</form>";
-		 }
-		 else {		   
-         $loginform .= "<form action=\"$url\" method=\"POST\">";
-         $loginform .= "<input type=\"hidden\" name=\"FormName\" value=\"RemLogin\">";
+				$tokens[] = "<input type=\"hidden\" name=\"FormAction\" value=\"shremember\">" .
+							"<input type=\"hidden\" name=\"FormName\" value=\"RemLogin\">".
+							"</form>";
+			}
+			else {		   
+				$loginform .= "<form action=\"$url\" method=\"POST\">";
+				$loginform .= "<input type=\"hidden\" name=\"FormName\" value=\"RemLogin\">";
 
-         //$loginform .= localize('_USERNAME',getlocal()) . " :<br><input type=\"text\" name=\"myusername\" maxlenght=\"50\" size=\"12\" ><br>";
-        /* $lf0[] = localize('_USERNAME',getlocal());
-		 $lfat0[] = "right;40%;";
-		 $lf0[] = "&nbsp;<input type=\"text\" name=\"myusername\" maxlenght=\"20\" size=\"20\" >";
-		 $lfat0[] = "left;60%";
-		 $w0 = new window('',$lf0,$lfat0);  $loginform .= $w0->render("center::100%::0::group_article_selected::left::0::0::");   unset ($w0);
-		*/
-         //$loginform .= localize('_MAIL',getlocal()) . " :<br><input type=\"text\" name=\"myemail\" maxlenght=\"50\" size=\"12\" ><br>";
-         $lf1[] = localize('_MAIL',getlocal());
-	     $lfat1[] = "right;40%;";
-		 $lf1[] = "&nbsp;<input type=\"text\" autocomplete=\"off\" name=\"myemail\" maxlenght=\"50\" size=\"20\" >";
-		 $lfat1[] = "left;60%";
-		 $w1 = new window('',$lf1,$lfat1);  $loginform .= $w1->render("center::100%::0::group_article_selected::left::0::0::");   unset ($w1);
+				$lf1[] = localize('_MAIL',getlocal());
+				$lfat1[] = "right;40%;";
+				$lf1[] = "&nbsp;<input type=\"text\" autocomplete=\"off\" name=\"myemail\" maxlenght=\"50\" size=\"20\" >";
+				$lfat1[] = "left;60%";
+				$w1 = new window('',$lf1,$lfat1);  $loginform .= $w1->render("center::100%::0::group_article_selected::left::0::0::");   unset ($w1);
 
-		 $loginform .= $recaptcha;
+				$loginform .= $recaptcha;
 		  
-         $loginform .= "<input type=\"hidden\" name=\"FormAction\" value=\"shremember\">";
-         $loginform .= "<input type=\"submit\" value=\"" . localize("_ok",getlocal()) . "\">";
-         $loginform .= "</form>";
+				$loginform .= "<input type=\"hidden\" name=\"FormAction\" value=\"shremember\">";
+				$loginform .= "<input type=\"submit\" value=\"" . localize("_ok",getlocal()) . "\">";
+				$loginform .= "</form>";
       
-         $toprint .= $loginform;
+				$toprint .= $loginform;
 
-         $swin = new window(localize('SHLOGIN_DPC',getlocal()),$toprint);
-         $out .= $swin->render("center::40%::0::group_win_body::left::0::0::");
-	     unset ($swin);
-		 }//tokens
+				$swin = new window(localize('SHLOGIN_DPC',getlocal()),$toprint);
+				$out .= $swin->render("center::40%::0::group_win_body::left::0::0::");
+				unset ($swin);
+			}//tokens
 		 
-	     if ($tokensout) 
-	       return ($tokens); 
-	     else	 
-           return ($out);		 
-	   }
-	   else {
-	     //echo 'OK';
-		 if (defined(_CAPTCHA_)) {
+			if ($tokensout) 
+				return ($tokens); 
+			else	 
+				return ($out);		 
+		}
+		else {
+		    //echo 'OK';
+			if (defined(_CAPTCHA_)) {
+				//no press here...just showit in the page.
+				//call the image
+				$uc = seturl("t=sencaptcha&c=".encode($this->result));
+				$winout .= "<img src=\"$uc\">";
 
-		   //no press here...just showit in the page.
-		   //call the image
-		   $uc = seturl("t=sencaptcha&c=".encode($this->result));
-           $winout .= "<img src=\"$uc\">";
-
-           $swin = new window(localize('SHLOGIN_DPC',getlocal()),$winout);
-           $out .= $swin->render("center::40%::0::group_win_body::left::0::0::");
-	       unset ($swin);
-		 }
-		 elseif (defined('SMTPMAIL_DPC')) {
-		   //echo 'mailOK';		 
-		   $msg = localize('_SENDCRE',getlocal());		   
+				$swin = new window(localize('SHLOGIN_DPC',getlocal()),$winout);
+				$out .= $swin->render("center::40%::0::group_win_body::left::0::0::");
+				unset ($swin);
+			}
+			elseif (defined('SMTPMAIL_DPC')) {
+				//echo 'mailOK';		 
+				$msg = localize('_SENDCRE',getlocal());		   
 		   
-		   if ($tokensout) {
-		     $tokens[] = $msg;
+				if ($tokensout) {
+					$tokens[] = $msg;
 			 
-			 //login tokens
-		     $tokens[] = "<form action=\"$logonurl\" method=\"POST\">".
+					//login tokens
+					$tokens[] = "<form action=\"$logonurl\" method=\"POST\">".
 		               "<input type=\"text\" name=\"Username\" maxlenght=\"20\">".
 					   "<input type=\"hidden\" name=\"FormName\" value=\"Login\">";	
-		     $tokens[] = "<input type=\"password\" name=\"Password\" maxlenght=\"20\">".
+					$tokens[] = "<input type=\"password\" name=\"Password\" maxlenght=\"20\">".
 		                 "<input type=\"hidden\" name=\"FormAction\" value=\"dologin\">";
 					   
-		     $tokens[] = "<input type=\"submit\" value=\"" . localize('SHLOGIN_DPC',getlocal()) . "\">".
+					$tokens[] = "<input type=\"submit\" value=\"" . localize('SHLOGIN_DPC',getlocal()) . "\">".
 					      "</form>";;					   		 
-		   }
-		   else {
-             $swin = new window(localize('SHLOGIN_DPC',getlocal()),$msg);
-             $out .= $swin->render("center::40%::0::group_win_body::left::0::0::");
-	         unset ($swin);
-		   }	 
-		 }
-	     else {
-		   //echo 'textOK';
-		   //text ver
-		   $r = $this->result;
-		   if ($tokensout) {
-		     $tokens[] = $r;
-		   }
-		   else {		   
-             $swin = new window(localize('SHLOGIN_DPC',getlocal()),$r);
-             $out .= $swin->render("center::40%::0::group_win_body::left::0::0::");
-	         unset ($swin);
-		   }	 
-		 }
+				}
+				else {
+					$swin = new window(localize('SHLOGIN_DPC',getlocal()),$msg);
+					$out .= $swin->render("center::40%::0::group_win_body::left::0::0::");
+					unset ($swin);
+				}	 
+			}
+			else {
+				//echo 'textOK';
+				//text ver
+				$r = $this->result;
+				if ($tokensout) {
+					$tokens[] = $r;
+				}
+				else {		   
+					$swin = new window(localize('SHLOGIN_DPC',getlocal()),$r);
+					$out .= $swin->render("center::40%::0::group_win_body::left::0::0::");
+					unset ($swin);
+				}	 
+			}
 		 
-	     if ($tokensout) 
-	       return ($tokens); 
-	     else	 
-           return ($out);			 
-	   }
-
-       //return ($out);
+			if ($tokensout) 
+				return ($tokens); 
+			else	 
+				return ($out);			 
+	    }
     }
 	
-	function html_remform() {
+	public function html_remform() {
 	
    		$toks = $this->remform(1);
-		
 		$mydata = str_replace('+','<@>',implode('<TOKENS>',$toks));
 		
 		if (!$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use remlogin.htm+".$mydata)) 
-		  $ret = $this->remform();
+			$ret = $this->remform();
 		  
 		return ($ret);  
 	}
 
-	function do_the_job() {
+	protected function do_the_job() {
 	   $db = GetGlobal('db');
 	   $u = GetParam("myusername");
 	   $m = GetParam("myemail");  
 	   
        //if ($this->valid_recaptcha($norecaptcha)) {	  //<<<
 
-		if ($m) {// && (!$u)) {//mail only -> send username and password
-	       $sSQL = "SELECT username, password, notes FROM users WHERE " .
-		           "email='" . addslashes($m) . "'";
+			if ($m) {// && (!$u)) {//mail only -> send username and password
+				$sSQL = "SELECT username, password, notes FROM users WHERE " .
+						"email='" . addslashes($m) . "'";
 
-	       //echo "remember:",$sSQL;
-           $result = $db->Execute($sSQL,2);
+				//echo "remember:",$sSQL;
+				$result = $db->Execute($sSQL,2);
 
-           if (($u=$result->fields['username']) && ($p=$result->fields['password'])) {
+				if (($u=$result->fields['username']) && ($p=$result->fields['password'])) {
  
-               $tokens[] = null; 
-			   $timestamp = time(); 
-			   $sectoken = urlencode(base64_encode($u.'|'.$timestamp));
-	           $reset_url = seturl('t=chpass&sectoken='.$sectoken);
-               $tokens[] = $reset_url;			  
+					$tokens[] = null; 
+					$timestamp = time(); 
+					$sectoken = urlencode(base64_encode($u.'|'.$timestamp));
+					$reset_url = seturl('t=chpass&sectoken='.$sectoken);
+					$tokens[] = $reset_url;			  
 				
-		       $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		       $mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userremind.htm+".$sd."+1");
+					$sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
+					$mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userremind.htm+".$sd."+1");
 			   
-		       $from = $this->accountmailfrom;
-	           $this->mailto($from,$m,localize('_UMAILREMSUBC',getlocal()),$mailbody);
+					$from = $this->accountmailfrom;
+					$this->mailto($from,$m,localize('_UMAILREMSUBC',getlocal()),$mailbody);
 
-			   $this->formerror = localize("ok", getlocal());//localize('_MSG2',getlocal()); //"ok";
-		   }
-		   else $this->formerror = localize('_MSG1',getlocal());
-		 }
-		 else
-		   $this->formerror = localize('_MSG1',getlocal());
+					$this->formerror = localize("ok", getlocal());//localize('_MSG2',getlocal()); //"ok";
+					
+					$this->update_login_statistics('cplogin-renew', $u);
+				}
+				else 
+					$this->formerror = localize('_MSG1',getlocal());
+			}
+			else
+				$this->formerror = localize('_MSG1',getlocal());
 		   
 		   
-		 if ($this->formerror!='ok') {
-		   SetGlobal('sFormErr',$this->formerror);		   
-		 }
-		 else {
-		   //$msg = localize('_SENDCRE',getlocal());	
-		   SetGlobal('sFormErr',"OKREMINDER");////$msg);
-		 }
+			if ($this->formerror!='ok') 
+				SetGlobal('sFormErr',$this->formerror);		   
+			else 	
+				SetGlobal('sFormErr',"OKREMINDER");////$msg);
 		 
-	   //}//recaptcha	    
-		   
+	   //}//recaptcha	       
 	}
 
-	function do_the_captcha() {
+	protected function do_the_captcha() {
 
 		//$this->captcha = new captcha();//strlen($this->result),'jpeg',$this->result);
 		//$captcha->sent_header();
 		//echo $captcha;
 	}
 
-	function show_the_captcha() {
+	protected function show_the_captcha() {
 
-	       $result = decode(GetReq('c'));
-		   $captcha = new captcha(strlen($result),'jpeg',$result);
+	    $result = decode(GetReq('c'));
+		$captcha = new captcha(strlen($result),'jpeg',$result);
 
-		   die();
+		die();
 	}
 
-	function is_logged_in() {
+	public function is_logged_in() {
 
-	      if (GetSessionParam('UserID'))
+	    if (GetSessionParam('UserID'))
 		    return true;
 
-		  return false;
+		return false;
 	}
 
-	function mailto($from,$to,$subject=null,$body=null) {
+	public function mailto($from,$to,$subject=null,$body=null) {
 
-		     if ((defined('SMTPMAIL_DPC')) &&
-				 (seclevel('SMTPMAIL_DPC',$this->UserLevelID)) ) {
-		       $smtpm = new smtpmail;
-		       $smtpm->to = $to;
-			   $smtpm->from = $from;
-			   $smtpm->subject = $subject;
-			   $smtpm->body = $body ;
+		if ((defined('SMTPMAIL_DPC')) && (seclevel('SMTPMAIL_DPC',$this->UserLevelID)) ) {
+		    $smtpm = new smtpmail;
+		    $smtpm->to = $to;
+			$smtpm->from = $from;
+			$smtpm->subject = $subject;
+			$smtpm->body = $body ;
 
-			   $mailerror = $smtpm->smtpsend();
-			   //echo '>',$mailerror;
+			$mailerror = $smtpm->smtpsend();
 
-			   unset($smtpm);
+			unset($smtpm);
 
-			   return ($mailerror);
-			 }
+			return ($mailerror);
+		}
 	}
 	
-	function login_with_key($key=null,$code=null,$ischar=null) {
-	  $db = GetGlobal('db');
+	public function login_with_key($key=null,$code=null,$ischar=null) {
+	    $db = GetGlobal('db');
 		 	
-	  if ($key) {
+	    if ($key) {
 	  
-	      $pk = explode("~",$key);
+			$pk = explode("~",$key);
 
-	      $sSQL = "SELECT ".$this->actcode.", sesid, notes, seclevid, clogon, username, password FROM users WHERE ";
-		  $sSQL.= $code?$code:$this->actcode;
-		  $sSQL.= "=";
-		  $sSQL.= $ischar?"'".$pk[0]."'":$pk[0];
-		  //echo $sSQL;
+			$sSQL = "SELECT ".$this->actcode.", sesid, notes, seclevid, clogon, username, password FROM users WHERE ";
+			$sSQL.= $code?$code:$this->actcode;
+			$sSQL.= "=";
+			$sSQL.= $ischar?"'".$pk[0]."'":$pk[0];
+			//echo $sSQL;
 
-		  //echo "login:",$sSQL;
+			//echo "login:",$sSQL;
 
-          $result = $db->Execute($sSQL,2);
-		  //print_r($result->fields);
-		  $hash = $pk[1];
-		  $data = trim($result->fields['username']).":".trim($result->fields['password']);
-		  $hash2cmp = md5($data);
+			$result = $db->Execute($sSQL,2);
+			//print_r($result->fields);
+			$hash = $pk[1];
+			$data = trim($result->fields['username']).":".trim($result->fields['password']);
+			$hash2cmp = md5($data);
 		  
-		  if (strcmp($hash,$hash2cmp)==0) {//echo 'zzzz2';
-		  
+			if (strcmp($hash,$hash2cmp)==0) {
           
-             if (/*($result->fields[$this->actcode]>0) &&*////PROBLEM
-		         (strcmp(trim($result->fields['notes']),"DELETED")!=0)) {//echo 'zzzz';
+				if (/*($result->fields[$this->actcode]>0) &&*////PROBLEM
+		         (strcmp(trim($result->fields['notes']),"DELETED")!=0)) {
+					 
+					$sUsername = $result->fields['username']; 
+					 
+					if (intval($result->fields['seclevid'])>=5) { 	 //echo 'admin';
+						$_SESSION['LOGIN'] = 'yes';
+						$GLOBALS['LOGIN'] = 'yes';
+						SetSessionParam('ADMIN','yes');	
+						SetSessionParam('ADMINSecID',$result->fields['seclevid']);
+						SetSessionParam("LoginName", $sUsername); //un-encoded	
+					}  
+				
+					//if ($this->load_session)
+					//    $this->loadSession($sUsername);
+				
+					SetSessionParam("UserName", encode($sUsername)); 
+					SetSessionParam("UserID", encode($result->fields[$this->actcode]));
+					$GLOBALS['UserID']=encode($result->fields[$this->actcode]);
+					SetSessionParam("UserSecID", encode($result->fields['seclevid']));
+					$GLOBALS['ADMINSecID']= $result->fields['seclevid'];
+					SetSessionParam('ADMINSecID',$result->fields['seclevid']);						 
 
-                             if ($this->load_session)
-							  $this->loadSession($sUsername);
+			        //re-enter password flag
+			        if ($result->fields['clogon']==1) {
+					    $this->must_reenter_password=1;
+						$chpass = seturl("t=chpass",localize('_PASSREMINDER',getlocal()),1,'',1);
+						setInfo($chpass);
+					}
+					else
+  		                setInfo(localize('_WELLCOME',getlocal()) . " " . $sUsername);
 
-							  $_POST['UserName'] = encode($sUsername);
-							  
-                              SetSessionParam("UserName", encode($sUsername));
-							  SetSessionParam("Password", encode($sPassword));//!!!!!
-                              SetSessionParam("UserID", encode($result->fields[$this->actcode]));
-							  $GLOBALS['UserID']=encode($result->fields[$this->actcode]);
-                              SetSessionParam("UserSecID", encode($result->fields['seclevid']));
-							  $this->is_reseller(); //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-			                  //re-enter password flag
-			                  if ($result->fields['clogon']==1) {
-							    $this->must_reenter_password=1;
-								$chpass = seturl("t=chpass",localize('_PASSREMINDER',getlocal()),1,'',1);
-								setInfo($chpass);
-							  }
-							  else
-  		                        setInfo(localize('_WELLCOME',getlocal()) . " " . $sUsername);
-
-							  //set cookie
-							  if (paramload('SHELL','cookies')) {
-							    setcookie("cuser",$UserName,time()+$this->time_of_session);//,time()+3600,"","panikidis.gr",0);
-								setcookie("csess",session_id(),time()+$this->time_of_session);
-							  }
-							  //echo "login:",$sSQL;
-							  return (encode($sUsername));
-             }
-             else {
-		                      //setInfo(localize('_MSG1',getlocal()));
-                              //$sFormErr = localize('_MSG1',getlocal());
-							  SetGlobal('sFormErr',localize('_MSG1',getlocal()));
-							  return false;
-             }  
-		  }//hash validation	 
+					//set cookie
+					/*if (paramload('SHELL','cookies')) {
+					    setcookie("cuser",$UserName,time()+$this->time_of_session);//,time()+3600,"","stereobit.gr",0);
+						setcookie("csess",session_id(),time()+$this->time_of_session);
+					}*/
+					
+					$this->update_login_statistics('cplogin', $sUsername);
+					
+					//echo "login:",$sSQL;
+					return (encode($sUsername));
+                }
+                else {
+				    SetGlobal('sFormErr',localize('_MSG1',getlocal()));
+					return false;
+                }  
+		    }//hash validation	 
 	  
-	  }//is key
-	  else
-	    return false;
-   }
+	    }//is key
+	    else
+			return false;
+    }
    
-	 function valid_recaptcha() {
+	protected function valid_recaptcha() {
 	 
-	      if (!defined('RECAPTCHA_DPC')) return true;
+	    if (!defined('RECAPTCHA_DPC')) return true;
 		  
-		  //print_r($_POST);
+		//print_r($_POST);
 		  
-          if ($_POST["recaptcha_response_field"]) {
+        if ($_POST["recaptcha_response_field"]) {
             $resp = recaptcha_check_answer ($this->recaptcha_private_key,
                                             $_SERVER["REMOTE_ADDR"],
                                             $_POST["recaptcha_challenge_field"],
@@ -1309,20 +1243,16 @@ window.setTimeout(\"neu()\",10);
 				$ret = false;
 		        $msg = '<br>' . "Incorrect recaptcha entry!";				
             }
-		  }
-		  else {
+		}
+		else {
 		    $ret = false;
 		    $msg = '<br>' . "Recaptcha entry required!";			  
-		  }
-		  //$sFormErr = $error;
-		  //echo '>',$error,'-',$ret;
-		  //SetGlobal('sFormErr',$this->msg);
+		}
 		  
-		  $this->formerror = $msg;//'recaptcha error';
-		  SetGlobal('sFormErr',$msg);
+		$this->formerror = $msg;//'recaptcha error';
+		SetGlobal('sFormErr',$msg);
 		  
-		  return ($ret);												
-									 
+		return ($ret);																			 
      }     
 	 
 	//last month check 
@@ -1374,18 +1304,18 @@ window.setTimeout(\"neu()\",10);
 		return null;
 	} 	
    
-	function combine_tokens($template_contents,$tokens) {
+	public function combine_tokens($template_contents,$tokens) {
 	
 	    if (!is_array($tokens)) return;
 		
 		if (defined('FRONTHTMLPAGE_DPC')) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template_contents);
+			unset ($fp);
+			//$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
 		}		  		
 		else
-		  $ret = $template_contents;
+			$ret = $template_contents;
 		  
 		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
@@ -1394,40 +1324,40 @@ window.setTimeout(\"neu()\",10);
 	    }
 		//clean unused token marks
 		for ($x=$i;$x<10;$x++)
-		  $ret = str_replace("$".$x,'',$ret);
+			$ret = str_replace("$".$x,'',$ret);
 		//echo $ret;
 		return ($ret);
 	}   
 
 	public static function myf_button($title,$link=null,$image=null) {
 
-	   $path = self::$staticpath;//$this->urlpath;//
+	    $path = self::$staticpath;//$this->urlpath;//
 	   
-	   if (($image) && (is_readable($path."/images/".$image.".png"))) {
-	      //echo 'a';
-	      $imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
-	   }
+	    if (($image) && (is_readable($path."/images/".$image.".png"))) {
+			//echo 'a';
+			$imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
+	    }
 	   
-	   if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
-	      //echo 'ie';
-		  $_b = $imglink ? $imglink : "[$title]";
-		  $ret = "&nbsp;<a href=\"$link\">$_b</a>&nbsp;";
-		  return ($ret);
-	   }	
+	    if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
+			//echo 'ie';
+			$_b = $imglink ? $imglink : "[$title]";
+			$ret = "&nbsp;<a href=\"$link\">$_b</a>&nbsp;";
+			return ($ret);
+	    }	
 	   
-	   if ($imglink)
-	       return ($imglink);
+	    if ($imglink)
+	        return ($imglink);
 	
-       //else button	
-	   if ($link)
-	      $ret = "<a href=\"$link\">";
+        //else button	
+	    if ($link)
+	       $ret = "<a href=\"$link\">";
 		  
-	   $ret .= "<input type=\"button\" class=\"myf_button\" value=\"".$title."\" />";
+	    $ret .= "<input type=\"button\" class=\"myf_button\" value=\"".$title."\" />";
 	   
-	   if ($link)
-          $ret .= "</a>";	   
+	    if ($link)
+			$ret .= "</a>";	   
 		  
-	   return ($ret);
+	    return ($ret);
 	}
 	
 	public function myf_login_logout($link=null,$glue=null) {
@@ -1445,6 +1375,31 @@ window.setTimeout(\"neu()\",10);
 	   
 	    return ($myfb);
 	}
+	
+	protected function update_login_statistics($id, $user=null) {
+        $db = GetGlobal('db'); 
+
+	    $currentdate = time();	
+	    $myday  = date('d',$currentdate);	
+	    $mymonth= date('m',$currentdate);	
+	    $myyear = date('Y',$currentdate);
+						
+		$sSQL = "insert into stats (day,month,year,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
+		$sSQL.= $myday . ",";
+		$sSQL.= $mymonth . ",";
+		$sSQL.= $myyear . ",";						
+		$sSQL.= $db->qstr($id) . ',';
+		$sSQL.= $db->qstr($user) . ',';
+		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
+		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ")";			
+
+		$db->Execute($sSQL,1);	 
+		
+		if ($db->Affected_Rows()) 
+			return true;
+		else 
+			return false;		
+	}	
 	
 };
 }

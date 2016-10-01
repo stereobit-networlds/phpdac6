@@ -1405,7 +1405,7 @@ EOF;
 		  $ret = $this->url;
 		  
 	    $ret .= $_SERVER['REQUEST_URI'];// ? '/'.$_SERVER['REQUEST_URI'] : null;
-		return ($ret);
+		return urldecode($ret);
 	    //return $_SERVER['PHP_SELF'];
     }
 
