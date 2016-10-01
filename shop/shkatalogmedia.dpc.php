@@ -161,7 +161,7 @@ class shkatalogmedia extends shkatalog {
 								 die($xml);	//xml output
 		                         break;
 								 
-		  case 'xmlout'        : GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //..to do also in cp chars etc //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
+		  case 'xmlout'        : GetGlobal('controller')->calldpc_method("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //..to do also in cp chars etc //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
 		                         $this->xmlread_list();
 								 $xml = $this->xml_feed();
 								 die($xml);	//xml output
@@ -169,11 +169,11 @@ class shkatalogmedia extends shkatalog {
 		  //cart override
 	      case 'addtocart'     : $cartstr = explode(';', GetReq('a')); 
 		                         $item = array_shift($cartstr); 
-		                         GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use $item+cartin");
+		                         GetGlobal('controller')->calldpc_method("cmsvstats.update_item_statistics use $item+cartin");
 		                         break; 
 		  case 'removefromcart': $cartstr = explode(';', GetReq('a'));
 		                         $item = array_shift($cartstr);
-		                         GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use $item+cartout");	                         
+		                         GetGlobal('controller')->calldpc_method("cmsvstats.update_item_statistics use $item+cartout");	                         
 		                         break;		
 		
 		  case 'showimage'    : $this->show_photodb(GetReq('id'), GetReq('type'));
@@ -181,14 +181,14 @@ class shkatalogmedia extends shkatalog {
 		  case 'kfilter'      : $filter = GetReq('input');
 		                        $this->my_one_item = $this->fread_list($filter); 
 								$_filter = $this->replace_spchars($filter,1);
-								GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use $_filter+filter");		  
+								GetGlobal('controller')->calldpc_method("cmsvstats.update_category_statistics use $_filter+filter");		  
 		                        break;		
 		  case 'klist'        : $this->my_one_item = $this->read_list(); 
-		                        GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use ".GetReq('cat'));//$this->replace_spchars(GetReq('cat'),1));		  
+		                        GetGlobal('controller')->calldpc_method("cmsvstats.update_category_statistics use ".GetReq('cat'));//$this->replace_spchars(GetReq('cat'),1));		  
 		                        break;	
 
 		  case 'kshow'        : $this->read_item(); 
-	                            GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use ".GetReq('id'));
+	                            GetGlobal('controller')->calldpc_method("cmsvstats.update_item_statistics use ".GetReq('id'));
                                 break;
 								
 		  default             : shkatalog::event($event);
@@ -334,7 +334,7 @@ class shkatalogmedia extends shkatalog {
 		
 		if ($text2find) {
 			
-		  GetGlobal('controller')->calldpc_method("rcvstats.update_category_statistics use $text2find+search");				
+		  GetGlobal('controller')->calldpc_method("cmsvstats.update_category_statistics use $text2find+search");				
 		
 		  $parts = explode(" ",$text2find);//get special words in text like code:  
 	

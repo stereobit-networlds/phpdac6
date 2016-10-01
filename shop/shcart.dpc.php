@@ -1810,7 +1810,7 @@ function addtocart(id,cartdetails)
 				//log 
 				$cartstr = explode(';', $product);
 				$item = $cartstr[0];
-				GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use $item+checkout");				
+				GetGlobal('controller')->calldpc_method("cmsvstats.update_item_statistics use $item+checkout");				
 			}	
 		}		 		
 		return true;
@@ -1837,7 +1837,7 @@ function addtocart(id,cartdetails)
 				/**** add log records to stats ****/ 
 				$cartstr = explode(';', $trcartrec);
 		        $item = $cartstr[0];
-		        GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use $item+cartin");				
+		        GetGlobal('controller')->calldpc_method("cmsvstats.update_item_statistics use $item+cartin");				
 				  
 			    $this->buffer[] = $trcartrec;
 			  }	

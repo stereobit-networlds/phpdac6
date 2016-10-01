@@ -248,6 +248,7 @@ EOF;
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
 	
+	    $currentdate = time();
 	    $myday  = date('d',$currentdate);	
 	    $mymonth= date('m',$currentdate);	
 	    $myyear = date('Y',$currentdate);
