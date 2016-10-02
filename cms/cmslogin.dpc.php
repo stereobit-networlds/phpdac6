@@ -6,6 +6,10 @@ define("CMSLOGIN_DPC",true);
 
 $__DPC['CMSLOGIN_DPC'] = 'cmslogin';
 
+define('YOUR_APP_ID', '1402380970015617');
+$a = GetGlobal('controller')->require_dpc('fb/facebook.lib.php');
+require_once($a);
+
 $__EVENTS['CMSLOGIN_DPC'][0]='cmslogin';
 $__EVENTS['CMSLOGIN_DPC'][1]='dologin';
 $__EVENTS['CMSLOGIN_DPC'][2]='dologout';
@@ -128,6 +132,7 @@ class cmslogin {
 	var $tmpl_path, $tmpl_name;	
 	
 	static $staticpath;
+	var $facebook_id, $facebook_key, $facebook;	
 
 	function __construct() {
 	    $sFormErr = GetGlobal('sFormErr');
@@ -185,7 +190,12 @@ class cmslogin {
 	    $this->recaptcha_private_key = remote_paramload('RECAPTCHA','privkey',$this->path);	      
 	   
 	    $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	    $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	   
+	    $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);
+
+	    //facebook login 
+	    $this->facebook_id = remote_paramload('CMSLOGIN','fbid',$this->path); //'1402380970015617';
+	    $this->facebook_key = remote_paramload('CMSLOGIN','fbkey',$this->path); //'8e09f14a39c54591921127ef2697cdd0';
+	    $this->facebook_userId = null;		
 	   
         //timezone	   
         date_default_timezone_set('Europe/Athens');		   
@@ -206,19 +216,26 @@ class cmslogin {
 		    case 'shremember'    : $this->do_the_job(); 
 			                       break;
 		    case 'shcaptcha'     : $this->do_the_captcha(); break;
-            case 'shlogin'       : break;
+            case 'cmslogin'      : $this->login_javascript(); break;
 
 			case "dologinajax"   :
             case "dologin"       :  
 			               switch ($__USERAGENT) {
-	                          case 'HTML' :  $this->login_successfull = $this->do_login();
-                                             if (($this->login_goto)&& ($this->login_successfull)) {
+	                          case 'HTML' :  $this->login_successfull = $this->is_fb_logged_in() ? $this->do_facebook_login() : $this->do_login();
+							  
+											 if (defined('SHCART_DPC')) 
+												$cartnotempty = GetGlobal('controller')->calldpc_method('shcart.notempty');
+											
+											 //goto after login...	
+											 //$this->login_goto = ($cartnotempty) ? $this->login_goto : 'xix/';//'xix.php';
+							  
+                                             if (($this->login_goto) && ($this->login_successfull)) {
 							                    if (!$this->dpc_after_goto)// inside code command
-			                                      $this->refresh_page_js($this->login_goto);	
+													$this->refresh_page_js($this->login_goto);	
 											 }	
 																		  
 							                 if (defined('UONLINE_DPC'))
-											   GetGlobal('controller')->calldpc_method('uonline.isOnline');
+												GetGlobal('controller')->calldpc_method('uonline.isOnline');
 											 break;
 	                          case 'XML'  :
 	                          case 'GTK'  :
@@ -234,9 +251,14 @@ class cmslogin {
             case "dologout":  
 			                switch ($__USERAGENT) {
 	                          case 'HTML' : if (defined('UONLINE_DPC'))
-    	                                      GetGlobal('controller')->calldpc_method('uonline.isOffline');
+												GetGlobal('controller')->calldpc_method('uonline.isOffline');
 											  
-                                            $this->do_logout();
+											if ($this->is_fb_logged_in()) {
+												//echo 'fb';
+												$this->do_facebook_logout();
+											}	
+											else 
+												$this->do_logout();
 											
                                             if ($this->logout_goto)
 			                                  $this->refresh_page_js($this->logout_goto); 											
@@ -278,7 +300,7 @@ class cmslogin {
 								  break;
 								 
 		    case 'shcaptcha'   : $out .= $this->show_the_captcha(); break;
-            case "shlogin"     : $out = $this->form(); break;
+            case "cmslogin"    : $out = $this->form(); break;
 
 			case "dologinajax" : $gurl = $_POST['FormGoto'] ? $_POST['FormGoto'] : $this->login_goto;
 			                     $goto = $gurl ? '<a href="'.$gurl.'">'.localize('_WELCOME2GO',getlocal()).'</a>' : null;
@@ -313,7 +335,132 @@ class cmslogin {
 		}
 
 		return ($out);
+	}	
+	
+	protected function login_javascript() {
+	
+        if (iniload('JAVASCRIPT')) {
+	   
+			$code = $this->fblogin_javascript();	   	
+			$js = new jscript;		   	 	
+			$js->load_js($code,null,1);		
+			unset ($js);
+	    }	
 	}		
+	
+	public function fblogin_javascript() {
+	
+		$fbjslogin = <<<FBLOGIN
+
+        window.fbAsyncInit = function() {
+          FB.init({
+            appId      : '{$this->facebook_id}',
+            status     : true, 
+            cookie     : true,
+            oauth      : true,
+            xfbml      : true,			
+			//channelUrl : '//WWW.YOUR_DOMAIN.COM/channel.html' // Channel File
+          }, true); //,true
+		  
+		  //window.fbAsyncInit = function() {
+			//FB.init({appId: "{$this->facebook_id}", status: true, cookie: true});
+		  	
+		  FB.getLoginStatus(function(response) {
+            if (response.status === 'connected') {
+
+                var uid = response.authResponse.userID;
+                var accessToken = response.authResponse.accessToken;
+
+                // Do something with the access token
+
+
+            } else {
+                // Subscribe to the event 'auth.authResponseChange' and wait for the user to autenticate
+                FB.Event.subscribe('auth.authResponseChange', function(response) {
+                    // nothing more needed than to reload the page
+                    //window.location.reload();
+					window.location.href='dologin/';
+                },true);      
+
+                // now dynamically show the login plugin
+                //$('#fb-div').show();      
+            }
+		  });	
+          //MUST BE LOADED IN EVERY PAGE IF login/logout from fb (remove if..)
+		  FB.Event.subscribe('auth.login', function(response) {
+			
+			//alert('login');
+			if (response.status === 'connected') 
+				window.location.href='dologin/';
+			else
+				window.location.href='dologout/';
+		  });
+		  /*FB.Event.subscribe('auth.logout', function (){
+			//window.location.reload();
+			alert('logout');
+			window.location.href='dologout/';
+		  });
+		  FB.Event.subscribe('auth.authResponseChange', function(response) {
+			alert('The status of the session is: ' + response.status);
+			window.location.reload();
+		  });*/		  
+        };	
+		
+        (function(d){
+           var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
+           js = d.createElement('script'); js.id = id; js.async = true;
+           js.src = "//connect.facebook.net/en_US/all.js";
+           d.getElementsByTagName('head')[0].appendChild(js);
+         }(document));
+FBLOGIN;
+	
+		return ($fbjslogin);
+	}
+	
+	protected function facebook_login($init_only=false, $js=false) {
+
+	    //if u want to see when logout...reg FP..remark return
+		//if ($this->is_fb_logged_in()) return('Facebook logged in');
+	
+	    $ret = '<div id="fb-root"></div>';
+		if ($js) {//for quickform call
+			$ret .= '<script>' .
+			        $this->fblogin_javascript(). 
+					'</script>';
+		} //for all at construct...
+		
+		if ($init_only==false) 
+			$ret .= '
+        <div id="fb-div" class="fb-login-button" scope="email,user_checkins">
+        Login with Facebook
+        </div>';
+	  	
+		return ($ret);
+	}	
+	
+	public function displayFBLoginButton() {
+		return '<fb:login-button show-faces="false" width="600" max-rows="1" scope="publish_stream, manage_pages, email" onlogin="afterFbLogin()"></fb:login-button>';
+	}	
+	
+	protected function is_fb_logged_in() {
+	    //print_r($_COOKIE);
+		
+		$this->facebook = new Facebook(array(
+							'appId'  => $this->facebook_id,
+							'secret' => $this->facebook_key,
+							));		
+							
+	    if ((!$this->facebook_id) || (!is_object($this->facebook))) 
+			return false;
+		
+		$cookie_name = 'fbsr_'. $this->facebook->getAppId();
+		//echo $cookie_name.'>';
+		if (array_key_exists($cookie_name, $_COOKIE))
+			return true;
+		
+		$this->facebook->destroySession();
+		return false;	
+	}	
 	
     protected function refresh_page_js($goto) {
    
@@ -611,6 +758,112 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 	
         return false;	
 	}
+	
+    /*[id] => 1678788437
+    [name] => Βασίλης Κομήτης
+    [first_name] => Βασίλης
+    [last_name] => Κομήτης
+    [link] => https://www.facebook.com/stereobit.networlds
+    [gender] => male
+    [email] => vasalex21@gmail.com
+    [timezone] => 2
+    [locale] => el_GR
+    [verified] => 1
+    [updated_time] => 2013-05-14T09:01:06+0000
+    [username] => stereobit.networlds*/		
+	public function do_facebook_login() {
+	    $db = GetGlobal('db');	
+	
+		if ($this->is_fb_logged_in()) {
+			$this->facebook_userId = $this->facebook->getUser();
+			//echo "FB User Id : " . $this->facebook_userId;
+			//if ($this->facebook_userId) {
+			$userInfo = $this->facebook->api('/me');
+
+			//echo "<pre>";
+			//print_r($userInfo);
+			//echo "</pre>";
+			
+			$sUsername = $userInfo['email'];
+			$sName = $userInfo['name'];
+			$sId = $userInfo['email'];//name'];//id'];
+			
+			//if (defined('SHSUBSCRIBE_DPC'))
+				//GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.$userInfo['email'].'+1+-1');
+			
+			//user exist ?
+			if (defined('SHUSERS_DPC')) {
+			
+			  $uret = GetGlobal('controller')->calldpc_method('shusers.username_exist use '.$userInfo['email']);
+			
+              if (!$uret) {//insert facebook user			
+				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid) values ";
+				$sSQL.= "('{$sUsername}','{$sName}','{$userInfo['first_name']}','{$userInfo['email']}','FACEBOOK','{$userInfo['email']}',1,1)";
+				$ret = $db->Execute($sSQL);
+			  }	
+			  else {
+				$sSQL = "UPDATE users set notes='FACEBOOK',fname='{$sName}',lname='{$userInfo['first_name']}' WHERE username='{$userInfo['email']}'";
+				$ret = $db->Execute($sSQL);
+                //$uret = true; 				
+              } 
+
+		      if (($uret) || ($ret = $db->Affected_Rows())) {
+		        SetGlobal('sFormErr',"ok");
+			    //if ($this->load_session)
+			      // $this->loadSession($sUsername);
+
+				SetSessionParam("UserName", encode($sUsername));
+				//SetSessionParam("Password", encode($sPassword));//!!!!!
+				SetSessionParam("UserID", encode($sId));
+				$GLOBALS['UserID']=encode($sId);
+				SetSessionParam("UserSecID", encode('1'));
+				
+				//set cookie
+				if (paramload('SHELL','cookies')) {
+					setcookie("cuser",$sUserName,time()+$this->time_of_session);
+					setcookie("csess",session_id(),time()+$this->time_of_session);
+				}		
+			  }
+            }
+            return true;			
+		}
+        else 
+		    SetGlobal('sFormErr',localize('_MSG1',getlocal()));	
+		
+		return false;
+	}
+	
+    public function do_facebook_logout() {
+        $UserName = GetGlobal('UserName');
+	    
+		if ($this->is_fb_logged_in()) {
+		
+			/*$cookie_name = 'fbsr_'. $this->facebook->getAppId();
+			$cookie_name2 = 'fbm_'.$this->facebook->getAppId();
+			echo $cookie_name.'>'.$cookie_name2;
+			unset($_COOKIE[$cookie_name]);
+			unset($_COOKIE[$cookie_name2]);*/
+		
+			$this->facebook->destroySession();		
+		}	
+
+		//$this->saveSession();
+		//print "save session";
+
+		//$un  = decode($UserName);	  
+		//setInfo(localize('_SEEYOU',getlocal()) . " $un ...");
+	  
+		SetSessionParam("UserName", null);
+		SetSessionParam("UserID", null);
+		$GLOBALS['UserID'] = null;
+		SetSessionParam("UserSecID", null);	  
+
+		//zero cookie
+		if (paramload('SHELL','cookies')) {
+			setcookie("cuser","");//,time()+3600,"",$this->iname,0);
+			setcookie("csess","");
+		}
+	}	
 
     public function do_login($user='',$pwd='',$editmode=null) {
 	    $db = GetGlobal('db');
