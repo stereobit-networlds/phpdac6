@@ -6,7 +6,7 @@ define("CMSLOGIN_DPC",true);
 
 $__DPC['CMSLOGIN_DPC'] = 'cmslogin';
 
-define('YOUR_APP_ID', '1402380970015617');
+//define('YOUR_APP_ID', '1402380970015617');
 $a = GetGlobal('controller')->require_dpc('fb/facebook.lib.php');
 require_once($a);
 
@@ -20,6 +20,7 @@ $__EVENTS['CMSLOGIN_DPC'][6]='chpass';
 $__EVENTS['CMSLOGIN_DPC'][7]='shrememberajax';
 $__EVENTS['CMSLOGIN_DPC'][8]='chpassajax';
 $__EVENTS['CMSLOGIN_DPC'][9]='dologinajax';
+$__EVENTS['CMSLOGIN_DPC'][10]='shlogin';
 
 $__ACTIONS['CMSLOGIN_DPC'][0]='cmslogin';
 $__ACTIONS['CMSLOGIN_DPC'][1]='dologin';
@@ -31,6 +32,7 @@ $__ACTIONS['CMSLOGIN_DPC'][6]='chpass';
 $__ACTIONS['CMSLOGIN_DPC'][7]='shrememberajax';
 $__ACTIONS['CMSLOGIN_DPC'][8]='chpassajax';
 $__ACTIONS['CMSLOGIN_DPC'][9]='dologinajax';
+$__ACTIONS['CMSLOGIN_DPC'][10]='shlogin';
 
 $__DPCATTR['CMSLOGIN_DPC']['cmslogin'] = 'cmslogin,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -66,6 +68,7 @@ $__LOCALE['CMSLOGIN_DPC'][28]='_NOTAFFECTED;Record not affected;Δεν έγιν�
 $__LOCALE['CMSLOGIN_DPC'][29]='_PLEASETEXT;Please fill out the information bellow and proceed;Παρακαλώ εισάγετε τα στοιχεία που ειναι απαραίτητα για την εισαγωγή στο σύστημα';
 $__LOCALE['CMSLOGIN_DPC'][30]='_WELCOME2GO;Press here to proceed;Πατήστε εδώ για να συνεχίσετε την περιηγησή σας';
 $__LOCALE['CMSLOGIN_DPC'][31]='_back;Back;Επιστροφή';
+$__LOCALE['CMSLOGIN_DPC'][32]='SHLOGIN_DPC;Login;Εισαγωγή';
 
 //cpmdbrec commands
 $__LOCALE['CMSLOGIN_DPC'][80]='_exit;Exit;Έξοδος';
@@ -215,8 +218,12 @@ class cmslogin {
 			case 'shrememberajax':
 		    case 'shremember'    : $this->do_the_job(); 
 			                       break;
-		    case 'shcaptcha'     : $this->do_the_captcha(); break;
-            case 'cmslogin'      : $this->login_javascript(); break;
+		    case 'shcaptcha'     : $this->do_the_captcha(); 
+			                       break;
+			
+			case 'shlogin'       :
+            case 'cmslogin'      : $this->login_javascript(); 
+			                       break;
 
 			case "dologinajax"   :
             case "dologin"       :  
@@ -299,8 +306,12 @@ class cmslogin {
 									$out = $this->html_form(); 
 								  break;
 								 
-		    case 'shcaptcha'   : $out .= $this->show_the_captcha(); break;
-            case "cmslogin"    : $out = $this->form(); break;
+		    case 'shcaptcha'   : $out = $this->show_the_captcha(); 
+			                     break;
+								 
+			case 'shlogin'     :								 
+            case "cmslogin"    : $out = $this->form(); 
+			                     break;
 
 			case "dologinajax" : $gurl = $_POST['FormGoto'] ? $_POST['FormGoto'] : $this->login_goto;
 			                     $goto = $gurl ? '<a href="'.$gurl.'">'.localize('_WELCOME2GO',getlocal()).'</a>' : null;
@@ -341,7 +352,8 @@ class cmslogin {
 	
         if (iniload('JAVASCRIPT')) {
 	   
-			$code = $this->fblogin_javascript();	   	
+			$code = $this->fblogin_javascript();
+			
 			$js = new jscript;		   	 	
 			$js->load_js($code,null,1);		
 			unset ($js);
@@ -417,7 +429,7 @@ FBLOGIN;
 		return ($fbjslogin);
 	}
 	
-	protected function facebook_login($init_only=false, $js=false) {
+	public function facebook_login($init_only=false, $js=false) {
 
 	    //if u want to see when logout...reg FP..remark return
 		//if ($this->is_fb_logged_in()) return('Facebook logged in');
@@ -442,7 +454,7 @@ FBLOGIN;
 		return '<fb:login-button show-faces="false" width="600" max-rows="1" scope="publish_stream, manage_pages, email" onlogin="afterFbLogin()"></fb:login-button>';
 	}	
 	
-	protected function is_fb_logged_in() {
+	public function is_fb_logged_in() {
 	    //print_r($_COOKIE);
 		
 		$this->facebook = new Facebook(array(
@@ -802,9 +814,11 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 				$ret = $db->Execute($sSQL);
 			  }	
 			  else {
+				/* DO NOTHING  
 				$sSQL = "UPDATE users set notes='FACEBOOK',fname='{$sName}',lname='{$userInfo['first_name']}' WHERE username='{$userInfo['email']}'";
 				$ret = $db->Execute($sSQL);
-                //$uret = true; 				
+				*/
+                $uret = true; 				
               } 
 
 		      if (($uret) || ($ret = $db->Affected_Rows())) {
