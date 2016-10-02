@@ -440,8 +440,10 @@ class shtransactions extends transactions {
        $UserName = GetGlobal('UserName');	   
 	   
 	   if (!$UserName) {
-	     if (defined('CMSLOGIN_DPC')) 
+	     if (defined('CMSLOGIN_DPC')) {
+		   GetGlobal('controller')->calldpc_method("cmslogin.login_javascript"); 	 
 		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +transview+shtransactions>viewTransactions");		   
+		 }  
 	     elseif (defined('SHLOGIN_DPC')) 
 		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +transview+shtransactions>viewTransactions");
 	     //else

@@ -69,6 +69,7 @@ $__LOCALE['CMSLOGIN_DPC'][29]='_PLEASETEXT;Please fill out the information bello
 $__LOCALE['CMSLOGIN_DPC'][30]='_WELCOME2GO;Press here to proceed;Πατήστε εδώ για να συνεχίσετε την περιηγησή σας';
 $__LOCALE['CMSLOGIN_DPC'][31]='_back;Back;Επιστροφή';
 $__LOCALE['CMSLOGIN_DPC'][32]='SHLOGIN_DPC;Login;Εισαγωγή';
+$__LOCALE['CMSLOGIN_DPC'][33]='_FBLOGIN;Login with Facebook;Σύνδεση με Facebook';
 
 //cpmdbrec commands
 $__LOCALE['CMSLOGIN_DPC'][80]='_exit;Exit;Έξοδος';
@@ -135,7 +136,7 @@ class cmslogin {
 	var $tmpl_path, $tmpl_name;	
 	
 	static $staticpath;
-	var $facebook_id, $facebook_key, $facebook;	
+	var $facebook_id, $facebook_key, $facebook_userId, $facebook;	
 
 	function __construct() {
 	    $sFormErr = GetGlobal('sFormErr');
@@ -222,7 +223,7 @@ class cmslogin {
 			                       break;
 			
 			case 'shlogin'       :
-            case 'cmslogin'      : $this->login_javascript(); 
+            case 'cmslogin'      : //$this->login_javascript(); //added in page load always
 			                       break;
 
 			case "dologinajax"   :
@@ -260,10 +261,8 @@ class cmslogin {
 	                          case 'HTML' : if (defined('UONLINE_DPC'))
 												GetGlobal('controller')->calldpc_method('uonline.isOffline');
 											  
-											if ($this->is_fb_logged_in()) {
-												//echo 'fb';
+											if ($this->is_fb_logged_in()) 
 												$this->do_facebook_logout();
-											}	
 											else 
 												$this->do_logout();
 											
@@ -361,69 +360,52 @@ class cmslogin {
 	}		
 	
 	public function fblogin_javascript() {
+		
+		$localization = (getlocal()==1) ? 'el-GR' : 'en_US';
 	
 		$fbjslogin = <<<FBLOGIN
-
-        window.fbAsyncInit = function() {
-          FB.init({
-            appId      : '{$this->facebook_id}',
-            status     : true, 
-            cookie     : true,
-            oauth      : true,
-            xfbml      : true,			
-			//channelUrl : '//WWW.YOUR_DOMAIN.COM/channel.html' // Channel File
-          }, true); //,true
-		  
-		  //window.fbAsyncInit = function() {
-			//FB.init({appId: "{$this->facebook_id}", status: true, cookie: true});
+		window.fbAsyncInit = function() { 
+		  FB.init({appId: '{$this->facebook_id}', xfbml: true, cookie: true, xfbml: true, version: 'v2.7'});
 		  	
 		  FB.getLoginStatus(function(response) {
             if (response.status === 'connected') {
-
                 var uid = response.authResponse.userID;
                 var accessToken = response.authResponse.accessToken;
-
                 // Do something with the access token
-
+				testAPI();
 
             } else {
                 // Subscribe to the event 'auth.authResponseChange' and wait for the user to autenticate
                 FB.Event.subscribe('auth.authResponseChange', function(response) {
-                    // nothing more needed than to reload the page
-                    //window.location.reload();
 					window.location.href='dologin/';
-                },true);      
-
-                // now dynamically show the login plugin
-                //$('#fb-div').show();      
+                },true);           
             }
 		  });	
-          //MUST BE LOADED IN EVERY PAGE IF login/logout from fb (remove if..)
+
 		  FB.Event.subscribe('auth.login', function(response) {
-			
-			//alert('login');
 			if (response.status === 'connected') 
 				window.location.href='dologin/';
 			else
 				window.location.href='dologout/';
-		  });
-		  /*FB.Event.subscribe('auth.logout', function (){
-			//window.location.reload();
-			alert('logout');
-			window.location.href='dologout/';
-		  });
-		  FB.Event.subscribe('auth.authResponseChange', function(response) {
-			alert('The status of the session is: ' + response.status);
-			window.location.reload();
-		  });*/		  
+		  });	  
         };	
 		
-        (function(d){
-           var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
-           js = d.createElement('script'); js.id = id; js.async = true;
-           js.src = "//connect.facebook.net/en_US/all.js";
-           d.getElementsByTagName('head')[0].appendChild(js);
-         }(document));
+		(function(d, s, id){
+			var js, fjs = d.getElementsByTagName(s)[0];
+			if (d.getElementById(id)) {return;}
+			js = d.createElement(s); js.id = id;
+			js.src = "//connect.facebook.net/{$localization}/sdk.js";
+			fjs.parentNode.insertBefore(js, fjs);
+		}(document, 'script', 'facebook-jssdk'));
+
+		function testAPI() {
+			console.log('Welcome!  Fetching your information.... ');
+			FB.api('/me?fields=id,email,name', function(response) {
+				console.log('Successful login for: ' + response.email);
+				document.getElementById('status').innerHTML =
+				'Thanks for logging in, ' + response.name + '!';
+			});
+		}		
 FBLOGIN;
 	
 		return ($fbjslogin);
@@ -442,10 +424,7 @@ FBLOGIN;
 		} //for all at construct...
 		
 		if ($init_only==false) 
-			$ret .= '
-        <div id="fb-div" class="fb-login-button" scope="public_profile">
-        Login with Facebook
-        </div>';
+			$ret .= '<div id="fb-div" class="fb-login-button" data-auto-logout-link="true" scope="public_profile,email">' . localize('_FBLOGIN',getlocal()) . '</div>';
 	  	
 		return ($ret);
 	}	
@@ -492,20 +471,6 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 ";
 		return ($ret);
     }   	
-
-	protected function title() {
-		$UserID = GetGlobal('UserID');
-
-		$uid = decode($UserID);
-
-		//navigation status
-		if ($uid == "")
-			$out = setNavigator(localize('CMSLOGIN_DPC',getlocal()));
-		else
-			$out = setNavigator(localize('_SHLOGOUT',getlocal()));
-
-		return ($out);
-	}
 
 	public function html_form($tokensout=null) {
 	    $sFormErr = GetGlobal('sFormErr');
@@ -567,8 +532,6 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 		      $tokens[] = $sFormErr;
 		}
 		else {	 
-		 
-		    $loginform .= $toprint = $this->title();
 						   		 
 		    if (($sFormErr=='ok')||($sFormErr=='Ok')||($sFormErr=='OK')||($sFormErr=='OKREMINDER')) {//fix ok global msg
 			  if (stristr($sFormErr,'ok'))
@@ -667,8 +630,7 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 	    }	 
 
 		switch ($agent) {
-	        case 'HTML' : //template form
-			              //$toprint = $this->title();
+	        case 'HTML' : 
 			default     :			   
 			              $toprint = $this->html_form();
 		                  break;
@@ -787,45 +749,40 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 	
 		if ($this->is_fb_logged_in()) {
 			$this->facebook_userId = $this->facebook->getUser();
-			echo "FB User Id : " . $this->facebook_userId;
+			//echo "FB User Id : " . $this->facebook_userId;
 			//if ($this->facebook_userId) {
-			$userInfo = $this->facebook->api('/me');
+			$userInfo = $this->facebook->api('/me?fields=id,email,name,first_name,last_name');
 
-			echo "<pre>";
-			print_r($userInfo);
-			echo "</pre>";
+			//echo "<pre>";
+			//print_r($userInfo);
+			//echo "</pre>";
 			
-			$sUsername = $userInfo['email'];
-			$sName = $userInfo['name'];
-			$sId = $userInfo['email'];//name'];//id'];
+			if ($sUsername = $userInfo['email']) {
+			  $sName = $userInfo['name'];
+			  $sId = $userInfo['email'];//name'];//id'];
 			
-			//if (defined('SHSUBSCRIBE_DPC'))
-				//GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.$userInfo['email'].'+1+-1');
-			
-			//user exist ?
-			//if (defined('SHUSERS_DPC')) {
-			  //$uret = GetGlobal('controller')->calldpc_method('shusers.username_exist use '.$userInfo['email']);
-			  
-			  $sSQL = "select id,username,notes from users WHERE username='{$userInfo['email']}' order by id DESCR LIMIT 1"; //last entry
+			  $sSQL = "select id,username,notes from users WHERE username='{$userInfo['email']}' and notes='ACTIVE' order by id desc LIMIT 1"; //last entry
 			  $uret = $db->Execute($sSQL);
-			
-              //if (!$uret) {		
+		
 			  if (!$uret->fields[0]) {
+				 
+				$fbpass	= md5($uret.'!@test@!'.time()); //auto gen password
+				  
 				//insert facebook user (active by def)	  
-				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid) values ";
-				$sSQL.= "('{$sUsername}','{$userInfo['first_name']}','{$userInfo['last_name']}','{$userInfo['email']}','ACTIVE','{$userInfo['email']}',1,1)";
-				$ret = $db->Execute($sSQL);
+				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid, password, vpass) values ";
+				$sSQL.= "('{$sUsername}','{$userInfo['first_name']}','{$userInfo['last_name']}','{$userInfo['email']}','ACTIVE','{$userInfo['email']}',1,1, '{$fbpass}','{$fbpass}')";
 			  }	
 			  else {  
 			    //update existed user with facebook data (active by def)
 				$sSQL = "UPDATE users set fname='{$userInfo['first_name']}',lname='{$userInfo['last_name']}', notes='ACTIVE' WHERE username='{$userInfo['email']}'";
-				$ret = $db->Execute($sSQL);
                 $uret = false; 				
               } 
-              echo $sSQL;
+			  $ret = $db->Execute($sSQL);
+              //echo $sSQL;
 			  
-		      if (($uret) || ($ret = $db->Affected_Rows())) {
-		        SetGlobal('sFormErr',"ok");
+		      //if (($uret) || ($ret = $db->Affected_Rows())) {
+		        //SetGlobal('sFormErr',"ok");
+				
 			    //if ($this->load_session)
 			      // $this->loadSession($sUsername);
 
@@ -841,9 +798,10 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 				}
 
 				$this->update_login_statistics('fblogin', $sUsername);	
-			  }
-            //}
-            return true;			
+			  //}
+			  return true;
+            }
+            return false;			
 		}
         else 
 		    SetGlobal('sFormErr',localize('_MSG1',getlocal()));	
@@ -853,8 +811,13 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 	
     public function do_facebook_logout() {
         $UserName = GetGlobal('UserName');
-	    
-		if ($this->is_fb_logged_in()) {
+		$un  = decode($UserName);			
+
+		//$this->saveSession();
+		$this->update_login_statistics('fblogout', $un);
+		setInfo(localize('_SEEYOU',getlocal()) . " $un");
+
+		//if ($this->is_fb_logged_in()) {
 		
 			/*$cookie_name = 'fbsr_'. $this->facebook->getAppId();
 			$cookie_name2 = 'fbm_'.$this->facebook->getAppId();
@@ -862,14 +825,8 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 			unset($_COOKIE[$cookie_name]);
 			unset($_COOKIE[$cookie_name2]);*/
 		
-			$this->facebook->destroySession();		
-		}	
-
-		//$this->saveSession();
-		//print "save session";
-
-		//$un  = decode($UserName);	  
-		//setInfo(localize('_SEEYOU',getlocal()) . " $un ...");
+			$this->facebook->destroySession();	//<<<<<<< not destroyed	
+		//}			
 	  
 		SetSessionParam("UserName", null);
 		SetSessionParam("UserID", null);
@@ -973,19 +930,17 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 
     public function do_logout() {
 		$UserName = GetGlobal('UserName');
-
 		$un  = decode($UserName);
+		
 		$this->saveSession();
-
-		setInfo(localize('_SEEYOU',getlocal()) . " $un ...");
+		$this->update_login_statistics('logout', $un);
+		setInfo(localize('_SEEYOU',getlocal()) . " $un");
 
 		//zero cookie
 		if (paramload('SHELL','cookies')) {
 			setcookie("cuser","");
 			setcookie("csess","");
 		}
-		
-		$this->update_login_statistics('logout', $un);
 	}
 	
 	public function getUserName() {

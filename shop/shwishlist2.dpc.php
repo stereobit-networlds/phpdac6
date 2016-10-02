@@ -225,8 +225,10 @@ class shwishlist2 extends shwishlist {
        $UserName = GetGlobal('UserName');	   
 	   
 	   if (!$UserName) {
-	     if (defined('CMSLOGIN_DPC')) 
+	     if (defined('CMSLOGIN_DPC')) {
+		   GetGlobal('controller')->calldpc_method("cmslogin.login_javascript"); 	 
 		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +wsview+wishlist>viewWishList");		   
+		 }  
 	     elseif (defined('SHLOGIN_DPC')) 
 		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +wsview+wishlist>viewWishList");
 	     else
@@ -298,6 +300,7 @@ class shwishlist2 extends shwishlist {
 	    $name = $UserName?decode($UserName):null;
 	    if (!$name) {
 		    if (defined('CMSLOGIN_DPC')) {
+				GetGlobal('controller')->calldpc_method("cmslogin.login_javascript"); 
 				$out = GetGlobal('controller')->calldpc_method('cmslogin.form');
 				return($out);
 			}			
@@ -387,8 +390,10 @@ class shwishlist2 extends shwishlist {
        $UserName = GetGlobal('UserName');	   
 	   
 	   if (!$UserName) {
-	     if (defined('CMSLOGIN_DPC')) 
+	     if (defined('CMSLOGIN_DPC')) {
+		   GetGlobal('controller')->calldpc_method("cmslogin.login_javascript"); 	 
 		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +wsview+wishlist>viewWishList");		   
+		 }  
 	     elseif (defined('SHLOGIN_DPC')) 
 		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +wsview+wishlist>viewWishList");
 	     else
