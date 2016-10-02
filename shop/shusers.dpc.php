@@ -285,12 +285,12 @@ class shusers  {
 										    //$out .= 'shcart';
 										    $carthasvalue = GetGlobal('controller')->calldpc_method("shcart.getcartTotal use 1");
 											if ($carthasvalue>0)
-											   $out .= GetGlobal('controller')->calldpc_method("shlogin.quickform use +viewcart+shcart>cartview+status+1");	 
+											   $out .= GetGlobal('controller')->calldpc_method("cmslogin.quickform use +viewcart+shcart>cartview+status+1");	 
 											else   
-											   $out .= GetGlobal('controller')->calldpc_method('shlogin.form use html');
+											   $out .= GetGlobal('controller')->calldpc_method('cmslogin.form use html');
 										 }
                                          else 										 
-											$out .= GetGlobal('controller')->calldpc_method('shlogin.form');
+											$out .= GetGlobal('controller')->calldpc_method('cmslogin.form');
 								      }		 
 									  else
                                          $out = $this->msg;//GetGlobal('sFormErr');	
@@ -1149,52 +1149,39 @@ class shusers  {
 	}
 	
 	function after_registration_goto() {
-	   $sFormErr = GetGlobal('sFormErr');	
+	    $sFormErr = GetGlobal('sFormErr');	
 	
-       if ($this->predef_customer) {//repdefined customer
-						     $content = $this->predef_customer . "<H4>".$this->atok."</H4>";
-							 $mx = "100%";
-			                 $win = new window(localize('_MSG10',getlocal()),$content);
-			                 $out .= $win->render("center::$mx::0::group_win_body::left::0::0::");
-			                 unset($win);									 
-	   }
-	   elseif ($this->includecusform) {//customer has submited with user form
-						     if ( (defined('SHCART_DPC')) && (seclevel('SHCART_DPC',$this->userLevelID)) ) {
-							   $out .= GetGlobal('controller')->calldpc_method('shcustomers.after_registration_goto');
-							 }
-							 elseif ( (defined('SHLOGIN_DPC')) && (seclevel('SHLOGIN_DPC',$this->userLevelID)) ) {
-							   $out .= GetGlobal('controller')->calldpc_method('shlogin.html_form');
-							 }
-	   }
-	   else {//goto customer registration
+        if ($this->predef_customer) {//repdefined customer
+		    $content = $this->predef_customer . "<H4>".$this->atok."</H4>";
+		    $mx = "100%";
+			$win = new window(localize('_MSG10',getlocal()),$content);
+			$out .= $win->render("center::$mx::0::group_win_body::left::0::0::");
+			unset($win);									 
+	    }
+	    elseif ($this->includecusform) {//customer has submited with user form
+			if ( (defined('SHCART_DPC')) && (seclevel('SHCART_DPC',$this->userLevelID)) ) {
+			    $out .= GetGlobal('controller')->calldpc_method('shcustomers.after_registration_goto');
+			}
+			elseif ( (defined('CMSLOGIN_DPC')) && (seclevel('CMSLOGIN_DPC',$this->userLevelID)) ) {
+			    $out .= GetGlobal('controller')->calldpc_method('cmslogin.html_form');
+		    }
+	    }
+	    else {//goto customer registration
        
-		   if (($this->continue_register_customer) && ( (defined('SHCUSTOMERS_DPC')) && (seclevel('SHCUSTOMERS_DPC',$this->userLevelID)) )) {
-							   //find id......
-							   $this->new_user_id = GetGlobal('controller')->calldpc_method('shcustomers.getmaxid')+1;
-                               $out .= GetGlobal('controller')->calldpc_method('shcustomers.register use '.$this->new_user_id);
-		   }	  
-		   elseif ( (defined('SHLOGIN_DPC')) && (seclevel('SHLOGIN_DPC',$this->userLevelID)) ) {
-							   $out .= GetGlobal('controller')->calldpc_method('shlogin.html_form');
-		   }
-		   else //continue rendering
-		     $out .= '';
-
-						/*     if ( (defined('SHCUSTOMERS_DPC')) && (seclevel('INSERTCUSTOMER_',$this->userLevelID)) ) {
-							   //find id......
-							   $this->new_user_id = GetGlobal('controller')->calldpc_method('shcustomers.getmaxid')+1;
-                               $out .= GetGlobal('controller')->calldpc_method('shcustomers.register use '.$this->new_user_id);
-							   //$mx = "100%";
-							 }
-							 elseif ( (defined('SHLOGIN_DPC')) && (seclevel('SHLOGIN_DPC',$this->userLevelID)) ) {
-							   $out .= GetGlobal('controller')->calldpc_method('shlogin.html_form');
-							 }
-						     //else
-							   //$mx = "50%";*/
-							 
-	   }	
+		    if (($this->continue_register_customer) && ( (defined('SHCUSTOMERS_DPC')) && (seclevel('SHCUSTOMERS_DPC',$this->userLevelID)) )) {
+				//find id......
+				$this->new_user_id = GetGlobal('controller')->calldpc_method('shcustomers.getmaxid')+1;
+                $out .= GetGlobal('controller')->calldpc_method('shcustomers.register use '.$this->new_user_id);
+		    }	  
+		    elseif ( (defined('CMSLOGIN_DPC')) && (seclevel('CMSLOGIN_DPC',$this->userLevelID)) ) {
+			    $out .= GetGlobal('controller')->calldpc_method('cmslogin.html_form');
+		    }
+		    else //continue rendering
+				$out .= '';	 
+	    }	
 						   				   
 						   
-	   return ($out);
+	    return ($out);
 	}	
 	
 	function after_update_goto() {

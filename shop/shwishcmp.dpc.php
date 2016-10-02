@@ -215,9 +215,10 @@ class shwishcmp extends shkatalogmedia {
        $UserName = GetGlobal('UserName');	   
 	   
 	   if (!$UserName) {
-	     if (defined('SHLOGIN_DPC')) {
+	     if (defined('CMSLOGIN_DPC')) 
+		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +wsview+wishlist>viewWishList");		   
+	     elseif (defined('SHLOGIN_DPC')) 
 		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +wsview+wishlist>viewWishList");
-		 }
 	     else
 	       $out = ("You must be logged in to view this page.");
 		   
@@ -380,9 +381,10 @@ class shwishcmp extends shkatalogmedia {
        $UserName = GetGlobal('UserName');	   
 	   
 	   if (!$UserName) {
-	     if (defined('SHLOGIN_DPC')) {
+		 if (defined('CMSLOGIN_DPC')) 
+		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +wsview+wishlist>viewWishList");  
+	     elseif (defined('SHLOGIN_DPC')) 
 		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +wsview+wishlist>viewWishList");
-		 }
 	     else
 	       $out = ("You must be logged in to view this page.");
 		   

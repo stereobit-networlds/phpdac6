@@ -196,8 +196,8 @@ class cmslogin {
 	    $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);
 
 	    //facebook login 
-	    $this->facebook_id = remote_paramload('CMSLOGIN','fbid',$this->path); //'1402380970015617';
-	    $this->facebook_key = remote_paramload('CMSLOGIN','fbkey',$this->path); //'8e09f14a39c54591921127ef2697cdd0';
+	    $this->facebook_id = remote_paramload('CMSLOGIN','fbid',$this->path); 
+	    $this->facebook_key = remote_paramload('CMSLOGIN','fbkey',$this->path); 
 	    $this->facebook_userId = null;		
 	   
         //timezone	   
@@ -348,7 +348,7 @@ class cmslogin {
 		return ($out);
 	}	
 	
-	protected function login_javascript() {
+	public function login_javascript() {
 	
         if (iniload('JAVASCRIPT')) {
 	   
@@ -443,7 +443,7 @@ FBLOGIN;
 		
 		if ($init_only==false) 
 			$ret .= '
-        <div id="fb-div" class="fb-login-button" scope="email,user_checkins">
+        <div id="fb-div" class="fb-login-button" scope="public_profile">
         Login with Facebook
         </div>';
 	  	
@@ -456,7 +456,6 @@ FBLOGIN;
 	
 	public function is_fb_logged_in() {
 	    //print_r($_COOKIE);
-		
 		$this->facebook = new Facebook(array(
 							'appId'  => $this->facebook_id,
 							'secret' => $this->facebook_key,
@@ -788,13 +787,13 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 	
 		if ($this->is_fb_logged_in()) {
 			$this->facebook_userId = $this->facebook->getUser();
-			//echo "FB User Id : " . $this->facebook_userId;
+			echo "FB User Id : " . $this->facebook_userId;
 			//if ($this->facebook_userId) {
 			$userInfo = $this->facebook->api('/me');
 
-			//echo "<pre>";
-			//print_r($userInfo);
-			//echo "</pre>";
+			echo "<pre>";
+			print_r($userInfo);
+			echo "</pre>";
 			
 			$sUsername = $userInfo['email'];
 			$sName = $userInfo['name'];
@@ -804,41 +803,46 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 				//GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.$userInfo['email'].'+1+-1');
 			
 			//user exist ?
-			if (defined('SHUSERS_DPC')) {
+			//if (defined('SHUSERS_DPC')) {
+			  //$uret = GetGlobal('controller')->calldpc_method('shusers.username_exist use '.$userInfo['email']);
+			  
+			  $sSQL = "select id,username,notes from users WHERE username='{$userInfo['email']}' order by id DESCR LIMIT 1"; //last entry
+			  $uret = $db->Execute($sSQL);
 			
-			  $uret = GetGlobal('controller')->calldpc_method('shusers.username_exist use '.$userInfo['email']);
-			
-              if (!$uret) {//insert facebook user			
+              //if (!$uret) {		
+			  if (!$uret->fields[0]) {
+				//insert facebook user (active by def)	  
 				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid) values ";
-				$sSQL.= "('{$sUsername}','{$sName}','{$userInfo['first_name']}','{$userInfo['email']}','FACEBOOK','{$userInfo['email']}',1,1)";
+				$sSQL.= "('{$sUsername}','{$userInfo['first_name']}','{$userInfo['last_name']}','{$userInfo['email']}','ACTIVE','{$userInfo['email']}',1,1)";
 				$ret = $db->Execute($sSQL);
 			  }	
-			  else {
-				/* DO NOTHING  
-				$sSQL = "UPDATE users set notes='FACEBOOK',fname='{$sName}',lname='{$userInfo['first_name']}' WHERE username='{$userInfo['email']}'";
+			  else {  
+			    //update existed user with facebook data (active by def)
+				$sSQL = "UPDATE users set fname='{$userInfo['first_name']}',lname='{$userInfo['last_name']}', notes='ACTIVE' WHERE username='{$userInfo['email']}'";
 				$ret = $db->Execute($sSQL);
-				*/
-                $uret = true; 				
+                $uret = false; 				
               } 
-
+              echo $sSQL;
+			  
 		      if (($uret) || ($ret = $db->Affected_Rows())) {
 		        SetGlobal('sFormErr',"ok");
 			    //if ($this->load_session)
 			      // $this->loadSession($sUsername);
 
+			    $GLOBALS['UserID'] = encode($sId);
 				SetSessionParam("UserName", encode($sUsername));
-				//SetSessionParam("Password", encode($sPassword));//!!!!!
 				SetSessionParam("UserID", encode($sId));
-				$GLOBALS['UserID']=encode($sId);
 				SetSessionParam("UserSecID", encode('1'));
 				
 				//set cookie
 				if (paramload('SHELL','cookies')) {
 					setcookie("cuser",$sUserName,time()+$this->time_of_session);
 					setcookie("csess",session_id(),time()+$this->time_of_session);
-				}		
+				}
+
+				$this->update_login_statistics('fblogin', $sUsername);	
 			  }
-            }
+            //}
             return true;			
 		}
         else 
@@ -926,10 +930,9 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
                 if ($this->load_session)
 				    $this->loadSession($sUsername);
 
+				$GLOBALS['UserID'] = encode($result->fields[$this->actcode]);
                 SetSessionParam("UserName", encode($sUsername));
-				SetSessionParam("Password", encode($sPassword));//!!!!!
                 SetSessionParam("UserID", encode($result->fields[$this->actcode]));
-				$GLOBALS['UserID']=encode($result->fields[$this->actcode]);
                 SetSessionParam("UserSecID", encode($result->fields['seclevid']));
 							  
 				if ((defined('SHCUSTOMERS_DPC')))   						  

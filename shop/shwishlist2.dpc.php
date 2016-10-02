@@ -128,6 +128,10 @@ class shwishlist2 extends shwishlist {
         $UserName = GetGlobal('UserName');	
 	    $name = $UserName?decode($UserName):null;
 	    if (!$name) {
+			if (defined('CMSLOGIN_DPC')) {
+				$out = GetGlobal('controller')->calldpc_method('cmslogin.form');
+				return($out);
+			}				
 		    if (defined('SHLOGIN_DPC')) {
 				$out = GetGlobal('controller')->calldpc_method('shlogin.form');
 				return($out);
@@ -221,9 +225,10 @@ class shwishlist2 extends shwishlist {
        $UserName = GetGlobal('UserName');	   
 	   
 	   if (!$UserName) {
-	     if (defined('SHLOGIN_DPC')) {
+	     if (defined('CMSLOGIN_DPC')) 
+		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +wsview+wishlist>viewWishList");		   
+	     elseif (defined('SHLOGIN_DPC')) 
 		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +wsview+wishlist>viewWishList");
-		 }
 	     else
 	       $out = ("You must be logged in to view this page.");
 		   
@@ -292,7 +297,11 @@ class shwishlist2 extends shwishlist {
         $UserName = GetGlobal('UserName');	
 	    $name = $UserName?decode($UserName):null;
 	    if (!$name) {
-		    if (defined('SHLOGIN_DPC')) {
+		    if (defined('CMSLOGIN_DPC')) {
+				$out = GetGlobal('controller')->calldpc_method('cmslogin.form');
+				return($out);
+			}			
+		    elseif (defined('SHLOGIN_DPC')) {
 				$out = GetGlobal('controller')->calldpc_method('shlogin.form');
 				return($out);
 			}
@@ -378,9 +387,10 @@ class shwishlist2 extends shwishlist {
        $UserName = GetGlobal('UserName');	   
 	   
 	   if (!$UserName) {
-	     if (defined('SHLOGIN_DPC')) {
+	     if (defined('CMSLOGIN_DPC')) 
+		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +wsview+wishlist>viewWishList");		   
+	     elseif (defined('SHLOGIN_DPC')) 
 		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +wsview+wishlist>viewWishList");
-		 }
 	     else
 	       $out = ("You must be logged in to view this page.");
 		   

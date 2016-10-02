@@ -477,9 +477,10 @@ window.onload=function(){
 	
 	function after_registration_goto() {
 	
-       if ( (defined('SHLOGIN_DPC')) && (seclevel('SHLOGIN_DPC',$this->userLevelID)) ) {
-		      //already in...
-		      if (GetSessionParam('UserID')) {
+		if ( (defined('CMSLOGIN_DPC')) && (seclevel('CMSLOGIN_DPC',$this->userLevelID)) ) {	
+		
+		    //already in...
+		    if (GetSessionParam('UserID')) {
 			    if (defined('SHCART_DPC')) { 
 				  $cartitems = GetGlobal('controller')->calldpc_method('shcart.getcartItems');
 				  if ($cartitems) 
@@ -489,16 +490,12 @@ window.onload=function(){
 				}  
 				else  
 			      $out = null; //goto fp
-			  } 
-			  else {
-			    $out .= GetGlobal('controller')->calldpc_method('shlogin.html_form');
+		    } 
+			else {
+			    $out .= GetGlobal('controller')->calldpc_method('cmslogin.html_form');
 			    SetPreSessionParam('afterlogingoto','shcart.cartview');
-			  }
-		} 
-			
-		//$win = new window(localize('_MSG10',getlocal()),$msg);
-		//$out .= $win->render("center::50%::0::group_win_body::left::0::0::");
-		//unset($win);			 
+			}
+		} 		 
 			  
 		return ($out);	
 	}	

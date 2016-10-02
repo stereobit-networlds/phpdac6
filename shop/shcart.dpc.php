@@ -3920,11 +3920,17 @@ function addtocart(id,cartdetails)
 	   switch ($this->todo) {
 
 	     case 'loginorregister' : //SetPreSessionParam('recalcdb','1');//set reculc from db=1
-		                          if (defined('SHLOGIN_DPC')) 
- 		                            $a = GetGlobal('controller')->calldpc_method("shlogin.quickform use +viewcart+shcart>cartview+status+1");
+		 
+								  if (defined('CMSLOGIN_DPC')) { 
 								  
-								  if (defined('SHUSERS_DPC'))
- 		                            $b = GetGlobal('controller')->calldpc_method("shusers.regform");
+									//call js for fb login	
+									GetGlobal('controller')->calldpc_method("cmslogin.login_javascript"); 
+									
+									$a = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +viewcart+shcart>cartview+status+1");  
+								  }	
+
+								  if (defined('SHUSERS_DPC')) 
+									$b = GetGlobal('controller')->calldpc_method("shusers.regform");
 									
 								  $c = $this->quickview();									
 									
