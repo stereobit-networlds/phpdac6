@@ -3924,7 +3924,7 @@ function addtocart(id,cartdetails)
 								  if (defined('CMSLOGIN_DPC')) { 
 								  
 									//call js for fb login	
-									GetGlobal('controller')->calldpc_method("cmslogin.login_javascript"); 
+									//GetGlobal('controller')->calldpc_method("cmslogin.login_javascript"); //always in code called by html
 									
 									$a = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +viewcart+shcart>cartview+status+1");  
 								  }	

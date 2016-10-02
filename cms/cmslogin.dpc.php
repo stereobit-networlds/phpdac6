@@ -136,7 +136,7 @@ class cmslogin {
 	var $tmpl_path, $tmpl_name;	
 	
 	static $staticpath;
-	var $facebook_id, $facebook_key, $facebook_userId, $facebook;	
+	var $facebook_id, $facebook_key, $facebook_userId, $facebook, $fbhash;	
 
 	function __construct() {
 	    $sFormErr = GetGlobal('sFormErr');
@@ -184,7 +184,7 @@ class cmslogin {
 	    $this->load_session = remote_paramload('SHLOGIN','loadsession',$this->path);
 
 	    $this->after_goto = remote_paramload('SHLOGIN','aftergoto',$this->path);
-	    $this->dpc_after_goto = GetSessionParam('afterlogingoto')?GetSessionParam('afterlogingoto'):$this->after_goto;
+	    $this->dpc_after_goto = GetSessionParam('afterlogingoto') ? GetSessionParam('afterlogingoto') : $this->after_goto;
 	    $this->login_successfull = false;
 	   
 	    $this->logout_goto = remote_paramload('SHLOGIN','logout_goto',$this->path);
@@ -199,8 +199,10 @@ class cmslogin {
 	    //facebook login 
 	    $this->facebook_id = remote_paramload('CMSLOGIN','fbid',$this->path); 
 	    $this->facebook_key = remote_paramload('CMSLOGIN','fbkey',$this->path); 
-	    $this->facebook_userId = null;		
-	   
+	    $this->facebook_userId = null;	
+		$this->fbhash = GetSessionParam('fbhash');	
+	   	//echo $this->fbhash,'>';
+		
         //timezone	   
         date_default_timezone_set('Europe/Athens');		   
 	}
@@ -230,13 +232,13 @@ class cmslogin {
             case "dologin"       :  
 			               switch ($__USERAGENT) {
 	                          case 'HTML' :  $this->login_successfull = $this->is_fb_logged_in() ? $this->do_facebook_login() : $this->do_login();
-							  
+							                 /* 
 											 if (defined('SHCART_DPC')) 
 												$cartnotempty = GetGlobal('controller')->calldpc_method('shcart.notempty');
 											
 											 //goto after login...	
-											 //$this->login_goto = ($cartnotempty) ? $this->login_goto : 'xix/';//'xix.php';
-							  
+											 $this->login_goto = ($cartnotempty) ? $this->login_goto : '/';//'signup/';
+							                 */
                                              if (($this->login_goto) && ($this->login_successfull)) {
 							                    if (!$this->dpc_after_goto)// inside code command
 													$this->refresh_page_js($this->login_goto);	
@@ -352,15 +354,16 @@ class cmslogin {
         if (iniload('JAVASCRIPT')) {
 	   
 			$code = $this->fblogin_javascript();
-			
-			$js = new jscript;		   	 	
-			$js->load_js($code,null,1);		
-			unset ($js);
+			if ($code) {
+				$js = new jscript;		   	 	
+				$js->load_js($code,null,1);		
+				unset ($js);
+			}
 	    }	
 	}		
 	
 	public function fblogin_javascript() {
-		
+	    if (!$this->facebook_id) return null;	
 		$localization = (getlocal()==1) ? 'el-GR' : 'en_US';
 	
 		$fbjslogin = <<<FBLOGIN
@@ -377,14 +380,14 @@ class cmslogin {
             } else {
                 // Subscribe to the event 'auth.authResponseChange' and wait for the user to autenticate
                 FB.Event.subscribe('auth.authResponseChange', function(response) {
-					window.location.href='dologin/';
+					window.location.href='dologin/#facebook';
                 },true);           
             }
 		  });	
 
 		  FB.Event.subscribe('auth.login', function(response) {
 			if (response.status === 'connected') 
-				window.location.href='dologin/';
+				window.location.href='dologin/#facebook';
 			else
 				window.location.href='dologout/';
 		  });	  
@@ -453,7 +456,7 @@ FBLOGIN;
 	}	
 	
     protected function refresh_page_js($goto) {
-   
+			
 		if (iniload('JAVASCRIPT')) {
 
 	       $code = $this->javascript($goto);
@@ -651,7 +654,7 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 			$tokensout = 1;
 		}	   
 
-		$this->after_goto = $after_goto?$after_goto:null;
+		$this->after_goto = $after_goto ? $after_goto : null;
 
 		if ($dpc_after_goto) 
 			SetSessionParam('afterlogingoto',str_replace('>','.',$dpc_after_goto));
@@ -758,6 +761,9 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 			//echo "</pre>";
 			
 			if ($sUsername = $userInfo['email']) {
+  			  $this->fbhash = '#facebook';
+			  SetSessionParam('fbhash', '#facebook');
+						  
 			  $sName = $userInfo['name'];
 			  $sId = $userInfo['email'];//name'];//id'];
 			
@@ -825,12 +831,13 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 			unset($_COOKIE[$cookie_name]);
 			unset($_COOKIE[$cookie_name2]);*/
 		
-			$this->facebook->destroySession();	//<<<<<<< not destroyed	
+			$this->facebook->destroySession();	//<<<<<<< not destroyed
+			SetSessionParam('fbhash', null);	
 		//}			
 	  
+	    $GLOBALS['UserID'] = null;
 		SetSessionParam("UserName", null);
 		SetSessionParam("UserID", null);
-		$GLOBALS['UserID'] = null;
 		SetSessionParam("UserSecID", null);	  
 
 		//zero cookie

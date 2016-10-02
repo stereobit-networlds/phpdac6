@@ -1100,41 +1100,42 @@ class shkatalogmedia extends shkatalog {
 	
 	//override
 	function list_katalog($imageclick=null,$cmd=null,$template=null,$no_additional_info=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$nolinemax=null,$originfunction=null) {
-	   $cmd = $cmd?$cmd:'klist';
-	   $lan = getlocal();
-	   $itmname = $lan?'itmname':'itmfname';
-	   $itmdescr = $lan?'itmdescr':'itmfdescr';
-	   $pz = $photosize?$photosize:1;		   
-	   $xdist = $this->imagex?$this->imagex:100;
-	   $ydist = $this->imagey?$this->imagey:null;//free y 75;	
-       $cat = GetReq('cat');   
-	   $custom_template=false;
-	   $page = GetReq('page') ? GetReq('page') : 0;
+	    $cmd = $cmd?$cmd:'klist';
+	    $lan = getlocal();
+	    $itmname = $lan?'itmname':'itmfname';
+	    $itmdescr = $lan?'itmdescr':'itmfdescr';
+	    $pz = $photosize?$photosize:1;		   
+	    $xdist = $this->imagex?$this->imagex:100;
+	    $ydist = $this->imagey?$this->imagey:null;//free y 75;	
+        $cat = GetReq('cat');   
+	    $custom_template=false;
+	    $page = GetReq('page') ? GetReq('page') : 0;
+	    $ogImage = array();
 
-	   $mylinemax = ($nolinemax) ? null : $this->linemax;   
-	   $myimageclick = ($this->imageclick>0) ? 1 : $imageclick;
+	    $mylinemax = ($nolinemax) ? null : $this->linemax;   
+	    $myimageclick = ($this->imageclick>0) ? 1 : $imageclick;
   
-       if (($template) && (!stristr($template,'searchres'))) { /*custom template list*/
+        if (($template) && (!stristr($template,'searchres'))) { /*custom template list*/
 	     //echo $template;
 		 $custom_template=true;
 	     $tmpl = explode('.',$template);
 	     $mytemplate = $this->select_template($tmpl[0],$cat);		
-	   }
-	   elseif (($template) && (stristr($template,'searchres'))) { /*search list*/
+	    }
+	    elseif (($template) && (stristr($template,'searchres'))) { /*search list*/
 	     $tmpl = explode('.',$template);
 		 //search template
 	     $mytemplate = $this->select_template($tmpl[0],$cat);		
 	     //list-table search alternative template
 	     $mytemplate_alt = $this->select_template($tmpl[0].'-alt',$cat);	   
-	   }
-	   else { /*katalog list*/
+	    }
+	    else { /*katalog list*/
 	     //default template
 	     $mytemplate = $this->select_template('fpkatalog',$cat);		
 	     //list-table alternative template
 	     $mytemplate_alt = $this->select_template('fpkatalog-alt',$cat);
-	   }
+	    }
        
-       if ($this->oneitemlist) {
+        if ($this->oneitemlist) {
 	     if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
 		   $is_one_item = $this->read_list(); //read records
 	       if ($is_one_item) { 
@@ -1152,16 +1153,16 @@ class shkatalogmedia extends shkatalog {
 		     return ($out);		   
 		   }	   
 		 }		 
-       } 	      
+        } 	      
 	   	
-	   if (!empty($this->result)) {		   
+	    if (!empty($this->result)) {		   
 
-		$pp = $this->read_policy();
+		 $pp = $this->read_policy();
 
-		$records = $this->result;  
-        $item_code = $this->getmapf('code');			
+		 $records = $this->result;  
+         $item_code = $this->getmapf('code');			
 	
-	    foreach ($this->result as $n=>$rec) {
+	     foreach ($this->result as $n=>$rec) {
 		
 		   $mem = memory_get_peak_usage(true);//memory_get_usage();
 	   
@@ -1235,7 +1236,8 @@ class shkatalogmedia extends shkatalog {
 			  }
 			  else
 			    $items_custom[] = $this->combine_tokens($mytemplate, $tokens, true);//<<exec after tokens replace
-				
+			
+			  $ogimage[] = $this->get_photo_url($rec[$item_code],2);
 			  unset($tokens);			  	 				   	   	   	
 		  }//foreach 
 		  
@@ -1245,17 +1247,23 @@ class shkatalogmedia extends shkatalog {
 	        else
            	  $toprint .= $this->make_table($items, $mylinemax, 'fpkatalogtable');	  
 			  
-	        $toprint .= $this->show_paging($cmd,$mytemplate,$nopager);		  
+	        $toprint .= $this->show_paging($cmd,$mytemplate,$nopager);
+
+			$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
+		                                           1=>$this->getcurrentkategory(),
+												   2=>str_replace($this->cseparator,' ',$this->replace_spchars($cat,1)),														
+												   3=>$this->httpurl .'/klist/'. $cat . '/',
+												   4=>$ogimage, /*$ogimage array of images (with no httpurl)!!*/
+												  ));			
 		  }	
           else //custom template
 		    $toprint .= (!empty($items_custom)) ? implode('',$items_custom) : null;
              		  
-	   }//empty result
+	    }//empty result
 
+	    $out .= $toprint . $mem_msg;
 
-	   $out .= $toprint . $mem_msg;
-
-	   return ($out);	
+	    return ($out);	
 	}	
 	
 	//override
@@ -1396,19 +1404,22 @@ class shkatalogmedia extends shkatalog {
 	
 	//overrided
 	function show_item($template=null,$no_additional_info=null,$lang=null,$lnktype=1,$pcat=null,$boff=null,$tax=null) {
-	   $lan = $lang?$lang:getlocal();
-	   $itmname = $lan?'itmname':'itmfname';
-	   $itmdescr = $lan?'itmdescr':'itmfdescr';
-	   $page = GetReq('page')?GetReq('page'):0;	
-	   $cat = $pcat?$pcat:GetReq('cat'); 	   	   
-	   $id = GetReq('id');
-	   $mytemplate = $this->select_template('fpitem',$cat);	 
-	   if (count($this->result->fields)>1) {	
+	    $lan = $lang?$lang:getlocal();
+	    $itmname = $lan?'itmname':'itmfname';
+	    $itmdescr = $lan?'itmdescr':'itmfdescr';
+	    $page = GetReq('page')?GetReq('page'):0;	
+	    $cat = $pcat?$pcat:GetReq('cat'); 	   	   
+	    $id = GetReq('id');
+	    $ogimage = array();
 	   
-		$pp = $this->read_policy();	   
-		$item_code = $this->getmapf('code');
+	    $mytemplate = $this->select_template('fpitem',$cat);	 
 	   
-		foreach ($this->result as $n=>$rec) {
+	    if (count($this->result->fields)>1) {	
+	   
+		 $pp = $this->read_policy();	   
+		 $item_code = $this->getmapf('code');
+	   
+		 foreach ($this->result as $n=>$rec) {
 			
            //$cat = $this->getkategories($rec);					 
 		   $cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
@@ -1494,26 +1505,26 @@ class shkatalogmedia extends shkatalog {
 			 //print_r($tokens);
 			 $out = $this->combine_tokens($mytemplate, $tokens, true);
 			 
-             $this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
-			                                            1=>$tokens[0],
-														2=>$tokens[1],														
-														3=>$this->httpurl .'/'. $itemlink,
-														4=>$this->httpurl . $tokens[19],
-												       )
-												  );
+			 $ogimage[] = $this->get_photo_url($rec[$item_code],2);
+			 
+			 $this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
+	                                               1=>$tokens[0],
+		    									   2=>$tokens[1],														
+												   3=>$this->httpurl .'/'. $itemlink,
+												   4=>$this->httpurl . str_replace('//','/','/'. $ogimage[0]),
+											      ));				 
 			 
 			 unset($tokens);	 
-			 
-		}//foreach	   
-	   }//if recs
-	   else {
+		 }//foreach	   
+	    }//if recs
+	    else {
 		  if ($this->itemlockparam) 
 		    $out = ($goto = $this->itemlockgoto) ? GetGlobal('controller')->calldpc_method($goto) : localize('_lockrec',getlocal());
 		  else 
 		    $out = localize('_norec',getlocal());
-	   }	  	  	   
+	    }	   
   	   
-	   return ($out);	
+	    return ($out);	
 	}		
 	
 
@@ -3418,8 +3429,18 @@ class shkatalogmedia extends shkatalog {
 	
 	protected function openGraphTags($tokens=null) {
 		if (!$tokens) return null;
+		//$self = _m('fronthtmlpage.php_self');
 		
-		//$self = GetGlobal('controller')->calldpc_method('fronthtmlpage.php_self');
+		//multiple images
+		if (is_array($tokens[4])) { 
+		    //print_r($tokens[4]);
+			foreach ($tokens[4] as $i=>$img)
+				$ogimage .= '
+		<meta property="og:image" content="'.$this->httpurl . str_replace('//','/','/'.$img).'" />';
+		}
+		else
+			$ogimage = '<meta property="og:image" content="'.$tokens[4].'" />
+';
 		
 		$ret = <<<EOF
 				
@@ -3428,11 +3449,16 @@ class shkatalogmedia extends shkatalog {
 		<meta property="og:description" content="$tokens[2]" />
 		<meta property="og:type" content="image/jpeg" />
 		<meta property="og:url" content="$tokens[3]" />
-		<meta property="og:image" content="$tokens[4]" />
+		$ogimage
+		
 EOF;
 
-		$ret .= $this->twitterTags($tokens);
-		$ret .= $this->ldTags($tokens);
+        //extract first image or just one
+        $img = is_array($tokens[4]) ? $this->httpurl . str_replace('//','/','/'.array_shift($tokens[4])) : $tokens[4];
+
+        $ret .= $this->fbTags(array(0=>$tokens[0],1=>$tokens[1],2=>$tokens[2],3=>$tokens[3],4=>$img)) ;//$tokens);
+		$ret .= $this->twitterTags(array(0=>$tokens[0],1=>$tokens[1],2=>$tokens[2],3=>$tokens[3],4=>$img)) ;//$tokens);
+		$ret .= $this->ldTags(array(0=>$tokens[0],1=>$tokens[1],2=>$tokens[2],3=>$tokens[3],4=>$img)) ;//$tokens);
 		
         return $ret;
 	}
@@ -3446,8 +3472,8 @@ EOF;
 	protected function twitterTags($tokens=null) {
 		if (!$tokens) return null;
 		
-		$twitter = explode('/', $this->siteTwitter); //get last token
-		$taddr = '@' . array_pop($twitter);
+		$twitter = explode('/', $this->siteTwitter); 
+		$taddr = '@' . array_pop($twitter); //get last token
 		
 		$ret = <<<EOF
 		
@@ -3463,10 +3489,26 @@ EOF;
         return $ret;
 	}
 	
+	protected function fbTags($tokens=null) {
+		if (!$tokens) return null;
+		
+		$fb = explode('/', $this->siteFb); 
+		$fbaddr = array_pop($fb); //get last token
+		
+		$fbid = _v('cmslogin.facebook_id');
+		
+		$ret = <<<EOF
+		
+	    <meta property="fb:app_id" content="$fbid" />
+		<meta property="fb:admins" content="$fbattr" />	
+EOF;
+        return $ret;
+	}	
+	
 	protected function ldTags($tokens=null) {
 		if (!$tokens) return null;
 		
-		$kw = GetGlobal('controller')->calldpc_method('shtags.get_page_info use keywords');
+		$kw = _m('shtags.get_page_info use keywords');
 		$keywords = str_replace(',""','' , '"' . str_replace(',', '","', $kw) . '"');
 		
 		$ret = <<<EOF
