@@ -28,7 +28,7 @@ class cmsrt extends cms  {
 		$csep = remote_paramload('RCITEMS','csep',$this->prpath); 
 		$this->cseparator = $csep ? $csep : '^';	
 		$this->onlyincategory = remote_paramload('SHKATALOGMEDIA','onlyincategory',$this->prpath);
-		$this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);		
+		$this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->prpath);		
 		
 		$this->autoresize = remote_arrayload('RCITEMS','autoresize',$this->prpath);
 		$this->restype = remote_paramload('RCITEMS','restype',$this->prpath);
@@ -425,11 +425,14 @@ class cmsrt extends cms  {
 		return ($ret);
 	}
 	
-	public function select_template($tfile=null) {
+	public function select_template($tfile=null, $iscp=false) {
 		if (!$tfile) return;
 	  
 		$template = $tfile . '.htm';	
-		$t = $this->path . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
+		$cpt = $this->prpath . $this->tpath .'/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
+		$fpt = $this->prpath . $this->tpath .'/'. $this->template .'/'. str_replace('.',getlocal().'.',$template) ;
+		$t = $iscp ? $cpt : $fpt;
+
 		if (is_readable($t)) 
 			$mytemplate = file_get_contents($t);
 

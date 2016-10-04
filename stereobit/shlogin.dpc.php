@@ -6,7 +6,7 @@ define("SHLOGIN_DPC",true);
 
 $__DPC['SHLOGIN_DPC'] = 'shlogin';
 
-GetGlobal('controller')->get_parent('SHLOGIN_DPC','STLOGIN_DPC');
+//GetGlobal('controller')->get_parent('SHLOGIN_DPC','STLOGIN_DPC');
 
 $__EVENTS['SHLOGIN_DPC'][0]='shlogin';
 $__EVENTS['SHLOGIN_DPC'][1]='dologin';

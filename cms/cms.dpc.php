@@ -23,7 +23,7 @@ class cms {
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); //8 
 		
-	    $tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);  
+	    $tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
 	    $this->cptemplate = $tmpl ? $tmpl : 'metro';
 		$this->tpath = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);	
 		$this->template = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);			
