@@ -35,6 +35,10 @@ $__LOCALE['CRMTIMELINE_DPC'][22]='_viewpage;View;Προβολή';
 $__LOCALE['CRMTIMELINE_DPC'][23]='_reference;Reference;Πηγή';
 $__LOCALE['CRMTIMELINE_DPC'][24]='_addoffer;Οffer recommendation;Είδος προσφοράς';
 $__LOCALE['CRMTIMELINE_DPC'][25]='_addcoll;Add in collection;Είδος συλλογής';
+$__LOCALE['CRMTIMELINE_DPC'][26]='_webpage;Web page;Ιστοσελίδα';
+$__LOCALE['CRMTIMELINE_DPC'][27]='_landpage;Landing page;Landing page';
+$__LOCALE['CRMTIMELINE_DPC'][28]='_action;Action;Ενέργεια';
+$__LOCALE['CRMTIMELINE_DPC'][29]='_facebook;Facebook;Facebook';
 
 class crmtimeline extends crmmodule  {
 	
@@ -100,6 +104,19 @@ class crmtimeline extends crmmodule  {
 			return ($frame); 
 	}	
 	
+	protected function getRefName($tag=null) {
+		if (!$tag) return null;
+		
+		switch ($tag) {
+			case 'fb'       :
+			case 'facebook' : $ret = localize('_facebook', getlocal()); break;
+			
+			default 		: //search mail campaign tag
+							  $ret = _m('rccontrolpanel.getRefName use '.$tag);
+		}
+		
+		return ($ret);
+	}
 	
 	public function showTimeline($template=null, $color=null, $icon=null, $time=null) {
 		$db = GetGlobal('db');
@@ -107,6 +124,7 @@ class crmtimeline extends crmmodule  {
 		$ic = $icon ? $icon : 'icon-time';
 		$time = $time ? $time : date('Y-m-d H:i');
 		$mode = GetReq('mode');
+		$lan = getlocal();
 		
 		if ($v = GetParam('v')) {
 			if (strstr($v,'|')) list ($visitor, $visitorIP) = explode('|', $v);
@@ -126,7 +144,7 @@ class crmtimeline extends crmmodule  {
 			$vSQL = $iSQL ? $iSQL : null;				
 				
 
-		$sSQL = "select DATE_FORMAT(date, '%d-%m-%Y %H:%i') as datetime, DATE_FORMAT(date, '%d-%m-%Y') as date, DATE_FORMAT(date, '%H:%i') as time, tid, attr1, attr2, attr3, ref, REMOTE_ADDR from stats where ";				
+		$sSQL = "select DATE_FORMAT(date, '%d-%m-%Y %H:%i') as datetime, DATE_FORMAT(date, '%d-%m-%Y') as date, DATE_FORMAT(date, '%H:%i') as time, tid, attr1, attr2, attr3, ref, REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT from stats where ";				
 		switch ($mode) {
 			case 1  : $sSQL .= "tid IS NOT NULL AND tid NOT REGEXP 'search|filter' AND attr1 IS NULL AND "; break;
 			case 2  : $sSQL .= "attr1 IS NOT NULL AND attr1 NOT REGEXP 'cartin|cartout|checkout' AND tid IS NULL AND "; break;
@@ -135,6 +153,9 @@ class crmtimeline extends crmmodule  {
 			case 5  : $sSQL .= "attr1='cartin' AND "; break;			
 			case 6  : $sSQL .= "attr1='cartout' AND "; break;			
 			case 7  : $sSQL .= "attr1='checkout' AND "; break;			
+			case 8  : $sSQL .= "tid='template' AND "; break;				
+			case 9  : $sSQL .= "tid='action' AND "; break;
+			case 10 : $sSQL .= "tid='fp' AND "; break;			
 			case 0  :
 			default : $sSQL .= ""; 
 		}
@@ -155,41 +176,56 @@ class crmtimeline extends crmmodule  {
 				$itemcode = null;
 				
 				switch ($rec['tid']) {
+					case 'action' : $c = 'red'; 
+									$title = localize('_action', $lan); 
+					                $item = $rec['attr1']; 
+									$link = $this->url . "/{$rec['attr1']}/";
+									break;						
+					case 'template':$c = 'red'; 
+									$title = localize('_landpage', $lan); 
+					                $item = $rec['attr1']; 
+									$link = $this->url . "/{$rec['attr1']}.php";
+									break;					
+					case 'fp'     : $c = 'red'; 
+									$title = localize('_webpage', $lan); 
+					                $item = $rec['attr1']; 
+									$link = $this->url . "/{$rec['attr1']}.php";
+									break;					
 					case 'search' : $c = 'orange'; 
-									$title = localize('_searchin', getlocal()); 
+									$title = localize('_searchin', $lan); 
 					                $item = $rec['attr1']; 
 									$link = $this->url . "/search/{$rec['attr1']}/";
 									break;
 					case 'filter' : $c = 'blue'; 
-									$title = localize('_filterin', getlocal());	
+									$title = localize('_filterin', $lan);	
 					                $item = $rec['attr1']; 
 									$link = $this->url . "/filter/{$rec['attr1']}/";
 									break;
 					default       : if ($itemcode = $rec['tid']) {
 										$c = 'purple'; 
-										$title = localize('_itemin', getlocal());
+										$title = localize('_itemin', $lan);
 										$item = $rec['tid'] . ' ' . _m('rccontrolpanel.getItemName use '.$rec['tid']);
 										$link = $this->url . "/kshow/0/0/{$rec['tid']}/"; //seturl('t=kshow&id='.$rec['tid']);
 									}	
 					
 					                switch ($rec['attr1']) {
 										case 'cartin'  : $c = 'green'; 
-														 $title = localize('_cartin', getlocal());
+														 $title = localize('_cartin', $lan);
 										                 $item = $rec['tid'] . ' ' . _m('rccontrolpanel.getItemName use '.$rec['tid']); 
 														 $link = $this->url . "/kshow/0/0/{$rec['tid']}/";
 														 break;
 										case 'cartout' : $c = 'red';   
-										                 $title = localize('_cartout', getlocal());
+										                 $title = localize('_cartout', $lan);
 										                 $item = $rec['tid'] . ' ' . _m('rccontrolpanel.getItemName use '.$rec['tid']); 
 														 $link = $this->url . "/kshow/0/0/{$rec['tid']}/";
 														 break;
 										case 'checkout': $c = 'gray';  
-										                 $title = localize('_checkout', getlocal());
+										                 $title = localize('_checkout', $lan);
 										                 $item = $rec['tid'] . ' ' . _m('rccontrolpanel.getItemName use '.$rec['tid']); break;
 														 $link = $this->url . "/kshow/0/0/{$rec['tid']}/";
 										default        : if ($rec['attr1']) {
 															$c = 'yellow'; 
-															$title = localize('_categorin', getlocal());
+															$title = localize('_categorin', $lan);
 															$item = _m("cmsrt.replace_spchars use ".$rec['attr1']."+1");
 															$link = $this->url . "/klist/{$rec['attr1']}/"; //seturl('t=klist&cat='.$rec['attr1']);
 										                 }	
@@ -204,21 +240,23 @@ class crmtimeline extends crmmodule  {
 				//if link	
 				if ($link) {
 					//$ulink = base64_encode(urlencode($link.'|300')); //height 300				
-					//$details = $this->actionButton(localize('_view', getlocal()), "javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url={$ulink}');", null, true);				
+					//$details = $this->actionButton(localize('_view', $lan), "javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url={$ulink}');", null, true);				
 					
 					$ulink = (strstr($link, 'http://')) ? $link : 'http://' . $link;
-					$details .= $this->actionButton(localize('_viewpage', getlocal()), $ulink, null, true);	
+					$details .= $this->actionButton(localize('_viewpage', $lan), $ulink, null, true);	
 				}	
 				
 				//if itemcode
 				if (($itemcode) && (filter_var($visitor, FILTER_VALIDATE_EMAIL))) {
 					//not ip based client and itemcode
 					//$ulink = $this->makeCrmURL("cpcrm.php?t=cpcrmdetails&iframe=1&id=$visitor&module=wishfav",300); //height 300
-					//$details .= $this->actionButton(localize('_details', getlocal()), "javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url={$ulink}');");//, 'crmdetails'.$meter);
+					//$details .= $this->actionButton(localize('_details', $lan), "javascript:$('#urldetails{$meter}').load('cpcrmtrace.php?t=cpcrmframe&url={$ulink}');");//, 'crmdetails'.$meter);
 					$details .= $this->timelineMenu($visitor, $meter, $itemcode);	
 				}
 				//else	
-					$details .= $rec['attr3'] ? localize('_reference', getlocal()).':' . _m('rccontrolpanel.getRefName use '.$rec['ref']) .' ('.$rec['REMOTE_ADDR']. ')' : ' ip:' . $rec['REMOTE_ADDR'];
+					$details .= $rec['ref'] ? localize('_reference', $lan).':' . $this->getRefName($rec['ref']) .
+				                              ' /'.$rec['REMOTE_ADDR'].'/'.$rec['HTTP_X_FORWARDED_FOR'].'/'.$rec['HTTP_USER_AGENT'] : 
+											  ' /' .$rec['REMOTE_ADDR'].'/'.$rec['HTTP_X_FORWARDED_FOR'].'/'.$rec['HTTP_USER_AGENT'];
 				
 				$details .= "<div id=\"urldetails{$meter}\"></div>"; //last (common)
 								
@@ -294,6 +332,9 @@ class crmtimeline extends crmmodule  {
 		$turl5 = seturl('t=cpcrmtimeline&mode=5&').$v.'&'.$daterange;
 		$turl6 = seturl('t=cpcrmtimeline&mode=6&').$v.'&'.$daterange;		
 		$turl7 = seturl('t=cpcrmtimeline&mode=7&').$v.'&'.$daterange;		
+		$turl8 = seturl('t=cpcrmtimeline&mode=8&').$v.'&'.$daterange;
+		$turl9 = seturl('t=cpcrmtimeline&mode=9&').$v.'&'.$daterange;		
+		$turl10 = seturl('t=cpcrmtimeline&mode=10&').$v.'&'.$daterange;		
 		$button = $this->createButton(localize('_filterin', getlocal()), 
 										array(localize('_itemin',    $l)=>$turl1,
 										      localize('_categorin', $l)=>$turl2,
@@ -302,6 +343,9 @@ class crmtimeline extends crmmodule  {
 											  localize('_cartin',    $l)=>$turl5,
 											  localize('_cartout',   $l)=>$turl6,
 											  localize('_checkout',  $l)=>$turl7,
+											  localize('_landpage',  $l)=>$turl8,
+											  localize('_action',    $l)=>$turl9,
+											  localize('_webpage',   $l)=>$turl10,											  
 											  localize('_allin',     $l)=>$turl0,			
 		                                ));	
 										

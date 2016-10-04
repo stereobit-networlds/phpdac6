@@ -210,7 +210,7 @@ class cmslogin {
             case "dologin"      : 	$this->login_successfull = $this->is_fb_logged_in() ? $this->do_facebook_login() : $this->do_login();
 							        /* 
 									if (defined('SHCART_DPC')) 
-										$cartnotempty = GetGlobal('controller')->calldpc_method('shcart.notempty');
+										$cartnotempty = _m('shcart.notempty');
 											
 									//goto after login...	
 									$this->login_goto = ($cartnotempty) ? $this->login_goto : '/';//'signup/';
@@ -272,7 +272,7 @@ class cmslogin {
 										$mydpc = explode('.',$this->dpc_after_goto);//check security
 										$mydpcname = strtoupper($mydpc[0]).'_DPC';				 
 										if (seclevel($mydpcname,$this->userLevelID)) 
-											$out = GetGlobal('controller')->calldpc_method($this->dpc_after_goto);
+											$out = _m($this->dpc_after_goto);
 										else
 											$out = $this->form();//default action  
 										$this->dpc_after_goto = null;
@@ -311,11 +311,11 @@ class cmslogin {
 	
 	public function fblogin_javascript() {
 	    if (!$this->facebook_id) return null;	
-		$localization = (getlocal()==1) ? 'el-GR' : 'en_US';
+		$localization = (getlocal()==1) ? 'el_GR' : 'en_US';
 	
 		$fbjslogin = <<<FBLOGIN
 		window.fbAsyncInit = function() { 
-		  FB.init({appId: '{$this->facebook_id}', xfbml: true, cookie: true, xfbml: true, version: 'v2.7'});
+		  FB.init({appId: '{$this->facebook_id}', xfbml: true, cookie: true, version: 'v2.7'});
 		  	
 		  FB.getLoginStatus(function(response) {
             if (response.status === 'connected') {
@@ -601,7 +601,7 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 	    if (($currentuser) && ($this->formerror!=localize('ok2',getlocal()))) {
 			
 			$mydata = str_replace('+','<@>',implode('<TOKENS>',$this->form_reset_pass($currentuser)));
-			$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userchpass.htm+".$mydata);
+			$ret = _m("fronthtmlpage.subpage use userchpass.htm+".$mydata);
 		}	  
 		else {//login
 			if (!$editmode)
@@ -749,7 +749,7 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
                 SetSessionParam("UserSecID", encode($result->fields['seclevid']));
 							  
 				if ((defined('SHCUSTOMERS_DPC')))   						  
-	                GetGlobal('controller')->calldpc_method('shcustomers.is_reseller');		
+	                _m('shcustomers.is_reseller');		
 
 			    //re-enter password flag
 			    if ($result->fields['clogon']==1) {
@@ -865,7 +865,7 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 				SetSessionParam("UserSecID", encode('1'));
 				
 				if ((defined('SHCUSTOMERS_DPC')))   						  
-	                GetGlobal('controller')->calldpc_method('shcustomers.is_reseller');					
+	                _m('shcustomers.is_reseller');					
 				
 				//set cookie
 				if (paramload('SHELL','cookies')) {
@@ -959,7 +959,7 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 		  $fp = new fronthtmlpage(null);
 		  $ret = $fp->process_commands($template_contents);
 		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+          //$ret = _m("fronthtmlpage.process_commands use ".$template_contents);		  		
 		}		  		
 		else
 		  $ret = $template_contents;
@@ -1023,28 +1023,10 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 	}
 	
 	protected function update_login_statistics($id, $user=null) {
-        $db = GetGlobal('db'); 
-
-	    $currentdate = time();	
-	    $myday  = date('d',$currentdate);	
-	    $mymonth= date('m',$currentdate);	
-	    $myyear = date('Y',$currentdate);
-						
-		$sSQL = "insert into stats (day,month,year,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
-		$sSQL.= $myday . ",";
-		$sSQL.= $mymonth . ",";
-		$sSQL.= $myyear . ",";						
-		$sSQL.= $db->qstr($id) . ',';
-		$sSQL.= $db->qstr($user) . ',';
-		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
-		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ")";			
-
-		$db->Execute($sSQL,1);	 
+        if (defined('CMSVSTATS_DPC'))	
+			return _m('cmsvstats.update_action_statistics use '.$id.'+'.$user);			
 		
-		if ($db->Affected_Rows()) 
-			return true;
-		else 
-			return false;		
+		return false;
 	}
 
 	//special reg for cp
@@ -1123,13 +1105,14 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 		//mail registration info to the company
 		$this->tell_it = remote_paramload('SHUSERS','tellregisterto',$this->path);
 		if ($this->tell_it) {
-			$mytemplate = _m('crmsrt.select_template use userinserttell');
+
 			$tokens = array();	
 			$tokens[] = $username;	
 			$tokens[] = $password;	
 			$tokens[] = $fname;	
 			$tokens[] = $lname;			  					
-			
+
+			$mytemplate = _m('crmsrt.select_template use userinserttell');			
 			$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
 			$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
@@ -1141,7 +1124,7 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 		//send username/password to user
 		$this->it_sendfrom = remote_paramload('SHUSERS','sendusernamefrom',$this->path);
 		if ($this->it_sendfrom) {
-			$mytemplate = _m('crmsrt.select_template use userinsert');
+
 			$hash = md5('stereobit9networlds8and7the6heart5breakers');
 			$sectoken = urlencode(base64_encode($username.'|'.$hash));
 			$account_enable_link = seturl('t=useractivate&sectoken='.$sectoken);
@@ -1150,7 +1133,8 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 			$tokens[] = $username;	
 			$tokens[] = $password;
 			$tokens[] = $account_enable_link;		  
-			
+
+			$mytemplate = _m('crmsrt.select_template use userinsert');			
 			$mailbody = $this->combine_tokens($mytemplate,$tokens);
 		
 			$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
@@ -1159,7 +1143,7 @@ function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()
 	    }
 	  
 		if (defined('SHFORM_DPC'))
-			GetGlobal('controller')->calldpc_method('shform.subscribe use '.$username);
+			_m('shform.subscribe use '.$username);
 		
 		return true;
 
