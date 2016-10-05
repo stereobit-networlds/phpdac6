@@ -1,13 +1,10 @@
 <?php
-$__DPCSEC['SHSUBSCRIBE_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['SHSUBSCRIBE_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
 if ( (!defined("SHSUBSCRIBE_DPC")) && (seclevel('SHSUBSCRIBE_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("SHSUBSCRIBE_DPC",true);
 
 $__DPC['SHSUBSCRIBE_DPC'] = 'shsubscribe';
-
-//$d = GetGlobal('controller')->require_dpc('subscribe/subscribe.dpc.php');
-//require_once($d);
 
 $__EVENTS['SHSUBSCRIBE_DPC'][0]='shsubscribe';
 $__EVENTS['SHSUBSCRIBE_DPC'][1]='unsubscribe';

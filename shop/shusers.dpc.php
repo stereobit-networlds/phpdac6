@@ -367,7 +367,7 @@ class shusers  {
 	   
 	   if ($fields) {
 		   $myfields = explode(";",$fields); //print_r($myfields);
-           //print_r($fields);
+           //print_r($myfields);
 		   $fname = $myfields[0];
 		   $lname = $myfields[1];
 		   $uname = $myfields[2];
@@ -843,14 +843,13 @@ class shusers  {
 
        if ($tokensout) {  
 	      $tokens[] = $submitout;
-		  if ($isupdate) {
+		  if ($isupdate) { 
 		    $tokens[] = $fname;
 		    $tokens[] = $lname;
 			$tokens[] = $statin; //subscription
 		  }
 		  else
 		    $tokens[] = $invtypedescr;//$myinvtype ? 'B' : 'A'; /*inv type title*/
-		  //print_r($tokens); 
 				  
 		  $ret = $this->combine_tokens($this->mytemplate,$tokens);
 		  return ($ret);			  
@@ -1603,8 +1602,8 @@ class shusers  {
 
 
        $sSQL = "UPDATE users set " .
-                "FNAME=" . $db->qstr(GetParam("fname"))  . "," .
-			    "LNAME=" . $db->qstr(GetParam("lname"));//  . ","; <<<< NOT THIS WAY			
+                "fname=" . $db->qstr(GetParam("fname"))  . "," .
+			    "lname=" . $db->qstr(GetParam("lname"));//  . ","; <<<< NOT THIS WAY			
                 /*"PASSWORD='" . md5(GetParam("pwd"))  . "'," .
                 "VPASS='" . md5(GetParam("pwd2"))  . "',";<<<< NOT THIS WAY*/
 	   /*<<<< NOT THIS WAY			
