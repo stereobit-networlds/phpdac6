@@ -17,21 +17,16 @@ $__EVENTS['SHUSERS_DPC'][1]='signup';
 $__EVENTS['SHUSERS_DPC'][2]='insert';
 $__EVENTS['SHUSERS_DPC'][3]='update';
 $__EVENTS['SHUSERS_DPC'][4]='delete';
-$__EVENTS['SHUSERS_DPC'][5]='searchuser';
-$__EVENTS['SHUSERS_DPC'][6]= "reset_sessions";
-$__EVENTS['SHUSERS_DPC'][7]= "useractivate";
-$__EVENTS['SHUSERS_DPC'][8]='insertajax';
-//$__EVENTS['SHUSERS_DPC'][999]='signup';
+$__EVENTS['SHUSERS_DPC'][5]= "useractivate";
+$__EVENTS['SHUSERS_DPC'][6]='insertajax';
 
 $__ACTIONS['SHUSERS_DPC'][0]='shusers';
 $__ACTIONS['SHUSERS_DPC'][1]='signup';
 $__ACTIONS['SHUSERS_DPC'][2]='insert';
 $__ACTIONS['SHUSERS_DPC'][3]='update';
 $__ACTIONS['SHUSERS_DPC'][4]='delete';
-$__ACTIONS['SHUSERS_DPC'][5]='searchuser';
-$__ACTIONS['SHUSERS_DPC'][6]= "reset_sessions";
-$__ACTIONS['SHUSERS_DPC'][7]= "useractivate";
-$__ACTIONS['SHUSERS_DPC'][8]='insertajax';
+$__ACTIONS['SHUSERS_DPC'][5]= "useractivate";
+$__ACTIONS['SHUSERS_DPC'][6]='insertajax';
 
 $__DPCATTR['SHUSERS_DPC']['signup'] = 'signup,1,0,1';
 
@@ -158,9 +153,7 @@ class shusers  {
 	   $this->tell_it = remote_paramload('SHUSERS','tellregisterto',$this->path);
 	   
 	   $cusform = remote_paramload('SHUSERS','includecusform',$this->path); 
-	   //echo '>',$cusform;
 	   $this->includecusform = $cusform?true:false;	 
-	   //echo 'z',$this->includecusform,$this->path;
 	   $usrt = GetSessionParam('usrtokens');
 	   $this->tokensout = $usrt?true:false;
 	   
@@ -171,8 +164,7 @@ class shusers  {
 	   
 	   $this->continue_register_customer = remote_paramload('SHUSERS','continueregcus',$this->path);
 	   $this->deny_multiple_users = remote_paramload('SHUSERS','denymultuser',$this->path);	   
-
-       //NOT LOADED YET //GetGlobal('controller')->calldpc_var('shcustomers.check_exist');		   	   	   
+		   	   	   
        $this->check_existing_customer = remote_paramload('SHCUSTOMERS','checkexist',$this->path);
 	   $this->map_customer = null;
 	   $this->customer_exist_id = null;
@@ -185,16 +177,12 @@ class shusers  {
 
     function event($sAction) {
 
-	   $a = GetReq('a');
-
        if (!$this->msg) {
 
          switch($sAction)   {
 		 
 		    case 'useractivate': $this->msg = $this->user_activate(); 
 			                     break;
-
-	        case "searchuser" : $a = $this->search($this->searchtext); /*print $a; */break;
 
 			case "insertajax" :
             case "insert": if ($this->includecusform) {
@@ -246,9 +234,8 @@ class shusers  {
                              }
 			               }
 				           break;
-            case "update":
-			//case trim(localize('_UPDATE',getlocal())) :
-				           if (!$this->checkFields(true,$this->checkuseasterisk)) {
+						   
+            case "update":  if (!$this->checkFields(true,$this->checkuseasterisk)) {
 							  //auto subscribe
                               if ( (defined('SHSUBSCRIBE_DPC')) && (seclevel('SHSUBSCRIBE_DPC',$this->userLevelID)) ) {
 								if (trim(GetParam('autosub'))=='on')
@@ -257,58 +244,46 @@ class shusers  {
 							      GetGlobal('controller')->calldpc_method('shsubscribe.dounsubscribe use '.GetParam("eml"));//.'+-1');
 							  }
 				              $this->update();
-			               }
-				           break;
-            case "delete":
-			//case trim(localize('_DELETE',getlocal())) :
-						   //auto unsubscribe
-                           if ( (defined('SHSUBSCRIBE_DPC')) && (seclevel('SHSUBSCRIBE_DPC',$this->userLevelID)) ) {
+			                }
+							
+							if ((defined('CMSLOGIN_DPC')) && (_v('cmslogin.fbhash'))) 
+								$this->fbjs();							
+				            break;
+							
+            case "delete":  if ( (defined('SHSUBSCRIBE_DPC')) && (seclevel('SHSUBSCRIBE_DPC',$this->userLevelID)) ) {
 							  GetGlobal('controller')->calldpc_method('shsubscribe.dounsubscribe use '.GetParam("eml").'+-1');
-						   }
-				           $this->_delete();
-				           break;
-
-		    case "reset_sessions"        : $this->reset_sessions(); break;
+						    }
+				            $this->_delete();
+							
+							if ((defined('CMSLOGIN_DPC')) && (_v('cmslogin.fbhash'))) 
+								$this->fbjs();							
+				            break;
+							
+			default      :  if ((defined('CMSLOGIN_DPC')) && (_v('cmslogin.fbhash'))) 
+								$this->fbjs();				
           }
        }
 	}
 
 	function action($action) {
-	   $__USERAGENT = GetGlobal('__USERAGENT');
-	   $GRX = GetGlobal('GRX');
 
        switch ($action) {
-	         case 'useractivate'    : 
-			                          if (defined('SHLOGIN_DPC')) { 
-									     //$out .= 'shlogin';
-									     if (defined('SHCART_DPC')) {
+	         case 'useractivate':   if (defined('CMSLOGIN_DPC')) { 
+									    if (defined('SHCART_DPC')) {
 										    //$out .= 'shcart';
 										    $carthasvalue = GetGlobal('controller')->calldpc_method("shcart.getcartTotal use 1");
 											if ($carthasvalue>0)
 											   $out .= GetGlobal('controller')->calldpc_method("cmslogin.quickform use +viewcart+shcart>cartview+status+1");	 
 											else   
 											   $out .= GetGlobal('controller')->calldpc_method('cmslogin.form use html');
-										 }
-                                         else 										 
+										}
+                                        else 										 
 											$out .= GetGlobal('controller')->calldpc_method('cmslogin.form');
-								      }		 
-									  else
-                                         $out = $this->msg;//GetGlobal('sFormErr');	
-                                      //$out.= 'z'.$this->msg;										 
-	                                  break;
-									  
-		     case "reset_sessions"  : switch ($__USERAGENT) {
-	                                       case 'HTML' : break;
-	                                       case 'GTK'  : $out = $this->msg; break;
-										   case 'CLI'  :
-	                                       case 'TEXT' : $out = $this->msg; break;
-	                                     }
-		                                 break;
+								    }		 	
+	                                break;
 										 
-			 case "insertajax":	$msg = ($sFormErr=="ok") ? 
-			                            localize('_SUCCESSREG',getlocal()) :
-			                            GetGlobal('sFormErr');
-			                    die($msg); break;						 
+			 case "insertajax":		$msg = ($sFormErr=="ok") ? localize('_SUCCESSREG',getlocal()) :  GetGlobal('sFormErr');
+									die($msg); break;						 
 			 
 		     case 'signup'    :
 			 default          :	$out = $this->register();
@@ -317,6 +292,31 @@ class shusers  {
        return ($out);
 	}
 
+	
+    /*[id] => 1678788437
+    [name] => Βασίλης Κομήτης
+    [first_name] => Βασίλης
+    [last_name] => Κομήτης
+    [link] => https://www.facebook.com/stereobit.networlds
+    [gender] => male
+    [email] => vasalex21@gmail.com
+    [timezone] => 2
+    [locale] => el_GR
+    [verified] => 1
+    [updated_time] => 2013-05-14T09:01:06+0000
+    [username] => stereobit.networlds*/		
+	protected function fbjs() {
+		$code = "function fbfetch() {
+		FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(response) {\$('#fname').val(response.first_name); \$('#lname').val(response.last_name); })};		
+";
+//alert ('Welcome ' + response.email + ': Your UID is ' + response.id);
+        if (iniload('JAVASCRIPT')) {
+	   
+			$js = new jscript;		   	 	
+			$js->load_js($code,null,1);		
+			unset ($js);
+	    }	
+	}	
 
     function get_seclevels() {
 
@@ -1026,26 +1026,6 @@ class shusers  {
 	   }
 	}
 
-    function readusers() {
-      $db = GetGlobal('db');
-	  $g = GetReq('g');
-
-	  //DISABLED !!!
-      /*if (seclevel('USERSMNG_',$this->userLevelID)) {
-
-         $sSQL = "SELECT CODE2,FNAME,LNAME,USERNAME FROM users ";
-		 //echo $sSQL;
-
-         $browser = new browseSQL(localize('_USERS',getlocal()));
-	     $out .= $browser->render($this->sen_db,$sSQL,$this->T_users,"signup",$this->pagenum,$this,1,1,1,0);
-	     unset ($browser);
-
-		 $out .= $this->searchform();
-
-		 return ($out);
-	  }*/
-	}
-
 	function register($myuser=null,$myfkey=null,$selectid=null,$cmd=null) {
        $user = decode(GetGlobal('UserID'));
 	   $sFormErr = GetGlobal('sFormErr');
@@ -1090,15 +1070,9 @@ class shusers  {
    	       elseif (seclevel('ACCOUNTMNG_',$this->userLevelID)) {
               //echo 'b';
    	          if ((seclevel('USERSMNG_',$this->userLevelID)) && (!$a)) {
-			     //echo '1';
-			     //if (!GetReq('editmode'))
-		           //$out = setNavigator(localize('_USERS',getlocal()));
-				 
-                 $out .= $this->readusers(); //browse users action
+			     //disabled
 		      }
 			  else {
-			     //echo '2';
-		         //$out = setNavigator(localize('_UPDATE',getlocal()));
 				 if ($myuser)
                    $record = $this->getuser($myuser,$myfkey,null,1);
 				 else				 
@@ -1735,31 +1709,6 @@ class shusers  {
 			 
 	}
 
-    function reset_sessions() {
-	  $db = GetGlobal('db');
-
-	  $this->msg = null;
-
-	  //delete table
-	  $sSQL0 = "drop table if exists sessions";
-	  $result0 = $db->Execute($sSQL0);
-
-	  if ($result0) $this->msg = "Drop table ...\n";
-	  //create table
-	  $sSQL1 = "create table sessions
-                (
-	              username varchar(60) primary key,
-	              session text,
-
-	              UNIQUE (username)
-                )";
-	  $result1 = $db->Execute($sSQL1);
-	  if ($result1) $this->msg .= "Create table ...\n";
-
-	  setInfo($this->msg);
-
-	  return ($this->msg);
-	}
 
    /////////////////////////////////////////////////////////////////
    // generate user selection list
@@ -2035,7 +1984,7 @@ class shusers  {
 	
 	     $db = GetGlobal('db');	
 		 $id = GetReq('sectoken'); //by mail link
-		 if (!$id) {//echo 'z';
+		 if (!$id) {
 		   SetGlobal('sFormErr',localize('_ACTIVATEERR',getlocal()));
 		   return false;
 		   //return (localize('_ACTIVATEERR',getlocal()));
