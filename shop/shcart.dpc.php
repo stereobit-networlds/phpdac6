@@ -1237,7 +1237,7 @@ function addtocart(id,cartdetails)
 	   if ($trid) //view case
 	     $this->transaction_id = $trid;
 	   $cat = GetReq('cat');
-       $UserName = GetGlobal('UserName');
+       $UserName = decode(GetGlobal('UserName'));
 	   $continue_shopping_goto_cmd = remote_paramload('SHCART','continuegoto',$this->path);
 	   
 	   $tmz_today = $this->make_gmt_date();  	   
@@ -1384,15 +1384,10 @@ function addtocart(id,cartdetails)
 		   if ($this->mycarttemplate) {
              switch ($this->status) {
 			 
-			    case 1 : /*if ($this->cancel_button)
-						   $ta .= "<input type=\"image\" src=\"".$this->cancel_button."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
-						 else*/  
+			    case 1 :   
 				           $ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->cancel\">&nbsp;";
-				         /*if ($this->submit_button)//order became submit ...change in event
-				           $ta .= "<input type=\"image\" src=\"".$this->submit_button."\" name=\"FormAction\" value=\"$this->order\">&nbsp;";
-						 else */ 
 						   $ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->order\">&nbsp;";
-						 break;
+						   break;
 						 
                 case 2 :
 				         //SetSessionParam('orderdataprint',$printout);
@@ -1421,16 +1416,13 @@ function addtocart(id,cartdetails)
 						 if ($this->continue_button) {
                            $continue_url = $continue_shopping_goto_cmd ? $continue_shopping_goto_cmd.'/' : 'klist'; 
 						   $continue_url .= $cat ? $cat .'/' : null;
-						   $ta .= "&nbsp;";//<a href=\"$continue_url\"><input type=\"button\" class=\"myf_button\" value=\"".localize('_CONTINUESHOP',getlocal())."\" /></a>";
+						   $ta .= "&nbsp;";
 						   if ($this->agentIsIE)
 						     $ta .= "<a href='".$this->baseurl.'/'.$continue_url."'>".localize('_CONTINUESHOP',getlocal())."</a>|";
 					       else  
 						     $ta .= $this->myf_button(localize('_CONTINUESHOP',getlocal()),$this->baseurl.'/'.$continue_url,'_CONTINUESHOP'); //url abs path (ie problem)
 						 }
                    
-				         //$ta .= seturl("t=clearcart&a=&g=" , $this->resetcart_button) . "&nbsp;" ;		
-						 //$clear_cart_url = 'clearcart/';//seturl("t=clearcart"); 						 
-						 
 						 $ta .= "&nbsp;";
 						 if ($this->agentIsIE)
 						   $ta .= "<a href='".$this->baseurl.'/clearcart/'."'>".localize('_CLEARCARTITEMS',getlocal())."</a>|";
@@ -1625,8 +1617,17 @@ function addtocart(id,cartdetails)
 	   
 	     //print_r($tokens);
 		 if ($this->notempty()) {
-			$out .= $this->combine_tokens($this->mycarttemplate,$tokens,true);
-			//echo 'a'.$this->myf_button(localize('_CLEARCARTITEMS',getlocal()),'clearcart/');
+			if ($this->status>0) { 
+				if (!$exist = GetGlobal('controller')->calldpc_method("shcustomers.search_customer_id use code2='" .$UserName."'")) {
+					$out .= GetGlobal('controller')->calldpc_method("shcustomers.register");
+					$this->status = 0;
+					SetSessionParam('cartstatus',0);
+				}	
+				else
+					$out .= $this->combine_tokens($this->mycarttemplate,$tokens,true);
+			}
+			else
+				$out .= $this->combine_tokens($this->mycarttemplate,$tokens,true);
 		 }	
 		 else {	//empty 1 token
 			$emptycart_template= "shcartempty.htm";
@@ -3024,63 +3025,6 @@ function addtocart(id,cartdetails)
         $out = $this->finalize_cart_success($transno);//...moved down
 		
 		return ($out);
-		/*
-        //dummy tokens
-	    $tokens[] = null;
-		$tokens[] = null;
-
-        //print $this->transaction_id;
-		if (($transno) && (!$this->mailerror)) {
-	          if ($this->mycarttemplate) { 
-			    $tokens[] = $this->finalize_cart_success($transno);
-				$tokens[] = $this->loopcartdata;
-				$tokens[] = $this->looptotals;	
-                $tokens[] = $this->print_button();										
-			  }	
-			  else { 
-		        $out .= $this->finalize_cart_success($transno);				
-			  }
-		}
-		else {
-	          if ($this->mycarttemplate) {			  
-			    $tokens[] = $this->finalize_cart_error($transno);
-				$tokens[] = $this->loopcartdata;
-				$tokens[] = $this->looptotals;
-			  }	
-			  else		  
-		        $out.= $this->finalize_cart_error($transno);
-		}
-
-  
-        if ($tokensout) {//called from this->viewcart when simple order
-		  //reset global params
-          SetSessionParam('TransactionID',0);
-          SetSessionParam('cartstatus',0);
-	      $this->status = 0;		
-		
-	      return ($tokens);
-		}  
-		else {//called from payengines when return
-		  //load cart again because of submit reset when goto payengines
-		  //$this->loadcart($transno);
-		  //$this->status = 3;//submited and return
-		  
-	      //template
-	      $cart_template= "shcart.htm";
-	      $t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.',$cart_template) ;
-		  //echo '>',$t;
-	      if (($cart_template) && is_readable($t)) {
-	        //print_r($tokens);
-	        $out .= $this->combine_tokens(file_get_contents($t),$tokens);
-	      }		
-		  
-		  //reset global params
-          SetSessionParam('TransactionID',0);
-          SetSessionParam('cartstatus',0);
-	      $this->status = 0;
-				  	
-          return ($out);
-		} */
 		 
     }
 
