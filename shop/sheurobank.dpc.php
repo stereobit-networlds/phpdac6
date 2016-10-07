@@ -126,7 +126,7 @@ class sheurobank  {
 						     $tid = $this->eurobank_get_post_params('orderid');
 							 $subject = localize('_mailSubject', getlocal()) . $tid;
 							 
-					         GetGlobal('controller')->calldpc_method("shcart.goto_mailer use $tid++invoice.htm+".$subject);
+					         _m("shcart.goto_mailer use $tid++invoice.htm+".$subject);
 					       }
 						}
 						else 
@@ -137,9 +137,8 @@ class sheurobank  {
        case 'paycancel' : //$this->savelog("PIRAEUS PAYMENT:CANCELED");	
 	     	           $this->handle_Transaction('cancel');
 					   
-					   if (defined('SHCART_DPC')) {
-					     GetGlobal('controller')->calldpc_method("shcart.cancel_order");
-					   }
+					   if (defined('SHCART_DPC')) 
+					     _m("shcart.cancel_order");
 					   
 	                   break;
 					   
@@ -148,8 +147,7 @@ class sheurobank  {
 					   
 	   case 'eurobank':
 	   case 'process' :
-       default        : if ($this->amount>0) {
-						    //$this->handle_Transaction('ticket'); //init	
+       default        : if ($this->amount>0) {	
 						    $this->eurobank_create_payment();	 
                             die();
 					    }   
@@ -162,55 +160,31 @@ class sheurobank  {
 		case 'payreturn' : if ($this->eurobank_payment) {
 			
 			                 $tid = $this->eurobank_get_post_params('orderid');
-		                     //$ret = $this->set_message('success',null);
 							 
 		                     if (defined('SHCART_DPC')) {
 								  
-		                        //$ret = $this->set_message('success'); //NO
-							    //NO NEED...called into cartview tid+3
-		                        //$ret .= GetGlobal('controller')->calldpc_method("shcart.finalize_cart use ".$tid);
-							   
-							    //$ok = GetGlobal('controller')->calldpc_method("shcart.loadcart use ".$tid);
-							    // if ($ok) {
-		                          $ret .= GetGlobal('controller')->calldpc_method("shcart.cartview use $tid+3");
-								  GetGlobal('controller')->calldpc_method("shcart.clear");
-								//}  
+		                          $ret .= _m("shcart.cartview use $tid+3");
+								  _m("shcart.clear");
 						     }	 
 						   }
 						   else {
-							   
-						      //$ret = $this->set_message('error','_PAYERROR');
 							  
-		                      if (defined('SHCART_DPC')) {							  
-							    //reload cart from error transaction
-							    //$ok = GetGlobal('controller')->calldpc_method("shcart.loadcart use ".$tid);//GetReq('tid'));
-							    //if ($ok)
-		                          $ret .= GetGlobal('controller')->calldpc_method("shcart.cartview use ".$tid);//GetReq('tid'));
-							  }	  
+		                      if (defined('SHCART_DPC')) 						  
+		                          $ret .= _m("shcart.cartview use ".$tid);//GetReq('tid'));
 						   }	 
 		                   break;
-		case 'paycancel'  : 
-		                   //$ret = $this->set_message('cancel','_PAYCANCEL');   
-						   if (defined('SHCART_DPC')) {
-							 //reload cart from canceled transaction
-							 //$ok = GetGlobal('controller')->calldpc_method("shcart.loadcart use ".GetReq('tid'));
-							 //if ($ok)
-		                       $ret .= GetGlobal('controller')->calldpc_method("shcart.cartview use ".GetReq('tid')."+2");
-							 //else goto fp  
-						   }	 
+		case 'paycancel'  :    
+						   if (defined('SHCART_DPC')) 
+		                       $ret .= _m("shcart.cartview use ".GetReq('tid')."+2");	 
 		                   break;
 		case 'payticket' : $ret = null;
 		                   break; 
 		case 'eurobank':				 
-	    case 'process' : //$ret = $this->error;//null;//must not have action, if error goto frontpage'Please wait processing...'; 
-	    default        : //in case of no amount (error?)  or ticket error goto cart 		
-		                 //$ret = $this->set_message('error','_SRVERROR');   
-						 if (defined('SHCART_DPC')) {
-							 //reload cart from error ... no need
-							 //GetGlobal('controller')->calldpc_method("shcart.loadcart use ".GetReq('tid'));
-				             if (GetGlobal('controller')->calldpc_var("shcart.qtytotal")>0)			 
-		                       $ret .= GetGlobal('controller')->calldpc_method("shcart.cartview use ".GetReq('tid'));
-		                       //else goto fp  
+	    case 'process' : 
+	    default        : 
+		                 if (defined('SHCART_DPC')) {
+				             if (_v("shcart.qtytotal")>0)			 
+		                       $ret .= _m("shcart.cartview use ".GetReq('tid'));
 						 }	 
 	 }
 	 
@@ -336,21 +310,21 @@ class sheurobank  {
    
    protected function handle_Transaction($status,$ticket=null) {
 
-           if ( (defined('SHTRANSACTIONS_DPC')) && (seclevel('SHTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
+        if ( (defined('SHTRANSACTIONS_DPC')) && (seclevel('SHTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
                 
-                $id = $this->transaction ? $this->transaction : GetReq('tid');
+            $id = $this->transaction ? $this->transaction : GetReq('tid');
 
-                switch ($status) {
-                    case 'ticket' : GetGlobal('controller')->calldpc_method("shtransactions.setTransactionStatus use $id+1");
-                                    break;
-                    case 'success': GetGlobal('controller')->calldpc_method("shtransactions.setTransactionStatus use $id+2");
-                                    break;													
-                    case 'cancel' : GetGlobal('controller')->calldpc_method("shtransactions.setTransactionStatus use $id+-1");
-                                    break;
-                    case 'error'  : GetGlobal('controller')->calldpc_method("shtransactions.setTransactionStatus use $id+-2");
-                                    break;									
-                }
-           }
+            switch ($status) {
+                case 'ticket' : _m("shtransactions.setTransactionStatus use $id+1");
+                                break;
+                case 'success': _m("shtransactions.setTransactionStatus use $id+2");
+                                break;													
+                case 'cancel' : _m("shtransactions.setTransactionStatus use $id+-1");
+                                break;
+                case 'error'  : _m("shtransactions.setTransactionStatus use $id+-2");
+                                break;									
+            }
+        }
    }    
    
    protected function add_field($field, $value) {
@@ -393,7 +367,6 @@ class sheurobank  {
 		echo '<br>' . $this->eurobank_url;
 	  }
 	  else //goto bank  	  
-        //echo "<body onLoad=\"document.form.submit();\">";
 		echo "<body onLoad=\"send_tran();\">";
 	  
       echo "<center><h3>".localize('_PLEASEWAIT',getlocal())."</h3></center>";
@@ -413,19 +386,13 @@ class sheurobank  {
    
    protected function set_message($case,$errorcode=null) {
 
-	    $template = remote_paramload('SHEUROBANK',$case,$this->path) . '.htm'; //'fpcartline.htm';
+	    $template = remote_paramload('SHEUROBANK',$case,$this->path) . '.htm'; 
 	    $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-	    //echo $t,'>';
+
 	    if (is_readable($t)) 
 		  $ret = file_get_contents($t);
 	    else
-	      $ret = $m?$m:localize($errorcode,getlocal()); //plain text	
-		  
-		//if ($errorcode)
-		  //$ret .= "[ERRORCODE:".$errorcode."]";
-		 
-		//if ($this->msg)
-		  //$ret .= "<br/>( $this->msg )"; 
+	      $ret = $m ? $m : localize($errorcode,getlocal()); //plain text	
 		  
 		$ret .= "<h2>";  
 		
@@ -500,8 +467,8 @@ class sheurobank  {
 	 
 	 //save in db
 	 $id = $this->transaction ? $this->transaction : $status['orderid']; 
-	 GetGlobal('controller')->calldpc_method("shtransactions.setTransactionStoreData use $id+type1+".$status['txId']);
-     GetGlobal('controller')->calldpc_method("shtransactions.setTransactionStoreData use $id+type2+".$record);	 	
+	 _m("shtransactions.setTransactionStoreData use $id+type1+".$status['txId']);
+     _m("shtransactions.setTransactionStoreData use $id+type2+".$record);	 	
 				 	 
      if ($fp = @fopen ($actfile , $mode)) {	 
                  fwrite ($fp,$record);
