@@ -322,21 +322,20 @@ class cmslogin {
                 var uid = response.authResponse.userID;
                 var accessToken = response.authResponse.accessToken;
                 // Do something with the access token
-				testAPI();
-
-            } else {
+				testAPI();} else {
+				var hash = window.location;				
                 // Subscribe to the event 'auth.authResponseChange' and wait for the user to autenticate
                 FB.Event.subscribe('auth.authResponseChange', function(response) {
-					window.location.href='dologin/#facebook';
+					window.location.href='dologin/#facebook^'+hash;
                 },true);           
             }
 		  });	
 
 		  FB.Event.subscribe('auth.login', function(response) {
-			if (response.status === 'connected') 
-				window.location.href='dologin/#facebook';
-			else
-				window.location.href='dologout/';
+			var hash = window.location;	  
+			if (response.status === 'connected') { 
+				window.location.href='dologin/#facebook^'+hash;}	
+			else window.location.href='dologout/#^'+hash;
 		  });	  
         };	
 		
@@ -416,8 +415,11 @@ FBLOGIN;
    
     //after login/logout goto...
     protected function javascript($goto) {
-		$ret = "
-function neu() { top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\",10);
+		
+		$ret = "var hash = window.location.hash.substring(1);
+var value = hash.split('^'); var rurl= (value[1]!=null) ? value[1] : '$goto';		
+function neu() { top.frames.location.href = rurl;} 
+window.setTimeout('neu()',10);
 ";
 		return ($ret);
     }   
