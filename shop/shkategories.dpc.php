@@ -668,41 +668,6 @@ class shkategories {
 	
 	
 	//  SHOW SELECTED TREE FUNCTIONS
-	/*function read_selected_tree($group,$cmd=null,$stylesheet=null,$outpoint=null,$br=1,$debug=null) {
-	    $t = $cmd ? $cmd : 'klist';
-	    $ddir = $this->read_tree($group,$debug,1);		
-		
-		$i=0;	 
-        if ($ddir)  {	   
-          reset($ddir);	
-          foreach ($ddir as $id => $line) {  		  
-		    if ($line) {
-			  if (trim($group)!=null) {
-			    $folder = $group . $this->cseparator . $line; 
-			    $gr = $this->replace_spchars($group . $this->cseparator . $line);		
-
-				$line = $line; //...no change	 
-			    $cgroup = $ptree[$cd+1]; //echo '>>',$cgroup;//$ptree[$depth];		 		
-              
-			    if ($outpoint)
-			      $mycat .= str_repeat('&nbsp;',$outpoint) . $this->outpoint;
-                $mycat .= "<a href=\"" . seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite) . "\">";
-			    $mycat .= $line;		
-			    $mycat .= "</a>";
-				$mycat .= str_repeat("<br/>",$br);	
-				
-			    //extra subcats
-				if (GetReq('cat')) //only if not in root
-                  $mycat .= $this->show_selected_tree($cmd,$this->replace_spchars($gr,1),null,null,null,$mystylesheet,3,0);//$subcats.'>';								
-
-			  }	
-			}
-		  }
-		}
-		
-		return ($mycat);   			  
-	}*/
-	
 	function show_selected_branch($id,$line,$t=null,$myselcat=null,$expand=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$linksonly=null,$titlesonly=null,$idsonly=null) {
 	       $mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
 	
@@ -791,173 +756,6 @@ class shkategories {
     }	
 	//.....  SHOW SELECTED TREE FUNCTIONS	
 	
-/*	
-	//  SHOW SELECTED TREE FUNCTIONS 2
-	function read_selected_tree2($group,$cmd=null,$showroot=null,$expand=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$noencodeurl=null,$debug=null) {
-	    $t = $cmd ? $cmd : 'klist';
-	    $mystylesheet = $stylesheet?$stylesheet:'group_category_title';		
-	 
-	    $ddir = $this->read_tree($group,$debug,1);		
-		
-		$i=0;	 
-        if ($ddir)  {	   
-          reset($ddir);	
-          foreach ($ddir as $id => $line) {  		  
-		    if ($line) {
-			  if (trim($group)!=null) {
-			    $folder = $group . $this->cseparator . $line; 
-				$gr = $this->replace_spchars($group . $this->cseparator . $line);		
-				$line = $line; //...no change	 
-			    $cgroup = $ptree[$cd+1]; //echo '>>',$cgroup;//$ptree[$depth];		 		
-				//SPACE ON 2 LEVEL
-				if ($outpoint==2) 
-				  $mycat .= '<br>'; //br before   
-                $mycat .= "<a href=\"" . seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //. "\">";
-				
-			    if ($linkclass)
-			      $mycat .=  "\" class=\"$linkclass\">";
-			    elseif ($outpoint)
-				  $mycat .=  "\" class=\"". $mystylesheet . $outpoint . "\">";
-			    else
-                  $mycat .=  "\">";				
-				  
-			    if ($outpoint) {
-				  if  ($outpoint>4) //show this->outpoint symbol when spaces-outpoint > 4
-				    $mycat .=  $this->outpoint;
-				} 				
-			    $mycat .= $line;		
-			    $mycat .= "</a>";
-				$mycat .= str_repeat("<br/>", intval($br));	
-				
-			    //extra subcats
-				if (GetReq('cat')) //only if not in root								
-                    $mycat .= $this->show_selected_tree2($cmd,$this->replace_spchars($gr,1),$showroot,$expand,null,$mystylesheet,($outpoint*2),0,null,$linkclass,$noencodeurl);								
-
-			  }	
-			}
-		  }
-		}
-		
-		return ($mycat);   			  
-	}
-	
-	function show_selected_branch2($id,$line,$t=null,$myselcat=null,$showroot=null,$expand=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$noencodeurl=null) {
-	       $mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
-
-           if ($template) { //template
-	         $tmpl = explode('.',$template);
-	         $mytemplate = $this->select_template($tmpl[0],$cat);		
-			 $mytemplate_show = $this->select_template($tmpl[0].'_show',$cat);
-			 $mytemplate_hide = $this->select_template($tmpl[0].'_hide',$cat);
-	       }
-	       else			   
-  	         $mytemplate = $this->select_template('fpcatcolumn',$cat);			   
-			  
-		    if ($line) {	
-
-			    if (trim($myselcat)!=null) {
-				
-				  if ($showroot) {//root selections is present
-				    //echo 'showroot:<br>';
-				    if ($myselcat==$line) {//selction cat = current listed cat
-					  //echo 'cat selection:'.$id.'<br>';
-			          $folder = $id;
-			          $gr = $noencodeurl ? $this->replace_spchars($id) : $this->replace_spchars($id);				  
-					}  
-					else {
-					  //echo 'no selection:'.$id.'<br>';
-					  $folder = null;
-					  $gr = $noencodeurl ? $this->replace_spchars($id) : $this->replace_spchars($id);
-					}
-				  }
-				  else {
-				    //echo 'no showroot:'.$id.'<br>';
-			        $folder = $myselcat . $this->cseparator . $id; 
-			        $gr = $noencodeurl ? $this->replace_spchars($myselcat . $this->cseparator . $id) : $this->replace_spchars($myselcat . $this->cseparator . $id);		   
-				  }
-				  
-			    }	
-			    else {
-				  //echo 'no selcat:<br>';
-			      $folder = $id;
-			      $gr = $noencodeurl ? $this->replace_spchars($id) : $this->replace_spchars($id); 
-			    }	
-
-              $mycat .= "<a href=\"" . seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite);
-			  
-			  if ($linkclass)
-			    $mycat .=  "\" class=\"$linkclass\">";
-			  elseif ($outpoint)
-				$mycat .=  "\" class=\"". $mystylesheet . $outpoint . "\">";
-			  else
-                $mycat .=  "\">";			  
-								
-			  $mycat .= $line;		
-			  $mycat .= "</a>";	
- 
-			  $winbody = $folder ? $this->read_selected_tree2($folder,$t,null,$expand,$mystylesheet,($outpoint*2),1,$template,$linkclass,$noencodeurl) : null;
- 		      $data[] = $winbody;
-              $attr[] = "left;";	
-			  			    
-
-			      $tokens[] = $mycat;
-				  $tokens[] = $expand?$winbody:null;
-				  //$out .= $this->combine_tokens($mytemplate, $tokens);	
-				  if (($expand) && ($winbody)) //autohide if no winbody
-			        $out .= $this->combine_tokens($mytemplate_show, $tokens, true);					
-				  else
-				    $out .= $this->combine_tokens($mytemplate_hide, $tokens, true);					
-
-			}//if  	 
-		  
-		return ($out);  
-	}
-	
-    function show_selected_tree2($cmd=null,$group=null,$showroot=null,$expand=null,$viewlevel=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$noencodeurl=null) {
-	  $mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
-	  $cat = $this->replace_spchars(GetReq('cat'),1);	
-	  $g = $this->replace_spchars($group,1);	
-      $myselcat = $g?$g:$cat;
-      $noencodeurl = $this->notencodeurl?$this->notencodeurl:$noencodeurl;	  
-	  
-      static $cd = -1;
-	  $wordlength = 19;//for calldpc purposes
-	  $t = $cmd?$cmd:'klist';
-
-	  $ptree = explode($this->cseparator,$myselcat); //print_r($ptree);
-			  
-	  if ($viewlevel) {
-	    $depth = count($ptree);
- 
-		if ($depth>$viewlevel) {
-		  foreach ($ptree as $p=>$pt) {
-		    if ($p<$viewlevel) 
-		      $pv[] = $pt;
-		  }	
-		  $myselcat = implode($this->cseparator,$pv);
-		}
-	  }
-	
-		
-	  	    
-	  if ($showroot) 
-	    $ddir = $this->read_tree(null,null,1);
-	  else	
-	    $ddir = $this->read_tree($myselcat,null,1);	
-
-	  $i=0;	 
-      if ($ddir)  {	   
-          reset($ddir);
-          foreach ($ddir as $id => $line) {		  
-            $out .= $this->show_selected_branch2($id,$line,$t,$myselcat,$showroot,$expand,$mystylesheet,$outpoint,$br,$template,$linkclass,$noencodeurl);
-			$i+=1; 
-		  }//foreach				
-	  }//if ddir
-	  
-	  return ($out);
-    }	
-	//.....  SHOW SELECTED TREE FUNCTIONS	2
-*/	
 	
 	function show_submenu($cmd=null,$viewtype=3,$group=null,$notheme=null, $rendertable=false) {
 		$group = $group ? $group : GetReq('cat');//$this->replace_spchars(GetReq('cat'),1);	
@@ -1933,9 +1731,9 @@ function gocatsearch(url)
 	  return ($mytemplate);	 
     }
 
-	protected function make_table($items=null, $mylinemax=null, $template=null) {
-	    $toprint = null;
-		$mytemplate = $template ? $this->select_template($template) : null;
+	protected function make_table($items=null, $mylinemax=null, $template=null, $pcat=null) {
+	    $cat = $pcat ? $pcat : GetReq('cat'); 	
+		$mytemplate = $template ? $this->select_template($template, $cat) : null;
 
 	    if ($items[0]) {
 	        //make table

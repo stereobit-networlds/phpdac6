@@ -36,6 +36,7 @@ class cpmhtmleditor {
 	var $encoding, $prpath, $template, $one_attachment, $slan;
 	var $htmlfile, $ckeditor4, $cke4, $ckjs;
 	var $urlpath, $urlbase, $msg;
+	var $photodb, $restype;
 
 	function __construct() {
 	
@@ -47,10 +48,10 @@ class cpmhtmleditor {
 		$this->encoding = $_GET['encoding']?$_GET['encoding']:'utf-8';
 		//echo '>',$encoding;
 		$this->prpath = paramload('SHELL','prpath');
-		$tmpl_path = remote_paramload('FRONTHTMLPAGE','template',$prpath);
+		$tmpl_path = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);
 		$this->template = $tmpl_path ? $tmpl_path .'/' : null;
 
-		$this->one_attachment = remote_paramload('SHKATALOG','oneattach',$prpath);
+		$this->one_attachment = remote_paramload('SHKATALOG','oneattach',$this->prpath);
 		$lan = getlocal();
 		$this->slan = ($this->one_attachment) ? null : ($lan?$lan:'0');
 
@@ -68,6 +69,8 @@ class cpmhtmleditor {
 		$this->cke4_inline = $this->ckeditor4 ? true/*false*/ : false; 
 		$this->ckjs = $this->ckeditor4 ? "http://stereobit.gr/ckeditor4/ckeditor.js" : "http://stereobit.gr/ckeditor/ckeditor.js";
 	
+	    $this->photodb = remote_paramload('RCITEMS','photodb',$this->prpath);
+		$this->restype = remote_paramload('RCITEMS','restype',$this->prpath);
 	    $this->msg = null;
 	}	
 	
@@ -720,6 +723,8 @@ document.addEventListener('keydown', function (event) {
 							   if ($dim_small = $autoresize[0]) {
                                  $image->resizeToWidth($dim_small);
                                  $image->save($img_small . $f);
+								 //auto add to db
+								 $this->add_photo2db($file,$restype,'SMALL');
                                }
                                return 1;							   
 							 }							 
@@ -733,10 +738,14 @@ document.addEventListener('keydown', function (event) {
 							   if ($dim_medium = $autoresize[1]) {
                                  $image->resizeToWidth($dim_medium);
                                  $image->save($img_medium . $f);
+								 //auto add to db
+								 $this->add_photo2db($file,$restype,'MEDIUM');
 							   }							   
 							   if ($dim_small = $autoresize[0]) {
                                  $image->resizeToWidth($dim_small);
                                  $image->save($img_small . $myfilename);
+								 //auto add to db
+								 $this->add_photo2db($file,$restype,'SMALL');
                                }
                                return 1;							   
 							 }
@@ -750,14 +759,20 @@ document.addEventListener('keydown', function (event) {
 							   if ($dim_large = $autoresize[2]) {
                                  $image->resizeToWidth($dim_large);
                                  $image->save($img_large . $f);	
+								 //auto add to db
+								 $this->add_photo2db($file,$restype,'LARGE');
 							   }								   
 							   if ($dim_medium = $autoresize[1]) {
                                  $image->resizeToWidth($dim_medium);
                                  $image->save($img_medium . $f);	
+								 //auto add to db
+								 $this->add_photo2db($file,$restype,'MEDIUM');
 							   }
 							   if ($dim_small = $autoresize[0]) {
                                  $image->resizeToWidth($dim_small);
                                  $image->save($img_small . $f);	
+								 //auto add to db
+								 $this->add_photo2db($file,$restype,'SMALL');
 							   }
                                return 1; 							   
 							 }
@@ -776,6 +791,8 @@ document.addEventListener('keydown', function (event) {
 							   if ($dim_large = $autoresize[2]) {
                                  $image->resizeToWidth($dim_large);
                                  $image->save($path . $f);	
+								 //auto add to db
+								 $this->add_photo2db($file,$restype,'');
                                }
                                return 1;							   
 							 }
@@ -805,7 +822,6 @@ document.addEventListener('keydown', function (event) {
 		$restype = remote_paramload('RCITEMS','restype',$this->prpath);//'.jpg'; 				  		
         $phototype = remote_paramload('RCITEMS','phototype',$this->path);
 
-		$photodb = remote_paramload('RCITEMS','photodb',$this->prpath);
 		$mixphoto = remote_paramload('RCITEMS','mixphoto',$this->prpath);	 
 		$photoquality = remote_paramload('RCITEMS','photoquality',$this->prpath);
 	  
@@ -1017,7 +1033,160 @@ document.addEventListener('keydown', function (event) {
 		  return true;
 		}  
 		return false;
-    }			
+    }
+	
+
+	protected function add_photo2db($itmcode,$type=null,$size=null) {
+	  $itmcode = $itmcode?$itmcode:GetReq('id');
+      $db = GetGlobal('db');	
+	  $type = $type ? $type : $this->restype;	  
+      $myfilename = $itmcode . $this->restype;	
+	  
+	  if (!$this->photodb) return;
+	  
+		//3 sized scaled images
+		$photo_bg = remote_paramload('RCITEMS','photobgpath',$this->prpath);		  
+		$img_large = $photo_bg ? $this->urlpath ."/images/$photo_bg/" : $thubpath;	  	  
+		$photo_md = remote_paramload('RCITEMS','photomdpath',$this->prpath);		  
+		$img_medium = $photo_md ? $this->urlpath ."/images/$photo_md/" : $thubpath;	  	  
+		$photo_sm = remote_paramload('RCITEMS','photosmpath',$this->prpath);		  
+		$img_small = $photo_sm ? $this->urlpath ."/images/$photo_sm/" : $thubpath;
+
+		//DEFAULT 1 sized photo
+        $path = $uphotoid ? remote_paramload('RCITEMS','adrespath',$this->prpath) : 
+							remote_paramload('RCITEMS','respath',$this->prpath);		
+	  
+	  switch ($size) {
+	    case "LARGE" :  $photo = $this->urlpath . $img_large . $myfilename; break;
+	    case "MEDIUM":  $photo = $this->urlpath . $img_medium . $myfilename; break;
+        case "SMALL" :  $photo = $this->urlpath . $img_small . $myfilename; break;
+        default      :  $photo = $this->urlpath . $path . $myfilename;
+                        $size = 'LARGE';		
+	  }  
+
+	  if (is_readable($photo)) {
+	  	    
+		$sSQL = "select code from pphotos ";
+		$sSQL .= " WHERE code='" . $itmcode . "' and type='". $type . "' and stype='". $size ."'";
+		//echo $sSQL;
+	  
+		$resultset = $db->Execute($sSQL,2);	
+		$result = $resultset;
+		$exist = $db->Affected_Rows();
+	  
+		$data = base64_encode(file_get_contents($photo));
+	  
+	    //65535 chars limit...
+		//else keep the file version in images dir...
+		if (strlen($data)<65535) {//cuted pic when max that 65535 (text field max width)
+	  
+			if ($exist) {
+				$sSQL = "update pphotos set data='". $data ."'";
+				$sSQL .= " WHERE code='" . $itmcode . "' and type='" . $type ."'";
+				if (isset($size))
+					$sSQL .= " and stype='" . $size . "'";		  		  
+			}
+			else 
+				$sSQL = "insert into pphotos (data,type,code,stype) values ('". $data ."','" . $type ."','" . $itmcode ."','".$size."')";  	  
+	
+			//echo $sSQL;	
+	  
+			$db->Execute($sSQL,1);	
+			$affected = $db->Affected_Rows();
+	  
+			if (($affected) && ($this->erase2db))
+				unlink($photo); //<<<<<<<<<< !!!! DELETE	
+			
+		}//limit
+		//else
+		  // echo '65535 limit!';
+	  }//is readable	
+	  return ($affected);  	  
+	}
+
+	protected function show_photodb($itmcode=null, $stype=null, $type=null) {
+      $db = GetGlobal('db');
+	  if (!$itmcode) return;
+	  $type = $type?$type:$this->restype;
+	  	  
+      $sSQL = "select data,type,code from pphotos ";
+	  $sSQL .= " WHERE code='" . $itmcode . "'";
+	  if (isset($type))
+	    $sSQL .= " and type='". $type ."'";
+	  if (isset($stype))
+	    $sSQL .= " and stype='". $stype ."'";		
+
+	  
+	  $resultset = $db->Execute($sSQL,2);	
+	  $result = $resultset;	  
+	  
+	  $mime_type = 'image/'.str_replace('.','',$result->fields['type']);
+	  //$mime_type = 'image/jpeg';
+	  echo $mime_type;
+	  //header('Content-type: ' . $mime_type);
+
+	  if ($result->fields['code']) //photo exists
+        echo base64_decode($result->fields['data']);
+	  else {//additional photo or standart nopic
+	    echo null;
+      }  
+	  
+	  die();
+	}
+
+	protected function photo2db($notexisted=null) {
+      $db = GetGlobal('db');	
+	  $i=0;
+
+	  $code = $this->getmapf('code'); 
+      $sSQL = "select id,".$code." from products where ";
+	  
+	  if ($id = GetReq('id')) 
+	    $sSQL .= $code . "='" . $id . "' and ";	
+	  elseif ($cat = GetReq('cat')) {
+	    $cat_tree = explode($this->cseparator,$this->replace_spchars($cat,1));
+		
+		foreach ($cat_tree as $c=>$cc)
+	      $whereClause[] = "cat$c=" . $db->qstr(rawurldecode($this->replace_spchars($cc,1)));	
+		  
+		$sSQL .= implode(' and ', $whereClause) . ' and ';	  	
+	  }	
+	  $sSQL .= " itmactive>0 and active>0";	
+	  
+	  if ($notexisted)
+		$sSQL .= " and ". $code . " NOT IN (select code from pphotos)";		  
+	  //echo $sSQL;
+	  
+	  $resultset = $db->Execute($sSQL,2);	
+	  $result = $resultset;
+	  //print_r($result);	
+	  $max_items = $db->Affected_Rows();
+	  //echo $max_items;  
+	  $this->msg = 'Total items:'. $max_items . '<br>';
+	  
+	  if (!empty($result)) {		  
+	    //echo $i,'>';
+	    foreach ($result as $n=>$rec) {
+		  //echo $this->attachpath,$rec[$code],'<br>';
+		  if ($this->img_large) {//large,medium,small photos	
+			
+		    $i+= $this->add_photo2db($rec[$code],$this->restype,'SMALL');
+
+		    $i+= $this->add_photo2db($rec[$code],$this->restype,'MEDIUM');
+
+		    $i+= $this->add_photo2db($rec[$code],$this->restype,'LARGE');
+          }
+          else //one photo
+		    $i+= $this->add_photo2db($rec[$code],$this->restype);
+		}
+	  } 
+	  $this->msg .=  $i . ' photos added to dababase.';
+	  
+	  if (GetReq('editmode')) {
+	    die($this->msg);
+	  }
+	}		
+	
 };
 }
 ?>

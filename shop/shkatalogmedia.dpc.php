@@ -1243,9 +1243,9 @@ class shkatalogmedia extends shkatalog {
 		  
 		  if (!$custom_template) { 
             if (($mytemplate) && ($mytemplate_alt)) 	
-              $toprint .= $this->make_table_list($items_grid, $items_list, 'fpkatalogtable', 'fpkataloglist');			
+              $toprint .= $this->make_table_list($items_grid, $items_list, 'fpkatalogtable', 'fpkataloglist', $cat);			
 	        else
-           	  $toprint .= $this->make_table($items, $mylinemax, 'fpkatalogtable');	  
+           	  $toprint .= $this->make_table($items, $mylinemax, 'fpkatalogtable', $cat);	  
 			  
 	        $toprint .= $this->show_paging($cmd,$mytemplate,$nopager);
 
@@ -1388,7 +1388,7 @@ class shkatalogmedia extends shkatalog {
 		}	
 		//else	
 	    //make table			
-		$ret .= $this->make_table($items, $linemax, 'fpkatalogtable');  	  
+		$ret .= $this->make_table($items, $linemax, 'fpkatalogtable', $cat);  	  
 	      				
 		if ($this->pager) 
 		  $ret .= $this->show_paging($cmd,$mytemplate,$nopager);					
@@ -1408,7 +1408,7 @@ class shkatalogmedia extends shkatalog {
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';
 	    $page = GetReq('page')?GetReq('page'):0;	
-	    $cat = $pcat?$pcat:GetReq('cat'); 	   	   
+	    $cat = $pcat ? $pcat : GetReq('cat'); 	   	   
 	    $id = GetReq('id');
 	    $ogimage = array();
 	   
@@ -1583,7 +1583,7 @@ class shkatalogmedia extends shkatalog {
 		 
 	     $itemscount = count($items); 
 		 if (($itemscount>0) && ($this->additional_files_perline>1))	 {
-		   $out = $this->make_table($items, $this->additional_files_perline, 'fptreetable');	   
+		   $out = $this->make_table($items, $this->additional_files_perline, 'fptreetable', $cat);	   
 		 }
 		 else 
 		   $out = (!empty($items)) ? implode('',$items) : null; //without table template 
@@ -2330,7 +2330,7 @@ class shkatalogmedia extends shkatalog {
 		 
 		 if (($mytemplate) && (stristr($mytemplate,'<SPLIT/>')) && ($this->linemax)) {
 		    $items = explode('<SPLIT/>',$ret); //<li> split..
-			$out .= $this->make_table($items, $this->linemax, 'fpkatalogtable'); 
+			$out .= $this->make_table($items, $this->linemax, 'fpkatalogtable', $cat); 
 		 }
 		 else
 		    $out .= $ret;
@@ -3285,25 +3285,25 @@ class shkatalogmedia extends shkatalog {
 	}
 	
 	/*two view methods for items */
-	protected function make_table_list($items_table=null, $items_list=null, $template_table=null, $template_list=null) {
-	    $toprint = null;
-		$mytemplate_table = $this->select_template($template_table);
-		$mytemplate_list = $this->select_template($template_list);
-		$mytemplate_tablelist = $this->select_template('fpkatalog-grid-list');
+	protected function make_table_list($items_table=null, $items_list=null, $template_table=null, $template_list=null, $pcat=null) {
+	    $cat = $pcat ? $pcat : GetReq('cat'); 		
+		$mytemplate_table = $this->select_template($template_table, $cat);
+		$mytemplate_list = $this->select_template($template_list, $cat);
+		$mytemplate_tablelist = $this->select_template('fpkatalog-grid-list', $cat);
 		$tokens = array();
 		
         if ($mytemplate_tablelist) { 
 		
 			$table_token[] = (!empty($items_table)) ? implode('',$items_table) : null; 
-			//echo $table_token[0];
+
 			$tokens[] = $this->combine_tokens($mytemplate_table, $table_token);
 
 			$list_token[] = (!empty($items_list)) ? implode('',$items_list) : null; 
-			//echo $list_token[0];
+
 			$tokens[] = $this->combine_tokens($mytemplate_list, $list_token);
-            //print_r($tokens);
+
 			$toprint = $this->combine_tokens($mytemplate_tablelist, $tokens);
-			//echo $toprint;
+
 			unset ($tokens);
 			unset ($table_token);
 			unset ($list_token);

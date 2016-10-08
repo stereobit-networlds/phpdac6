@@ -1243,11 +1243,11 @@ function handleResponse() {if(http.readyState == 4){
 			//transactions
 			$timeins = $this->sqlDateRange('tdate', false, true);
 			
-			$sSQL = "select count(recid) from transactions where tdata like '%$id%'" . $timeins;
+			$sSQL = "select count(recid) from transactions where tstatus>=0 and tdata like '%$id%'" . $timeins;
 			$res = $db->Execute($sSQL,2);
             $this->stats['Purchase']['transactions'] = $this->nformat($res->fields[0]);
 
-			$sSQL = "select tdata from transactions where tdata like '%$id%'" . $timeins;
+			$sSQL = "select tdata from transactions where tstatus>=0 and tdata like '%$id%'" . $timeins;
 			$result = $db->Execute($sSQL,2);
 			//echo $sSQL;	   
 			$counter = 0;
@@ -1318,11 +1318,11 @@ function handleResponse() {if(http.readyState == 4){
 			//transactions
 			$timeins = $this->sqlDateRange('tdate', false, true);
 			
-			$sSQL = "select count(recid) from transactions where tdata REGEXP '". implode('|', $items) ."'" . $timeins;
+			$sSQL = "select count(recid) from transactions where tstatus>=0 and tdata REGEXP '". implode('|', $items) ."'" . $timeins;
 			$res = $db->Execute($sSQL,2);
             $this->stats['Items']['transactions'] = $this->nformat($res->fields[0]);
 
-			$sSQL = "select tdata from transactions where tdata REGEXP '". implode('|', $items) ."'" . $timeins;
+			$sSQL = "select tdata from transactions where tstatus>=0 and tdata REGEXP '". implode('|', $items) ."'" . $timeins;
 			$result = $db->Execute($sSQL,2);
 			//echo $sSQL;	   
 			$counter = 0;
@@ -1410,16 +1410,13 @@ function handleResponse() {if(http.readyState == 4){
 
 
 			//transactions
-			$timein = $this->sqlDateRange('tdate', false, false);
-			$where = $timein ? ' where ' : null;
-			//$sSQL = "select count(recid) from transactions where substr(tdate,1,4)='$year'";
-			$sSQL = "select count(recid) from transactions" . $where . $timein;
+			$timein = $this->sqlDateRange('tdate', false, true);
+			$sSQL = "select count(recid) from transactions where tstatus>=0 " . $timein;
 			//echo $sSQL;
 			$res = $db->Execute($sSQL,2);
 			$this->stats['Transactions']['value'] = $res->fields[0] ? $this->nformat($res->fields[0]) : 0;			
 			
-		    //$sSQL = "select sum(cost),sum(costpt) from transactions where substr(tdate,1,4)='$year'";
-		    $sSQL = "select sum(cost),sum(costpt) from transactions" . $where . $timein;
+		    $sSQL = "select sum(cost),sum(costpt) from transactions where tstatus>=0 " . $timein;
 			//echo $sSQL;	
 			$res = $db->Execute($sSQL,2);
 			$this->stats['Transactions']['revenuenet'] = $this->nformat($res->fields[0],2);
@@ -2318,7 +2315,7 @@ function handleResponse() {if(http.readyState == 4){
 		$tokens = array();
 		$text = localize('_sale',getlocal());
 		
-		$sSQL = "SELECT timein,cid,tid FROM transactions where timein BETWEEN DATE_SUB( NOW() , INTERVAL 3 DAY ) AND NOW() order by timein desc LIMIT " . $l;
+		$sSQL = "SELECT timein,cid,tid FROM transactions where tstatus>=0 and timein BETWEEN DATE_SUB( NOW() , INTERVAL 3 DAY ) AND NOW() order by timein desc LIMIT " . $l;
 
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);

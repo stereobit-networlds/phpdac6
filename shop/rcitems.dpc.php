@@ -998,7 +998,7 @@ class rcitems {
                                  $image->resizeToWidth($dim_large);
                                  $image->save($this->urlpath . $this->img_large . $myfilename);
 								 //auto add to db
-								 $this->add_photo2db($id,$this->restype,'SMALL');	
+								 $this->add_photo2db($id,$this->restype,'LARGE');	
 							   }								   
 							   if ($dim_medium = $this->autoresize[1]) {
                                  $image->resizeToWidth($dim_medium);
@@ -1010,7 +1010,7 @@ class rcitems {
                                  $image->resizeToWidth($dim_small);
                                  $image->save($this->urlpath . $this->img_small . $myfilename);
 								 //auto add to db
-								 $this->add_photo2db($id,$this->restype,'LARGE');	
+								 $this->add_photo2db($id,$this->restype,'SMALL');	
 							   }
                                return 1; 							   
 							 }

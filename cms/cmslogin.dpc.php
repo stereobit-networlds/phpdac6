@@ -38,10 +38,10 @@ $__ACTIONS['CMSLOGIN_DPC'][11]='shlogin';
 
 $__DPCATTR['CMSLOGIN_DPC']['cmslogin'] = 'cmslogin,1,0,0,0,0,0,0,0,0,0,0,1';
 
-$__LOCALE['CMSLOGIN_DPC'][0]='CMSLOGIN_DPC;Login;Εισαγωγή';
+$__LOCALE['CMSLOGIN_DPC'][0]='CMSLOGIN_DPC;Login;Σύνδεση';
 $__LOCALE['CMSLOGIN_DPC'][1]='_SHLOGOUT;Logout;Αποσύνδεση';
 $__LOCALE['CMSLOGIN_DPC'][2]='SHLOGIN_CNF;Logout;Αποσύνδεση';
-$__LOCALE['CMSLOGIN_DPC'][3]='SHLOGIN_UNK;Login;Εισαγωγή';
+$__LOCALE['CMSLOGIN_DPC'][3]='SHLOGIN_UNK;Login;Σύνδεση';
 $__LOCALE['CMSLOGIN_DPC'][4]='_USERNAME;Username;Χρήστης';
 $__LOCALE['CMSLOGIN_DPC'][5]='_PASSWORD;Password;Κωδικός';
 $__LOCALE['CMSLOGIN_DPC'][6]='_WELLCOME;Welcome;Καλωσήρθες';
