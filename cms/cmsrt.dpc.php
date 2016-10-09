@@ -255,7 +255,7 @@ class cmsrt extends cms  {
 		
         $sSQL = "select id,datein,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,".
-				"volume,dimensions,size,color,manufacturer,xml,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%a') as monthname," . 
+				"volume,dimensions,size,color,manufacturer,xml,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," . 
 				$this->getmapf('code') . " from products WHERE ";
 	
 		if (isset($tid)) {
@@ -349,6 +349,24 @@ class cmsrt extends cms  {
 		return ($ret);
 	}		
 
+	
+	public function get_attachment($itmcode=null,$type=null,$nolan=null) {
+		$db = GetGlobal('db');	
+		$lan = getlocal(); 
+		$slan = ($nolan) ? null : ($lan ? $lan : '0');	  
+	  		  
+		$sSQL = "select data,type from pattachments ";
+		$sSQL .= " WHERE code='" . $itmcode . "'";
+		if (isset($type))
+			$sSQL .= " and type='". $type ."'";
+		if (isset($slan))
+			$sSQL .= " and lan=" . $slan;	
+		//echo $sSQL;
+	  
+		$result = $db->Execute($sSQL);	
+	  
+		return ($result->fields[0]);
+	}	
 	
     //combine tokens with load tmpl data inside	
 	public function ct($template, $toks, $execafter=null) {

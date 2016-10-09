@@ -2852,6 +2852,24 @@ This email and any files transmitted with it are confidential and intended solel
 		return (number_format($n,$dec,',','.'));
 	}	
 	
+	public function get_attachment($itmcode=null,$type=null,$nolan=null) {
+		$db = GetGlobal('db');	
+		$lan = getlocal(); 
+		$slan = ($nolan) ? null : ($lan ? $lan : '0');	  
+	  		  
+		$sSQL = "select data,type from pattachments ";
+		$sSQL .= " WHERE code='" . $itmcode . "'";
+		if (isset($type))
+			$sSQL .= " and type='". $type ."'";
+		if (isset($slan))
+			$sSQL .= " and lan=" . $slan;	
+		//echo $sSQL;
+	  
+		$result = $db->Execute($sSQL);	
+	  
+		return ($result->fields[0]);
+	}	
+	
 	protected function select_template($tfile=null) {
 		if (!$tfile) return;
 	  

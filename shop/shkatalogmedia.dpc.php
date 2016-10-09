@@ -65,6 +65,7 @@ class shkatalogmedia extends shkatalog {
 	var $orderid, $sortdef, $bypass_order_list;
 	var $isListView, $imgLargeDB, $imgMediumDB, $imgSmallDB;
 	var $ogTags, $siteTitle, $httpurl;
+	var $selectSQL;
 
 	function shkatalogmedia() {
 
@@ -131,6 +132,12 @@ class shkatalogmedia extends shkatalog {
 	  $this->siteFb = remote_paramload('INDEX','facebook', $this->path);
       $this->ogTags = null;	  
 	  $this->twitTags = null;
+	  
+	  $lastprice = $this->getmapf('lastprice') ? ','.$this->getmapf('lastprice') : ',id';//dummy
+	  $this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
+						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
+						$this->getmapf('code'). $lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname" .
+						" from products ";
     }
 	
 	function event($event=null) {
@@ -268,7 +275,9 @@ class shkatalogmedia extends shkatalog {
 		$page = GetReq('page')?GetReq('page'):0;	
 		
         $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,".$this->getmapf('code')." from products ";
+	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1," . 
+				 $this->getmapf('code'). $lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname" .
+				 " from products ";				
 		$sSQL .= " WHERE itmactive>0 and active>0";			 
 		//$sSQL .= ' ORDER BY';
 		$itmnamesort = $this->bypass_order_list ? null : ",".$itmname;
@@ -298,24 +307,10 @@ class shkatalogmedia extends shkatalog {
 		    $out .= $this->list_katalog(0);//null,'katalog',null,null,1); 
 		
 		return ($out);
-	}
-	
-	//override handle cat/sub cat navigation
-	/*function tree_browser() {
-	  $cat = GetReq('cat'); 
-	  
-	  if ($this->notreebrowser)
-	      return null;
-	  
-	  $out = $this->show_submenu('klist',1,null,null,1);  //submenu only
-	  
-	  return ($out);
-	  
-	}*/		
+	}	
 
-	
 	//override
-	function do_quick_search($text2find,$incategory=null) {
+	public function do_quick_search($text2find,$incategory=null) {
         $db = GetGlobal('db');	
 		$page = GetReq('page')?GetReq('page'):0;
 	    $asc = GetReq('asc')?GetReq('asc'):GetSessionParam('asc');
@@ -338,11 +333,7 @@ class shkatalogmedia extends shkatalog {
 		
 		  $parts = explode(" ",$text2find);//get special words in text like code:  
 	
-	      $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,".
-				$this->getmapf('code').	$lastprice . 
-				" from products ";
-		  	
+	      $sSQL = $this->selectSQL;
 		  $sSQL .= " where ";
 		  
 		  switch ($parts[0]) {
@@ -429,15 +420,9 @@ class shkatalogmedia extends shkatalog {
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';						
 		
-		$lastprice = $this->getmapf('lastprice'); //?','.$this->getmapf('lastprice'):null;	
-		
 		if ($text2find) {
 		
-	      $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,".
-				$this->getmapf('code').	$lastprice .
-				" from products ";
-		  	
+	      $sSQL = $this->selectSQL;
 		  $sSQL .= " where manufacturer='" . $this->replace_spchars($text2find,1) . "'";
 		  
           if ($incategory) {	
@@ -702,8 +687,7 @@ class shkatalogmedia extends shkatalog {
 	    $lan = getlocal();
 	    $mylan = $lan?$lan:'0';
 	    $itmname = $mylan?'itmname':'itmfname';
-	    $itmdescr = $mylan?'itmdescr':'itmfdescr';	
-        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;			
+	    $itmdescr = $mylan?'itmdescr':'itmfdescr';			
 	    $f = $mylan; 	
 		$cat = GetReq('cat');	
 
@@ -718,11 +702,7 @@ class shkatalogmedia extends shkatalog {
 		  
 		  $cat_tree = explode($this->cseparator, $cat); 
 			
-		   
-	      $sSQL = "select id,sysins,code1,pricepc,price2,sysupd,itmname,itmfname,uniname1,uniname2,active,code4," .
-	              "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				  $this->getmapf('code'). $lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid" .
-				  " from products ";
+	      $sSQL = $this->selectSQL;
 		  $sSQL .= " WHERE ";		   
 		      	  
 		  if ($cat_tree[0])
@@ -746,7 +726,7 @@ class shkatalogmedia extends shkatalog {
 		  $sSQL .= $whereClause;				 
 		  $sSQL .= " and itmactive>0 and active>0";			   
 		  $sSQL .= " ORDER BY {$this->orderid}";
-		  
+
 		  switch ($order) {
 		      case 1  : $sSQL .= $this->bypass_order_list ? null : ','.$itmname; break;
 			  case 2  : $sSQL .= $this->bypass_order_list ? null : ',price0';break;  
@@ -790,8 +770,7 @@ class shkatalogmedia extends shkatalog {
 	    $lan = getlocal();
 	    $mylan = $lan?$lan:'0';
 	    $itmname = $mylan?'itmname':'itmfname';
-	    $itmdescr = $mylan?'itmdescr':'itmfdescr';	
-        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;			
+	    $itmdescr = $mylan?'itmdescr':'itmfdescr';				
 	    $f = $mylan; 
 		$oper = '=';
 
@@ -801,11 +780,7 @@ class shkatalogmedia extends shkatalog {
 		  
 		  $cat_tree = explode($this->cseparator,$cat); 
 			
-		   
-	      $sSQL = "select id,sysins,code1,pricepc,price2,sysupd,itmname,itmfname,uniname1,uniname2,active,code4," .
-	              "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				  $this->getmapf('code'). $lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid" .
-				  " from products ";
+	      $sSQL = $this->selectSQL;
 		  $sSQL .= " WHERE ";		   
 		      	  
 		  if ($cat_tree[0])
@@ -878,20 +853,16 @@ class shkatalogmedia extends shkatalog {
 	    $lan = getlocal();
 	    $mylan = $lan?$lan:'0';
 	    $itmname = $mylan?'itmname':'itmfname';
-	    $itmdescr = $mylan?'itmdescr':'itmfdescr';	
-        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;			 	
+	    $itmdescr = $mylan?'itmdescr':'itmfdescr';			 	
 		$cat = GetReq('cat');				
 		$xmlitems = GetReq('xml');	
 			
+		
+	    /*$sSQL = $this->selectSQL;*/
 		if (!defined('RCXMLFEEDS_DPC')) return 'RCXMLFEEDS DPC not loaded'; //dpc cmds needed
 		$sf = _v('rcxmlfeeds.select_fields'); //remote_arrayload('RCXMLFEEDS','selectfields',$this->path);			
 		$myfields = implode(',', $sf);	
-		$sSQL = "select id," . $myfields . " from products";
-		
-	    /*$sSQL = "select id,sysins,code1,pricepc,price2,sysupd,itmname,itmfname,uniname1,uniname2,active,code4," .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-		  	    $this->getmapf('code'). $lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid" .
-				" from products ";*/
+		$sSQL = "select id," . $myfields . " from products";		
 		$sSQL .= " WHERE ";	
 
 		if ($cat!=null) {		   
@@ -929,36 +900,29 @@ class shkatalogmedia extends shkatalog {
 	function read_item($direction=null,$item_id=null) {
         $db = GetGlobal('db');	
 		$item = $item_id ? $item_id : GetReq('id');
-		$cat = GetReq('cat');		
-        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;			  	
+		$cat = GetReq('cat');				  	
 		
-	    $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code') .
-				$lastprice .				
-				",weight,volume,dimensions,size,color,manufacturer from products ";
-				
-		  $sSQL .= " WHERE ".$this->getmapf('code')."=";
-		  $sSQL .= $this->codetype=='string' ? $db->qstr($item) : $item;
+	    $sSQL = $this->selectSQL;	
+		$sSQL .= " WHERE ".$this->getmapf('code')."=";
+		$sSQL .= $this->codetype=='string' ? $db->qstr($item) : $item;
 		  
-		  if (($lock = $this->itemlockparam) && (!GetGlobal('UserID')))
+		if (($lock = $this->itemlockparam) && (!GetGlobal('UserID')))
 		    $sSQL .=  ' and ' . $lock . ' is null';		  	  
 	   
-	   $sSQL .= " LIMIT 1";
+	    $sSQL .= " LIMIT 1";
 	   
-	   $resultset = $db->Execute($sSQL,2);
-	   $this->result = $resultset; 	
+	    $resultset = $db->Execute($sSQL,2);
+	    $this->result = $resultset; 	
  
-       //update session last viewed items
-       $vitems = (array) unserialize(GetSessionParam('lastvieweditems'));	   
-	   $vitems[] = $item;
-	   if (count($vitems)>12) 
-		$itemout = array_shift($vitems);
+        //update session last viewed items
+        $vitems = (array) unserialize(GetSessionParam('lastvieweditems'));	   
+	    $vitems[] = $item;
+	    if (count($vitems)>12) 
+			$itemout = array_shift($vitems);
 	   	
+	    SetSessionParam('lastvieweditems',serialize($vitems));	   
 	   
-	   SetSessionParam('lastvieweditems',serialize($vitems));	   
-	   
-	   return ($resultset);   
+	    return ($resultset);   
 	}		
 	
 	//override
@@ -1230,6 +1194,13 @@ class shkatalogmedia extends shkatalog {
               $tokens[] = $this->item_has_discount($rec[$item_code]);
               $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				  
 		      
+			  /*date time */
+			  $tokens[] = $rec['year'];
+			  $tokens[] = $rec['month'];
+			  $tokens[] = $rec['day'];
+			  $tokens[] = $rec['time'];
+			  $tokens[] = $rec['monthname'];
+			  
 			  if (!$custom_template) {
                 $items_grid[] = $this->combine_tokens($mytemplate, $tokens, true);//<<exec after tokens replace
                 $items_list[] = $this->combine_tokens($mytemplate_alt, $tokens, true);//<<exec after tokens replace			  
@@ -1376,7 +1347,14 @@ class shkatalogmedia extends shkatalog {
 
              $tokens[] = $this->item_has_discount($rec[$item_code]);
              $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				 
-			 			 	 
+			 			
+			 /*date time */
+			 $tokens[] = $rec['year'];
+			 $tokens[] = $rec['month'];
+			 $tokens[] = $rec['day'];
+			 $tokens[] = $rec['time'];
+			 $tokens[] = $rec['monthname'];
+						
 			 $items[] = $this->combine_tokens($mytemplate, $tokens, true);	
 			 unset($tokens);													 
 		   
@@ -1502,6 +1480,13 @@ class shkatalogmedia extends shkatalog {
 			 $tokens[] = $rec['ypoloipo1'];
 			 $tokens[] = $rec['manufacturer'];	
 			 
+			 /*date time */
+			 $tokens[] = $rec['year'];
+			 $tokens[] = $rec['month'];
+			 $tokens[] = $rec['day'];
+			 $tokens[] = $rec['time'];
+			 $tokens[] = $rec['monthname'];			 
+			 
 			 //print_r($tokens);
 			 $out = $this->combine_tokens($mytemplate, $tokens, true);
 			 
@@ -1615,14 +1600,9 @@ class shkatalogmedia extends shkatalog {
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';				
-		$pz = $photosize?$photosize:1;	
-		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;		
+		$pz = $photosize?$photosize:1;		
 	                                                                             
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products ";
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
 		if ($selected_item = GetReq('id')) 
@@ -1654,18 +1634,13 @@ class shkatalogmedia extends shkatalog {
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';
-		$mycat = $category ? $category : GetReq('cat');	   
-		$cat = explode($this->cseparator,$mycat);			
-		$pz = $photosize?$photosize:1;	
-		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;		
+		$mycat = $category ? $category : GetReq('cat');	   			
+		$pz = $photosize?$photosize:1;			
 	                                                                             
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products ";
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
+		$cat = explode($this->cseparator,$mycat);		
 		foreach ($cat as $i=>$c) {
 		  $myc = $this->replace_spchars($c,1);		
 		  $sSQL .= " cat{$i}='$myc' and ";	
@@ -1675,9 +1650,6 @@ class shkatalogmedia extends shkatalog {
 		  $ii = $i+1;
 		  $sSQL .= " (cat{$ii} IS NULL or cat{$ii}='') and ";		
 		}  		
-		
-		if (($selected_item = GetReq('id')) && (!$xor)) 
-		  $sSQL .= $this->getmapf('code') . " not like '" . $selected_item ."' and ";
 		  
 		//MULTIPLE CHECKS  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		if ($selected_cat0 = $fields['cat0']) 
@@ -1715,24 +1687,65 @@ class shkatalogmedia extends shkatalog {
 		  
 		return ($out);	
 	}
+	
+	function show_lastincat($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+        $db = GetGlobal('db');		
+	    $lan = $lang?$lang:getlocal();
+	    $itmname = $lan?'itmname':'itmfname';
+	    $itmdescr = $lan?'itmdescr':'itmfdescr';
+		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   		
+		$pz = $photosize?$photosize:1;		
+
+        $sSQL = $this->selectSQL;
+		$sSQL .= " WHERE ";	
+		
+		$cat = explode($this->cseparator,$mycat);			
+		foreach ($cat as $i=>$c) {
+		  $myc = $this->replace_spchars($c,1);		
+		  $sSQL .= " cat{$i}='$myc' and ";	
+		}  
+		//only items inside category ..when category param not specified
+	    if ((!$category) && ($this->onlyincategory)) {
+		  $ii = $i+1;
+		  $sSQL .= " (cat{$ii} IS NULL or cat{$ii}='') and ";		
+		}  		
+
+		if ($selected_item = GetReq('id')) 
+		  $sSQL .= $this->getmapf('code') . " not like '" . $selected_item ."' and ";
+		  		
+		$sSQL .= "itmactive>0 and active>0";	
+		$mysort = $ascdesc ? ($ascdesc=='ASC'?'ASC':'DESC') : $this->sortdef; 
+		$sSQL .= " ORDER BY sysins ";// $mysort ";//!!!!!=MUST ASC (=DEFAULT WHEN NOT WRITTEN )
+		//$sSQL .= $this->bypass_order_list ? null : ",$itmname $mysort ";//MUST DESC		
+		$sSQL .= $items ? " LIMIT " . $items : null;			
+	    //echo $sSQL,'<br>';
+		
+	    $resultset = $db->Execute($sSQL,2);	
+		$this->result = $resultset;
+		
+		$xmax = $imgx?$imgx:100;
+		$ymax = $imgy?$imgy:75;		
+		
+		if ($linemax>1)
+		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_pcat use $p,$category,$items");
+		else  	
+          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_pcat use $p,$category,$items");
+		  
+		return ($out);	
+	}		
 
 	function show_orderid($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');		
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';
-		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
-		$cat = explode($this->cseparator,$mycat);			
-		$pz = $photosize?$photosize:1;	
-		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;		
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products ";
+		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   		
+		$pz = $photosize?$photosize:1;		
+
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
+		$cat = explode($this->cseparator,$mycat);			
 		foreach ($cat as $i=>$c) {
 		  $myc = $this->replace_spchars($c,1);		
 		  $sSQL .= " cat{$i}='$myc' and ";	
@@ -1743,9 +1756,6 @@ class shkatalogmedia extends shkatalog {
 		  $sSQL .= " (cat{$ii} IS NULL or cat{$ii}='') and ";		
 		}  		
 		
-		if (($selected_item = GetReq('id')) && (!$xor)) 
-		  $sSQL .= $this->getmapf('code') . " not like '" . $selected_item ."' and ";
-		  
 		//MULTIPLE CHECKS  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		if ($selected_cat0 = $fields['cat0']) 
 		  $sSQL .= "cat0 not like '" . $selected_cat0 . "' and ";		  
@@ -1788,16 +1798,10 @@ class shkatalogmedia extends shkatalog {
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';
-		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
-		$cat = explode($this->cseparator,$mycat);			
-		$pz = $photosize?$photosize:1;	
-		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;		
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products ";
+		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   			
+		$pz = $photosize?$photosize:1;			
+
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";		
 			
 		$sSQL .= "orderid = $orderid and orderid IS NOT NULL and itmactive>0 and active>0";	
@@ -1826,15 +1830,10 @@ class shkatalogmedia extends shkatalog {
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';				
 		$pz = $photosize?$photosize:1;	
-		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;	
         $ordfield = $ofield ? $ofield : $itmname;
         $ascd = $desc ? "desc" : "asc"; 		
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products ";
+
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
 		if ($selected_item = GetReq('id')) 
@@ -1869,13 +1868,8 @@ class shkatalogmedia extends shkatalog {
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
 		$pz = $photosize?$photosize:1;	
-        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;				
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products ";
+
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		 
 		$sSQL .= $this->getmapf('code') . " in (" . $group .")";  //coma sep codes
@@ -1910,13 +1904,8 @@ class shkatalogmedia extends shkatalog {
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
 		$pz = $photosize?$photosize:1;	
-        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;				
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products ";
+
+        $sSQL = $this->selectSQL;				
 		$sSQL .= " WHERE ";	
 		
 		if ($selected_item = GetReq('id')) 
@@ -1950,8 +1939,7 @@ class shkatalogmedia extends shkatalog {
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';
 		$pz = $photosize?$photosize:1;						
-		$p = null;
-        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;			
+		$p = null;			
 		$table2check = 'products';
 		$fields = $this->result->fields;				
 		//print_r($fields);
@@ -1976,12 +1964,7 @@ class shkatalogmedia extends shkatalog {
 		  } 
 		}
 	    //echo '>>>>>>>',$field2check,':',$p,':',$mode,'>>>>>>';				
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products ";
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE (";	
 		
 		switch ($mode) {
@@ -2101,8 +2084,7 @@ class shkatalogmedia extends shkatalog {
 	   $itmdescr = $lan?'itmdescr':'itmfdescr';		
 	   //$date2check = time() - ($days * 24 * 60 * 60);
 	   //$entrydate = date('Y-m-d',$date2check);		
-	   $pz = $photosize?$photosize:1;	  
-       $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;		    
+	   $pz = $photosize?$photosize:1;	  	    
 	
        if ( (defined('SHTRANSACTIONS_DPC')) && (seclevel('SHTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 
@@ -2111,11 +2093,7 @@ class shkatalogmedia extends shkatalog {
 		 
 		 if (!empty($itemslist)) {
 		 
-           $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	               "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				   $this->getmapf('code') .
-				   $lastprice .
-				   " from products ";
+           $sSQL = $this->selectSQL;
 		   $sSQL .= " WHERE (";	
 		
 		   foreach ($itemslist as $i=>$code)
@@ -2153,18 +2131,14 @@ class shkatalogmedia extends shkatalog {
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';			
 		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
 		$cat = explode($this->cseparator,$mycat);		
-		$pz = $photosize?$photosize:1;
-        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;			
+		$pz = $photosize?$photosize:1;		
 				
 		//auto browse current cat
-		$fields = $this->result->fields; //prev query exclude cat		
-	    //echo 'z'; print_r($fields);                                                                            //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,".
-				$this->getmapf('code').
-				$lastprice.
-				" from products ";
+		$fields = $this->result->fields; //prev query exclude cat
+		
+	    $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
+		
 		foreach ($cat as $i=>$c) {
 		  $myc = $this->replace_spchars($c,1);		
 		  $sSQL .= " cat{$i}='$myc' and ";	
@@ -2221,17 +2195,12 @@ class shkatalogmedia extends shkatalog {
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';			
 		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
 		$cat = explode($this->cseparator,$mycat);		
-		$pz = $photosize?$photosize:1;
-        $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;			
+		$pz = $photosize?$photosize:1;		
 				
 		//auto browse current cat
 		$fields = $this->result->fields; //prev query exclude cat		
-	    //echo 'z'; print_r($fields);                                                                            //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,".
-				$this->getmapf('code').
-				$lastprice.
-				" from products ";
+		
+	    $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";		  		  
 		$sSQL .= "itmactive>0 and active>0";	
 		$sSQL .= " ORDER BY sysupd DESC LIMIT 2000";// . $items;	//<<<<<<		
@@ -2348,27 +2317,19 @@ class shkatalogmedia extends shkatalog {
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';				
 		$pz = $photosize?$photosize:1;	
-		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;	
 		
 		if (!$item) 
 		  $item = GetReq('id');	
-		  //$item = GetGlobal('controller')->calldpc_var('shtags.tagitem');
 		
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".
-			    $this->getmapf('code').
-				$lastprice .
-				" from products ";
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";
 		$sSQL .= $this->getmapf('code') . "= '" . $item ."'";
 		//echo $sSQL;
 	    $resultset = $db->Execute($sSQL,2);	
 		$result = $resultset;
-		//print_r($result);
+
 	    foreach ($result as $n=>$rec) {
 		  if ($islink) {
-		    //$cat = $this->getkategories($rec);
-			//$ucat = $cat;//urlencode($cat);
 			$ucat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 		  	$itemlink = seturl('t=kshow&cat='.$ucat.'&id='.$rec[$this->getmapf('code')],$rec[$attr]);
 			return ($itemlink);
@@ -2384,15 +2345,10 @@ class shkatalogmedia extends shkatalog {
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';				
 		$pz = $photosize?$photosize:1;	
-		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;
 		
 		if (!$itemsarray) return;		
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".
-			    $this->getmapf('code').
-				$lastprice .
-				" from products ";
+
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
         if (strstr($itemsarray,';')) {
@@ -2432,6 +2388,7 @@ class shkatalogmedia extends shkatalog {
 	}		
 	
 	//override
+	
 	function show_last_viewed_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');			
@@ -2500,9 +2457,7 @@ class shkatalogmedia extends shkatalog {
 		if (!empty($lastviewed)) {	
 			$ilist = implode("','",array_reverse($lastviewed));
 		
-			$sSQL = "select products.id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->getmapf('code').
-				" from products";
+			$sSQL = $this->selectSQL;
 			$sSQL .= " WHERE " . $this->getmapf('code')." in ('". $ilist ."') and itmactive>0 and active>0";				
 
 			//echo $sSQL;	
@@ -2530,15 +2485,11 @@ class shkatalogmedia extends shkatalog {
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';				
-		
-	    //$date2check = time() - ($days * 24 * 60 * 60);
-	    //$entrydate = date('Y-m-d',$date2check);
 		$pz = $photosize?$photosize:1;			
-	                                                                                //,date1
-        $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,".$this->getmapf('code')." from products ";
+
+        $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
-		//echo $cat;
+
 		if ($cat) {
 		  $c = explode($this->cseparator, $this->replace_spchars($cat,1)); //print_r($cat);
 		  foreach ($c as $cc=>$category)

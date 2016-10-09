@@ -16,11 +16,15 @@ $__EVENTS['CPMHTMLEDITOR_DPC'][0]='cpmhtmleditor';
 $__EVENTS['CPMHTMLEDITOR_DPC'][1]='cpmdropzone';
 $__EVENTS['CPMHTMLEDITOR_DPC'][2]='cpmvphoto';
 $__EVENTS['CPMHTMLEDITOR_DPC'][3]='cpmvdel';
+$__EVENTS['CPMHTMLEDITOR_DPC'][4]='cpmvphotoadddb';
+$__EVENTS['CPMHTMLEDITOR_DPC'][5]='cpmvphotodeldb';
 
 $__ACTIONS['CPMHTMLEDITOR_DPC'][0]='cpmhtmleditor';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][1]='cpmdropzone';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][2]='cpmvphoto';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][3]='cpmvdel';
+$__ACTIONS['CPMHTMLEDITOR_DPC'][4]='cpmvphotoadddb';
+$__ACTIONS['CPMHTMLEDITOR_DPC'][5]='cpmvphotodeldb';
 
 //$__DPCATTR['CPMHTMLEDITOR_DPC']['cpmhtmleditor'] = 'cpmhtmleditor,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -42,8 +46,8 @@ class cpmhtmleditor {
 	
 		self::$staticpath = paramload('SHELL','urlpath');
 	
-		$this->urlpath = paramload('SHELL','urlpath').$this->infolder.'/';		  
-		$this->urlbase = paramload('SHELL','urlbase').$this->infolder.'/';	
+		$this->urlpath = paramload('SHELL','urlpath');		  
+		$this->urlbase = paramload('SHELL','urlbase');	
 		
 		$this->encoding = $_GET['encoding']?$_GET['encoding']:'utf-8';
 		//echo '>',$encoding;
@@ -77,6 +81,10 @@ class cpmhtmleditor {
 	public function event($sEvent) {
 	
 		switch ($sEvent) {
+			
+			case 'cpmvphotoadddb' : $this->add_photo2db(null,null,GetReq('size')); break;
+			case 'cpmvphotodeldb' : $this->delete_photodb(GetReq('size')); break;
+			
 		    case 'cpmvdel'     :$this->delete_photo(); break;
 			case 'cpmvphoto'   :break; 
 		    case 'cpmdropzone' :$this->dropzone(); break; //fast-entry photo
@@ -88,6 +96,10 @@ class cpmhtmleditor {
 	
 	public function action($sAction) {
 		switch ($sAction) {
+		
+			case 'cpmvphotoadddb' : 
+			case 'cpmvphotodeldb' : 		
+	
 		    case 'cpmvdel'     :
 		    case 'cpmvphoto'   : $out = $this->gallery(); break; 
 			case 'cpmdropzone' : break;
@@ -889,7 +901,15 @@ document.addEventListener('keydown', function (event) {
 	
 		$photo_bg = remote_paramload('RCITEMS','photobgpath',$this->prpath);		  
 		$img = "/images/$photo_bg/" . $name . $restype;
-		$img_large = $photo_bg ? $this->urlpath . $img : null;	  	  
+		$img_large = $photo_bg ? $this->urlpath . $img : null;	
+
+        if ($this->photodb) {
+			$add2db_url = seturl('t=cpmvphotoadddb&size=LARGE&id='.$name);
+			$add2db_button = '<div class="mega-link mega-red"><a href="'.$add2db_url.'"><div class="mega-link mega-red"></div></a></div>';
+			$del2db_url = seturl('t=cpmvphotodeldb&size=LARGE&id='.$name);
+			$del2db_button = '<div class="mega-link mega-red"><a href="'.$del2db_url.'"><div class="mega-link mega-red"></div></a></div>';			
+		}
+		
 		if (($img_large) && is_readable($img_large)) {
 		    $id += 1;
 			$ret = '<div class="mega-entry cat-large cat-all" id="mega-entry-'.$id.'" data-src="'.$img.'" data-lowsize="">
@@ -901,6 +921,7 @@ document.addEventListener('keydown', function (event) {
                         </div>
                         <!-- The Link Buttons -->
                         <div class="mega-coverbuttons">
+							'.$add2db_button . $del2db_button.'
                             <div class="mega-link mega-red"><a href="'.$xlink.$name.'&type=LARGE"><div class="mega-link mega-red"></div></a></div>
                             <a class="fancybox" rel="group" href="'.$img.'" title="'.$name.'"><div class="mega-view mega-red"></div></a>
                         </div>
@@ -910,6 +931,14 @@ document.addEventListener('keydown', function (event) {
 		$photo_md = remote_paramload('RCITEMS','photomdpath',$this->prpath);		  
 		$img = "/images/$photo_md/" . $name . $restype;
 		$img_medium = $photo_md ? $this->urlpath . $img : null;
+		
+        if ($this->photodb) {
+			$add2db_url = seturl('t=cpmvphotoadddb&size=MEDIUM&id='.$name);
+			$add2db_button = '<div class="mega-link mega-red"><a href="'.$add2db_url.'"><div class="mega-link mega-red"></div></a></div>';
+			$del2db_url = seturl('t=cpmvphotodeldb&size=MEDIUM&id='.$name);
+			$del2db_button = '<div class="mega-link mega-red"><a href="'.$del2db_url.'"><div class="mega-link mega-red"></div></a></div>';			
+		}		
+		
 		if (($img_medium) && is_readable($img_medium)) {
 		    $id += 1;
 			$ret .= '<div class="mega-entry cat-medium cat-all" id="mega-entry-'.$id.'" data-src="'.$img.'" data-lowsize="">
@@ -921,6 +950,7 @@ document.addEventListener('keydown', function (event) {
                         </div>
                         <!-- The Link Buttons -->
                         <div class="mega-coverbuttons">
+							'.$add2db_button . $del2db_button.'
                             <div class="mega-link mega-red"><a href="'.$xlink.$name.'&type=MEDIUM"><div class="mega-link mega-red"></div></a></div>
                             <a class="fancybox" rel="group" href="'.$img.'" title="'.$name.'"><div class="mega-view mega-red"></div></a>
                         </div>
@@ -930,6 +960,14 @@ document.addEventListener('keydown', function (event) {
  		$photo_sm = remote_paramload('RCITEMS','photosmpath',$this->prpath);		  
 		$img = "/images/$photo_sm/" . $name . $restype;
 		$img_small = $photo_sm ? $this->urlpath . $img : null;
+		
+        if ($this->photodb) {
+			$add2db_url = seturl('t=cpmvphotoadddb&size=SMALL&id='.$name);
+			$add2db_button = '<div class="mega-link mega-red"><a href="'.$add2db_url.'"><div class="mega-link mega-red"></div></a></div>';
+			$del2db_url = seturl('t=cpmvphotodeldb&size=SMALL&id='.$name);
+			$del2db_button = '<div class="mega-link mega-red"><a href="'.$del2db_url.'"><div class="mega-link mega-red"></div></a></div>';			
+		}		
+		
 		if (($img_small) && is_readable($img_small)) {
 		    $id += 1;
 			$ret .= '<div class="mega-entry cat-small cat-all" id="mega-entry-'.$id.'" data-src="'.$img.'" data-lowsize="">
@@ -941,6 +979,7 @@ document.addEventListener('keydown', function (event) {
                         </div>
                         <!-- The Link Buttons -->
                         <div class="mega-coverbuttons">
+							'.$add2db_button . $del2db_button.'
                             <div class="mega-link mega-red"><a href="'.$xlink.$name.'&type=SMALL"><div class="mega-link mega-red"></div></a></div>
                             <a class="fancybox" rel="group" href="'.$img.'" title="'.$name.'"><div class="mega-view mega-red"></div></a>
                         </div>
@@ -950,7 +989,15 @@ document.addEventListener('keydown', function (event) {
 		$rp = remote_paramload('RCITEMS','respath',$this->prpath);		
 		$rrp = $rp ? $rp : '/images/thub/';
 		$img = $rrp . $name . $restype;
-		$img_thub = $this->urlpath . $img;	 
+		$img_thub = $this->urlpath . $img;	
+
+        if ($this->photodb) {
+			$add2db_url = seturl('t=cpmvphotoadddb&size=&id='.$name);
+			$add2db_button = '<div class="mega-link mega-red"><a href="'.$add2db_url.'"><div class="mega-link mega-red"></div></a></div>';
+			$del2db_url = seturl('t=cpmvphotodeldb&size=&id='.$name);
+			$del2db_button = '<div class="mega-link mega-red"><a href="'.$del2db_url.'"><div class="mega-link mega-red"></div></a></div>';			
+		}	
+		
 		if (($img_thub) && is_readable($img_thub)) {
 		    $id += 1;
 			$ret .= '<div class="mega-entry cat-thumb cat-all" id="mega-entry-'.$id.'" data-src="'.$img.'" data-lowsize="">
@@ -962,6 +1009,7 @@ document.addEventListener('keydown', function (event) {
                         </div>
                         <!-- The Link Buttons -->
                         <div class="mega-coverbuttons">
+							'.$add2db_button.$del2db_button.'
                             <div class="mega-link mega-red"><a href="'.$xlink.$name.'&type=THUMB"><div class="mega-link mega-red"></div></a></div>
                             <a class="fancybox" rel="group" href="'.$img.'" title="'.$name.'"><div class="mega-view mega-red"></div></a>
                         </div>
@@ -1035,13 +1083,30 @@ document.addEventListener('keydown', function (event) {
 		return false;
     }
 	
+	protected function delete_photodb($size=null) {
+		$db = GetGlobal('db');
+		$sizetype = $size ? $size : null;   
+		$id = GetReq('id');
+		
+
+        $sSQL = "delete from pphotos ";
+	    $sSQL .= " WHERE code='" . $id . "'";
+	    if (isset($sizetype))
+	      $sSQL .= " and stype='" . $sizetype . "'";
+        else //is null
+		  $sSQL .= " and stype=''";
+		
+        //echo $sSQL; 
+	    $resultset = $db->Execute($sSQL);		
+		return true;
+	}
 
 	protected function add_photo2db($itmcode,$type=null,$size=null) {
-	  $itmcode = $itmcode?$itmcode:GetReq('id');
+	  $itmcode = $itmcode ? $itmcode : GetReq('id');
       $db = GetGlobal('db');	
 	  $type = $type ? $type : $this->restype;	  
       $myfilename = $itmcode . $this->restype;	
-	  
+
 	  if (!$this->photodb) return;
 	  
 		//3 sized scaled images
@@ -1057,15 +1122,15 @@ document.addEventListener('keydown', function (event) {
 							remote_paramload('RCITEMS','respath',$this->prpath);		
 	  
 	  switch ($size) {
-	    case "LARGE" :  $photo = $this->urlpath . $img_large . $myfilename; break;
-	    case "MEDIUM":  $photo = $this->urlpath . $img_medium . $myfilename; break;
-        case "SMALL" :  $photo = $this->urlpath . $img_small . $myfilename; break;
-        default      :  $photo = $this->urlpath . $path . $myfilename;
+	    case "LARGE" :  $photo = $img_large . $myfilename; break;
+	    case "MEDIUM":  $photo = $img_medium . $myfilename; break;
+        case "SMALL" :  $photo = $img_small . $myfilename; break;
+        default      :  $photo = $path . $myfilename;
                         $size = 'LARGE';		
 	  }  
 
-	  if (is_readable($photo)) {
-	  	    
+	  //echo $photo;	 
+	  if (is_readable($photo)) {   
 		$sSQL = "select code from pphotos ";
 		$sSQL .= " WHERE code='" . $itmcode . "' and type='". $type . "' and stype='". $size ."'";
 		//echo $sSQL;
@@ -1185,6 +1250,29 @@ document.addEventListener('keydown', function (event) {
 	  if (GetReq('editmode')) {
 	    die($this->msg);
 	  }
+	}
+
+	protected function has_photo2db($itmcode=null,$type=null,$stype=null) {
+      $db = GetGlobal('db');	
+  
+      $sSQL = "select code from pphotos ";
+	  $sSQL .= " WHERE code='" . $itmcode . "'";
+	  if (isset($type))
+	    $sSQL .= " and type='". $type ."'";
+	  if (isset($stype))
+	    $sSQL .= " and stype='". $stype ."'";		
+
+	  //echo $sSQL;
+	  $resultset = $db->Execute($sSQL,2);	
+	  $result = $resultset;
+	  //print_r($result);	
+	  
+	  $exist = $db->Affected_Rows();
+    
+	  if ($result->fields[0])//($exits) 
+	    return true;
+	  
+	  return false;
 	}		
 	
 };
