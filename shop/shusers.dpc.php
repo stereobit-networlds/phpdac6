@@ -1243,84 +1243,73 @@ class shusers  {
 	   //echo '>'.$genun;	 
 	   return ($genun);
 	}
+	
+    //mail registration info to the company
+	protected function mailtohost($username=null,$password=null,$fname=null,$lname=null,$tell=false) {
+		
+	  $tellit =	$tell ? $tell : $this->tell_it;
+		
+	  if ($tellit) {
+		  
+	    $template= "userinserttell.htm";
+		$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
+  	    $mytemplate = file_get_contents($t);
+		
+		$tokens = array(); //reset		
+		$tokens[] = $username;	
+		$tokens[] = $password;	
+		$tokens[] = $fname;	
+		$tokens[] = $lname;			  					
+			
+		$mailbody = $this->combine_tokens($mytemplate,$tokens);
+
+		$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
+		$subject = localize($ss, getlocal());
+		$mysubject = $subject ? $subject : localize('_UMAILSUBC',getlocal());
+		
+	    $this->mailto($this->usemail2send,$this->tell_it,$mysubject,$mailbody);//,1,1);
+	  }	
+	} 
+
+	//send username/password to user
+	protected function mailtoclient($username=null,$password=null,$fname=null,$lname=null) {
+		
+	  if ($this->it_sendfrom) {
+		  
+	    $template= "userinsert.htm";
+		$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
+
+		$hash = md5('stereobit9networlds8and7the6heart5breakers');
+		$sectoken = urlencode(base64_encode($username.'|'.$hash));
+		$account_enable_link = seturl('t=useractivate&sectoken='.$sectoken);
+		
+		$mytemplate = file_get_contents($t);
+		$tokens = array(); //reset	
+		$tokens[] = $username;	
+		$tokens[] = $password;
+        $tokens[] = $account_enable_link;		  
+			
+		$mailbody = $this->combine_tokens($mytemplate,$tokens);
+		
+		$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
+		$subject = localize($ss, getlocal());
+		$mysubject = $subject?$subject:localize('_UMAILSUBC',getlocal());
+
+        if ($this->usemailasusername) 
+	      $this->mailto($this->it_sendfrom,$username,$mysubject,$mailbody);//,1,1);	   
+	    else 
+	      $this->mailto($this->it_sendfrom,GetParam('eml'),$mysubject,$mailbody);//,1,1);	 
+	  }		
+	}	
 
 	//parameter is the result of input = username
 	function after_insert_task($username=null,$password=null,$fname=null,$lname=null) {
 
       //mail registration info to the company
-	  if ($this->tell_it) {
-	    $template= "userinserttell.htm";
-	    //$t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.',$template) ;
-		$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
-		//echo $t;
-	    if (is_readable($t)) {
-		  $mytemplate = file_get_contents($t);
-		  $tokens = array(); //reset		
-		  $tokens[] = $username;	
-		  $tokens[] = $password;	
-		  $tokens[] = $fname;	
-		  $tokens[] = $lname;			  					
-			
-		  $mailbody = $this->combine_tokens($mytemplate,$tokens);
-	    }	
-	   	else {	
-	      $cmailb = GetParam('fname') . "<br/>" . GetParam('lname');
-
-		  $template = paramload('SHELL','prpath') . "insertusrcom.tpl";
-		  $mailbody = str_replace("##_LINK_##",$cmailb,file_get_contents($template));
-        }
-	    //$this->mailto(GetParam('eml'),$this->tell_it,localize('_UMAILSUBH',getlocal()),$mailbody);
-		$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
-		$subject = localize($ss, getlocal());
-		$mysubject = $subject?$subject:localize('_UMAILSUBC',getlocal());
-	    $this->mailto($this->usemail2send,$this->tell_it,$mysubject,$mailbody);//,1,1);
-		//echo $this->usemail2send,':',$this->tell_it,'<br>';
-	  }
+	  $this->mailtohost($username,$password,$fname,$lname);
 	  
       //send username/password to user
-	  if ($this->it_sendfrom) {
-	    $template= "userinsert.htm";
-	    //$t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.',$template) ;
-		$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
-		//echo $t;
-		$hash = md5('stereobit9networlds8and7the6heart5breakers');
-		$sectoken = urlencode(base64_encode($username.'|'.$hash));
-		$account_enable_link = seturl('t=useractivate&sectoken='.$sectoken);
-		
-	    if (is_readable($t)) {
-		  $mytemplate = file_get_contents($t);
-		  $tokens = array(); //reset	
-		  $tokens[] = $username;	
-		  $tokens[] = $password;
-          $tokens[] = $account_enable_link;		  
-			
-		  $mailbody = $this->combine_tokens($mytemplate,$tokens);
-		  //echo $mailbody;
-	    }	
-	   	else {		
-	      if ($password)
-	        $pass = "/Password:" . $password;		  
-			
-	      $mailcontent = "Username:" . $username . $pass . $this->c_message;
-
-		  $template = paramload('SHELL','prpath') . "insertusrusr.tpl";
-		  $mailbody = str_replace("##_LINK_##",$mailcontent,file_get_contents($template));
-        }
-		
-		$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
-		$subject = localize($ss, getlocal());
-		$mysubject = $subject?$subject:localize('_UMAILSUBC',getlocal());
-
-        if ($this->usemailasusername) {
-	      $this->mailto($this->it_sendfrom,$username,$mysubject,$mailbody);//,1,1);
-		  //echo $this->it_sendfrom,':',$username,'A<br>';		  
-	    }	 
-	    else {
-	      $this->mailto($this->it_sendfrom,GetParam('eml'),$mysubject,$mailbody);//,1,1);
-		  //echo $this->it_sendfrom,':',GetParam('eml'),'B<br>';		 
-		} 
- 
-	  }
+	  $this->mailtoclient($username,$password,$fname,$lname);
 	  
 	  $this->auto_subscribe();
 

@@ -845,14 +845,22 @@ window.setTimeout('neu()',10);
 				//insert facebook user (active by def)	  
 				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid, password, vpass) values ";
 				$sSQL.= "('{$sUsername}','{$userInfo['first_name']}','{$userInfo['last_name']}','{$userInfo['email']}','ACTIVE','{$userInfo['email']}',1,1, '{$fbpass}','{$fbpass}')";
+				$ret = $db->Execute($sSQL);
+							  
+				if ($db->Affected_Rows()) {
+					if (defined('SHUSERS_DPC'))  
+						GetGlobal('controller')->calldpc_method("shusers.mailtohost use $sUsername++".$userInfo['first_name'].'+'.$userInfo['last_name']);
+					
+				    if (defined('SHSUBSCRIBE_DPC'))  
+						GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.$sUsername.'+1');
+				}	
 			  }	
 			  else {  
 			    //update existed user with facebook data (active by def)
 				$sSQL = "UPDATE users set fname='{$userInfo['first_name']}',lname='{$userInfo['last_name']}', notes='ACTIVE' WHERE username='{$userInfo['email']}'";
                 $uret = false; 				
+				$ret = $db->Execute($sSQL);
               } 
-
-			  $ret = $db->Execute($sSQL);
               //echo $sSQL;
 			  
 		      //if (($uret) || ($ret = $db->Affected_Rows())) {
