@@ -19,17 +19,26 @@ require_once($d);
 //this transfer all actions,commands,attr from parent to child and parent disabled(=null)
 //it is important for inherit to still procced the commands of parent
 GetGlobal('controller')->get_parent('TRANSACTIONS_DPC','SHTRANSACTIONS_DPC');
-//print_r($__ACTIONS['SHTRANSACTIONS_DPC']);
 
 $__EVENTS['SHTRANSACTIONS_DPC'][6]='transviewhtml';
+$__EVENTS['SHTRANSACTIONS_DPC'][7]='cancelorder';
 
 $__ACTIONS['SHTRANSACTIONS_DPC'][6]='transviewhtml';
+$__ACTIONS['SHTRANSACTIONS_DPC'][7]='cancelorder';
 
 //overwrite for cmd line purpose
 $__LOCALE['SHTRANSACTIONS_DPC'][0]='SHTRANSACTIONS_CNF;Transaction List;Λίστα Συναλλαγών';	   
 $__LOCALE['SHTRANSACTIONS_DPC'][1]='_COST;Cost;Κόστος';	
 $__LOCALE['SHTRANSACTIONS_DPC'][2]='_LOADCART;Load;Στο καλάθι';	
 $__LOCALE['SHTRANSACTIONS_DPC'][3]='_PREVIEWCART;Preview;Προβολή';	
+$__LOCALE['SHTRANSACTIONS_DPC'][4]='_CANCELTRANS;Cancel;Ακύρωση';	
+$__LOCALE['SHTRANSACTIONS_DPC'][5]='_trhostcancel;Cancel by host;Ακυρώθηκε απο τον παραλήπτη';	
+$__LOCALE['SHTRANSACTIONS_DPC'][6]='_trtranscancel;Cancel by user;Ακυρώθηκε απο τον χρήστη';	
+$__LOCALE['SHTRANSACTIONS_DPC'][7]='_trusercancel;Canceled;Ακυρώθηκε';
+$__LOCALE['SHTRANSACTIONS_DPC'][8]='_trinprocess;In process;Σε επεξεργασία';
+$__LOCALE['SHTRANSACTIONS_DPC'][9]='_trintransport;Ready to delivery;Προς διανομή';
+$__LOCALE['SHTRANSACTIONS_DPC'][10]='_trsubmited;Submited;Παρελήφθει';
+$__LOCALE['SHTRANSACTIONS_DPC'][11]='_trinhand;Delivered;Ολοκληρώθηκε';
 	   
 class shtransactions extends transactions {
 
@@ -65,6 +74,8 @@ class shtransactions extends transactions {
    function event($event=null) {
    
        switch ($event) {
+		 case 'cancelorder'   : $this->cancelOrder(GetReq('tid')); break;   
+		   
 	     case 'transviewhtml' : $this->viewTransactionHtml();
 		                        die();
 		                        break;
@@ -74,14 +85,16 @@ class shtransactions extends transactions {
    }
    
    //override
-   function action()  { 
+   function action($action=null)  { 
 
-		 //$out = $this->title();
-		 //$out .= $this->form();
-         //$out = setNavigator(localize('_TRANSLIST',getlocal()));
-         $out .= $this->viewTransactions();
+		switch ($action) {
+			
+			case 'cancelorder' : 
+			
+			default            : $out .= $this->viewTransactions();
+		} 
 
-	   return ($out);
+		return ($out);
    }   
    
    //overwrite
@@ -116,47 +129,18 @@ class shtransactions extends transactions {
 
     //override use tid instead of recid in db mode
 	function setTransactionStatus($trid,$state) {
-       $db = GetGlobal('db');
+		$db = GetGlobal('db');
 	   
-	   //if ($this->storetype=='DB') {  //db		   
-	     
-	   
-	     $sSQL = "update transactions set tstatus=" . $state .
+	    $sSQL = "update transactions set tstatus=" . $state .
 	             " where tid='" . $this->initial_word. $trid ."'";
-         $result = $db->Execute($sSQL);
+        $result = $db->Execute($sSQL);
 		
-	     //print $sSQL.'>';
-	     //print $db->Affected_Rows() . ">>>>";
-         if ($db->Affected_Rows()) return true;
-	                          else return false;   	   
-	  /* }
-	   else {//echo "XML";  //xml and txt
-	   
-         if (is_dir($this->path)) {
-           $i=1;
-           $mydir = dir($this->path); //echo 'PATH:',$fpath;
 
-           while ($fileread = $mydir->read()) {//echo $fileread,"<br>";
-             if ((!is_dir($fpath.$fileread)) && ($fileread!='.') && 
-			                                    ($fileread!='..') && 
-												($fileread!='id.'.$this->storetype) && 
-												(strstr($fileread,'.'.$this->storetype))) {	   
-	     
-	           if (stristr($fileread,$trid)) {
-			     //echo $fileread;
-				 $parts = explode("_",$fileread);
-				 $parts[2] = $state . "." . $this->storetype;
-				 $newname = implode("_",$parts);
-				 //echo $newname;
-				 rename($this->path.$fileread,$this->path.$newname);
-				 $mydir->close();		   
-				 return (true);
-		       }
-		     }	 
-		   }  
-	     }
-         $mydir->close();		     
-	   }	*/					  
+        if ($db->Affected_Rows()) 
+			return true;
+	    else 
+			return false;   	   
+				  
 	}
 	
 	function getTransactionStatus($trid) {
@@ -177,8 +161,6 @@ class shtransactions extends transactions {
 	           "' where tid='" . $this->initial_word. $trid ."'";
        $result = $db->Execute($sSQL);
 		
-	     //print $sSQL.'>';
-	     //print $db->Affected_Rows() . ">>>>";
        if ($db->Affected_Rows()) 
 	     return true;
 	   else 
@@ -192,9 +174,6 @@ class shtransactions extends transactions {
 	           "where tid='" . $this->initial_word. $trid ."'";
        $result = $db->Execute($sSQL);
 		
-	     //print $sSQL.'>';
-		 //print_r($result);
-	     //print $db->Affected_Rows() . ">>>>";
        $ret = $result->fields[$fieldname]; 
 	   return $ret;   	   
 	}	 
@@ -208,9 +187,9 @@ class shtransactions extends transactions {
        $result = $db->Execute($sSQL);
 		
        if ($result->fields['type1']) 
-	     return false;//exist ???
+	     return false;
 	   else 
-	     return true;//not exist ok  	
+	     return true;	
 	} 
 	
 	//called by shpiraeus to check txn_id
@@ -222,9 +201,9 @@ class shtransactions extends transactions {
        $result = $db->Execute($sSQL);
 		
        if ($result->fields['type1']) 
-	     return false;//exist ???
+	     return false;
 	   else 
-	     return true;// not exist ok  	
+	     return true; 	
 	} 
 	
 	//replace 2 func above
@@ -261,8 +240,6 @@ class shtransactions extends transactions {
 		
 			//d must be serialized array of tokens when template	
 			$d = unserialize($data);		
-			//echo $data;
-			//print_r($d);
 		
 			if ($template) {
 				//printout template
@@ -304,7 +281,7 @@ class shtransactions extends transactions {
 	
 	function getTransactionHtml($id) {
         $file = $this->path . $id . ".html"; 
-	    //echo $file;//,$data;
+
 		if (!$this->isTransOwner($id)) {
 		  $ret = 'Invalid transaction id'; 		
 		  return ($ret);
@@ -368,6 +345,22 @@ class shtransactions extends transactions {
 	   return $ret;   	   	
 	}	
 	
+	function cancelOrder($trid) {
+		$db = GetGlobal('db');
+		if (!$this->isTransOwner($trid)) {
+		  echo 'Invalid tranascrion id';
+		  die();		
+		}	   	   
+		   
+		$sSQL = "update transactions set tstatus=-2 where tid='" . $this->initial_word . $trid ."'";
+        $result = $db->Execute($sSQL);
+		
+        if ($db->Affected_Rows()) 
+			return true;
+		else 
+			return false;   	   
+	}	
+	
 	
 	function getTransactionsList() {
        $db = GetGlobal('db');
@@ -379,51 +372,29 @@ class shtransactions extends transactions {
 	   if ($this->storetype=='DB') {  //db	
 	   	   
 	     $sSQL = "select tid,tdate,ttime,tstatus,payway,roadway,cost,costpt from transactions where cid=" . $db->qstr($name) . 
-		         "order by tid DESC";
-				 
-		 /*$browser = new browseSQL(localize('_TRANSLIST',getlocal()));
-	     $out .= $browser->render($db,$sSQL,"transactions","transview",15,$this,1,0,1,0); //do not search internal because of form conflict
-	     unset ($browser);*/					 
+		         "order by tid DESC";				 
 				 
 	     $res = $db->Execute($sSQL,2);
 	     //print_r ($res->fields[5]);
 		 $i=0;
 	     if (!empty($res)) { 
 	       foreach ($res as $n=>$rec) {
-		    $i+=1;
-			
-           /* if ($this->admint==1) {
-			   //print checkbox 
-			   $checkbox = "<input type=\"checkbox\" name=\"" . $rec[0] . 
-			                                     "\" value=\"" . $rec[0] . "\">"; 
-			}
-			elseif ($this->admint==2) {
-			   //print checkbox only if status!=1
-			   $checkbox = "<input type=\"checkbox\" name=\"" . $rec[0] . 
-			                                    "\" value=\"" . $rec[0] . "\">"; 
-			}												  
-			else $checkbox = "";*/			
-			
-            $transtbl[] = //$checkbox . $i . ";" . 
-                         $rec[0] . ";" .
-			             $rec[0] . ";" .
-						 /*$rec[3] .*/ $rec[4] . "/" . $rec[5] . ";" .
-			             $rec[1] . " / " . $rec[2] . ";" .	
-			             number_format($rec[7],2,',','.');// . ";" .						 					 
-			             //number_format($rec[7],2,',','.')/*str_replace(".",",",$rec[7])*/;		   
+				$i+=1;
+				$transtbl[] = $rec[0].";".$rec[3].";".$rec[4]."/".$rec[5].";".$rec[1]." / ".$rec[2].";" .	
+							number_format($rec[7],2,',','.');		   
 		   }
 		   
            //browse
 		   //print_r($transtbl); 
 		   $ppager = GetReq('pl')?GetReq('pl'):10;
-           $browser = new browse($transtbl,/*localize('_TRANSLIST',getlocal())*/null,$this->getpage($transtbl,$this->searchtext));
+           $browser = new browse($transtbl,null,$this->getpage($transtbl,$this->searchtext));
 	       $out .= $browser->render("transview",$ppager,$this,1,0,0,0);
 	       unset ($browser);	
 		      
 	     }
 		 else {
            //empty message
-	       $w = new window(/*localize('_CART',getlocal())*/null,localize('_EMPTY',getlocal()));
+	       $w = new window(null,localize('_EMPTY',getlocal()));
 	       $out .= $w->render("center::40%::0::group_win_body::left::0::0::");//" ::100%::0::group_form_headtitle::center;100%;::");
 	       unset($w);
 
@@ -479,39 +450,18 @@ class shtransactions extends transactions {
 	   $out .= $this->getTransactionsList();	 
 		 
 	   if ($this->admint) {
-		/*     if ($this->admint==1) {
-	           $out .= "<input type=\"submit\" name=\"FormAction\" value=\"$this->status0\">&nbsp;";		 
-	           $out .= "<input type=\"submit\" name=\"FormAction\" value=\"$this->status1\">&nbsp;";
-			   $out .= "<input type=\"submit\" name=\"FormAction\" value=\"$this->status2\">&nbsp;";			   
-			   $out .= "<input type=\"submit\" name=\"FormAction\" value=\"$this->status4\">";			   
-			 }
-			 elseif ($this->admint==2) {
-			   $out .= "<input type=\"submit\" name=\"FormAction\" value=\"$this->status2\">&nbsp;";
-			   $out .= "<input type=\"submit\" name=\"FormAction\" value=\"$this->status4\">";			   
-			 }*/
-			 
              $out .= "<input type=\"hidden\" name=\"FormName\" value=\"Transview\">";
-             $out .= "</FORM>";			 		   
-			 	
-	   }  
-	   		 
-
-       /*$out .= $this->searchform();	    
-		 
-	   $dater = new datepicker();	
-	   $out .= $dater->renderspace(seturl("t=transview&a=$a"),"transview");		 
-	   unset($dater);
-       */
-						
+             $out .= "</FORM>";			 		   	 	
+	   }  	
 	   
 	   return ($out);
 	}	
 	
 	//overide
-	function details($id,$storebuffer=null) {
+	function details($id,$template=null) {
 	   
 	   if (defined('SHCART_DPC')) 
-	     $ret = GetGlobal('controller')->calldpc_method('shcart.previewcart use '.$id.'+transview');
+	     $ret = GetGlobal('controller')->calldpc_method('shcart.previewcart use '.$id.'++'.$template);
 		 
 	   return ($ret);
 	}
@@ -538,112 +488,67 @@ class shtransactions extends transactions {
 	} 		
 	
 	//override
-    function viewtrans($id,$fname,$lname,$status,$ddate,$dtime) {
-	   $p = GetReq('p');
-	   $a = GetReq('a');
+    function viewtrans($id,$status,$payway,$datetime,$trtotal,$dummy=null) {
 	   
-	   $link = 'trload/'.$id.'/';//seturl("t=loadcart&tid=$id");// , $id);
-	   $cload_button = $this->myf_button(localize('_LOADCART',getlocal()),$link);
+		$link = 'trload/'.$id.'/';
+		$cload_button = $this->myf_button(localize('_LOADCART',getlocal()),$link);
 	   
-       //if ($this->admint>0) {//==1) {
-			   //print checkbox 
-			   $data[] = $fname;//"<input type=\"checkbox\" name=\"" . $fname . "\" value=\"" . $fname . "\">"; 
-	           $attr[] = "left;1%";											  
-	   //}
-	   /*elseif ($this->admint==2) {
-			   //print checkbox only if status!=1
-			   $data[] = "<input type=\"checkbox\" name=\"" . $fname . 
-			                                  "\" value=\"" . $fname . "\">"; 
-	           $attr[] = "left;1%";											  
-	   }	*/											  	   
-	   
-							  
-	   	   
-	   $data[] = $cload_button;//$link;   
-	   $attr[] = "left;10%";
-	   
-	   /*switch ($status) {
-			  case 0 : $data[] = $this->status0; break;
-			  case 1 : $data[] = $this->status1; break;	
-			  case 2 : $data[] = $this->status2; break;				  		  
-			  case 3 : $data[] = $this->status3; break;
-			  case 4 : $data[] = $this->status4; break;
-	   }	
-	   $data[] = $fname;       
-	   $attr[] = "left;10%";		   
-	   */
-	   
-	   if (is_readable($this->path . $id . ".html")) {	
-	     $lnk = 'trview/'.$id.'/';//seturl('t=transviewhtml&tid='.$id);//,$lname);
-		 $preview_button = $this->myf_button(localize('_PREVIEWCART',getlocal()),$lnk);
-       }
-	   else 
-	     //$lnk = $lname;
-         $preview_button = $lname;		 
-	   
-	   $data[] = $preview_button;//$lnk;   
-	   $attr[] = "left;50%";   
-	   
-	   $data[] = $status;   
-	   $attr[] = "left;20%";	      
-	   
-	   $data[] = $ddate /*. '/' . $dtime*/;   
-	   $attr[] = "right;10%";	
-	   
-	   //$data[] = $dtime;   
-	   //$attr[] = "right;1%";	
+		if (is_readable($this->path . $id . ".html")) {	
+			$lnk = 'trview/'.$id.'/';
+			$preview_button = $this->myf_button(localize('_PREVIEWCART',getlocal()),$lnk);
+		}
+		else 
+			$preview_button = null;		  
 
-	   $mtemplate='fptrans.htm';
-	   $mt = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$mtemplate) ;
-	   //echo $t,'>';
-	   if (($mtemplate) && is_readable($mt)) {
-	     //line	
-		 $mytemplate = file_get_contents($mt);
-		 $out = $this->combine_tokens($mytemplate,$data);
-		 
-  		 //cart details
-	     $_template='fptransline.htm';
-	     $_t = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$_template) ;
-	     //echo $_t,'>';
-	     if (($_template) && is_readable($_t)) {
-			$linetemplate = file_get_contents($_t);
-			$tokens[] = $this->details($id);
-			//$tokens[] = $id;
-			//$tokens[] = $status;
-			$tokens[] = $line;//???
-			$out .= $this->combine_tokens($linetemplate,$tokens);
-		 }
-         		 
-	   }	   
-	   else { //no template
-	   
-	   $myarticle = new window('',$data,$attr);
-       $line = $myarticle->render("center::100%::0::group_dir_body::left::0::0::");
-	   unset ($data);
-	   unset ($attr);
-	   
-       if ($this->details) {//disable cancel and delete form buttons due to form elements in details????
-	     $mydata = $line . '<br/>' . $this->details($id);
-		 
-         if (defined('WINDOW2_DPC')) {
-	       $cartwin = new window2($id . '/' . $status,$mydata,null,1,null,'HIDE',null,1);
-	       $out = $cartwin->render();//"center::100%::0::group_article_body::left::0::0::"
-	       unset ($cartwin);		   
-		 }
-		 else {
-	       $cartwin = new window($id . '/' . $status,$mydata);
-	       $out = $cartwin->render();//"center::100%::0::group_article_body::left::0::0::"
-	       unset ($cartwin);		 
-		 }
-	   }	
-	   else {   
-	     //echo 'z';
-		 $out .= $line . '<hr>';
-	   }	   
-	   
-       }//no template
-	   
-	   return ($out);
+		//line details
+		$_template = 'fptransline.htm';
+		$_t = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$_template) ;
+		
+		$linetemplate = file_get_contents($_t);
+		$tokens[] = $this->details($id,'shcartpreview'); //use template for line
+		$line = $this->combine_tokens($linetemplate,$tokens);
+
+		//line			
+		$mtemplate='fptrans.htm';
+		$mt = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$mtemplate) ;
+
+		$data[] = $id;
+		$data[] = $payway;
+		$data[] = $datetime;
+		$data[] = $trtotal;
+		$data[] = $dummy;	
+		$data[] = $cload_button;
+		$data[] = $preview_button;
+
+		switch ($status) {	
+		    case -3    : $trstatus = localize('_trhostcancel', getlocal()); break;
+		    case -2    : $trstatus = localize('_trtranscancel', getlocal()); break;
+		    case -1    : $trstatus = localize('_trusercancel', getlocal()); break;
+		
+		    case 3     : $trstatus = localize('_trinhand', getlocal()); break;
+		    case 2     : $trstatus = localize('_trintransport', getlocal()); break;
+		    case 1     : $trstatus = localize('_trinprocess', getlocal()); break;
+			case 0     : 
+			default    : $trstatus = localize('_trsubmited', getlocal());			
+		}	
+		
+		if ($trstatus>=0) {
+			$cancelnk = 'trcancel/'.$id.'/';
+			$cancel_button = $this->myf_button(localize('_CANCELTRANS',getlocal()),$cancelnk);	
+			$data[] = $trstatus;
+			$data[] = $cancel_button;
+		}	
+		else {
+			$data[] = $trstatus;
+			$data[] = null;
+		}	
+		
+		$data[] = $line;
+		
+		$mytemplate = file_get_contents($mt);
+		$out = $this->combine_tokens($mytemplate,$data);		
+			
+	    return ($out);
 	}
 	
 	//security function to not vew trans of other users

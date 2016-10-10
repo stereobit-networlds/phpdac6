@@ -174,7 +174,7 @@ class shcart extends cart {
 		
 		//fixed shipping cost
 		$sx = remote_paramload('SHCART','shipcost',$this->path);	   
-		$this->shippingcost = GetSessionParam('shipcost')?GetSessionParam('shipcost'):$sx;	   
+		$this->shippingcost = GetSessionParam('shipcost') ? GetSessionParam('shipcost') : $sx;	   
 		$this->shipcalcmethod = remote_arrayload('SHCART','shipcalcmethod',$this->path);	      
 	   
 		$this->quicktax = remote_paramload('SHCART','viewtaxfp',$this->path);
@@ -684,6 +684,10 @@ function addtocart(id,cartdetails)
 				$this->logcart();
 				$this->goto_printer();
 				$this->clear();
+				
+				//transport save
+				if (defined('TRANSPORT_DPC')) 
+					_m('transport.finalize use '.$this->transaction_id.'+'.$this->shippingcost);			
 			}
 		}
     }
@@ -1383,76 +1387,9 @@ function addtocart(id,cartdetails)
 		return false;
 	}	
 
-	//used by detailed transaction view (MUST BE DISABLE)
-	public function previewcart2($id,$callback=null,$cmd=null) {
-
-        $pview=$cmd?$cmd:'kshow';
-
-		if (is_number($id)) {
-
-		   $transdata = _m('shtransactions.getTransaction use '.$id);
-           //unserialize data
-		   $buffer = unserialize($transdata);
-
-           foreach ($buffer as $prod_id => $product) {
-
-		     if (($product) && ($product!='x')) {
-               $aa+=1;
-		       $param = explode(";",$product);
-
-		       $gr = $param[4];
-			   $ar = $param[1];
-			   $page = $param[5];
-			   $id = $param[0];
-	           $link = seturl("t=$pview&id=$id&cat=$gr&page=" , $param[1]);
-
-			   $data[] = "<img src=\"" . $param[7] . "\" width=\"100\" height=\"75\" alt=\"\">";
-	           $attr[] = "left;10%";
-
-			   //expand
-			   for ($i=0;$i<30;$i++) $expander .= "&nbsp;";
-               $data[] = $param[0] . "<br>" . $link . $expander;
-	           $attr[] = "left;80%";
-			   /*$data[] = $this->showsymbol($product,$param[4],$param[5]);
-	           $attr[] = "center;10%";*/
-
-			   /*$price = floatval(str_replace(",",".",$param[8]));
-			   $data[] = number_format($price,$this->dec_num,',','.') . $this->moneysymbol;
-	           $attr[] = "right;15%";*/
-
-	           /*$options = $this->setquantity("Product$aa",$param[9]);
-			   if (($this->uniname2) && ($param[11]))
-			     $options .= "<br>" . $this->setuniname("Uniname$aa",$param[10],$param[10],$param[11]);*/
-			   $data[] = $param[9];//$options;
-	           $attr[] = "center;10%";
-
-			   //$data[] = '='.$this->settotal("Product$aa",$price,$param[9]) . $this->moneysymbol;
-	           //$attr[] = "right;15%";
-
-	           $myproduct = new window('',$data,$attr);
-	           $out .= $myproduct->render("center::100%::0::group_article_body::left::0::0::") . "<hr>";
-
-	           unset ($data);
-	           unset ($attr);
-		       unset ($param);
-		     }
-	       }
-
-
-		}
-		else {
-           //empty message
-	       $w = new window(localize('_CART',getlocal()),localize('_EMPTY',getlocal()));
-	       $out .= $w->render("center::40%::0::group_win_body::left::0::0::");//" ::100%::0::group_form_headtitle::center;100%;::");
-	       unset($w);
-
-		}
-
-		return ($out);
-	}
 	
 	//revisited
-	public function previewcart($id,$callback=null,$cmd=null) {
+	public function previewcart($id,$cmd=null,$template=null) {
         $pview = $cmd ? $cmd : 'kshow';
 	    $status = $this->status ? strval($this->status) : '0';
 	    $ix = $this->imagex ? $this->imagex : 100;
@@ -1461,7 +1398,7 @@ function addtocart(id,cartdetails)
 	    $iyh = $iy ? "height=".$iy : null; //empty y=free dim	   		
 		
 	    //loop template (status param)
-	    $loopcart_template= "shcart".$status.".htm";
+	    $loopcart_template= $template ? $template.'.htm' : "shcart".$status.".htm";
 	    $t2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loopcart_template) ;
 		$this->myloopcarttemplate = file_get_contents($t2);		
 
@@ -1478,55 +1415,41 @@ function addtocart(id,cartdetails)
 					$param = explode(";",$product); 
 					$gr = $param[4];
 					$ar = $param[1];
-					$link = seturl("t=$pview&id=$ar&cat=$gr&id=".$param[0] , $this->unreplace_cartchars($param[1]));
+					$addButton = $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
+
+					$link = seturl("t=$pview&cat=$gr&id=".$param[0] , $this->unreplace_cartchars($param[1]),null,null,null,true);
 			   
 					if (defined("SHKATALOGMEDIA_DPC")) {
 						$itemphoto = _m("shkatalogmedia.get_photo_url use ".$param[7].'+1');
-						$linkimage = seturl("t=$command&a=$ar&cat=$gr&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$ar\">");
+						$linkimage = seturl("t=$pview&cat=$gr&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$ar\">",null,null,null,true);
 					}
 					else
 						$linkimage = '&nbsp;';			   
 
-					if (!$this->status) 
-						$data[] = $linkimage;
-					else 
-						$data[] = $aa . "&nbsp;" . $param[0];
-			   
+
+					$data[] = $linkimage;
+
 					if ($this->cartlinedetails)
 						$details = $param[6] ? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null;
 					else
 						$details = null;	 
 
-					switch ($this->status) {
-						default :
-						case 0 : $data[] = $param[0] . "<br/>" . $link . "&nbsp;" . $details;  break;
-						case 1 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details;  break;
-						case 2 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details; break;
-						case 3 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details; break;				   
-					}
-
-					if (!$this->status) {
-						$attr[] = "left;40%";
-						$data[] = $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
-						$attr[] = "center;10%";
-					}
-
+					$data[] = $param[0] . "<br/>" . $link . "&nbsp;" . $details; 
+					
+					$data[] = $addButton;
+					
+                    $data[] = $param[9]; //qty
+					
 					$price = floatval(str_replace(",",".",$param[8]));
-					$data[] = number_format($price,$this->dec_num,',','.') . $this->moneysymbol;
-
-					//$options = $this->setquantity("Product$aa",$param[9]);
-					if (($this->uniname2) && ($param[11]))
-						$options .= $this->setuniname("Uniname$aa",$param[10],$param[10],$param[11]);
-					$data[] = $options;
-
+					$data[] = number_format($price,$this->dec_num,',','.') . $this->moneysymbol;					
+					
 					$ssum = floatval(str_replace(",",".",$price)) * intval($param[9]);	
 					$merikosynolo = number_format($ssum,$this->dec_num,',','.') . $this->moneysymbol;		   
-					$data[] = 'x'.$param[9].'='.$merikosynolo;
+					$data[] = $merikosynolo;				
 			   		   
 					$loopout .= $this->combine_tokens($this->myloopcarttemplate,$data,true);
 				
 					unset ($data);
-
 					unset ($param);
 				}
 			  }

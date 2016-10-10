@@ -1123,7 +1123,7 @@ JSTRANS;
 	}	
 	
 	//cart finalize
-	public function finalize($trid=null, $trprice=null) {
+	public function finalize($trid=null, $trprice=0) {
 	    $db = GetGlobal('db');
 	    $UserName = GetGlobal('UserName');
 		if ((!$UserName) || (!$trid)) return false;
@@ -1140,19 +1140,13 @@ JSTRANS;
 			$sum_value = 0;
 			$pid = 0; //transport project ...
 			$code = 'transport'; //transport item code
-			$owner = ($trprice) ? null : $user;//when cost let future owner else self delivery 
+			$owner = $user; //($trprice) ? null : $user;//when cost let future owner else self delivery 
 			$name = 'Transport'; //transport name
 			
-			if (($owner) && (defined('XIXUSER_DPC'))) { 
-				$location = GetGlobal('controller')->calldpc_method('xixuser.get_user_location use '.$owner);
-				$xy = explode(',',$location);
-				$latitude = $xy[0];
-				$longitude = $xy[1];						
-			}
-			else {
-				$latitude = 0;
-				$longitude = 0;
-			}				
+			$query = "SELECT latitude,longitude from users WHERE username=" . $db->qstr($owner);
+			$result = $db->Execute($query);
+			$latitude = $result->fields[0] ? $result->fields[0] : 0;
+			$longitude = $result->fields[1] ? $result->fields[1] : 0;		
 			 
 		    foreach ($result as $r=>$rec) {
 				$sum_weight += (float) $rec['weight']; 
@@ -1171,11 +1165,8 @@ JSTRANS;
 			$query.= "owner='".$owner."',"; 					
 			$query.= "name='" .$name."',";	
 
-			//transport shipping price from cart or cart cost
-			/*$price = GetSessionParam('shipcost') ? 
-			         GetSessionParam('shipcost') :
-					 $sum_value;*/			
-			$price = $trprice ? $trprice : 0; //0 when self transport		 
+			//transport shipping price from cart or cart cost		
+			$price = $trprice; //0 when self transport		 
 			$query.= "value=" .$price.",";			
 			$query.= "qty=".$sum_qty.",";
 			$query.= "cid='".$user."',";			
