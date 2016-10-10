@@ -39,6 +39,8 @@ $__LOCALE['SHTRANSACTIONS_DPC'][8]='_trinprocess;In process;Σε επεξεργ�
 $__LOCALE['SHTRANSACTIONS_DPC'][9]='_trintransport;Ready to delivery;Προς διανομή';
 $__LOCALE['SHTRANSACTIONS_DPC'][10]='_trsubmited;Submited;Παρελήφθει';
 $__LOCALE['SHTRANSACTIONS_DPC'][11]='_trinhand;Delivered;Ολοκληρώθηκε';
+$__LOCALE['SHTRANSACTIONS_DPC'][12]='_mailcancelbody;Canceled transaction;Ακύρωση παραγγελίας';
+$__LOCALE['SHTRANSACTIONS_DPC'][13]='_mailcancelsubject;Canceled transaction;Ακύρωση παραγγελίας';
 	   
 class shtransactions extends transactions {
 
@@ -345,7 +347,7 @@ class shtransactions extends transactions {
 	   return $ret;   	   	
 	}	
 	
-	function cancelOrder($trid) {
+	protected function cancelOrder($trid) {
 		$db = GetGlobal('db');
 		if (!$this->isTransOwner($trid)) {
 		  echo 'Invalid tranascrion id';
@@ -355,11 +357,41 @@ class shtransactions extends transactions {
 		$sSQL = "update transactions set tstatus=-2 where tid='" . $this->initial_word . $trid ."'";
         $result = $db->Execute($sSQL);
 		
-        if ($db->Affected_Rows()) 
+        if ($db->Affected_Rows()) { 
+		  
+		    //send mail to host
+		    $s = localize('_mailcancelsubject', getlocal()) . ' ' . $trid;
+			$b = $this->getTransactionHtml($trid);
+		    $this->mailto(null,$s,$b);
+		
 			return true;
+		}	
 		else 
 			return false;   	   
 	}	
+	
+	protected function mailto($mto=null,$subject=null,$body=null,$template=null) {
+        $UserName = GetGlobal('UserName');	
+	    $to = $mto ? $mto : decode($UserName);	
+		if (!$UserName) return false;
+		  
+        if ($template) {
+			$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
+			$mytemplate = file_get_contents($t);
+		
+			$tokens[] = $body ? $body : localize('_mailcancelbody', getlocal());			  					
+			$mailbody = $this->combine_tokens($mytemplate,$tokens);
+		}
+		else	
+			$mailbody = $body ? $body : localize('_mailcancelbody', getlocal());			  					
+		
+		$mailsubject = $subject ? $subject : localize('_mailcancelsubject', getlocal());
+		
+		$from = _v('shusers.usemail2send');
+	    $ret = _m('shusers.mailto use '.$from.'+'.$to.'+'.$mailsubject.'+'.$mailbody);
+		
+		return ($ret);
+	} 	
 	
 	
 	function getTransactionsList() {
@@ -532,7 +564,7 @@ class shtransactions extends transactions {
 			default    : $trstatus = localize('_trsubmited', getlocal());			
 		}	
 		
-		if ($trstatus>=0) {
+		if ($status>=0) {
 			$cancelnk = 'trcancel/'.$id.'/';
 			$cancel_button = $this->myf_button(localize('_CANCELTRANS',getlocal()),$cancelnk);	
 			$data[] = $trstatus;
