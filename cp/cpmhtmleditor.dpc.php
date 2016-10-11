@@ -19,6 +19,7 @@ $__EVENTS['CPMHTMLEDITOR_DPC'][3]='cpmvdel';
 $__EVENTS['CPMHTMLEDITOR_DPC'][4]='cpmvphotoadddb';
 $__EVENTS['CPMHTMLEDITOR_DPC'][5]='cpmvphotodeldb';
 $__EVENTS['CPMHTMLEDITOR_DPC'][6]='cpmedititem';
+$__EVENTS['CPMHTMLEDITOR_DPC'][6]='cpmnewitem';
 
 $__ACTIONS['CPMHTMLEDITOR_DPC'][0]='cpmhtmleditor';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][1]='cpmdropzone';
@@ -27,6 +28,7 @@ $__ACTIONS['CPMHTMLEDITOR_DPC'][3]='cpmvdel';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][4]='cpmvphotoadddb';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][5]='cpmvphotodeldb';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][6]='cpmedititem';
+$__ACTIONS['CPMHTMLEDITOR_DPC'][7]='cpmnewitem';
 
 //$__DPCATTR['CPMHTMLEDITOR_DPC']['cpmhtmleditor'] = 'cpmhtmleditor,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -42,7 +44,7 @@ class cpmhtmleditor {
 	var $encoding, $prpath, $template, $one_attachment, $slan;
 	var $htmlfile, $ckeditor4, $cke4, $ckjs;
 	var $urlpath, $urlbase, $msg;
-	var $photodb, $restype;
+	var $photodb, $restype, $cseparator;
 
 	function __construct() {
 	
@@ -78,12 +80,15 @@ class cpmhtmleditor {
 	    $this->photodb = remote_paramload('RCITEMS','photodb',$this->prpath);
 		$this->restype = remote_paramload('RCITEMS','restype',$this->prpath);
 	    $this->msg = null;
+		
+		$csep = remote_paramload('RCITEMS','csep',$this->path); 
+		$this->cseparator = $csep ? $csep : '^';			
 	}	
 	
 	public function event($sEvent) {
 	
 		switch ($sEvent) {
-			
+			case 'cpmnewitem'     :
 			case 'cpmedititem'    : $this->javascript();
 								    break;
 			
@@ -100,7 +105,7 @@ class cpmhtmleditor {
 	
 	public function action($sAction) {
 		switch ($sAction) {
-		
+		    case 'cpmnewitem'     :
 		    case 'cpmedititem'    : $out = $this->editor();
 			                        break;
 		
@@ -243,121 +248,67 @@ document.addEventListener('keydown', function (event) {
 	  }   
     } 
 
-    protected function render_inline($file=null,$tempfile=null,$id=null,$type=null) {
-
-	  if (!$this->ckeditor4) 
-	     return (render($file,$tempfile,$id,$type));//default rendering
-		 
-      $isTemplate = true;
-   	  
-	  if (isset($_POST['htmltext'])) {//??.....NEVER HERE ..AJAX
-        $this->savefile($file,null);		 
-		$mydata = $this->unload_spath(file_get_contents($file));//$_POST['htmltext'];		 
-	  }
-	  else {//load
-		if (($file) && is_readable($file)) {
-			$mydata = $this->load_spath(file_get_contents($file));
-		}  
-		else
-		    $mydata = 'File not exist!' . " ($file)";
-	  }
-	  
-	  //is template file ?....RETURN TO NO INLINE MODE.....
-	  //if (stristr($mydata,'!DOCTYPE html')) {
-	  if (substr($mydata,0,8)=='<!DOCTYPE') {
-	    $isTemplate = false;
-		return (render($file,$tempfile,$id,$type));//default rendering...
-	  }	
-      //else continue...
-	  
-	  //html body MUST has editable tags inside else default editing
-	  if (!stristr($mydata, 'contenteditable')) {
-	      return ($this->render($file,$tempfile,$id,$type));//default rendering...
-	  }
-	
-	  //html body MUST has editable tags inside...enable it..disbale it when save...
-	  $out = str_replace('contenteditable="false"','contenteditable="true"',$mydata);
-	  
-	  //js script
-	  $out.= "<script type='text/javascript'>"; 
-      $out.= "CKEDITOR.on( 'instanceCreated', function( event ) {
-			  var editor = event.editor,
-			  element = editor.element;
-
-			  if ( element.is( 'h1', 'h2', 'h3' ) || element.getAttribute( 'id' ) == 'taglist' ) {
-				editor.on( 'configLoaded', function() {
-
-					// Remove unnecessary plugins to make the editor simpler.
-					editor.config.removePlugins = 'colorbutton,find,flash,font,' +
-						'forms,iframe,image,newpage,removeformat,' +
-						'smiley,specialchar,stylescombo,templates';
-
-					// Rearrange the layout of the toolbar.
-					editor.config.toolbarGroups = [
-						{ name: 'editing', groups: [ 'basicstyles', 'links' ] },
-						{ name: 'undo' },
-						{ name: 'clipboard', groups: [ 'selection', 'clipboard' ] },
-						{ name: 'about' }
-					];
-				});
-			  }	
-			  
-			  editor.on( 'blur', function( event ) {
-				  var data = editor.getData();
-				  save_inline_data(data);
-			  });
-			  editor.on( 'focus', function( event ) {
-				  var data = editor.getData();
-				  //save_init_data(data);
-				  save_inline_data(data);
-			  });			  
-               
-			  /*editor.on( 'instanceReady', function( event ) {
-			      //var data = editor.getData();
-			      //save_init_data(data);
-				  //save_inline_data(data);
-				  
-				  periodicData();
-			  });*/			  
-			  
-	var periodicData = ( function(){
-    var data, oldData;
-
-    return function() {
-        if ( ( data = editor.getData() ) !== oldData ) {
-		
-			save_inline_data(data, oldData);
-			
-            oldData = data;
-            //console.log( data );
-        }
-
-        setTimeout( periodicData, 1000 );
-    };
-})();
-			  
-		});			
-"; 		     
-	  $out .= "</script>"; 
-	  
-      return ($out);
-    }
-
-    protected function render($file=null,$tempfile=null,$id=null,$type=null) {
-
-      $isTemplate = true; //$_GET['istemplate']?$_GET['istemplate']:false;
-	  $insfast = GetReq('insfast');
+	//generic html edit
+    protected function render($file=null,$tempfile=null) {
+		$id = GetParam('id');
+		$type = GetParam('type') ? GetParam('type') : '.html'; //default type for text attachment
+		$isTemplate = (substr($mydata,0,8)=='<!DOCTYPE') ? false : true; //html5 !!!!!	
       
-	  if (isset($_POST['insfast'])) { //fast item insert
-	    //echo $_POST['title'],$_POST['tags'];
-		$title = GetParam('title');
+		if (isset($_POST['htmltext'])) {
+			if ($id) { //db	 
+				$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
+				$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$id ."+". $type."+".$mytext);		 
+				$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+			}
+			else {//text
+				$this->savefile($file,null);		 
+				$mydata = file_get_contents($file);//$_POST['htmltext'];
+			}		 
+		}
+		else {//load
+			if ($id) { //db
+				$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+			}
+			else {//text
+				if (($file) && is_readable($file)) {
+					$mydata = file_get_contents($file);
+				}  
+				else
+					$mydata = 'File not exist!' . " ($file)";			
+			}	  
+		}
+	  
+		$purl = $_SERVER['PHP_SELF'].'?encoding='.$_GET['encoding'].'&htmlfile='.$_GET['htmlfile'];
+		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
+
+		$out .= $this->ckeditor($mydata, $isTemplate);
+	
+		$mytempfile = GetParam('tempfile')?	GetParam('tempfile') : $tempfile;	   
+		$myfile = GetParam('file')?	GetParam('file') : $file;
 		
-		if (($id) && ($type) && ($title)) { 
-			$code = str_replace(' ','-',$title);
-			$tags = GetParam('tags') ;//as come from post ...str_replace(' ',',',GetParam('tags'));
+		$out .= "<input type=\"hidden\" name=\"file2saveon\" value=\"" . $myfile . "\" />";	  
+		$out .= "<input type=\"hidden\" name=\"filetemp\" value=\"" . $mytempfile . "\" />";	 
+		$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";	 
+		$out .= "<input type=\"hidden\" name=\"type\" value=\"" . $type . "\" />";		   
+		$out .= "</form>";
+      
+		return ($out); 
+    }	
+	
+	//new item
+    protected function render_new() {
+		$type = '.html'; //default type for text attachment
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$id = GetParam('id');
+      
+		if (isset($_POST['insert'])) { 
+		
+			$title = GetParam('title');
+			$code = $this->replace_spchars($title);
+			$tags = GetParam('tags') ;
 			$text = GetParam('htmltext');
 			$descr = substr(trim(strip_tags($text)),0,250).'...';
-		    $category = str_replace('_',' ',$id);
+			$category = $this->replace_spchars($cpGet['cat'], 1);
 			
 			$save_attachment = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code."+". $type."+".$text."+1");		
 			$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
@@ -365,77 +316,32 @@ document.addEventListener('keydown', function (event) {
 			$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
 			
 			if (isset($_POST['htmltext'])) {
-			    $mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
+				$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
 				$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
 				$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
 			}
+		}
+		else {//load
+			$mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 	  
+		}
+	  
+	  
+		$purl = 'cpmhtmleditor.php';
+		if (!$_POST['insert']) {	//hide when post fast
+			$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
 		}	
-	  }
-	  elseif (isset($_POST['htmltext'])) {
-         if (($id) && ($type)) { //db
-		    //echo 'post load from db';		 
-	        $mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-	        $save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$id ."+". $type."+".$mytext);		 
-		    $mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
-         }
-         else {//text
-		    //echo 'post load from post';
-            $this->savefile($file,null);		 
-		    $mydata = file_get_contents($file);//$_POST['htmltext'];
-         }		 
-	  }
-	  else {//load
-	     //echo $id,'>',$type;
-         if (($id) && ($type)) { //db
-		    //echo 'load from db:',$id,$type;
-		    $mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
-         }
-         else {//text
-		    //echo 'load from file'; 
-			if (($file) && is_readable($file)) {
-				$mydata = file_get_contents($file);
-			}  
-			else
-				$mydata = 'File not exist!' . " ($file)";			
-         }	  
-	  }
 	  
-	  //is template file ?....
-	  //if (stristr($mydata,'!DOCTYPE html')) //not <html> due to extra html defintions
-	  if (substr($mydata,0,8)=='<!DOCTYPE') 
-	    //echo substr($mydata,0,8);
-	    $isTemplate = false;
-	  
-	  $purl = $_SERVER['PHP_SELF'].'?encoding='.$_GET['encoding'].'&htmlfile='.$_GET['htmlfile'];
-	  //echo $purl;
-	  if (!$_POST['insfast']) {	//hide when post fast
-		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
-	  }	
-	  
-	  $out .= $this->ckeditor($mydata);
+		$out .= $this->ckeditor($mydata);
 	
-      if (!$_POST['insfast']) {	//hide when post fast
-		$mytempfile = GetParam('tempfile')?	GetParam('tempfile') : $tempfile;	   
-		$myfile = GetParam('file')?	GetParam('file') : $file;	
-		$myid = GetParam('id')?	GetParam('id') : $id;	
-		$mytype = GetParam('type')?	GetParam('type') : $type;	
-	    /*
-		$out .= "<input type=\"submit\" name=\"ok\" value=\"  ".localize('_submit',getlocal())."  \" />";	  
-		*/
-		$out .= "<input type=\"hidden\" name=\"file2saveon\" value=\"" . $myfile . "\" />";	  
-		$out .= "<input type=\"hidden\" name=\"filetemp\" value=\"" . $mytempfile . "\" />";	 
-		$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $myid . "\" />";	 
-		$out .= "<input type=\"hidden\" name=\"type\" value=\"" . $mytype . "\" />";		   
-
-		//insert item fast
-		if ($insfast) {
+		if (!$_POST['insert']) {	//hide when post fast	 
+			$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";	 	   
+			$out .= "<input type=\"hidden\" name=\"insert\" value=\"1\" />";
+			$out .= "<input type=\"hidden\" name=\"FormAction\" value=\"cpmnewitem\" />";			
 			/*
 			$out .= "<br/><br/>".localize('_title',getlocal()).":<input type=\"text\" name=\"title\" value=\"".localize('_subject',getlocal())."\" />";
 			$out .= "<br/>".localize('_tags',getlocal()).":<input type=\"text\" name=\"tags\" value=\"".str_replace(array(' ','_','-'),array(',',' ',' '),$myid)."\" />";
-			*/
-			$out .= "<input type=\"hidden\" name=\"insfast\" value=\"" . $insfast . "\" />";		   	  
-			
-			$out .= '            <div class="space20"></div>
+			*/			
+			$out .= '     <div class="space20"></div>
                                  <div class="row-fluid">
                                      <div class="feedback">
                                          <h3>'.localize('_title',getlocal()).'</h3>
@@ -456,52 +362,49 @@ document.addEventListener('keydown', function (event) {
                                                  <button class="btn btn-success " name="ok" type="submit">'.localize('_submit',getlocal()).'</button>
                                              </div>
                                      </div>
-                                 </div>';
-		}	  
+                                 </div>';  
 		
-		$out .= "</form>";
-	  }//post fast hide
-	  elseif ($_POST['insfast']) { //post fast seccond step, add photo
-	    //echo 'add_photo:'.$code.'>'.$category;
-		if (defined('RCITEMS_DPC') && (($code)||($category))) {	
-			$out .= GetGlobal('controller')->calldpc_method('rcitems.form_photo use 1+'.$category.'+'.$code.'+cpitems');
-		}		
-	  }
+			$out .= "</form>";
+			
+		}//post fast hide
+		elseif ($_POST['insert']) { //post fast seccond step, add photo
 
-      //$out .= $file.':'.$targetfile;
+			if (defined('RCITEMS_DPC') && (($code)||($category))) {	
+				$out .= GetGlobal('controller')->calldpc_method('rcitems.form_photo use 1+'.$category.'+'.$code.'+cpitems');
+			}		
+		}
       
-	  return ($out); 
+		return ($out); 
     }	
 	
-    protected function render_edit() {
-		$id = GetParam('id');
+	//edit item
+    protected function render_edit() { 
 		$type = '.html'; //default type for text attachment
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$id = GetParam('id') ? GetParam('id') : $cpGet['id'];		
       
 		if (isset($_POST['id'])) { //post edit
-			//echo $_POST['title'],$_POST['tags'];
+
 			$title = GetParam('title');
-		
-			if (($id) && ($type) && ($title)) { 
-				$code = str_replace(' ','-',$title);
-				$tags = GetParam('tags') ;//as come from post ...str_replace(' ',',',GetParam('tags'));
-				$text = GetParam('htmltext');
-				$descr = substr(trim(strip_tags($text)),0,250).'...';
-				$category = str_replace('_',' ',$id);
+			$code = $this->replace_spchars($title);
+			$tags = GetParam('tags') ;
+			$text = GetParam('htmltext');
+			$descr = substr(trim(strip_tags($text)),0,250).'...';
+			$category = $this->replace_spchars($cpGet['cat'], 1);
 			
-				$save_attachment = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code."+". $type."+".$text."+1");		
-				$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
-				$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
-				$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
+			$save_attachment = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code."+". $type."+".$text."+1");		
+			$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
+			$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
+			$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
 			
-				if (isset($_POST['htmltext'])) {
-					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-					$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
-					$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
-				}
-			}	
+			if (isset($_POST['htmltext'])) {
+				$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
+				$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
+				$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+			}
 		}
 		else {//load
-		    $mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+		    $mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 
 		}
 	  
       
@@ -513,7 +416,9 @@ document.addEventListener('keydown', function (event) {
 			$out .= "<br/><br/>".localize('_title',getlocal()).":<input type=\"text\" name=\"title\" value=\"".localize('_subject',getlocal())."\" />";
 			$out .= "<br/>".localize('_tags',getlocal()).":<input type=\"text\" name=\"tags\" value=\"".str_replace(array(' ','_','-'),array(',',' ',' '),$myid)."\" />";
 		*/
-		$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";		   	  
+		$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";		  
+		$out .= "<input type=\"hidden\" name=\"update\" value=\"1\" />";		
+		$out .= "<input type=\"hidden\" name=\"FormAction\" value=\"cpmedititem\" />";
 			
 		$out .= '            <div class="space20"></div>
                                  <div class="row-fluid">
@@ -544,41 +449,32 @@ document.addEventListener('keydown', function (event) {
     }
 
     public function editor($itemcode=null, $itemtype=null, $file = null) {
-	
-	    $id = $itemcode ? $itemcode : GetReq('id');
+	    $cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+	    $id = $itemcode ? $itemcode : GetReq('id'); //$cpGet['id']; //selected item
 		$type = $itemtype ? $itemtype : (GetReq('type') ? GetReq('type') : null);//'.html'); //must be set by hand in url
 		$htmlfile = $file ? $file : $this->htmlfile; 
 		
 		if (!empty($_POST)) {
-			//echo 'post....';	
-			if (($id = GetParam('id')) && ($type = GetParam('type'))) {	
-				$ret =  $this->render(null,null,$id,$type);
-			}
-			elseif ($myfile = GetParam('file2saveon')) {
-				//if ($cke4_inline)
-				// echo render_inline($myfile,null);	  	  
-				//else	  
-				$ret = $this->render($myfile,null);
-			}
+
+		    if ($myfile = GetParam('file2saveon'))  
+				$ret = $this->render($myfile);
+			elseif ($insfast = GetParam('insert')) 
+				$ret =  $this->render_new();
+			else 	
+				$ret =  $this->render_edit();		
 		}
 		else {
-			//echo 'load....';	
-			if (($id) && ($type)) {
-				$ret = $this->render(null,null,$id,$type);
-			}
-			elseif ($htmlfile) {
+			if ($htmlfile) {
 				$p = explode('/',$htmlfile);
 				$fa = array_pop($p);
 				$myfile = getcwd() . '/html/' . $this->template .  $fa;
 				//$tempname = getcwd() . '/modify_html.tmp';
-	  
-				if ($this->cke4_inline)
-					$ret = $this->render_inline($myfile,null);	  	  
-				else
-					$ret = $this->render($myfile,null);	  	  
-			}
+				$ret = $this->render($myfile);	  	  
+			}			
+			elseif ($id) 
+				$ret = $this->render_edit();
 			else
-				$ret = $this->render_edit();		
+				$ret = $this->render_new();		
 		}	
 		return ($ret);
     }	
@@ -1295,6 +1191,27 @@ document.addEventListener('keydown', function (event) {
 		$out .= '</div>';
 
 		return ($out);	
+	}
+
+	protected function replace_spchars($string, $reverse=false) {
+	
+		switch ($this->replacepolicy) {	
+	
+			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+			default :	
+			if ($reverse) {
+				$g1 = array("'",',','"','+','/',' ',' & ');
+				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
+				$ret = str_replace($g2,$g1,$string);
+			}	 
+			else {
+				$g1 = array("'",',','"','+','/',' ','-&-');
+				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
+				$ret = str_replace($g1,$g2,$string);
+			}	
+	    }
+		return ($ret);
 	}	
 	
 };
