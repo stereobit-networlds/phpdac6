@@ -18,6 +18,7 @@ $__EVENTS['CPMHTMLEDITOR_DPC'][2]='cpmvphoto';
 $__EVENTS['CPMHTMLEDITOR_DPC'][3]='cpmvdel';
 $__EVENTS['CPMHTMLEDITOR_DPC'][4]='cpmvphotoadddb';
 $__EVENTS['CPMHTMLEDITOR_DPC'][5]='cpmvphotodeldb';
+$__EVENTS['CPMHTMLEDITOR_DPC'][6]='cpmedititem';
 
 $__ACTIONS['CPMHTMLEDITOR_DPC'][0]='cpmhtmleditor';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][1]='cpmdropzone';
@@ -25,6 +26,7 @@ $__ACTIONS['CPMHTMLEDITOR_DPC'][2]='cpmvphoto';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][3]='cpmvdel';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][4]='cpmvphotoadddb';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][5]='cpmvphotodeldb';
+$__ACTIONS['CPMHTMLEDITOR_DPC'][6]='cpmedititem';
 
 //$__DPCATTR['CPMHTMLEDITOR_DPC']['cpmhtmleditor'] = 'cpmhtmleditor,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -82,20 +84,25 @@ class cpmhtmleditor {
 	
 		switch ($sEvent) {
 			
+			case 'cpmedititem'    : $this->javascript();
+								    break;
+			
 			case 'cpmvphotoadddb' : $this->add_photo2db(null,null,GetReq('size')); break;
 			case 'cpmvphotodeldb' : $this->delete_photodb(GetReq('size')); break;
 			
 		    case 'cpmvdel'     :$this->delete_photo(); break;
 			case 'cpmvphoto'   :break; 
 		    case 'cpmdropzone' :$this->dropzone(); break; //fast-entry photo
-			default 		   : 	
-								$this->javascript();
+			default 		   :$this->javascript();
 								$this->raw_save();
 		}
     }
 	
 	public function action($sAction) {
 		switch ($sAction) {
+		
+		    case 'cpmedititem'    : $out = $this->editor();
+			                        break;
 		
 			case 'cpmvphotoadddb' : 
 			case 'cpmvphotodeldb' : 		
@@ -172,58 +179,7 @@ class cpmhtmleditor {
 		$_url= "cpmdpceditor.php?turl=" . urlencode(base64_encode($turl));
 
 		if ($cke4_inline) {
-			$ret =  "
-	   
-function createRequestObject() {
-    var ro;
-    var browser = navigator.appName;
-    if(browser == \"Microsoft Internet Explorer\"){
-        ro = new ActiveXObject(\"Microsoft.XMLHTTP\");
-    }else{
-        ro = new XMLHttpRequest();
-    }
-    return ro;
-}
-
-var http = createRequestObject();
-
-function sndUrl(url) {
-    http.open('get', url+'&ajax=1');
-    http.onreadystatechange = handleResponse;
-    http.send(null);
-}
-
-function sndReqArg(url) {
-    var params = url+'&ajax=1';
-
-    http.open('post', params, true);
-    http.setRequestHeader(\"Content-Type\", \"text/html; charset=utf-8\");
-    //http.setRequestHeader(\"charset\", \"utf-8\");
-    http.setRequestHeader(\"encoding\", \"utf-8\");	
-    //http.setRequestHeader(\"Content-length\", params.length);	
-    //http.setRequestHeader(\"Connection\", \"close\");	
-    http.onreadystatechange = handleResponse;	
-    http.send(null);
-}
-
-function handleResponse() {
-    if(http.readyState == 4){
-        //var response = http.responseText;
-        //trim response
-        //response = response.replace( /^\s+/g, \"\" ); // strip leading 
-        //response = response.replace( /\s+$/g, \"\" ); // strip trailing
-        
-        if (response=http.responseText) {		
-		
-          alert(response); 
-		  
-		  //reload page after save...
-		  window.location.reload();
-		}  
-    }
-}
-   
-	   
+			$ret =  "	   
 function save_inline_data(data, oldData){
 	
 	//alert(data+'--'+oldData);
@@ -456,56 +412,7 @@ document.addEventListener('keydown', function (event) {
 		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
 	  }	
 	  
-	  $ckattr = $this->ckeditor4 ?
-	           "fullpage : true, 
-               filebrowserBrowseUrl : '/cp/ckfinder/ckfinder.html',
-	           filebrowserImageBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Images',
-	           filebrowserFlashBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Flash',
-	           filebrowserUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
-	           filebrowserImageUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
-	           filebrowserFlashUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash',
-	           filebrowserWindowWidth : '1000',
- 	           filebrowserWindowHeight : '700'"	  
-	           : 
-	           "skin : 'v2', 
-			   fullpage : true, 
-			   extraPlugins :'docprops',
-               filebrowserBrowseUrl : '/cp/ckfinder/ckfinder.html',
-	           filebrowserImageBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Images',
-	           filebrowserFlashBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Flash',
-	           filebrowserUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
-	           filebrowserImageUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
-	           filebrowserFlashUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash',
-	           filebrowserWindowWidth : '1000',
- 	           filebrowserWindowHeight : '700'";
-	 
-	  $out .= '<div>'; 
-      $out .= "<textarea id='htmltext' name='htmltext'>".$this->load_spath($mydata)."</textarea>";	
-	  $out .= "<script type='text/javascript'> 
-	           CKEDITOR.replace('htmltext',
-			   {
-               $ckattr		   
-			   }		   
-			   );";
-	
-      if ($isTemplate==false)	
-	  $out .= "			   
-	           CKEDITOR.config.fullPage=true;";		   
-		
-      $maximize = 'minimize';//$insfast ? ($_POST['insfast'] ? 'maximize' : 'minimize' ) : 'maximize';		
-	  $out .= "		   
-               CKEDITOR.config.entities = false;
-               CKEDITOR.config.entities_greek = false;
-               CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;			   
-               CKEDITOR.on('instanceReady',
-               function( evt )
-               {
-                  var editor = evt.editor;
-                  editor.execCommand('$maximize');
-               });
-			   </script>"; 
-	  $out .= '</div>';
-      //extraPlugins : 'stylesheetparser',enterMode : CKEDITOR.ENTER_DIV/ENTER_BR/ENTER_P
+	  $out .= $this->ckeditor($mydata);
 	
       if (!$_POST['insfast']) {	//hide when post fast
 		$mytempfile = GetParam('tempfile')?	GetParam('tempfile') : $tempfile;	   
@@ -565,51 +472,150 @@ document.addEventListener('keydown', function (event) {
       
 	  return ($out); 
     }	
+	
+    protected function render_edit() {
+		$id = GetParam('id');
+		$type = '.html'; //default type for text attachment
+      
+		if (isset($_POST['id'])) { //post edit
+			//echo $_POST['title'],$_POST['tags'];
+			$title = GetParam('title');
+		
+			if (($id) && ($type) && ($title)) { 
+				$code = str_replace(' ','-',$title);
+				$tags = GetParam('tags') ;//as come from post ...str_replace(' ',',',GetParam('tags'));
+				$text = GetParam('htmltext');
+				$descr = substr(trim(strip_tags($text)),0,250).'...';
+				$category = str_replace('_',' ',$id);
+			
+				$save_attachment = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code."+". $type."+".$text."+1");		
+				$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
+				$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
+				$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
+			
+				if (isset($_POST['htmltext'])) {
+					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
+					$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
+					$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+				}
+			}	
+		}
+		else {//load
+		    $mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+		}
+	  
+      
+		$purl = 'cpmhtmleditor.php';
+		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
+	    $out .= $this->ckeditor($mydata);
+	
+		/*
+			$out .= "<br/><br/>".localize('_title',getlocal()).":<input type=\"text\" name=\"title\" value=\"".localize('_subject',getlocal())."\" />";
+			$out .= "<br/>".localize('_tags',getlocal()).":<input type=\"text\" name=\"tags\" value=\"".str_replace(array(' ','_','-'),array(',',' ',' '),$myid)."\" />";
+		*/
+		$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";		   	  
+			
+		$out .= '            <div class="space20"></div>
+                                 <div class="row-fluid">
+                                     <div class="feedback">
+                                         <h3>'.localize('_title',getlocal()).'</h3>
+                                         <p>'.localize('_tags',getlocal()).'</p>
+                                         <div class="space20"></div>
+
+                                             <!--div class="control-group">
+                                                 <input type="text" placeholder="Name" class="span12">
+                                             </div-->
+                                             <div class="control-group ">
+                                                 <input type="text" name="title" value="'.localize('_subject',getlocal()).'" class="span6 one-half">
+                                                 <input type="text" name="tags" value="'.str_replace(array(' ','_','-'),array(',',' ',' '),$myid).'" class="span6">
+                                             </div>
+                                             <!--div class="control-group">
+                                                 <textarea placeholder="Message" class="span12" rows="5"></textarea>
+                                             </div-->
+                                             <div class="text-center">
+                                                 <button class="btn btn-success " name="ok" type="submit">'.localize('_submit',getlocal()).'</button>
+                                             </div>
+                                     </div>
+                                 </div>';  
+		
+		$out .= "</form>";
+      
+		return ($out); 
+    }
+
+    public function editor($itemcode=null, $itemtype=null, $file = null) {
+	
+	    $id = $itemcode ? $itemcode : GetReq('id');
+		$type = $itemtype ? $itemtype : (GetReq('type') ? GetReq('type') : null);//'.html'); //must be set by hand in url
+		$htmlfile = $file ? $file : $this->htmlfile; 
+		
+		if (!empty($_POST)) {
+			//echo 'post....';	
+			if (($id = GetParam('id')) && ($type = GetParam('type'))) {	
+				$ret =  $this->render(null,null,$id,$type);
+			}
+			elseif ($myfile = GetParam('file2saveon')) {
+				//if ($cke4_inline)
+				// echo render_inline($myfile,null);	  	  
+				//else	  
+				$ret = $this->render($myfile,null);
+			}
+		}
+		else {
+			//echo 'load....';	
+			if (($id) && ($type)) {
+				$ret = $this->render(null,null,$id,$type);
+			}
+			elseif ($htmlfile) {
+				$p = explode('/',$htmlfile);
+				$fa = array_pop($p);
+				$myfile = getcwd() . '/html/' . $this->template .  $fa;
+				//$tempname = getcwd() . '/modify_html.tmp';
+	  
+				if ($this->cke4_inline)
+					$ret = $this->render_inline($myfile,null);	  	  
+				else
+					$ret = $this->render($myfile,null);	  	  
+			}
+			else
+				$ret = $this->render_edit();		
+		}	
+		return ($ret);
+    }	
 
     protected function savefile($filename=null,$tempfile=null) {
-         //echo $filename;
-		 
-	     /////////////////////////////////////////////////////////////
-		 
-	     if (GetSessionParam('LOGIN')!='yes') 
-		   die("Not logged in!");
-		   
-	     /////////////////////////////////////////////////////////////			 
-
-         //if ($_POST['ok']) { //CKEDITOR FULL SCREEN SAVE BUTTON ....NO NEED
+        //echo $filename;
+	 
+	    if (GetSessionParam('LOGIN')!='yes') 
+			die("Not logged in!");
 			
-            $this->write2disk($filename,$_POST['htmltext']); //save temp
+        $this->write2disk($filename,$_POST['htmltext']); //save temp
              
-            if ($tempfile)
-              $this->write2disk($tempfile,$_POST['htmltext']); //save original
+        if ($tempfile)
+            $this->write2disk($tempfile,$_POST['htmltext']); //save original
 			  
-
-         //}
     }
 
     protected function remove_spchars($text=null) {
-	   //if ckfinder
-	   //return ($text);	
 
-       $p1 = str_replace("\'","'",$text);
-       $p2 = str_replace('\"','"',$p1);
+		$p1 = str_replace("\'","'",$text);
+		$p2 = str_replace('\"','"',$p1);
 
-       return $p2;
-
+		return $p2;
     }
 
     protected function handle_phpdac_tags($text,$savemode=null) {
 
-      if ($savemode==null) {//load
-       $p1 = str_replace("<?","<phpdac5>",$text);
-       $p2 = str_replace('?>','</phpdac5>',$p1);
-      }
-      else {//save mode
-       $p1 = str_replace("<phpdac5>","<?",$text);
-       $p2 = str_replace('</phpdac5>','?>',$p1);
-      }
+		if ($savemode==null) {//load
+			$p1 = str_replace("<?","<phpdac5>",$text);
+			$p2 = str_replace('?>','</phpdac5>',$p1);
+		}
+		else {//save mode
+			$p1 = str_replace("<phpdac5>","<?",$text);
+			$p2 = str_replace('</phpdac5>','?>',$p1);
+		}
 
-      return $p2;
+		return $p2;
     }
 
     protected function load_spath($text=null) {
@@ -652,44 +658,6 @@ document.addEventListener('keydown', function (event) {
         }
         return false;
 
-    }
-
-    public function editor($itemcode=null, $itemtype='.html', $file = null) {
-	
-	    $id = $itemcode ? $itemcode : GetReq('id');
-		$type = $itemtype ? $itemtype : (GetReq('type') ? GetReq('type') : '.html');
-		$htmlfile = $file ? $file : $this->htmlfile; 
-		
-		if (!empty($_POST)) {
-			//echo 'post....';	
-			if (($id = GetParam('id')) && ($type = GetParam('type'))) {	
-				$ret =  $this->render(null,null,$id,$type);
-			}
-			elseif ($myfile = GetParam('file2saveon')) {
-				//if ($cke4_inline)
-				// echo render_inline($myfile,null);	  	  
-				//else	  
-				$ret = $this->render($myfile,null);
-			}
-		}
-		else {
-			//echo 'load....';	
-			if (($id) && ($type)) {	
-				$ret = $this->render(null,null,$id,$type);
-			}
-			elseif ($htmlfile) {
-				$p = explode('/',$htmlfile);
-				$fa = array_pop($p);
-				$myfile = getcwd() . '/html/' . $this->template .  $fa;
-				//$tempname = getcwd() . '/modify_html.tmp';
-	  
-				if ($this->cke4_inline)
-					$ret = $this->render_inline($myfile,null);	  	  
-				else
-					$ret = $this->render($myfile,null);	  	  
-			} 
-		}	
-		return ($ret);
     }
 	
 	
@@ -1273,7 +1241,61 @@ document.addEventListener('keydown', function (event) {
 	    return true;
 	  
 	  return false;
-	}		
+	}	
+
+	protected function ckeditor($mydata=null,$isTemplate=false) {
+		$ckattr = $this->ckeditor4 ?
+	           "fullpage : true, 
+               filebrowserBrowseUrl : '/cp/ckfinder/ckfinder.html',
+	           filebrowserImageBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Images',
+	           filebrowserFlashBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Flash',
+	           filebrowserUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
+	           filebrowserImageUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
+	           filebrowserFlashUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash',
+	           filebrowserWindowWidth : '1000',
+ 	           filebrowserWindowHeight : '700'"	  
+	           : 
+	           "skin : 'v2', 
+			   fullpage : true, 
+			   extraPlugins :'docprops',
+               filebrowserBrowseUrl : '/cp/ckfinder/ckfinder.html',
+	           filebrowserImageBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Images',
+	           filebrowserFlashBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Flash',
+	           filebrowserUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
+	           filebrowserImageUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
+	           filebrowserFlashUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash',
+	           filebrowserWindowWidth : '1000',
+ 	           filebrowserWindowHeight : '700'";
+	 
+		$out .= '<div>'; 
+		$out .= "<textarea id='htmltext' name='htmltext'>".$this->load_spath($mydata)."</textarea>";	
+		$out .= "<script type='text/javascript'> 
+	           CKEDITOR.replace('htmltext',
+			   {
+               $ckattr		   
+			   }		   
+			   );";	 
+        /*
+		if ($isTemplate==false)	
+			$out .= "			   
+	           CKEDITOR.config.fullPage=true;";				   
+		*/
+		$maximize = 'minimize';	
+		$out .= "		   
+               CKEDITOR.config.entities = false;
+               CKEDITOR.config.entities_greek = false;
+               CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;			   
+               CKEDITOR.on('instanceReady',
+               function( evt )
+               {
+                  var editor = evt.editor;
+                  editor.execCommand('$maximize');
+               });
+			   </script>"; 
+		$out .= '</div>';
+
+		return ($out);	
+	}	
 	
 };
 }

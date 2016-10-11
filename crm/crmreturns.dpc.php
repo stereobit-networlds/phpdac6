@@ -1,69 +1,69 @@
 <?php
-$__DPCSEC['CRMPURCHASES_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['CRMRETURNS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ((!defined("CRMPURCHASES_DPC")) && (seclevel('CRMPURCHASES_DPC',decode(GetSessionParam('UserSecID')))) ) {
-define("CRMPURCHASES_DPC",true);
+if ((!defined("CRMRETURNS_DPC")) && (seclevel('CRMRETURNS_DPC',decode(GetSessionParam('UserSecID')))) ) {
+define("CRMRETURNS_DPC",true);
 
-$__DPC['CRMPURCHASES_DPC'] = 'crmpurchases';
+$__DPC['CRMRETURNS_DPC'] = 'crmreturns';
 
 $b = GetGlobal('controller')->require_dpc('crm/crmmodule.dpc.php');
 require_once($b);
 
-$__LOCALE['CRMPURCHASES_DPC'][0]='CRMPURCHASES_DPC;Purchased;Αγορές';
-$__LOCALE['CRMPURCHASES_DPC'][1]='_date;Date;Ημερ.';
-$__LOCALE['CRMPURCHASES_DPC'][2]='_time;Time;Ώρα';
-$__LOCALE['CRMPURCHASES_DPC'][3]='_qty;Quantity;Ποσότητα';
-$__LOCALE['CRMPURCHASES_DPC'][4]='_items;Items;Είδη';
-$__LOCALE['CRMPURCHASES_DPC'][5]='_active;Active;Ενεργό';
-$__LOCALE['CRMPURCHASES_DPC'][6]='_title;Title;Τίτλος';
-$__LOCALE['CRMPURCHASES_DPC'][7]='_descr;Description;Περιγραφή';
-$__LOCALE['CRMPURCHASES_DPC'][8]='_xml;Xml;Xml';
-$__LOCALE['CRMPURCHASES_DPC'][9]='_color;Color;Χρώμα';
-$__LOCALE['CRMPURCHASES_DPC'][10]='_code;Code;Κωδικός';
-$__LOCALE['CRMPURCHASES_DPC'][11]='_dimensions;Dimension;Διαστάσεις';
-$__LOCALE['CRMPURCHASES_DPC'][12]='_size;Size;Μέγεθος';
-$__LOCALE['CRMPURCHASES_DPC'][13]='_dimensions;Dimensions;Διαστάσεις';
-$__LOCALE['CRMPURCHASES_DPC'][14]='_xmlcreate;Create XML;Δημιούργησε XML';
-$__LOCALE['CRMPURCHASES_DPC'][15]='_xml;XML item;Είδος XML';
-$__LOCALE['CRMPURCHASES_DPC'][16]='_manufacturer;Manufacturer;Κατασκευαστής';
-$__LOCALE['CRMPURCHASES_DPC'][17]='_uniname1;Unit;Μον.μετρ.';
-$__LOCALE['CRMPURCHASES_DPC'][18]='_ypoloipo1;Qty;Υπόλοιπο';
-$__LOCALE['CRMPURCHASES_DPC'][19]='_price0;Price 1;Αξία 1';
-$__LOCALE['CRMPURCHASES_DPC'][20]='_price1;Price 2;Αξία 2';
-$__LOCALE['CRMPURCHASES_DPC'][21]='_name;Name;Όνομα';
-$__LOCALE['CRMPURCHASES_DPC'][22]='_cat0;Category 1;Κατηγορία 1';
-$__LOCALE['CRMPURCHASES_DPC'][23]='_cat1;Category 2;Κατηγορία 2';
-$__LOCALE['CRMPURCHASES_DPC'][24]='_cat2;Category 3;Κατηγορία 3';
-$__LOCALE['CRMPURCHASES_DPC'][25]='_cat3;Category 4;Κατηγορία 4';
-$__LOCALE['CRMPURCHASES_DPC'][26]='_cat4;Category 5;Κατηγορία 5';
+$__LOCALE['CRMRETURNS_DPC'][0]='CRMRETURNS_DPC;Returns;Επιστροφές';
+$__LOCALE['CRMRETURNS_DPC'][1]='_date;Date;Ημερ.';
+$__LOCALE['CRMRETURNS_DPC'][2]='_time;Time;Ώρα';
+$__LOCALE['CRMRETURNS_DPC'][3]='_qty;Quantity;Ποσότητα';
+$__LOCALE['CRMRETURNS_DPC'][4]='_items;Items;Είδη';
+$__LOCALE['CRMRETURNS_DPC'][5]='_active;Active;Ενεργό';
+$__LOCALE['CRMRETURNS_DPC'][6]='_title;Title;Τίτλος';
+$__LOCALE['CRMRETURNS_DPC'][7]='_descr;Description;Περιγραφή';
+$__LOCALE['CRMRETURNS_DPC'][8]='_xml;Xml;Xml';
+$__LOCALE['CRMRETURNS_DPC'][9]='_color;Color;Χρώμα';
+$__LOCALE['CRMRETURNS_DPC'][10]='_code;Code;Κωδικός';
+$__LOCALE['CRMRETURNS_DPC'][11]='_dimensions;Dimension;Διαστάσεις';
+$__LOCALE['CRMRETURNS_DPC'][12]='_size;Size;Μέγεθος';
+$__LOCALE['CRMRETURNS_DPC'][13]='_dimensions;Dimensions;Διαστάσεις';
+$__LOCALE['CRMRETURNS_DPC'][14]='_xmlcreate;Create XML;Δημιούργησε XML';
+$__LOCALE['CRMRETURNS_DPC'][15]='_xml;XML item;Είδος XML';
+$__LOCALE['CRMRETURNS_DPC'][16]='_manufacturer;Manufacturer;Κατασκευαστής';
+$__LOCALE['CRMRETURNS_DPC'][17]='_uniname1;Unit;Μον.μετρ.';
+$__LOCALE['CRMRETURNS_DPC'][18]='_ypoloipo1;Qty;Υπόλοιπο';
+$__LOCALE['CRMRETURNS_DPC'][19]='_price0;Price 1;Αξία 1';
+$__LOCALE['CRMRETURNS_DPC'][20]='_price1;Price 2;Αξία 2';
+$__LOCALE['CRMRETURNS_DPC'][21]='_name;Name;Όνομα';
+$__LOCALE['CRMRETURNS_DPC'][22]='_cat0;Category 1;Κατηγορία 1';
+$__LOCALE['CRMRETURNS_DPC'][23]='_cat1;Category 2;Κατηγορία 2';
+$__LOCALE['CRMRETURNS_DPC'][24]='_cat2;Category 3;Κατηγορία 3';
+$__LOCALE['CRMRETURNS_DPC'][25]='_cat3;Category 4;Κατηγορία 4';
+$__LOCALE['CRMRETURNS_DPC'][26]='_cat4;Category 5;Κατηγορία 5';
 
-$__LOCALE['CRMPURCHASES_DPC'][30]='_transactions;Transactions;Συναλλαγές';
-$__LOCALE['CRMPURCHASES_DPC'][31]='_date;Date;Ημερ.';
-$__LOCALE['CRMPURCHASES_DPC'][32]='_time;Time;Ώρα';
-$__LOCALE['CRMPURCHASES_DPC'][33]='_status;Status;Φάση';
-$__LOCALE['CRMPURCHASES_DPC'][34]='_payway;Pay method;Πληρωμή';
-$__LOCALE['CRMPURCHASES_DPC'][35]='_roadway;Delivery;Διανομή';
-$__LOCALE['CRMPURCHASES_DPC'][36]='_qty;Qty;Ποσοτ.';
-$__LOCALE['CRMPURCHASES_DPC'][37]='_cost;Cost A;Κόστος A';
-$__LOCALE['CRMPURCHASES_DPC'][38]='_costpt;Cost B;Κόστος B';
-$__LOCALE['CRMPURCHASES_DPC'][39]='_xxx;Cost B;Κόστος Β';
-$__LOCALE['CRMPURCHASES_DPC'][40]='_user;User;Πελάτης';
-$__LOCALE['CRMPURCHASES_DPC'][41]='Eurobank;Credit card;Πιστωτική κάρτα';  
-$__LOCALE['CRMPURCHASES_DPC'][42]='Piraeus;Credit card;Πιστωτική κάρτα';  
-$__LOCALE['CRMPURCHASES_DPC'][43]='Paypal;Credit card;Πιστωτική κάρτα';  
-$__LOCALE['CRMPURCHASES_DPC'][44]='PayOnsite;Pay on site;Πληρωμή στο κατάστημά μας'; 
-$__LOCALE['CRMPURCHASES_DPC'][45]='BankTransfer;Bank transfer;Κατάθεση σε τραπεζικό λογαριασμό'; 
-$__LOCALE['CRMPURCHASES_DPC'][46]='PayOndelivery;Pay on delivery;Αντικαταβολή'; 
-$__LOCALE['CRMPURCHASES_DPC'][47]='Invoice;Invoice;Τιμολόγιο'; 
-$__LOCALE['CRMPURCHASES_DPC'][48]='Receipt;Receipt;Απόδειξη'; 
-$__LOCALE['CRMPURCHASES_DPC'][49]='CompanyDelivery;Our Delivery Service;Διανομή με όχημα της εταιρείας'; 
-$__LOCALE['CRMPURCHASES_DPC'][50]='Logistics;3d Party Logistic Service;Μεταφορική εταιρεία'; 
-$__LOCALE['CRMPURCHASES_DPC'][51]='Courier;Courier;Courier'; 
-$__LOCALE['CRMPURCHASES_DPC'][52]='CustomerDelivery;Self Service;Παραλαβή απο το κατάστημα μας'; 
+$__LOCALE['CRMRETURNS_DPC'][30]='_transactions;Transactions;Συναλλαγές';
+$__LOCALE['CRMRETURNS_DPC'][31]='_date;Date;Ημερ.';
+$__LOCALE['CRMRETURNS_DPC'][32]='_time;Time;Ώρα';
+$__LOCALE['CRMRETURNS_DPC'][33]='_status;Status;Φάση';
+$__LOCALE['CRMRETURNS_DPC'][34]='_payway;Pay method;Πληρωμή';
+$__LOCALE['CRMRETURNS_DPC'][35]='_roadway;Delivery;Διανομή';
+$__LOCALE['CRMRETURNS_DPC'][36]='_qty;Qty;Ποσοτ.';
+$__LOCALE['CRMRETURNS_DPC'][37]='_cost;Cost A;Κόστος A';
+$__LOCALE['CRMRETURNS_DPC'][38]='_costpt;Cost B;Κόστος B';
+$__LOCALE['CRMRETURNS_DPC'][39]='_xxx;Cost B;Κόστος Β';
+$__LOCALE['CRMRETURNS_DPC'][40]='_user;User;Πελάτης';
+$__LOCALE['CRMRETURNS_DPC'][41]='Eurobank;Credit card;Πιστωτική κάρτα';  
+$__LOCALE['CRMRETURNS_DPC'][42]='Piraeus;Credit card;Πιστωτική κάρτα';  
+$__LOCALE['CRMRETURNS_DPC'][43]='Paypal;Credit card;Πιστωτική κάρτα';  
+$__LOCALE['CRMRETURNS_DPC'][44]='PayOnsite;Pay on site;Πληρωμή στο κατάστημά μας'; 
+$__LOCALE['CRMRETURNS_DPC'][45]='BankTransfer;Bank transfer;Κατάθεση σε τραπεζικό λογαριασμό'; 
+$__LOCALE['CRMRETURNS_DPC'][46]='PayOndelivery;Pay on delivery;Αντικαταβολή'; 
+$__LOCALE['CRMRETURNS_DPC'][47]='Invoice;Invoice;Τιμολόγιο'; 
+$__LOCALE['CRMRETURNS_DPC'][48]='Receipt;Receipt;Απόδειξη'; 
+$__LOCALE['CRMRETURNS_DPC'][49]='CompanyDelivery;Our Delivery Service;Διανομή με όχημα της εταιρείας'; 
+$__LOCALE['CRMRETURNS_DPC'][50]='Logistics;3d Party Logistic Service;Μεταφορική εταιρεία'; 
+$__LOCALE['CRMRETURNS_DPC'][51]='Courier;Courier;Courier'; 
+$__LOCALE['CRMRETURNS_DPC'][52]='CustomerDelivery;Self Service;Παραλαβή απο το κατάστημα μας'; 
 
 
 
-class crmpurchases extends crmmodule  {
+class crmreturns extends crmmodule  {
 		
 	function __construct() {
 	
@@ -76,7 +76,7 @@ class crmpurchases extends crmmodule  {
 	   
 	   //search serialized data for id
 	   $sSQL = "select tdata from transactions " . 
-	           "where tstatus>=0 and cid= " . $db->qstr($cid);
+	           "where tstatus<0 and cid= " . $db->qstr($cid);
        $result = $db->Execute($sSQL,2);
 	   //echo $sSQL;
 	   
@@ -98,7 +98,7 @@ class crmpurchases extends crmmodule  {
 	   return $ret;   	   	
 	}		
 
-	public function purchases_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	public function returns_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $selected = urldecode(GetReq('id'));
 		
 	    $height = $height ? $height : 800;
@@ -107,7 +107,7 @@ class crmpurchases extends crmmodule  {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;	
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('CRMPURCHASES_DPC',getlocal());
+		$title = localize('CRMRETURNS_DPC',getlocal());
 	
 	    if (defined('MYGRID_DPC')) {
 			
@@ -145,8 +145,8 @@ class crmpurchases extends crmmodule  {
 	}	
 	
 	
-	//return array of purchased item's documents
-	protected function getPurchased($id=null, $cid=null) {
+	//return array of returned item's documents
+	protected function getReturned($id=null, $cid=null) {
        $db = GetGlobal('db');
 	   
 	   //search serialized data for id
@@ -161,7 +161,7 @@ class crmpurchases extends crmmodule  {
 	   return $ret;   	   	
 	}	
 	
-	protected function purchased_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	protected function returned_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $selected = urldecode(GetReq('id'));
 		$s = explode('~', $selected);
 		$id = $s[0];
@@ -191,7 +191,7 @@ class crmpurchases extends crmmodule  {
 								  "'".localize('Logistics',getlocal())."',".
 								  "'".localize('Courier',getlocal())."') as rw";				
 			
-			$doclist = $this->getPurchased($id, $cid);
+			$doclist = $this->getReturned($id, $cid);
 			if (!empty($doclist))
 				$dSQL = ' AND i.tid in (' . implode(',', $doclist) . ')';
 			else
@@ -222,8 +222,8 @@ class crmpurchases extends crmmodule  {
   	
 	}	
 	
-	public function purchased() {
-		$out = $this->purchased_grid(null,250,10,'r',true);
+	public function returned() {
+		$out = $this->returned_grid(null,250,10,'r',true);
 		return ($out);
 	}	
 
@@ -236,7 +236,7 @@ class crmpurchases extends crmmodule  {
 		if ((is_numeric($data)) && (intval($data)<50000))	
 			$bodyurl = 'cptransactions.php?t=cptranslink&tid='.$data;
 		else	
-			$bodyurl = 'cpcrm.php?t=cpcrmrun&mod=crmwishcmp.purchased&id='.$data; 
+			$bodyurl = 'cpcrm.php?t=cpcrmrun&mod=crmwishcmp.returned&id='.$data; 
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
 
 		return ($frame);		

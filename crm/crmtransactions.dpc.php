@@ -75,7 +75,7 @@ class crmtransactions extends crmmodule  {
 				//echo $xsSQL2;
 			}
 			else {
-				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.timein,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i) x";
+				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.timein,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i ) x";
 				//echo $xsSQL2;
 			}
 

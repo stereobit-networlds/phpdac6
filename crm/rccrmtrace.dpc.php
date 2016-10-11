@@ -76,6 +76,7 @@ class rccrmtrace  {
 	
 	var $contactRec, $cantactData;
 	var $v, $visitor, $visitorIP, $visitorEmail, $resolved, $ref, $source;
+	var $fb, $login, $recognize, $resolve;
 		
 	function __construct() {
 	
@@ -113,6 +114,11 @@ class rccrmtrace  {
 		
 		$this->ref = null;
 		$this->source = null;	
+		
+		$this->fb = GetReq('fb') ? true : false;
+		$this->login = GetReq('login') ? true : false;
+		$this->recognize = GetReq('recognized') ? true : false;
+		$this->resolve = GetReq('resolved') ? true : false;		
 	}
 	
     function event($event=null) {
@@ -221,6 +227,11 @@ class rccrmtrace  {
 		
 		$ret = $ucfirst ? ucfirst($this->contactData[$fieldname]) : $this->contactData[$fieldname];
 		return ($ret);
+	}
+	
+	public function readVar($var=null) {
+		if (!$var) return false;
+		return ($this->{$var});
 	}
 	
 	public function readContactID() {
@@ -693,30 +704,36 @@ class rccrmtrace  {
     public function visitors($template=null) {
 		$db = GetGlobal('db'); 	
 
-		$recognize = GetReq('recognized') ? true : false;
-		$resolve = GetReq('resolved') ? true : false;
-		$limit = ($recognize) ? null : ( $resolve ? " LIMIT 5000" : " LIMIT 500" ); //????
+		//$recognize = GetReq('recognized') ? true : false;
+		//$resolve = GetReq('resolved') ? true : false;
+		$limit = ($this->recognize) ? null : ( $this->resolve ? " LIMIT 3000" : " LIMIT 500" ); //????
 		
 		$cpGet = _v('rcpmenu.cpGet');
 		
 		if ($v = $this->visitor)  //ip / mail / session
 			$vSQL = $this->isIPUser($v) ? " AND REMOTE_ADDR='$v' " : 
 			       ($this->iseMailUser($v) ? " AND (attr2='$v' OR attr3='$v') " : " AND attr2='$v' " );
-		else
-			$vSQL = null;
+		else {
+			if ($this->fb)
+				$vSQL = " AND ref like 'facebook%' ";
+			elseif ($this->login)
+				$vSQL = " AND tid='action' AND (attr1='login' OR attr1='fblogin') ";
+			else
+				$vSQL = null;		
+		}	
 		
         if ($id = $cpGet['id']) {
 			$cat = $cpGet['cat'];
 			$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
-			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where (tid='$id' OR attr1='$cat') $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,ref,REMOTE_ADDR FROM stats where (tid='$id' OR attr1='$cat') $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		elseif ($cat = $cpGet['cat']) {
 			$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
-			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,ref,REMOTE_ADDR FROM stats where attr1='$cat' $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		else {
 			$timein = _m('rccontrolpanel.sqlDateRange use date+1+0');
-			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,ref,REMOTE_ADDR FROM stats where $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		//echo $sSQL;	
         $result = $db->Execute($sSQL);
@@ -731,24 +748,25 @@ class rccrmtrace  {
 			$visitor = $this->iseMailUser($rec['attr3']) ? $rec['attr3'] : 
 						( $this->iseMailUser($rec['attr2']) ? $rec['attr2'] : $rec['REMOTE_ADDR']);
 						
-			if (($recognize) && (!$this->iseMailUser($visitor))) 
+			if (($this->recognize) && (!$this->iseMailUser($visitor))) 
 				continue;		
-			elseif (($resolve) && ($this->isIPUser($visitor))) {
+			elseif (($this->resolve) && ($this->isIPUser($visitor))) {
 				$resolved = $this->resolveIP($visitor);		
 				if (!$this->iseMailUser($resolved)) continue;
 			}
 			
-			//$name = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")";	
-			$name = $recognize ? $visitor . " -&gt resolved : " . $this->resolveProfile($visitor) : $visitor; 
-			//$name.= " -&gt resolved : " . $this->resolveProfile($visitor);
+			
+			$fbmark = $rec['ref'] ? ((substr($rec['ref'],0,8)=='facebook') ? "<i class='icon-facebook'></i>" : null ) : null;
+			$name = $this->recognize ? $visitor . " -&gt resolved : " . $this->resolveProfile($visitor) : $visitor; 
+			
 			$rtokens[] = $resolved ? $name . " -&gt resolved : " . $this->resolveProfile($resolved) : $name; 
 			$rtokens[] = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec['date'])); 
 			$rtokens[] = 'cpcrmtrace.php?t=cpcrmprofile&v=' . ($resolved ? $resolved.'|'.$visitor : $visitor); //link
 			$rtokens[] = null;//$rec[3]; //hash
 			
-			$rtokens[] = $resolved ? _m("crmforms.formsMenu use ".$resolved."+crmdoc") : 
+			$rtokens[] = $resolved ? _m("crmforms.formsMenu use ".$resolved."+crmdoc") . $fbmark : 
 			              ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) ? 
-							_m("crmforms.formsMenu use ".$visitor."+crmdoc") : null);			
+							_m("crmforms.formsMenu use ".$visitor."+crmdoc") . $fbmark : $fbmark);			
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
 			             "<option value=\"$hash\">".$rtokens[1]."</option>";

@@ -815,9 +815,9 @@ class rccrm  {
 												<li><a data-role="leaf" href="javascript:subdetails(\'wishcmp'.$id.'\')"><i class="icon-tags"></i> '.$t_compares.'</a></li>
 												<li><a data-role="leaf" href="javascript:subdetails(\'wishfav'.$id.'\')"><i class="icon-tags"></i> '.$t_favorites.'</a></li>
 												<li><a data-role="leaf" href="javascript:subdetails(\'itemstats'.$id.'\')"><i class="icon-tags"></i> '.$t_views.'</a></li>												
-                                                <li><a data-role="leaf" href="javascript:subdetails(\'docsitem'.$id.'\')"><i class="icon-user"></i> '.$t_offers.'</a></li>
-                                                <li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_returns.'</a></li>												
-												<li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_behaviors.'</a></li>
+                                                <li><a data-role="leaf" href="javascript:subdetails(\'docsitem'.$id.'\')"><i class="icon-tags"></i> '.$t_offers.'</a></li>
+                                                <li><a data-role="leaf" href="javascript:subdetails(\'returns'.$id.'\')"><i class="icon-tags"></i> '.$t_returns.'</a></li>												
+												<!--li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_behaviors.'</a></li-->
                                             </ul>
                                         </li>
 										
