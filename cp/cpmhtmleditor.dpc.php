@@ -46,7 +46,7 @@ class cpmhtmleditor {
 	var $encoding, $prpath, $template, $one_attachment, $slan;
 	var $htmlfile, $ckeditor4, $cke4, $ckjs;
 	var $urlpath, $urlbase, $msg;
-	var $photodb, $restype, $cseparator, $map_t, $map_f;
+	var $photodb, $restype, $cseparator, $map_t, $map_f, $encodeimageid;
 	
 	var $messages, $postok, $record;
 
@@ -81,6 +81,7 @@ class cpmhtmleditor {
 		$this->cke4_inline = $this->ckeditor4 ? true/*false*/ : false; 
 		$this->ckjs = $this->ckeditor4 ? "http://stereobit.gr/ckeditor4/ckeditor.js" : "http://stereobit.gr/ckeditor/ckeditor.js";
 	
+		$this->encodeimageid = remote_paramload('RCITEMS','encodeimageid',$this->path);
 	    $this->photodb = remote_paramload('RCITEMS','photodb',$this->prpath);
 		$this->restype = remote_paramload('RCITEMS','restype',$this->prpath);
 	    $this->msg = null;
@@ -625,18 +626,6 @@ class cpmhtmleditor {
 		}
     }	
 	
-	protected function encode_image_id($id=null) {
-	    if (!$id) return null;
-		$encodeimageid = remote_paramload('RCITEMS','encodeimageid',$this->prpath);	  				
-
-		if ($this->encodeimageid) 
-			$out = md5($id);
-		else
-		    $out = $id;
-			
-        return $out;
-	}	
-	
 	//handle dropzone js form for pic uploading
 	protected function dropzone($accepted_filetypes=null) {
 	    $title = $_GET['title'] ? str_replace(' ','-',$_GET['title']) : 'title'; //posted item code
@@ -917,7 +906,7 @@ class cpmhtmleditor {
 	  $itmcode = $itmcode ? $itmcode : GetReq('id');
       $db = GetGlobal('db');	
 	  $type = $type ? $type : $this->restype;	  
-      $myfilename = $itmcode . $this->restype;	
+      $myfilename = $this->encode_image_id($itmcode) . $this->restype;	
 
 	  if (!$this->photodb) return;
 	  
@@ -1505,6 +1494,10 @@ class cpmhtmleditor {
 		if (isset($slan)) $sSQL .= " and lan=" . $slan;			
 		$db->Execute($sSQL);		
 		
+		//delete pb photos
+		$sSQL = "delete from pphotos where code=" . $db->qstr($id);	
+		$db->Execute($sSQL);		
+		
 		return true;
 	}
 
@@ -1582,6 +1575,18 @@ class cpmhtmleditor {
 		$ret = $this->map_f[$id];
 		return ($ret);
 	}	
+	
+	//for utf strings as products code..encode to digits for saving image
+	public function encode_image_id($id=null) {
+	    if (!$id) return null;
+
+		if ($this->encodeimageid) 
+			$out = md5($id);
+		else
+		    $out = $id;
+			
+        return $out;
+	}		
 
 	protected function replace_spchars($string, $reverse=false) {
 	
