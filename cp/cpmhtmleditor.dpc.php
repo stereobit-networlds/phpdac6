@@ -103,11 +103,10 @@ class cpmhtmleditor {
 			case 'cpmvphotoadddb' : $this->add_photo2db(null,null,GetReq('size')); break;
 			case 'cpmvphotodeldb' : $this->delete_photodb(GetReq('size')); break;
 			
-		    case 'cpmvdel'     :$this->delete_photo(); break;
-			case 'cpmvphoto'   :break; 
-		    case 'cpmdropzone' :$this->dropzone(); break; //fast-entry photo
-			default 		   :$this->javascript();
-								$this->raw_save();
+		    case 'cpmvdel'     	  : $this->delete_photo(); break;
+			case 'cpmvphoto'      : break; 
+		    case 'cpmdropzone'    : $this->dropzone(); break; //fast-entry photo
+			default 		      : $this->javascript();
 		}
     }
 	
@@ -164,8 +163,10 @@ class cpmhtmleditor {
 		if (isset($_POST['htmltext'])) {
 			if ($id) { //db	 
 				$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-				$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$id ."+". $type."+".$mytext);		 
-				$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+				//$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$id ."+". $type."+".$mytext);		 
+				$save = $this->add_attachment_data($id,$type,$mytext);
+				//$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+				$mydata = $this->has_attachment2db($id,$type,1);
 			}
 			else {//text
 				$this->savefile($file,null);		 
@@ -174,7 +175,8 @@ class cpmhtmleditor {
 		}
 		else {//load
 			if ($id) { //db
-				$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+				//$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+				$mydata = $this->has_attachment2db($id,$type,1);
 			}
 			else {//text
 				if (($file) && is_readable($file)) {
@@ -225,17 +227,22 @@ class cpmhtmleditor {
 				else					
 					$category = $this->replace_spchars($cpGet['cat'], 1);
 			
-				$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
+				//$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
+				$save_tags = $this->add_tags_data($code,$title,$descr,$tags);
 				$this->messages[] = "Add tags:".$tags;
-				$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
+				//$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
+				$save_cat = $this->add_kategory_data($category);
 				$this->messages[] = "Add category:".$category;
-				$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
+				//$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
+				$save_item = $this->add_item_data($code,$title,$descr,$category);
 				$this->messages[] = "Add item:".$code;
 			
 				if (isset($_POST['htmltext'])) {
 					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-					$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
-					$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+					//$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
+					$save = $this->add_attachment_data($code,$type,$mytext);
+					//$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+					$mydata = $this->has_attachment2db($code,$type,1);
 					$this->messages[] = "Save text:".$type;
 				}
 				
@@ -250,7 +257,8 @@ class cpmhtmleditor {
 				$this->messages[] = "Insert subject";			
 		}
 		else {//load
-			$mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 	  
+			//$mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 	  
+			$mydata = $id ? $this->has_attachment2db($id,$type,1) : null;
 			$this->messages[] = $id ? "Load text" : null;
 		}
 	  
@@ -305,7 +313,7 @@ class cpmhtmleditor {
 
 			if ($title = GetParam('title')) {
 			
-				$code = $this->replace_spchars($title);
+				$code = $id; //$this->replace_spchars($title);
 				$tags = GetParam('tags') ;
 				$text = GetParam('htmltext');
 				$descr = substr(trim(strip_tags($text)),0,250).'...';
@@ -314,15 +322,10 @@ class cpmhtmleditor {
 				else		
 					$category = $this->replace_spchars($cpGet['cat'], 1);
 				$cat = explode($this->cseparator, $category);
-				
-			/*
-				$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
-				$this->messages[] = "Add tags:".$tags;
-				$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
-				$this->messages[] = "Add category:".$category;
-				$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
-			    $this->messages[] = "Add item:".$code;
-				*/
+
+				//update tags
+				$save_tags = $this->upd_tags_data($code,$title,$descr,$tags);
+				$this->messages[] = "Update tags:".$tags;				
 				
 				//update
 				$sSQL = "update products set itmname=" . $db->qstr($title) . ",itmdescr=" . $db->qstr($descr);
@@ -333,7 +336,6 @@ class cpmhtmleditor {
 				
 				$res = $db->Execute($sSQL);	
 				$this->record = $res->fields;
-			
 				$this->messages[] = "Update record";				
 				
 				//read 
@@ -343,12 +345,14 @@ class cpmhtmleditor {
 				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
 				$res = $db->Execute($sSQL);	
 				$this->record = $res->fields;
-			
-				$this->messages[] = "Load record";				
+				$this->messages[] = "Load record";									
+				
 				if (isset($_POST['htmltext'])) {
 					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-					$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
-					$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+					//$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
+					$save = $this->add_attachment_data($code,$type,$mytext);
+					//$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+					$mydata = $this->has_attachment2db($code,$type,1);
 					$this->messages[] = "Save text:".$type;
 				}
 				
@@ -363,7 +367,8 @@ class cpmhtmleditor {
 				$this->messages[] = "Insert subject";	
 		}
 		else {//load
-		    $mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 
+		    //$mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 
+			$mydata = $id ? $this->has_attachment2db($id,$type,1) : null; 
 			$this->messages[] = $id ? "Load text" : null;
 			
 			if ($id) {
@@ -1183,7 +1188,8 @@ class cpmhtmleditor {
 		else
 			$id = GetParam('id') ? GetParam('id') : null;
 		
-		$ret = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 		
+		//$ret = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 		
+		$ret = $id ? $this->has_attachment2db($id,$type,1) : null; 		
 		return ($ret);
 	}		
 	
@@ -1193,29 +1199,297 @@ class cpmhtmleditor {
 		$editor = $this->ckeditor($data);
 		return ($editor);
 	}	
+
+	public function getSelectedCategory() {
+		$db = GetGlobal('db');
+		$lan = getlocal();
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$scat = $cpGet['cat'];		
 		
-	
-	protected function replace_spchars($string, $reverse=false) {
-	
-		switch ($this->replacepolicy) {	
-	
-			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
-			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
-			default :	
-			if ($reverse) {
-				$g1 = array("'",',','"','+','/',' ',' & ');
-				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
-				$ret = str_replace($g2,$g1,$string);
-			}	 
-			else {
-				$g1 = array("'",',','"','+','/',' ','-&-');
-				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
-				$ret = str_replace($g1,$g2,$string);
+		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";	
+		if ($scat) {
+			$sSQL.= "where ";
+			$xcat = explode($this->cseparator, $scat);
+			foreach($xcat as $i=>$c) {
+				$ic = $i+2;
+				$w[] = "cat{$ic}=" . $db->qstr($c);
 			}	
-	    }
-		return ($ret);
+			$sSQL .= implode(' AND ', $w);	
+		}
+		$res = $db->Execute($sSQL);	
+		//echo $sSQL;
+		
+		foreach ($res as $i=>$rec) {
+			$cat = $rec[0];
+			$cat.= $rec[1] ? $this->cseparator.$rec[1] : null;
+			$cat.= $rec[2] ? $this->cseparator.$rec[2] : null;
+			$cat.= $rec[3] ? $this->cseparator.$rec[3] : null;
+			
+			$tcat = $rec[4];
+			$tcat.= $rec[5] ? $this->cseparator.$rec[5] : null;
+			$tcat.= $rec[6] ? $this->cseparator.$rec[6] : null;
+			$tcat.= $rec[7] ? $this->cseparator.$rec[7] : null;			
+			
+			$aret[] = "<option value='$cat'>$tcat</option>";
+		}	
+        $ret = array_unique($aret); 
+		return (implode('',$ret));	
 	}	
 	
+	public function getCategories() {
+		$db = GetGlobal('db');
+		$lan = getlocal();
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$scat = $cpGet['cat'];			
+		
+		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";	
+		if ($scat) {
+			$sSQL.= "where ";
+			$xcat = explode($this->cseparator, $scat);
+			foreach($xcat as $i=>$c) {
+				$ic = $i+2;
+				$w[] = "cat{$ic}<>" . $db->qstr($c);
+			}	
+			$sSQL .= implode(' AND ', $w);	
+		}		
+		$res = $db->Execute($sSQL);	
+		
+		foreach ($res as $i=>$rec) {
+			$cat = $rec[0];
+			$cat.= $rec[1] ? $this->cseparator.$rec[1] : null;
+			$cat.= $rec[2] ? $this->cseparator.$rec[2] : null;
+			$cat.= $rec[3] ? $this->cseparator.$rec[3] : null;
+			
+			$tcat = $rec[4];
+			$tcat.= $rec[5] ? $this->cseparator.$rec[5] : null;
+			$tcat.= $rec[6] ? $this->cseparator.$rec[6] : null;
+			$tcat.= $rec[7] ? $this->cseparator.$rec[7] : null;
+			
+			$aret[] = "<option value='$cat'>$tcat</option>";
+		}	
+        $ret = array_unique($aret); 
+		return (implode('',$ret));		
+	}
+
+	protected function add_tags_data($code=null,$title=null,$descr=null,$keywords=null) {
+        if (!$code) return;
+        $db = GetGlobal('db'); 
+	    $lan = getlocal();
+	    $itmkeywords = $lan?'keywords'.$lan:'keywords0';
+	    $itmdescr = $lan?'descr'.$lan:'descr0'; 
+        $itmtitle = $lan?'title'.$lan:'title0';  
+  
+        $sSQL = "insert into ptags (code,tag,$itmkeywords,$itmdescr,$itmtitle) values (";
+	    $sSQL .= $db->qstr($code).",".
+	             $db->qstr($title).",".
+				 $db->qstr($keywords).",".
+				 $db->qstr($descr).",".
+				 $db->qstr($title).
+				 ")"; 
+        //echo $sSQL;
+		$result = $db->Execute($sSQL);
+        return ($result);		
+    }	
+  
+	protected function upd_tags_data($code=null,$title=null,$descr=null,$keywords=null) {
+        if (!$code) return;
+        $db = GetGlobal('db'); 
+	    $lan = getlocal();
+	    $itmkeywords = $lan?'keywords'.$lan:'keywords0';
+	    $itmdescr = $lan?'descr'.$lan:'descr0'; 
+        $itmtitle = $lan?'title'.$lan:'title0';  
+  
+        $sSQL = "update ptags set ";
+	    $sSQL .= "tag=" . $db->qstr($title).",".
+				 "$itmkeywords=" . $db->qstr($keywords).",".
+				 "$itmdescr=" . $db->qstr($descr).",".
+				 "$itmtitle=" . $db->qstr($title).
+				 " where code=" . $db->qstr($code); 
+        //echo $sSQL;
+		$result = $db->Execute($sSQL);
+        return ($result);		
+    }
+	
+	protected function add_kategory_data($cat=null) {
+        if (!$cat) return;
+        $db = GetGlobal('db'); 
+	    $lan = getlocal();
+	    $lan = $lang?$lang:getlocal();	
+		
+	    if (stristr($cat ,$this->cseparator))
+			$cats = explode($this->cseparator,$cat);  
+		else
+			$cats[] = $cat;	
+			
+		$cat_to_add = array();	
+		$loop = 1;
+        while (($loop) && (!empty($cats))) {		
+			//print_r($cats);
+
+			$sSQL = "select id from categories ";
+			$sSQL .= " WHERE cat1='ITEMS' and ";
+	        $where = null;
+			foreach ($cats as $i=>$c) {
+				$id = $i+2;//+2;...root_name added
+				$where[] = "cat$id='" . $this->replace_spchars($c,1) . "'";	
+			}	 
+			$sSQL .= implode(' and ',$where);
+			$sSQL .= ' LIMIT 1';// in case of many recs...???'
+			//echo $sSQL,'<br/>';
+			$resultset = $db->Execute($sSQL,2);	
+			//print_r($resultset->fields);
+			$retid = $resultset->fields['id'];
+			
+            $loop = $retid ? 0 : 1;
+            if ($loop) {
+			    $addcat = array_pop($cats); //prev level sql select			
+                $cat_to_add[] = $addcat;//add category for adding 
+			}	
+        }
+		//print_r($cats); //existed cat record 
+        //print_r($cat_to_add); //categories to add
+        if (!empty($cat_to_add)) {
+		
+		    $newcats = array_reverse($cat_to_add); //due to array_pop..
+			
+			/*check for null field before update / insert */
+			$cid = $id+1;
+			$checkSQL = "select id from categories WHERE ";
+			$checkSQL.= "id='$retid' and (cat{$cid}='' or cat{$cid} is NULL)";
+			//echo $checkSQL.'<br/>';
+			$rset = $db->Execute($checkSQL,2);
+			$retid_checked = $rset->fields['id'];
+			
+		    if (/*(!empty($cats)) &&*/ ($retid_checked)) {//checked
+				$sSQL = "update categories set ";
+				if (!empty($newcats)) {//new cats
+				  foreach ($newcats as $key=>$value) {
+					$k = $key+count($cats)+2;
+					if ($k<6) //max cat0..5
+						$nc[] = "cat{$k}='$value',cat0{$k}='$value',cat1{$k}='$value'";
+				  }
+				}
+				$sSQL .= implode(",",$nc);
+				$sSQL .= " where id='$retid' and cat1='ITEMS' and " . implode(' and ',$where);			
+			}
+			else {
+			    $nc = array();
+			    $sSQL = "insert into categories set ctgid=1,cat1='ITEMS',cat01='ITEMS',cat11='ITEMS',";
+				if (!empty($cats)) {//existed cats when dublicated record
+				  foreach ($cats as $key=>$value) {
+					$k = $key+count($cats)+1;
+					$nc[] = "cat{$k}='$value',cat0{$k}='$value',cat1{$k}='$value'";
+				  }
+				}
+				if (!empty($newcats)) {//new cats
+				  foreach ($newcats as $key=>$value) {
+				    $k = $key+count($cats)+2;
+					if ($k<6) //max cat0..5
+						$nc[] = "cat{$k}='$value',cat0{$k}='$value',cat1{$k}='$value'";
+				  }
+				}
+				$sSQL .= implode(",",$nc);
+			}
+			//echo $sSQL;
+			$result = $db->Execute($sSQL);
+			return ($result);
+        }		
+	}	
+	
+	public function has_attachment2db($itmcode=null,$type=null,$retattachment=null) {
+		$db = GetGlobal('db');	
+		$lan = getlocal(); //lan handle ?
+		$one_attachment = remote_paramload('SHKATALOG','oneattach',$this->path);
+		if ($one_attachment) 
+			$slan = null;
+		else
+			$slan = $lan?$lan:'0';	  
+		//echo $slan,'>',$itmcode,'>',$this->cseparator;
+	  
+		//in case of category id search for the last category branch	  
+		if (strstr($itmcode,$this->cseparator)) {
+			$itmcatdepth = explode($this->cseparator,$itmcode);
+			$itmcode = array_pop($itmcatdepth);	  
+		}	
+	  
+		$code = $this->getmapf('code');	  
+		$sSQL = "select data,type from pattachments ";
+		$sSQL .= " WHERE code='" . $itmcode . "'";
+		if (isset($type))
+			$sSQL .= " and type='". $type ."'";
+		if (isset($slan))
+			$sSQL .= " and lan=" . $slan;	
+		//echo $sSQL;
+	  
+		$resultset = $db->Execute($sSQL,2);	
+		$result = $resultset;
+		//print_r($result);	
+	  
+		//$exist = $db->Affected_Rows();
+		foreach ($result as $i=>$rec) {
+			$type = $rec['type'];
+			$att = $rec['data'];
+		}	
+	  
+		if ($retattachment) {
+			$attachment = $att;
+			return ($attachment);
+		}
+
+		return ($type);
+	}	
+	
+	protected function add_attachment_data($itmcode,$type=null,$data=null, $forceisid=null) {
+		$db = GetGlobal('db');	
+		$lan = getlocal(); 
+		$one_attachment = remote_paramload('SHKATALOG','oneattach',$this->path);
+		$type = $type?$type:GetReq('type');
+	  
+		if ($one_attachment) 
+			$slan = null;
+		else
+			$slan = $lan?$lan:'0';	  
+	  
+		//in case of category id search for the last category branch
+		//BUT in case of a title-id (fast insert) csep=, may into id ?= forceisid	  
+		if ((strstr($itmcode,$this->cseparator)) && ($forceisid==null)) {
+			$itmcatdepth = explode($this->cseparator,$itmcode);
+			$itmcode = array_pop($itmcatdepth);	  
+		}		  
+	  	    
+		$sSQL = "select code from pattachments ";
+		$sSQL .= " WHERE code='" . $itmcode . "' and type='". $type ."'";
+		if (isset($slan))
+			$sSQL .= " and lan=" . $slan;	
+		//echo $sSQL;
+	  
+		$resultset = $db->Execute($sSQL,2);	
+		$result = $resultset;
+		//print_r($result);	
+		$exist = $db->Affected_Rows();
+	  
+		if ($exist) {
+			$sSQL = "update pattachments set data='". str_replace('<SYN>','+',$data) ."'";
+			$sSQL .= " WHERE code='" . $itmcode . "' and type='" . $type ."'";
+			if (isset($slan))
+				$sSQL .= " and lan=" . $slan;		  		
+			//echo $sSQL;	  
+		}
+		else {
+			if (isset($slan))
+				$sSQL = "insert into pattachments (data,type,code,lan) values ('". str_replace('<SYN>','+', $data) ."','" . $type ."','" . $itmcode ."',$slan)";
+			else
+				$sSQL = "insert into pattachments (data,type,code) values ('". str_replace('<SYN>','+',$data) ."','" . $type ."','" . $itmcode ."')";
+			//echo $sSQL;	  	  
+		}
+	  
+		$db->Execute($sSQL,1);	
+		$affected = $db->Affected_Rows();
+		//echo $affected;  
+
+		return ($affected);  	  
+	}
+
 	//select mcpage to publish post with
 	public function frontpages() {
 		
@@ -1291,75 +1565,25 @@ class cpmhtmleditor {
 		return ($ret);
 	}	
 
-	public function getSelectedCategory() {
-		$db = GetGlobal('db');
-		$lan = getlocal();
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
-		$scat = $cpGet['cat'];		
-		
-		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";	
-		if ($scat) {
-			$sSQL.= "where ";
-			$xcat = explode($this->cseparator, $scat);
-			foreach($xcat as $i=>$c) {
-				$ic = $i+2;
-				$w[] = "cat{$ic}=" . $db->qstr($c);
-			}	
-			$sSQL .= implode(' AND ', $w);	
-		}
-		$res = $db->Execute($sSQL);	
-		//echo $sSQL;
-		
-		foreach ($res as $i=>$rec) {
-			$cat = $rec[0];
-			$cat.= $rec[1] ? $this->cseparator.$rec[1] : null;
-			$cat.= $rec[2] ? $this->cseparator.$rec[2] : null;
-			$cat.= $rec[3] ? $this->cseparator.$rec[3] : null;
-			
-			$tcat = $rec[4];
-			$tcat.= $rec[5] ? $this->cseparator.$rec[5] : null;
-			$tcat.= $rec[6] ? $this->cseparator.$rec[6] : null;
-			$tcat.= $rec[7] ? $this->cseparator.$rec[7] : null;			
-			
-			$aret[] = "<option value='$cat'>$tcat</option>";
-		}	
-        $ret = array_unique($aret); 
-		return (implode('',$ret));	
-	}	
+	protected function replace_spchars($string, $reverse=false) {
 	
-	public function getCategories() {
-		$db = GetGlobal('db');
-		$lan = getlocal();
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
-		$scat = $cpGet['cat'];			
-		
-		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";	
-		if ($scat) {
-			$sSQL.= "where ";
-			$xcat = explode($this->cseparator, $scat);
-			foreach($xcat as $i=>$c) {
-				$ic = $i+2;
-				$w[] = "cat{$ic}<>" . $db->qstr($c);
+		switch ($this->replacepolicy) {	
+	
+			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+			default :	
+			if ($reverse) {
+				$g1 = array("'",',','"','+','/',' ',' & ');
+				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
+				$ret = str_replace($g2,$g1,$string);
+			}	 
+			else {
+				$g1 = array("'",',','"','+','/',' ','-&-');
+				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
+				$ret = str_replace($g1,$g2,$string);
 			}	
-			$sSQL .= implode(' AND ', $w);	
-		}		
-		$res = $db->Execute($sSQL);	
-		
-		foreach ($res as $i=>$rec) {
-			$cat = $rec[0];
-			$cat.= $rec[1] ? $this->cseparator.$rec[1] : null;
-			$cat.= $rec[2] ? $this->cseparator.$rec[2] : null;
-			$cat.= $rec[3] ? $this->cseparator.$rec[3] : null;
-			
-			$tcat = $rec[4];
-			$tcat.= $rec[5] ? $this->cseparator.$rec[5] : null;
-			$tcat.= $rec[6] ? $this->cseparator.$rec[6] : null;
-			$tcat.= $rec[7] ? $this->cseparator.$rec[7] : null;
-			
-			$aret[] = "<option value='$cat'>$tcat</option>";
-		}	
-        $ret = array_unique($aret); 
-		return (implode('',$ret));		
+	    }
+		return ($ret);
 	}		
 
 };
