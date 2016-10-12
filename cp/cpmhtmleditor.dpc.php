@@ -19,7 +19,7 @@ $__EVENTS['CPMHTMLEDITOR_DPC'][3]='cpmvdel';
 $__EVENTS['CPMHTMLEDITOR_DPC'][4]='cpmvphotoadddb';
 $__EVENTS['CPMHTMLEDITOR_DPC'][5]='cpmvphotodeldb';
 $__EVENTS['CPMHTMLEDITOR_DPC'][6]='cpmedititem';
-$__EVENTS['CPMHTMLEDITOR_DPC'][6]='cpmnewitem';
+$__EVENTS['CPMHTMLEDITOR_DPC'][7]='cpmnewitem';
 
 $__ACTIONS['CPMHTMLEDITOR_DPC'][0]='cpmhtmleditor';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][1]='cpmdropzone';
@@ -44,7 +44,9 @@ class cpmhtmleditor {
 	var $encoding, $prpath, $template, $one_attachment, $slan;
 	var $htmlfile, $ckeditor4, $cke4, $ckjs;
 	var $urlpath, $urlbase, $msg;
-	var $photodb, $restype, $cseparator;
+	var $photodb, $restype, $cseparator, $map_t, $map_f;
+	
+	var $messages, $postok, $record;
 
 	function __construct() {
 	
@@ -73,7 +75,7 @@ class cpmhtmleditor {
 
 		//ckeditor 4
 		//$ckeditor4 = GetReq('cke4') ? GetReq('cke4') : false;
-		$this->ckeditor4 = ((GetReq('cke4'))||($template)) ? /*true*/false : false; //<<<<
+		$this->ckeditor4 = true;//((GetReq('cke4'))||($template)) ? /*true*/false : false; //<<<<
 		$this->cke4_inline = $this->ckeditor4 ? true/*false*/ : false; 
 		$this->ckjs = $this->ckeditor4 ? "http://stereobit.gr/ckeditor4/ckeditor.js" : "http://stereobit.gr/ckeditor/ckeditor.js";
 	
@@ -81,8 +83,14 @@ class cpmhtmleditor {
 		$this->restype = remote_paramload('RCITEMS','restype',$this->prpath);
 	    $this->msg = null;
 		
+	    $this->map_t = remote_arrayload('RCITEMS','maptitle',$this->path);	
+	    $this->map_f = remote_arrayload('RCITEMS','mapfields',$this->path);		
 		$csep = remote_paramload('RCITEMS','csep',$this->path); 
-		$this->cseparator = $csep ? $csep : '^';			
+		$this->cseparator = $csep ? $csep : '^';
+
+		$this->record = null;
+		$this->messages = array();
+		$this->postok = false;	
 	}	
 	
 	public function event($sEvent) {
@@ -105,13 +113,11 @@ class cpmhtmleditor {
 	
 	public function action($sAction) {
 		switch ($sAction) {
-		    case 'cpmnewitem'     :
-		    case 'cpmedititem'    : $out = $this->editor();
-			                        break;
+		    case 'cpmnewitem'     : $out = $this->render_new(); break;
+		    case 'cpmedititem'    : $out = $this->render_edit(); break;
 		
 			case 'cpmvphotoadddb' : 
 			case 'cpmvphotodeldb' : 		
-	
 		    case 'cpmvdel'     :
 		    case 'cpmvphoto'   : $out = $this->gallery(); break; 
 			case 'cpmdropzone' : break;
@@ -120,133 +126,34 @@ class cpmhtmleditor {
 		return ($out);
     }
 	
-	protected function raw_save() {
-		if ((GetReq('savepart')) && ($file=GetParam('file'))) {
-
-			//$p = explode('/',$htmlfile);
-			//$fa = array_pop($p);
-	
-			//$file = GetParam('file');
-	
-			$mypartialfile = getcwd() . '/html/' . $template . $file;
-			$data = GetParam('data') ? $this->unload_spath(GetParam('data')) : '';
-			//$old_data = GetParam('olddata') ? $this->unload_spath(GetParam('olddata')) : '';
-	
-			//$mydfile = getcwd() . '/html/pdata.part';
-			$myofile = getcwd() . '/html/'.$template.'podata.part';
-     
-			/*if ($old_data) {//keep initial data
-	
-			//check if data to save exists
-			//if ($odata = @file_get_contents($myofile)) {
-			//}
-	   
-			@file_put_contents($myofile,$old_data);	   
-			} */  
-	   
-			if ($data) { //save modified data
-				$message = null;
-				//@file_put_contents($mydfile,$data);	 
-
-				//if olddata and dif save...
-				if (($odata = @file_get_contents($myofile)) && (strlen($odata)!=strlen($data))) {
-					//keep backup
-					$b = @copy($mypartialfile, str_replace(array('.htm','.php'),array('._htm','._php'),$mypartialfile));  
-					//save it
-					//$str = htmlentities($str, ENT_COMPAT, "UTF-8");
-					$r = @file_put_contents($mypartialfile, str_replace($odata, $data, @file_get_contents($mypartialfile), $counter));
-		   
-					//remove compare file
-					@unlink($myofile);
-		   
-					$message = $counter ? 'Saved ('.$file .')!' : 'Error: Not Saved ('.$file .')!';
-				}
-				else //save data to compare it...
-					@file_put_contents($myofile,$data);	
-			}   
-	
-			//$message .= $data ?	$data.' Saved ' : null; //null when olddata
-			die($message);
-		}
-		elseif (($mc_page=GetReq('mc_page')) /*&& ($file=GetParam('file'))*/) {
-
-			if ($turl=urldecode(base64_decode($_GET['turl']))) {
-				$pt = explode('?',$turl);
-				parse_str($pt[1], $args);
-			}			
-			$id = $args['id'] ? $args['id'] : ($args['cat'] ? $args['cat'] : str_replace('.php','',$pt[0]));
-			$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.mcSavePage use $id+$mc_page+");
-			//die($ret);
-		}	
-	}
-	
-	protected function ckeditor_javascript() {
-		$_url= "cpmdpceditor.php?turl=" . urlencode(base64_encode($turl));
-
-		if ($cke4_inline) {
-			$ret =  "	   
-function save_inline_data(data, oldData){
-	
-	//alert(data+'--'+oldData);
-	
-	//ajax call to replace part of conetent with the updated partial text submited here...
-	//JSON.stringify(data)
-	//sndReqArg('cpmhtmleditor.php?savepart=1&data='+escape(data)+'&olddata='+escape(oldData));	
-	sndReqArg('cpmhtmleditor.php?savepart=1&file=$htmlfile&data='+escape(data));
-}
-
-/*function save_init_data(data){
-	
-	//alert('INIT:'+data);
-	
-	//ajax call to replace part of conetent with the updated partial text submited here...
-	//JSON.stringify(data)
-	sndReqArg('cpmhtmleditor.php?savepart=1&file=$htmlfile&olddata='+escape(data));	
-}*/
-
-/*
-document.addEventListener('keydown', function (event) {
-  var esc = event.which == 27,
-      nl = event.which == 13,
-      el = event.target,
-      input = el.nodeName != 'INPUT' && el.nodeName != 'TEXTAREA',
-      data = {};
-
-  if (input) {
-    if (esc) {
-      // restore state
-      document.execCommand('undo');
-      el.blur();
-    } 
-	else if (nl) {
-      // save
-      //data[el.getAttribute('data-name')] = el.innerHTML;
-
-      // we could send an ajax request to update the field
-      //log(JSON.stringify(data));
-	  save_inline_data(data);
-
-      el.blur();
-      event.preventDefault();
-    }
-  }
-}, true);
-*/
-";	    
-        }
-		return ($ret);
-	}
 	
     protected function javascript() {
+		
+		return true; //DISABLED	
    
-      if (iniload('JAVASCRIPT')) {
+		if (iniload('JAVASCRIPT')) {
 		 
-		   $js = new jscript;
-		   //$js->load_js($this->ckjs); //inline
-           $js->load_js($this->ckeditor_javascript(),"",1);			   
-		   unset ($js);
-	  }   
+			//$js = new jscript;
+			//unset ($js);
+		}   
     } 
+	
+    public function editor($itemcode=null, $itemtype=null, $file = null) {
+		$type = $itemtype ? $itemtype : (GetReq('type') ? GetReq('type') : '.html');
+		$htmlfile = $file ? $file : $this->htmlfile; 
+		
+		if (!empty($_POST)) {
+			$ret = $this->render();//$myfile);
+		}
+		else {
+			$p = explode('/',$htmlfile);
+			$fa = array_pop($p);
+			$myfile = getcwd() . '/html/' . $this->template .  $fa;
+			//$tempname = getcwd() . '/modify_html.tmp';
+			$ret = $this->render($myfile);	  	  
+		}	
+		return ($ret);
+    }	
 
 	//generic html edit
     protected function render($file=null,$tempfile=null) {
@@ -284,7 +191,11 @@ document.addEventListener('keydown', function (event) {
 		$out .= $this->ckeditor($mydata, $isTemplate);
 	
 		$mytempfile = GetParam('tempfile')?	GetParam('tempfile') : $tempfile;	   
-		$myfile = GetParam('file')?	GetParam('file') : $file;
+		$myfile = GetParam('file2saveon') ?	GetParam('file2saveon') : $file;
+		if ($iframe = GetReq('iframe'))
+			$out .= "<input type=\"hidden\" name=\"iframe\" value=\"1\" />";	
+		if ($ajax = GetReq('ajax'))
+			$out .= "<input type=\"hidden\" name=\"ajax\" value=\"1\" />";		
 		
 		$out .= "<input type=\"hidden\" name=\"file2saveon\" value=\"" . $myfile . "\" />";	  
 		$out .= "<input type=\"hidden\" name=\"filetemp\" value=\"" . $mytempfile . "\" />";	 
@@ -303,45 +214,54 @@ document.addEventListener('keydown', function (event) {
       
 		if (isset($_POST['insert'])) { 
 		
-			$title = GetParam('title');
-			$code = $this->replace_spchars($title);
-			$tags = GetParam('tags') ;
-			$text = GetParam('htmltext');
-			$descr = substr(trim(strip_tags($text)),0,250).'...';
-			$category = $this->replace_spchars($cpGet['cat'], 1);
+			if ($title = GetParam('title')) {
+				
+				$code = $this->replace_spchars($title);
+				$tags = GetParam('tags') ;
+				$text = GetParam('htmltext');
+				$descr = substr(trim(strip_tags($text)),0,250).'...';
+				$category = $this->replace_spchars($cpGet['cat'], 1);
 			
-			$save_attachment = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code."+". $type."+".$text."+1");		
-			$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
-			$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
-			$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
+				$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
+				$this->messages[] = "Add tags:".$tags;
+				$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
+				$this->messages[] = "Add category:".$category;
+				$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
+				$this->messages[] = "Add item:".$code;
 			
-			if (isset($_POST['htmltext'])) {
-				$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-				$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
-				$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+				if (isset($_POST['htmltext'])) {
+					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
+					$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
+					$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+					$this->messages[] = "Save text:".$type;
+				}
+				
+				if ($mcpage = GetParam('mcpage')) {
+					$mydata = GetGlobal('controller')->calldpc_method("fronthtmlpage.mcSavePage use ".$title."+".$mcpage); 			
+					$this->messages[] = "MCPAGE:".$mcpage;
+				}
+			
+				$this->postok = true;
 			}
+			else
+				$this->messages[] = "Insert subject";			
 		}
 		else {//load
 			$mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 	  
+			$this->messages[] = $id ? "Load text" : null;
 		}
 	  
 	  
 		$purl = 'cpmhtmleditor.php';
-		if (!$_POST['insert']) {	//hide when post fast
-			$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
-		}	
+		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
 	  
 		$out .= $this->ckeditor($mydata);
-	
-		if (!$_POST['insert']) {	//hide when post fast	 
-			$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";	 	   
-			$out .= "<input type=\"hidden\" name=\"insert\" value=\"1\" />";
-			$out .= "<input type=\"hidden\" name=\"FormAction\" value=\"cpmnewitem\" />";			
-			/*
-			$out .= "<br/><br/>".localize('_title',getlocal()).":<input type=\"text\" name=\"title\" value=\"".localize('_subject',getlocal())."\" />";
-			$out .= "<br/>".localize('_tags',getlocal()).":<input type=\"text\" name=\"tags\" value=\"".str_replace(array(' ','_','-'),array(',',' ',' '),$myid)."\" />";
-			*/			
-			$out .= '     <div class="space20"></div>
+	 
+		$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";	 	   
+		$out .= "<input type=\"hidden\" name=\"insert\" value=\"1\" />";
+		$out .= "<input type=\"hidden\" name=\"FormAction\" value=\"cpmnewitem\" />";			
+		
+		$out .= '     <div class="space20"></div>
                                  <div class="row-fluid">
                                      <div class="feedback">
                                          <h3>'.localize('_title',getlocal()).'</h3>
@@ -353,7 +273,7 @@ document.addEventListener('keydown', function (event) {
                                              </div-->
                                              <div class="control-group ">
                                                  <input type="text" name="title" value="'.localize('_subject',getlocal()).'" class="span6 one-half">
-                                                 <input type="text" name="tags" value="'.str_replace(array(' ','_','-'),array(',',' ',' '),$myid).'" class="span6">
+                                                 <input type="text" name="tags" value="'.str_replace(array(' ','_','-'),array(',',' ',' '), $cpGet['cat']).'" class="span6">
                                              </div>
                                              <!--div class="control-group">
                                                  <textarea placeholder="Message" class="span12" rows="5"></textarea>
@@ -364,47 +284,86 @@ document.addEventListener('keydown', function (event) {
                                      </div>
                                  </div>';  
 		
-			$out .= "</form>";
-			
-		}//post fast hide
-		elseif ($_POST['insert']) { //post fast seccond step, add photo
-
-			if (defined('RCITEMS_DPC') && (($code)||($category))) {	
-				$out .= GetGlobal('controller')->calldpc_method('rcitems.form_photo use 1+'.$category.'+'.$code.'+cpitems');
-			}		
-		}
+		$out .= "</form>";
       
 		return ($out); 
     }	
 	
 	//edit item
     protected function render_edit() { 
+		$db = GetGlobal('db');
 		$type = '.html'; //default type for text attachment
 		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
-		$id = GetParam('id') ? GetParam('id') : $cpGet['id'];		
-      
-		if (isset($_POST['id'])) { //post edit
+		$id = GetParam('id') ? GetParam('id') : $cpGet['id'];
 
-			$title = GetParam('title');
-			$code = $this->replace_spchars($title);
-			$tags = GetParam('tags') ;
-			$text = GetParam('htmltext');
-			$descr = substr(trim(strip_tags($text)),0,250).'...';
-			$category = $this->replace_spchars($cpGet['cat'], 1);
+		$activecode = $this->getmapf('code');	
+      
+		if (isset($_POST['update'])) { //post edit
+
+			if ($title = GetParam('title')) {
 			
-			$save_attachment = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code."+". $type."+".$text."+1");		
-			$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
-			$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
-			$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
+				$code = $this->replace_spchars($title);
+				$tags = GetParam('tags') ;
+				$text = GetParam('htmltext');
+				$descr = substr(trim(strip_tags($text)),0,250).'...';
+				$category = $this->replace_spchars($cpGet['cat'], 1);
+			/*
+				$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
+				$this->messages[] = "Add tags:".$tags;
+				$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
+				$this->messages[] = "Add category:".$category;
+				$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
+			    $this->messages[] = "Add item:".$code;
+				*/
+				
+				//update
+				$sSQL = "update products set itmname=" . $db->qstr($title);
+				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
+				$res = $db->Execute($sSQL);	
+				$this->record = $res->fields;
 			
-			if (isset($_POST['htmltext'])) {
-				$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-				$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
-				$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+				$this->messages[] = "Update record";				
+				
+				//read 
+				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
+						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$activecode.
+						" from products ";	
+				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
+				$res = $db->Execute($sSQL);	
+				$this->record = $res->fields;
+			
+				$this->messages[] = "Load record";				
+				if (isset($_POST['htmltext'])) {
+					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
+					$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
+					$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+					$this->messages[] = "Save text:".$type;
+				}
+				
+				if ($mcpage = GetParam('mcpage')) {
+					$mydata = GetGlobal('controller')->calldpc_method("fronthtmlpage.mcSavePage use ".$title."+".$mcpage); 			
+					$this->messages[] = "MCPAGE:".$mcpage;
+				}				
+			
+				$this->postok = true;
 			}
+			else
+				$this->messages[] = "Insert subject";	
 		}
 		else {//load
 		    $mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 
+			$this->messages[] = $id ? "Load text" : null;
+			
+			if ($id) {
+				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
+						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$activecode.
+						" from products ";	
+				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
+				$res = $db->Execute($sSQL);	
+				$this->record = $res->fields;
+			
+				$this->messages[] = "Load record";
+			}
 		}
 	  
       
@@ -412,10 +371,6 @@ document.addEventListener('keydown', function (event) {
 		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
 	    $out .= $this->ckeditor($mydata);
 	
-		/*
-			$out .= "<br/><br/>".localize('_title',getlocal()).":<input type=\"text\" name=\"title\" value=\"".localize('_subject',getlocal())."\" />";
-			$out .= "<br/>".localize('_tags',getlocal()).":<input type=\"text\" name=\"tags\" value=\"".str_replace(array(' ','_','-'),array(',',' ',' '),$myid)."\" />";
-		*/
 		$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";		  
 		$out .= "<input type=\"hidden\" name=\"update\" value=\"1\" />";		
 		$out .= "<input type=\"hidden\" name=\"FormAction\" value=\"cpmedititem\" />";
@@ -432,7 +387,7 @@ document.addEventListener('keydown', function (event) {
                                              </div-->
                                              <div class="control-group ">
                                                  <input type="text" name="title" value="'.localize('_subject',getlocal()).'" class="span6 one-half">
-                                                 <input type="text" name="tags" value="'.str_replace(array(' ','_','-'),array(',',' ',' '),$myid).'" class="span6">
+                                                 <input type="text" name="tags" value="'.str_replace(array(' ','_','-'),array(',',' ',' '), $cpGet['cat']).'" class="span6">
                                              </div>
                                              <!--div class="control-group">
                                                  <textarea placeholder="Message" class="span12" rows="5"></textarea>
@@ -446,37 +401,6 @@ document.addEventListener('keydown', function (event) {
 		$out .= "</form>";
       
 		return ($out); 
-    }
-
-    public function editor($itemcode=null, $itemtype=null, $file = null) {
-	    $cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
-	    $id = $itemcode ? $itemcode : GetReq('id'); //$cpGet['id']; //selected item
-		$type = $itemtype ? $itemtype : (GetReq('type') ? GetReq('type') : null);//'.html'); //must be set by hand in url
-		$htmlfile = $file ? $file : $this->htmlfile; 
-		
-		if (!empty($_POST)) {
-
-		    if ($myfile = GetParam('file2saveon'))  
-				$ret = $this->render($myfile);
-			elseif ($insfast = GetParam('insert')) 
-				$ret =  $this->render_new();
-			else 	
-				$ret =  $this->render_edit();		
-		}
-		else {
-			if ($htmlfile) {
-				$p = explode('/',$htmlfile);
-				$fa = array_pop($p);
-				$myfile = getcwd() . '/html/' . $this->template .  $fa;
-				//$tempname = getcwd() . '/modify_html.tmp';
-				$ret = $this->render($myfile);	  	  
-			}			
-			elseif ($id) 
-				$ret = $this->render_edit();
-			else
-				$ret = $this->render_new();		
-		}	
-		return ($ret);
     }	
 
     protected function savefile($filename=null,$tempfile=null) {
@@ -1192,7 +1116,73 @@ document.addEventListener('keydown', function (event) {
 
 		return ($out);	
 	}
-
+	
+	public function ckeditorAttributes() {
+		
+		$ckattr = $this->ckeditor4 ?
+	           "fullpage : true, 
+               filebrowserBrowseUrl : '/cp/ckfinder/ckfinder.html',
+	           filebrowserImageBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Images',
+	           filebrowserFlashBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Flash',
+	           filebrowserUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
+	           filebrowserImageUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
+	           filebrowserFlashUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash',
+	           filebrowserWindowWidth : '1000',
+ 	           filebrowserWindowHeight : '700'"	  
+	           : 
+	           "skin : 'v2', 
+			   fullpage : true, 
+			   extraPlugins :'docprops',
+               filebrowserBrowseUrl : '/cp/ckfinder/ckfinder.html',
+	           filebrowserImageBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Images',
+	           filebrowserFlashBrowseUrl : '/cp/ckfinder/ckfinder.html?type=Flash',
+	           filebrowserUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
+	           filebrowserImageUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
+	           filebrowserFlashUploadUrl : '/cp/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash',
+	           filebrowserWindowWidth : '1000',
+ 	           filebrowserWindowHeight : '700'";
+	 
+		$out .= "<script type='text/javascript'> 
+	           CKEDITOR.replace('htmltext',
+			   {
+               $ckattr		   
+			   }		   
+			   );";	 	
+		$maximize = 'minimize';	
+		$out .= "		   
+               CKEDITOR.config.entities = false;
+               CKEDITOR.config.entities_greek = false;
+               CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;			   
+               CKEDITOR.on('instanceReady',
+               function( evt )
+               {
+                  var editor = evt.editor;
+                  editor.execCommand('$maximize');
+               });
+			   </script>"; 
+		return ($out);		
+	}	
+	
+	public function itemText($isupdate=null) {
+		$type = '.html'; //default type for text attachment
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		if ($isupdate)
+			$id = GetParam('id') ? GetParam('id') : $cpGet['id'];	
+		else
+			$id = GetParam('id') ? GetParam('id') : null;
+		
+		$ret = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 		
+		return ($ret);
+	}		
+	
+	public function itemEditor($isupdate=null) {
+		$data = $this->itemText($isupdate);
+		
+		$editor = $this->ckeditor($data);
+		return ($editor);
+	}	
+		
+	
 	protected function replace_spchars($string, $reverse=false) {
 	
 		switch ($this->replacepolicy) {	
@@ -1214,6 +1204,89 @@ document.addEventListener('keydown', function (event) {
 		return ($ret);
 	}	
 	
+	//select mcpage to publish post with
+	public function frontpages() {
+		
+		$mc_pages = GetGlobal('controller')->calldpc_method("fronthtmlpage.mc_read_files use pages+php++1");
+		
+		$location = GetGlobal('controller')->calldpc_var('rcpmenu.turl'); //GetSessionParam('turldecoded') 
+		$my_current_page = GetGlobal('controller')->calldpc_method("fronthtmlpage.mc_parse_editurl use ".$location);		
+		$mc_current_page = str_replace(array('.php','../'),array('',''),$my_current_page);		
+		
+		foreach ($mc_pages as $mcpage=>$mctitle) {
+			
+		    $mc_page = urlencode(base64_encode($mcpage . '.php'));
+		    /*$mc_title = ($mcpage==$mc_current_page) ?
+		               '<b>'.$mctitle.'</b>' : $mctitle;
+			*/
+			//select	
+		    //$qtokens[] = "<a href='cpmhtmleditor.php?htmlfile=" .$mc_page. "&mc_page=$mcpage&turl=".$_GET['turl']."&encoding=$encoding&editmode=1' target='mainFrame'>".$mc_title."</a>";
+			//edit
+			//$htokens[] = "<a href='cpmhtmleditor.php?htmlfile=" .$mc_page. "&encoding=$encoding&editmode=1' target='mainFrame'>".$mc_title."</a>";
+			$selected = ($mcpage==$mc_current_page) ? 'selected' : null;
+			$ret .= "<option value='$mctitle' $selected>$mctitle</option>";
+		}
+		return ($ret);	
+	}
+	
+	public function getMcPage() {
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$id = GetParam('id') ? GetParam('id') : $cpGet['id'];
+		
+		$p = GetGlobal('controller')->calldpc_method('fronthtmlpage.mcSelectPage use '.$id);
+		
+		return ($p);
+	}	
+	
+	public function getVar($var=null) {
+		if (!$var) return null;
+		return ($this->{$var});
+	}
+	
+	public function getField($field=null) {
+		if (!$field) return null;
+		
+		if (!empty($this->record))
+			return ($this->record[$field]);
+		
+		return null;
+	}	
+
+	public function cpGet($var=null) {
+		
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		
+		if (!$var) return $cpGet['cat'];
+		return ($cpGet['id']);
+	}
+	
+	public function viewMessages($var=null) {
+		
+		foreach ($this->messages as $m=>$msg)
+			$ret .= "<option>$msg<option>";
+		
+		return ($ret);		
+	}
+
+	protected function getmapf($name) {
+	
+		if (empty($this->map_t)) return 0;
+	  
+		foreach ($this->map_t as $id=>$elm)
+			if ($elm==$name) break;
+				
+		$ret = $this->map_f[$id];
+		return ($ret);
+	}	
+
+	public function getSelectedCategory() {
+		return null;
+	}	
+	
+	public function getCategories() {
+		return null;
+	}		
+
 };
 }
 ?>
