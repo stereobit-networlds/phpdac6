@@ -20,6 +20,7 @@ $__EVENTS['CPMHTMLEDITOR_DPC'][4]='cpmvphotoadddb';
 $__EVENTS['CPMHTMLEDITOR_DPC'][5]='cpmvphotodeldb';
 $__EVENTS['CPMHTMLEDITOR_DPC'][6]='cpmedititem';
 $__EVENTS['CPMHTMLEDITOR_DPC'][7]='cpmnewitem';
+$__EVENTS['CPMHTMLEDITOR_DPC'][8]='cpmdelitem';
 
 $__ACTIONS['CPMHTMLEDITOR_DPC'][0]='cpmhtmleditor';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][1]='cpmdropzone';
@@ -29,6 +30,7 @@ $__ACTIONS['CPMHTMLEDITOR_DPC'][4]='cpmvphotoadddb';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][5]='cpmvphotodeldb';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][6]='cpmedititem';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][7]='cpmnewitem';
+$__ACTIONS['CPMHTMLEDITOR_DPC'][8]='cpmdelitem';
 
 //$__DPCATTR['CPMHTMLEDITOR_DPC']['cpmhtmleditor'] = 'cpmhtmleditor,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -96,6 +98,8 @@ class cpmhtmleditor {
 	public function event($sEvent) {
 	
 		switch ($sEvent) {
+			case 'cpmdelitem'     : $this->delete_item();
+			                        //break;
 			case 'cpmnewitem'     :
 			case 'cpmedititem'    : $this->javascript();
 								    break;
@@ -112,6 +116,7 @@ class cpmhtmleditor {
 	
 	public function action($sAction) {
 		switch ($sAction) {
+			case 'cpmdelitem'     :
 		    case 'cpmnewitem'     : $out = $this->render_new(); break;
 		    case 'cpmedititem'    : $out = $this->render_edit(); break;
 		
@@ -210,12 +215,15 @@ class cpmhtmleditor {
 	
 	//new item
     protected function render_new() {
+		$db = GetGlobal('db');		
 		$type = '.html'; //default type for text attachment
 		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
 		$id = GetParam('id');
-      
-		if (isset($_POST['insert'])) { 
 		
+		$activecode = $this->getmapf('code');
+
+		if (isset($_POST['insert'])) { 
+
 			if ($title = GetParam('title')) {
 				
 				$code = $this->replace_spchars($title);
@@ -226,22 +234,24 @@ class cpmhtmleditor {
 					$category = array_shift($_POST['include']); //get first from list
 				else					
 					$category = $this->replace_spchars($cpGet['cat'], 1);
-			
-				//$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
+				$cat = explode($this->cseparator, $category);
+					
 				$save_tags = $this->add_tags_data($code,$title,$descr,$tags);
-				$this->messages[] = "Add tags:".$tags;
-				//$save_cat = GetGlobal('controller')->calldpc_method("rckategories.add_kategory_data use ".$category);		
+				$this->messages[] = "Add tags:".$tags;		
 				$save_cat = $this->add_kategory_data($category);
-				$this->messages[] = "Add category:".$category;
-				//$save_item = GetGlobal('controller')->calldpc_method("rcitems.add_item_data use ".$code."+". $title."+".$descr."+".$category);		
-				$save_item = $this->add_item_data($code,$title,$descr,$category);
+				$this->messages[] = "Add category:".$category;		
+				
+				$sSQL = "insert into products ($activecode,itmname,itmfname,itmdescr,itmfdescr,sysins,active,itmactive,cat0,cat1,cat2,cat3,cat4) values (";
+				$sSQL .= $db->qstr($code).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr(date('Y-m-d h:m:s')).",101,1,";			
+				$sSQL .= $db->qstr($cat[0]).",".$db->qstr($cat[1]).",".$db->qstr($cat[2]).",".$db->qstr($cat[3]).",".$db->qstr($cat[4]);			
+				$sSQL .= ")"; 
+
+				$result = $db->Execute($sSQL);				
 				$this->messages[] = "Add item:".$code;
 			
 				if (isset($_POST['htmltext'])) {
-					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-					//$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
-					$save = $this->add_attachment_data($code,$type,$mytext);
-					//$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); 		 
+					$save = $this->add_attachment_data($code,$type,$mytext);		
 					$mydata = $this->has_attachment2db($code,$type,1);
 					$this->messages[] = "Save text:".$type;
 				}
@@ -256,8 +266,7 @@ class cpmhtmleditor {
 			else
 				$this->messages[] = "Insert subject";			
 		}
-		else {//load
-			//$mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 	  
+		else {//load	  
 			$mydata = $id ? $this->has_attachment2db($id,$type,1) : null;
 			$this->messages[] = $id ? "Load text" : null;
 		}
@@ -306,6 +315,9 @@ class cpmhtmleditor {
 		$type = '.html'; //default type for text attachment
 		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
 		$id = GetParam('id') ? GetParam('id') : $cpGet['id'];
+	    $lan = $lang?$lang:getlocal();
+	    $itmname = $lan?'itmname':'itmfname';
+	    $itmdescr = $lan?'itmdescr':'itmfdescr';		
 
 		$activecode = $this->getmapf('code');	
       
@@ -328,12 +340,10 @@ class cpmhtmleditor {
 				$this->messages[] = "Update tags:".$tags;				
 				
 				//update
-				$sSQL = "update products set itmname=" . $db->qstr($title) . ",itmdescr=" . $db->qstr($descr);
+				$sSQL = "update products set $itmname=" . $db->qstr($title) . ",$itmdescr=" . $db->qstr($descr);
 				foreach($cat as $i=>$c) 
 					$sSQL .= ",cat{$i}=" . $db->qstr($c);
-				
 				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
-				
 				$res = $db->Execute($sSQL);	
 				$this->record = $res->fields;
 				$this->messages[] = "Update record";				
@@ -341,17 +351,14 @@ class cpmhtmleditor {
 				//read 
 				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
 						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$activecode.
-						" from products ";	
-				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
+						" from products WHERE $activecode=" . $db->qstr($id);
 				$res = $db->Execute($sSQL);	
 				$this->record = $res->fields;
 				$this->messages[] = "Load record";									
 				
 				if (isset($_POST['htmltext'])) {
-					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-					//$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$code ."+". $type."+".$mytext);		 
-					$save = $this->add_attachment_data($code,$type,$mytext);
-					//$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $code ."+$type+1"); 			
+					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); 		 
+					$save = $this->add_attachment_data($code,$type,$mytext); 			
 					$mydata = $this->has_attachment2db($code,$type,1);
 					$this->messages[] = "Save text:".$type;
 				}
@@ -1187,9 +1194,8 @@ class cpmhtmleditor {
 			$id = GetParam('id') ? GetParam('id') : $cpGet['id'];	
 		else
 			$id = GetParam('id') ? GetParam('id') : null;
-		
-		//$ret = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 		
-		$ret = $id ? $this->has_attachment2db($id,$type,1) : null; 		
+				
+		$ret = $id ? $this->has_attachment2db($id,$type,1) : GetParam('htmltext'); 		
 		return ($ret);
 	}		
 	
@@ -1439,23 +1445,12 @@ class cpmhtmleditor {
 		return ($type);
 	}	
 	
-	protected function add_attachment_data($itmcode,$type=null,$data=null, $forceisid=null) {
+	protected function add_attachment_data($itmcode,$type=null,$data=null) {
 		$db = GetGlobal('db');	
 		$lan = getlocal(); 
 		$one_attachment = remote_paramload('SHKATALOG','oneattach',$this->path);
-		$type = $type?$type:GetReq('type');
-	  
-		if ($one_attachment) 
-			$slan = null;
-		else
-			$slan = $lan?$lan:'0';	  
-	  
-		//in case of category id search for the last category branch
-		//BUT in case of a title-id (fast insert) csep=, may into id ?= forceisid	  
-		if ((strstr($itmcode,$this->cseparator)) && ($forceisid==null)) {
-			$itmcatdepth = explode($this->cseparator,$itmcode);
-			$itmcode = array_pop($itmcatdepth);	  
-		}		  
+		$slan = $one_attachment ? null : ($lan?$lan:'0');		
+		$type = '.html'; //default type for text attachment	  	  
 	  	    
 		$sSQL = "select code from pattachments ";
 		$sSQL .= " WHERE code='" . $itmcode . "' and type='". $type ."'";
@@ -1465,7 +1460,6 @@ class cpmhtmleditor {
 	  
 		$resultset = $db->Execute($sSQL,2);	
 		$result = $resultset;
-		//print_r($result);	
 		$exist = $db->Affected_Rows();
 	  
 		if ($exist) {
@@ -1479,15 +1473,39 @@ class cpmhtmleditor {
 			if (isset($slan))
 				$sSQL = "insert into pattachments (data,type,code,lan) values ('". str_replace('<SYN>','+', $data) ."','" . $type ."','" . $itmcode ."',$slan)";
 			else
-				$sSQL = "insert into pattachments (data,type,code) values ('". str_replace('<SYN>','+',$data) ."','" . $type ."','" . $itmcode ."')";
-			//echo $sSQL;	  	  
+				$sSQL = "insert into pattachments (data,type,code) values ('". str_replace('<SYN>','+',$data) ."','" . $type ."','" . $itmcode ."')"; 	  
 		}
 	  
 		$db->Execute($sSQL,1);	
 		$affected = $db->Affected_Rows();
-		//echo $affected;  
 
 		return ($affected);  	  
+	}
+	
+	protected function delete_item() {
+		$db = GetGlobal('db');		
+		$lan = getlocal(); 
+		$one_attachment = remote_paramload('SHKATALOG','oneattach',$this->path);
+		$slan = $one_attachment ? null : ($lan?$lan:'0');		
+		$type = '.html'; //default type for text attachment
+		$id = GetReq('id');
+		
+		$activecode = $this->getmapf('code');		
+		
+		//delete product
+		$sSQL = "delete from products where $activecode=" . $db->qstr($id);
+		$db->Execute($sSQL);
+
+		//delete ptags
+		$sSQL = "delete from ptags where code=" . $db->qstr($id);
+		$db->Execute($sSQL);		
+		
+		//delete pattachment
+		$sSQL = "delete from pattachments where code=" . $db->qstr($id) . " and type=". $db->qstr($type);
+		if (isset($slan)) $sSQL .= " and lan=" . $slan;			
+		$db->Execute($sSQL);		
+		
+		return true;
 	}
 
 	//select mcpage to publish post with
