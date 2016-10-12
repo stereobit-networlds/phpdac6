@@ -220,7 +220,10 @@ class cpmhtmleditor {
 				$tags = GetParam('tags') ;
 				$text = GetParam('htmltext');
 				$descr = substr(trim(strip_tags($text)),0,250).'...';
-				$category = $this->replace_spchars($cpGet['cat'], 1);
+				if (!empty($_POST['include'])) 
+					$category = array_shift($_POST['include']); //get first from list
+				else					
+					$category = $this->replace_spchars($cpGet['cat'], 1);
 			
 				$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
 				$this->messages[] = "Add tags:".$tags;
@@ -252,7 +255,7 @@ class cpmhtmleditor {
 		}
 	  
 	  
-		$purl = 'cpmhtmleditor.php';
+		$purl = $_SERVER['PHP_SELF'];//'cpmhtmleditor.php';
 		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
 	  
 		$out .= $this->ckeditor($mydata);
@@ -306,7 +309,12 @@ class cpmhtmleditor {
 				$tags = GetParam('tags') ;
 				$text = GetParam('htmltext');
 				$descr = substr(trim(strip_tags($text)),0,250).'...';
-				$category = $this->replace_spchars($cpGet['cat'], 1);
+				if (!empty($_POST['include'])) 
+					$category = array_shift($_POST['include']); //get first from list
+				else		
+					$category = $this->replace_spchars($cpGet['cat'], 1);
+				$cat = explode($this->cseparator, $category);
+				
 			/*
 				$save_tags = GetGlobal('controller')->calldpc_method("rctags.add_tags_data use ".$code."+". $title."+".$descr."+".$tags);		
 				$this->messages[] = "Add tags:".$tags;
@@ -317,8 +325,12 @@ class cpmhtmleditor {
 				*/
 				
 				//update
-				$sSQL = "update products set itmname=" . $db->qstr($title);
+				$sSQL = "update products set itmname=" . $db->qstr($title) . ",itmdescr=" . $db->qstr($descr);
+				foreach($cat as $i=>$c) 
+					$sSQL .= ",cat{$i}=" . $db->qstr($c);
+				
 				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
+				
 				$res = $db->Execute($sSQL);	
 				$this->record = $res->fields;
 			
@@ -367,7 +379,7 @@ class cpmhtmleditor {
 		}
 	  
       
-		$purl = 'cpmhtmleditor.php';
+		$purl = $_SERVER['PHP_SELF'];//'cpmhtmleditor.php';
 		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
 	    $out .= $this->ckeditor($mydata);
 	
@@ -1280,11 +1292,74 @@ class cpmhtmleditor {
 	}	
 
 	public function getSelectedCategory() {
-		return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$scat = $cpGet['cat'];		
+		
+		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";	
+		if ($scat) {
+			$sSQL.= "where ";
+			$xcat = explode($this->cseparator, $scat);
+			foreach($xcat as $i=>$c) {
+				$ic = $i+2;
+				$w[] = "cat{$ic}=" . $db->qstr($c);
+			}	
+			$sSQL .= implode(' AND ', $w);	
+		}
+		$res = $db->Execute($sSQL);	
+		//echo $sSQL;
+		
+		foreach ($res as $i=>$rec) {
+			$cat = $rec[0];
+			$cat.= $rec[1] ? $this->cseparator.$rec[1] : null;
+			$cat.= $rec[2] ? $this->cseparator.$rec[2] : null;
+			$cat.= $rec[3] ? $this->cseparator.$rec[3] : null;
+			
+			$tcat = $rec[4];
+			$tcat.= $rec[5] ? $this->cseparator.$rec[5] : null;
+			$tcat.= $rec[6] ? $this->cseparator.$rec[6] : null;
+			$tcat.= $rec[7] ? $this->cseparator.$rec[7] : null;			
+			
+			$aret[] = "<option value='$cat'>$tcat</option>";
+		}	
+        $ret = array_unique($aret); 
+		return (implode('',$ret));	
 	}	
 	
 	public function getCategories() {
-		return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$scat = $cpGet['cat'];			
+		
+		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";	
+		if ($scat) {
+			$sSQL.= "where ";
+			$xcat = explode($this->cseparator, $scat);
+			foreach($xcat as $i=>$c) {
+				$ic = $i+2;
+				$w[] = "cat{$ic}<>" . $db->qstr($c);
+			}	
+			$sSQL .= implode(' AND ', $w);	
+		}		
+		$res = $db->Execute($sSQL);	
+		
+		foreach ($res as $i=>$rec) {
+			$cat = $rec[0];
+			$cat.= $rec[1] ? $this->cseparator.$rec[1] : null;
+			$cat.= $rec[2] ? $this->cseparator.$rec[2] : null;
+			$cat.= $rec[3] ? $this->cseparator.$rec[3] : null;
+			
+			$tcat = $rec[4];
+			$tcat.= $rec[5] ? $this->cseparator.$rec[5] : null;
+			$tcat.= $rec[6] ? $this->cseparator.$rec[6] : null;
+			$tcat.= $rec[7] ? $this->cseparator.$rec[7] : null;
+			
+			$aret[] = "<option value='$cat'>$tcat</option>";
+		}	
+        $ret = array_unique($aret); 
+		return (implode('',$ret));		
 	}		
 
 };
