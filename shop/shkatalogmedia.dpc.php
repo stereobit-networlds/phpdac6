@@ -7,14 +7,24 @@ define("SHKATALOGMEDIA_DPC",true);
 
 $__DPC['SHKATALOGMEDIA_DPC'] = 'shkatalogmedia';
 
-$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shkatalog.dpc.php', paramload('SHELL','urlpath'));
-require_once($d);
+//$d = GetGlobal('controller')->require_dpc('shop/shkategories.dpc.php');
+//require_once($d); //inside .php as object
 
 $e = GetGlobal('controller')->require_dpc('shell/pxml.lib.php');
 require_once($e);
 
-GetGlobal('controller')->get_parent('SHKATALOG_DPC','SHKATALOGMEDIA_DPC');
+//GetGlobal('controller')->get_parent('SHKATALOG_DPC','SHKATALOGMEDIA_DPC');
 
+$__EVENTS['SHKATALOGMEDIA_DPC'][0]='katalog';
+$__EVENTS['SHKATALOGMEDIA_DPC'][1]='klist';
+$__EVENTS['SHKATALOGMEDIA_DPC'][2]='kshow';
+$__EVENTS['SHKATALOGMEDIA_DPC'][3]='knext';
+$__EVENTS['SHKATALOGMEDIA_DPC'][4]='kprev';
+$__EVENTS['SHKATALOGMEDIA_DPC'][5]='kprint';
+$__EVENTS['SHKATALOGMEDIA_DPC'][6]='addtocart';     //continue with ..cart
+$__EVENTS['SHKATALOGMEDIA_DPC'][7]='removefromcart';//continue with ..cart
+$__EVENTS['SHKATALOGMEDIA_DPC'][8]='searchtopic';   //continue with ..browser
+$__EVENTS['SHKATALOGMEDIA_DPC'][9]='lastentries';
 $__EVENTS['SHKATALOGMEDIA_DPC'][96]='sitemap';
 $__EVENTS['SHKATALOGMEDIA_DPC'][97]='feed';
 $__EVENTS['SHKATALOGMEDIA_DPC'][98]='showimage';
@@ -22,6 +32,16 @@ $__EVENTS['SHKATALOGMEDIA_DPC'][99]='shkatalogmedia';
 $__EVENTS['SHKATALOGMEDIA_DPC'][100]='kfilter';
 $__EVENTS['SHKATALOGMEDIA_DPC'][101]='xmlout';
 
+$__ACTIONS['SHKATALOGMEDIA_DPC'][0]='katalog';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][1]='klist';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][2]='kshow';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][3]='knext';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][4]='kprev';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][5]='kprint';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][6]='addtocart';     //continue with ..from cart
+$__ACTIONS['SHKATALOGMEDIA_DPC'][7]='removefromcart';//continue with ..from cart
+$__ACTIONS['SHKATALOGMEDIA_DPC'][8]='searchtopic';   //continue with ..from browser
+$__ACTIONS['SHKATALOGMEDIA_DPC'][9]='lastentries';
 $__ACTIONS['SHKATALOGMEDIA_DPC'][96]='sitemap';
 $__ACTIONS['SHKATALOGMEDIA_DPC'][97]='feed';
 $__ACTIONS['SHKATALOGMEDIA_DPC'][98]='showimage';
@@ -48,11 +68,54 @@ $__LOCALE['SHKATALOGMEDIA_DPC'][15]='_REVIEWS;Reviews;Σχόλια';
 $__LOCALE['SHKATALOGMEDIA_DPC'][16]='_WITHTAX;with tax;με ΦΠΑ';
 $__LOCALE['SHKATALOGMEDIA_DPC'][17]='_NOTAX;net value;χωρίς ΦΠΑ';
 $__LOCALE['SHKATALOGMEDIA_DPC'][18]='_MANUFACTURER;Manufacturer;Κατασκευαστής';
+$__LOCALE['SHKATALOGMEDIA_DPC'][19]='_code;Code;Κωδικός';
+$__LOCALE['SHKATALOGMEDIA_DPC'][20]='_descr;Description;Περιγραφή';
+$__LOCALE['SHKATALOGMEDIA_DPC'][21]='_axia;Cost;Τιμή';
+$__LOCALE['SHKATALOGMEDIA_DPC'][22]='_uniname1;MM;ΜΜ';
+$__LOCALE['SHKATALOGMEDIA_DPC'][23]='_order;Order by:;Ταξινόμηση:';
+$__LOCALE['SHKATALOGMEDIA_DPC'][24]='_item;Item;Προιόν';
+$__LOCALE['SHKATALOGMEDIA_DPC'][25]='_cat1;Detail 1;Χαρακτηριστικό 1';
+$__LOCALE['SHKATALOGMEDIA_DPC'][26]='_next;Next;Επόμενο';
+$__LOCALE['SHKATALOGMEDIA_DPC'][27]='_prev;Previous;Προηγούμενο';
+$__LOCALE['SHKATALOGMEDIA_DPC'][28]='_offers;Offers;Προσφορές';
+$__LOCALE['SHKATALOGMEDIA_DPC'][29]='_lastitems;New arrivals;Νέες αφίξεις';
+$__LOCALE['SHKATALOGMEDIA_DPC'][30]='_gallery;Additional files;Συνημένα αρχεία';
+$__LOCALE['SHKATALOGMEDIA_DPC'][31]='_availabillity;Product Availabillity;Διαθεσιμότητα προιόντων';
+$__LOCALE['SHKATALOGMEDIA_DPC'][32]='_items;Items;Προιόντα';
+$__LOCALE['SHKATALOGMEDIA_DPC'][33]='_asc;Asc;Αυξουσα';
+$__LOCALE['SHKATALOGMEDIA_DPC'][34]='_desc;Desc;Φθινουσα';
+$__LOCALE['SHKATALOGMEDIA_DPC'][35]='_first;First;Πρώτα';
+$__LOCALE['SHKATALOGMEDIA_DPC'][36]='_all;All;Ολα';
+$__LOCALE['SHKATALOGMEDIA_DPC'][37]='_nofound;Items not found;Δεν βρέθηκαν εγγραφές';
+$__LOCALE['SHKATALOGMEDIA_DPC'][38]='_title;Title;Περιγραφή';
+$__LOCALE['SHKATALOGMEDIA_DPC'][39]='_norecs;Record set is empty;Οι εγγραφές δεν υπάρχουν';
+$__LOCALE['SHKATALOGMEDIA_DPC'][40]='_norec;Record not exist;Η εγγραφή δεν υπάρχει';
+$__LOCALE['SHKATALOGMEDIA_DPC'][41]='_lockrec;Title;Η εγγραφή είναι κλειδωμένη';
 
-class shkatalogmedia extends shkatalog {
-
+class shkatalogmedia extends shkategories {
+	
+    var $max_items, $result, $path, $urlpath, $inpath;
+	var $map_t, $map_f;
+	var $pprice, $codetype;
+	var $availability;	
+    var $userLevelID;	
+	var $is_reseller, $htmlpath;
+	var $listcontrols;
+	var $carthandler;	
+	var $max_selection;
+	
+	var $itemfimagex,$itemfimagey,$imagex,$imagey, $itemimagex, $itemimagey;	
+	var $imageclick, $linemax;
+	var $thubpath_large, $thubpath_medium, $thubpath_small;
+	var $myorderby, $asc, $deforder, $defasc;
+    var $global_hide_asceding;
+	var $addfx, $addfy;	
+	var $asccombostyle;
+	var $decimals;
+	var $toggler, $catbanner, $itemlockparam, $itemlockgoto, $isitemlocked;	
+	
     var $title;
-	var $resource, $xmax, $ymax, $allow_show_resource;
+	var $allow_show_resource;
 	var $url;
 	var $onlyincategory;
 	var $oneitemlist, $my_one_item;
@@ -68,8 +131,91 @@ class shkatalogmedia extends shkatalog {
 	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan;
 
 	function shkatalogmedia() {
+	  $GRX = GetGlobal('GRX');		
+	  $UserSecID = GetGlobal('UserSecID');	
+	
+	  shkategories::shkategories();
+	  
+      $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	  
+	
+	  $this->msg = null;
+	  $this->post = null;		  
+	  $this->path = paramload('SHELL','prpath');	//echo $this->path;
+	  $this->urlpath = paramload('SHELL','urlpath');
+	  $this->inpath = paramload('ID','hostinpath');		  
+	  $this->result = null;	 
 
-	  shkatalog::shkatalog();
+	  $this->imgpath = $this->inpath . '/images/uphotos/';  	  
+	  $this->thubpath = $this->inpath . '/images/thub/';
+      $photo_bg = remote_paramload('SHKATALOG','photobgpath',$this->path);		  
+      $this->thubpath_large = $photo_bg?$this->inpath . "/images/$photo_bg/":$this->inpath . '/images/thub/';	  	  
+      $photo_md = remote_paramload('SHKATALOG','photomdpath',$this->path);		  
+      $this->thubpath_medium = $photo_md?$this->inpath . "/images/$photo_md/":$this->inpath . '/images/thub/';	  	  
+      $photo_sm = remote_paramload('SHKATALOG','photosmpath',$this->path);		  
+      $this->thubpath_small = $photo_sm?$this->inpath . "/images/$photo_sm/":$this->inpath . '/images/thub/';	  	  	  	  
+	  
+	  $rt = remote_paramload('SHKATALOG','restype',$this->path);
+	  $this->restype = $rt?$rt:'.jpg';
+	  //fp img xy
+	  $this->itemfimagex = remote_paramload('SHKATALOG','itemfimagex',$this->path);	
+	  $this->itemfimagey = remote_paramload('SHKATALOG','itemfimagey',$this->path); 
+	  //thumb xy
+	  $this->imagex = remote_paramload('SHKATALOG','imagex',$this->path);	
+	  $this->imagey = remote_paramload('SHKATALOG','imagey',$this->path);	  
+	  //item xy
+      $this->itemimagex = remote_paramload('SHKATALOG','itemimagex',$this->path);	
+	  $this->itemimagey = remote_paramload('SHKATALOG','itemimagey',$this->path);
+
+      $this->addfx = remote_paramload('SHKATALOG','addimagex',$this->path);	
+	  $this->addfy = remote_paramload('SHKATALOG','addimagey',$this->path);	  	  
+
+      $this->imageclick = remote_paramload('SHKATALOG','imageclick',$this->path);
+      $this->linemax = remote_paramload('SHKATALOG','itemsperline',$this->path); 	
+
+	  $this->htmlpath = $this->urlpath . $this->inpath . '/cp/html/';
+	  $this->pager = GetReq('pager')?GetReq('pager'): (GetSessionParam('pager')?GetSessionParam('pager') : remote_paramload('SHKATALOG','pager',$this->path));
+	  $this->zeroprice_msg = remote_paramload('SHKATALOG','zeroprice',$this->path);		  
+	  
+	  $this->map_t = remote_arrayload('SHKATALOG','maptitle',$this->path);	
+	  $this->map_f = remote_arrayload('SHKATALOG','mapfields',$this->path);	
+	  $this->pprice = remote_arrayload('SHKATALOG','pricepolicy',$this->path);
+	  if (empty($this->pprice)){//default
+	    $this->pprice[0]='price0';
+		$this->pprice[1]='price1';
+	  }
+
+	  $this->codetype = remote_paramload('SHKATALOG','codetype',$this->path);	  	
+	  $this->availability = remote_arrayload('SHKATALOG','qtyavail',$this->path);		  	
+	  	  
+	  $this->is_reseller = GetSessionParam('RESELLER'); 
+	  $this->carthandler = remote_paramload('SHKATALOG','carthandler',$this->path);	
+	  $this->one_attachment = remote_paramload('SHKATALOG','oneattach',$this->path);
+	  $this->max_selection = null;	  
+	  $this->deforder = remote_paramload('SHKATALOG','deforder',$this->path);	
+	  $this->defasc = remote_paramload('SHKATALOG','defasc',$this->path);  
+	  $this->global_hide_asceding = remote_paramload('SHKATALOG','hideasc',$this->path);  
+	  $this->asccombostyle = remote_paramload('SHKATALOG','asccombostyle',$this->path);	
+
+	  $cb = remote_arrayload('SHKATALOG','categorybanner',$this->path);	 
+	  $this->catbanner = is_array($cb)?(array)$cb : remote_paramload('SHKATALOG','categorybanner',$this->path);	  
+	  
+	  $this->itemlockparam = remote_paramload('SHKATALOG','itemlockparam',$this->path);
+	  $this->itemlockgoto = remote_paramload('SHKATALOG','itemlockgoto',$this->path);	
+	  $this->isitemlocked = false;  
+
+	  $this->set_order(); //reset ..init 
+
+	  $dec_num = remote_paramload('SHKATALOG','decimals',$this->path);
+	  $this->decimals = $dec_num?$dec_num:2;   
+	   
+	  $toggle = remote_arrayload('SHKATALOG','toggler',$this->path);  
+	  $deftoggle = array(0=>'no',1=>'yes');
+	  if (!empty($toggle))
+	    $this->toggler = $toggle;
+	  else
+	    $this->toggler = $deftoggle;	  
+	  
+	  
 	  
 	  $murl = arrayload('SHELL','ip');
       $this->url = $murl[0];
@@ -1051,8 +1197,8 @@ class shkatalogmedia extends shkatalog {
                 $cart = null;  			 
 		   
 		     $availability = $this->show_availability($rec['ypoloipo1']);	
-		     $details = null;//seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code].'#DETAILS',$this->details_button,null,null,null,$this->rewrite);	   
-             $detailink = null;//seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code].'#DETAILS',$this->details_button,null,null,null,$this->rewrite);		   
+		     $details = null;
+             $detailink = null;
 		     $itemlink = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,$this->rewrite);
 		     $itemlinkname = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],$rec[$this->itmname],null,null,null,$this->rewrite);		   
 		   		   
@@ -1199,8 +1345,8 @@ class shkatalogmedia extends shkatalog {
 			    $icon_cart = null;
 		   
 		   $availability = $this->show_availability($rec['ypoloipo1']);		
-		   $details = null;//seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code].'#DETAILS',$this->details_button,null,null,null,$this->rewrite);	   
-           $detailink = null;//eturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code].'#DETAILS',$this->details_button,null,null,null,$this->rewrite);		   
+		   $details = null;
+           $detailink = null;		   
 		   $itemlink = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,$this->rewrite);
 		   $itemlinkname = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],$rec[$this->itmname],null,null,null,$this->rewrite);			   
 		   
@@ -1285,16 +1431,14 @@ class shkatalogmedia extends shkatalog {
 		 $item_code = $this->fcode;
 	   
 		 foreach ($this->result as $n=>$rec) {
-			
-           //$cat = $this->getkategories($rec);					 
+						 
 		   $cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 		   
 		   if ($rec[$pp]>0) 
 		     $price = $this->spt($rec[$pp],$tax);
 		   else 	 
 		     $price = $this->zeroprice_msg;	
-			 
-		   //if ((GetGlobal('UserID')) || (seclevel('SHKATALOG_CART',$this->userLevelID))) {//logged in or sec ok
+		 
 		     $cart_code = $rec[$item_code];
 			 $cart_title = $this->replace_cartchars($rec[$this->itmname]);
 			 $cart_group = $cat;
@@ -1317,13 +1461,13 @@ class shkatalogmedia extends shkatalog {
 			
 			 $itemlink = seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,$this->rewrite); 
 		     $availability = $this->show_availability($rec['ypoloipo1']);	 
-		     $detailink = seturl("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code],null,null,null,null,$this->rewrite).'#details';//,$this->details_button);		   
+		     $detailink = seturl("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code],null,null,null,null,$this->rewrite).'#details';		   
 			 
 	         $linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
 
              $ahtml = $this->show_aditional_html_files($rec[$item_code]);			 
-             $atext = "";//$this->show_aditional_txt_files($rec[$item_code]);				 		 		   			  
-			 $afile = "";//$this->show_aditional_files($rec[$item_code],1,$rec[$this->itmname]);			 
+             $atext = "";				 		 		   			  
+			 $afile = "";			 
 			 $details = "";//$ahtml . $atext . $afile;
 		 		   
              //// tokens method												 
@@ -1506,6 +1650,72 @@ class shkatalogmedia extends shkatalog {
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_p use $p,$items");
 		else  	
           $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_p use $p,$items");
+		  
+		return ($out);	
+	}		
+	
+	public function show_lastentries($items=10,$days=12,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$photosize=null,$nopager=null) {
+        $db = GetGlobal('db');		
+		$mydays = $days?$days:12;
+	    $date2check = time() - ($mydays * 24 * 60 * 60);
+	    $entrydate = date('Y-m-d',$date2check);
+		$pz = $photosize?$photosize:1;			
+
+        $sSQL = $this->selectSQL;
+		$sSQL .= " WHERE ";	
+		$sSQL .= "sysins>='" . convert_date(trim($entrydate),"-DMY",1) . "' and ";
+		
+		if ($selected_item = GetReq('id')) 
+		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
+		  		
+		$sSQL .= "itmactive>0 and active>0";	
+		$sSQL .= " ORDER BY id desc LIMIT " . $items;			
+	    //echo $sSQL;
+		
+	    $resultset = $db->Execute($sSQL,2);	
+		$this->result = $resultset;
+		
+		$xmax = $imgx?$imgx:100;
+		$ymax = $imgy?$imgy:null;//free y 75;		
+		
+		if ($linemax>1)
+		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$nopager);
+		else  	
+          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);
+		  
+		return ($out);	
+	}		
+	
+	public function show_kategory_offers($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null) {
+        $db = GetGlobal('db');			
+		$c = $category?$category:GetReq('cat');	//auto browse current cat
+		$cat = explode($this->cseparator,$c);			
+		$pz = $photosize?$photosize:1;		
+
+        $sSQL = $this->selectSQL;
+		$sSQL .= " WHERE ";	
+		foreach ($cat as $i=>$c) {
+		  $myc = $this->replace_spchars($c,1);
+		  $sSQL .= " cat{$i}='$myc' and ";	
+		}   
+		
+		if ($selected_item = GetReq('id')) 
+		  $sSQL .= $this->getmapf('code') . " not like '" . $selected_item ."' and ";
+		  		
+		$sSQL .= $this->getmapf('offer')."='".$this->toggler[1]."' and itmactive>0 and active>0";	
+		$sSQL .= " ORDER BY {$this->itmname} asc LIMIT " . $items;			
+	    //echo $sSQL;
+		
+	    $resultset = $db->Execute($sSQL,2);	
+		$this->result = $resultset;
+		
+		$xmax = $imgx?$imgx:100;
+		$ymax = $imgy?$imgy:null;// free y 75;		
+		
+		if ($linemax>1)
+		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$nopager);
+		else  	
+          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);
 		  
 		return ($out);	
 	}		
@@ -3257,6 +3467,138 @@ EOF;
 EOF;
         return $ret;
 	}
+	
+	
+	//SHKATALOG
+	
+	public function make_combo($url2go,$values,$title=null,$selection=null,$style=null) {
+	    $mystyle = $style?$style:$this->asccombostyle;
+	
+		$r = "<select name=\"".$name."\" class=\"".$mystyle."\"".( $size != 0 ? "size=\"".$size."\"" : "").
+		      //" onChange=\"sndReqArg('index.php?t=$t&s1=CANON','combo2')\">";
+			  " onChange=\"location=this.options[this.selectedIndex].value\">";
+			  
+		if (!empty($values) && ($title)) 	  
+		  $r .= "<option value=''>---$name---</option>";	
+		  
+		foreach ($values as $i=>$v) {
+		    $myvalue = str_replace('#',$i,$url2go); 
+			$r .= "<option value=\"$myvalue\"".($i == $selection ? " selected" : "").">$v</option>";		
+		}  
+		
+		$r .= "</select>";
+				
+		return ($r);  
+	}		
+	
+	//set ordersing online using <phpdac>
+	public function set_order($orderby=null,$asc=null) {
+	
+	   if ($orderby) {
+		 $this->myorderby = $orderby ? $this->fcode : $this->itmname;	   
+	   }
+	   else //reset
+	     $this->myorderby = $this->itmname;
+	   
+	   //desc asc
+	   if ($asc) {
+		 $this->myasc =	$asc;
+	   }
+	   else //reset
+	   	 $this->myasc =	'asc';   
+	}
+
+	public function read_policy($leeid=null) {
+		 
+	   $v = $this->is_reseller ? $this->pprice[0] : $this->pprice[1]; 
+	   return ($v);
+	}		
+	
+	public function pricewithtax($price,$tax=null) {
+	
+	  if (defined('SHCART_DPC')) {
+		  $tax = _v('shcart.tax'); 
+          $mytax = (($price*$tax)/100);	
+	      $value = ($price+$mytax);		  
+	  }
+	  elseif ($tax) {
+          $mytax = (($price*$tax)/100);	
+	      $value = ($price+$mytax);		  
+	  }
+	  else
+	     $value = $price;
+	
+	  
+	  return ($value);
+	}	
+	
+	public function getmapf($name) {
+	  $ch = null;
+	
+	  if (empty($this->map_t)) return 0;	
+	  
+	  foreach ($this->map_t as $id=>$elm) {	    
+	    if ($elm==$name) {
+		  $ch = $id;
+		  break;
+		}  
+	  }			
+
+	  $ret = $this->map_f[$ch];
+	  return ($ret);
+	}	
+
+	//used by shcart to reupdate prices in login
+	public function update_prices($cartitems) {
+	   $db = GetGlobal('db');
+	   $p_ret = null;
+	   
+	   $items = unserialize($cartitems);
+	   $pfield = $this->read_policy();
+	   
+	   if (is_array($items)) {
+	    //print_r($items);
+        foreach ($items as $prod_id => $product) {
+		  if (($product) && ($product!='x')) {	   
+		  
+            $param = explode(";",$product);		  
+	   
+            $sSQL = "select ".$pfield." from products ";
+	        $sSQL .= " WHERE ".$this->fcode."='".$param[0]."'";	   	   
+		    //echo $sSQL,'<br>';
+		    $result = $db->Execute($sSQL,2);	
+			
+			$p_ret[$param[0]] = $this->spt($result->fields[0]);
+		  }
+		}
+		return ($p_ret);  
+	   }
+
+        return null;
+	
+	}
+
+	public function combine_template($template_contents,$p0=null,$p1=null,$p2=null,$p3=null,$p4=null,$p5=null,$p6=null,$p7=null,$p8=null,$p9=null) {
+	
+		$params = explode('<#>',"$p0<#>$p1<#>$p2<#>$p3<#>$p4<#>$p5<#>$p6<#>$p7<#>$p8<#>$p9");
+		
+		if (defined('FRONTHTMLPAGE_DPC')) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template_contents);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template_contents;
+
+	    foreach ($params as $p=>$pp) {
+		  if ($pp)
+	        $ret = str_replace("$".$p,$pp,$ret);
+		  else	
+		    $ret = str_replace("$".$p,'',$ret);
+	    }
+
+		return ($ret);
+	}			
 	
 };			  
 }

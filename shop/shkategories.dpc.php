@@ -117,11 +117,7 @@ class shkategories {
           case 'openf' : 
 		                        break;			
           case 'shkategories' :
-		  default             :	//analyze dir...for tags klist,kshow cmd added	
-                                //echo 'z';		
-                                /*if ($cat=GetReq('cat'))								
-									$this->cat_result = $this->analyzedir($cat);**************/
-                                //print_r($this->cat_result); 							
+		  default             :								
         }					
     }
 	
@@ -131,10 +127,7 @@ class shkategories {
           case 'openf'        : 
 		                        break;		
           case 'shkategories' :
-		  default             :	//when shkategories included as dpc banner comes first...
-		                        //..rem not to do, handled by shkatalogmedia
-		                        //$out = $this->show_category_banner();
-		                        //$out .= 'test';//no view..$this->show_tree(null,3,$this->treeview);							  
+		  default             :								  
 		                        	
         }	
 		
@@ -176,29 +169,20 @@ class shkategories {
 		                         $this->select_template('fpkatbanner');	   
 	   
 	   if ($this->showcatbannerpath) {		   
-	     //echo $cat,'>';
 	     $catdepth = explode($this->cseparator,$cat);
 	     $alsoseedir = $this->urlpath . $this->inpath . '/' . $this->showcatbannerpath;
-	     //echo $alsoseedir;
-		   		   	   
-	     //$mycurrentsubcat = $this->replace_spchars(,array_pop($catdepth)); //last cat depth
-	     //$mycurrentsubcat = $this->replace_spchars(array_shift($catdepth)); //first cat depth	   
+	   
 	     //from inside to outer cat ...  
 	     while ($mycurrentsubcat = $this->replace_spchars(array_pop($catdepth))) {
-	   
-	       //echo $mycurrentsubcat,'<br>';
  	  
            $sSQL = "select data from pattachments ";
 	       $sSQL .= " WHERE (type='.html' or type='.htm') and code='" . $mycurrentsubcat . "'";
-	       //if (isset($lan)) //, no one attach here lan=null
-	         $sSQL .= " and (lan=" . $lan . ")";// or (lan=NULL)";	
-	       //echo $sSQL;
+	       $sSQL .= " and (lan=" . $lan . ")";// or (lan=NULL)";	
 	  
 	       $resultset = $db->Execute($sSQL,2);	
 	       $result = $resultset;
-	       //print_r($result);	
+
 	       if ($exist = $db->Affected_Rows()) {
-		     //echo 'sql';
 			 if ($mytemplate) {
 			    $tok[] = $result->fields['data'];
 			    $out .= $this->combine_tokens($mytemplate, $tok);
@@ -208,13 +192,9 @@ class shkategories {
 			   return ($result->fields['data']);
 		   }		   
            else {			   
-	         //$catname = '/see_also_banner.htm';
 	         $nn = str_replace('/','-',$mycurrentsubcat); //replace title / with -	 
 	         $catname = '/' . $nn . $lan . '.htm';
-	         //echo $catname;
 
-		     //if (is_dir($alsoseedir)) {
-		     //echo 'dir';
 		     if (is_readable($alsoseedir.$catname)) {
 		       $htmlret = file_get_contents($alsoseedir.$catname);
 			   if ($mytemplate) {
@@ -230,7 +210,7 @@ class shkategories {
 	       //$ret = 'banner';
 		 }//while  
 	   } 
-	   return null;//($ret);	 
+	   return null; 
 	}
 	
 	function show_category_image() {
@@ -241,30 +221,17 @@ class shkategories {
 	   
 	     if ($cat) {
 	   	   
-	     //echo $cat,'>';
 	     $catdepth = explode($this->cseparator,$cat);
 	     $alsoseedir = $this->urlpath . $this->inpath . '/' . $this->showcatimagepath;
-	     //echo $alsoseedir;
-		 //print_r($catdepth);  		   	   
-	     //$mycurrentsubcat = $this->replace_spchars(array_pop($catdepth)); //last cat depth
-	     //$mycurrentsubcat = $this->replace_spchars(array_shift($catdepth)); //first cat depth	   
+
 	     //from inside to outer cat ...  
 	     while ($mycurrentsubcat = $this->replace_spchars(array_pop($catdepth))) {
 	   
-	       //echo $mycurrentsubcat,'<br>';
-
-	       //$catname = '/see_also_banner.htm';
 	       $nn = str_replace('/','-',$mycurrentsubcat); //replace title / with -
            
-	       //if ($this->encodeimageid) { //check inside func
-	          $catname = '/';
-			  $catname.= $this->encode_image_id($nn);
-			  $catname.= $this->restype; 
-		      //echo $nn.'>'.$this->encodeimageid.'|<br/>';
-	       /*}
-		   else		   
-		   	  $catname = '/' . $nn . $this->restype ;*/
-		   //echo $catname,'>';	  
+	       $catname = '/';
+		   $catname.= $this->encode_image_id($nn);
+		   $catname.= $this->restype;   
 
 		   if (is_readable($alsoseedir.$catname)) {
 		     $image = $this->showcatimagepath.$catname;
@@ -277,14 +244,10 @@ class shkategories {
 		   
 		 }//if
 		 else {
-	       //if ($this->encodeimageid) {//check inside func
-	          $tname = '/';
-			  $tname.= $this->encode_image_id($tid);
-			  $tname.= $this->restype; 
-	       /*}	  
-	       else 		 
-		      $tname = '/' . $tid . $this->restype ; //echo '>',$this->showcatimagepath,$tname;
-		   */	  
+	       $tname = '/';
+		   $tname.= $this->encode_image_id($tid);
+		   $tname.= $this->restype; 
+	  
 		   if (is_readable($alsoseedir.$tname)) {
 		     $image = $this->showcatimagepath.$tname;
 		     $htmlret = "<img src='$image' alt='' />";//file_get_contents($alsoseedir.$catname);
@@ -298,25 +261,17 @@ class shkategories {
 	
 	protected function get_image_icon($catcode=null) {	
         $alsoseedir = $this->urlpath . $this->inpath . '/' . $this->showcatimagepath;
-		//echo '>',$this->showcatimagepath,$tname;
 		
         $x = $this->imagex ? "width=\"".$this->imagex."\"":null; 
         $y = $this->imagey ? "height=\"".$this->imagey."\"":null;			
-		//echo $x, $y; //overwtiten by called class shkatalogmedia
 		
 	    if (!$catcode) {
 		    $tname = 'nopic' . $this->restype ;
 		}	
 		else {
-		   //echo $catcode,'<br/>';
-	       //if ($this->encodeimageid) {//check inside func
 			  $tname = $this->encode_image_id($catcode);
-			  $tname.= $this->restype; 
-	       /*}	  
-	       else 		 
-              $tname = urldecode($catcode) . $this->restype ;*/		
+			  $tname.= $this->restype; 	
 		} 	
-		//echo $alsoseedir.$tname,'<br>';
 		
 		if (is_readable($alsoseedir.$tname)) 
 		     $image = $this->showcatimagepath.$tname;
@@ -324,7 +279,6 @@ class shkategories {
 		     $image = $this->showcatimagepath. 'nopic' . $this->restype ;
 		
 		$htmlret = "<img src='$image' $x $y>";
-		//echo $image,'>';
 		$ret = $htmlret;
 		return ($ret);		 
 	}		
@@ -356,20 +310,16 @@ class shkategories {
 		   	   	 
            reset($ddir);
            foreach ($ddir as $line_num => $line) {	
-		   
-		         //echo $line_num,' ',$line,'<br>';						    
+		   					    
 				 if (stristr($t,'input=')) { //ti replaces first search with result name
-				 //if ((GetParam('t')=='search') {
 				   $text2find = GetParam('Input') ? GetParam('Input') : GetReq('input'); 
 				   $ti = str_replace($text2find,$line,$t);
-				   //echo $ti,'<br>';
 				 }
 				 else
 				   $ti = $t;
 			 
 
 				 $loctitle = $line;
-					
 				 $title = $loctitle;		
 					
 				 if (trim($group)!=null) {				  
@@ -377,10 +327,8 @@ class shkategories {
 				 }		
 				 else { 
 					  $search_array_group = $setofgroups[$line_num];
-					  if ($search_array_group) {	
-					    //print_r($search_array_group);					
+					  if ($search_array_group) 			
 					    $gr = $search_array_group . $this->cseparator . $this->replace_spchars($line_num);					
-					  }  
 					  else
              	        $gr = $this->replace_spchars($line_num);					
 				 }		
@@ -413,9 +361,7 @@ class shkategories {
 			  $this->max_selection+=1;
 			  
 	       }//foreach 
-		   
-
-           //print_r($mytokens); 		  
+		   	  
 		   $mydatatemplate = file_get_contents($tfile);
 		   $tokret = $this->combine_n_tokens($mydatatemplate, $mytokens, $tok2);
 
@@ -432,16 +378,11 @@ class shkategories {
 	   $mystylesheet_selected = $mystylesheet . '_selected';   
 
 	   static $cd = -1;
+	      
+	   $t = $cmd?$cmd:'shkategories';   
 	   
-	   //if ($mode) $mytype = $mode;
-	   //      else $mytype = $this->dirview;	   
-	   $t = $cmd?$cmd:'shkategories';
-	   //$mytype=$this->dirview;	   
-	   
-	   //echo '>>',$cd;
 	   $ptree = explode($this->cseparator,$cat); //print_r($ptree);
-	   $depth = count($ptree)-1; //echo 'DEPTH:',$depth;
-	   //echo $cat;    
+	   $depth = count($ptree)-1; //echo 'DEPTH:',$depth;  
 	   $ddir = $this->read_tree($group);
  
 	   $i=0;	 
@@ -498,9 +439,7 @@ class shkategories {
        $tokens = array();
 	   $template2 = 'fpkatnav-accordion-inner.htm';
 	   $t2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template2) ;			 
-	   //echo $t2;
-	   $tmpl2_data = @file_get_contents($t2);
-       //echo $tmpl2_data;	   
+	   $tmpl2_data = @file_get_contents($t2);  
 	   
 	   static $cd = -1;
 	   	   
@@ -510,8 +449,7 @@ class shkategories {
 	   $ddir = $this->read_tree($group);
  
 	   $i=0;	 
-       if ($ddir)  {
-          //print_r($ddir);  	   
+       if ($ddir)  {	   
           reset($ddir);
           foreach ($ddir as $id => $line) {	
 		    
@@ -529,29 +467,22 @@ class shkategories {
 			    }	
 			  	
 				//$gr = $current_leaf;		 
-				$cgroup = $ptree[$cd+1]; //echo '>>',$cgroup;//$ptree[$depth];		 		
+				$cgroup = $ptree[$cd+1]; 	 		
 
-				//echo '>>>',$cd,'---',$this->depthview;
-				$tokens[0] = $_id;//str_replace(' ','-',$line);//accordion id
+				$tokens[0] = $_id;
 				$tokens[1] = summarize(($wordlength-$sp),$line);//accordion cat name
 				$tokens[2] = null;//seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //url
-				//$out .= $this->combine_tokens($template,$tokens,true);
-				//unset($tokens);
 
-				//echo '>>>',$cd,'---',$this->depthview;
-				//echo $cgroup,':',$line,':',$mode,'<br>';
 				//if ($cgroup==$line) {
 				if (mb_strstr($cgroup,$_id)) {
 					$cd+=1;
 					if ($cd+1<$this->depthview) {//depth view param for hidden categories
 					    $subcat_tokens = $this->show_tree2($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template);
-						//echo $subcat_tokens,'<br/>';
 						$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
 						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
 						$out .= $this->combine_tokens($template,$tokens,true);
-						//print_r($tokens);	
 						unset($tokens);
 						unset($subcat_tokens);
 					}
@@ -618,9 +549,9 @@ class shkategories {
 			      $gr = $_id;
 			    }	
 						  		 
-				$cgroup = $ptree[$cd+1]; //echo '>>',$cgroup;//$ptree[$depth];		 		
+				$cgroup = $ptree[$cd+1]; 	 		
 
-				$tokens[0] = $_id;//str_replace(' ','-',$line);//accordion id
+				$tokens[0] = $_id;//accordion id
 				$tokens[1] = summarize(($wordlength-$sp),$line);//accordion cat name
 				$tokens[2] = null;
 
@@ -629,13 +560,11 @@ class shkategories {
 					$cd+=1;
 					if ($cd+1<$this->depthview) {//depth view param for hidden categories
 					    $subcat_tokens = $this->show_tree3($cmd,$folder,$mytreespaces,$mysp,$mode,$wordlength,$notheme,$mystylesheet,$template);
-						//echo $subcat_tokens,'<br/>';
 						$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
 						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
 						$out .= $this->combine_tokens($template,$tokens,true);
-						//print_r($tokens);	
 						unset($tokens);
 						unset($subcat_tokens);
 
@@ -653,7 +582,6 @@ class shkategories {
 						else			   
 							$out .= ($group) ? '<li>'.seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line),null,null,null,$this->rewrite).'</li>' : null;										   					
 						
-						//print_r($tokens);	
 						unset($tokens);
 						unset($subcat_tokens);	
 				}			  
@@ -716,7 +644,7 @@ class shkategories {
     function show_selected_tree($cmd=null,$group=null,$showroot=null,$expand=null,$viewlevel=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$linksonly=null,$titlesonly=null,$idsonly=null) {
 	  $mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
       $myselcat = $group ? $group : GetReq('cat'); //$this->replace_spchars($group,1) : $this->replace_spchars(GetReq('cat'),1);	  
-	  //echo $myselcat,'<br/>';
+
       static $cd = -1;
 	  $wordlength = 19;//for calldpc purposes
 	  $t = $cmd ? $cmd : 'klist';
@@ -846,10 +774,8 @@ class shkategories {
 
 	}	
 
-	
 	function set_tree_path($array_path) {
 	  
-	    //$ret = implode($this->cseparator,$array_path);
 		$ret = null;
 		$max = count($array_path);
 		foreach ($array_path as $id=>$path) {
@@ -901,15 +827,13 @@ class shkategories {
 	    $lan = getlocal();
 	    $f = $lan?$lan:'0';			
 		
-	    //if ($selection= GetReq('sel')) 
-		  //$group .= $this->cseparator.$selection;
+
         $adir = array();
 		
 	    if ($isroot) {
 			$sSQL = "select distinct cat2,cat{$f}2 from categories where ";
 			$depth = 1;
 			$sSQL .= "(ctgid>0 and active>0 and view>0) order by ctgid";
-			//echo $sSQL;
 			$result = $db->Execute($sSQL,2);
 			
 			if ($result) { 
@@ -918,7 +842,6 @@ class shkategories {
 				}
 				$ret_adir = $adir;
 			}
-			//print_r($ret_adir); die();
 		}
         else {
 		    if ($startup) 
@@ -928,7 +851,6 @@ class shkategories {
 		
 		    $sSQL = "select distinct cat2,cat{$f}2,cat3,cat{$f}3,cat4,cat{$f}4,cat5,cat{$f}5 from categories where ";
 			$depth = count($splitx)-1;
-			//echo '>',$depth;
 			switch ($depth) {
 			  case 3  :$sSQL .= "cat5=\"".$this->replace_spchars($splitx[3],1)."\" and ";
 			  case 2  :$sSQL .= "cat4=\"".$this->replace_spchars($splitx[2],1)."\" and ";
@@ -937,7 +859,6 @@ class shkategories {
 			  default :
 			}
 			$sSQL .= " and (ctgid>0 and active>0 and view>0) order by ctgid";
-			//echo $sSQL;
 			$result = $db->Execute($sSQL,2);
 			
 			if ($result) {     
@@ -955,7 +876,6 @@ class shkategories {
 			//depthview restiction	
 			if ($this->depthview) {	
 				$depthview = $this->depthview+$startup;
-				//for($i=0;$i<$depthview;$i++)
 				$i=0;
 				foreach ($adir as $a=>$b) {
 					if ($i<$depthview) {
@@ -982,7 +902,7 @@ class shkategories {
 
 		//analyze dir		
         $adirs = $this->analyzedir($g,$startup, $isroot);	
-		//print_r($adirs);
+
         if (!empty($adirs)) {			
 		
 		    //startup meters
@@ -1202,7 +1122,6 @@ class shkategories {
 		}
 								
 
-				 
                  if (($rec['cat0']) && ($this->depthview>=1)) {
 				      if ($links)
 					    $ck[0] = seturl("t=$cmd&cat=".$rec['cat0'],$_cat0,null,null,null,$this->rewrite);
