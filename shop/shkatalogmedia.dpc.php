@@ -7,13 +7,8 @@ define("SHKATALOGMEDIA_DPC",true);
 
 $__DPC['SHKATALOGMEDIA_DPC'] = 'shkatalogmedia';
 
-//$d = GetGlobal('controller')->require_dpc('shop/shkategories.dpc.php');
-//require_once($d); //inside .php as object
-
 $e = GetGlobal('controller')->require_dpc('shell/pxml.lib.php');
 require_once($e);
-
-//GetGlobal('controller')->get_parent('SHKATALOG_DPC','SHKATALOGMEDIA_DPC');
 
 $__EVENTS['SHKATALOGMEDIA_DPC'][0]='katalog';
 $__EVENTS['SHKATALOGMEDIA_DPC'][1]='klist';
@@ -92,7 +87,7 @@ $__LOCALE['SHKATALOGMEDIA_DPC'][39]='_norecs;Record set is empty;Οι εγγρα
 $__LOCALE['SHKATALOGMEDIA_DPC'][40]='_norec;Record not exist;Η εγγραφή δεν υπάρχει';
 $__LOCALE['SHKATALOGMEDIA_DPC'][41]='_lockrec;Title;Η εγγραφή είναι κλειδωμένη';
 
-class shkatalogmedia extends shkategories {
+class shkatalogmedia {
 	
     var $max_items, $result, $path, $urlpath, $inpath;
 	var $map_t, $map_f;
@@ -133,8 +128,6 @@ class shkatalogmedia extends shkategories {
 	function shkatalogmedia() {
 	  $GRX = GetGlobal('GRX');		
 	  $UserSecID = GetGlobal('UserSecID');	
-	
-	  shkategories::shkategories();
 	  
       $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	  
 	
@@ -289,7 +282,7 @@ class shkatalogmedia extends shkategories {
 	  $this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 						$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname" .
-						" from products ";
+						" from products ";					
     }
 	
 	function event($event=null) {
@@ -297,9 +290,8 @@ class shkatalogmedia extends shkategories {
 	    switch ($event) {
 			
 		  case 'sitemap'       : 
-								 if ($dpc = GetReq('dpc')) {//special phpdac page..read
-								   $dpccmd = str_replace(',','+',$dpc);	
-                                   //echo '>',$dpccmd; 								   
+								 if ($dpc = GetReq('dpc')) {
+								   $dpccmd = str_replace(',','+',$dpc);							   
 								   _m($dpccmd);		  
 								 }  
 		                      
@@ -311,16 +303,15 @@ class shkatalogmedia extends shkategories {
 		                           $this->read_item();
 								 elseif (GetReq('cat'))  
 		                           $this->read_list();
-								 else {//special phpdac page..read
-								   $dpccmd = str_replace(',','+',GetReq('dpc'));	
-                                   //echo '>',$dpccmd; 								   
+								 else {
+								   $dpccmd = str_replace(',','+',GetReq('dpc'));								   
 								   _m($dpccmd);		  
 								 }  
 								 $xml = $this->katalog_feed();
 								 die($xml);	//xml output
 		                         break;
 								 
-		  case 'xmlout'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //..to do also in cp chars etc //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
+		  case 'xmlout'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
 		                         $this->xmlread_list();
 								 $xml = $this->xml_feed();
 								 die($xml);	//xml output
@@ -350,7 +341,7 @@ class shkatalogmedia extends shkategories {
 	                            _m("cmsvstats.update_item_statistics use ".GetReq('id'));
                                 break;
 								
-		  default             : shkatalog::event($event);
+		  default             : //if (!GetReq('modify')) GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use ".GetReq('id'));
 		}			
     }	
 	
@@ -367,8 +358,7 @@ class shkatalogmedia extends shkategories {
 	      case 'addtocart'     :
 		  case 'removefromcart':
 		                        if (($this->carthandler) || (GetSessionParam('fastpick')=='on')) {
-		                          if ($cat=GetReq('cat')) {
-								    //event
+		                          if (GetReq('cat')) {
 									$this->my_one_item = $this->read_list(); 							  							
 									$out .= $this->list_katalog(0);											
 								  }
@@ -380,7 +370,7 @@ class shkatalogmedia extends shkategories {
 		                        break;			
 		
           case 'kfilter'      :	if (in_array('beforeitemslist',$this->catbanner))//before
-								  $out .= $this->show_category_banner();									  
+								  $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();									  
 								  								
 		                        $out .= $this->list_katalog(0,'kfilter');		
 								
@@ -390,30 +380,25 @@ class shkatalogmedia extends shkategories {
 								break;
 								
 		  case 'klist'        : if (in_array('beforeitemslist',$this->catbanner))//before
-								  $out .= $this->show_category_banner();									  
+								  $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();									  
 								   								
 		                        $out .= $this->list_katalog(0);		
 								
 								//banner down
 								if (in_array('afteritemslist',$this->catbanner))//after
-								  $out .= $this->show_category_banner();														 
+								  $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();														 
 								break;
 
 		  case 'kshow'        : if (in_array('beforeitem',$this->catbanner))
-		                          $out .= $this->show_category_banner();	
+		                          $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();	
 								  
 		                        $out .= $this->show_item();
 								
 								if (in_array('afteritem',$this->catbanner))
-		                          $out .= $this->show_category_banner();	
+		                          $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();	
 		                        break;									
 		  
-		  default             : //echo $action,'>';
-		                        if ($action=='katalog')
-		                            $out .= $this->default_action();
-			                    else 
-									$out .= shkatalog::action($action);		
-		                         
+		  default             : if (!GetReq('modify')) $out .= $this->default_action();	
 		  
 		}	
 		
@@ -508,7 +493,7 @@ class shkatalogmedia extends shkategories {
 		  $sSQL .= ')' ;
 		  
           if ($incategory) {	
-		    $cats = explode($this->cseparator,$incategory);
+		    $cats = explode($this->sep(),$incategory);
 		    foreach ($cats as $c=>$mycat)
 		      $sSQL .= ' and cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
 		  }
@@ -542,7 +527,7 @@ class shkatalogmedia extends shkategories {
 		  $sSQL .= " where manufacturer='" . $this->replace_spchars($text2find,1) . "'";
 		  
           if ($incategory) {	
-		    $cats = explode($this->cseparator,$incategory);
+		    $cats = explode($this->sep(),$incategory);
 		    foreach ($cats as $c=>$mycat)
 		      $sSQL .= ' and cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
 		  }
@@ -572,10 +557,10 @@ class shkatalogmedia extends shkategories {
 		    $negative = true;
 			$cat = substr($cat,1);//drop -
 		}			
-		$cat_tree = explode($this->cseparator, $cat);		
+		$cat_tree = explode($this->sep(), $cat);		
 		$oper = $negative?' not like ':'='; 	
-		$stype = GetParam('searchtype'); //echo $stype;
-		$scase = GetParam('searchcase'); //echo $scase;					
+		$stype = GetParam('searchtype');
+		$scase = GetParam('searchcase');				
 				
 		$sSQL = "select count(id) from products where ";
 		
@@ -704,7 +689,7 @@ class shkatalogmedia extends shkategories {
 	  }
 	  else {//ordinal image
 	  
-		 $code = $this->encode_image_id($code);			  
+		 $code = $this->encode_image_id($code); //_m('shkategories.encode_image_id use '.$code);			  
 		 $pfile = $code;
 	     $photo_file = $this->urlpath . '/' .$tpath . $pfile . $this->restype;	  
 	     if (!file_exists($photo_file)) {
@@ -787,7 +772,7 @@ class shkatalogmedia extends shkategories {
 		
 		if ($cat!=null) {		   
 		  
-		  $cat_tree = explode($this->cseparator, $cat); 
+		  $cat_tree = explode($this->sep(), $cat); 
 			
 	      $sSQL = $this->selectSQL;
 		  $sSQL .= " WHERE ";		   
@@ -845,7 +830,7 @@ class shkatalogmedia extends shkategories {
 		
 		if ($cat!=null) {		   
 		  
-		  $cat_tree = explode($this->cseparator,$cat); 
+		  $cat_tree = explode($this->sep(),$cat); 
 			
 	      $sSQL = $this->selectSQL;
 		  $sSQL .= " WHERE ";		   
@@ -913,7 +898,7 @@ class shkatalogmedia extends shkategories {
 
 		if ($cat!=null) {		   
 		  
-			$cat_tree = explode($this->cseparator, $cat); 		  
+			$cat_tree = explode($this->sep(), $cat); 		  
 		      	  
 			if ($cat_tree[0])
 				$whereClause .= ' cat0='.$db->qstr($this->replace_spchars($cat_tree[0],1));		
@@ -936,7 +921,7 @@ class shkatalogmedia extends shkategories {
 		$sSQL .= $whereClause ? $whereClause . " AND " : null;
 		  
 		$sSQL .= $xmlitems ? "xml=1 and itmactive>0 and active>0" : "itmactive>0 and active>0";		  		   
-		$sSQL .= " ORDER BY ".$this->orderid .' '. $this->sortdef;
+		$sSQL .= " ORDER BY ".$this->itmname .' '. $this->sortdef; //$this->orderid;
 
 		//echo $sSQL;	
 	    $this->result = $db->Execute($sSQL,2);
@@ -990,10 +975,9 @@ class shkatalogmedia extends shkategories {
 	   $cutter = 2;//5	 
 	   
 	   if ($mp<=$pager) return;  
-	   $tmpl_file='fppager-button.htm';	   
-	   $template_button = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$tmpl_file) ;	   
-	   $tmplcontents = file_get_contents($template_button);	 
-	    
+
+	   $tmplcontents = $this->select_template('fppager-button');
+	   
 	   if ($page<$max_page) {//&& ($mp<$pager)) { 
 
 	     //next pages
@@ -1042,12 +1026,8 @@ class shkatalogmedia extends shkategories {
 	   $cp = $page+1;
 	   $current = $this->combine_template($tmplcontents, $this->pager_current_class ,"<a href=\"#\">$cp</a>");   
 			
-	     
-	   //template
-	   $template_file='fppager.htm';	   
-	   $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template_file) ; 	
-	   $page_titles = $prev . $current . $next;	
-	   $contents = file_get_contents($tfile);	   		 	    		 
+	   $page_titles = $prev . $current . $next;	  	
+       $contents = $this->select_template('fppager');	   
 	   $ret = $this->combine_template($contents,$page_titles);	
 	   
 	   return ($ret);
@@ -1095,12 +1075,8 @@ class shkatalogmedia extends shkategories {
           $data2[$n] = localize('_array',getlocal()).' '.$n;
        }		  
 	   $combo_pager = $this->make_combo(seturl('t='.$cmd.'&cat='.$cat.'&pager=#'),$data2,null,$this->pager,$style);
-	   	  		   
-	   //template	   
-	   $template_file='fpsort.htm';	   
-	   $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template_file) ; 	
-       
-		$contents = file_get_contents($tfile);	 	   	   		 	      
+	   	  		    	   	   		 	      
+	    $contents = $this->select_template('fpsort');
 	    $out = $this->combine_template($contents,localize('_order',getlocal()),$combo_char,$combo_asceding,$combo_pager);	     
 	   
 	   return ($out);	      
@@ -1262,8 +1238,8 @@ class shkatalogmedia extends shkategories {
 	        $toprint .= $this->show_paging($cmd,$mytemplate,$nopager);
 
 			$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
-		                                           1=>$this->getcurrentkategory(),
-												   2=>str_replace($this->cseparator,' ',$this->replace_spchars($cat,1)),														
+		                                           1=>_m('shkategories.getcurrentkategory'),
+												   2=>str_replace($this->sep(),' ',$this->replace_spchars($cat,1)),														
 												   3=>$this->httpurl .'/klist/'. $cat . '/',
 												   4=>$ogimage, /*$ogimage array of images (with no httpurl)!!*/
 												  ));			
@@ -1550,15 +1526,14 @@ class shkatalogmedia extends shkategories {
 	     $cat = GetReq('cat');
 		 $title = $altname ? $altname : $id;
 		 $name = $id;
-		 $id = $this->encode_image_id($id); 
+		 $id = $this->encode_image_id($id); //_m('shkategories.encode_image_id use '.$id);
 		 
 	     $addfx = $this->addfx?$this->addfx:100;
 	     $addfy = $this->addfy?$this->addfy:null;//free y size //75;	
 	     $this->allow_show_resource = true; //enable it after show main item image		
 	
-	     $template= $tmpl ? $tmpl : 'fpitemaddfiles.htm';	   
-	     $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ; 
-		 $mytemplate = @file_get_contents($t);   	
+	     $template= $tmpl ? $tmpl : 'fpitemaddfiles.htm';	    	
+		 $mytemplate = $this->select_template($template);
          
          $slide_index = 1; //start at 1, 1=main image 		 
 		 //multiple images
@@ -1689,7 +1664,7 @@ class shkatalogmedia extends shkategories {
 	public function show_kategory_offers($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null) {
         $db = GetGlobal('db');			
 		$c = $category?$category:GetReq('cat');	//auto browse current cat
-		$cat = explode($this->cseparator,$c);			
+		$cat = explode($this->sep(),$c);			
 		$pz = $photosize?$photosize:1;		
 
         $sSQL = $this->selectSQL;
@@ -1728,7 +1703,7 @@ class shkatalogmedia extends shkategories {
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
-		$cat = explode($this->cseparator,$mycat);		
+		$cat = explode($this->sep(),$mycat);		
 		foreach ($cat as $i=>$c) {
 		  $myc = $this->replace_spchars($c,1);		
 		  $sSQL .= " cat{$i}='$myc' and ";	
@@ -1784,7 +1759,7 @@ class shkatalogmedia extends shkategories {
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
-		$cat = explode($this->cseparator,$mycat);			
+		$cat = explode($this->sep(),$mycat);			
 		foreach ($cat as $i=>$c) {
 		  $myc = $this->replace_spchars($c,1);		
 		  $sSQL .= " cat{$i}='$myc' and ";	
@@ -1826,7 +1801,7 @@ class shkatalogmedia extends shkategories {
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
-		$cat = explode($this->cseparator,$mycat);			
+		$cat = explode($this->sep(),$mycat);			
 		foreach ($cat as $i=>$c) {
 		  $myc = $this->replace_spchars($c,1);		
 		  $sSQL .= " cat{$i}='$myc' and ";	
@@ -2176,7 +2151,7 @@ class shkatalogmedia extends shkategories {
 	public function show_kategory_items($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
         $db = GetGlobal('db');			
 		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
-		$cat = explode($this->cseparator,$mycat);		
+		$cat = explode($this->sep(),$mycat);		
 		$pz = $photosize?$photosize:1;		
 				
 		//auto browse current cat
@@ -2237,7 +2212,7 @@ class shkatalogmedia extends shkategories {
 	public function show_sitemap_items($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
         $db = GetGlobal('db');		
 		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
-		$cat = explode($this->cseparator,$mycat);		
+		$cat = explode($this->sep(),$mycat);		
 		$pz = $photosize?$photosize:1;		
 				
 		//auto browse current cat
@@ -2267,7 +2242,8 @@ class shkatalogmedia extends shkategories {
        $db = GetGlobal('db');
 	   $start = GetReq('start');
 	   $headcat = GetReq('headcat')?GetReq('headcat'):"";	   
-	   $meter = $start?$start-1:0;  
+	   $meter = $start?$start-1:0; 
+	   $sep = $this->sep();	
 	   
 	   return null; //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< DISABLED
 
@@ -2310,10 +2286,10 @@ class shkatalogmedia extends shkategories {
 			 if (strtolower($headcat)!=strtolower($cat)) {//paging start
 			   $headcat = $cat;
 			   //echo $headcat;
-			   if (strstr($headcat,'</a>'.$this->cseparator.'<a')) //link
-			     $ret .= '<h2>' . str_replace('</a>'.$this->cseparator.'<a','</a>'.$this->rightarrow.'<a', $this->replace_spchars($headcat,1)) . '</h2><hr>';
+			   if (strstr($headcat,'</a>'.$sep.'<a')) //link
+			     $ret .= '<h2>' . str_replace('</a>'.$sep.'<a','</a>'.$this->rightarrow.'<a', $this->replace_spchars($headcat,1)) . '</h2><hr>';
 			   else			   
-			     $ret .= '<h2>' . str_replace($this->cseparator,$this->rightarrow,$this->replace_spchars($headcat,1)) . '</h2><hr>';
+			     $ret .= '<h2>' . str_replace($sep,$this->rightarrow,$this->replace_spchars($headcat,1)) . '</h2><hr>';
 			 }
 			 $title = $rec[$this->fcode] . "&nbsp;" . $rec[$this->itmname];
 			 
@@ -2418,7 +2394,7 @@ class shkatalogmedia extends shkategories {
         $UserName = GetGlobal('UserName');							
 		$c = $category?$category:GetReq('cat');
 		
-		$cat = explode($this->cseparator,$c);		
+		$cat = explode($this->sep(),$c);		
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
 		$pz = $photosize?$photosize:1;
@@ -2457,7 +2433,7 @@ class shkatalogmedia extends shkategories {
         $UserName = GetGlobal('UserName');						
 		$c = $category?$category:GetReq('cat');	
 		
-		$cat = explode($this->cseparator,$c);		
+		$cat = explode($this->sep(),$c);		
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
 		$pz = $photosize?$photosize:1;
@@ -2494,7 +2470,7 @@ class shkatalogmedia extends shkategories {
 		$sSQL .= " WHERE ";	
 
 		if ($cat) {
-		  $c = explode($this->cseparator, $this->replace_spchars($cat,1)); //print_r($cat);
+		  $c = explode($this->sep(), $this->replace_spchars($cat,1)); //print_r($cat);
 		  foreach ($c as $cc=>$category)
 			$sSQL .= "cat".$cc."='" . $category . "' and ";
 	    }
@@ -2532,6 +2508,8 @@ class shkatalogmedia extends shkategories {
 	  $isutf8 = (stristr($this->encoding, 'utf8')) ? true : false;
 	  if ($read_all)
 	    $this->read_all_items();
+	
+	  $sep = $this->sep();
 
       $xml = new pxml();
       $xml->encoding = $this->encoding;	//must be utf8 not utf-8
@@ -2541,20 +2519,20 @@ class shkatalogmedia extends shkategories {
 	  //categories  
 	  if (!$off_categories) {
 	  
-      $ddir = $this->read_tree(GetReq('cat'),null,1);
+      $ddir = _m("shkategories.read_tree use ".GetReq('cat')."++1"); //$this->read_tree(GetReq('cat'),null,1);
 	  
 	  if (!empty($ddir)) {
 	        foreach ($ddir as $g=>$lan_g) {
 			
 			       $cat = GetReq('cat');
-				   $c = $cat ? $cat.$this->cseparator.$g : $g;
+				   $c = $cat ? $cat . $sep . $g : $g;
 				   $cat_url = 'http://' . $this->url . '/' . seturl('t=klist&cat='. $c ,null,null,null,null,$this->rewrite);
 			
 		           $p[] = $g;
-			       $p[] = $lan_g;//$isutf8 ? $lan_g : iconv($this->encoding, "UTF-8", $lan_g);
+			       $p[] = $lan_g;
                    $p[] = $cat_url;			   
-			       $p[] = $cat;//urlencode($cat);//GetReq('cat');//$cat;
-			       $p[] = $lan_g;//$isutf8 ? $lan_g : iconv($this->encoding, "UTF-8", $lan_g);
+			       $p[] = $cat;
+			       $p[] = $lan_g;
 			       $p[] = null;
 			       $p[] = null;
 				   $p[] = null;
@@ -2565,7 +2543,7 @@ class shkatalogmedia extends shkategories {
                    $p[] = null; 				   
 				   
 			       $this->xml_formater($xml,$format,null,$p);
-				   unset($p);	//holds record data to pass it at xml formater				  	 
+				   unset($p);				  	 
 			 
 			       $i+=1;
             }				   
@@ -2666,7 +2644,7 @@ class shkatalogmedia extends shkategories {
 	protected function xml_formater(& $xml,$format=null,$init=null,$params=null,$encoding=null) {
 	
 	      $date = date(DATE_RFC822);//'m-d-Y');
-		  $cat_title = $this->getcurrentkategory();
+		  $cat_title = _m('shkategories.getcurrentkategory');
 	      $lan_descr = getlocal() ? 'gr' : 'en';
 	   
 	      if ($init) {
@@ -2734,10 +2712,10 @@ class shkatalogmedia extends shkategories {
 			   break;
 			 
 	           case 'skroutz' : 
-			   $cats = explode($this->cseparator,$params[3]);	
+			   $cats = explode($this->sep() ,$params[3]);	
 			   $manufacturer = $this->replace_spchars(array_shift($cats),1);
 			   $category = $this->replace_spchars($params[3],1);
-			   $category = str_replace($this->cseparator,'/',$category);
+			   $category = str_replace($this->sep() ,'/',$category);
 	           $xf = ($this->itemfimagex?$this->itemfimagex:640);
 	           $yf = ($this->itemfimagey?$this->itemfimagey:480);	
 	           $xt = ($this->imagex?$this->imagex:160);
@@ -2896,7 +2874,8 @@ class shkatalogmedia extends shkategories {
 	protected function xml_feed() {
 		$db = GetGlobal('db');	  
 		$format = GetReq('format') ? GetReq('format') : 'sitemap';		
-		$code = $this->fcode;	
+		$code = $this->fcode;
+		$sep = $this->sep();	
 
 		if (!defined('RCXMLFEEDS_DPC')) return 'RCXMLFEEDS DPC not loaded'; //dpc cmds needed
 		$sf = _v('rcxmlfeeds.select_fields'); //remote_arrayload('RCXMLFEEDS','selectfields',$this->path); 
@@ -2920,10 +2899,10 @@ class shkatalogmedia extends shkategories {
 			} 
 		    $id = $rec[$code];	
 			$cat = $rec['cat0'] ? $rec['cat0'] : null;
-			$cat .= $rec['cat1'] ? $this->cseparator.$rec['cat1'] : null;
-			$cat .= $rec['cat2'] ? $this->cseparator.$rec['cat2'] : null;
-			$cat .= $rec['cat3'] ? $this->cseparator.$rec['cat3'] : null;
-			$cat .= $rec['cat4'] ? $this->cseparator.$rec['cat4'] : null;
+			$cat .= $rec['cat1'] ? $sep . $rec['cat1'] : null;
+			$cat .= $rec['cat2'] ? $sep . $rec['cat2'] : null;
+			$cat .= $rec['cat3'] ? $sep . $rec['cat3'] : null;
+			$cat .= $rec['cat4'] ? $sep . $rec['cat4'] : null;
 			
 			$_cat = _m('cmsrt.replace_spchars use '.$cat);//str_replace(' ','_', $cat);
 	
@@ -3046,10 +3025,8 @@ class shkatalogmedia extends shkategories {
 		  if (is_array($data_array['QTY'])) {
 		    foreach ($data_array['QTY'] as $ix=>$ax) {
 			  if ($policyqty>=$ax) {
-			    //echo $ax,'>';
 			    $pc = intval($data_array['PRICE'][$ix]);
 			    $retprice = $price?$price+($price*$pc/100):$pc;
-				//print_r($data_arra
 			  }
 			}
 			return ($retprice);
@@ -3059,14 +3036,9 @@ class shkatalogmedia extends shkategories {
 		  $style = $data_array['style'];
 		  $titlesON = $data_array['titles'];
 		  $elements = $titlesON?1:0;	
-		  $template = $data_array['template']?$data_array['template']:'fpitempolicy';
+		  $template = $data_array['template'] ? $data_array['template'] : 'fpitempolicy';
 		  
-	      //loop template 
-	      $loop_template= $template.".htm";
-	      $tpl = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loop_template) ;
-	      if (is_readable($tpl)) {//file temaplate
-		  
-		    $mylooptemplate = file_get_contents($tpl);
+			$mylooptemplate = $this->select_template($template);
 			
 			foreach ($data_array['PRICE'] as $ix=>$ax) {
 			  $data[] = $data_array['QTY'][$ix];
@@ -3085,48 +3057,6 @@ class shkatalogmedia extends shkategories {
 			  //echo $body,'>';
 			  unset($data);			  
 			}		
-	      }			  	  
-          else { //standart template 
-		    if (is_array($data_array['QTY'])) {
-			  $percent = intval(100/(count($data_array['QTY'])+$elements)); //echo $percent;	
-			  if ($titlesON) {				  
-		        $viewdata[] = localize('_QTY',getlocal());//$i;
-		        $viewattr[] = "right;$percent%";		  
-			  }
-		      foreach ($data_array['QTY'] as $ix=>$ax) {
-				
-		        $viewdata[] = $ax;
-		        $viewattr[] = "right;$percent%";
-			  } 
-	          $myline = new window('',$viewdata,$viewattr);
-	          $body = $myline->render($style);
-	          unset ($viewdata); unset($viewattr);				 
-		    }		
-		
-		    if (is_array($data_array['PRICE'])) {
-			  $percent = intval(100/(count($data_array['PRICE'])+$elements)); //echo $percent;
-			  if ($titlesON) {		  
-		        $viewdata[] = localize('_PRICE',getlocal());//$i;
-		        $viewattr[] = "right;$percent%";		  
-			  }
-		      foreach ($data_array['PRICE'] as $ix=>$ax) {
-			    
-			    $cartd[8] = $price?$price+($price*$ax/100):$ax;//'22.23';
-				$cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
-				//echo $cartd[9],'>';
-				$cartout = implode(';',$cartd);
-			    $icon_cart = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
-
-			    $val = number_format($cartd[8],$this->decimals,',','.');
-
-		        $viewdata[] = /*'<del>'.$price.'</del><br/>'.*/$val . $icon_cart;
-		        $viewattr[] = "right;$percent%";
-			  } 
-	          $myline = new window('',$viewdata,$viewattr);
-	          $body .= $myline->render($style);
-	          unset ($viewdata); unset($viewattr);				 
-		    }
-		  }//template
         }
 		//echo $body;
 		return ($body);  
@@ -3134,8 +3064,7 @@ class shkatalogmedia extends shkategories {
 	}
 
 	//read policy from item record or lookup
-    protected function read_array_policy2($itemcode=null,$price=null,$cart_details=null,$qtyscale=null,$prcscale=null) {
-		//$db = GetGlobal('db');	
+    protected function read_array_policy2($itemcode=null,$price=null,$cart_details=null,$qtyscale=null,$prcscale=null) {	
 		$cat = $pcat?$pcat:GetReq('cat');
 		$cart_page = GetReq('page')?GetReq('page'):0;	  	
 		$cartd = explode(';',$cart_details);
@@ -3145,34 +3074,25 @@ class shkatalogmedia extends shkategories {
 		$ps = explode(',', $prcscale); //-5.0,-8.0,-12.0 %- percent discount
         if (count($qs)!=count(ps)) return null;		
 		
-		$template = 'fpitempolicy';
-		  
-	    //loop template 
-	    $loop_template= $template.".htm";
-	    $tpl = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loop_template) ;
-		
-	    if (is_readable($tpl)) {//file temaplate
-		  
-		    $mylooptemplate = file_get_contents($tpl);
+		$mylooptemplate = $this->select_template('fpitempolicy');
 			
-			foreach ($ps as $ix=>$ax) {
-			  $data[] = $qs[$ix];
+		foreach ($ps as $ix=>$ax) {
+			$data[] = $qs[$ix];
 	 
-			  $cartd[8] = $price ? $price +($price*$ax/100) : $ax;//'22.23';
-			  $cartd[9] = intval($qs[$ix]);//prev line //'12';
+			$cartd[8] = $price ? $price +($price*$ax/100) : $ax;//'22.23';
+			$cartd[9] = intval($qs[$ix]);//prev line //'12';
 			  
-		      $data[] =	number_format($cartd[8],$this->decimals,',','.');		  
+		    $data[] = number_format($cartd[8],$this->decimals,',','.');		  
 			  
-			  $cartout = implode(';',$cartd);
-			  $data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
-			  $data[] = $itemcode;
-			  $data[] = "addcart/$cartout/$cat/0/";
+			$cartout = implode(';',$cartd);
+			$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+			$data[] = $itemcode;
+			$data[] = "addcart/$cartout/$cat/0/";
 			 
-			  $body .= $this->combine_tokens($mylooptemplate,$data,true);	
-			  //echo $body,'>';
-			  unset($data);			  
-			}		
-	    }
+			$body .= $this->combine_tokens($mylooptemplate,$data,true);	
+
+			unset($data);			  
+		}		
 
         return ($body); 		
 	}
@@ -3239,21 +3159,19 @@ class shkatalogmedia extends shkategories {
 		$baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility
 		
 	    $db = GetGlobal('db');		
-        $filename = seturl("t=$mycmd");//&a=$a&g=$g");  
+        $filename = seturl("t=$mycmd"); 
 	    $lan = getlocal()?getlocal():'0';
 		$command = $cmd ? $cmd : 'search';
 	  
-        //template form
-	    $template_file='searchfilter.htm';	   
-	    $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',$lan.'.',$template_file) ; 	
-		$contents = @file_get_contents($tfile);	
+
+		$contents = $this->select_template('searchfilter');
 		
 		$tokens = array(); 
 		$r = array();	
 		
 	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
         if ($incategory) {	
-		    $cats = explode($this->cseparator, GetReq('cat'));
+		    $cats = explode($this->sep(), GetReq('cat'));
 		    foreach ($cats as $c=>$mycat)
 		      $s[] = 'cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
 		}		
@@ -3266,20 +3184,17 @@ class shkatalogmedia extends shkategories {
 		$result = $db->Execute($sSQL,2); 
 	  
 		if (!empty($result)) {
-			//print_r($result);
+
 			foreach ($result as $n=>$t) {
-				//print_r($t); 
-				//echo $t[0];
 				if (trim($t[0])!='') {
 					$tokens[] = $t[0];
 					$tokens[] = $t[1];
 					$tokens[] = $baseurl . seturl('t='.$command.'&cat='.$this->replace_spchars(GetReq('cat')).'&input='.$this->replace_spchars($t[0]),null,null,null,null,true);
 					$tokens[] = ($t[0]==GetReq('input')) ? 'checked="checked"' : null;
-					$r[] = $template ? $this->combine_tokens($contents,$tokens) : $rec;	
+					$r[] = $this->combine_tokens($contents,$tokens);	
 					unset($tokens);		
                 }				
-			}	
-		    
+			}	   
 		}
 		
 		//header
@@ -3288,12 +3203,11 @@ class shkatalogmedia extends shkategories {
 			$tokens[] = GetReq('input') ? '*' : $this->max_cat_items; //$this->max_items; //'*';
 			$tokens[] = $baseurl . seturl('t=klist&cat='.GetReq('cat'),null,null,null,null,true);
 			$tokens[] = (!GetReq('input')) ? 'checked="checked"' : null;
-			if ($template) $r[] = $this->combine_tokens($contents,$tokens);
+			$r[] = $this->combine_tokens($contents,$tokens);
 			unset($tokens);
 		}			
        
-		$x = $template ? '' : '<br/>';
-		$ret = (empty($r)) ? null : implode($x,$r);	
+		$ret = (empty($r)) ? null : implode('',$r);	
 		return ($ret);  
 	}
 	
@@ -3330,7 +3244,7 @@ class shkatalogmedia extends shkategories {
 	}
 	
 	protected function getkategoriesS($categories) {	
-		$c = $this->cseparator;
+		$c = $this->sep();
 					
 		switch ($this->replacepolicy) {
 			
@@ -3557,7 +3471,6 @@ EOF;
 	   $pfield = $this->read_policy();
 	   
 	   if (is_array($items)) {
-	    //print_r($items);
         foreach ($items as $prod_id => $product) {
 		  if (($product) && ($product!='x')) {	   
 		  
@@ -3565,7 +3478,6 @@ EOF;
 	   
             $sSQL = "select ".$pfield." from products ";
 	        $sSQL .= " WHERE ".$this->fcode."='".$param[0]."'";	   	   
-		    //echo $sSQL,'<br>';
 		    $result = $db->Execute($sSQL,2);	
 			
 			$p_ret[$param[0]] = $this->spt($result->fields[0]);
@@ -3575,9 +3487,56 @@ EOF;
 	   }
 
         return null;
-	
 	}
+	
+	public function encode_image_id($id=null) {
+	    if (!$id) return null;
+		$out = _m("cmsrt.encode_image_id use $id+".$this->encodeimageid); //$this->encodeimageid ? md5($id) : $id;
+        return $out;
+	}		
 
+	protected function sep() {
+		return _v('cmsrt.cseparator'); //$this->cseparator;
+	}
+	
+	protected function select_template($tmpl=null,$cat=null,$hasext=null) {
+		if (!$tmpl) return null;		
+		return _m("shkategories.select_template use $tmpl+$cat+$hasext");
+	}
+	
+	//tokens method	
+	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
+	
+	    if (!is_array($tokens)) return;
+		
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template_contents);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template_contents;
+		  
+	    foreach ($tokens as $i=>$tok) {
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<40;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);
+		//echo $ret;
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
+	}	
+	
 	public function combine_template($template_contents,$p0=null,$p1=null,$p2=null,$p3=null,$p4=null,$p5=null,$p6=null,$p7=null,$p8=null,$p9=null) {
 	
 		$params = explode('<#>',"$p0<#>$p1<#>$p2<#>$p3<#>$p4<#>$p5<#>$p6<#>$p7<#>$p8<#>$p9");

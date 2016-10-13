@@ -481,6 +481,12 @@ class cmsrt extends cms  {
 		return ($ret);
 	}
 	
+	public function encode_image_id($id=null, $encode=null) {
+	    if (!$id) return null;
+		$out = $encode ? md5($id) : $id;
+        return $out;
+	}		
+	
 	public function getmapf($name) {
 	
 	  if (empty($this->map_t)) return 0;

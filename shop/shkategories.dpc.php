@@ -84,7 +84,6 @@ class shkategories {
 	  $this->depthview = remote_paramload('SHKATEGORIES','depthview',$this->path);	
 	  
 	  $this->showcatbannerpath = remote_paramload('SHKATEGORIES','catbannerpath',$this->path);	
-	  //echo $this->showcatbannerpath,'>';
 	  $this->showcatimagepath = remote_paramload('SHKATEGORIES','catimagepath',$this->path);		  	  
 	  
 	  $this->rewrite = remote_paramload('SHKATEGORIES','rewrite',$this->path);
@@ -151,12 +150,7 @@ class shkategories {
 	//for utf strings as products code..encode to digits for saving image
 	public function encode_image_id($id=null) {
 	    if (!$id) return null;
-
-		if ($this->encodeimageid) 
-			$out = md5($id);	
-		else
-		    $out = $id;
-			
+		$out = _m("cmsrt.encode_image_id use $id+".$this->encodeimageid); //$this->encodeimageid ? md5($id) : $id;
         return $out;
 	}	
 	

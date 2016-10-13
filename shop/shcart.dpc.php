@@ -817,19 +817,8 @@ function addtocart(id,cartdetails)
 		$this->stock_msg = null;
 		$this->overitem = null;
 		$jcode = null;
-		$p_returned = null; 
 	   
-		//always due to price is get cmd and can change by hand
-		//if (($this->liveupdate) || ($update_from_db)) {
-			if ((defined('SHKATALOGMEDIA_DPC')))
-				$p_returned = _m('shkatalogmedia.update_prices use '.serialize($this->buffer));
-			elseif ((defined('SHKATALOG_DPC'))) 
-				$p_returned = _m('shkatalog.update_prices use '.serialize($this->buffer));
-			else  
-				$p_returned = null;
-			//echo 'update from db';  
-			//print_r($p_returned);
-		//}	
+		$p_returned = _m('shkatalogmedia.update_prices use '.serialize($this->buffer));
 	   
 		$this->read_policy();	   
 	   
@@ -857,17 +846,9 @@ function addtocart(id,cartdetails)
 		   
 				//new prices when updated from db (live)
 				if (is_array($p_returned) && isset($p_returned[$param[0]])) {
-					//$param[8] = $p_returned[$param[0]];
-					//echo $param[8],'<br>';
-			 
-					// selectedqty must always has a value >0 else return button not available
-					if ((defined('SHKATALOGMEDIA_DPC')))
-						$ap_price = _m("shkatalogmedia.read_array_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   			 
-					elseif ((defined('SHKATALOG_DPC'))) 
-						$ap_price = _m("shkatalog.read_array_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   
-
-					$param[8] = $ap_price?$ap_price:$p_returned[$param[0]];
-					//echo $param[0],"x $qty =",$param[9],'>',$ap_price,'>',$param[8],'<br/>';			 
+					
+					$ap_price = _m("shkatalogmedia.read_array_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   			 
+					$param[8] = $ap_price?$ap_price:$p_returned[$param[0]];		 
 				}
 				$p = floatval(str_replace(',','.',$param[8]));
 				$this->total = $this->total+($qty*$p);
@@ -1264,19 +1245,12 @@ function addtocart(id,cartdetails)
 				$param = explode(";",$product); 
 				$gr = $param[4];
 				$ar = $param[1];
-				$link = seturl("t=$command&cat=$gr&id=".$param[0] , $this->unreplace_cartchars($param[1]),null,null,null,true);//rewrite);
+				$link = seturl("t=$command&cat=$gr&id=".$param[0] , $this->unreplace_cartchars($param[1]),null,null,null,true);
 			   
-				if (defined("SHKATALOGMEDIA_DPC")) {
-					$itemphoto = _m("shkatalogmedia.get_photo_url use ".$param[7].'+1');
-					$linkimage = seturl("t=$command&cat=$gr&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$ar\">",null,null,null,true);//rewrite);
-				}
-				else
-					$linkimage = '&nbsp;';
+				$itemphoto = _m("shkatalogmedia.get_photo_url use ".$param[7].'+1');
+				$linkimage = seturl("t=$command&cat=$gr&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$ar\">",null,null,null,true);
+				$data[] = ($this->status==0) ? $linkimage : $aa . "&nbsp;" . $param[0];
 
-				if (!$this->status) 
-					$data[] = $linkimage;
-				else 
-					$data[] = $aa . "&nbsp;" . $param[0];
 			   
 				if ($this->cartlinedetails)
 					$details = $param[6] ? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null;
@@ -1419,14 +1393,8 @@ function addtocart(id,cartdetails)
 
 					$link = seturl("t=$pview&cat=$gr&id=".$param[0] , $this->unreplace_cartchars($param[1]),null,null,null,true);
 			   
-					if (defined("SHKATALOGMEDIA_DPC")) {
-						$itemphoto = _m("shkatalogmedia.get_photo_url use ".$param[7].'+1');
-						$linkimage = seturl("t=$pview&cat=$gr&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$ar\">",null,null,null,true);
-					}
-					else
-						$linkimage = '&nbsp;';			   
-
-
+					$itemphoto = _m("shkatalogmedia.get_photo_url use ".$param[7].'+1');
+					$linkimage = seturl("t=$pview&cat=$gr&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$ar\">",null,null,null,true);	   
 					$data[] = $linkimage;
 
 					if ($this->cartlinedetails)
@@ -2470,20 +2438,9 @@ function addtocart(id,cartdetails)
 		return ($out);
 	}
 
-    protected function quick_recalculate($update_from_db=null) {
+    protected function quick_recalculate() {
 
-	    $p_returned = null;	   
-	   
-	    if (($this->liveupdate) || ($update_from_db)) {
-			if ((defined('SHKATALOGMEDIA_DPC')))
-				$p_returned = _m('shkatalogmedia.update_prices use '.serialize($this->buffer));
-			elseif ((defined('SHKATALOG_DPC'))) 
-				$p_returned = _m('shkatalog.update_prices use '.serialize($this->buffer));
-			else  
-				$p_returned = null;
-			//echo 'update from db';  
-			//print_r($p_returned);
-	    }		
+		$p_returned = _m('shkatalogmedia.update_prices use '.serialize($this->buffer));	
 	   
 	    $this->read_policy();		   
 	   
@@ -2497,7 +2454,6 @@ function addtocart(id,cartdetails)
            
 				$counter+=1;
 				$param = explode(";",$product);
-				//print_r($param);
 		   
 				$qty = $param[9];		   
 				$selectedqty = intval($param[9]);
@@ -2506,26 +2462,16 @@ function addtocart(id,cartdetails)
 		   
 				//new prices when updated from db (live)
 				if (is_array($p_returned) && isset($p_returned[$param[0]])) {
-					//$param[8] = $p_returned[$param[0]];
-					//echo $param[8],'<br>';
-			 
-					if ((defined('SHKATALOGMEDIA_DPC')))
-						$ap_price = _m("shkatalogmedia.read_array_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   			 
-					elseif ((defined('SHKATALOG_DPC'))) 
-						$ap_price = _m("shkatalog.read_array_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   
-			 
-					$param[8] = $ap_price?$ap_price:$p_returned[$param[0]];
-					//echo $param[9],'>',$ap_price,'>',$param[8],'<br/>';
+
+					$ap_price = _m("shkatalogmedia.read_array_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   			 			 		   
+					$param[8] = $ap_price ? $ap_price : $p_returned[$param[0]];
 				}		   
 		   
 				$p = floatval(str_replace(',','.',$param[8]));
-				$this->total = $this->total+($qty*$p); //echo $qty,'-',$p,'-',$param[8],'<br>';
-				//echo $p;
-				//echo $param[9],'+';
+				$this->total = $this->total+($qty*$p); 
 			}
 	    }
 
-	    //echo '>',$this->qty_total;
 	    if ($this->itemscount)
 			SetSessionParam('qty_total',$counter);//items count
 	    else
@@ -3036,9 +2982,8 @@ function addtocart(id,cartdetails)
 				$itemscodes[] = $data[0];
 			}
 		}
-		//print_r($itemscodes);
 	  
-		if ((defined("SHKATALOGMEDIA_DPC")) && (!empty($itemscodes))) {
+		if (!empty($itemscodes)) {
 	   
 			$weights = _m('shkatalogmedia.read_item_weight use '.implode(';',$itemscodes));	
 

@@ -47,9 +47,6 @@ class shnsearch extends shsearch {
 	  $this->path = paramload('SHELL','prpath');
 	  $this->urlpath = paramload('SHELL','urlpath');
 	  $this->inpath = paramload('ID','hostinpath');			  
-	  
-	  //$this->_combo[0] = new nitobi("SubscribersList");
-      //$this->nitobi_javascript();	
 	  $this->imageclick = remote_paramload('SHNSEARCH','imageclick',$this->path);	
 
 	  $this->textsearch = remote_paramload('SHNSEARCH','textsearch',$this->path);	  
@@ -70,7 +67,7 @@ class shnsearch extends shsearch {
 	function event($event=null) {
 
 	  $this->text2find = GetParam('Input') ? GetParam('Input') : GetReq('input'); 
-	//echo $this->text2find,'>';
+
 	  switch ($event) {
 		  
 		case 'filter'         :     $this->do_filter_search($this->text2find, GetReq('cat')); //getreq input
@@ -123,138 +120,39 @@ class shnsearch extends shsearch {
 	  }			   	   	  
 		   
 	}
-/*
-	function nitobi_javascript() {
-
-      if (iniload('JAVASCRIPT')) {
-
-		   //$template = $this->set_template();   		      
-
-	       $code = $this->init_combo();					   	
-
-		   //$code .= $this->_grids[0]->OnClick(22,'QueueDetails',$template,'Vehicles','p_id',0);
-
-		   $js = new jscript;
-
-		   //$js->setloadparams("init()"); //added in html
-
-           //$js->load_js('nitobi.grid.js');		   	   
-
-           $js->load_js('nitobi.toolkit.js');				   		   
-           $js->load_js('nitobi.combo.js');		   		   
-           $js->load_js($code,"",1);			   			   
-
-		   unset ($js);
-	  }		
-	}	
-
-
-	function init_combo() {
-
-        //disable alert !!!!!!!!!!!!		
-
-		$out = "
-
-function alert() {}\r\n 
-
-
-function init()
-
-{
-
-";
-
-	   if (!empty($this->_combo)) {	  
-        foreach ($this->_combo as $n1=>$g1) {
-		  if (is_object($g1))
-		    $out .= $g1->init_combo($n1);		 
-		}
-	   }	   
-       $out .= "\r\n}";
-
-       return ($out);
-	}		
-
-	*/
 
 	function show_combo($title=null,$preselcat=null,$isleaf=null) {
-       //NITOBI
 
-	   /* $this->_combo[0]->set_combo_column_img('images/b_go.gif',16,1);	
-	    $this->_combo[0]->set_combo_column('color',170,0);
-	    $this->_combo[0]->set_combo_column('',200,2);
-
-
-	    //STATIC MODE
-
-	    $file = paramload('SHELL','prpath') . "colors.opt";
-	    $names = array('color','image','email');	 
-	    $data = explode(",",file_get_contents($file));	
-
-	    foreach ($data as $id=>$rec) {
-	     $mydata[] = array(trim($rec),'images/b_go.gif','xxx');
-	    }
-
-	    $this->_combo[0]->set_combo_data($mydata,implode("|",$names));					
-
-	    //$ret = $this->_combo[0]->set_combo();
-
-        $ret .= $this->_combo[0]->set_combo("175","360","300","",'unbound');	*/
-		
-		
-		//INTERNAL
-		if (defined("SHKATEGORIES_DPC"))//sql based cats			
-          $ret = GetGlobal('controller')->calldpc_method('shkategories.show_combo_results use '.$title.'+'.$preselcat.'+'.$isleaf);
-			 
-		
-		//$ret .='zzzz';		
-
+        $ret = _m('shkategories.show_combo_results use '.$title.'+'.$preselcat.'+'.$isleaf);
 		return ($ret);
-
 	}		
 	
 	//override
 	function do_quick_search($text2find,$comboselection=null) {
 	
-		  if (defined("SHKATALOGMEDIA_DPC")) {
-		      GetGlobal('controller')->calldpc_method('shkatalogmedia.do_quick_search use '.$text2find.'+'.$comboselection);
-	      }		
-          elseif (defined("SHKATALOG_DPC"))
-              GetGlobal('controller')->calldpc_method('shkatalog.do_quick_search use '.$text2find.'+'.$comboselection);
+		_m('shkatalogmedia.do_quick_search use '.$text2find.'+'.$comboselection);
 			  
 	}
 	
 	function do_filter_search($filter,$cat=null) {
 	
-		  if (defined("SHKATALOGMEDIA_DPC")) {
-		      GetGlobal('controller')->calldpc_method('shkatalogmedia.do_filter_search use '.$filter.'+'.$cat);
-	      }		
+		 _m('shkatalogmedia.do_filter_search use '.$filter.'+'.$cat);
 	}	
 	
 	//override
 	function search_categories($text2find=null,$template=null) {
-	
-		  if (defined("SHCATEGORIES_DPC")) {//text based cats
-		      //search&searchtype=$this->asphrase&input=".$text2find.
-		      $ret = GetGlobal('controller')->calldpc_method('shcategories.search_tree use '.$text2find."+klist+".$template);//klist or search in cat, =+search		
-	      }		
-          elseif (defined("SHKATEGORIES_DPC"))//sql based cats		
-		      //search&searchtype=$this->asphrase&input=".$text2find.	
-              $ret = GetGlobal('controller')->calldpc_method('shkategories.search_tree use ' . $text2find ."+klist+".$template);//klist or seach in cat,= +search
+		
+        $ret = _m('shkategories.search_tree use ' . $text2find ."+klist+".$template);//klist or seach in cat,= +search
 			  
-		  return ($ret);	  
+		return ($ret);	  
 	}		
 	
 	//override
 	function list_catalog($imageclick=null,$cmd=null,$template=null) {
 	
-		  if (defined("SHKATALOGMEDIA_DPC")) {
-		      $ret = GetGlobal('controller')->calldpc_method('shkatalogmedia.list_katalog use '.$imageclick.'+'.$cmd.'+'.$template.'++1');
-	      }		
-          elseif (defined("SHKATALOG_DPC"))
-              $ret = GetGlobal('controller')->calldpc_method('shkatalog.list_katalog use '.$imageclick.'+'.$cmd .'+'.$template . '++1');
-			  
-		  return ($ret);	  
+		$ret = _m('shkatalogmedia.list_katalog use '.$imageclick.'+'.$cmd.'+'.$template.'++1');
+
+		return ($ret);	  
 	}		
 	
 	//override
@@ -271,26 +169,13 @@ function init()
       //template form
 	  $template_file='searchform.htm';	   
 	  $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',$lan.'.',$template_file) ; 	
+		$contents = file_get_contents($tfile);	   
 
-      //in thios case mytemplate disbled
-	  //echo $tfile;
-      if (is_readable($tfile)) {
-		 $contents = file_get_contents($tfile);	   
-	     $template = 1;	     
-	  }	 
-	        
-
-      //print statistics
-	  if ($template) 
 	    $tokens[] = $this->stime . $message;
-	  else		  
-	    $out = $this->stime . $message;
 
-	  if ($template) { 
 	    $tokens[] = "<FORM name='searchform' action=". $filename . " method=POST>" . //post 
 		            "<INPUT type=\"text\" name=\"input\" value=\"$entry\" size=25 class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">"; 
-					
-					
+						
         if ($this->stype) {
 	      switch ($this->stype) {
 		    case $this->anyterms   : $tokens[] = "<SELECT name=searchtype class=\"myf_select\"> <OPTION selected>$this->anyterms<OPTION>$this->allterms<OPTION>$this->asphrase</OPTION></SELECT>"; break;
@@ -299,10 +184,9 @@ function init()
 			default                : $tokens[] = "<SELECT name=searchtype class=\"myf_select\"> <OPTION>$this->anyterms<OPTION>$this->allterms<OPTION selected>$this->asphrase</OPTION></SELECT>";break;
 	      }
 	    }
-	    else {
-		   //or//as a phrace
+	    else 
 		   $tokens[] = "<SELECT name=searchtype class=\"myf_select\"> <OPTION selected>$this->anyterms<OPTION>$this->allterms<OPTION>$this->asphrase</OPTION></SELECT>";					
-		}   
+ 
 		   
         if ($this->scase) $check = "checked"; else $check = "";
 		//disabled checkbox=hidden
@@ -314,73 +198,10 @@ function init()
 		
 		//search in cat form			
         $tokens[] = $this->searchin();							
-	  }	
-	  else {			
-        $toprint  = "<FORM name='searchform' action=". $filename . " method=POST>";//post
-	  
-        $field1[] = $this->t_searchtitle . ":";
-	    $attr1[] = "right;50%";	  
-        $field1[] = "<INPUT type=\"text\" name=\"input\" value=\"$entry\" size=25>";
-	    $attr1[] = "left;50%";
-	  
-	    $w1 = new window('',$field1,$attr1);  $toprint .= $w1->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field1);  unset ($attr1); unset ($w1);
-	  
-        $field2[] = $this->t_sttype . ":";
-	    $attr2[] = "right;50%";	  
-        if ($this->stype) {
-	      switch ($this->stype) {
-		    case $this->anyterms   : $field2[] = "<SELECT name=searchtype> <OPTION selected>$this->anyterms<OPTION>$this->allterms<OPTION>$this->asphrase</OPTION></SELECT>"; break;
-		    case $this->allterms   : $field2[] = "<SELECT name=searchtype> <OPTION>$this->anyterms<OPTION selected>$this->allterms<OPTION>$this->asphrase</OPTION></SELECT>";break;
-		    case $this->asphrase   : $field2[] = "<SELECT name=searchtype> <OPTION>$this->anyterms<OPTION>$this->allterms<OPTION selected>$this->asphrase</OPTION></SELECT>";break;
-	      }
-	    }
-	    else
-		   $field2[] = "<SELECT name=searchtype> <OPTION>$this->anyterms<OPTION>$this->allterms<OPTION selected>$this->asphrase</OPTION></SELECT>";
-	    $attr2[] = "left;50%";
-	    $w2 = new window('',$field2,$attr2);  $toprint .= $w2->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field2);  unset ($attr2); unset ($w2);
-		  	      
-        //check case sencitive param
-        $field3[] = $this->t_casesence . ":";	  
-	    $attr3[] = "right;50%";		  
-        if ($this->scase) $check = "checked"; else $check = "";
-        $field3[] = "<input type=\"checkbox\" name=\"searchcase\" value=\"$check \"". $check . ">";
-	    $attr3[] = "left;50%";		  
-	    $w3 = new window('',$field3,$attr3);  $toprint .= $w3->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field3);  unset ($attr3); unset ($w3);
 
-       /* $field4[] = "&nbsp";	  
-	    $attr4[] = "right;50%";		  		   
-        $field4[] = $this->searchin();
-	    $attr4[] = "left;50%";		  
-	    $w4 = new window('',$field4,$attr4);  $toprint .= $w4->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field4);  unset ($attr4); unset ($w4);	 		
-	  */
-	    $toprint .= "<input type=\"submit\" name=\"Submit\" value=\"$this->t_searchtitle\">"; 
-        $toprint .= "<input type=\"hidden\" name=\"FormAction\" value=\"$mycmd\">";
-        $toprint .= "</FORM>";
-	   
-	    $data2[] = $toprint; 
-  	    $attr2[] = "left";
-
-	    $swin = new window(localize('_SEARCH',getlocal()),$data2,$attr2);
-	    $out .= $swin->render("center::100%::0::group_dir_body::left::0::0::");	
-	    unset ($swin);
-		
-		//2nd form search in cats
-        $catform[] = localize('_SEARCHIN',getlocal());//"&nbsp";	  
-	    $attrform[] = "right;50%";		  		   
-        $catform[] = $this->searchin();
-	    $attrform[] = "left;50%";		  
-	    $cform = new window(localize('_SEARCHIN',getlocal()),$catform,$attrform);  
-		$out .= $cform->render("center::100%::0::group_dir_body::left::0::0::");   
-		unset ($cform);  	 		
-	  		
-	  }	
-
-	  if ($template) {	 		 	      
+		 	      
 		$tokout = $this->combine_tokens($contents,$tokens);
 		return ($tokout);    
-	  }
-	  else 		  
-        return ($out);
     }
 	
 	//override
@@ -389,50 +210,25 @@ function init()
 	   $extras = trim(GetParam('extras'));
 	   $price = trim(GetParam('price'));
 	   $price2 = trim(GetParam('price2'));	   
-
-	   //else	 
-		 //$msg = "&nbsp;(" . '0' .'&nbsp;'. localize('_founded',getlocal()) . ")";
-		  
-       //$out =  setNavigator($this->title . $msg);	
-	   //if ($f)	 	   
-	     //$msg = "&nbsp;(" . $f .'&nbsp;'. localize('_founded',getlocal()) . ")";
 		 	   
-	   $out .= $this->form(null,'search',$msg);
+	   $out = $this->form(null,'search',$msg);
 	   
 	   //KATEGORIES SEARCH
 	   $out .= $this->search_categories($this->text2find,'searchcatres.htm');
 	   
-	   $this->msg = null;//reset not to re-show in list_vehicles functions
-	   //$out .= $this->msg;
+	   $this->msg = null;
 	   
-	   $myimageclick = $this->imageclick?$this->imageclick:null;
+	   $myimageclick = $this->imageclick ? $this->imageclick : null;
 
-		 	   
-	   //$out .= $this->list_katalog_table(2,null,null,0,1);
 	   $out .= $this->list_catalog($myimageclick,'search&input='.$this->text2find,'searchres.htm');
+	  
 	   
-       //if ($this->meter) 
-	     //$out .= "<hr>";
-	   
-	   if (defined('SHKATALOGMEDIA_DPC'))	 
-	     $f1 = GetGlobal('controller')->calldpc_var('shkatalogmedia.max_selection');	   
-	   elseif (defined('SHKATALOG_DPC'))
-	     $f1 = GetGlobal('controller')->calldpc_var('shkatalog.max_selection');
+	    $f1 = _v('shkatalogmedia.max_selection');	   
 		 
-	   if (defined('SHKATEGORIES_DPC'))	 
-	     $f2 = GetGlobal('controller')->calldpc_var('shkategories.max_selection');	   
-	   elseif (defined('SHCATEGORIES_DPC'))
-	     $f2 = GetGlobal('controller')->calldpc_var('shcategories.max_selection');		
+	    $f2 = _v('shkategories.max_selection');	   	
 		 
 	   $f = $f1+$f2;	  
 	   	
-	   /*if ($f)	 	   
-	     $msg = "&nbsp;(" . $f .'&nbsp;'. localize('_founded',getlocal()) . ")";
-		 	   
-	   $out .= $this->form(null,'search',$msg);
-	   */
-
-	   
 	   return ($out);	
 	}	
 	
@@ -474,10 +270,7 @@ function get_stype()
 	//override
 	function searchin($staticmenu=0) {
 	
-		//INTERNAL
-		if (defined("SHKATEGORIES_DPC")) {//sql based cats			
-          $ret = GetGlobal('controller')->calldpc_method('shkategories.show_combo_results use '.$title.'+'.$preselcat.'+'.$isleaf.'+search');
-	    }		
+        $ret = _m('shkategories.show_combo_results use '.$title.'+'.$preselcat.'+'.$isleaf.'+search');
 		
 		return ($ret);
 	}	
@@ -495,14 +288,8 @@ function get_stype()
 		 
 	  if (!empty($fields)) {	
 	  
-
 		   $extra_codes = (array) $this->search_additional_files($terms);
-		   //print_r($extra_codes);
-		   //echo count($extra_codes),"<br>";
-		   
 		   $extra2_codes = (array) $this->search_attachments($terms);
-		   //print_r($extra2_codes);
-		   //echo count($extra2_codes),"<br>";		
 		   
 		   if ((!empty($extra_codes)) || (!empty($extra2_codes)))
 		     $extra_codes = array_merge($extra_codes,$extra2_codes);   
@@ -681,7 +468,6 @@ function get_stype()
 	  if (empty($result))
 	    return $nullarray;
 		
-	  //print_r($result);
 	  foreach ($result as $n=>$rec) {  
 	    $ret[$rec[0]] = $rec[0];
 	  }
@@ -725,8 +511,6 @@ function get_stype()
 		if (!empty($result)) {
 			//print_r($result);
 			foreach ($result as $n=>$t) {
-				//print_r($t); 
-				//echo $t[0];
 				if (trim($t[0])!='') {
 					$tokens[] = $t[0];
 					$tokens[] = $t[1];
@@ -765,21 +549,18 @@ function get_stype()
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
 		  $fp = new fronthtmlpage(null);
 		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+		  unset ($fp);		  		
 		}		  		
 		else
 		  $ret = $template_contents;
 		  
 		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 		//clean unused token marks
 		for ($x=$i;$x<20;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
