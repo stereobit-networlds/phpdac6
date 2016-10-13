@@ -86,7 +86,7 @@ class shkategories {
 	  $this->showcatbannerpath = remote_paramload('SHKATEGORIES','catbannerpath',$this->path);	
 	  $this->showcatimagepath = remote_paramload('SHKATEGORIES','catimagepath',$this->path);		  	  
 	  
-	  $this->rewrite = remote_paramload('SHKATEGORIES','rewrite',$this->path);
+	  //$this->rewrite = remote_paramload('SHKATEGORIES','rewrite',$this->path); //DISABLED
 	  $this->notencodeurl = remote_paramload('SHKATEGORIES','notencodeurl',$this->path);
 	  $this->result_in_table = remote_paramload('SHKATEGORIES','resultintable',$this->path);
 	  
@@ -330,22 +330,22 @@ class shkategories {
 				  				  				  
 				  
                   switch ($type) {
-                    case  2 :  $mytokens[] =  seturl("t=$ti&cat=$gr",$loctitle,null,null,null,$this->rewrite) . "<br>";
+                    case  2 :  $mytokens[] =  seturl("t=$ti&cat=$gr",$loctitle,null,null,null,true) . "<br>";
 							   break;
 							   
-                    case  3 :  $mytokens[] = seturl("t=$ti&cat=$gr","<B>".$loctitle."</B",null,null,null,$this->rewrite);
+                    case  3 :  $mytokens[] = seturl("t=$ti&cat=$gr","<B>".$loctitle."</B",null,null,null,true);
                                break;
 							   
-					case  4 :  $mytokens[] = seturl("t=$ti&cat=$gr","<B>" . $loctitle . "</B>",null,null,null,$this->rewrite);
+					case  4 :  $mytokens[] = seturl("t=$ti&cat=$gr","<B>" . $loctitle . "</B>",null,null,null,true);
 					           break;
 
 					case  1 : 
                     default : 
-					             $mytokens[] = seturl("t=$ti&cat=$gr",$loctitle,null,null,null,$this->rewrite) . " " . $this->outpoint . " ";
-								 $tok2[$i][] = seturl("t=$ti&cat=$gr",$loctitle,null,null,null,$this->rewrite) . " " . $this->outpoint . " ";
+					             $mytokens[] = seturl("t=$ti&cat=$gr",$loctitle,null,null,null,true) . " " . $this->outpoint . " ";
+								 $tok2[$i][] = seturl("t=$ti&cat=$gr",$loctitle,null,null,null,true) . " " . $this->outpoint . " ";
 								 $tok2[$i][] = $gr; //cat name
 								 $tok2[$i][] = $loctitle; //cat title
-								 $tok2[$i][] = seturl("t=$ti&cat=$gr",null,null,null,null,$this->rewrite);//url
+								 $tok2[$i][] = seturl("t=$ti&cat=$gr",null,null,null,null,true);//url
 								 $tok2[$i][] = $this->get_image_icon($gr);//$this->show_category_image();//image
 							   
 							   
@@ -400,7 +400,7 @@ class shkategories {
 
 			 
 			  $cgroup = $ptree[$cd+1]; 		 		
-              $mycat = "$treespaces$this->outpoint <a href=\"" . seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite) . "\">";
+              $mycat = "$treespaces$this->outpoint <a href=\"" . seturl("t=$t&cat=$gr",null,null,null,null,true) . "\">";
 			  $mycat .= summarize(($wordlength-$sp),$line);	
 			  $mycat .= "</a>";
 			  
@@ -465,7 +465,7 @@ class shkategories {
 
 				$tokens[0] = $_id;
 				$tokens[1] = summarize(($wordlength-$sp),$line);//accordion cat name
-				$tokens[2] = null;//seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //url
+				$tokens[2] = null;//seturl("t=$t&cat=$gr",null,null,null,null,true); //url
 
 				//if ($cgroup==$line) {
 				if (mb_strstr($cgroup,$_id)) {
@@ -475,7 +475,7 @@ class shkategories {
 						$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
+						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,true); 
 						$out .= $this->combine_tokens($template,$tokens,true);
 						unset($tokens);
 						unset($subcat_tokens);
@@ -486,12 +486,12 @@ class shkategories {
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
+						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,true); 
 						
 						if ($mode)
 							$out .= $this->combine_tokens($template,$tokens,true);						
 						else				   
-							$out .= ($group) ? '<li>'.seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line),null,null,null,$this->rewrite).'</li>' : null;										   					
+							$out .= ($group) ? '<li>'.seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line),null,null,null,true).'</li>' : null;										   					
 						
 						//print_r($tokens);	
 						unset($tokens);
@@ -557,7 +557,7 @@ class shkategories {
 						$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
+						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,true); //$gr; //current cat / link
 						$out .= $this->combine_tokens($template,$tokens,true);
 						unset($tokens);
 						unset($subcat_tokens);
@@ -569,12 +569,12 @@ class shkategories {
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite); //$gr; //current cat / link
+						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,true); //$gr; //current cat / link
 						
 						if ($mode)
 							$out .= $this->combine_tokens($template,$tokens,true);						
 						else			   
-							$out .= ($group) ? '<li>'.seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line),null,null,null,$this->rewrite).'</li>' : null;										   					
+							$out .= ($group) ? '<li>'.seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line),null,null,null,true).'</li>' : null;										   					
 						
 						unset($tokens);
 						unset($subcat_tokens);	
@@ -613,7 +613,7 @@ class shkategories {
 
 			  if ($outpoint)
 			    $mycat .= str_repeat('&nbsp;',$outpoint) . $this->outpoint;		  
-              $mycat .= "<a href=\"" . seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite);
+              $mycat .= "<a href=\"" . seturl("t=$t&cat=$gr",null,null,null,null,true);
 			  
 			  if ($linkclass) 
 			    $mycat .=  "\" class=\"$linkclass\">";
@@ -622,11 +622,9 @@ class shkategories {
 				
 			  $mycat .= $line;		
 			  $mycat .= "</a>";	
-			  
-			  //$winbody = $this->read_selected_tree($folder,$t,$mystylesheet,$outpoint);
 		
-			  $tokens[] = ($linksonly) ? seturl("t=$t&cat=$gr",null,null,null,null,$this->rewrite) :
-				                             ($titlesonly ? $line : ($idsonly ? $id : $mycat));
+			  $tokens[] = ($linksonly) ? seturl("t=$t&cat=$gr",null,null,null,null,true) :
+				                        ($titlesonly ? $line : ($idsonly ? $id : $mycat));
 			  $tokens[] = $id;//$winbody;
 			  $out .= $this->combine_tokens($mytemplate, $tokens, true);					
 
@@ -924,12 +922,12 @@ class shkategories {
 					  
 			      $mygroup = $curl;
 			   
-			      $a = seturl("t=$t&cat=$mygroup",null,null,null,null,$this->rewrite);
-				  $b = "<a href=\"" . seturl("t=$t&cat=$mygroup",null,null,null,null,$this->rewrite) . "\">" . $locname . "</a>";
+			      $a = seturl("t=$t&cat=$mygroup",null,null,null,null,true);
+				  $b = "<a href=\"" . seturl("t=$t&cat=$mygroup",null,null,null,null,true) . "\">" . $locname . "</a>";
 		        }	
 	            else {
-   	              $a = seturl("t=",null,null,null,null,$this->rewrite);
-				  $b = "<a href=\"" . seturl("t=",null,null,null,null,$this->rewrite) . "\">" . $locname . "</a>";					
+   	              $a = seturl("t=",null,null,null,null,true);
+				  $b = "<a href=\"" . seturl("t=",null,null,null,null,true) . "\">" . $locname . "</a>";					
 			    }
 				
 			    $ablink = ($nolinks) ? $a : $b;						  
@@ -964,14 +962,14 @@ class shkategories {
 		           break;
           case 1  ://toplevel
 		  default :if ($url) 
-		              $ret = seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,$this->rewrite);
+		              $ret = seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
                    else 
 		              $ret = array_pop(array_reverse($mycattree));	  
 		}
 	  }	
 	  else {//actual
 	    if ($url) 
-		  $ret = seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,$this->rewrite);
+		  $ret = seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
         else	  
 	      $ret = array_pop($mycattree);	  	
 	  }
@@ -1118,35 +1116,35 @@ class shkategories {
 
                  if (($rec['cat0']) && ($this->depthview>=1)) {
 				      if ($links)
-					    $ck[0] = seturl("t=$cmd&cat=".$rec['cat0'],$_cat0,null,null,null,$this->rewrite);
+					    $ck[0] = seturl("t=$cmd&cat=".$rec['cat0'],$_cat0,null,null,null,true);
 					  else
                         $ck[0] = $_cat0;
 				 }  	
 				 	
                  if (($rec['cat1']) && ($this->depthview>=2)) {
 				      if ($links)
-					    $ck[1] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'],$_cat1,null,null,null,$this->rewrite);
+					    $ck[1] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'],$_cat1,null,null,null,true);
 					  else				   
                         $ck[1] = $_cat1;
 				 }		
 
                  if (($rec['cat2']) && ($this->depthview>=3)) {
 				      if ($links)
-					    $ck[2] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'],$_cat2,null,null,null,$this->rewrite);
+					    $ck[2] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'],$_cat2,null,null,null,true);
 					  else					 
                         $ck[2] = $_cat2;
 				 }		  
  
                  if (($rec['cat3']) && ($this->depthview>=4)) {
 				    if ($links)
-					  $ck[3] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'],$_cat3,null,null,null,$this->rewrite);
+					  $ck[3] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'],$_cat3,null,null,null,true);
 					else				 
                       $ck[3] = $_cat3;
 				 }	
 				   
                  if (($rec['cat4']) && ($this->depthview>=5)) {
 				    if ($links)
-					  $ck[4] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'].$this->cseparator.$rec['cat4'],$this->replace_spchars($rec['cat4']),null,null,null,$this->rewrite);
+					  $ck[4] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'].$this->cseparator.$rec['cat4'],$this->replace_spchars($rec['cat4']),null,null,null,true);
 					else				 
                       $ck[4] = $this->replace_spchars($rec['cat4']);
 				 }	
