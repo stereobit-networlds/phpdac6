@@ -1207,7 +1207,7 @@ class cpmhtmleditor {
 			$xcat = explode($this->cseparator, $scat);
 			foreach($xcat as $i=>$c) {
 				$ic = $i+2;
-				$w[] = "cat{$ic}=" . $db->qstr($c);
+				$w[] = "cat{$ic}=" . $db->qstr($this->replace_spchars($c,1));
 			}	
 			$sSQL .= implode(' AND ', $w);	
 		}
@@ -1243,7 +1243,7 @@ class cpmhtmleditor {
 			$xcat = explode($this->cseparator, $scat);
 			foreach($xcat as $i=>$c) {
 				$ic = $i+2;
-				$w[] = "cat{$ic}<>" . $db->qstr($c);
+				$w[] = "cat{$ic}<>" . $db->qstr($this->replace_spchars($c,1));
 			}	
 			$sSQL .= implode(' AND ', $w);	
 		}		
@@ -1553,7 +1553,7 @@ class cpmhtmleditor {
 		
 		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
 		
-		if (!$var) return $cpGet['cat'];
+		if (!$var) return ($this->replace_spchars($cpGet['cat'],1)); //without special chars
 		return ($cpGet['id']);
 	}
 	
