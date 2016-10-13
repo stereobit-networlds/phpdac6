@@ -154,7 +154,7 @@ class shkatalogmedia extends shkatalog {
 								 if ($dpc = GetReq('dpc')) {//special phpdac page..read
 								   $dpccmd = str_replace(',','+',$dpc);	
                                    //echo '>',$dpccmd; 								   
-								   GetGlobal('controller')->calldpc_method($dpccmd);		  
+								   _m($dpccmd);		  
 								 }  
 		                      
 								 $xml = $this->sitemap_feed(true);
@@ -168,13 +168,13 @@ class shkatalogmedia extends shkatalog {
 								 else {//special phpdac page..read
 								   $dpccmd = str_replace(',','+',GetReq('dpc'));	
                                    //echo '>',$dpccmd; 								   
-								   GetGlobal('controller')->calldpc_method($dpccmd);		  
+								   _m($dpccmd);		  
 								 }  
 								 $xml = $this->katalog_feed();
 								 die($xml);	//xml output
 		                         break;
 								 
-		  case 'xmlout'        : GetGlobal('controller')->calldpc_method("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //..to do also in cp chars etc //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
+		  case 'xmlout'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //..to do also in cp chars etc //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
 		                         $this->xmlread_list();
 								 $xml = $this->xml_feed();
 								 die($xml);	//xml output
@@ -182,11 +182,11 @@ class shkatalogmedia extends shkatalog {
 		  //cart override
 	      case 'addtocart'     : $cartstr = explode(';', GetReq('a')); 
 		                         $item = array_shift($cartstr); 
-		                         GetGlobal('controller')->calldpc_method("cmsvstats.update_item_statistics use $item+cartin");
+		                         _m("cmsvstats.update_item_statistics use $item+cartin");
 		                         break; 
 		  case 'removefromcart': $cartstr = explode(';', GetReq('a'));
 		                         $item = array_shift($cartstr);
-		                         GetGlobal('controller')->calldpc_method("cmsvstats.update_item_statistics use $item+cartout");	                         
+		                         _m("cmsvstats.update_item_statistics use $item+cartout");	                         
 		                         break;		
 		
 		  case 'showimage'    : $this->show_photodb(GetReq('id'), GetReq('type'));
@@ -194,14 +194,14 @@ class shkatalogmedia extends shkatalog {
 		  case 'kfilter'      : $filter = GetReq('input');
 		                        $this->my_one_item = $this->fread_list($filter); 
 								$_filter = $this->replace_spchars($filter,1);
-								GetGlobal('controller')->calldpc_method("cmsvstats.update_category_statistics use $_filter+filter");		  
+								_m("cmsvstats.update_category_statistics use $_filter+filter");		  
 		                        break;		
 		  case 'klist'        : $this->my_one_item = $this->read_list(); 
-		                        GetGlobal('controller')->calldpc_method("cmsvstats.update_category_statistics use ".GetReq('cat'));//$this->replace_spchars(GetReq('cat'),1));		  
+		                        _m("cmsvstats.update_category_statistics use ".GetReq('cat'));//$this->replace_spchars(GetReq('cat'),1));		  
 		                        break;	
 
 		  case 'kshow'        : $this->read_item(); 
-	                            GetGlobal('controller')->calldpc_method("cmsvstats.update_item_statistics use ".GetReq('id'));
+	                            _m("cmsvstats.update_item_statistics use ".GetReq('id'));
                                 break;
 								
 		  default             : shkatalog::event($event);
@@ -230,7 +230,7 @@ class shkatalogmedia extends shkatalog {
 								    $out = $this->default_action();
 								}  
 								else
-								  $out = GetGlobal('controller')->calldpc_method("shcart.cartview");   
+								  $out = _m("shcart.cartview");   
 		                        break;			
 		
           case 'kfilter'      :	if (in_array('beforeitemslist',$this->catbanner))//before
@@ -328,7 +328,7 @@ class shkatalogmedia extends shkatalog {
 		
 		if ($text2find) {
 			
-		  GetGlobal('controller')->calldpc_method("cmsvstats.update_category_statistics use $text2find+search");				
+		  _m("cmsvstats.update_category_statistics use $text2find+search");				
 		
 		  $parts = explode(" ",$text2find);//get special words in text like code:  
 	
@@ -342,7 +342,7 @@ class shkatalogmedia extends shkatalog {
 		    default      : //normal search
 		  
 		    if (defined("SHNSEARCH_DPC")) {
-              $sSQL .= '('. GetGlobal('controller')->calldpc_method('shnsearch.findsql use '.$text2find.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark++'.$stype.'+'.$scase);		  
+              $sSQL .= '('. _m('shnsearch.findsql use '.$text2find.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark++'.$stype.'+'.$scase);		  
             }
 			else { 			  	
 	          $sSQL .= '(' . " ( {$this->itmname} like '%" . strtolower($text2find) . "%' or " .
@@ -437,7 +437,7 @@ class shkatalogmedia extends shkatalog {
 		
 		  if (defined("SHNSEARCH_DPC")) {
 			  $mytext = $filter ? $this->replace_spchars($text2find,1) : $text2find; //search by user or filter 
-              $whereClause = GetGlobal('controller')->calldpc_method('shnsearch.findsql use '.$mytext.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark<@>manufacturer++'.$stype.'+'.$scase);		  
+              $whereClause = _m('shnsearch.findsql use '.$mytext.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark<@>manufacturer++'.$stype.'+'.$scase);		  
           }
 		  else {		
 			 $mytext = $filter ? $this->replace_spchars($text2find,1) : strtolower($text2find); //search by user or filter			  
@@ -1043,9 +1043,9 @@ class shkatalogmedia extends shkatalog {
 				$cart_photo = $rec[$this->fcode];//$this->get_photo_url($rec[$this->fcode],$pz);
 				$cart_price = $price;
 				$cart_qty   = 1;//???				 
-				$cart = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
+				$cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
 				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
-				$in_cart = GetGlobal('controller')->calldpc_method("shcart.getCartItemQty use ".$rec[$item_code]);
+				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]);
 			 }	
 			 else
                 $cart = null;  			 
@@ -1191,9 +1191,9 @@ class shkatalogmedia extends shkatalog {
 				$cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
 				$cart_photo = $rec[$item_code];//$this->get_photo_url($rec[$this->fcode],$pz);
 				$cart_price = $price;				 
-				$icon_cart  = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
+				$icon_cart  = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
 				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
-				$in_cart = GetGlobal('controller')->calldpc_method("shcart.getCartItemQty use ".$rec[$item_code]);
+				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]);
 			 }	
 			 else	
 			    $icon_cart = null;
@@ -1304,8 +1304,8 @@ class shkatalogmedia extends shkatalog {
 			 $cart_price = $price;
 			 $cart_qty = 1;//???
 			 if (defined("SHCART_DPC")) {
-				$in_cart = GetGlobal('controller')->calldpc_method("shcart.getCartItemQty use ".$rec[$item_code]); 
-				$icon_cart = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
+				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]); 
+				$icon_cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
 				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				
 			    $units = $rec['uniname2'] ? localize($rec['uniname1'],$lan).'/'.localize($rec['uniname2'],$lan):
@@ -1391,7 +1391,7 @@ class shkatalogmedia extends shkatalog {
 	    }//if recs
 	    else {
 		  if ($this->itemlockparam) 
-		    $out = ($goto = $this->itemlockgoto) ? GetGlobal('controller')->calldpc_method($goto) : localize('_lockrec',getlocal());
+		    $out = ($goto = $this->itemlockgoto) ? _m($goto) : localize('_lockrec',getlocal());
 		  else 
 		    $out = localize('_norec',getlocal());
 	    }	   
@@ -1401,14 +1401,11 @@ class shkatalogmedia extends shkatalog {
 	
 
     //overrided
-	function show_aditional_files($id,$nojs=null,$altname=null,$tmpl=null) {
+	public function show_aditional_files($id,$nojs=null,$altname=null,$tmpl=null) {
 	     if (!$id) return;
 	     $cat = GetReq('cat');
 		 $title = $altname ? $altname : $id;
-	     //$cat = $cat ? $cat : GetGlobal('controller')->calldpc_var('shtags.tagcat');
-		 //$id = $id ? $id : GetGlobal('controller')->calldpc_var('shtags.tagitem');
 		 $name = $id;
-		 //if ($this->encodeimageid) //check inside func
 		 $id = $this->encode_image_id($id); 
 		 
 	     $addfx = $this->addfx?$this->addfx:100;
@@ -1464,7 +1461,7 @@ class shkatalogmedia extends shkatalog {
 	}
 	
 	//overrwriiten
-	function show_aditional_html_files($id) {	
+	public function show_aditional_html_files($id) {	
          $db = GetGlobal('db');	
 	     $lan = getlocal();
 		 $slan =  ($this->one_attachment) ? $slan : ($lan ? $lan : '0'); 
@@ -1482,7 +1479,7 @@ class shkatalogmedia extends shkatalog {
 	}	
 	
 	
-	function show_p($p,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_p($p,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');					
 		$pz = $photosize?$photosize:1;		
 	                                                                             
@@ -1513,7 +1510,7 @@ class shkatalogmedia extends shkatalog {
 		return ($out);	
 	}		
 	
-	function show_pcat($p,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_pcat($p,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');		
 		$mycat = $category ? $category : GetReq('cat');	   			
 		$pz = $photosize?$photosize:1;			
@@ -1569,7 +1566,7 @@ class shkatalogmedia extends shkatalog {
 		return ($out);	
 	}
 	
-	function show_lastincat($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_lastincat($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');		
 		$mycat = $category?$category:GetReq('cat');	   		
 		$pz = $photosize?$photosize:1;		
@@ -1611,7 +1608,7 @@ class shkatalogmedia extends shkatalog {
 		return ($out);	
 	}		
 
-	function show_orderid($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_orderid($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');		
 		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   		
 		$pz = $photosize?$photosize:1;		
@@ -1667,7 +1664,7 @@ class shkatalogmedia extends shkatalog {
 		return ($out);	
 	}	
 	
-	function show_orderidis($orderid=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_orderidis($orderid=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');		
 		$mycat = $category?$category:GetReq('cat');	   			
 		$pz = $photosize?$photosize:1;			
@@ -1695,7 +1692,7 @@ class shkatalogmedia extends shkatalog {
 		return ($out);	
 	}	
 	
-	function show_resources($contition,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$ofield=null,$desc=null) {
+	public function show_resources($contition,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$ofield=null,$desc=null) {
         $db = GetGlobal('db');					
 		$pz = $photosize?$photosize:1;	
         $ordfield = $ofield ? $ofield : $this->itmname;
@@ -1727,7 +1724,7 @@ class shkatalogmedia extends shkatalog {
 	}			
 	 
 	 
-	function show_group($group,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_group($group,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');				
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
@@ -1760,7 +1757,7 @@ class shkatalogmedia extends shkatalog {
 	}	 
 	 
 	//override
-	function show_special($contition,$items=10,$days=12,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_special($contition,$items=10,$days=12,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');			
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
@@ -1793,7 +1790,7 @@ class shkatalogmedia extends shkatalog {
 		return ($out);	
 	}	
 	
-	function show_special_online($field2check,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$key=null) {
+	public function show_special_online($field2check,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$key=null) {
         $db = GetGlobal('db');
 		$dbbuffer = GetGlobal('_sqlbuffer');		
 		$pz = $photosize?$photosize:1;						
@@ -1884,14 +1881,14 @@ class shkatalogmedia extends shkatalog {
 	}			
 	
 	//alias
-	function show_relatives($key,$field2check=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_relatives($key,$field2check=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
 	
       $ret = show_special_online($field2check,$items,$linemax,$imgx,$imgy,$imageclick,$template,$ainfo,$external_read,$photosize,$key);	
 	  return ($ret);
 	}
 	
 	//??? NOT USED ????
-	function sql_search_relative_titles($mastertitle,$field2check) {
+	public function sql_search_relative_titles($mastertitle,$field2check) {
         $db = GetGlobal('db');	
 		$remarks = 'itmremark';	
 		$sqlout = null;		
@@ -1923,14 +1920,14 @@ class shkatalogmedia extends shkatalog {
 		  return null;
 	} 
 	
-	function show_relative_sales($id,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_relative_sales($id,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
 	   $myid = $id?$id:GetReq('id');
        $db = GetGlobal('db');			
 	   $pz = $photosize?$photosize:1;	  	    
 	
        if ( (defined('SHTRANSACTIONS_DPC')) && (seclevel('SHTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 
-	     $itemslist = GetGlobal('controller')->calldpc_method('shtransactions.getRelativeSales use '.$items.'+'.$myid);
+	     $itemslist = _m('shtransactions.getRelativeSales use '.$items.'+'.$myid);
 	     //print_r($itemslist); //echo 'z';
 		 
 		 if (!empty($itemslist)) {
@@ -1966,7 +1963,7 @@ class shkatalogmedia extends shkatalog {
 	}
 	
 	//override
-	function show_kategory_items($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
+	public function show_kategory_items($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
         $db = GetGlobal('db');			
 		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
 		$cat = explode($this->cseparator,$mycat);		
@@ -2027,7 +2024,7 @@ class shkatalogmedia extends shkatalog {
 	}		
 	
 	//for sitemap call
-	function show_sitemap_items($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
+	public function show_sitemap_items($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
         $db = GetGlobal('db');		
 		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
 		$cat = explode($this->cseparator,$mycat);		
@@ -2056,7 +2053,7 @@ class shkatalogmedia extends shkatalog {
 		return ($out);	
 	}		
 	
-	function show_sitemap($template=null) {
+	public function show_sitemap($template=null) {
        $db = GetGlobal('db');
 	   $start = GetReq('start');
 	   $headcat = GetReq('headcat')?GetReq('headcat'):"";	   
@@ -2140,7 +2137,7 @@ class shkatalogmedia extends shkatalog {
 	   return ($ret);		   		   	
 	}
 	
-	function read_item_attr($item=null,$attr=null,$islink=null) {
+	public function read_item_attr($item=null,$attr=null,$islink=null) {
         $db = GetGlobal('db');					
 		
 		if (!$item) 
@@ -2164,7 +2161,7 @@ class shkatalogmedia extends shkatalog {
 		}  									
 	}
 	
-	function read_item_weight($itemsarray=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function read_item_weight($itemsarray=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');						
 		$pz = $photosize?$photosize:1;	
 		
@@ -2206,8 +2203,7 @@ class shkatalogmedia extends shkatalog {
 	}		
 	
 	//override
-	
-	function show_last_viewed_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
+	public function show_last_viewed_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');							
 		$c = $category?$category:GetReq('cat');
@@ -2246,7 +2242,7 @@ class shkatalogmedia extends shkatalog {
 	}	
 	
 	/*session mode due to big stats*/
-	function show_last_viewed_items_session($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
+	public function show_last_viewed_items_session($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');						
 		$c = $category?$category:GetReq('cat');	
@@ -2280,7 +2276,7 @@ class shkatalogmedia extends shkatalog {
 	}		
 	
 	//override
-	function show_offers($items=10,$cat=null,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
+	public function show_offers($items=10,$cat=null,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
         $db = GetGlobal('db');				
 		$pz = $photosize?$photosize:1;			
 
@@ -2318,7 +2314,7 @@ class shkatalogmedia extends shkatalog {
 	}	
 		
 	
-    function katalog_feed($read_all=false, $off_categories=false, $off_items=false) {
+    public function katalog_feed($read_all=false, $off_categories=false, $off_items=false) {
       $db = GetGlobal('db');  
       $format = GetReq('format')?GetReq('format'):'rss2';	
 	  $code = $this->fcode;
@@ -2413,7 +2409,7 @@ class shkatalogmedia extends shkatalog {
 	  return($data);	  
     }	
 	
-    function sitemap_feed($read_all=false) {
+    public function sitemap_feed($read_all=false) {
 	  $db = GetGlobal('db');
       $i=0;	  
       $format = 'sitemap';	
@@ -2457,7 +2453,7 @@ class shkatalogmedia extends shkatalog {
 	  return($data);	  
     }		
 
-	function xml_formater(& $xml,$format=null,$init=null,$params=null,$encoding=null) {
+	protected function xml_formater(& $xml,$format=null,$init=null,$params=null,$encoding=null) {
 	
 	      $date = date(DATE_RFC822);//'m-d-Y');
 		  $cat_title = $this->getcurrentkategory();
@@ -2599,7 +2595,7 @@ class shkatalogmedia extends shkatalog {
 		  return 0;
 	}	
 
-	function get_xml_links($mylan=null,$feed_id=null,$dpcfeed=null) {
+	public function get_xml_links($mylan=null,$feed_id=null,$dpcfeed=null) {
 	  $lan = $mylan?$mylan:getlocal();//by hand per htm 0,1 page
 	  $lnk = array();
 	  $id = GetReq('id');
@@ -2662,7 +2658,7 @@ class shkatalogmedia extends shkatalog {
 	}	
 	
     //read dir for rss page
-	function read_all_items() {
+	protected function read_all_items() {
        $db = GetGlobal('db');
 	   $lan = GetReq('lan')>=0?GetReq('lan'):getlocal();	//in case of post sitemap set lan param uri   
 	   $start = GetReq('start');
@@ -2737,7 +2733,7 @@ class shkatalogmedia extends shkatalog {
 		return ($ret);		
 	}	
 	
-	function show_last_edited_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$photosize=null,$nopager=null) {	
+	public function show_last_edited_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$photosize=null,$nopager=null) {	
 	     $limit = $items ? $items : 5;
          $db = GetGlobal('db');	
 	     $lan = getlocal();	
@@ -2788,7 +2784,7 @@ class shkatalogmedia extends shkatalog {
 		 return ($out);			 
 	}	
 	
-	function item_var($field=null,$code=null, $photosize=null, $array=null) {	
+	public function item_var($field=null,$code=null, $photosize=null, $array=null) {	
         $db = GetGlobal('db');					
 		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;		
 		
@@ -2810,27 +2806,22 @@ class shkatalogmedia extends shkatalog {
 	}	
 
 	//select price type..overriten error when no cart
-	function spt($price,$tax=null) {
-      //echo $tax;
-	  
-	  if ($tax) {
-        $p = $this->pricewithtax($price,$tax);	  
-	  }
-	  elseif ($this->is_reseller) {
-	    $p = $price;
-	  }	
-	  elseif ((defined('SHCART_DPC')) && 
-	         (GetGlobal('controller')->calldpc_var('shcart.showtaxretail'))) {//retal handl
-	    $p = $this->pricewithtax($price,$tax);
-	  }
-	  else
-	    $p = $price;		
-	  //echo '>',$p;
-	  return ($p);
+	public function spt($price,$tax=null) {
+
+		if ($tax) 
+			$p = $this->pricewithtax($price,$tax);	  
+		elseif ($this->is_reseller) 
+			$p = $price;
+		elseif ((defined('SHCART_DPC')) && (_v('shcart.showtaxretail'))) 
+			$p = $this->pricewithtax($price,$tax);
+		else
+			$p = $price;		
+
+		return ($p);
 	}
 	
 	//override multiple prices based on file array
-	function read_array_policy($itemcode=null,$price=null,$cart_details=null,$policyqty=null) {
+	public function read_array_policy($itemcode=null,$price=null,$cart_details=null,$policyqty=null) {
 	  $cat = $pcat?$pcat:GetReq('cat');
 	  $cart_page = GetReq('page')?GetReq('page'):0;	  	
 	  $file = $this->path . $itemcode . '.txt'; //echo $file;
@@ -2870,13 +2861,13 @@ class shkatalogmedia extends shkatalog {
 			foreach ($data_array['PRICE'] as $ix=>$ax) {
 			  $data[] = $data_array['QTY'][$ix];
 	 
-			  $cartd[8] = $price?$price+($price*$ax/100):$ax;//'22.23';
+			  $cartd[8] = $price ? $price+($price*$ax/100) : $ax;
 			  $cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
 			  
 		      $data[] =	number_format($cartd[8],$this->decimals,',','.');		  
 			  
 			  $cartout = implode(';',$cartd);
-			  $data[] = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+			  $data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
 			  $data[] = $itemcode;
 			  $data[] = "addcart/$cartout/$cat/0/";
 			 
@@ -2914,7 +2905,7 @@ class shkatalogmedia extends shkatalog {
 				$cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
 				//echo $cartd[9],'>';
 				$cartout = implode(';',$cartd);
-			    $icon_cart = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+			    $icon_cart = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
 
 			    $val = number_format($cartd[8],$this->decimals,',','.');
 
@@ -2963,7 +2954,7 @@ class shkatalogmedia extends shkatalog {
 		      $data[] =	number_format($cartd[8],$this->decimals,',','.');		  
 			  
 			  $cartout = implode(';',$cartd);
-			  $data[] = GetGlobal('controller')->calldpc_method("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+			  $data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
 			  $data[] = $itemcode;
 			  $data[] = "addcart/$cartout/$cat/0/";
 			 
@@ -2977,7 +2968,7 @@ class shkatalogmedia extends shkatalog {
 	}
 	
 	//override
-	function show_availability($qty=null) {
+	public function show_availability($qty=null) {
 		if (!$this->availability) 
 			return 0;
 		//echo $qty;
@@ -2991,7 +2982,7 @@ class shkatalogmedia extends shkatalog {
 	}	
 	
 	//override
-	function show_availabillity_table($title=null,$plaisio=null) {
+	public function show_availabillity_table($title=null,$plaisio=null) {
 		return null; //disabled
 	}	
 	
