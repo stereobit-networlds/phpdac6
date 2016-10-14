@@ -50,7 +50,7 @@ class shsubscribe {
 	var $subject,$body;
 	var $subject2,$body2;	
 	var $tell_it, $tell_from;
-	var $tell_user;
+	var $tell_user, $owner;
 	var $tmpl_path, $tmpl_name;
 
 	function shsubscribe() {
@@ -79,6 +79,7 @@ class shsubscribe {
 	  $this->body2 = remote_paramload('SHSUBSCRIBE','bodytotellatdel',$this->path);		
 	  
 	  $this->tell_user = remote_paramload('SHSUBSCRIBE','telluser',$this->path);  
+	  $this->owner = $this->tell_user; //remote_paramload('SHSUBSCRIBE','telluser',$this->path);  
 	  
 	  $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
 	  $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	  
@@ -96,11 +97,9 @@ class shsubscribe {
 		                              $this->dounsubscribe();
 	                                  break;			 
 		 
-	        //case localize('_SUBSCR',getlocal()): 
 	        case 'subscribe'  ://subscribe 
 			                          $this->dosubscribe();
-	                                  break;							
-			//case localize('_USUBSCR',getlocal()) :				
+	                                  break;											
 	        case 'unsubscribe' ://unsubscribe
 		                              $this->dounsubscribe();
 	                                  break;				  								  
@@ -118,214 +117,90 @@ class shsubscribe {
 	                                  break;											
 	        case 'unsubscribeajax' :  die(GetGlobal('sFormErr'));
 	                                  break;			 
-	        default :                 //print_r($_POST);
-									  $out = $this->title($action);
-									  $out .= $this->form();//$act);
+	        default :                 $out .= GetGlobal('sFormErr');
+			                          $out .= $this->form();
          }
 	     return ($out);
 	}
 
-
-	function title($action=null) {
-       $sFormErr = GetGlobal('sFormErr');
-       //navigation status 
-	   /*$sub = localize('_SUBSCR',getlocal());
-	   $usub = localize('_USUBSCR',getlocal());	     
-		 
-	   switch ($action) {
-		   
-		   case 'unsubscribe' :	 $out = setNavigator($usub); break;	             
-		   case 'subscribe'   :	 $out = setNavigator($sub); break;		   
-	       default            :  $out = setNavigator($this->title); 
-       }*/
-       //error message //????????????
-	   //if (($act = GetParam('act')) && ($act!='unsubscribe'))
-	   if (GetParam('act')!='unsubscribe') {
-  	     if ((GetReq('t')) || (GetReq('act')))
-		   $out .= setError($sFormErr);
-	   } 
-	   
-	   return ($out);
-	}
-
-
-
     function form($action=null)  { 	
-	   $action = $action?$action:GetReq('t');	
-	   //echo '>',$action; //handled by act
-	   //template
-       switch ($action) {	   
-	    case 'unsubscribe' : $stemplate= "unsubscribe.htm"; break;
-	    case 'subscribe'   :
-		           default : $stemplate= "subscribe.htm";
-	   }
-	   //$template = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.',$stemplate) ;
-	   $template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$stemplate) ; 	
-	   //echo $template;
-	   if (is_readable($template)) {
-	     $tmpl = 1;
-		 $tokens = array();
-		 $mytemplate = file_get_contents($template);
-	   }		
+		$action = $action?$action:GetReq('t');	
+
+		switch ($action) {	   
+			case 'unsubscribe' : $stemplate= "unsubscribe.htm"; break;
+			case 'subscribe'   :
+			default : $stemplate= "subscribe.htm";
+		}
+
+		$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$stemplate) ; 	
+		$tokens = array();
+		$mytemplate = file_get_contents($template);	
 	
-       //subscription form
-	   if ($action)
-	     $filename = seturl("t=$action");      
-	   else 
-         $filename = seturl("t=subscribe");      
+	    $filename = $action ? seturl("t=$action") : seturl("t=subscribe");      
        
-	
-	   if ($tmpl) {
-		 $tokens[] = "<FORM action=". "$filename" . " method=post>";		
-		 $tokens[] = "<INPUT type=\"input\" name=\"submail\" maxlenght=\"64\" size=\"25\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255);\" >";
-	   }
-	   else {	 
-         $toprint  = "<FORM action=". "$filename" . " method=post>";
-         $toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1><STRONG>";
-	     $toprint .= $this->t_entermail;
-	     $toprint .= "</STRONG><br><INPUT type=\"text\" name=\"submail\" maxlenght=\"64\" size=25><br>"; 	   
-	   }
+		$tokens[] = "<FORM action=". "$filename" . " method=post>";		
+		$tokens[] = "<INPUT type=\"input\" name=\"submail\" maxlenght=\"64\" size=\"25\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255);\" >";
+
+		if ($action) {
 	   
-	   if ($action) {
-	   
-		 $sub = localize('_SUBSCR',getlocal());
-		 $usub = localize('_USUBSCR',getlocal());	     
+			$sub = localize('_SUBSCR',getlocal());
+			$usub = localize('_USUBSCR',getlocal());	     
 		 
-		 switch ($action) {
+			switch ($action) {
 		   
-		   case 'unsubscribe' :
-					 if ($tmpl) {
-		               $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"$usub\"><input type=\"hidden\" name=\"FormAction\" value=\"$action\">";		   
-					 }
-					 else {  
-		     	       $toprint .= "<input type=\"submit\" value=\"$usub\">";
-	    	 	       $toprint .= "<input type=\"hidden\" name=\"FormAction\" value=\"$action\">";	   
-					 }
-					 break;
-		   case 'subscribe' :
-		   default :
-					 if ($tmpl) {
-		               $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"$sub\"><input type=\"hidden\" name=\"FormAction\" value=\"$action\">";		   
-					 }
-					 else { 		   
-		     	       $toprint .= "<input type=\"submit\" value=\"$sub\">";
-	    	 	       $toprint .= "<input type=\"hidden\" name=\"FormAction\" value=\"$action\">";
-					 }  
-		 } 
-	   }	 
-	   else {
-		 if ($tmpl) {
-		   $tokens[] = "<input type=\"submit\" class=\"myf_button\" name=\"FormAction\" value=\"subscribe\">&nbsp;<input type=\"submit\" class=\"myf_button\" name=\"FormAction\" value=\"unsubscribe\">";
-		 }
-		 else { 		   
-	       $toprint .= "<input type=\"submit\" name=\"FormAction\" value=\"subscribe\">&nbsp;"; 
-           $toprint .= "<input type=\"submit\" name=\"FormAction\" value=\"unsubscribe\">";
-		 }  
-	   }
+				case 'unsubscribe' : $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"$usub\"><input type=\"hidden\" name=\"FormAction\" value=\"$action\">";		   
+					                 break;
+				case 'subscribe'   :
+				default            : $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"$sub\"><input type=\"hidden\" name=\"FormAction\" value=\"$action\">";		   
+			} 
+		}	 
+		else 
+			$tokens[] = "<input type=\"submit\" class=\"myf_button\" name=\"FormAction\" value=\"subscribe\">&nbsp;<input type=\"submit\" class=\"myf_button\" name=\"FormAction\" value=\"unsubscribe\">";
 	   
-	   if ($tmpl) {
-	     $tokens[] = "</FORM>";
-		 $tokens[] = GetGlobal('sFormErr');
+	    $tokens[] = "</FORM>";
+		$tokens[] = GetGlobal('sFormErr');
 		 
-		 $out .= $this->combine_tokens($mytemplate,$tokens);
-	   }	   	 
-	   else {
-         $toprint .= "</FONT></FORM>";
-	   
-	     $data2[] = $toprint; 
-  	     $attr2[] = "left";
+		$out .= $this->combine_tokens($mytemplate,$tokens);
 
-	     $swin = new window(localize('_SUBSCR',getlocal()),$data2,$attr2);
-	     $out .= $swin->render("center::50%::0::group_dir_body::left::0::0::");	
-	     unset ($swin);	 
-       }
-
-       return ($out);
-   }
+        return ($out);
+    }
 
 	function message2go() {
 	   
 	    $out = $this->mesout . seturl("t=advsubscribe",localize('_CLICKHERE',getlocal()));
-		
 		return ($out);
 	}	
-
+	
+	function checkmail($mail=null) {
+		$valid = filter_var($mail, FILTER_VALIDATE_EMAIL);
+		return ($valid);		
+	}
 
 	
 	function dosubscribe($mail=null,$bypasscheck=null,$telltouser=null) {
-       $mail_tell_user = isset($telltouser)?$telltouser:$this->tell_user;	
-	   
-	   $mail = $mail?$mail:GetParam('submail');	 
-	   if (!$mail) return;
-	   //echo 'subscribe';	   
-	
        $db = GetGlobal('db');
        $sFormErr = GetGlobal('sFormErr');	
 	   $name = $name ? $name : 'unknown';
-	   $dlist = 'default';
+	   $dlist = 'default';		
+       $mail_tell_user = isset($telltouser)?$telltouser:$this->tell_user;	
+	   $mail = $mail?$mail:GetParam('submail');	 
+	   if (!$mail) return;	   
 	   
        $dtime = date('Y-m-d h:i:s');	   	
 	   
-	   if (checkmail($mail))  {
-          //check if mail is in database
-		  //$sSQL = "SELECT email,subscribe FROM users where email=". $db->qstr($mail); 
-		  //TRANSITION TO ULIST
-		  $sSQL = "SELECT email FROM ulists where email=". $db->qstr($mail) .
-		          " and (listname='deleted' or listname='$dlist')"; 
+	   if ($this->checkmail($mail))  {
+
+		  $sSQL = "SELECT email FROM ulists where email=". $db->qstr($mail) . " and listname='$dlist'"; 
 		  
 	      $ret = $db->Execute($sSQL,2);
-          //print_r($ret);
-		  //echo $sSQL;
-		  //echo '>',$ret->fields['email'];
 		  $mymail = $ret->fields['email'];
 		  
-          if (!isset($mymail)) {
-
-			   /*$sSQL = "insert into users (email,startdate,lname,fname,subscribe,notes) " .
-			           "values (" .
-					   $db->qstr(strtolower($mail)) . "," . $db->qstr($dtime) . "," .
-					   $db->qstr('SUBSCRIBER') . "," . $db->qstr('UNKNOWN') . ",1," . $db->qstr('ACTIVE') .
-		               ")"; */ 
-			   //TRANSITION TO ULIST	
-			   $sSQL = "insert into ulists (email,startdate,active,lid,listname,name) " .
-							"values (" .
-							$db->qstr(strtolower($mail)) . "," . $db->qstr($dtime) . "," .
-							"1,1,'$dlist'," . $db->qstr($name) . ")";   			   
-			   $db->Execute($sSQL,1);	
-			   
-			   if (!$bypasscheck)	    
-			     SetGlobal('sFormErr', localize('_MSG6',getlocal()));	
-				 
-			   //echo $sSQL;
-               if ($this->tell_it) //tell to me
-			     $this->mailto($this->tell_from,$this->tell_it,$this->subject,$mail);
-				 			     							  
-			   //tell to subscriber
-	           /*$template= "subinsert.htm";
-	           $t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.',$template) ;
-	           if (is_readable($t)) {			   
-		         $mytemplate = file_get_contents($t);
-			
-		         $tokens[] = $mail;		  
-			
-		         $mailbody = $this->combine_tokens($mytemplate,$tokens);	*/		   
-		       $tokens[] = $mail;	
-               $tokens[] = $mail; //dummy at leats 2 elements				   					 
-               $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		       if ($mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use subinsert.htm+".$sd."+1")) { 
-				 
-			     $this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 
-			   }
-			   else
-			     $this->mailto($this->tell_from,$mail,$this->subject,$this->body);	 	 
-		  }
-		  elseif (isset($mymail)) {//is in db but disabled  ..enable subscription
-			   $sSQL = "update users set subscribe=1 where email=" . $db->qstr(strtolower($mail));  
+		  if ($mymail==$mail) {//is in db but already enabled or disabled  re-enable subscription
+			   $sSQL = "update ulists set active=1 where listname='$dlist' and email=" . $db->qstr(strtolower($mail));  
 			   $db->Execute($sSQL,1);		
 			   if (!$bypasscheck)    
 			     SetGlobal('sFormErr', localize('_MSG6',getlocal()));	
 				 
-			   //echo $sSQL;
                if ($this->tell_it) //tell to me
 			     $this->mailto($this->tell_from,$this->tell_it,$this->subject,$mail);
 				 			     							  
@@ -341,51 +216,57 @@ class shsubscribe {
 			     else			   
 			       $this->mailto($this->tell_from,$mail,$this->subject,$this->body);					 	  
 			  }	   
+		  }		  
+          else {
+	
+			   $sSQL = "insert into ulists (email,startdate,active,lid,listname,name,owner) " .
+						"values (" .
+						$db->qstr(strtolower($mail)) . "," . $db->qstr($dtime) . "," .
+						"1,1,'$dlist'," . $db->qstr($name) . ",". $db->qstr($this->owner). ")";   			   
+			   $db->Execute($sSQL,1);	
+			   
+			   if (!$bypasscheck)	    
+			     SetGlobal('sFormErr', localize('_MSG6',getlocal()));	
+				 
+			   //echo $sSQL;
+               if ($this->tell_it) //tell to me
+			     $this->mailto($this->tell_from,$this->tell_it,$this->subject,$mail);
+				 			     							  
+			   //tell to subscriber	   
+		       $tokens[] = $mail;	
+               $tokens[] = $mail; //dummy at leats 2 elements				   					 
+               $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
+		       if ($mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use subinsert.htm+".$sd."+1")) { 
+				 
+			     $this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 
+			   }
+			   else
+			     $this->mailto($this->tell_from,$mail,$this->subject,$this->body);	 	 
 		  }
-		  else {
-    	    if (!$bypasscheck)
-		      SetGlobal('sFormErr', localize('_MSG7',getlocal()));
-		  }	
 	   }
 	   else {
 	     if (!$bypasscheck)
 	       SetGlobal('sFormErr', localize('_MSG5',getlocal()));		   	 
-	   }
-       //echo GetGlobal('sFormErr'); 	   
+	   }	   
 	}
 	
 	function dounsubscribe($mail=null,$telltouser=null) {
-	   $mail_tell_user = isset($telltouser)?$telltouser:$this->tell_user;
-	   $ulistname = GetParam('ulistname') ? GetParam('ulistname') : null;	   
-	   $remove = false;	 
-	   $mamail = $mail?$mail:GetParam('submail'); echo $mamail;	 
-	   $mail = $mamail?$mamail:GetReq('submail'); echo $mail;	 
-	   if (!$mail) return;		 
-	   //echo 'unsubscribe';
-	   	
        $db = GetGlobal('db');
-       $sFormErr = GetGlobal('sFormErr');	   
+       $sFormErr = GetGlobal('sFormErr');			
+	   $mail_tell_user = isset($telltouser)?$telltouser:$this->tell_user;
+	   $ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';	    
+	   $mail = $mail ? $mail : GetReq('submail'); 
+	   if (!$mail) return;		   
 	   
-	   if (checkmail($mail))  {
+	   if ($this->checkmail($mail))  {
 
-          //remove from ulists
-		  if ($this->isin_ulists($mail)) {
-			$sSQL = "delete from ulists where email=" . $db->qstr($mail);
-			if ($ulistname)
-				$sSQL .= ' and listname=' . $db->qstr($ulistname); 
+          //disable from ulists
+		  if ($this->isin_ulists($mail, $ulistname)) {
+			$sSQL = "update ulists set active=0 where email=" . $db->qstr($mail);
+			$sSQL .= ' and listname=' . $db->qstr($ulistname); 
 			$result = $db->Execute($sSQL,1);
-			$remove = true;
-		  }
-		  //standart remove DISABLED / ULIST TRANSITION
-		  /*if ($this->isin($mail)) {
-			$sSQL = "update users set subscribe=0 where email=" . $db->qstr($mail) ; 
-			$result = $db->Execute($sSQL,1);
-			$remove = true;
-		  }*/
-		  
-		  if ($remove) {
+            //echo $sSQL;
 			SetGlobal('sFormErr',localize('_MSG8',getlocal()));
-			setInfo(localize('_MSG8',getlocal()));
 		  
 			if ($this->tell_it) //tell to me
 				$this->mailto($this->tell_from,$this->tell_it,$this->subject2,$mail);
@@ -402,51 +283,44 @@ class shsubscribe {
 				else			   
 					$this->mailto($this->tell_from,$mail,$this->subject2,$this->body2);			  
 			}
-          }//remove	
-          //echo '>',$remove;		  
+		  }  
 	   }
-	   else { 
+	   else 
 	     SetGlobal('sFormErr', localize('_MSG5',getlocal()));	  
-		 setInfo(localize('_MSG5',getlocal()));
-	   }
-       //echo GetGlobal('sFormErr');	   
 	}
 	
     function isin($mail) {
        $db = GetGlobal('db');
 	   
-       $sSQL = "SELECT id,email,startdate FROM users";	
-	   $sSQL .= " WHERE email=" . $db->qstr($mail) . " and subscribe>0"; 
+       $sSQL = "SELECT id,email,startdate FROM ulists";	
+	   $sSQL .= " WHERE email=" . $db->qstr($mail) . " and active=1"; 
 	   $resultset = $db->Execute($sSQL,2);
-	   //$ret = $db->fetch_array($resultset);	   
-	   //echo $mail,$sSQL;
 	   if ($resultset->fields['email']==$mail) return (true);
 	
        return (false);
     }	
 	
-    function isin_ulists($mail) {
+    function isin_ulists($mail, $list=null) {
        $db = GetGlobal('db');
+	   $ulist = $list ? $list : 'default';
 	   
        $sSQL = "SELECT email FROM ulists";	
-	   $sSQL .= " WHERE email=" . $db->qstr($mail);// . " and subscribe>0"; 
+	   $sSQL .= " WHERE listname='$ulist' and email=" . $db->qstr($mail); 
 	   $resultset = $db->Execute($sSQL,2);
 
-	   if ($resultset->fields['email']==$mail) return (true);
+	   if ($resultset->fields['email']) 
+		   return (true);
 	
        return (false);
     }		
 	
-	function getmails() {
-	
+	function getmails($list=null) {
        $db = GetGlobal('db');	
-	   
-       $resultset = $db->Execute("select email from users where subscribe>0",2);   
-
+	   $ulist = $list ? $list : 'default';	   
+       $resultset = $db->Execute("select email from ulists where active=1 and listname='$ulist'");   
 
 	   $ret = $db->fetch_array_all($resultset);
 	   $out = implode(',',$ret);
-
 
 	   return $out;	
 	}
@@ -454,11 +328,9 @@ class shsubscribe {
 	function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 	
 	    if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
-		  //echo 'z',$to,'>',$from,'<br>';
 		  $ret = GetGlobal('controller')->calldpc_method("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
         }
 		else {
-		  //echo 'AAAA',$to,'>',$from,'<br>';
 		     if ((defined('SMTPMAIL_DPC')) &&
 				 (seclevel('SMTPMAIL_DPC',$this->UserLevelID)) ) {
 		       $smtpm = new smtpmail;
@@ -486,21 +358,19 @@ class shsubscribe {
 		if (defined('FRONTHTMLPAGE_DPC')) {
 		  $fp = new fronthtmlpage(null);
 		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+		  unset ($fp);		  		
 		}		  		
 		else
 		  $ret = $template_contents;
 		  
-		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
 		    $ret = str_replace("$".$i,$tok,$ret);
 	    }
+		
 		//clean unused token marks
 		for ($x=$i;$x<10;$x++)
 		  $ret = str_replace("$".$x,'',$ret);
-		//echo $ret;
+	  
 		return ($ret);
 	} 				
 

@@ -276,42 +276,6 @@ class cpmhtmleditor {
 		}
 	  
 	    return true;
-	  
-		$purl = $_SERVER['PHP_SELF'];
-		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
-	  
-		$out .= $this->ckeditor($mydata);
-	 
-		$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";	 	   
-		$out .= "<input type=\"hidden\" name=\"insert\" value=\"1\" />";
-		$out .= "<input type=\"hidden\" name=\"FormAction\" value=\"cpmnewitem\" />";			
-		
-		$out .= '     <div class="space20"></div>
-                                 <div class="row-fluid">
-                                     <div class="feedback">
-                                         <h3>'.localize('_title',getlocal()).'</h3>
-                                         <p>'.localize('_tags',getlocal()).'</p>
-                                         <div class="space20"></div>
-
-                                             <!--div class="control-group">
-                                                 <input type="text" placeholder="Name" class="span12">
-                                             </div-->
-                                             <div class="control-group ">
-                                                 <input type="text" name="title" value="'.localize('_subject',getlocal()).'" class="span6 one-half">
-                                                 <input type="text" name="tags" value="'.str_replace(array(' ','_','-'),array(',',' ',' '), $cpGet['cat']).'" class="span6">
-                                             </div>
-                                             <!--div class="control-group">
-                                                 <textarea placeholder="Message" class="span12" rows="5"></textarea>
-                                             </div-->
-                                             <div class="text-center">
-                                                 <button class="btn btn-success " name="ok" type="submit">'.localize('_submit',getlocal()).'</button>
-                                             </div>
-                                     </div>
-                                 </div>';  
-		
-		$out .= "</form>";
-      
-		return ($out); 
     }	
 	
 	//edit item
@@ -399,41 +363,6 @@ class cpmhtmleditor {
 		}
 	  
 	    return true;
-      
-		$purl = $_SERVER['PHP_SELF'];
-		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
-	    $out .= $this->ckeditor($mydata);
-	
-		$out .= "<input type=\"hidden\" name=\"id\" value=\"" . $id . "\" />";		  
-		$out .= "<input type=\"hidden\" name=\"update\" value=\"1\" />";		
-		$out .= "<input type=\"hidden\" name=\"FormAction\" value=\"cpmedititem\" />";
-			
-		$out .= '            <div class="space20"></div>
-                                 <div class="row-fluid">
-                                     <div class="feedback">
-                                         <h3>'.localize('_title',getlocal()).'</h3>
-                                         <p>'.localize('_tags',getlocal()).'</p>
-                                         <div class="space20"></div>
-
-                                             <!--div class="control-group">
-                                                 <input type="text" placeholder="Name" class="span12">
-                                             </div-->
-                                             <div class="control-group ">
-                                                 <input type="text" name="title" value="'.localize('_subject',getlocal()).'" class="span6 one-half">
-                                                 <input type="text" name="tags" value="'.str_replace(array(' ','_','-'),array(',',' ',' '), $cpGet['cat']).'" class="span6">
-                                             </div>
-                                             <!--div class="control-group">
-                                                 <textarea placeholder="Message" class="span12" rows="5"></textarea>
-                                             </div-->
-                                             <div class="text-center">
-                                                 <button class="btn btn-success " name="ok" type="submit">'.localize('_submit',getlocal()).'</button>
-                                             </div>
-                                     </div>
-                                 </div>';  
-		
-		$out .= "</form>";
-      
-		return ($out); 
     }	
 	
 	public function hrefEshopDetails() {
@@ -475,7 +404,7 @@ class cpmhtmleditor {
 			$p1 = str_replace("<?","<phpdac5>",$text);
 			$p2 = str_replace('?>','</phpdac5>',$p1);
 		}
-		else {//save mode
+		else {//save 
 			$p1 = str_replace("<phpdac5>","<?",$text);
 			$p2 = str_replace('</phpdac5>','?>',$p1);
 		}
@@ -484,8 +413,6 @@ class cpmhtmleditor {
     }
 
     protected function load_spath($text=null) {
-	   //if ckfinder
-	   //return ($text);
 
        $p1 = str_replace("images/","../images/",$text);
 
@@ -494,9 +421,7 @@ class cpmhtmleditor {
 
     }
 
-    protected function unload_spath($text=null) {
-	   //if ckfinder
-	   //return ($text);	
+    protected function unload_spath($text=null) {	
 
        $p1 = str_replace("../images/","images/",$text);
 
@@ -512,7 +437,6 @@ class cpmhtmleditor {
 		@copy($file, str_replace(array('.htm','.php'),array('._htm','._php'),$file));
 		
         if ($fp = @fopen ($file , "w")) {
-	        //echo $file,"<br>";
             fwrite ($fp, $indata);
             fclose ($fp);
 

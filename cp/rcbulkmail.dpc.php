@@ -2721,14 +2721,13 @@ This email and any files transmitted with it are confidential and intended solel
 		$refsql = null; //$cid ? "and ref='$cid'" : null;
 		
 		//all as 9 user or only owned
-		$ownerSQL = ($this->seclevid==9) ? null : 'and ulists.owner=' . $db->qstr($this->owner); 		
+		$ownerSQL = ($this->seclevid==9) ? null : null;//'and ulists.owner=' . $db->qstr($this->owner); 		
 		
 		$lastmonth = mktime(0, 0, 0, date("m")-1, date("d"),   date("Y"));
 		
-		$sSQL = "SELECT timein,listname,email FROM ulists where active=0 and (timein>$lastmonth) $refsql $ownerSQL order by timein desc LIMIT " . $l;
-		//echo $sSQL;
+		$sSQL = "SELECT datein,listname,email FROM ulists where active=0 and (datein>$lastmonth) $refsql $ownerSQL order by datein desc LIMIT " . $l;
 		$resultset = $db->Execute($sSQL,2);
-		
+
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 			$tokens[] = date('d-m-Y G:i',strtotime($rec[0])) . ' '. $rec[1];
@@ -2753,23 +2752,18 @@ This email and any files transmitted with it are confidential and intended solel
 		$refsql = null; //$cid ? "and ref='$cid'" : null;
 		
 		//all as 9 user or only owned
-		$ownerSQL = ($this->seclevid==9) ? null : 'and ulists.owner=' . $db->qstr($this->owner); 		
+		$ownerSQL = ($this->seclevid==9) ? null : null;//'and ulists.owner=' . $db->qstr($this->owner); 		
 		
 		$lastday = mktime(0, 0, 0, date("m"), date("d")-1,   date("Y"));
 		$text = localize('_outoflist',getlocal());
 		
-		$sSQL = "SELECT timein,listname,email FROM ulists where active=0 and (timein>$lastday) $refsql $ownerSQL order by timein desc LIMIT " . $l;
-		//echo $sSQL;
+		$sSQL = "SELECT datein,listname,email FROM ulists where active=0 and (datein>$lastday) $refsql $ownerSQL order by datein desc LIMIT " . $l;
 		$resultset = $db->Execute($sSQL,2);
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			/*$tokens[] = date('d-m-Y G:i',strtotime($rec[0])) . ' '. $rec[1];
-			$tokens[] = $rec[2];
-			$ret .= $this->combine_tokens($t, $tokens);
-			unset($tokens);	*/
+
 			$msg = "warning|" . $rec[2] .", ". $text .' '. $rec[1] . " (" .date("d-m-Y G:i", strtotime($rec[0])). ")";
-			//echo $msg;
 			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
 		}
 
