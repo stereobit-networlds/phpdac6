@@ -230,7 +230,10 @@ class cpmhtmleditor {
 				$code = $this->replace_spchars($title);
 				$tags = GetParam('tags') ;
 				$text = GetParam('htmltext');
-				$descr = substr(trim(strip_tags($text)),0,250).'...';
+				$descr = GetParam('descr') ? GetParam('descr') : substr(trim(strip_tags($text)),0,250).'...';
+				$active = GetParam('active') ? '101' : '0';
+				$itmactive = GetParam('itmactive') ? '1' : '0';
+				
 				if (!empty($_POST['include'])) 
 					$category = array_shift($_POST['include']); //get first from list
 				else					
@@ -243,7 +246,7 @@ class cpmhtmleditor {
 				$this->messages[] = "Add category:".$category;		
 				
 				$sSQL = "insert into products ($activecode,itmname,itmfname,itmdescr,itmfdescr,sysins,active,itmactive,cat0,cat1,cat2,cat3,cat4) values (";
-				$sSQL .= $db->qstr($code).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr(date('Y-m-d h:m:s')).",101,1,";			
+				$sSQL .= $db->qstr($code).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr(date('Y-m-d h:m:s')).",$active,$itmactive,";			
 				$sSQL .= $db->qstr($cat[0]).",".$db->qstr($cat[1]).",".$db->qstr($cat[2]).",".$db->qstr($cat[3]).",".$db->qstr($cat[4]);			
 				$sSQL .= ")"; 
 
@@ -262,7 +265,7 @@ class cpmhtmleditor {
 					$this->messages[] = "MCPAGE:".$mcpage;
 				}
 			
-				$this->postok = true;
+				$this->postok = $code; //active code
 			}
 			else
 				$this->messages[] = "Insert subject";			
@@ -272,8 +275,9 @@ class cpmhtmleditor {
 			$this->messages[] = $id ? "Load text" : null;
 		}
 	  
+	    return true;
 	  
-		$purl = $_SERVER['PHP_SELF'];//'cpmhtmleditor.php';
+		$purl = $_SERVER['PHP_SELF'];
 		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
 	  
 		$out .= $this->ckeditor($mydata);
@@ -329,7 +333,10 @@ class cpmhtmleditor {
 				$code = $id; //$this->replace_spchars($title);
 				$tags = GetParam('tags') ;
 				$text = GetParam('htmltext');
-				$descr = substr(trim(strip_tags($text)),0,250).'...';
+				$descr = GetParam('descr');// ? GetParam('descr') : substr(trim(strip_tags($text)),0,250).'...';
+				$active = GetParam('active') ? '101' : '0';
+				$itmactive = GetParam('itmactive') ? '1' : '0';
+				
 				if (!empty($_POST['include'])) 
 					$category = array_shift($_POST['include']); //get first from list
 				else		
@@ -342,6 +349,7 @@ class cpmhtmleditor {
 				
 				//update
 				$sSQL = "update products set $itmname=" . $db->qstr($title) . ",$itmdescr=" . $db->qstr($descr);
+				$sSQL.= ",itmactive=" . $itmactive . ",active=" . $active;
 				foreach($cat as $i=>$c) 
 					$sSQL .= ",cat{$i}=" . $db->qstr($c);
 				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
@@ -350,7 +358,7 @@ class cpmhtmleditor {
 				$this->messages[] = "Update record";				
 				
 				//read 
-				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
+				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,itmactive,code4,".
 						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$activecode.
 						" from products WHERE $activecode=" . $db->qstr($id);
 				$res = $db->Execute($sSQL);	
@@ -369,18 +377,17 @@ class cpmhtmleditor {
 					$this->messages[] = "MCPAGE:".$mcpage;
 				}				
 			
-				$this->postok = true;
+				$this->postok = $id; //active code
 			}
 			else
 				$this->messages[] = "Insert subject";	
 		}
 		else {//load
-		    //$mydata = $id ? GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1") : null; 
 			$mydata = $id ? $this->has_attachment2db($id,$type,1) : null; 
 			$this->messages[] = $id ? "Load text" : null;
 			
 			if ($id) {
-				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
+				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,itmactive,code4,".
 						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$activecode.
 						" from products ";	
 				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
@@ -391,8 +398,9 @@ class cpmhtmleditor {
 			}
 		}
 	  
+	    return true;
       
-		$purl = $_SERVER['PHP_SELF'];//'cpmhtmleditor.php';
+		$purl = $_SERVER['PHP_SELF'];
 		$out = "<form name=\"htmlform\" action=\"".$purl."\" method=\"post\">";  
 	    $out .= $this->ckeditor($mydata);
 	
@@ -427,6 +435,18 @@ class cpmhtmleditor {
       
 		return ($out); 
     }	
+	
+	public function hrefEshopDetails() {
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');		
+		$id = $this->postok ? $this->postok : (GetParam('id') ? GetParam('id') : $cpGet['id']);
+		return $id ? seturl('t=cpmhtmldetails&id='.$id) : '#';
+	}
+	
+	public function hrefCopyItem() {
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');		
+		$id = $this->postok ? $this->postok : (GetParam('id') ? GetParam('id') : $cpGet['id']);		
+		return $id ? seturl('t=cpmhtmlcopy&id='.$id) : '#';
+	}	
 
     protected function savefile($filename=null,$tempfile=null) {
         //echo $filename;
@@ -1199,10 +1219,21 @@ class cpmhtmleditor {
 		$db = GetGlobal('db');
 		$lan = getlocal();
 		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
-		$scat = $cpGet['cat'];		
-		
-		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";	
-		if ($scat) {
+		$scat = $cpGet['cat'];
+		$sid = GetReq('id');//$cpGet['id'];
+			
+		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";
+		if (!empty($this->record)) {//edit mode
+			$sSQL.= "where ";
+			for($x=0;$x<4;$x++) {
+				$ic = $x+2;
+				$w[] = "cat{$ic}=" . $db->qstr($this->replace_spchars($this->record["cat{$x}"],1));
+			}	
+			$sSQL .= implode(' AND ', $w);				
+		}
+		elseif ($scat) { //new mode		
+			//return null;
+			
 			$sSQL.= "where ";
 			$xcat = explode($this->cseparator, $scat);
 			foreach($xcat as $i=>$c) {
@@ -1211,6 +1242,9 @@ class cpmhtmleditor {
 			}	
 			$sSQL .= implode(' AND ', $w);	
 		}
+		else 
+			return null; 
+		
 		$res = $db->Execute($sSQL);	
 		//echo $sSQL;
 		
@@ -1223,9 +1257,11 @@ class cpmhtmleditor {
 			$tcat = $rec[4];
 			$tcat.= $rec[5] ? $this->cseparator.$rec[5] : null;
 			$tcat.= $rec[6] ? $this->cseparator.$rec[6] : null;
-			$tcat.= $rec[7] ? $this->cseparator.$rec[7] : null;			
+			$tcat.= $rec[7] ? $this->cseparator.$rec[7] : null;
+
+			$lcat = $rec[7] ? $rec[6].'-&gt'.$rec[7] : ($rec[6] ? $rec[5].'-&gt'.$rec[6] : ($rec[5] ? $rec[4].'-&gt'.$rec[5] :($rec[4] ? $rec[4] : null)));	
 			
-			$aret[] = "<option value='$cat'>$tcat</option>";
+			$aret[] = "<option value='$cat'>$lcat</option>";
 		}	
         $ret = array_unique($aret); 
 		return (implode('',$ret));	
@@ -1236,18 +1272,33 @@ class cpmhtmleditor {
 		$lan = getlocal();
 		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
 		$scat = $cpGet['cat'];			
+		$sid = GetReq('id'); //$cpGet['id'];
 		
 		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";	
-		if ($scat) {
+		if (!empty($this->record)) {//edit mode
+			$sSQL.= "where ";
+			for($x=0;$x<4;$x++) {
+				$ic = $x+2;
+				$w[] = ($x<3) ? "cat{$ic}=" . $db->qstr($this->replace_spchars($this->record["cat{$x}"],1)) :
+								"cat{$ic}<>" . $db->qstr($this->replace_spchars($this->record["cat{$x}"],1));
+			}	
+			$sSQL .= implode(' AND ', $w);				
+		}
+		elseif ($scat) { //new mode		
 			$sSQL.= "where ";
 			$xcat = explode($this->cseparator, $scat);
+			//$depth = count($xcat)-1;
+			//$current = array_pop($xcat);
 			foreach($xcat as $i=>$c) {
+				//if ($i>=$depth) continue;
 				$ic = $i+2;
-				$w[] = "cat{$ic}<>" . $db->qstr($this->replace_spchars($c,1));
+				$w[] = "cat{$ic}=" . $db->qstr($this->replace_spchars($c,1));
 			}	
 			$sSQL .= implode(' AND ', $w);	
+			//$sSQL .= " AND cat{$ic}<>" . $db->qstr($current);
 		}		
 		$res = $db->Execute($sSQL);	
+		//echo $sSQL;
 		
 		foreach ($res as $i=>$rec) {
 			$cat = $rec[0];
@@ -1260,7 +1311,9 @@ class cpmhtmleditor {
 			$tcat.= $rec[6] ? $this->cseparator.$rec[6] : null;
 			$tcat.= $rec[7] ? $this->cseparator.$rec[7] : null;
 			
-			$aret[] = "<option value='$cat'>$tcat</option>";
+			$lcat = $rec[7] ? $rec[6].'-&gt'.$rec[7] : ($rec[6] ? $rec[5].'-&gt'.$rec[6] : ($rec[5] ? $rec[4].'-&gt'.$rec[5] :($rec[4] ? $rec[4] : null)));
+			
+			$aret[] = "<option value='$cat'>$lcat</option>";
 		}	
         $ret = array_unique($aret); 
 		return (implode('',$ret));		
@@ -1540,13 +1593,22 @@ class cpmhtmleditor {
 		return ($this->{$var});
 	}
 	
-	public function getField($field=null) {
+	public function getField($field=null, $scan=false) {
 		if (!$field) return null;
+		$ret = null;
 		
-		if (!empty($this->record))
-			return ($this->record[$field]);
-		
-		return null;
+		if (!empty($this->record)) {
+			
+			if (!$scan)
+				return ($this->record[$field]);
+			
+		    switch ($field) {
+				case 'itmactive' : $ret = ($this->record[$field]>0) ? 'checked' : null; break;
+				case 'active'    : $ret = ($this->record[$field]>0) ? 'checked' : null; break;
+				default 		 : $ret = $this->record[$field];
+			}
+		}
+		return $ret;
 	}	
 
 	public function cpGet($var=null) {
