@@ -1,31 +1,5 @@
 <?php
-
-if ($_GET['editmode']>0) {
-// Turn off all error reporting
-//error_reporting(0);
-
-// Report simple running errors
-//error_reporting(E_ERROR | E_WARNING | E_PARSE);
-
-// Reporting E_NOTICE can be good too (to report uninitialized
-// variables or catch variable name misspellings ...)
-//error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
-
-// Report all errors except E_NOTICE
-// This is the default value set in php.ini
-//error_reporting(E_ALL ^ E_NOTICE);
-
-// Report all PHP errors (see changelog)
-//error_reporting(E_ALL);
-
-// Report all PHP errors
-//error_reporting(-1);
-
-//echo nl2br(file_get_contents('./error_log'));
-//debug_print_backtrace();
-}
-
-$__DPCSEC['FRONTHTMLPAGE_DPC']='1;1;1;1;1;1;1;1;9';
+$__DPCSEC['FRONTHTMLPAGE_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if (!defined("FRONTHTMLPAGE_DPC")) {//&& (seclevel('FRONTPAGE_DPC',decode(GetSessionParam('UserSecID')))) ){
 define("FRONTHTMLPAGE_DPC",true);
@@ -91,48 +65,40 @@ class fronthtmlpage {
         $this->prpath = paramload('SHELL','prpath');		
 		
 		$this->htmlpage = paramload('FRONTHTMLPAGE','path')?paramload('FRONTHTMLPAGE','path'):'html'; 
-		//echo '>',$this->htmlpage;
-		//$this->htmlfile = paramload('SHELL','prpath'). $this->htmlpage . "/" . $file; 
 		$this->urlpath = paramload('SHELL','urlpath');			
 		$this->urltitle = paramload('SHELL','urltitle');					
 		
 		$murl = arrayload('SHELL','ip');
         $this->url = (!empty($murl)) ? $murl[0] : paramload('SHELL','urlbase'); 			
-		//echo $this->url ,'>';
 		$this->infolder = paramload('ID','hostinpath');		
 		
 		//check if html file name based on action exist
 		$cmd = GetParam('FormAction')?GetParam('FormAction'):GetReq('t');
 		if ($cmd) {
-		  //check lan
-		  $mylan = getlocal()?getlocal():'0';
-		  //is logged in user
-		  $autofile = GetGlobal('UserID')? $cmd . '_in' . $mylan . '.html' : $cmd . $mylan . '.html';
+			$mylan = getlocal() ? getlocal() : '0';
+			$autofile = GetGlobal('UserID')? $cmd . '_in' . $mylan . '.html' : $cmd . $mylan . '.html';
 		  
-		  $htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $autofile;
-		  if (!is_readable($htmlfile)) //default
-		    $htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file;
+			$htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $autofile;
+			if (!is_readable($htmlfile)) //default
+				$htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file;
 		}
 		else
-		$htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file;
+			$htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file;
 		//echo '>',$htmlfile;
 		
 		if (!is_readable($htmlfile)) {//check for parent file
 
-		  $cphtmlpath = "/../cp/$this->htmlpage/";
-			
-		  $parentfile = $this->urlpath . $cphtmlpath . $file; 
-		  //echo 'z'.$parentfile;
-		  if (is_readable($parentfile)) 
-			$this->htmlfile = $parentfile;
+			$cphtmlpath = "/../cp/$this->htmlpage/";
+			$parentfile = $this->urlpath . $cphtmlpath . $file; 
+			if (is_readable($parentfile)) 
+				$this->htmlfile = $parentfile;
 		}
 		else {
-		  $cphtmlpath = $this->infolder . '/cp/' . $this->htmlpage;		
-		  $this->htmlfile = $htmlfile;//$this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file; 
+			$cphtmlpath = $this->infolder . '/cp/' . $this->htmlpage;		
+			$this->htmlfile = $htmlfile;//$this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file; 
 		}  
 		
 		//echo '>',$this->htmlfile;
-		
 		$this->adminhtmlfile = $this->urlpath . $cphtmlpath . "/cpmframework.htm"; 
 		$this->adminhtml = $this->urlpath . $cphtmlpath . "/cpmhtmleditor.htm"; 
 		$this->admindpc = $this->urlpath . $cphtmlpath . "/cpmdpcedtitor.htm"; 
@@ -207,7 +173,9 @@ class fronthtmlpage {
 		//problem returning part (outside html body)
 		$this->preprocess = 0;//GetGlobal('controller')->calldpc_var('pcntl.preprosess')		
 
-		//date_default_timezone_set('Europe/Athens');		
+		//date_default_timezone_set('Europe/Athens');
+
+		$this->javascript();	
 	}	
 	
     function render($actiondata) { 	
@@ -240,28 +208,25 @@ class fronthtmlpage {
 	
 	function action($actiondata) {
 		
-	   if ($this->modify) {
-	   
+	   if ($this->modify) 
 	     $out = $this->modify_page();
-	   }	 
+ 
        $out .= $this->process_html_file($actiondata, null, $this->modify);	
 	   return ($out);
 	}
 	
 	function process_html_file($data,$stage=null, $admin=null) {
-	  //echo $data;
-	  //echo $this->htmlfile;
-	  if ($admin) { //echo 'zzzzz';
-	  //  $this->htmlfile = $this->adminview; //override
-	  
+	  if ($admin) { 
 	    if ($this->anel) 
 		    $htmldata = $this->anel_panel(); //anel angular js
 		elseif ($this->cptemplate)
 			$htmldata = $this->cpanel_iframe();
-		elseif ($this->dhtml)
+		else
+			$htmldata = 'cptemplate missing';	
+		/*elseif ($this->dhtml)
 		    $htmldata = $this->fullpage_iframe();//ifwindows();
 		else
-	        $htmldata = $this->frameset();
+	        $htmldata = $this->frameset();*/
 
 	    return ($htmldata);
 	  }
@@ -269,13 +234,11 @@ class fronthtmlpage {
 	  if (is_file($this->htmlfile)) {
 				
 		$htmdata = file_get_contents($this->htmlfile);
-		//echo '>',$this->htmlfile;
 		
         $cssdata = $this->process_css($htmdata);
         $jhtmdata = $this->process_javascript($cssdata);		
         $chunks_data = $this->process_chunks($data,$jhtmdata,$pageout);				
 
-		//echo $this->htmlfile,'>>',$chunks_data;
 		$ret = ($this->debug) ? str_replace("<?". $this->argument ."?>",$this->argument,$pageout):
 		                        str_replace("<?". $this->argument ."?>",$chunks_data,$pageout);
 		  
@@ -285,7 +248,6 @@ class fronthtmlpage {
 		  
 		//::::update fpdata at pcntl to useit by advertisers,helpers etc  :::
 		$this->data = GetGlobal('controller')->calldpc_var('pcntl.fpdata',$ret); 
-		//echo $this->data;
 		
 		$ret = $this->process_commands($ret);
 		
@@ -399,9 +361,7 @@ class fronthtmlpage {
 		    foreach ($line as $j=>$column) {
 			  $ret = str_replace('%'.($j+1),$column,$content); 
 			  $content = $ret;
-			  //echo $ret,"<br>";
 			}
-		    //echo $ret,"<br>";	
 			$arraydata .= $ret;
 		  }
 	  }	
@@ -414,20 +374,16 @@ class fronthtmlpage {
 	  $udata = $action_array['form'];
 	
 	  if (is_array($udata)) {
-	   	//if (udata not artios!!!!!!!) die("Unbalanced form!");
-
 	    //find form name's field value
 	    $pattern = "@name=.*?\"(.*?)\"@";
 	    preg_match_all($pattern,$html_form,$matches);
 	    $names = $matches[1];
-		//print_r($names);	
 	  
 	    //find form value's field value
 	    $pattern = "@value=.*?\"(.*?)\"@";
 	    preg_match_all($pattern,$html_form,$matches);
 	    $values = $matches[1];	
 		//$values_exp = $matches[1]; 	  	
-		//print_r($values);	
 		
 		$max = count($names)-1; //echo $max-1;//BEWARE OR NULL VALUES..REPLACE MORE THAN ONE NULL
 		$n = 0;
@@ -444,11 +400,11 @@ class fronthtmlpage {
 	    $pattern = "@action=.*?(.*?) @";
 	    preg_match($pattern,$html_form,$matches);
 	    $get = $matches[1];	//echo $get;//print_r($get);		
-		//modify action=GET
+
 		if (isset($action_array['action']))
 		  $html_form = str_replace($get,$action_array['action'],$html_form);
 	  }	
-	  //echo $html_form;
+
 	  $formdata = $html_form;
 	  return ($formdata);		  
 	}
@@ -460,10 +416,8 @@ class fronthtmlpage {
 	  
 	  $pattern = "@<phpdac.*?>(.*?)</phpdac>@";
 	  preg_match_all($pattern,$data,$matches);
-	  //print_r($matches);
 	  
       foreach ($matches[1] as $r=>$cmd) {
-	    //echo $cmd,"<br>";
 		if (!$this->debug) {
 	      $ret = GetGlobal('controller')->calldpc_method($cmd,1); //no error stop 					 
 		  $data = str_replace("<phpdac>".$cmd."</phpdac>",$ret,$data);
@@ -479,11 +433,11 @@ class fronthtmlpage {
       if (iniload('JAVASCRIPT')) {	
 		 $js = new jscript;
 		 $onload = $js->onLoad();//!!!!!!!!!!!!!!!MUST BE SET TO <BODY AT END>
-		 $jret = $js->callJavaS() . "</head>";	//body jqgrid problem 
+		 $jret = $js->callJavaS() . "</body>";	//body jqgrid problem 
 		 unset ($js);		 
 		 
 		 if ($jret) {
-		   $ret = str_replace("</head>",$jret,$data);
+		   $ret = str_replace("</body>",$jret,$data);
 		 }
 		 
 		 return ($ret);
@@ -493,35 +447,9 @@ class fronthtmlpage {
 	}
 	
 	function process_css($data) {
-	  //$thema = GetGlobal('thema');
-/*	  $theme = GetGlobal('theme');	
-	
-	  $thema = GetGlobal('controller')->calldpc_var("pcntl.theme");
-	  if (!$thema) 
-		$thema = paramload('SHELL','deftheme');	
-	
-	  $prpath = paramload('SHELL','prpath');
-	  
-	  $themepath = $prpath . 'public/' .$theme['path'] . $thema . ".theme/";
-	  //echo $themepath;
-      */
-    
-	  /*
-   	  //by replacing css	 
-	   if ($this->runasapp) 
-	    $newcss = $this->runasapp. '/' . $this->themeurl . 'style.css';
-	  else 
-	    $newcss = $this->themeurl . 'style.css';
-	
-	  $ret = str_ireplace('style.css',$newcss,$data);*/
-	  
-	  $path = paramload('SHELL','prpath') . $this->htmlpage;	  
-	  //echo $path;
-	  //by enclosing css file		  
-	  //$enccss = $themepath . 'style.css';	  
+	  $path = paramload('SHELL','prpath') . $this->htmlpage;	   
 	  $enccss = $path . '/style.css';	  
 	  $cssdata = @file_get_contents($enccss);
-	  //echo $cssdata;  
 	  if ($cssdata) {
 	    $translated_css = "<style type='text/css'>" . $cssdata . "</style>";
 	    $ret = str_ireplace('</head>',$translated_css.'</head>',$data);	
@@ -559,9 +487,7 @@ class fronthtmlpage {
 	  elseif (is_readable($upath."/rss/".$feed_file)) {
 	    $lnk['RSS'] = '/rss/'.$feed_file;
 	  }
-	  
-	  //echo $upath."/rss/".$feed_file;	  
-	  
+
 	  //ATOM
 	  if (($lan) && (is_readable($upath."/atom/$lan/".$feed_file))) {
 	    $lnk['ATOM'] = "/atom/$lan/".$feed_file;	  
@@ -569,14 +495,11 @@ class fronthtmlpage {
 	  elseif (is_readable($upath.'/atom/'.$feed_file)) {
 	    $lnk['ATOM'] = '/atom/'.$feed_file;
 	  }
-	  //print_r($lnk);	
 
 	  if (is_array($lnk)) {
-	    foreach ($lnk as $t=>$w) {
-	      //echo $w,$t,'<br>';	    
+	    foreach ($lnk as $t=>$w) {    
 		  if ($w) {
 		    $icon_file = $this->urlpath.'/'.$this->infolder.'/images/'.strtolower($t).'.png';
-			//echo $icon_file,'>';
 		    if (is_readable($icon_file))
 			  $mylink = "<img src=\"". $this->infolder.'/images/'.strtolower($t).'.png' ."\" border=\"0\" alt=\"$t\">";
 			else
@@ -584,7 +507,6 @@ class fronthtmlpage {
 			  
 	        $ret .= "<A href=\"$w\">".$mylink."</A>&nbsp;";
 		  }	
-		  //echo $ret,'<br>';
 	    }
 	  }
 	  
@@ -675,12 +597,6 @@ class fronthtmlpage {
 
 	function get_admin_link() {	
 
-	    //print_r($_GET);
-		
-		//no edit when in editmode - modify...NOT WORK....
-	    //if ((defined('__EDITMODE')) || (GetReq('editmode')>0) || (GetReq('modify'))) 
-		  // return;//no edit at frame
-	 
 		if (is_array($_GET)) {
 		  foreach ($_GET as $i=>$t) {
 		    if ( ($i!='action') && ($i!='turl') ) 
@@ -699,16 +615,7 @@ class fronthtmlpage {
 		
         SetSessionParam('authverify',1);		
 				
-	    /*if (is_readable($icon_file))
-		  //$mylink = "<img src=\"". $this->infolder.'/images/editpage.png' ."\" border=\"0\" alt=\"Edit this page\">";
-		  $ret .= seturl("modify=".urlencode(base64_encode('stereobit'))."&turl=".$target_url.$mynewquery,$icon_file);//?? load theme 
-		else
-		  //$mylink = '[Edit]';
-		  $ret .= seturl("modify=".urlencode(base64_encode('stereobit'))."&turl=".$target_url.$mynewquery,'[Edit]'); 
-		*/ 
 		$ret .= seturl("modify=".urlencode(base64_encode('stereobit'))."&turl=".$target_url.$mynewquery,$this->editmode_point); 	
-	    //$ret .= "<A href=\"".$admin_url."\">$mylink</A>";	 		
-		//$ret .= seturl("modify=".encode('stereobit')."turl=".$target_url.$mynewquery,'[Edit]'); 
 		
 		return ($ret);
 	}
@@ -720,7 +627,6 @@ class fronthtmlpage {
 	//demo admin
 	function get_admin_demo_link($editmode_point=null) {
 
-	    //if (GetSessionParam('ADMIN')) return null;
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
        	
@@ -735,7 +641,7 @@ class fronthtmlpage {
 		  
 		$mynewquery = $newquery ? $newquery : null;  
 			
-		$current_page = pathinfo($_SERVER['PHP_SELF']);//parse_url($_SERVER['PHP_SELF'],PHP_URL_PAGE);				
+		$current_page = pathinfo($_SERVER['PHP_SELF']);			
 		$target_url = urlencode(base64_encode($current_page['basename'] . "?".$mynewquery));		
 
 		if ($editmode_point) {
@@ -747,9 +653,8 @@ class fronthtmlpage {
 		
 		return ($ret);
 	}	
-	
+	/*
 	function frameset($query=null) {
-		//fetch current size
 		$is_oversized = $this->app_is_oversized();
         if ($is_oversized)
             die($this->self_addspace());//die('Oversized');		
@@ -760,7 +665,7 @@ class fronthtmlpage {
 		
 		if (is_array($_GET)) {
 		  foreach ($_GET as $i=>$t) {
-		    if ( ($i!='pcntladmin') && ($i!='action') ) //??action //bypass pcntladmin=.. param for repoladn same url...
+		    if ( ($i!='pcntladmin') && ($i!='action') ) 
 		      $newquery .= '&'.$i.'='.$t;  
 	      }
 		}
@@ -921,15 +826,6 @@ return window.confirm(\"Close window?\")
 		else
 		    $js_cmdwin = null;
 				
-		/*if (($this->editdpc) && (GetSessionParam('LOGIN')=='yes')) {
-			$js_codewin = "
-var codewin=dhtmlwindow.open(\"bottomframe\", \"iframe\", \"$bottomframe_url\", \"Console\", \"width=600px,height=200px,resize=1,scrolling=1,center=0\", \"recal\")
-codewin.onclose=function(){ 
-return window.confirm(\"Close window?\")
-}		
-";		
-	    }
-		else */
 		    $js_codewin = null;
 			
 		if ($is_cpwizard) {
@@ -988,7 +884,7 @@ EOF;
         return ($fp);		
     }
 	
-	
+*/	
 	function anel_panel($query=null) {
 	    $encoding = $this->charset;
 		$is_oversized = $this->app_is_oversized();
@@ -1014,11 +910,7 @@ EOF;
 		@file_put_contents('cp/.turl',urlencode(base64_encode($turl)),LOCK_EX);
 		@file_put_contents('cp/.htmlfile',urlencode(base64_encode($file2edit)),LOCK_EX);
 		
-	    //#/access/signin
-		$mainframe_url = 'http://' . $this->url . str_replace('.','#',$this->anel);
-        /*$mainframe_url.= (GetSessionParam('LOGIN')=='yes') ?
-	                     str_replace('.','#',$this->anel) : 
-						 str_replace('.','#',$this->anel_signin);*/		
+		$mainframe_url = 'http://' . $this->url . str_replace('.','#',$this->anel);	
 			
 		$fp = <<<EOF
 <html>
@@ -1035,7 +927,7 @@ EOF;
 	   
 	   return ($fp);
 	}
-	
+
 	//cpanel template iframe win
     function cpanel_iframe($query=null) {
 	    $encoding = $this->charset;
@@ -1094,7 +986,7 @@ EOF;
 							     "cp/cp.php?editmode=1&encoding=".$encoding."&turl=" . urlencode(base64_encode($turl));
 								 //"cp/cpside.html";
 	  	}
-//<title>{$this->urltitle} - Modify Page ($turl)</title>		
+	
 		$fp = <<<EOF
  
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
@@ -1273,36 +1165,6 @@ EOF;
 		//echo $ret;
 		return ($ret);
     }
-  
-  //encrypt tokess to be params
- /* function tokenizer($tokarray) {
-  
-    $a0 = explode('<TOKENS>',$tokarray);
-	
-	if (is_array($a0)) {
-      //$a = serialize($tokarray);
-	  //$b = str_replace('+','<@>',$a);
-	  return $a0;
-	}
-	
-	return null;
-  }
-  
-  //decrypt tokess to be params
-  function detokenizer($tok) {
-
-    $a0 = explode('<TOKENS>',$tok);
-	  
-	if (is_array($a0)) {	  
-	  //$c = str_replace('TOKENS:','',$tok);  
-	  //$b = str_replace('<@>','+',$c);  
-      //$a = unserialize($b);
-	
-	  return $a0;  
-	}
-	
-	return null;
-  } */
   
     function is_tokens_var($var) {
   
@@ -1796,10 +1658,13 @@ EOF;
 				$ret = $force_page ? $force_page : $page;
 			else
 				$ret = $page ? $page : $mc_page;
-			//echo '->'.$pageid.'->'.$ret;
+
+            $this->MC_CURRENT_PAGE = $mc_page;
+		    //echo $this->MC_CURRENT_PAGE;			
 			return ($ret); 
 		}
-        
+        $this->MC_CURRENT_PAGE = $mc_page;
+		//echo $this->MC_CURRENT_PAGE;
         return ($mc_page);   		
 	}
 	
@@ -1887,13 +1752,11 @@ EOF;
 	}
 	
 	public function current_language() {
-	    //echo $this->language;
 		$loclan = localize($this->language, getlocal());
 		return ($loclan);
     }	
 	
 	public function iso_language() {
-	    //echo $this->isolanguage;
 		return ($this->isolanguage);
     }
 	
@@ -1912,9 +1775,7 @@ EOF;
 	//UTF-8
 	
 	public function strutf2iso($string=null,$encoding='ISO-8859-7') {
-	    //echo 'source:'.$string;
 		$ret = iconv("UTF-8", 'ISO-8859-7', $string);	
-		//echo 'target:'.$ret.'<br/>';
 		return ($ret);
 	}	
 	
@@ -1923,13 +1784,11 @@ EOF;
 		//$ret = iconv("UTF-8", 'ASCII//TRANSLIT', $string);	
 		//$ret = mb_convert_encoding($string,'CP1252');
 		$ret = urlencode($string);
-		//echo 'target:'.$ret.'<br/>';
 		return ($ret);
 	}
 	
 	public function strutf2md5($string=null) {
 		$ret = md5($string);
-		//echo 'target:'.$ret.'<br/>';
 		return ($ret);	
 	}
 	
@@ -1942,7 +1801,6 @@ EOF;
 	}
 	
     public function cpUsername() {
-		//$username = GetSessionParam('UserName') ? decode(GetSessionParam('UserName')) : $_POST['cpuser'];
 		$username = GetSessionParam('LoginName') ? GetSessionParam('LoginName') : $_POST['cpuser'];
 		$p = explode('@', $username);
 		$name =  $p[0];	
@@ -1950,6 +1808,48 @@ EOF;
 		return ($name);
     }	
 	
+    protected function javascript_ajax()  {
+   
+      $jscript = <<<EOF
+function createRequestObject() {var ro; var browser = navigator.appName;
+    if(browser == "Microsoft Internet Explorer"){ro = new ActiveXObject("Microsoft.XMLHTTP");} 
+	else{ro = new XMLHttpRequest();} return ro;}
+var http = createRequestObject();
+function sndUrl(url) {http.open('get', url); http.send(null);}
+function sndReqArg(url) {var params = url; http.open('post', params, true); http.setRequestHeader("Content-Type", "text/html; charset=utf-8");
+    http.setRequestHeader("encoding", "utf-8");	http.onreadystatechange = handleResponse; http.send(null);}
+function handleResponse() {if(http.readyState == 4){
+    var response = http.responseText;
+    var update = new Array();
+    response = response.replace( /^\s+/g, "" ); 
+    response = response.replace( /\s+$/g, "" );		
+    if(response.indexOf('|' != -1)) { /*alert(response); */ update = response.split('|');
+        document.getElementById(update[0]).innerHTML = update[1];}}}
+EOF;
+
+      return ($jscript);
+   }
+
+	protected function createcookie_js() {
+		
+		$ret = '
+function cc(name,value,days) {
+    if (days) { var date = new Date(); date.setTime(date.getTime()+(days*24*60*60*1000)); var expires = "; expires="+date.toGMTString();} else var expires = "";
+    document.cookie = name+"="+value+expires+"; path=/; domain=.'.str_replace('www.','',$_SERVER['HTTP_HOST']).';" }
+';
+        return ($ret);
+	}
+
+	protected function javascript() {
+        if (iniload('JAVASCRIPT')) {
+           	$code = $this->createcookie_js();				
+			$code.= $this->javascript_ajax();
+
+		    $js = new jscript;
+            $js->load_js($code,"",1);			   
+		    unset ($js);		
+     	}	  
+	}	
 };
 }
 ?>

@@ -823,9 +823,10 @@ class shkategories {
         $adir = array();
 		
 	    if ($isroot) {
+			$depth = 1;			
 			$sSQL = "select distinct cat2,cat{$f}2 from categories where ";
-			$depth = 1;
 			$sSQL .= "(ctgid>0 and active>0 and view>0) order by ctgid";
+			//$sSQL .= "ctgid>0 order by ctgid";
 			$result = $db->Execute($sSQL,2);
 			
 			if ($result) { 
@@ -851,6 +852,7 @@ class shkategories {
 			  default :
 			}
 			$sSQL .= " and (ctgid>0 and active>0 and view>0) order by ctgid";
+			//$sSQL .= "ctgid>0 order by ctgid";
 			$result = $db->Execute($sSQL,2);
 			
 			if ($result) {     

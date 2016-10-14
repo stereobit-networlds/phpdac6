@@ -8,7 +8,7 @@ define("CMSVSTATS_DPC",true);
 $__DPC['CMSVSTATS_DPC'] = 'cmsvstats';
 
 $__EVENTS['CMSVSTATS_DPC'][0]='cmsvstats';
-$__EVENTS['CMSVSTATS_DPC'][1]='cnsvmcstart';
+$__EVENTS['CMSVSTATS_DPC'][1]='cmsvmcstart';
 
 $__ACTIONS['CMSVSTATS_DPC'][0]='cmsvstats';
 $__ACTIONS['CMSVSTATS_DPC'][1]='cmsvmcstart';
@@ -65,18 +65,18 @@ class cmsvstats  {
         if (iniload('JAVASCRIPT')) {
 		
 		    //became universal
-           	$code = $this->createcookie_js();				
+           	//$code = $this->createcookie_js();	//fronthtmlpage universal			
 			
 		    //return no js when tags already loaded 
 			if (isset($this->hashtag) || (isset($this->cid) && isset($this->mc))) {}
 			else {	
-				$code.= $this->javascript_ajax();			
-				$code.= $this->reference_js();		
+				//$code.= $this->javascript_ajax();	//fronthtmlpage universal
+				$code.= $this->reference_js();			
+		
+				$js = new jscript;
+				$js->load_js($code,"",1);			   
+				unset ($js);		
 			}	
-			
-		    $js = new jscript;
-            $js->load_js($code,"",1);			   
-		    unset ($js);		
      	}	  
 	}
 	
@@ -101,8 +101,7 @@ if (window.location.hash) {
 	var hash = window.location.hash.substring(1);
 	var value = hash.split("|");
 	if (value[1]!=null) { cc("cid",value[0],"1"); cc("mc",value[1],"1");} else cc("hashtag",hash,"1");
-	//$.get( "katalog.php?t=cpvmcstart", function( data ) { alert( "Data Loaded: " + data ); });
-	sndUrl("katalog.php?t=cpvmcstart");
+	sndUrl("katalog.php?t=cmsvmcstart");
 }
 else { }		
 ';
@@ -113,35 +112,19 @@ else { }
    
       $jscript = <<<EOF
 function createRequestObject() {var ro; var browser = navigator.appName;
-    if(browser == "Microsoft Internet Explorer"){ro = new ActiveXObject("Microsoft.XMLHTTP");} else{
-        ro = new XMLHttpRequest();}
-    return ro;}
+    if(browser == "Microsoft Internet Explorer"){ro = new ActiveXObject("Microsoft.XMLHTTP");} 
+	else{ro = new XMLHttpRequest();} return ro;}
 var http = createRequestObject();
-function sndUrl(url) {
-    http.open('get', url+'&ajax=1');
-    //http.onreadystatechange = handleResponse;
-    http.send(null);
-}
-function sndReqArg(url) {var params = url+'&ajax=1';
-    http.open('post', params, true);
-    http.setRequestHeader("Content-Type", "text/html; charset=utf-8");
-    http.setRequestHeader("encoding", "utf-8");	
-    http.onreadystatechange = handleResponse;	
-    http.send(null);
-}
+function sndUrl(url) {http.open('get', url); http.send(null);}
+function sndReqArg(url) {var params = url; http.open('post', params, true); http.setRequestHeader("Content-Type", "text/html; charset=utf-8");
+    http.setRequestHeader("encoding", "utf-8");	http.onreadystatechange = handleResponse; http.send(null);}
 function handleResponse() {if(http.readyState == 4){
     var response = http.responseText;
     var update = new Array();
-    response = response.replace( /^\s+/g, "" ); // strip leading 
-    response = response.replace( /\s+$/g, "" ); // strip trailing		
-    if(response.indexOf('|' != -1)) {
-        //alert(response); 	
-        update = response.split('|');
-        document.getElementById(update[0]).innerHTML = update[1];
-    }	
-  }
-}
-
+    response = response.replace( /^\s+/g, "" ); 
+    response = response.replace( /\s+$/g, "" );		
+    if(response.indexOf('|' != -1)) { /*alert(response); */ update = response.split('|');
+        document.getElementById(update[0]).innerHTML = update[1];}}}
 EOF;
 
       return ($jscript);

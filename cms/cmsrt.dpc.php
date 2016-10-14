@@ -58,7 +58,7 @@ class cmsrt extends cms  {
 			$this->image_size_path = $ipath; //absolute path
 		
 		$this->items = null;
-		$this->csvitems = null;		  
+		$this->csvitems = null;			
 	}
 	
 	public function renderTemplate($id=null, $items=null, $fsave=null) {

@@ -255,7 +255,7 @@ class shkatalogmedia {
 	  }	
 
 	  $this->fcode = $this->getmapf('code');
-	  $this->lastprice = $this->getmapf('lastprice') ? ','.$this->getmapf('lastprice') : ',id';//dummy
+	  $this->lastprice = $this->getmapf('lastprice') ? ','.$this->getmapf('lastprice') : ',xml';
 	  
 	  $this->lan = getlocal() ? getlocal() : '0';
 	  $this->itmname = $this->lan ? 'itmname' : 'itmfname';
@@ -278,6 +278,7 @@ class shkatalogmedia {
 	  $this->siteFb = remote_paramload('INDEX','facebook', $this->path);
       $this->ogTags = null;	  
 	  $this->twitTags = null;
+	  $this->filterajax = false; //true;
 	  
 	  $this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
@@ -333,7 +334,8 @@ class shkatalogmedia {
 								$_filter = $this->replace_spchars($filter,1);
 								_m("cmsvstats.update_category_statistics use $_filter+filter");		  
 		                        break;		
-		  case 'klist'        : $this->my_one_item = $this->read_list(); 
+		  case 'klist'        : $this->javascript();
+		                        $this->my_one_item = $this->read_list(); 
 		                        _m("cmsvstats.update_category_statistics use ".GetReq('cat'));//$this->replace_spchars(GetReq('cat'),1));		  
 		                        break;	
 
@@ -372,7 +374,12 @@ class shkatalogmedia {
           case 'kfilter'      :	if (in_array('beforeitemslist',$this->catbanner))//before
 								  $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();									  
 								  								
-		                        $out .= $this->list_katalog(0,'kfilter');		
+		                        if ($this->filterajax) {
+									$section = $this->replace_spchars(GetReq('cat'),1);
+									die($section .'|'.$this->list_katalog(0,'kfilter'));
+								}	
+								else	
+									$out .= $this->list_katalog(0,'kfilter');		
 								
 								//banner down
 								if (in_array('afteritemslist',$this->catbanner))//after
@@ -404,10 +411,75 @@ class shkatalogmedia {
 		
 		return ($out);
     }
+	
+	protected function js() {
+		$cat = GetReq('cat');
+		$baseurl = paramload('SHELL','urlbase') . '/';		
+		$furl = $baseurl . seturl('t=kfilter&cat='.$this->replace_spchars($cat),null,null,null,null,true); 
+		
+		$js = "
+function filter(f,div) { 
+//alert(div+' '+f);
+/*
+\$('#'+div).html(\"<img src='images/loading.gif' alt='Loading'>\");			
+\$.get('{$furl}'+f+'/', function(data) {\$('#'+div).html(data);});};
+*/
+$.ajax({
+  url: '{$furl}'+f+'/',
+  cache: false,
+  success: function(html){
+    $('#'+div).text(html);
+  }
+})};
+";
+		return ($js);
+	}
+	
+	protected function scrolltop_javascript_code() {
+
+		$jscroll = <<<SCROLLTOP
+function ajaxcall(pdiv,purl) {
+	var pdiv = pdiv ? pdiv : '#content_div';
+	//console.log(pdiv+purl);
+	$('#'+pdiv).html('<img src="images/loading.gif" alt="Loading">');
+	$.get(purl,function(data) {	$('#'+pdiv).html(data);	});	
+}				
+//scroll smooth to top
+function gotoTop() {
+	//$("a[href='#top']").click(function() {
+	$("html, body").animate({ scrollTop: 0 }, "slow");
+	return false;
+	//});
+};
+
+SCROLLTOP;
+
+		return ($jscroll);
+    }	
+	
+	
+	protected function javascript() {
+	
+       if (iniload('JAVASCRIPT')) {
+	   
+	       $code = $this->js();
+		   $code.= $this->scrolltop_javascript_code();
+		   
+		   $js = new jscript;	
+           $js->load_js($code,null,1);		
+		   unset ($js);
+	   }	
+	}		
 
 	protected function orderSQL() {
-		$order = GetReq('order')?GetReq('order'):GetSessionParam('order');	
+		$order = GetReq('order') ? GetReq('order') : GetSessionParam('order');	
 		$ppolicy = $this->is_reseller ? 'price0' : 'price1';
+		
+		if ($this->myorder) { //phpdac hack
+			$sSQL = " ORDER BY ";	
+			$sSQL .= $this->myorder .' '. ($this->myasc ? $this->myasc : $this->sortdef);		
+			return ($sSQL);			
+		}
 		
 		switch ($order) {
 		    case 1  : $o = $this->bypass_order_list ? null : $this->itmname; break;
@@ -1774,10 +1846,9 @@ class shkatalogmedia {
 		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= "itmactive>0 and active>0";	
-		$mysort = $ascdesc ? ($ascdesc=='ASC'?'ASC':'DESC') : $this->sortdef; 
-		$sSQL .= " ORDER BY sysins ";	
+		$mysort = ($ascdesc=='ASC') ? 'ASC' : 'DESC'; 
+		$sSQL .= " ORDER BY datein " . $mysort;	
 		$sSQL .= $items ? " LIMIT " . $items : null;			
-	    //echo $sSQL,'<br>';
 		
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
@@ -3133,15 +3204,12 @@ class shkatalogmedia {
 	//FILTERS
 	function filter($field=null, $template=null, $incategory=null, $cmd=null, $header=null) {	
 		if (!$field) return;
-		$baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility
 		
 	    $db = GetGlobal('db');		
-        $filename = seturl("t=$mycmd"); 
-	    $lan = getlocal()?getlocal():'0';
+		$baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility		
 		$command = $cmd ? $cmd : 'search';
 	  
-
-		$contents = $this->select_template('searchfilter');
+		$contents = ($this->filterajax) ? $this->select_template('searchfilter-ajax') : $this->select_template('searchfilter');
 		
 		$tokens = array(); 
 		$r = array();	
@@ -3161,12 +3229,17 @@ class shkatalogmedia {
 		$result = $db->Execute($sSQL,2); 
 	  
 		if (!empty($result)) {
-
+			
 			foreach ($result as $n=>$t) {
 				if (trim($t[0])!='') {
+			        $f = $this->replace_spchars($t[0]);
+					$section = $this->replace_spchars(GetReq('cat'),1);
+					$url = $baseurl . seturl('t='.$command.'&cat='.GetReq('cat').'&input='.$f,null,null,null,null,true);
+					$theurl = ($this->filterajax) ? /*"filter('{$f}', '{$section}')" "ajaxcall('$section','$url')"*/ "sndReqArg('$url','$section')" : $url;
+					
 					$tokens[] = $t[0];
 					$tokens[] = $t[1];
-					$tokens[] = $baseurl . seturl('t='.$command.'&cat='.$this->replace_spchars(GetReq('cat')).'&input='.$this->replace_spchars($t[0]),null,null,null,null,true);
+					$tokens[] = $theurl;
 					$tokens[] = ($t[0] == $this->replace_spchars(GetReq('input'),1)) ? 'checked="checked"' : null;
 					$r[] = $this->combine_tokens($contents,$tokens);	
 					unset($tokens);		
@@ -3386,19 +3459,9 @@ EOF;
 	
 	//set ordersing online using <phpdac>
 	public function set_order($orderby=null,$asc=null) {
-	
-		if ($orderby) {
-			$this->myorderby = $orderby ? $this->fcode : $this->itmname;	   
-		}
-		else //reset
-			$this->myorderby = $this->itmname;
-	   
-		//desc asc
-		if ($asc) {
-			$this->myasc =	$asc;
-		}
-		else //reset
-			$this->myasc =	'asc';   
+
+		$this->myorderby = $orderby ? $orderby : null;
+		$this->myasc = $asc;  
 	}
 
 	public function read_policy($leeid=null) {
