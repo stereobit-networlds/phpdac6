@@ -468,9 +468,11 @@ function handleResponse() {if(http.readyState == 4){
             document.getElementById(update[0]).innerHTML = update[1];
         }}}  		
 		function init(){ sndReqArg('cp.php?t=cpmessages','cpmessages');} 
+";
+/*      //moved to footer.php, if init() execute
 		window.setInterval(\"sndReqArg('cp.php?t=cptasks','cptasks')\",63000);
 		window.setInterval(\"sndReqArg('cp.php?t=cpmessages','cpmessages')\",61200);
-";
+*/
 
 		return $js;
 	}	  
