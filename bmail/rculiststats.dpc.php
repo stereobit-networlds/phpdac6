@@ -19,6 +19,7 @@ $__EVENTS['RCULISTSTATS_DPC'][8]='cpactivatequeuerec';
 $__EVENTS['RCULISTSTATS_DPC'][9]='cpdeactivatequeuerec';
 $__EVENTS['RCULISTSTATS_DPC'][10]='cpviewtrace';
 $__EVENTS['RCULISTSTATS_DPC'][11]='cpviewclicks';
+$__EVENTS['RCULISTSTATS_DPC'][12]='cp'; //cp when first page
 
 $__ACTIONS['RCULISTSTATS_DPC'][0]='cpuliststats';
 $__ACTIONS['RCULISTSTATS_DPC'][1]='cpulframe';
@@ -32,6 +33,7 @@ $__ACTIONS['RCULISTSTATS_DPC'][8]='cpactivatequeuerec';
 $__ACTIONS['RCULISTSTATS_DPC'][9]='cpdeactivatequeuerec';
 $__ACTIONS['RCULISTSTATS_DPC'][10]='cpviewtrace';
 $__ACTIONS['RCULISTSTATS_DPC'][11]='cpviewclicks';
+$__ACTIONS['RCULISTSTATS_DPC'][12]='cp'; //cp when first page
 
 $__DPCATTR['RCULISTSTATS_DPC']['cpuliststats'] = 'cpuliststats,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -74,7 +76,7 @@ class rculiststats  {
 		if ($login!='yes') return null;		
 
 		switch ($event) {				
-			
+			case 'cp'            :	break;		
 			case 'cpuliststats'  :
 			default              : //$this->percentofCamps();                    
 		}
@@ -86,7 +88,7 @@ class rculiststats  {
 		if ($login!='yes') return null;	
 
 		switch ($action) {
-				
+			case 'cp'                  : $this->runstats(); break; //when first page and need to run stats				
 			case 'cpuliststats'   	   :
 			default          		   : $this->runstats();	
 		}

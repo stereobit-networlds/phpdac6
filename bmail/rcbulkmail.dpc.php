@@ -15,7 +15,7 @@ require_once($a);
 
 
 $__EVENTS['RCBULKMAIL_DPC'][0]='cpbulkmail';
-$__EVENTS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
+/*$__EVENTS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
 $__EVENTS['RCBULKMAIL_DPC'][2]='cpsubscribe';
 $__EVENTS['RCBULKMAIL_DPC'][3]='cpadvsubscribe';
 $__EVENTS['RCBULKMAIL_DPC'][4]='cpviewsubsqueue';
@@ -23,7 +23,7 @@ $__EVENTS['RCBULKMAIL_DPC'][5]='cploadframe';
 $__EVENTS['RCBULKMAIL_DPC'][6]='cpmailbodyshow';
 $__EVENTS['RCBULKMAIL_DPC'][7]='cpviewsubsqueueactiv';
 $__EVENTS['RCBULKMAIL_DPC'][8]='cpactivatequeuerec';
-$__EVENTS['RCBULKMAIL_DPC'][9]='cpdeactivatequeuerec';
+$__EVENTS['RCBULKMAIL_DPC'][9]='cpdeactivatequeuerec';*/
 $__EVENTS['RCBULKMAIL_DPC'][10]='cpsavemailadv';
 $__EVENTS['RCBULKMAIL_DPC'][11]='cpsubsend';
 $__EVENTS['RCBULKMAIL_DPC'][12]='cpsubloadhtmlmail';
@@ -32,14 +32,14 @@ $__EVENTS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
 $__EVENTS['RCBULKMAIL_DPC'][15]='cpmailstats';
 $__EVENTS['RCBULKMAIL_DPC'][16]='cpviewclicks';
 $__EVENTS['RCBULKMAIL_DPC'][17]='cpviewtrace';
-$__EVENTS['RCBULKMAIL_DPC'][18]='cp'; //cp when fist page
+//$__EVENTS['RCBULKMAIL_DPC'][18]='cp'; //cp when fist page
 $__EVENTS['RCBULKMAIL_DPC'][19]='cpcampcontent';
 $__EVENTS['RCBULKMAIL_DPC'][20]='cpdeletecamp';
 $__EVENTS['RCBULKMAIL_DPC'][21]='cptemplatenew';
 $__EVENTS['RCBULKMAIL_DPC'][22]='cptemplatesav';
 
 $__ACTIONS['RCBULKMAIL_DPC'][0]='cpbulkmail';
-$__ACTIONS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
+/*$__ACTIONS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
 $__ACTIONS['RCBULKMAIL_DPC'][2]='cpsubscribe';
 $__ACTIONS['RCBULKMAIL_DPC'][3]='cpadvsubscribe';
 $__ACTIONS['RCBULKMAIL_DPC'][4]='cpviewsubsqueue';
@@ -47,7 +47,7 @@ $__ACTIONS['RCBULKMAIL_DPC'][5]='cploadframe';
 $__ACTIONS['RCBULKMAIL_DPC'][6]='cpmailbodyshow';
 $__ACTIONS['RCBULKMAIL_DPC'][7]='cpviewsubsqueueactiv';
 $__ACTIONS['RCBULKMAIL_DPC'][8]='cpactivatequeuerec';
-$__ACTIONS['RCBULKMAIL_DPC'][9]='cpdeactivatequeuerec';
+$__ACTIONS['RCBULKMAIL_DPC'][9]='cpdeactivatequeuerec';*/
 $__ACTIONS['RCBULKMAIL_DPC'][10]='cpsavemailadv';
 $__ACTIONS['RCBULKMAIL_DPC'][11]='cpsubsend';
 $__ACTIONS['RCBULKMAIL_DPC'][12]='cpsubloadhtmlmail';
@@ -56,7 +56,7 @@ $__ACTIONS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
 $__ACTIONS['RCBULKMAIL_DPC'][15]='cpmailstats';
 $__ACTIONS['RCBULKMAIL_DPC'][16]='cpviewclicks';
 $__ACTIONS['RCBULKMAIL_DPC'][17]='cpviewtrace';
-$__ACTIONS['RCBULKMAIL_DPC'][18]='cp'; //cp when first page
+//$__ACTIONS['RCBULKMAIL_DPC'][18]='cp'; //cp when first page
 $__ACTIONS['RCBULKMAIL_DPC'][19]='cpcampcontent';
 $__ACTIONS['RCBULKMAIL_DPC'][20]='cpdeletecamp';
 $__ACTIONS['RCBULKMAIL_DPC'][21]='cptemplatenew';
@@ -258,16 +258,14 @@ class rcbulkmail {
 									$this->gotourl = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 								  }
 								  break;									  
-            */
+            
             case 'cpmailstats'     : //as first tme loged in stats must be calced at action
 			                         //$this->load_graph_objects();
 									 //$this->runstats();		
-                                     break;			
+                                     break;			*/
 			
 	        case 'cpdeletecamp'    : $this->delete_campaign();
-			                         break;	
-									
-            case 'cpdeletecamp'    : break;									
+			                         break;								
 	        case 'cpviewcamp'      : $this->load_campaign();
 			                         break;			
 									 
@@ -393,18 +391,15 @@ class rcbulkmail {
 			case 'cploadframe'         : */ 									 
 			
 			case 'cpsubloadhtmlmail'   :
-            case 'cpsavemailadv'       :	
-	        //case 'cpsubsend'         :	$this->runstats();	break;	//goto stats	
+            case 'cpsavemailadv'       :		
 			case 'cpsubsend'           :
 			case 'cpcampcontent'       : 
+            case 'cpdeletecamp'        :
 			case 'cppreviewcamp'       : 
 			case 'cpviewcamp'          : $out = $this->campaigns_grid(null,140,5,'r', true);  break;
 			case 'cpbulkmail'          : 
-		    default                    : $out = null;
-		}	
-
-		//when stats run (used by timeline fun call into breadcrumb)
-		//$this->cpStats = $this->isStats();		
+		    default                    : 
+		}			
 		
         return ($out);
 	}
@@ -458,7 +453,7 @@ class rcbulkmail {
 		_m("mygrid.column use grid1+cdate|".localize('_date',getlocal())."|5|0|");		
 		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|1|");
 		_m("mygrid.column use grid1+cc|".localize('_email',getlocal())."|link|0|"."cpuliststats.php?t=cpadvsubscribe&cid={cid}".'||');
-		_m("mygrid.column use grid1+title|".localize('_subject',getlocal())."|link|15|"."javascript:cid(\"{cid}\");".'||');						
+		_m("mygrid.column use grid1+title|".localize('_subject',getlocal())."|link|15|"."cpbulkmail.php?t=cpviewcamp&cid={cid}".'||'); //."javascript:cid(\"{cid}\");".'||');						
 		_m("mygrid.column use grid1+ctype|".localize('_type',getlocal())."|2|1|");		
 		_m("mygrid.column use grid1+ulists|".localize('_LISTNAME',getlocal())."|link|1|"."cpulists.php?t=cpadvsubscribe".'||');
 		_m("mygrid.column use grid1+template|".localize('_template',getlocal())."|5|1|");
@@ -470,378 +465,6 @@ class rcbulkmail {
 		
 		return ($out);  
 	}		
-	
-	
-/*	
-	
-	protected function dosubscribe($mail=null,$notell=null,$name=null) {
-        $db = GetGlobal('db');
-        $sFormErr = GetGlobal('sFormErr');	
-        $name = $name ? $name : 'unknown'; 		
-	    $ret = false;
-	    $mail = $mail ? $mail : GetParam('submail');
-		if (!$mail) return false;
-	   
-        $dtime = date('Y-m-d h:i:s');		
-	
-		//when a new name of a list keep the new name else selected ulist else default
-		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : (GetParam('ulist') ? GetParam('ulist') : 'default');
-		    //ulist....
-			if ($this->_checkmail($mail))  {
-				$sSQL = "SELECT email FROM ulists where email=". $db->qstr($mail) . 
-				        " and (listname='deleted' or listname=" . $db->qstr($ulistname) .")"; 
-				$ret = $db->Execute($sSQL,2);
-                if (empty($ret->fields[0])) {
-					$sSQL = "insert into ulists (email,startdate,active,lid,listname,name,owner) " .
-							"values (" .
-							$db->qstr(strtolower($mail)) . "," . $db->qstr($dtime) . "," .
-							"1,1," . 
-							$db->qstr(strtolower($ulistname)) . "," .
-							$db->qstr($name) . "," .
-							$db->qstr($this->owner) . 
-							")";  
-					$db->Execute($sSQL,1);		    
-			        //echo $sSQL;
-					
-					SetGlobal('sFormErr', localize('_MSG6',getlocal()));
-			        if ((!$notell) && ($this->tell_it)) 
-						$this->mailto($this->tell_from,$this->tell_it,'New Subscription',$mail);			     							  	 
-			   
-					$ret = true;					
-                }				
-			}
-			else 
-			    SetGlobal('sFormErr', localize('_MSG5',getlocal()));
-	   
-	    return $ret;	   	
-	}
-
-	protected function dounsubscribe($mail=null) {
-        $db = GetGlobal('db');
-        $sFormErr = GetGlobal('sFormErr');	
-	    $mail = $mail ? $mail : GetParam('submail');
-		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';		
-		if (!$mail) return false;  
-		
-			if ($this->_checkmail($mail))  {
-
-				$sSQL = "update ulists set active=0 where email=" . $db->qstr($mail) . ' and listname=' . $db->qstr($ulistname); 
-				$result = $db->Execute($sSQL,1);
-		        //echo $sSQL;
-				return true;
-			}	
-				
-        return false;		
-	}	
-	
-	protected function subscribe_extracting_name($token=null) {
-        $db = GetGlobal('db'); 
-		if (!$token) return;	
-		$matches = array();
-					
-	    //method 1 name <mail>
-	    $pattern = "@<(.*?)>@";
-	    preg_match($pattern,$token,$matches);
-	    $extracted_mail = trim(strtolower($matches[1]));
-
-		if ($this->_checkmail($extracted_mail)) {	  
-		  if ($name = str_replace($extracted_mail,'',$token)) {
-		    //echo $name,'<br>'
-		    $name = str_replace('"','',$name);
-		    $name = str_replace("'",'',$name);
-		    $name = str_replace('<>','',$name);			
-		  }
-		  $s = $this->dosubscribe($extracted_mail,1,$name);
-		  return ($s);	   
-	    }
-		else { //method 2 name [mail]
-	      $pattern2 = "@[(.*?)]@";
-	      preg_match($pattern2,$token,$matches);
-	      //print_r($matches);
-	      $extracted_mail = trim(strtolower($matches[1]));
-		
-		  //if ($s = $this->dosubscribe($extracted_mail,1)) {  
-		  if ($this->_checkmail($extracted_mail)) {	  
-		    if ($name = str_replace($extracted_mail,'',$token)) {		
-		      $name = str_replace('"','',$name);
-			  $name = str_replace("'",'',$name);
-		      $name = str_replace('[]','',$name);			
-		    }
-		    $s = $this->dosubscribe($extracted_mail,1,$name);
-		    return ($s);		   			   
-	      }
-		  else { //method 3 name mail
-		    $mytokens = explode(' ',$token);
-		    $name = trim($mytokens[0]);
-		    $extracted_mail = trim(strtolower($mytokens[1])); 
-		  
-		    if ($this->_checkmail($extracted_mail)) {		
-		      if ($name = str_replace($extracted_mail,'',$token)) {
-		        $name = str_replace('"','',$name);
-			    $name = str_replace("'",'',$name);
-			  }	
-		      $s = $this->dosubscribe($extracted_mail,1,$name);
-		      return ($s);	   
-			}  
-	      }		  
-		}
-
-        return false;
-	}		
-	
-	protected function mass_subscribe() {
-	  //print_r($_POST);
-	  $mailtext = GetParam('csvmails');	  
-	  $separator = GetParam('separator') ? GetParam('separator') : ',';
-	  if (!$mailtext) return;
-	  
-	  $mymails = explode($separator,$mailtext);
-	  //print_r($mymails);
-	  $x=0; $x2=0;
-	  $n=0;
-	  $e=0;
-	  set_time_limit(50);
-	  foreach ($mymails as $i=>$tok) {
-	    if ($doit = $this->dosubscribe(trim(strtolower($tok)),1)) {//is a mail address...
-		  if ($doit>0) 
-		    $x+=1;
-		  elseif ($doit<0) 
-		    $x2+=1;
-		}  
-		else {//..is a combo mail/name
-		
-		  $doit_2 = $this->subscribe_extracting_name($tok);
-		  
-		  if ($doit_2) {
-		    $n+=1;
-		    if ($doit_2>0) 
-		      $x+=1;
-		    elseif ($doit_2<0)
-		      $x2+=1;			
-			else
-			  $e+=1;    
-		  }
-		  else		
-		    $e+=1; 
-	    }	
-	  }
-	  set_time_limit(30); //default
-	  
-	  $msg = $x . ' mails added, ';
-	  $msg .= $x2 . ' mails updated from ' . count($mymails) . ', ';	  
-	  $msg .= $n . ' names extracted,';	  
-	  $msg .= $e . ' tokens not recognized.';	  
-	  
-	  SetGlobal('sFormErr', $msg);	  
-	  setInfo($msg);	  
-	}		
-
-	protected function deactivate_queue_rec() {
-         $db = GetGlobal('db');
-         $rec = GetReq('rec'); 
-	   	   
-	     $sSQL = "update mailqueue set active=0,mailstatus='USER_CANCEL' where id=" . $rec;
-		 //echo $sSQL;		 
-				 
-	     $res = $db->Execute($sSQL,1);	
-	}	
-
-	protected function activate_queue_rec() {
-         $db = GetGlobal('db');
-         $rec = GetReq('rec'); 
-	   	   
-	     $sSQL = "update mailqueue set active=1,mailstatus='USER_ACTIV' where id=" . $rec;
-		 //echo $sSQL;		 
-				 
-	     $res = $db->Execute($sSQL,1);	
-	}	
-
-	//user table (deprecated)
-    public function _isin($mail) {
-       $db = GetGlobal('db');
-	   
-       $sSQL = "SELECT id,email,startdate FROM users";	
-	   $sSQL .= " WHERE email=" . $db->qstr($mail) . " and subscribe>0"; 
-		
-	   $resultset = $db->Execute($sSQL,2);
-	   //$ret = $db->fetch_array($resultset);	   
-	   
-	   //echo $mail,$sSQL;
-
-
-	   if ($resultset->fields['email']==$mail) return (true);
-	
-       return (false);
-    }	
-	
-	//ulists table
-    public function isin($mail) {
-       $db = GetGlobal('db');
-	   
-       $sSQL = "SELECT id,listname, name, email, datein, active FROM ulist";	
-	   $sSQL .= " WHERE email=" . $db->qstr($mail); // . " and active>0"; 
-		
-	   $resultset = $db->Execute($sSQL,2);
-	   //$ret = $db->fetch_array($resultset);	   
-	   
-	   //echo $mail,$sSQL;
-	   if ($email = $resultset->fields['email']) {
-         $ret = ($resultset->fields['active']==1) ? 1 : -1; //activeted - deactivated
-	     return $ret;
-       }		 
-	
-       return false; //not exist
-    }	
-	
-	protected function loadframe($ajaxdiv=null) {
-	    $bodyurl = seturl("t=cpmailbodyshow&id=".GetReq('id'));
-	
-		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
-
-		if ($ajaxdiv)
-			return $ajaxdiv.'|'.$frame;//$out;	//'<p>'.$bodyurl.'</p>';
-		else
-			return ($frame);
-	}	
-	
-    protected function show_mailbody() {
-		$db = GetGlobal('db'); 	
-		$id = GetReq('id');
-	  
-		$sSQL = "select body from mailqueue where id=".$id;
-		$result = $db->Execute($sSQL);
-   
-        $htmlbody = $result->fields['body'];
-
-		return ($htmlbody);	  
-    }	
-
-	public function viewMails($active=null) {
-		$active = $active?$active:GetReq('active');
-		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;
-		   	
-	    //in case of preview in ajax win mygrid is not working so render browser
-		//when paging goto fullscreesn and ajax req is not exist so can render mygid
-		//also when active is 1 because sql can't select using where
-		if ((!$active) && (!$isajax_window) && (defined('MYGRID_DPC'))) {
-		    $title = str_replace(' ','_',localize('_MAILQUEUE',getlocal()));//NO SPACES !!!//localize('_MAILQUEUE',getlocal());
-		   
-	        $sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue";
-            $sSQL.= ') as o';  				
-		   		   
-		    //echo $sSQL;
-            //seturl('t=cpactivatequeuerec&editmode=1&rec={id}')
-			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal())."|boolean|1|ACTIVE:NOT ACTIVE");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal()).'|link|2|'."javascript:disable({id});".'||');			
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+timeout|".localize('_date',getlocal())."|link|5|"."javascript:enable({id});".'||'); //.'|date|1');				
-            //GetGlobal('controller')->calldpc_method("mygrid.column use grid9+receiver|".localize('_receiver',getlocal()).'|10|1');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+receiver|".localize('_receiver',getlocal())."|link|5|".seturl('t=cpviewtrace&m={receiver}&cid={cid}&editmode=1').'||');	   
-            //GetGlobal('controller')->calldpc_method("mygrid.column use grid9+subject|".localize('_subject',getlocal()).'|20|1');	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+subject|".localize('_subject',getlocal())."|link|15|"."javascript:show_body({id});".'||'); //.seturl('t=cpactivatequeuerec&editmode=1&rec={id}').'||');
-		    //GetGlobal('controller')->calldpc_method("mygrid.column use grid9+active|".localize('_active',getlocal()).'|boolean|1');	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+reply|".localize('_reply',getlocal()).'|2|1|||||right');	
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+status|".localize('_status',getlocal()).'|2|1|||||right');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+mailstatus|".localize('_mailstatus',getlocal()).'|2|1');	
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+cid|".localize('_cid',getlocal())."|link|5|"); 
-			
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+16+400++0+1+1");
-			
-			//mail body ajax renderer
-			$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
-		}
-        else  
-			$out .= null;
-   		
-		
-	    return ($out);	
-	}
-	
-	protected function viewTrace($mail=null, $cid=null) {
-		if (!$mail) return null;
-		$email = urldecode($mail);
-		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;
-		   	
-	    //in case of preview in ajax win mygrid is not working so render browser
-		//when paging goto fullscreesn and ajax req is not exist so can render mygid
-		//also when active is 1 because sql can't select using where
-		if ((!$isajax_window) && (defined('MYGRID_DPC'))) {
-		    $title = str_replace(' ','_',localize('_MAILTRACE',getlocal()));
-		   
-			if ($cid) $cID = " and ref='$cid'";		   
-	        $sSQL = "select * from (select id,date,tid,attr1 from stats where attr3='$email' $cID order by id";
-            $sSQL.= ') as o';  				
-		   		   
-		    //echo $sSQL;
-
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|date|5');				
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_code',getlocal()).'|10|1');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_category',getlocal()).'|30|1');			
-			
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+16+400++0+1+1");
-			
-			//mail body ajax renderer
-			$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use mailbody");
-		}
-        else  
-			$out .= null;
-   		
-		
-	    return ($out);	
-	}	
-	
-	protected function ulistform($ulistname) {
-        $db = GetGlobal('db');	
-		$ulistname = localize('_list',getlocal()); 'grid1';//$ulistname ? $ulistname : 'default';
-		
-		if (defined('MYGRID_DPC')) { 
-		   $sSQL = "select * from (";
-		   $sSQL.= "SELECT id,startdate,active,failed,name,email,listname FROM ulists";
-           $sSQL .= ') as o';  		   
-		   
-		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_ID',getlocal()));
-           GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_SUBMAIL',getlocal()).'|10|1');
-           GetGlobal('controller')->calldpc_method("mygrid.column use grid1+startdate|".localize('_SUBDATE',getlocal()).'|10|0');		   
-           GetGlobal('controller')->calldpc_method("mygrid.column use grid1+name|".localize('_FNAME',getlocal()).'|20|1');	
-		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_ACTIVE',getlocal()).'|boolean|1');	
-		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+failed|".localize('_FAILED',getlocal()).'|5|1');	
-		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+listname|".localize('_LISTNAME',getlocal()).'|20|1');	
-		   $out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ulists+$sSQL+d+$ulistname+id+0+1+12+320++0+1+1");
-
-		}	
-		
-	   	
-	    return ($out);	
-	}
-	
-	public function postSubmit($action, $title=null, $class=null) {
-		if (!$action) return;
-		$submit = $title ? $title : 'Submit';
-		$cl = $class ? "class=\"$class\"" : null;
-		 
-        $c .= "<button type=\"submit\" name=\"submit\" value=\"" . $submit . "\" $cl />";  
-        $c .= "<INPUT type=\"hidden\" name=\"FormName\" value=\"MailBulkInsert\" />";		   
-        $c .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . $action . "\" $cl />";
-        return ($c);   		   
-	}	
-			
-
-    protected function subscribeform()  { 		
-
-	    //ulist form
-	    if ($this->isDemoUser())  //deny list from demo users
-			$out = "[List view kept hidden]";
-		else {	
-			//$out .= $this->ulistform(GetParam('ulistname'));
-			$bodyurl = 'cpsubscribers.php?t=cpsubsframe';; 
-			$out = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"320px\"><p>Your browser does not support iframes</p></iframe>";      
-		}	
-
-        return ($out);
-    }
-	*/
 	
 	public function viewUList($exclude_selected=false) {
 		$db = GetGlobal('db');
@@ -1357,7 +980,7 @@ class rcbulkmail {
 	
 	protected function preview_campaign() {
 		$db = GetGlobal('db');	
-        if (!$this->cid) die("CID error");
+        if (!$this->cid) return false; //die("CID error");
 		
 		//all as 9 user or only owned		
 		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
@@ -1374,7 +997,7 @@ class rcbulkmail {
 	
 	protected function delete_campaign() {
 		$db = GetGlobal('db');	
-        if (!$this->cid) die("CID error");
+        if (!$this->cid) return false; //die("CID error");
 		
 		if ($this->isDemoUser()) {
 			$this->messages[] = "Campaign NOT deleted (demo user).";//localize('_delcamp', getlocal());
@@ -1811,20 +1434,7 @@ class rcbulkmail {
 		$mailname = GetParam('realm') ? GetParam('realm') : $this->mailname; //a per user submit (realm)
 		$from = $mailuser ? $mailuser : $from; //replace sender when another server settings ? 
 		$cc = $_POST['include'] ? implode(';',$_POST['include']) : null; //subscribers field array
-		//print_r($_POST);//['include']);
-		//echo count($_POST['include']);
-		
-		/* $to = $_POST['to'] ? $_POST['to'] : $_POST['submail']; //to field, submail come from create
-		if ($to) { //to alone test
-		    //echo 'to:'.$to;
-		    if ($this->domain_exists($to)) {
-				$text = str_replace('_SUBSCRIBER_', $to, $mail_text); 	
-				$meter += $this->sendmail_instant($from,$to,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
-				$i=1;
-			}
-			else $this->messages[] =  'Send failed: MX error (to)';
-		}
-		else*/
+
 		if ($cc) {		
 			$qty = count($_POST['include']);
 			//echo 'qty:',$qty;
@@ -1837,7 +1447,7 @@ class rcbulkmail {
 				}	
 			}
 			else {			
-				set_time_limit(60); 
+				set_time_limit(120); 
 				foreach ($_POST['include'] as $z=>$m) { //remaining postc (reduced input array)...
 					
 					//break if mails bigger than max input vars 					
