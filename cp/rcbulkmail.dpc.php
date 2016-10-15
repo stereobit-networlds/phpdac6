@@ -759,7 +759,7 @@ class rcbulkmail {
 		
 	    return ($out);	
 	}	
-	
+	/*
 	protected function ulistform($ulistname) {
         $db = GetGlobal('db');	
 		$ulistname = localize('_list',getlocal()); 'grid1';//$ulistname ? $ulistname : 'default';
@@ -767,18 +767,8 @@ class rcbulkmail {
 		if (defined('MYGRID_DPC')) { 
 		   $sSQL = "select * from (";
 		   $sSQL.= "SELECT id,startdate,active,failed,name,email,listname FROM ulists";
-		   
-		   //not selectable by typing listname...just search in grid
-		   //$sSQL .= " where listname=" . $db->qstr($ulistname);
-           //solving where using not in users !!!!!		   
-		   //$sSQL.= " LEFT JOIN users c ON c.email <> u.email AND ";
-           /*if ($ulistname=='default') 
-				$sSQL .= "(u.listname='".$ulistname."' OR u.listname='')";
-		   else
-				$sSQL .= " u.listname='".$ulistname."'";*/
-		   
            $sSQL .= ') as o';  		   
-		   //echo $sSQL;
+		   
 		   GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_ID',getlocal()));
            GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_SUBMAIL',getlocal()).'|10|1');
            GetGlobal('controller')->calldpc_method("mygrid.column use grid1+startdate|".localize('_SUBDATE',getlocal()).'|10|0');		   
@@ -793,7 +783,7 @@ class rcbulkmail {
 	   	
 	    return ($out);	
 	}
-	
+	*/
 	public function postSubmit($action, $title=null, $class=null) {
 		if (!$action) return;
 		$submit = $title ? $title : 'Submit';
@@ -811,8 +801,11 @@ class rcbulkmail {
 	    //ulist form
 	    if ($this->isDemoUser())  //deny list from demo users
 			$out = "[List view kept hidden]";
-		else	
-			$out .= $this->ulistform(GetParam('ulistname'));	   
+		else {	
+			//$out .= $this->ulistform(GetParam('ulistname'));
+			$bodyurl = 'cpsubscribers.php?t=cpsubsframe';; 
+			$out = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"320px\"><p>Your browser does not support iframes</p></iframe>";      
+		}	
 
         return ($out);
     }

@@ -91,29 +91,19 @@ class rccustomers extends shcustomers {
 
 	  $this->path = paramload('SHELL','prpath'); 
 
-      if ($GRX) {
 
-          $this->delete = loadTheme('ditem',localize('_delete',getlocal()));
-          $this->edit = loadTheme('eitem',localize('_edit',getlocal()));
-          $this->add = loadTheme('aitem',localize('_add',getlocal()));
-          $this->mail = loadTheme('mailitem',localize('_mail',getlocal()));
-		  $this->type = loadTheme('iitem',localize('_ptype',getlocal()));
+         $this->delete = localize('_delete',getlocal());
+         $this->edit = localize('_edit',getlocal());
+         $this->add = localize('_add',getlocal());
+         $this->mail = localize('_mail',getlocal());
+         $this->type = localize('_ptype',getlocal());
 
-		  $this->sep = "&nbsp;";//loadTheme('lsep');
-      }
-      else {
-          $this->delete = localize('_delete',getlocal());
-          $this->edit = localize('_edit',getlocal());
-          $this->add = localize('_add',getlocal());
-          $this->mail = localize('_mail',getlocal());
-          $this->type = localize('_ptype',getlocal());
+		 $this->sep = "|";
 
-		  $this->sep = "|";
-      }
 
-	  $acode = remote_paramload('RCCUSTOMERS','activecode',$this->path);
+		$acode = remote_paramload('RCCUSTOMERS','activecode',$this->path);
 
-	  $this->actcode = 'id';
+		$this->actcode = 'id';
 	}
 
     function event($event=null) {
@@ -140,7 +130,6 @@ class rccustomers extends shcustomers {
 	     case 'regcustomer' :
 		                      break;
          case 'updcustomer' : $this->updrec = $this->getcustomer(GetReq('rec'),$this->actcode);
-		                      //$this->grid_javascript();
 		                      break;
 	     case 'saveupdcus'  : $this->update(GetReq('rec'),$this->actcode);
 		                      break;
@@ -185,52 +174,6 @@ class rccustomers extends shcustomers {
 	 return ($out);
     }
 	
-	function grid_javascript() {
-      if (iniload('JAVASCRIPT')) {		      
-		   
-	       $code = $this->init_grids();			
-		   $js = new jscript;	   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }		
-	}	
-/*	
-	function init_grids() {
-
-		$bodyurl = seturl("t=cploadframe&tid=");
-	
-        //disable alert !!!!!!!!!!!!		
-		$out = "
-function alert() {}\r\n 
-
-function update_stats_id() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];
-  
-  
-  statsid.value = str;
-  //alert(statsid.value);
-  sndReqArg('$this->ajaxLink'+statsid.value,'stats');
-  
-  return str1+' '+str2;
-}
-
-function show_body() {
-  var str = arguments[0];
-  var str1 = arguments[1];
-  var str2 = arguments[2];  
-  var taskid;
-  var custid;
-  
-  taskid = str;  
-  sndReqArg('$bodyurl'+taskid,'trans');
-}			
-";
-
-        $out .= "\r\n";
-        return ($out);
-	}	*/
 	
 	protected function update_customer_form() {
 	
@@ -296,7 +239,7 @@ function show_body() {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr2|".localize('_attr2',getlocal())."|5|1|");							
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr3|".localize('_attr3',getlocal())."|5|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr4|".localize('_attr4',getlocal())."|5|1|");			
-			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+customers+$xsSQL2+d+".localize('RCCUSTOMERS_DPC',getlocal())."+id+0+1+36+600");
+			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+customers+$xsSQL2+d+".localize('RCCUSTOMERS_DPC',getlocal())."+id+0+1+25+600");
 
 	    }
 		else 
@@ -323,7 +266,7 @@ function show_body() {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+voice2|".localize('_tel',getlocal())."|10|1|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+fax|".localize('_fax',getlocal())."|10|1|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+mail|".localize('_mail',getlocal())."|20|1|");			
-			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+custaddress+$xsSQL2+d+".localize('_custaddress',getlocal())."+id+0+1+36+600");
+			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+custaddress+$xsSQL2+d+".localize('_custaddress',getlocal())."+id+0+1+25+600");
 
 	    }
 		else 
