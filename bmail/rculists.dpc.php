@@ -247,7 +247,7 @@ class rculists  {
 		    _m("mygrid.column use grid9+active|".localize('_active',getlocal()).'|link|2|'."javascript:disable({id});".'||');			
             _m("mygrid.column use grid9+timeout|".localize('_date',getlocal())."|link|5|"."javascript:enable({id});".'||'); //.'|date|1');				
 			_m("mygrid.column use grid9+receiver|".localize('_receiver',getlocal())."|link|5|". "javascript:show_trace(\"{receiver}\",\"{cid}\");".'||'); //seturl('t=cpviewtrace&m={receiver}&cid={cid}').'||');	   
-			_m("mygrid.column use grid9+subject|".localize('_subject',getlocal())."|link|15|"."javascript:show_body({id});".'||'); //.seturl('t=cpactivatequeuerec&rec={id}').'||');	
+			_m("mygrid.column use grid9+subject|".localize('_subject',getlocal())."|link|15|"."javascript:show_body(\"{cid}\");".'||'); //.seturl('t=cpactivatequeuerec&rec={id}').'||');	
 		    _m("mygrid.column use grid9+reply|".localize('_reply',getlocal()).'|2|1|||||right');	
 		    _m("mygrid.column use grid9+status|".localize('_status',getlocal()).'|2|1|||||right');
 		    _m("mygrid.column use grid9+mailstatus|".localize('_mailstatus',getlocal()).'|2|1');	
@@ -280,11 +280,13 @@ class rculists  {
     protected function show_mailbody() {
 		$db = GetGlobal('db'); 	
 		$id = GetReq('id');
-	  
+	    /* DISABLED HTML DB
 		$sSQL = "select body from mailqueue where id=".$id;
 		$result = $db->Execute($sSQL);
         $htmlbody = $result->fields['body'];
-		
+		*/
+		$htmlbody = @file_get_contents($this->savehtmlpath .'/'. $id . '.html');
+
 		return ($htmlbody);	  
     }
 
