@@ -53,7 +53,7 @@ class rcsubscribers  {
 		if ($login!='yes') return null;	
 
 		switch ($action) {
-			case 'cpsubsframe'  : $out .= $this->show_subscribers(null,200,8,'d'); break;
+			case 'cpsubsframe'  : $out .= $this->show_subscribers(null,200,8,'d', true); break;
 			case 'cpsubscribers':
 			default             : $out .= $this->show_subscribers();
 		}

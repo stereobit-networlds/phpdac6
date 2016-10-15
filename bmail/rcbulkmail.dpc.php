@@ -63,7 +63,7 @@ $__ACTIONS['RCBULKMAIL_DPC'][21]='cptemplatenew';
 $__ACTIONS['RCBULKMAIL_DPC'][22]='cptemplatesav';
 
 $__LOCALE['RCBULKMAIL_DPC'][0]='RCBULKMAIL_DPC;Mail queue;Mail queue';
-$__LOCALE['RCBULKMAIL_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
+$__LOCALE['RCBULKMAIL_DPC'][1]='_campaigns;Campaigns;Καμπάνιες';
 $__LOCALE['RCBULKMAIL_DPC'][2]='_MAILCAMPAIGNS;Mail campaigns;Αποστολές σε συνδρομητές';
 $__LOCALE['RCBULKMAIL_DPC'][3]='_active;Active;Ενεργό';
 $__LOCALE['RCBULKMAIL_DPC'][4]='_sender;Sender;Αποστολέας';
@@ -80,7 +80,7 @@ $__LOCALE['RCBULKMAIL_DPC'][14]='_options;Options;Ρυθμίσεις';
 $__LOCALE['RCBULKMAIL_DPC'][15]='_ACTIVE;Active;Ενεργό';
 $__LOCALE['RCBULKMAIL_DPC'][16]='_LISTNAME;List;Όνομα λίστας';
 $__LOCALE['RCBULKMAIL_DPC'][17]='_ID;Id;Α/Α';
-$__LOCALE['RCBULKMAIL_DPC'][18]='_BULKSUBSCRIBE;Bulk subscribe;Μαζική εισαγωγή';
+$__LOCALE['RCBULKMAIL_DPC'][18]='_email;e-Mail;e-Mail';
 $__LOCALE['RCBULKMAIL_DPC'][19]='_MAILQUEUE;Mail list;Λίστα αποστολών';
 $__LOCALE['RCBULKMAIL_DPC'][20]='_MAILQUEUEACTIVE;Active queue;Πρός αποστολή';
 $__LOCALE['RCBULKMAIL_DPC'][21]='_SELECTITEMS;Select Items;Επιλογή στοιχείων';
@@ -92,7 +92,7 @@ $__LOCALE['RCBULKMAIL_DPC'][26]='_unsubscribe;Unsubscribe;Διαγραφή απ�
 $__LOCALE['RCBULKMAIL_DPC'][27]='_viewasweb;View as web page;Πατήστε εδώ για να δείτε την ιστοσελίδα';
 $__LOCALE['RCBULKMAIL_DPC'][28]='_notifications;Notifications;Ειδοποιήσεις';
 $__LOCALE['RCBULKMAIL_DPC'][29]='_viewallnotifications;View all notifications;Όλες οι ειδοποιήσεις';
-$__LOCALE['RCBULKMAIL_DPC'][30]='_MAILCLICKS;Responses;Ανταπόκριση';
+$__LOCALE['RCBULKMAIL_DPC'][30]='_owner;Owner;Owner';
 $__LOCALE['RCBULKMAIL_DPC'][31]='_dashboard;Dashboard;Στατιστικά';
 $__LOCALE['RCBULKMAIL_DPC'][32]='_year;Year;Έτος';
 $__LOCALE['RCBULKMAIL_DPC'][33]='_month;Month;Μήνας';
@@ -102,9 +102,8 @@ $__LOCALE['RCBULKMAIL_DPC'][36]='_MAILTRACE;Actions;Ενέργειες';
 $__LOCALE['RCBULKMAIL_DPC'][37]='_msgsuccess;Mail sent;Το μήνυμα στάλθηκε επιτυχώς';
 $__LOCALE['RCBULKMAIL_DPC'][38]='_msgerror;Sent error;Το μήνυμα απέτυχε να σταλθεί';
 $__LOCALE['RCBULKMAIL_DPC'][39]='_delcamp;Campaign deleted;Επιτυχής διαγραφή';
-
-$__LOCALE['RCBULKMAIL_DPC'][40]='_statisticscat;Category Viewed/Month;Επισκεψιμότητα κατηγοριών';
-$__LOCALE['RCBULKMAIL_DPC'][41]='_statistics;Items Viewed/Month;Επισκεψιμότητα ειδών';
+$__LOCALE['RCBULKMAIL_DPC'][40]='_template;Template;Template';
+$__LOCALE['RCBULKMAIL_DPC'][41]='_collection;Collection;Collection';
 $__LOCALE['RCBULKMAIL_DPC'][42]='_transactions;Transaction/Month;Συναλλαγές ανα μήνα';
 $__LOCALE['RCBULKMAIL_DPC'][43]='_applications;Applications Birth/Month;Νεές εφαρμογές ανα μήνα';
 $__LOCALE['RCBULKMAIL_DPC'][44]='_appexpires;Applications Expires/Month;Ληξεις εφαρμογών ανα μήνα';
@@ -399,9 +398,9 @@ class rcbulkmail {
 			case 'cpsubsend'           :
 			case 'cpcampcontent'       : 
 			case 'cppreviewcamp'       : 
-			case 'cpviewcamp'          : 
+			case 'cpviewcamp'          : $out = $this->campaigns_grid(null,140,5,'r', true);  break;
 			case 'cpbulkmail'          : 
-		    default                    : $out .= null;
+		    default                    : $out = null;
 		}	
 
 		//when stats run (used by timeline fun call into breadcrumb)
@@ -442,6 +441,38 @@ class rcbulkmail {
 		return true;  
 	}
 	
+	
+	protected function campaigns_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;				   
+	    $lan = getlocal() ? getlocal() : 0;  
+		$title = localize('_campaigns', getlocal()); 
+		
+        $xsSQL = "SELECT * from (select id,timein,ctype,cdate,active,title,ulists,cc,template,collection,owner,cid from mailcamp) o ";		   
+		   
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");	
+		//_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   		
+		_m("mygrid.column use grid1+cdate|".localize('_date',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|1|");
+		_m("mygrid.column use grid1+cc|".localize('_email',getlocal())."|link|0|"."cpuliststats.php?t=cpadvsubscribe&cid={cid}".'||');
+		_m("mygrid.column use grid1+title|".localize('_subject',getlocal())."|link|15|"."javascript:cid(\"{cid}\");".'||');						
+		_m("mygrid.column use grid1+ctype|".localize('_type',getlocal())."|2|1|");		
+		_m("mygrid.column use grid1+ulists|".localize('_LISTNAME',getlocal())."|link|1|"."cpulists.php?t=cpadvsubscribe".'||');
+		_m("mygrid.column use grid1+template|".localize('_template',getlocal())."|5|1|");
+		//_m("mygrid.column use grid1+collection|".localize('_collection',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+owner|".localize('_owner',getlocal())."|5|0|");
+		_m("mygrid.column use grid1+cid|".localize('_cid',getlocal())."|5|0|");
+		   
+		$out = _m("mygrid.grid use grid1+mailcamp+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		
+		return ($out);  
+	}		
+	
+	
+/*	
 	
 	protected function dosubscribe($mail=null,$notell=null,$name=null) {
         $db = GetGlobal('db');
@@ -760,7 +791,7 @@ class rcbulkmail {
 		
 	    return ($out);	
 	}	
-	/*
+	
 	protected function ulistform($ulistname) {
         $db = GetGlobal('db');	
 		$ulistname = localize('_list',getlocal()); 'grid1';//$ulistname ? $ulistname : 'default';
@@ -784,7 +815,7 @@ class rcbulkmail {
 	   	
 	    return ($out);	
 	}
-	*/
+	
 	public function postSubmit($action, $title=null, $class=null) {
 		if (!$action) return;
 		$submit = $title ? $title : 'Submit';
@@ -810,7 +841,7 @@ class rcbulkmail {
 
         return ($out);
     }
-	
+	*/
 	
 	public function viewUList($exclude_selected=false) {
 		$db = GetGlobal('db');
