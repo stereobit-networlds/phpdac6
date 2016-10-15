@@ -35,7 +35,7 @@ $__ACTIONS['RCULISTS_DPC'][11]='cpviewclicks';
 
 $__DPCATTR['RCULISTS_DPC']['cpulists'] = 'cpulists,1,0,0,0,0,0,0,0,0,0,0,1';
 
-$__LOCALE['RCULISTS_DPC'][0]='RCULISTS_DPC;:Queue;Αποστολές';
+$__LOCALE['RCULISTS_DPC'][0]='RCULISTS_DPC;Queue;Αποστολές';
 $__LOCALE['RCULISTS_DPC'][1]='_MASSSUBSCRIBE;Mass subscribe;Μαζική εγγραφή συνδρομητών';
 $__LOCALE['RCULISTS_DPC'][2]='_MAILCAMPAIGNS;Mail campaigns;Αποστολές σε συνδρομητές';
 $__LOCALE['RCULISTS_DPC'][3]='_active;Active;Ενεργό';
@@ -61,7 +61,7 @@ class rculists  {
 	public function __construct() {
 		$GRX = GetGlobal('GRX');
 		$this->title = localize('RCULISTS_DPC',getlocal());
-		$this->path = paramload('SHELL','prpath'); 
+		$this->prpath = paramload('SHELL','prpath'); 
 		$this->urlpath = paramload('SHELL','urlpath');	
 		
 		$tmplsavepath = remote_paramload('RCBULKMAIL','tmplsavepath', $this->prpath);
@@ -279,13 +279,26 @@ class rculists  {
 	
     protected function show_mailbody() {
 		$db = GetGlobal('db'); 	
-		$id = GetReq('id');
+		$cid = GetReq('id');
 	    /* DISABLED HTML DB
-		$sSQL = "select body from mailqueue where id=".$id;
+		$sSQL = "select body from mailqueue where id=".$cid;
 		$result = $db->Execute($sSQL);
         $htmlbody = $result->fields['body'];
 		*/
-		$htmlbody = @file_get_contents($this->savehtmlpath .'/'. $id . '.html');
+		
+		//$htmlbody = @file_get_contents($this->savehtmlpath .'/'. $cid . '.html');
+		
+        if (!$cid) die("CID error");
+		
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
+        $cidSQL = $ownerSQL ? 'and cid='.$db->qstr($cid) : 'cid='.$db->qstr($cid);	
+		
+		$sSQL = 'select body from mailcamp where '. $ownerSQL . $cidSQL;
+        //echo $sSQL;		
+		
+		$result = $db->Execute($sSQL,2);
+		$htmlbody = base64_decode($result->fields[0]); 		
 
 		return ($htmlbody);	  
     }
@@ -319,8 +332,6 @@ class rculists  {
 	}	
 	
     protected function subscribeform()  { 		
-
-	    //ulist form
 	    if ($this->isDemoUser())  //deny list from demo users
 			$out = "[List view kept hidden]";
 		else {	
@@ -328,12 +339,10 @@ class rculists  {
 			$bodyurl = 'cpsubscribers.php?t=cpsubsframe';; 
 			$out = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"320px\"><p>Your browser does not support iframes</p></iframe>";      
 		}	
-
         return ($out);
     }		
 
-	
-	protected function dosubscribe($mail=null,$notell=null,$name=null) {
+	protected function dosubscribe($mail=null,$name=null) {
         $db = GetGlobal('db');
         $sFormErr = GetGlobal('sFormErr');	
         $name = $name ? $name : 'unknown'; 		
@@ -362,12 +371,6 @@ class rculists  {
 						$db->qstr($this->owner) . 
 						")";  
 				$db->Execute($sSQL,1);		    
-		        //echo $sSQL;
-				/*	
-				SetGlobal('sFormErr', localize('_MSG6',getlocal()));
-		        if ((!$notell) && ($this->tell_it)) 
-					$this->mailto($this->tell_from,$this->tell_it,'New Subscription',$mail);			     							  	 
-			    */
 				$ret = true;					
             }
 			else {
@@ -415,7 +418,7 @@ class rculists  {
 		    $name = str_replace("'",'',$name);
 		    $name = str_replace('<>','',$name);			
 		  }
-		  $s = $this->dosubscribe($extracted_mail,1,$name);
+		  $s = $this->dosubscribe($extracted_mail,$name);
 		  return ($s);	   
 	    }
 		else { //method 2 name [mail]
@@ -423,15 +426,14 @@ class rculists  {
 	      preg_match($pattern2,$token,$matches);
 	      //print_r($matches);
 	      $extracted_mail = trim(strtolower($matches[1]));
-		
-		  //if ($s = $this->dosubscribe($extracted_mail,1)) {  
+		 
 		  if ($this->_checkmail($extracted_mail)) {	  
 		    if ($name = str_replace($extracted_mail,'',$token)) {		
 		      $name = str_replace('"','',$name);
 			  $name = str_replace("'",'',$name);
 		      $name = str_replace('[]','',$name);			
 		    }
-		    $s = $this->dosubscribe($extracted_mail,1,$name);
+		    $s = $this->dosubscribe($extracted_mail,$name);
 		    return ($s);		   			   
 	      }
 		  else { //method 3 name mail
@@ -444,7 +446,7 @@ class rculists  {
 		        $name = str_replace('"','',$name);
 			    $name = str_replace("'",'',$name);
 			  }	
-		      $s = $this->dosubscribe($extracted_mail,1,$name);
+		      $s = $this->dosubscribe($extracted_mail,$name);
 		      return ($s);	   
 			}  
 	      }		  
@@ -466,7 +468,7 @@ class rculists  {
 	  $e=0;
 	  set_time_limit(120);
 	  foreach ($mymails as $i=>$tok) {
-	    if ($doit = $this->dosubscribe(trim(strtolower($tok)),1)) {//is a mail address...
+	    if ($doit = $this->dosubscribe(trim(strtolower($tok)))) {//is a mail address...
 		  if ($doit>0) 
 		    $x+=1;
 		  elseif ($doit<0) 
