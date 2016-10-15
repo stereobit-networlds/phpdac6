@@ -79,8 +79,8 @@ class rculists  {
 
 		switch ($event) {	
 
-			case 'cpsubscribe'    		: 	$this->dosubscribe();
-											$this->mass_subscribe();				
+			case 'cpsubscribe'    		: 	$s1 = $this->dosubscribe();
+											$s2 = (GetParam('scan')) ? $this->mass_subscribe() : $this->bulk_subscribe();				
 											break;
 									
 		    case 'cpunsubscribe'  		: 	$this->dounsubscribe();				
@@ -456,50 +456,78 @@ class rculists  {
 	}		
 	
 	protected function mass_subscribe() {
-	  //print_r($_POST);
-	  $mailtext = GetParam('csvmails');	  
-	  $separator = GetParam('separator') ? GetParam('separator') : ',';
-	  if (!$mailtext) return;
+		$mailtext = GetParam('csvmails');	  
+		$separator = GetParam('separator') ? GetParam('separator') : ';';
+		if (!$mailtext) return;
 	  
-	  $mymails = explode($separator,$mailtext);
-	  //print_r($mymails);
-	  $x=0; $x2=0;
-	  $n=0;
-	  $e=0;
-	  set_time_limit(120);
-	  foreach ($mymails as $i=>$tok) {
-	    if ($doit = $this->dosubscribe(trim(strtolower($tok)))) {//is a mail address...
-		  if ($doit>0) 
-		    $x+=1;
-		  elseif ($doit<0) 
-		    $x2+=1;
-		}  
-		else {//..is a combo mail/name
+		$mymails = explode($separator,$mailtext);
+		$x=0; $x2=0;
+		$n=0;
+		$e=0;
+		set_time_limit(120);
+		foreach ($mymails as $i=>$tok) {
+			if ($doit = $this->dosubscribe(trim(strtolower($tok)))) {//is a mail address...
+			if ($doit>0) 
+				$x+=1;
+			elseif ($doit<0) 
+				$x2+=1;
+			}  
+			else {//..is a combo mail/name
 		
-		  $doit_2 = $this->subscribe_extracting_name($tok);
+				$doit_2 = $this->subscribe_extracting_name($tok);
 		  
-		  if ($doit_2) {
-		    $n+=1;
-		    if ($doit_2>0) 
-		      $x+=1;
-		    elseif ($doit_2<0)
-		      $x2+=1;			
-			else
-			  $e+=1;    
-		  }
-		  else		
-		    $e+=1; 
-	    }	
-	  }
-	  set_time_limit(ini_get('max_execution_time'));
+				if ($doit_2) {
+					$n+=1;
+					if ($doit_2>0) 
+						$x+=1;
+					elseif ($doit_2<0)
+						$x2+=1;			
+					else
+						$e+=1;    
+				}
+				else		
+					$e+=1; 
+			}	
+		}
+		set_time_limit(ini_get('max_execution_time'));
 	  
-	  $msg = $x . ' mails added, ';
-	  $msg .= $x2 . ' mails updated from ' . count($mymails) . ', ';	  
-	  $msg .= $n . ' names extracted,';	  
-	  $msg .= $e . ' tokens not recognized.';	  
+		$msg = $x . ' mails added, ';
+		$msg .= $x2 . ' mails updated from ' . count($mymails) . ', ';	  
+		$msg .= $n . ' names extracted,';	  
+		$msg .= $e . ' tokens not recognized.';	  
 	  
-	  SetGlobal('sFormErr', $msg);	  
-	  	
+		SetGlobal('sFormErr', $msg);
+		return true;	
+	}	
+	
+	/*bulk sql*/
+	protected function bulk_subscribe() {
+        $db = GetGlobal('db');
+		
+		$mailtext = GetParam('csvmails');	  
+		if (!$mailtext) return;
+		
+		$separator = GetParam('separator') ? GetParam('separator') : ';';
+		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';	  
+		$dtime = date('Y-m-d h:i:s');	  
+		$mymails = explode($separator,$mailtext);
+
+		set_time_limit(120);
+		$sSQL = "insert into ulists (email,startdate,active,lid,listname,name,owner) values ";	
+		foreach ($mymails as $i=>$tok) {
+			$sql[] = "(" . $db->qstr(strtolower($tok)) . "," . $db->qstr($dtime) . "," .
+					"1,1," . $db->qstr(strtolower($ulistname)) . "," .	$db->qstr($name) . "," . $db->qstr($this->owner) . ")";  
+		}
+		set_time_limit(ini_get('max_execution_time'));
+	  
+	    $sSQL .= implode(',', $sql);
+		$db->Execute($sSQL);		  
+	    //echo $sSQL;
+		
+		$msg = count($mymails) . ' mails added, ';	  
+		SetGlobal('sFormErr', $msg);	
+		
+		return true;	
 	}	
 
 	public function viewUList($exclude_selected=false) {

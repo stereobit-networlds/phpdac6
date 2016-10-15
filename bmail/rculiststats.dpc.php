@@ -37,23 +37,8 @@ $__DPCATTR['RCULISTSTATS_DPC']['cpuliststats'] = 'cpuliststats,1,0,0,0,0,0,0,0,0
 
 $__LOCALE['RCULISTSTATS_DPC'][0]='RCULISTSTATS_DPC;Statistics;Στατιστική';
 $__LOCALE['RCULISTSTATS_DPC'][1]='_viewallnotifications;View all notifications;Όλες οι ειδοποιήσεις';
-/*
-$__LOCALE['RCULISTSTATS_DPC'][2]='_MAILCAMPAIGNS;Mail campaigns;Αποστολές σε συνδρομητές';
-$__LOCALE['RCULISTSTATS_DPC'][3]='_active;Active;Ενεργό';
-$__LOCALE['RCULISTSTATS_DPC'][4]='_sender;Sender;Αποστολέας';
-$__LOCALE['RCULISTSTATS_DPC'][5]='_receiver;Receiver;Παραλήπτης';
-$__LOCALE['RCULISTSTATS_DPC'][6]='_reply;Views;Εμφανίσεις';
-$__LOCALE['RCULISTSTATS_DPC'][7]='_subject;Subject;Θέμα';
-$__LOCALE['RCULISTSTATS_DPC'][8]='_id;Id;Α/Α';
-$__LOCALE['RCULISTSTATS_DPC'][9]='_MAILQUEUE;Mail list;Λίστα αποστολών';
-$__LOCALE['RCULISTSTATS_DPC'][10]='_status;Status;Κατάσταση';
-$__LOCALE['RCULISTSTATS_DPC'][11]='_cid;Campaign;Καμπάνια';
-$__LOCALE['RCULISTSTATS_DPC'][12]='_MAILCLICKS;Responses;Ανταπόκριση';
-$__LOCALE['RCULISTSTATS_DPC'][13]='_MAILTRACE;Actions;Ενέργειες';
-$__LOCALE['RCULISTSTATS_DPC'][14]='_code;Item;Κωδικός';
-$__LOCALE['RCULISTSTATS_DPC'][15]='_category;Category;Κατηγορία';
-$__LOCALE['RCULISTSTATS_DPC'][16]='_mailstatus;Reason;Αιτία';
-*/
+$__LOCALE['RCULISTSTATS_DPC'][2]='_outoflist;out of list;εξήχθει απο';
+
 class rculiststats  {
 
     var $title, $urlpath, $prpath, $seclevid, $userDemoIds;
@@ -86,18 +71,12 @@ class rculiststats  {
     public function event($event=null) {
 
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-		if ($login!='yes') return null;
-		
-		//set message (in actions, dpc call error)
-		//_m("rccontrolpanel.setTask use info|test 123|1|#");						
-		$this->percentofCamps();		//<<<<<<<<<<<<<<<<<<<<<<<<<<<??? use with new rccontrolpanel		
+		if ($login!='yes') return null;		
 
 		switch ($event) {				
 			
 			case 'cpuliststats'  :
-			default              :  //as first tme loged in stats must be calced at action
-			                        //$this->load_graph_objects();
-									//$this->runstats();                   
+			default              : //$this->percentofCamps();                    
 		}
     }
 
@@ -107,12 +86,9 @@ class rculiststats  {
 		if ($login!='yes') return null;	
 
 		switch ($action) {
-			
-			
-						
+				
 			case 'cpuliststats'   	   :
-			default          		   : //$this->load_graph_objects();
-			                             $this->runstats();	
+			default          		   : $this->runstats();	
 		}
 		
 		//when stats run (used by timeline fun call into breadcrumb)
@@ -606,7 +582,7 @@ class rculiststats  {
 
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			$tokens[] = date('d-m-Y G:i',strtotime($rec[0])) . ' '. $rec[1];
+			$tokens[] = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec[0])) . $rec[1]; //date('d-m-Y G:i',strtotime($rec[0])) . ' '. $rec[1];
 			$tokens[] = $rec[2];
 			$ret .= $this->combine_tokens($t, $tokens);
 			unset($tokens);	
@@ -639,48 +615,13 @@ class rculiststats  {
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 
-			$msg = "warning|" . $rec[2] .", ". $text .' '. $rec[1] . " (" .date("d-m-Y G:i", strtotime($rec[0])). ")";
+		    $saytime = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec[0]));
+			$msg = "warning|" . $rec[2] .", ". $text .' '. $rec[1] . "|" . $saytime;//" (" .date("d-m-Y G:i", strtotime($rec[0])). ")";
 			_m("rccontrolpanel.setMessage use ".$msg);
 		}
 
 		return ($ret);			
 	}	
-	
-	//load graphs urls to call DISABLED
-	/*protected function load_graph_objects() {
-			  
-        $this->objcall['mailqueue'] = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report=mailqueue&statsid=');
-
-	}	
-	
-    public function _show_charts() {
-
-	    if (!empty($this->objcall)) {  
-		 
- 		    foreach ($this->objcall as $report=>$goto) {//goto not used in this case
-                $title = localize("_$report",getlocal()); //title							 	   
-				$ts = '
-					<!-- BEGIN CHART PORTLET-->
-                    <div class="widget ">
-                        <div class="widget-title">
-                            <h4><i class="icon-reorder"></i> '.$title.'</h4>
-                            <span class="tools">
-                                <a href="javascript:;" class="icon-chevron-down"></a>
-                                <a href="javascript:;" class="icon-remove"></a>
-                            </span>
-                        </div>
-                        <div class="widget-body">
-                            <div class="text-center">
-                                <div id="'.$report.'"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- END CHART PORTLET-->
-';		
-			}
-		}
-		return ($ts);//stats);		 
-    }*/
 
     public function select_timeline($template,$year=null, $month=null) {
 		$year = GetParam('year') ? GetParam('year') : date('Y'); 
@@ -690,12 +631,12 @@ class rculiststats  {
 		$t = ($template!=null) ? $this->select_template($template) : null;		
 	    if ($t) {
 			for ($y=2015;$y<=intval(date('Y'));$y++) {
-				$yearsli .= '<li>'. seturl('t=cpmailstats&month='.$month.'&year='.$y, $y) .'</li>';
+				$yearsli .= '<li>'. seturl('month='.$month.'&year='.$y, $y) .'</li>';
 			}
 		
 			for ($m=1;$m<=12;$m++) {
 				$mm = sprintf('%02d',$m);
-				$monthsli .= '<li>' . seturl('t=cpmailstats&month='.$mm.'&year='.$year, $mm) .'</li>';
+				$monthsli .= '<li>' . seturl('month='.$mm.'&year='.$year, $mm) .'</li>';
 			}	  
 	  
 	        $posteddaterange = $daterange ? ' > ' . $daterange : ($year ? ' > ' . $month . ' ' . $year : null) ;

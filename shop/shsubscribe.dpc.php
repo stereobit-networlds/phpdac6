@@ -263,7 +263,7 @@ class shsubscribe {
           //disable from ulists
 		  if ($this->isin_ulists($mail, $ulistname)) {
 			$sSQL = "update ulists set active=0 where email=" . $db->qstr($mail);
-			$sSQL .= ' and listname=' . $db->qstr($ulistname); 
+			//$sSQL .= ' and listname=' . $db->qstr($ulistname);  //from all the lists !!!!!(nwsletter have to include the list while unsub)
 			$result = $db->Execute($sSQL,1);
             //echo $sSQL;
 			SetGlobal('sFormErr',localize('_MSG8',getlocal()));
