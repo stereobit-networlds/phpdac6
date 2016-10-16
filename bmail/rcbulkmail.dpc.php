@@ -213,7 +213,7 @@ class rcbulkmail {
 		
 		$this->sendOk = 0; //false unitl bid decrease to 0
 		$this->batchid = GetParam('bid') ? GetParam('bid') : 0; //as reade by post form when send submit
-		$this->maxinpvars = 2; //ini_get('max_input_vars') - 50; //DEPEND ON SRV AND DEFINES THE BATCH OUTPUT		
+		$this->maxinpvars = 2500; //ini_get('max_input_vars') - 50; //DEPEND ON SRV AND DEFINES THE BATCH OUTPUT		
 		
 		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 		$this->crmLevel = 9;
@@ -352,9 +352,6 @@ class rcbulkmail {
 
     protected function _checkmail($data) {
 
-		/*if( !eregi("^[a-z0-9]+([_\\.-][a-z0-9]+)*" . "@([a-z0-9]+([\.-][a-z0-9]{1,})+)*$", $data, $regs) )  
-			return false;*/
-		
         $ret = filter_var($data, FILTER_VALIDATE_EMAIL);
 		return ($ret);  
 	}
@@ -904,7 +901,11 @@ class rcbulkmail {
 		$res = $db->Execute($sSQL);
 		
 		SetParam('subject', $res->fields[0]); //make it global to used be html form
-		SetParam('ulists', $res->fields[2]); //
+		
+		SetParam('ulists', $res->fields[2]); //ulists
+		//$ul = strstr($res->fields[2], ',') ? explode(',',$res->fields[2]) : array([0]=>$res->fields[2]);
+		//$this->messages[] = $this->_checkmail($ul[0]) ? $ul[0] . ' will receive test instant message!' : 'The first in list '.$ul[0]. ' will receive instant message!';
+		
 		SetParam('from', $res->fields[3]); // from cc
 		//SetParam('bcc', $res->fields[4]); // bcc saved as hidden xbcc
 			
@@ -1346,7 +1347,7 @@ class rcbulkmail {
 	}			
 	
 	/*on resend or batch send */
-	protected function resetbatch($xcid=null, $step=1, $ulist=null, $segment=null) {
+	protected function resetbatch($xcid=null, $step=1, $ulist=null, $segment=null, $counter=0) {
 		$db = GetGlobal('db');		
 		$cid = $xcid ? $xcid : $this->cid;
         if (!$cid) return false;
@@ -1444,17 +1445,17 @@ class rcbulkmail {
 				if ($ismail = filter_var($m, FILTER_VALIDATE_EMAIL)) {
 		 									
 					$text = str_replace('_SUBSCRIBER_', $m, $mail_text); 	
-					$meter += ($z<3) ?  $this->sendmail_instant($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver) :
+					$meter += ($z<1) ?  $this->sendmail_instant($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver) :
 										$this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
 					$i+=1; 				
 					
-					$this->resetbatch($cid ,1, $to, $m);		
+					$this->resetbatch($cid ,1, $to, $m, 1);		
 				}
 				else {//list name
 				
 					$mails = $this->get_mails_from_lists($m, true, $this->maxinpvars, $index);
 					//echo 'List:'.$m;
-					print_r($mails);
+					//print_r($mails);
 					
 					if (!empty($mails)) {
 						foreach ($mails as $z1=>$m1) {		
@@ -1469,10 +1470,10 @@ class rcbulkmail {
 							break 1;							
 						}//if not a full set page
 						else //next tag
-							$this->batchid = $index = $this->resetbatch($cid ,1, $to, $m);							
+							$this->batchid = $index = $this->resetbatch($cid ,1, $to, $m, count($mails));							
 					}//has mails
 					else //next tag
-						$this->batchid = $index = $this->resetbatch($cid ,1, $to, $m);			
+						$this->batchid = $index = $this->resetbatch($cid ,1, $to, $m, 0);			
 				}
 			}	
 			
@@ -1501,7 +1502,7 @@ class rcbulkmail {
 		$cid = $this->cid; 
 		
 		//test
-		$this->messages[] = $to;
+		//$this->messages[] = $to;
 		return true; //test
 	   
 		//tracking var
@@ -1565,7 +1566,7 @@ class rcbulkmail {
 		$cid = $this->cid; 
 		
 		//test		
-		$this->messages[] = $to;
+		$this->messages[] = $to . ' instant message sent.';
 		return true; //test
 	   
 		//tracking var
