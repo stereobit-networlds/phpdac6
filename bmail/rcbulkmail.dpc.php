@@ -172,7 +172,7 @@ class rcbulkmail {
 		$this->ulistselect = GetReq('ulistselect') ? GetReq('ulistselect') : GetSessionParam('ulistselect');
 		$this->ishtml = true;
 		$this->mailbody = null;
-		$this->cid = $_GET['cid'] ? $_GET['cid'] : $_POST['cid'];//no gereq,getparam may cid used by campaigns is in cookies
+		$this->cid = GetParam('cid'); //$_GET['cid'] ? $_GET['cid'] : $_POST['cid'];//no gereq,getparam may cid used by campaigns is in cookies
 		
         //$defaultsavepath = remote_paramload('FRONTHTMLPAGE','path', $this->prpath);
 		$tmplsavepath = remote_paramload('RCBULKMAIL','tmplsavepath', $this->prpath);		
@@ -326,14 +326,13 @@ class rcbulkmail {
 			case "cpsubsend"      :	$this->sendOk = $this->send_mails();
 									//echo 'sendOK:',$this->sendOk;
 									SetSessionParam('messages',$this->messages);
-									//$this->runstats();
 				                    break; 									 
 			
 	        case 'cpsavemailadv'  : $this->save_campaign();
 									SetSessionParam('messages',$this->messages); //save messages
 			                        break;
 									
-			case 'cp'             :	//$this->runstats(); //when first page and need to run stats					
+			//case 'cp'             :	//$this->runstats(); //when first page and need to run stats					
 			case 'cpbulkmail'     :
 			default               :	if ($this->template) {
 				                        //also when returns in cp and template is selected
@@ -430,10 +429,11 @@ class rcbulkmail {
 
     protected function _checkmail($data) {
 
-		if( !eregi("^[a-z0-9]+([_\\.-][a-z0-9]+)*" . "@([a-z0-9]+([\.-][a-z0-9]{1,})+)*$", $data, $regs) )  
-			return false;
-
-		return true;  
+		/*if( !eregi("^[a-z0-9]+([_\\.-][a-z0-9]+)*" . "@([a-z0-9]+([\.-][a-z0-9]{1,})+)*$", $data, $regs) )  
+			return false;*/
+		
+        $ret = filter_var($data, FILTER_VALIDATE_EMAIL);
+		return ($ret);  
 	}
 	
 	
@@ -1207,28 +1207,31 @@ class rcbulkmail {
 	}	
 	
 	
-	protected  function get_mails_from_lists($listname=null) {
-       $db = GetGlobal('db');	
-	   $ulistname = $listname ? $listname : 'default';
-	   $out = null; 
+	protected function get_mails_from_lists($listname=null, $retarray=false) {
+		$db = GetGlobal('db');	
+		$ulistname = $listname ? $listname : 'default';
+		$out = null; 
 	   
-	   $sSQL .= "SELECT email FROM ulists where listname=" . $db->qstr($ulistname); 
-	   $sSQL .= " and active=1";
-	   //echo $sSQL;	
-       $result = $db->Execute($sSQL,2);
+		$sSQL .= "SELECT email FROM ulists where listname=" . $db->qstr($ulistname); 
+		$sSQL .= " and active=1";
+		//echo $sSQL;	
+		$result = $db->Execute($sSQL,2);
 	   
-	   if (count($result)>0) {		   
-	     foreach ($result as $n=>$rec) {
-            if ($m = $this->checkmail(trim($rec['email']))) 		 
-				$ret[] = trim($m);
-		 }
-	   }
+		if (count($result)>0) {		   
+			foreach ($result as $n=>$rec) {
+				if ($m = $this->checkmail(trim($rec['email']))) 		 
+					$ret[] = trim($m);
+			}
+		}
 	   
-	   if (!empty($ret)) {  
-	     $out = implode(';',$ret);
-       }
+		if (!empty($ret)) {  
+	        if ($retarray)
+				return (array_unique($ret));
+			else		
+				return (implode(';',$ret));
+		}
 
-	   return $out;		   
+		return false;		   
 	}
 	
 	
@@ -1389,20 +1392,24 @@ class rcbulkmail {
 	        $this->messages[] = "Failed, module expired.";
 		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
 	    }
-		if (!$cid = $_POST['cid']) {
+		
+		if ($resend = GetParam('resend')) 
+			$this->messages[] = 'Re-send campaign!';
+
+		if (!$cid = GetParam('xcid')) { //jqgrid present (select cid,.. zero on post)
 			$this->messages[] = 'CID form error!';
 			return false;		
         }
-		if (!$from = $_POST['from']) {
+		if (!$from = GetParam('from')) {
 			$this->messages[] = 'From field missing!';
 			return false;
 		}		
-		if (!$subject = $_POST['subject']) {
+		if (!$subject = GetParam('subject')) {
 			$this->messages[] = 'Subject field missing!';
 			return false;
 		}				
 		
-		if (!empty($_POST['include'])) {
+		if (GetParam('include')) {
 			
 			if (is_readable($this->savehtmlpath .'/'. $cid.'.html')) {
 				
@@ -1433,21 +1440,38 @@ class rcbulkmail {
 		$mailserver = GetParam('server') ? GetParam('server') : $this->mailserver;
 		$mailname = GetParam('realm') ? GetParam('realm') : $this->mailname; //a per user submit (realm)
 		$from = $mailuser ? $mailuser : $from; //replace sender when another server settings ? 
-		$cc = $_POST['include'] ? implode(';',$_POST['include']) : null; //subscribers field array
+		//$cc = $_POST['include'] ? implode(';',$_POST['include']) : null; //subscribers field array
+		$cc = GetParam('include') ? explode(',',GetParam('include')) : null; //ulist csv text
 
 		if ($cc) {		
-			$qty = count($_POST['include']);
-			//echo 'qty:',$qty;
-			if ($qty<=3) { //send instand mail if <=3 mail address
-				//$m = array_pop($_POST['include']);
-				foreach ($_POST['include'] as $z=>$m) {
+		
+			set_time_limit(120); 
+		
+			//$qty = count($cc);
+			//if ($qty<=3) { //send instand mail if <=3 mail address
+
+			foreach ($cc as $z=>$m) {
+				if ($ismail = filter_var($m, FILTER_VALIDATE_EMAIL)) {
 					$text = str_replace('_SUBSCRIBER_', $m, $mail_text); 	
-					$meter += $this->sendmail_instant($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
-					$i=1;
-				}	
-			}
+					$meter += ($z<3) ?  $this->sendmail_instant($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver) :
+										$this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
+					$i=1; //batch
+				}
+				else {//list name
+				
+					$bcc = $this->get_mails_from_lists($m, true);
+					
+					if (!empty($bcc)) {
+						foreach ($bcc as $z1=>$m1) {
+							$text = str_replace('_SUBSCRIBER_', $m1, $mail_text); 	
+							$meter += $this->sendmail_inqueue($from,$m1,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);								
+						}
+						$i+=1; //batch
+					}
+				}
+			}	
+			/*}
 			else {			
-				set_time_limit(120); 
 				foreach ($_POST['include'] as $z=>$m) { //remaining postc (reduced input array)...
 					
 					//break if mails bigger than max input vars 					
@@ -1458,8 +1482,9 @@ class rcbulkmail {
 					$meter += $this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
 					$i+=1;
 				}
-				set_time_limit(ini_get('max_execution_time'));	//return to default
-			}
+			}*/
+			
+			set_time_limit(ini_get('max_execution_time'));	//return to default			
 			
 			//reduce batch id
 			//also the input array must reduced by the mails that already send
@@ -1469,9 +1494,8 @@ class rcbulkmail {
 			}			
 		} 
 		else $this->messages[] =  'Send failed: NO receipients (cc)';
-
-		$mtr = $meter ? $meter : 0;		
-		$this->messages[] = $mtr . ' mail(s) sent';		
+	
+		$this->messages[] = $meter . ' mail(s) sent';		
 		//return ($i);				
 		$ret = ($this->batchid>0) ? 0 : $i; //return false until batchid became 0
 		return ($ret);				
