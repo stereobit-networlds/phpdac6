@@ -216,7 +216,7 @@ class rcbulkmail {
 		
 		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 		$this->crmLevel = 9;
-		$this->maxinpvars = ini_get('max_input_vars') - 50; //DEPEND ON SRV AND DEFINES THE BATCH OUTPUT
+		$this->maxinpvars = 1; //ini_get('max_input_vars') - 50; //DEPEND ON SRV AND DEFINES THE BATCH OUTPUT
 		
 		$ckeditorVersion = remote_paramload('RCBULKMAIL','ckeditor',$this->prpath);		
 		$this->ckeditver = $ckeditorVersion ? $ckeditorVersion : 4; //default version 4
@@ -789,6 +789,21 @@ class rcbulkmail {
 	   return false;
 	}
 	
+	////build when post a new campaign or fetch existed
+	protected function _CID($a=null, $b=null, $c=null) {
+		
+		if ($a && $b && $c) { //build
+			$cid = md5($a . '|' . $b .'|'. $c);
+		}
+		else {
+			if ($text = GetParam('mail_text')) //new posted campaign
+				$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail'));
+			else //existed		
+				$cid = $this->cid;	
+				
+		return ($cid);		
+	}	
+	
 	public function viewCampaigns() {
 		$db = GetGlobal('db');	
 		
@@ -797,7 +812,8 @@ class rcbulkmail {
 		
 		$sSQL = 'select cdate,cid,title,timein from mailcamp where ' . $ownerSQL . ' and ';		   
 		if ($text = GetParam('mail_text')) {
-			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail'));
+			//$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail'));
+			$cid = $this->_CID($text, GetParam('subject'), GetParam('submail'));
 			$sSQL .= "cid = " . $db->qstr($cid);	
 			$sSQL .= GetParam('savecmp') ?  ' and active=1' : null; //temp camps without multiple selection
 		}
@@ -825,7 +841,8 @@ class rcbulkmail {
 
 		$sSQL = 'select cdate,cid,title from mailcamp where ' . $ownerSQL ;
 		if ($text = GetParam('mail_text')) {
-			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail')); //when new post
+			//$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail')); //when new post
+			$cid = $this->_CID($text, GetParam('subject'), GetParam('submail')); //when new post
 			$sSQL .= " cid = " . $db->qstr($cid);	
 			$sSQL .= GetParam('savecmp') ?  ' and active=1' : null; //temp camps without multiple selection
 		}
@@ -879,38 +896,26 @@ class rcbulkmail {
 			$rSQL = "update mailcamp set bcc='' where " . $ownerSQL . $cidSQL; 			
 			$db->Execute($rSQL);			
 			
-			$this->messages[] = 'Reset campaign';			
+			$this->messages[] = 'Reload campaign';			
 		}
 		*/
 		$sSQL = 'select title,cdate,ulists,cc,bcc,user,pass,server from mailcamp where '. $ownerSQL . $cidSQL;
-        //echo $sSQL;		
+		$res = $db->Execute($sSQL);
 		
-		$resultset = $db->Execute($sSQL,2);
-		//$rec = array_pop($resultset);
-		foreach ($resultset as $n=>$rec) {
-			SetParam('subject', $rec[0]); //make it global to used be html form
-			SetParam('ulists', $rec[2]); //
-			SetParam('from', $rec[3]); // from cc
-			SetParam('bcc', $rec[4]); // bcc saved as hidden xbcc
+		SetParam('subject', $res->fields[0]); //make it global to used be html form
+		SetParam('ulists', $res->fields[2]); //
+		SetParam('from', $res->fields[3]); // from cc
+		SetParam('bcc', $res->fields[4]); // bcc saved as hidden xbcc
 			
-			//make it global to used be html form (hide default settings)
-			if ($rec[5]!=$this->mailuser) SetParam('user', $rec[5]); //alternative mail user
-			if ($rec[6]!=$this->mailpass) SetParam('pass', $rec[6]); //alternative mail pass
-			if ($rec[7]!=$this->mailserver) SetParam('server', $rec[7]); //alternative mail server
-			//fetch user realm from users
-			$realm = $this->userRealm();		
-			$m_realm = $realm ? $realm : $this->mailname; 
-			SetParam('realm', $m_realm);
-            
-			/* DISABLED
-			//calc batchid
-			$nofmails = explode(';', $rec[4]);
-			$nfm = intval(count($nofmails));
-			$this->batchid = ceil($nfm / $this->maxinpvars);
-			$this->messages[] =  "Load task batch: " . $this->batchid;
-			//echo 'Load batchid:',$this->batchid,':',$nfm;
-			*/
-		}	
+		//make it global to used be html form (hide default settings)
+		if ($res->fields[5]!=$this->mailuser) SetParam('user', $res->fields[5]); //alternative mail user
+		if ($res->fields[6]!=$this->mailpass) SetParam('pass', $res->fields[6]); //alternative mail pass
+		if ($res->fields[7]!=$this->mailserver) SetParam('server', $res->fields[7]); //alternative mail server
+		
+		//fetch user realm from users
+		$realm = $this->userRealm();		
+		$m_realm = $realm ? $realm : $this->mailname; 
+		SetParam('realm', $m_realm);
 
 		return ($rec[0]); //one rec
 	}			
@@ -975,15 +980,6 @@ class rcbulkmail {
 			return false;
 		}	
 		SetParam('taglists',$ulists); //used by form
-
-		/* DISABLED
-        //compute batch submits
-		$nofmails = explode(';', $bcc);
-		$nfm = intval(count($nofmails));
-		$this->batchid = ceil( $nfm / $this->maxinpvars);	//post form save it as hidden
-		$this->messages[] =  'Batch tasks to submit:' . $this->batchid;
-		//echo 'batchid:',$thid->batchid,'>';
-		*/
 		
 		$m_user = GetParam('user') ? GetParam('user') : $this->mailuser; //user origin
 		$m_pass = GetParam('pass') ? GetParam('pass') : $this->mailpass;//pass origin
@@ -1001,7 +997,8 @@ class rcbulkmail {
 		$title = GetParam('subject') ? GetParam('subject') : 'Campaign ' . $r;
 		
 		$date = date('Y-m-d H:m:s');
-		$cid = md5(GetParam('mail_text') .'|'. GetParam('subject') .'|'. $to);
+		//$cid = md5($body .'|'. $title .'|'. $to);
+		$cid = $this->_CID($body, $title, $to);
         $active = GetParam('savecmp') ? 1 : 0;	
 		
 		if ($viewashtml = GetParam('webviewlink')) {
@@ -1035,17 +1032,6 @@ class rcbulkmail {
 			$rtokens[1] = ''; //dummy token to replace if $1$ exist in page
 		
 		$body =  $this->combine_tokens($body, $rtokens); //in case of tokens	
-
-		/*
-		if (is_array($_POST['csv'])) 
-		    $mycsvlist = 'csv';  	
-		if (is_array($_POST['ulistname'])) {
-			$multi_ulists = implode(',', $_POST['ulistname']);
-		    $multitags = $mycsvlist ? $mycsvlist . ',' . $multi_ulists : $multi_ulists;  	
-		}	
-		$ulists = $this->ulistselect ? $this->ulistselect . ',' . $multitags : $multitags;
-		SetParam('taglists',$taglists); //used by form
-		*/
 		
 		
 		if (defined('RCCOLLECTIONS_DPC')) 
@@ -1103,10 +1089,29 @@ class rcbulkmail {
 		return (false);		
 	}
 	
-
-	
 	public function getCmpMails($option=null) {
-		$db = GetGlobal('db');
+        $db = GetGlobal('db'); 
+		
+		$cid = $this->_CID(GetParam('mail_text'), GetParam('subject'), GetParam('submail'));
+		
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
+        $cidSQL = $ownerSQL ? 'and cid='.$db->qstr($cid) : 'cid='.$db->qstr($cid);			
+		
+		$sSQL = 'select ulists from mailcamp where '. $ownerSQL . $cidSQL;
+		$res = $db->Execute($sSQL);
+		
+		$c = $res->fields[0];
+		$list = strstr($c, ',') ? explode(',',$c) : array(0=>$c);
+		foreach ($list as $m)
+			$oret[] = $option ? "<option value='".$m."'>". $m."</option>" : $m;
+        		
+		if (is_array($oret))
+			$ret = $option ? implode('',$oret) : implode(';',$oret);
+		
+		return ($ret);		
+		
+		/*$db = GetGlobal('db');
 		
 		$sSQL = 'select bcc from mailcamp where ';		   
 		if ($text = GetParam('mail_text')) {
@@ -1146,7 +1151,7 @@ class rcbulkmail {
 		if (is_array($oret))
 			$ret = $option ? implode('',$oret) : implode(';',$oret);
 		
-		return ($ret);
+		return ($ret);*/
 	}	
 	
 	
@@ -1382,7 +1387,7 @@ class rcbulkmail {
 				$rawtext = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html'); //$this->mailbody; //not exist in this post			
 				$res = $this->sendit($from, $subject, $rawtext, $cid); 
 				if (!$res) 
-					$this->messages[] = $this->batchid ? "Batch send" : "Sent failed";				
+					$this->messages[] = $this->batchid ? "Batch send" : "Send failed";				
 				
 				return ($res); 
 			}
@@ -1406,7 +1411,6 @@ class rcbulkmail {
 		$mailserver = GetParam('server') ? GetParam('server') : $this->mailserver;
 		$mailname = GetParam('realm') ? GetParam('realm') : $this->mailname; //a per user submit (realm)
 		$from = $mailuser ? $mailuser : $from; //replace sender when another server settings ? 
-		//$cc = $_POST['include'] ? implode(';',$_POST['include']) : null; //subscribers field array
 		
 		$bcc = GetParam('xbcc');
 		$inc = GetParam('include'); 
@@ -1421,16 +1425,13 @@ class rcbulkmail {
 		
 			set_time_limit(120); 
 		
-			//$qty = count($cc);
-			//if ($qty<=3) { //send instand mail if <=3 mail address
-
 			foreach ($cc as $z=>$m) {
 		
 				if ($ismail = filter_var($m, FILTER_VALIDATE_EMAIL)) {
 		
 					//test (create batch) 					
-					if ($z==1) { //one by one
-						$bid = 1;
+					if ($z==$this->maxinpvars) { //one by one
+						$bid = $this->maxinpvars;;
 						break 1;	
 					}	
 					
@@ -1448,8 +1449,8 @@ class rcbulkmail {
 						foreach ($bcc as $z1=>$m1) {
 							
 							//break if num of mails bigger than a number (create batch) 					
-							if ($z1==1) { 
-								$bid = 1;//$this->maxinpvars;
+							if ($z1==$this->maxinpvars) { 
+								$bid = $this->maxinpvars;
 								break 2;								
 							}
 							$text = str_replace('_SUBSCRIBER_', $m1, $mail_text); 	
@@ -1461,35 +1462,14 @@ class rcbulkmail {
 				}
 				$this->batch_campaign($cid ,1, $to, $m, $bcc); 
 			}	
-			/*}
-			else {			
-				foreach ($_POST['include'] as $z=>$m) { //remaining postc (reduced input array)...
-					
-					//break if mails bigger than max input vars 					
-					if ($z==$this->maxinpvars) 
-						break;						
-					
-					$text = str_replace('_SUBSCRIBER_', $m, $mail_text); 	
-					$meter += $this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
-					$i+=1;
-				}
-			}*/
 			
 			set_time_limit(ini_get('max_execution_time'));	//return to default			
-			
-			//reduce batch id
-			//also the input array must reduced by the mails that already send
-			/*if ($this->batchid>0) {
-				$this->batchid = $this->batchid - 1; //reduce batchid by 1
-				$this->messages[] =  'Batch tasks remain:' . $this->batchid;	
-			}*/			
+					
 		} 
 		else $this->messages[] =  'Send failed: NO receipients (cc)';
 	
 		$this->messages[] = $meter . ' mail(s) sent';		
-		
-		//$ret = ($this->batchid>0) ? 0 : $i; //return false until batchid became 0
-		//return ($ret);		
+				
 		$this->batchid = $bid ? $bid : 0;				
 		return ($bid ? false : true);
     }	
@@ -1502,11 +1482,11 @@ class rcbulkmail {
 		$origin = $this->prpath; 
 		$encoding = $this->overwrite_encoding ? $this->overwrite_encoding : $this->encoding;
 		$datetime = date('Y-m-d h:s:m');
-		$active = 1;//0; //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<		
-		$cid = $this->cid; //$_POST['cid']; //cid mark 
+		$active = 1;		
+		$cid = $this->cid; 
 		
 		//test
-		//return 1; //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+		return 1; //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 	   
 		//tracking var
 		if ($this->trackmail) {
@@ -1565,8 +1545,8 @@ class rcbulkmail {
 		$origin = $this->prpath; 
 		$encoding = $this->overwrite_encoding ? $this->overwrite_encoding : $this->encoding;
 		$datetime = date('Y-m-d h:s:m');
-		$active = 0; //<<<<<<<<<<<<<<<<<<<<<< instant send active = 0 in db		
-		$cid = $this->cid; //$_POST['cid']; //cid mark 
+		$active = 0; 		
+		$cid = $this->cid; 
 	   
 		//tracking var
 		if ($this->trackmail) {
