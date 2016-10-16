@@ -252,17 +252,6 @@ class rcbulkmail {
 			case 'cptemplatesav': $this->saved = $this->saveTemplate(); 
 								  $this->newcopyTemplate();	//load
 								  break;
-			/*
-		    case 'cpchartshow'	: if ($report = GetReq('report')) {//ajax call
-									$this->hasgraph = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use $report");
-									$this->gotourl = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
-								  }
-								  break;									  
-            
-            case 'cpmailstats'     : //as first tme loged in stats must be calced at action
-			                         //$this->load_graph_objects();
-									 //$this->runstats();		
-                                     break;			*/
 			
 	        case 'cpdeletecamp'    : $this->delete_campaign();
 			                         break;								
@@ -289,40 +278,7 @@ class rcbulkmail {
 			                          if ($this->ulistselect = GetReq('ulistselect')) 
 											SetSessionParam('ulistselect', $this->ulistselect); 
                                       break;			
-			/* 
-			case 'cpsubscribe'    : $this->dosubscribe();
-		                            $this->mass_subscribe();				
-	                                break;
-									
-		    case 'cpunsubscribe'  : $this->dounsubscribe();				
-	                                break;		 
-			 
-			case 'cpactivatequeuerec': $this->activate_queue_rec(); //ajax call
-		                               die('mailbody|<h1>Enabled</h1>');
-		                               break;
-									   
-			case 'cpdeactivatequeuerec': $this->deactivate_queue_rec(); //ajax call
-		                                 die('mailbody|<h1>Disabled</h1>');
-		                                 break;			 
-			 
-	        case 'cpmailbodyshow' : die($this->show_mailbody());
-		                            break; 			 
-			 
-		    case 'cploadframe'    : echo $this->loadframe('mailbody');
-								    die();
-		                            break;
-									
-			case 'cpadvsubscribe' : break; 
-
-	        case 'cpviewtrace'     : //echo $this->viewTrace($_GET['m'], $_GET['cid']); //ajax call
-			                         //die();
-			                         break;					
-			
-			case 'cpviewclicks'        :
-            case 'cpviewsubsqueueactiv':
-		    case 'cpviewsubsqueue'     : 				
-	                                     break;	*/
-										 
+									  
 			case "cpsubsend"      :	$this->sendOk = $this->send_mails();
 									//echo 'sendOK:',$this->sendOk;
 									SetSessionParam('messages',$this->messages);
@@ -355,42 +311,7 @@ class rcbulkmail {
 	    switch ($action) {
 			
 			case 'cptemplatesav'       :  $out = ($this->saved==true) ? "Saved" : null; break;
-			case 'cptemplatenew'       :  break;
-			/* 
-		    case 'cpchartshow'         : if ($this->hasgraph) //ajax call
-											$out = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");
-										 else
-											$out = localize('_GNAVAL',0);	
-
-										 die(GetReq('report').'|'.$out); //ajax return
-										 break;	
-            
-            case 'cpmailstats'         : $this->load_graph_objects();
-			                             $this->runstats();	
-                                         break;						 
-			case 'cpunsubscribe'       :	 
-			case 'cpsubscribe'         :			 
-		    case 'cpadvsubscribe' 	   : $out .= $this->subscribeform(); 
-										 break;			 
-			 
-		    case 'cpviewclicks'  	   : $out = $this->viewClicks(); 				
-	                                     break;			 
-			
-			case 'cpviewtrace'         : $out = $this->viewTrace($_GET['m'], $_GET['cid']);
-                                         break; 			
-			case 'cpactivatequeuerec'  :
-			case 'cpdeactivatequeuerec':			 
-		    case 'cpviewsubsqueue'	   : $out = $this->viewMails(); 				
-	                                     break;
-
-			case 'cpviewsubsqueueactiv': $out = $this->viewMails(1); 
-			                             break;	
-										 
-			case 'cp'             	   : $this->runstats();  break;											 
-										 
-			case 'cpmailbodyshow'      :
-			case 'cploadframe'         : */ 									 
-			
+			case 'cptemplatenew'       :  break;									 
 			case 'cpsubloadhtmlmail'   :
             case 'cpsavemailadv'       :		
 			case 'cpsubsend'           :
@@ -943,20 +864,24 @@ class rcbulkmail {
 		return ($ret);
 	}	
 	
-	protected function load_campaign($reload=false) {
+	protected function load_campaign($reset=false) {
 		$db = GetGlobal('db');		
         if (!$this->cid) return false;
 		
 		//all as 9 user or only owned		
 		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);	
 		$cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
-		
-		if ($reload) {
+		/*
+		if ($reset) {
 			//fetch ulists from bcc to cc
-			$rSQL = "update mailcamp set cc=bcc, bcc='' where " . $ownerSQL . $cidSQL; 
+			$rSQL = "update mailcamp set ulists=bcc where " . $ownerSQL . $cidSQL; 
 			$db->Execute($rSQL);
+			$rSQL = "update mailcamp set bcc='' where " . $ownerSQL . $cidSQL; 			
+			$db->Execute($rSQL);			
+			
+			$this->messages[] = 'Reset campaign';			
 		}
-		
+		*/
 		$sSQL = 'select title,cdate,ulists,cc,bcc,user,pass,server from mailcamp where '. $ownerSQL . $cidSQL;
         //echo $sSQL;		
 		
@@ -966,7 +891,7 @@ class rcbulkmail {
 			SetParam('subject', $rec[0]); //make it global to used be html form
 			SetParam('ulists', $rec[2]); //
 			SetParam('from', $rec[3]); // from cc
-			SetParam('bcc', $rec[4]); // from bcc
+			SetParam('bcc', $rec[4]); // bcc saved as hidden xbcc
 			
 			//make it global to used be html form (hide default settings)
 			if ($rec[5]!=$this->mailuser) SetParam('user', $rec[5]); //alternative mail user
@@ -1043,14 +968,13 @@ class rcbulkmail {
         $cc = GetParam('from'); //from origin		
 		$to = GetParam('submail'); //to origin
 		
-		//$bcc = $this->getmails($to, true); //fetch mails plus 'to' origin //DISABLED
-		$bcc = $this->getmails($to, false, ',');
-		
-		//echo $bcc;
-		if (!$bcc) {
+		$bcc = null;//$this->getmails($to, true); //fetch mails plus 'to' origin //DISABLED
+		$ulists = $this->getmails($to, false, ',');
+		if (!$ulists) {
 			$this->messages[] = 'Campaign NOT saved (no receipients)';
 			return false;
 		}	
+		SetParam('taglists',$ulists); //used by form
 
 		/* DISABLED
         //compute batch submits
@@ -1112,6 +1036,7 @@ class rcbulkmail {
 		
 		$body =  $this->combine_tokens($body, $rtokens); //in case of tokens	
 
+		/*
 		if (is_array($_POST['csv'])) 
 		    $mycsvlist = 'csv';  	
 		if (is_array($_POST['ulistname'])) {
@@ -1120,6 +1045,8 @@ class rcbulkmail {
 		}	
 		$ulists = $this->ulistselect ? $this->ulistselect . ',' . $multitags : $multitags;
 		SetParam('taglists',$taglists); //used by form
+		*/
+		
 		
 		if (defined('RCCOLLECTIONS_DPC')) 
 			$collection = GetGlobal('controller')->calldpc_var("rccollections.savedlist");
@@ -1305,7 +1232,7 @@ class rcbulkmail {
 				foreach ($altlist as $i=>$list) {
 				   $this->messages[] = 'Call mail list ' . $list; 	
 				   $_list = $fetchlist ? $this->get_mails_from_lists($list) : $list; //just the name
-				   $lm .= $_s . _list
+				   $lm .= $_s . $_list;
 				}   
 				$mails .= $lm;
 			}
@@ -1421,7 +1348,7 @@ class rcbulkmail {
 			$sSQL .= ", bcc=" . $db->qstr($mybcc);
 		}
 		$sSQL .= ' where '. $ownerSQL . $cidSQL;
-        echo $sSQL;		
+        //echo $sSQL;		
 		
 		$resultset = $db->Execute($sSQL);
 
@@ -1431,14 +1358,11 @@ class rcbulkmail {
 	protected function send_mails() {	  
         //check expiration key
         if ($this->appkey->isdefined('RCBULKMAIL')==false) {
-	        $this->messages[] = "Failed, module expired.";
+	        //$this->messages[] = "Failed, module expired.";
 		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
 	    }
-		
-		if ($resend = GetParam('resend')) 
-			$this->messages[] = 'Re-send campaign!';
 
-		if (!$cid = GetParam('xcid')) { //jqgrid present (select cid,.. zero on post)
+		if (!$cid = $this->cid) { //jqgrid present (select cid,.. zero on post)
 			$this->messages[] = 'CID form error!';
 			return false;		
         }
@@ -1484,8 +1408,9 @@ class rcbulkmail {
 		$from = $mailuser ? $mailuser : $from; //replace sender when another server settings ? 
 		//$cc = $_POST['include'] ? implode(';',$_POST['include']) : null; //subscribers field array
 		
-		$bcc = GetParam('bcc');
-		$inc = GetParam('include');
+		$bcc = GetParam('xbcc');
+		$inc = GetParam('include'); 
+		//echo $inc;
 		//clean to from remaing commas while batch move names
 		for ($i=0;$i<strlen($inc);$i++) 
 			$to = (substr($inc,0,1)==',') ? substr($inc, 1) : $inc;
@@ -1523,8 +1448,8 @@ class rcbulkmail {
 						foreach ($bcc as $z1=>$m1) {
 							
 							//break if num of mails bigger than a number (create batch) 					
-							if ($z1==$this->maxinpvars) { 
-								$bid = $this->maxinpvars;
+							if ($z1==1) { 
+								$bid = 1;//$this->maxinpvars;
 								break 2;								
 							}
 							$text = str_replace('_SUBSCRIBER_', $m1, $mail_text); 	
@@ -1698,127 +1623,25 @@ class rcbulkmail {
 	
     protected function sendmail($from,$to,$subject,$mail_text='',$is_html=false) {
 		$sFormErr = GetGlobal('sFormErr');
-		$err = null;
-		/*$ccs = GetParam('cc'); //echo $ccs;
-	   
-		if ($ccs)
-			$ccaddress = explode(';',$ccs);		      
-		$bccs = GetParam('bcc');	//echo $bccs;	 
-		if ($ccs)
-			$bccaddress = explode(';',$bccs);			 
-		//global $info; //receives errors	*/ 
+		$err = null; 
 
 		if (($this->_checkmail($to)) && ($subject)) {//echo $to,'<br>';
 	   
          $smtpm = new smtpmail($this->encoding,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);
 		   	   
          if ((SMTP_PHPMAILER=='true') || ($method=='SMTP')) {
-		   //echo 'smtp';	
+	       //echo 'smtp';
 		   $smtpm->from($from,$this->mailname);		   
 		   $smtpm->to($to);  
-		   if (!empty($ccaddress)) {
-		     foreach ($ccaddress as $cc) {
-			   //echo $cc,'<br>';
-			   if (trim($cc)) {
-		         //$smtpm->cc($cc);//ONLY WIN32  
-			     $smtpm->to($cc);
-			   }
-			 }  
-		   }  	 
-		   if (!empty($bccaddress)) {
-		     foreach ($bccaddress as $bcc) {
-			   //echo $bcc,'<br>';		
-			   if (trim($bcc)) {	 
-		         //$smtpm->bcc($bcc); //ONLY WIN32  
-			     $smtpm->to($bcc);  
-			   }	 
-			 }  
-		   }		   
 		   $smtpm->subject($subject);
-		   $smtpm->body($mail_text,$is_html);
-		   
-           # Optional alternate text-only body:
-           $smtpm->smtp->AltBody = GetParam('alttext');		 
-		   # url images to Embeded images replacement
-		   if (!empty($this->images)) {
-		     foreach ($this->images as $a=>$image) {
-		       if ($image) {
-			     foreach ($this->imgtypes as $ext) {		 
-			       if (strstr($image,$ext)) {
-				     $myext = str_replace('.','',$ext);//without dot
-                     $err .= $smtpm->smtp->AddEmbeddedImage($this->template_images_path . $image, "1", $image, "base64", "image/$myext");		 
-				   }  
-			     }
-			   }  
-		     }	  
-		   }
-           # Attached file containing this source code:
-		   if (!empty($this->attachments)) {
-		     foreach ($this->attachments as $a=>$attachment) {
-		       if ($attachment) {
-			     foreach ($this->doctypes as $ext) {		 
-			       if (strstr($attachment,$ext)) {		
-				     $myext = str_replace('.','',$ext);//without dot???? switch	 
-                     $err .= $smtpm->smtp->AddAttachment($this->template_document_path . $attachment, $attachment, "base64", "text/plain");
-				   }  
-			     }
-			   }  
-		     }
-		   }		   			   	   
+		   $smtpm->body($mail_text,$is_html);		   			   	   
 	     }
          elseif ((SENDMAIL_PHPMAILER=='true') || ($method=='SENDMAIL')) {	  	   
 		   //echo 'phpmailer';
 		   $smtpm->from($from,$this->mailname);		   
-		   $smtpm->to($to);  
-		   if (!empty($ccaddress)) {
-		     foreach ($ccaddress as $cc) {
-			   //echo $cc,'<br>';			 
-			   if (trim($cc)) {			 
-		         //$smtpm->cc($cc); //ONLY WIN32  
-			     $smtpm->to($cc);
-			   }	 
-			 }  
-		   }
-		   if (!empty($bccaddress)) {
-		     foreach ($bccaddress as $bcc) {
- 			   //echo $bcc,'<br>';
-			   if (trim($bcc)) {				   
-		         //$smtpm->bcc($bcc);//ONLY WIN32   
-			     $smtpm->to($bcc);
-			   }	 
-			 }  
-		   }			    
+		   $smtpm->to($to);  			    
 		   $smtpm->subject($subject);
-		   $smtpm->body($mail_text,$is_html);		
-		   
-           # Optional alternate text-only body:
-           $smtpm->smtp->AltBody = GetParam('alttext');		 
-		   # url images to Embeded images replacement
-		   if (!empty($this->images)) {
-		     foreach ($this->images as $a=>$image) {
-		       if ($image) {
-			     foreach ($this->imgtypes as $ext) {		 
-			       if (strstr($image,$ext)) {
-				     $myext = str_replace('.','',$ext);//without dot
-                     $err .= $smtpm->smtp->AddEmbeddedImage($this->template_images_path . $image, "1", $image, "base64", "image/$myext");		 
-				   }  
-			     }
-			   }  
-		     }	  
-		   }
-           # Attached file containing this source code:
-		   if (!empty($this->attachments)) {
-		     foreach ($this->attachments as $a=>$attachment) {
-		       if ($attachment) {
-			     foreach ($this->doctypes as $ext) {		 
-			       if (strstr($attachment,$ext)) {		
-				     $myext = str_replace('.','',$ext);//without dot???? switch	 
-                     $err .= $smtpm->smtp->AddAttachment($this->template_document_path . $attachment, $attachment, "base64", "text/plain");
-				   }  
-			     }
-			   }  
-		     }
-		   }		      
+		   $smtpm->body($mail_text,$is_html);		  		      
 		 } 
 		 else {
 		   //echo 'default';	
