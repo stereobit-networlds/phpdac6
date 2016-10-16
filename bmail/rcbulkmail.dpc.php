@@ -976,7 +976,7 @@ class rcbulkmail {
 		}	
 
 		return ($rec[0]); //one rec
-	}	
+	}			
 	
 	protected function preview_campaign() {
 		$db = GetGlobal('db');	
@@ -1386,6 +1386,32 @@ class rcbulkmail {
 	    return $ret;	
 	}			
 	
+	/*on resend or batch send */
+	protected function update_campaign($xcid=null, $step=1, $cc=null, $segment=null, $bcc=null) {
+		$db = GetGlobal('db');		
+		$cid = $xcid ? $xcid : $this->cid;
+        if (!$cid) return false;
+		
+		//all as 9 user or only owned		
+		//$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);	
+		$cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
+		
+		$sSQL = 'update mailcamp set active=1, ctype=' . $step; //enable by updat if not enabled
+		if (($cc) && ($segment)) {//email or ulist
+			//remove tag from cc and move to bcc
+			$sSQL .= ", cc= REPLACE(cc, " . $db->qstr($segment) . ", '')" ;
+			//modify bcc tag
+			$mybcc = $bcc ? $bcc .','.$segment : $segment;
+			$sSQL .= ", bcc=" . $db->qstr($mybcc);
+		}
+		$sSQL .= ' where '. $cidSQL;
+        //echo $sSQL;		
+		
+		$resultset = $db->Execute($sSQL);
+
+		return true;
+	}	
+	
 	protected function send_mails() {	  
         //check expiration key
         if ($this->appkey->isdefined('RCBULKMAIL')==false) {
@@ -1414,7 +1440,7 @@ class rcbulkmail {
 			if (is_readable($this->savehtmlpath .'/'. $cid.'.html')) {
 				
 				$rawtext = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html'); //$this->mailbody; //not exist in this post			
-				$res = $this->sendit($from,$subject,$rawtext); 
+				$res = $this->sendit($from, $subject, $rawtext, $cid); 
 				if (!$res) 
 					$this->messages[] = $this->batchid ? "Batch send" : "Sent failed";				
 				
@@ -1427,7 +1453,7 @@ class rcbulkmail {
 	    return false;   
 	}	
 	
-	protected function sendit($from,$subject,$mail_text='') {
+	protected function sendit($from,$subject,$mail_text='',$cid=null) {
 	    if (!$mail_text) {
 		    $this->messages[] = 'Failed: Empty content';	
 			return 0; 
@@ -1452,10 +1478,17 @@ class rcbulkmail {
 
 			foreach ($cc as $z=>$m) {
 				if ($ismail = filter_var($m, FILTER_VALIDATE_EMAIL)) {
+					
+					//test (create batch) 					
+					if ($z==1) { //one by one
+						$this->batchid = 1;
+						break;	
+					}	
+					
 					$text = str_replace('_SUBSCRIBER_', $m, $mail_text); 	
 					$meter += ($z<3) ?  $this->sendmail_instant($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver) :
 										$this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
-					$i=1; //batch
+					$i=1; //batch				
 				}
 				else {//list name
 				
@@ -1463,12 +1496,19 @@ class rcbulkmail {
 					
 					if (!empty($bcc)) {
 						foreach ($bcc as $z1=>$m1) {
+							
+							//break if num of mails bigger than a number (create batch) 					
+							if ($z1==$this->maxinpvars) { 
+								$this->batchid = $this->maxinpvars;
+								break;								
+							}
 							$text = str_replace('_SUBSCRIBER_', $m1, $mail_text); 	
 							$meter += $this->sendmail_inqueue($from,$m1,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);								
 						}
 						$i+=1; //batch
 					}
 				}
+				$this->update_campaign($cid ,1, GetParam('include'), $m); //bcc not posted
 			}	
 			/*}
 			else {			
@@ -1488,10 +1528,10 @@ class rcbulkmail {
 			
 			//reduce batch id
 			//also the input array must reduced by the mails that already send
-			if ($this->batchid>0) {
+			/*if ($this->batchid>0) {
 				$this->batchid = $this->batchid - 1; //reduce batchid by 1
 				$this->messages[] =  'Batch tasks remain:' . $this->batchid;	
-			}			
+			}*/			
 		} 
 		else $this->messages[] =  'Send failed: NO receipients (cc)';
 	
