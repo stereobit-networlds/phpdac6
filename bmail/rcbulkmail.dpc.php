@@ -903,9 +903,10 @@ class rcbulkmail {
 		SetParam('subject', $res->fields[0]); //make it global to used be html form
 		
 		SetParam('ulists', $res->fields[2]); //ulists
-		//$ul = strstr($res->fields[2], ',') ? explode(',',$res->fields[2]) : array([0]=>$res->fields[2]);
-		//$this->messages[] = $this->_checkmail($ul[0]) ? $ul[0] . ' will receive test instant message!' : 'The first in list '.$ul[0]. ' will receive instant message!';
-		
+		if ($reset) {
+			$ul = strstr($res->fields[2], ',') ? explode(',',$res->fields[2]) : array([0]=>$res->fields[2]);
+			$this->messages[] = $this->_checkmail($ul[0]) ? $ul[0] . ' will receive instant message!' : 'The first in list '.$ul[0]. ' will receive instant message!';
+		}
 		SetParam('from', $res->fields[3]); // from cc
 		//SetParam('bcc', $res->fields[4]); // bcc saved as hidden xbcc
 			
@@ -1112,48 +1113,6 @@ class rcbulkmail {
 			$ret = $option ? implode('',$oret) : implode(',',$oret);
 		
 		return ($ret);		
-		
-		/*$db = GetGlobal('db');
-		
-		$sSQL = 'select bcc from mailcamp where ';		   
-		if ($text = GetParam('mail_text')) {
-			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail'));
-			$sSQL .= " cid = " . $db->qstr($cid);	
-		}
-        else		
-			$sSQL .= " cid=" . $db->qstr($this->cid);	
-
-		//echo $sSQL;	
-	    $resultset = $db->Execute($sSQL,2);	
-		
-		//print_r($resultset);
-		//foreach ($resultset as $n=>$rec) {
-		
-        $bcc = $resultset->fields[0];		
-		$csv = explode(';', $bcc); //$rec[0]);
-		$nfm = intval(count($csv));
-		$this->messages[] =  'Mails in campaign :' . $nfm;
-		$bid = ceil( $nfm / $this->maxinpvars); //static batchid always in max val
-		
-		//also must reduce input array by the mails that already send (here)
-		if (GetParam('FormAction')) { //means that there is post to send
-			$index = ($bid - $this->batchid);//+1;
-			$lim = $this->maxinpvars * $index;
-			//echo 'index:',$index,' bid:',$bid,' batchid:',$this->batchid,' lim:',$lim ; 
-			foreach ($csv as $i=>$m) {
-				if ($i >= $lim) //check for mail list bigger than max input vars
-					$oret[] = $option ? "<option value='".$m."'>". $m."</option>" : $m;
-			}	
-		}	
-		else {
-			foreach ($csv as $m)
-				$oret[] = $option ? "<option value='".$m."'>". $m."</option>" : $m;
-        }		
-		
-		if (is_array($oret))
-			$ret = $option ? implode('',$oret) : implode(';',$oret);
-		
-		return ($ret);*/
 	}	
 	
 	protected function count_maillist($listname=null) {
@@ -1361,14 +1320,14 @@ class rcbulkmail {
 			//remove tag from ulists and move to bcc
 			$sSQL .= ", ulists= REPLACE(ulists, " . $db->qstr($segment) . ", '')" ;
 			//modify bcc tag
-			$sSQL .= ", bcc=CONCAT(bcc, " . $db->qstr(','.$segment) . ")" ;
+			$sSQL .= ", bcc=CONCAT_WS(',', bcc, " . $db->qstr($segment) . ")" ;
 		}
 		$sSQL .= ' where '. $ownerSQL . $cidSQL;
         //echo $sSQL;		
 		
 		$resultset = $db->Execute($sSQL);
 
-		return 0;
+		return array(0=>0,1=>0,2=>2500);//0;
 	}	
 	
 	protected function send_mails() {	  
@@ -1404,7 +1363,7 @@ class rcbulkmail {
 			}
 			else $this->messages[] = 'File not exist ('. $this->savehtmlpath .'/'. $cid . '.html)';			
 		}
-		else $this->messages[] = "No recipients, send failed";
+		else $this->messages[] = "No recipients, send distribution completed!";
 		
 	    return false;   
 	}	
@@ -1414,6 +1373,9 @@ class rcbulkmail {
 		    $this->messages[] = 'Failed: Empty content';	
 			return 0; 
 		}	 
+		
+		$db = GetGlobal('db');
+		$optSQL = null;	
 		
 		$mailuser = GetParam('user') ? GetParam('user') : $this->mailuser;
 		$mailpass = GetParam('pass') ? GetParam('pass') : $this->mailpass;
@@ -1428,7 +1390,7 @@ class rcbulkmail {
 		for ($i=0;$i<strlen($inc);$i++) 
 			$to = (substr($inc,0,1)==',') ? substr($inc, 1) : $inc;
 		$cc = $to ? (strstr($to ,',') ? explode(',', $inc) : array(0=>$to)) : null; //ulist csv text or one element
-        echo $to; print_r($cc);
+        //echo $to; print_r($cc);
 		
 		$i = 0;
 		$meter = 0;
@@ -1449,7 +1411,7 @@ class rcbulkmail {
 										$this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
 					$i+=1; 				
 					
-					$this->resetbatch($cid ,1, $to, $m, 1);		
+					list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, 1);		
 				}
 				else {//list name
 				
@@ -1460,7 +1422,10 @@ class rcbulkmail {
 					if (!empty($mails)) {
 						foreach ($mails as $z1=>$m1) {		
 							$text = str_replace('_SUBSCRIBER_', $m1, $mail_text); 	
-							$meter += $this->sendmail_inqueue($from,$m1,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);								
+							if ($this->_OPT) //ERROR see below
+								$optSQL .= $this->sendmail_inqueue_opt($from,$m1,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);								
+							else
+								$meter += $this->sendmail_inqueue($from,$m1,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);								
 							$i+=1; 
 						}
 						
@@ -1470,10 +1435,10 @@ class rcbulkmail {
 							break 1;							
 						}//if not a full set page
 						else //next tag
-							$this->batchid = $index = $this->resetbatch($cid ,1, $to, $m, count($mails));							
+							list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, count($mails));							
 					}//has mails
 					else //next tag
-						$this->batchid = $index = $this->resetbatch($cid ,1, $to, $m, 0);			
+						list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, 0);			
 				}
 			}	
 			
@@ -1481,14 +1446,69 @@ class rcbulkmail {
 					
 		} 
 		else $this->messages[] =  'Send failed: NO receipients (cc)';
+		
+		if ($optSQL) {
+			$optimizeSQL = "insert into mailqueue (timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server,trackid,cid,owner) values ";
+			$runSQL = $optimizeSQL . $optSQL;
+			//$s = @file_put_contents($this->savehtmlpath .'/sql-'. $cid . '.txt' , $runSQL, LOCK_EX);
+			$result = $db->Execute($runSQL);
+			$af = $db->Affected_Rows();  
+			$this->messages[] = $af . ' records added in mail queue.'.$s;
+			//ERROR : Allowed memory size of 268435456 bytes exhausted (tried to allocate 79088397 bytes) in /home/stereobi/public_html/cp/dpc/system/extensions/adodb/adodb.ext.php on line 1233	
+		}	
 	
-		$this->messages[] = $meter . ' mail(s) sent' . '-('.$this->batchid.')';		
+		$this->messages[] = $meter . ' e-mail(s) have just been sent' . ' ('.$this->batchid.')';		
 				
 		//$this->batchid = $bid ? $bid : 0;				
 		//return ($bid ? false : true);
 		$ret = (!$cc) ? true : false;
 		return ($ret);
     }	
+	
+	//send mail to db queue optimized
+	protected function sendmail_inqueue_opt($from,$to,$subject,$mail_text='',$is_html=false,$user=null,$pass=null,$name=null,$server=null) {
+		$db = GetGlobal('db');		
+		$ishtml = $is_html?$is_html:0;
+		$altbody = null;
+		$origin = $this->prpath; 
+		$encoding = $this->overwrite_encoding ? $this->overwrite_encoding : $this->encoding;
+		$datetime = date('Y-m-d h:s:m');
+		$active = 1;		
+		$cid = $this->cid; 
+		
+		//test
+		//$this->messages[] = $to;
+		//return true; //test
+	   
+		//tracking var
+		if ($this->trackmail) {
+	     		 
+			$trackid = $this->get_trackid($from,$to);
+		 
+			if (!$ishtml) {
+				$ishtml = 1;
+				$html_mail_text = '<html><body>' . $mail_text . '</body></html>';
+				$body = $this->add_tracker_to_mailbody($html_mail_text,$trackid,$to,$ishtml);
+			}
+			else //already html body ...leave it as is		 
+				$body = $this->add_tracker_to_mailbody($mail_text,$trackid,$to,$ishtml);
+
+			$body = $this->add_urltracker_to_mailbody($body,$to,$cid);			
+		}
+		else {
+			$body = $mail_text;	   
+			$trackid = '';
+		}	 
+	    
+		$sSQL =  " (" .
+			 $db->qstr($datetime) . "," . $active . "," . $db->qstr(strtolower($from)) . "," . $db->qstr(strtolower($to)) . "," .
+		     $db->qstr($subject) . "," .  $db->qstr($body) . "," . $db->qstr($altbody) . "," . $db->qstr($ccs) . "," .
+			 $db->qstr($bccs) . "," . $ishtml . "," . $db->qstr($encoding) . "," . $db->qstr($origin) . "," . $db->qstr($user) . "," .
+			 $db->qstr($pass) .	"," . $db->qstr($name) . "," . $db->qstr($server) . "," . $db->qstr($trackid) . "," .
+			 $db->qstr($cid) . "," . $db->qstr($this->owner) . "),";  
+ 
+		return ($sSQL);			 
+	}		
 	
 	//send mail to db queue
 	protected function sendmail_inqueue($from,$to,$subject,$mail_text='',$is_html=false,$user=null,$pass=null,$name=null,$server=null) {
@@ -1503,7 +1523,7 @@ class rcbulkmail {
 		
 		//test
 		//$this->messages[] = $to;
-		return true; //test
+		//return true; //test
 	   
 		//tracking var
 		if ($this->trackmail) {
@@ -1552,7 +1572,7 @@ class rcbulkmail {
 		$ret = $db->Affected_Rows();    
  
 		return ($ret);			 
-	}	
+	}		
 	
 	//send mail to db queue
 	protected function sendmail_instant($from,$to,$subject,$mail_text='',$is_html=false,$user=null,$pass=null,$name=null,$server=null) {
@@ -1566,8 +1586,8 @@ class rcbulkmail {
 		$cid = $this->cid; 
 		
 		//test		
-		$this->messages[] = $to . ' instant message sent.';
-		return true; //test
+		$this->messages[] = $to . ' instant message has been sent.';
+		//return true; //test
 	   
 		//tracking var
 		if ($this->trackmail) {
