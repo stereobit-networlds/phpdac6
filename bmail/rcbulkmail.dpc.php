@@ -15,52 +15,32 @@ require_once($a);
 
 
 $__EVENTS['RCBULKMAIL_DPC'][0]='cpbulkmail';
-/*$__EVENTS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
-$__EVENTS['RCBULKMAIL_DPC'][2]='cpsubscribe';
-$__EVENTS['RCBULKMAIL_DPC'][3]='cpadvsubscribe';
-$__EVENTS['RCBULKMAIL_DPC'][4]='cpviewsubsqueue';
-$__EVENTS['RCBULKMAIL_DPC'][5]='cploadframe';
-$__EVENTS['RCBULKMAIL_DPC'][6]='cpmailbodyshow';
-$__EVENTS['RCBULKMAIL_DPC'][7]='cpviewsubsqueueactiv';
-$__EVENTS['RCBULKMAIL_DPC'][8]='cpactivatequeuerec';
-$__EVENTS['RCBULKMAIL_DPC'][9]='cpdeactivatequeuerec';*/
-$__EVENTS['RCBULKMAIL_DPC'][10]='cpsavemailadv';
-$__EVENTS['RCBULKMAIL_DPC'][11]='cpsubsend';
-$__EVENTS['RCBULKMAIL_DPC'][12]='cpsubloadhtmlmail';
-$__EVENTS['RCBULKMAIL_DPC'][13]='cpviewcamp';
-$__EVENTS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
-$__EVENTS['RCBULKMAIL_DPC'][15]='cpmailstats';
-$__EVENTS['RCBULKMAIL_DPC'][16]='cpviewclicks';
-$__EVENTS['RCBULKMAIL_DPC'][17]='cpviewtrace';
-//$__EVENTS['RCBULKMAIL_DPC'][18]='cp'; //cp when fist page
-$__EVENTS['RCBULKMAIL_DPC'][19]='cpcampcontent';
-$__EVENTS['RCBULKMAIL_DPC'][20]='cpdeletecamp';
-$__EVENTS['RCBULKMAIL_DPC'][21]='cptemplatenew';
-$__EVENTS['RCBULKMAIL_DPC'][22]='cptemplatesav';
+$__EVENTS['RCBULKMAIL_DPC'][1]='cpsavemailadv';
+$__EVENTS['RCBULKMAIL_DPC'][2]='cpsubsend';
+$__EVENTS['RCBULKMAIL_DPC'][3]='cpsubloadhtmlmail';
+$__EVENTS['RCBULKMAIL_DPC'][4]='cpviewcamp';
+$__EVENTS['RCBULKMAIL_DPC'][5]='cppreviewcamp';
+$__EVENTS['RCBULKMAIL_DPC'][6]='cpmailstats';
+$__EVENTS['RCBULKMAIL_DPC'][7]='cpviewclicks';
+$__EVENTS['RCBULKMAIL_DPC'][8]='cpviewtrace';
+$__EVENTS['RCBULKMAIL_DPC'][9]='cpcampcontent';
+$__EVENTS['RCBULKMAIL_DPC'][10]='cpdeletecamp';
+$__EVENTS['RCBULKMAIL_DPC'][11]='cptemplatenew';
+$__EVENTS['RCBULKMAIL_DPC'][12]='cptemplatesav';
 
 $__ACTIONS['RCBULKMAIL_DPC'][0]='cpbulkmail';
-/*$__ACTIONS['RCBULKMAIL_DPC'][1]='cpunsubscribe';
-$__ACTIONS['RCBULKMAIL_DPC'][2]='cpsubscribe';
-$__ACTIONS['RCBULKMAIL_DPC'][3]='cpadvsubscribe';
-$__ACTIONS['RCBULKMAIL_DPC'][4]='cpviewsubsqueue';
-$__ACTIONS['RCBULKMAIL_DPC'][5]='cploadframe';
-$__ACTIONS['RCBULKMAIL_DPC'][6]='cpmailbodyshow';
-$__ACTIONS['RCBULKMAIL_DPC'][7]='cpviewsubsqueueactiv';
-$__ACTIONS['RCBULKMAIL_DPC'][8]='cpactivatequeuerec';
-$__ACTIONS['RCBULKMAIL_DPC'][9]='cpdeactivatequeuerec';*/
-$__ACTIONS['RCBULKMAIL_DPC'][10]='cpsavemailadv';
-$__ACTIONS['RCBULKMAIL_DPC'][11]='cpsubsend';
-$__ACTIONS['RCBULKMAIL_DPC'][12]='cpsubloadhtmlmail';
-$__ACTIONS['RCBULKMAIL_DPC'][13]='cpviewcamp';
-$__ACTIONS['RCBULKMAIL_DPC'][14]='cppreviewcamp';
-$__ACTIONS['RCBULKMAIL_DPC'][15]='cpmailstats';
-$__ACTIONS['RCBULKMAIL_DPC'][16]='cpviewclicks';
-$__ACTIONS['RCBULKMAIL_DPC'][17]='cpviewtrace';
-//$__ACTIONS['RCBULKMAIL_DPC'][18]='cp'; //cp when first page
-$__ACTIONS['RCBULKMAIL_DPC'][19]='cpcampcontent';
-$__ACTIONS['RCBULKMAIL_DPC'][20]='cpdeletecamp';
-$__ACTIONS['RCBULKMAIL_DPC'][21]='cptemplatenew';
-$__ACTIONS['RCBULKMAIL_DPC'][22]='cptemplatesav';
+$__ACTIONS['RCBULKMAIL_DPC'][1]='cpsavemailadv';
+$__ACTIONS['RCBULKMAIL_DPC'][2]='cpsubsend';
+$__ACTIONS['RCBULKMAIL_DPC'][3]='cpsubloadhtmlmail';
+$__ACTIONS['RCBULKMAIL_DPC'][4]='cpviewcamp';
+$__ACTIONS['RCBULKMAIL_DPC'][5]='cppreviewcamp';
+$__ACTIONS['RCBULKMAIL_DPC'][6]='cpmailstats';
+$__ACTIONS['RCBULKMAIL_DPC'][7]='cpviewclicks';
+$__ACTIONS['RCBULKMAIL_DPC'][8]='cpviewtrace';
+$__ACTIONS['RCBULKMAIL_DPC'][9]='cpcampcontent';
+$__ACTIONS['RCBULKMAIL_DPC'][10]='cpdeletecamp';
+$__ACTIONS['RCBULKMAIL_DPC'][11]='cptemplatenew';
+$__ACTIONS['RCBULKMAIL_DPC'][12]='cptemplatesav';
 
 $__LOCALE['RCBULKMAIL_DPC'][0]='RCBULKMAIL_DPC;Mail queue;Mail queue';
 $__LOCALE['RCBULKMAIL_DPC'][1]='_campaigns;Campaigns;Καμπάνιες';
@@ -187,13 +167,7 @@ class rcbulkmail {
 		$this->appkey = new appkey();			
 		
 		$this->messages = array(); //reset messages any time page reload - local msg system
-		/*$this->stats = array();
-		$this->cpStats = false;			
-		
-		//$this->refresh = GetReq('refresh')?GetReq('refresh'):60;//0
-		$this->gotourl = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
-		$this->objcall = array();
-		*/
+
 		$this->urlRedir = remote_paramload('RCBULKMAIL','urlredir', $this->prpath);
 		$this->urlRedir2 = remote_paramload('RCBULKMAIL','urlredir2', $this->prpath);
 		
@@ -238,11 +212,8 @@ class rcbulkmail {
 	    if ($login!='yes') return null;
 		
 		if (defined('RCCOLLECTIONS_DPC')) //used by wizard html page !!
-			$this->iscollection = GetGlobal('controller')->calldpc_method('rccollection.isCollection');  		
-			
-		//set message (in actions, dpc call error)
-		//GetGlobal('controller')->calldpc_method("rccontrolpanel.setTask use info|test 123|1|#");						
-		//$this->percentofCamps();		//<<<<<<<<<<<<<<<<<<<<<<<<<<<??? use with new rccontrolpanel		
+			$this->iscollection = _m('rccollection.isCollection');  		
+					
   
 	    switch ($event) {
 			
@@ -263,11 +234,9 @@ class rcbulkmail {
 			                         break;							 
 			 
 			case 'cpsubloadhtmlmail': if ($this->iscollection>0) {
-                                        //print_r($_POST);
-				                        //check for sort post
 										if (!empty($_POST['colsort'])) { 
 											$slist = implode(',', $_POST['colsort']);	
-											GetGlobal('controller')->calldpc_method("rccollections.saveSortedlist use " . $slist);
+											_m("rccollections.saveSortedlist use " . $slist);
 										}
 										
 										$this->loadTemplate2(); 	
@@ -289,8 +258,7 @@ class rcbulkmail {
 	        case 'cpsavemailadv'  : $this->save_campaign();
 									SetSessionParam('messages',$this->messages); //save messages
 			                        break;
-									
-			//case 'cp'             :	//$this->runstats(); //when first page and need to run stats					
+														
 			case 'cpbulkmail'     :
 			default               :	if ($this->template) {
 				                        //also when returns in cp and template is selected
@@ -393,11 +361,8 @@ class rcbulkmail {
 		if ($exclude_selected)
 			$sSQL .= " where listname <> " . $db->qstr($this->ulistselect);	
 		$sSQL .= " ORDER BY listname";	
-
-		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
-		
-		//print_r($resultset);
+
 		foreach ($resultset as $n=>$rec) {
 			$ret  .= "<option value='".$rec[0]."'>". $rec[0]."</option>" ;
         }		
@@ -411,7 +376,6 @@ class rcbulkmail {
 		$sSQL = 'select distinct listname from ulists ';		   
 		$sSQL .= " ORDER BY listname";	
 
-		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
 	
 		$url = ($taction) ? seturl('t='.$taction.'&ulistselect=',null,null,null,null) : 
@@ -420,7 +384,7 @@ class rcbulkmail {
 	 
 		$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
 		$ret .= "<option value=\"\">Select...</option>";
-		//print_r($resultset);
+
 		foreach ($resultset as $n=>$rec) {
 			$selection = ($rec[0] == $this->ulistselect) ? " selected" : null;
 			$ret .= "<option value='".$url . $rec[0]."' $selection >". $rec[0]."</option>" ;
@@ -457,7 +421,6 @@ class rcbulkmail {
 				sort($ddir);
 				foreach ($ddir as $i=>$name) {
 					$parts = explode(".",$name);
-					//echo $name,'<br/>';
 					$title = $parts[0];
 					$ret .= "<option value=\"$name\">$title</option>";		
 				}	 			    
@@ -538,26 +501,16 @@ class rcbulkmail {
 	protected function get_mail_body($tmpl=null) {
 		$template = $tmpl ? $tmpl : GetReq('stemplate'); 
 		$mailbody = null;
-
-		//if ($this->iscollection>0) {			
+		
 		if (defined('RCCOLLECTIONS_DPC')) {
-			//echo 'RCCOLLECTIONS_DPC';	
+
 		    if ($template) {
 				$template_file = $this->templatepath . $template;
-				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page use ".$template_file.'+'.$this->templatepath);
+				$mailbody = _m("rccollections.create_page use ".$template_file.'+'.$this->templatepath);
 			}
 			else
-				$mailbody = GetGlobal('controller')->calldpc_method("rccollections.create_page");
-		}					
-		elseif (defined('RCTEDIT_DPC')) {//..STANDART BUILD KATALOG TO MAIL...//template engine
-            //echo 'RCTEDIT_DPC';
-		    if ($template) {
-				$template_file = $this->templatepath . $template;
-				$mailbody = GetGlobal('controller')->calldpc_method("rcitems.create_page use ".$template_file);
-			}
-			else
-				$mailbody = GetGlobal('controller')->calldpc_method("rcitems.create_page");
-		}				   
+				$mailbody = _m("rccollections.create_page");
+		}									   
 	 
 		return ($mailbody);	 
 	}		
@@ -567,10 +520,8 @@ class rcbulkmail {
 		$path = $this->templatepath;	
 		$data = null;	
 		
-		$data = @file_get_contents($path . $template); 
-						 
+		$data = @file_get_contents($path . $template); 			 
 		$sub_template = str_replace($this->template_ext,$this->template_subext,$template);
-		//echo $path.$sub_template,'>';
 			 
 		//if sub template exist 
 		if (is_readable($path . $sub_template)) { 
@@ -590,9 +541,7 @@ class rcbulkmail {
 		if (is_readable($path . $template)) {
 		   
 		    SetSessionParam('stemplate', $template); //save tmpl 
-		   
 		    $this->mailbody = $this->loadData($template);			
-			
 			return true;
 		}
 		return false;	  			
@@ -605,7 +554,6 @@ class rcbulkmail {
 		if (($template) && (is_readable($path . $template))) {
 		  
 			SetSessionParam('stemplate', $template); //save tmpl 
-			
 			$this->mailbody = @file_get_contents($path . $template); 			
 			return true;			
 		}	
@@ -645,7 +593,6 @@ class rcbulkmail {
 		$path = $this->templatepath;
 		$template = GetReq('stemplate');
 		$file = str_replace($this->template_ext, '', $template) . '.pattern.txt';
-		//echo $file;
 		
 		if (is_readable($path . $file))  {
 			$pf = file($path . $file);
@@ -662,8 +609,6 @@ class rcbulkmail {
 			}
 			$_pattern[0] = explode(',', $subtemplates);
 			$_pattern[1] = (array) $joins;
-			//print_r($_pattern);
-			//return ($_pattern);
 			
 			//render pattern
 			if (is_array($_pattern)) {
@@ -685,10 +630,8 @@ class rcbulkmail {
 
 				foreach ($cc as $i=>$group) {
 					foreach ($group as $j=>$child) {
-						//echo $path . $pattern[$j] . '<br>';
 						$tts[] = $this->ct($path . $pattern[$j], $child, true);
 						if ($cmd = $join[$j]) {
-							//echo $path . $join[$j] . '<br>';
 							switch ($cmd) {
 							    case '_break' : $out .= implode('', $tts); break;
 								default       : $out .= $this->ct($path . $cmd, $tts, true);		
@@ -742,7 +685,6 @@ class rcbulkmail {
 				return	"<a{$m[1]}href=\"<phpdac>rcbulkmail.encUrl use {$m[2]}+1</phpdac>\"{$m[3]}>";
 		};		
 
-		//if (is_readable($path . $this->savedname)) {
 		if ($template = GetParam('template_text')) {	
 
 			if ($this->isDemoUser()) 	
@@ -777,9 +719,8 @@ class rcbulkmail {
 	public function userRealm() {
        $db = GetGlobal('db');	
 	
-	   if ($UserName) {
+	   if ($UserName) {//???
 		    $sSQL = 'select fname from users where username=' . $db->qstr($this->owner);
-			//echo $sSQL;
 			$result = $db->Execute($sSQL,2);
 			return ($result->fields[0]);
 	   }
@@ -852,16 +793,13 @@ class rcbulkmail {
 
         $mycid = $cid ? $cid : $this->cid; //new post or load camp request  		
 
-		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
 	
 		$url = ($taction) ? seturl('t='.$taction.'&cid=',null,null,null,null) : 
 		                    seturl('t=cpviewcamp&cid=',null,null,null,null);
 		
-	 
 		$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
-		$ret .= $choose ? $choose : null; //"<option value=\"\">Select...</option>";
-		//print_r($resultset);
+		$ret .= $choose ? $choose : null; 
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
@@ -954,8 +892,6 @@ class rcbulkmail {
         $cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
 		
 		$sSQL = 'update mailcamp set active=0 where '. $ownerSQL . $cidSQL;
-        //echo $sSQL;		
-		
 		$resultset = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
@@ -1087,7 +1023,6 @@ class rcbulkmail {
 		}
 		
 		$this->messages[] = 'Campaign NOT saved';
-		//echo $sSQL;
 		
 		return (false);		
 	}
@@ -1103,7 +1038,7 @@ class rcbulkmail {
 		
 		$sSQL = 'select ulists from mailcamp where '. $ownerSQL . $cidSQL;
 		$res = $db->Execute($sSQL);
-		//echo $sSQL;
+
 		$c = $res->fields[0];
 		$list = strstr($c, ',') ? explode(',',$c) : array(0=>$c);
 		foreach ($list as $m)
@@ -1249,7 +1184,7 @@ class rcbulkmail {
 			}	
 		}
 	   
-	    /*app users checkbox*/
+	    /*app users checkbox (todo, make ulist)*/
 	    if ((!$this->isDemoUser()) && ($users = $_POST['siteusers'])) {		
 			$seclevid = 1;
 			$this->messages[] = 'Call user mail list ' . $seclevid;			
@@ -1271,7 +1206,7 @@ class rcbulkmail {
 			}
 	    }
 		
-	    /*app customers checkbox*/
+	    /*app customers checkbox (todo, make ulist)*/
 	    if ((!$this->isDemoUser()) &&($users = $_POST['sitecusts'])) {
 		
 			$this->messages[] = 'Call customers mail list ';			
@@ -1319,7 +1254,6 @@ class rcbulkmail {
 		if (($ulist) && ($segment)) {//email or ulist
 			//remove tag from ulists and move to bcc
 			$sSQL .= ", ulists= REPLACE(ulists, " . $db->qstr($segment) . ", '')" ;
-			//modify bcc tag
 			$sSQL .= ", bcc=CONCAT_WS(',', bcc, " . $db->qstr($segment) . ")" ;
 		}
 		$sSQL .= ' where '. $ownerSQL . $cidSQL;
@@ -1383,10 +1317,10 @@ class rcbulkmail {
 		$mailname = GetParam('realm') ? GetParam('realm') : $this->mailname; //a per user submit (realm)
 		$from = $mailuser ? $mailuser : $from; //replace sender when another server settings ? 
 		
-		//$bcc = GetParam('xbcc');
+		//$bcc = GetParam('xbcc'); //disabled
 		$inc = GetParam('include'); 
 		//echo $inc;
-		//clean to from remaing commas while batch move names
+		//clean to, from remaing commas
 		for ($i=0;$i<strlen($inc);$i++) 
 			$to = (substr($inc,0,1)==',') ? substr($inc, 1) : $inc;
 		$cc = $to ? (strstr($to ,',') ? explode(',', $inc) : array(0=>$to)) : null; //ulist csv text or one element
@@ -1416,8 +1350,6 @@ class rcbulkmail {
 				else {//list name
 				
 					$mails = $this->get_mails_from_lists($m, true, $this->maxinpvars, $index);
-					//echo 'List:'.$m;
-					//print_r($mails);
 					
 					if (!empty($mails)) {
 						foreach ($mails as $z1=>$m1) {		
@@ -1461,7 +1393,8 @@ class rcbulkmail {
 				
 		//$this->batchid = $bid ? $bid : 0;				
 		//return ($bid ? false : true);
-		$ret = (!$cc) ? true : false;
+		//$ret = (!$cc) ? true : false;
+		$ret = (str_replace(',','',$to)==null) ? true : false; //to show the green button when its over
 		return ($ret);
     }	
 	
@@ -1478,7 +1411,7 @@ class rcbulkmail {
 		
 		//test
 		//$this->messages[] = $to;
-		//return true; //test
+		//return true; //test ..ADO MEM ERROR
 	   
 		//tracking var
 		if ($this->trackmail) {
@@ -1718,17 +1651,10 @@ class rcbulkmail {
 		return ($out);	 
 	}	
 	
+	/* todo : add list name to unsubscribe in specific list*/
 	protected function get_trackid($from,$to) {
 	
-		$i = rand(100000,999999);//++$m;
-		 	
-		 /*$ta[] = encode(date('Ymd-H:m:s'));
-		 $ta[] = $from;
-		 $ta[] = $this->appname;
-		 $tc = implode('<DLM>',$ta);
-		 $tid = rawurlencode(encode($tc));*/
-		 
-		//YmdHmsu u only at >5.2.2		 
+		$i = rand(100000,999999);//++$m;	 
 		$tid = date('YmdHms') .  $i . '@' . $this->appname;
 		 
 		return ($tid);	
@@ -1787,18 +1713,9 @@ This email and any files transmitted with it are confidential and intended solel
 	
 
     public function ckeditorjs($element=null, $maxmininit=false, $disable=false) {
-		//CKEDITOR.config.basicEntities = false;
-		//CKEDITOR.config.htmlEncodeOutput = false;	
-	    //...		
-		//ckeditor attributes depend on template edit new / mail text
-		//$readonly = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 0 : 1;  
-		$readonly = $disable ? 1 : 0;  
-	
-        //$element_name = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 'template_text' : 'mail_text';	
+
+		$readonly = $disable ? 1 : 0;  	
 		$element_name = $element ? $element : ((($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 'template_text' : 'mail_text');
-		
-		//minmax only when select for new/edit not when select for mail sent
-		//$minmax = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? ($_GET['stemplate'] ? 'maximize' : 'minimize') : 'minimize' ;
 		$minmax = $maxmininit ? $maxmininit : ($_GET['stemplate'] ? 'maximize' : 'minimize') ;
 		//echo $minmax;	
 		
@@ -1874,15 +1791,12 @@ This email and any files transmitted with it are confidential and intended solel
 		else
 		  $ret = $template;
 		  
-		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 		//clean unused token marks
 		for ($x=$i;$x<30;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
@@ -1911,13 +1825,11 @@ This email and any files transmitted with it are confidential and intended solel
 		  
 		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 		//clean unused token marks
 		for ($x=$i;$x<30;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;		
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {

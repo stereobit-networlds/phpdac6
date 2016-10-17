@@ -584,7 +584,7 @@ class rculiststats  {
 
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			$tokens[] = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec[0])) . $rec[1]; //date('d-m-Y G:i',strtotime($rec[0])) . ' '. $rec[1];
+			$tokens[] = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec[0])) .' '. $rec[1]; //date('d-m-Y G:i',strtotime($rec[0])) . ' '. $rec[1];
 			$tokens[] = $rec[2];
 			$ret .= $this->combine_tokens($t, $tokens);
 			unset($tokens);	
