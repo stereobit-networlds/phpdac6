@@ -10,13 +10,6 @@ $__DPC['MAILDBQUEUE_DPC'] = 'maildbqueue';
 
 $v = GetGlobal('controller')->require_dpc('crypt/ciphersaber.lib.php');
 require_once($v); 
-/*
-$a = GetGlobal('controller')->require_dpc('nitobi/nitobi.lib.php');
-require_once($a);
-
-$b = GetGlobal('controller')->require_dpc('nitobi/nhandler.lib.php');
-require_once($b);
-*/
 
 $__EVENTS['MAILDBQUEUE_DPC'][0]='cpmaildbqueue';
 $__EVENTS['MAILDBQUEUE_DPC'][1]='cpngetqueue';
@@ -52,42 +45,40 @@ class maildbqueue  {
 	var $cpanelmailpath;
 
 	function maildbqueue() {
-	  $UserSecID = GetGlobal('UserSecID'); 	
-      $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	 
+		$UserSecID = GetGlobal('UserSecID'); 	
+		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	 
 	  
-      $this->path = paramload('SHELL','prpath');  	
-      $this->urlpath = paramload('SHELL','urlpath');
-	  $murl = arrayload('SHELL','ip');
-      $this->url = $murl[0]; 
-	  $this->inpath = paramload('ID','hostinpath');		   
-	  $this->title = localize('MAILDBQUEUE_DPC',getlocal());		  
+		$this->path = paramload('SHELL','prpath');  	
+		$this->urlpath = paramload('SHELL','urlpath');
+		$murl = arrayload('SHELL','ip');
+		$this->url = $murl[0]; 
+		$this->inpath = paramload('ID','hostinpath');		   
+		$this->title = localize('MAILDBQUEUE_DPC',getlocal());		  
 	    
-	  $this->languages = remote_arrayload('SHELL','languages',$this->path);
-	  $this->default_lang = remote_paramload('SHELL','dlang',$this->path);
+		$this->languages = remote_arrayload('SHELL','languages',$this->path);
+		$this->default_lang = remote_paramload('SHELL','dlang',$this->path);
 	  
-	  $ba = remote_paramload('MAILDBQUEUE','batch',$this->path);
-	  $this->batch = $ba?$ba:1;//1000;  //mails in queue pre batch
-	  $this->auto_refresh = GetParam('refresh')?GetParam('refresh'):0;
-	  $this->timeout = 3601+1000;//one hour+1000 sec
+		$ba = remote_paramload('MAILDBQUEUE','batch',$this->path);
+		$this->batch = $ba?$ba:1;//1000;  //mails in queue pre batch
+		$this->auto_refresh = GetParam('refresh')?GetParam('refresh'):0;
+		$this->timeout = 3601+1000;//one hour+1000 sec
 
-      $this->mail_encoding = remote_paramload('MAILDBQUEUE','encoding',$this->path);	  
+		$this->mail_encoding = remote_paramload('MAILDBQUEUE','encoding',$this->path);	  
 	  
-	  //$sitecharset = paramload('SHELL','charset');
-	  //$this->charset = $sitecharset;	  
-      $char_set  = arrayload('SHELL','char_set');	  
-      $charset  = paramload('SHELL','charset');	  		
-	  if ($charset=='utf-8')
-	    $this->encoding = 'utf-8';
-	  else  
-	    $this->encoding = $char_set[getlocal()]; 
+		$char_set  = arrayload('SHELL','char_set');	  
+		$charset  = paramload('SHELL','charset');	  		
+		if ($charset=='utf-8')
+			$this->encoding = 'utf-8';
+		else  
+			$this->encoding = $char_set[getlocal()]; 
 		
-	  $this->hosted_path = $this->path;	  
+		$this->hosted_path = $this->path;	  
 	  
-	  $appsinpool = remote_arrayload('MAILDBQUEUE','applications',$this->path);
-	  $this->app_pool = (array) $appsinpool;
-	  //array(0=>'art-time',1=>'panikidis2',2=>'audiophile-sounds',3=>'nathellas',4=>'hellascopy');
-	  //extra apps
-	  if ($extra_apps = @file_get_contents($this->path . 'mailqueue-apps.ini')) {
+		$appsinpool = remote_arrayload('MAILDBQUEUE','applications',$this->path);
+		$this->app_pool = (array) $appsinpool;
+
+		//extra apps
+		if ($extra_apps = @file_get_contents($this->path . 'mailqueue-apps.ini')) {
 	      if (stristr($extra_apps,',')) { //many apps
 		    $ea = explode(',',$extra_apps);
 			foreach ($ea as $a=>$app)
@@ -95,31 +86,29 @@ class maildbqueue  {
 		  }
           else //one app
             $this->app_pool[] = $extra_apps;   		  
-	  }	  
+		}	     
 	  
-	  //$this->_grids[] = new nitobi("Mailqueue");	
-	  //$this->ajaxLink = seturl('t=cpmailqueue&statsid='); //for use with...	 
-	  //$this->hasgraph = false;	   
+		$this->appname = null;//'rootapp';//paramload('ID','instancename');	  
+		//app side track vars
+		$track = remote_paramload('MAILDBQUEUE','track',$this->path);
+		$this->trackmail = $track?true:false;								    	  
+		//server-root app side vars
+		$this->trackapp = remote_arrayload('MAILDBQUEUE','apptrack',$this->path);	  
 	  
-	  $this->appname = null;//'rootapp';//paramload('ID','instancename');	  
-	  //app side track vars
-	  $track = remote_paramload('MAILDBQUEUE','track',$this->path);
-	  $this->trackmail = $track?true:false;								    	  
-	  //server-root app side vars
-	  $this->trackapp = remote_arrayload('MAILDBQUEUE','apptrack',$this->path);	  
+		$this->thisapp = paramload('ID','instancename');	
 	  
-	  $this->thisapp = paramload('ID','instancename');	
+		$rootpath = paramload('RCCONTROLPANEL','rootpath', $this->prpath);
+		$this->cpanelmailpath = $rootpath ? '/home/'.$rootpath.'/mail/' : '/home/stereobi/mail/';	 
 	  
-	  $rootpath = paramload('RCCONTROLPANEL','rootpath', $this->prpath);
-      $this->cpanelmailpath = $rootpath ? '/home/'.$rootpath.'/mail/' : '/home/stereobi/mail/';	 
+		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath); //MAILDBQUEUE
+		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	  
 	}
 	
 	function event($event=null) {		
 	
 		  	  
-	   /////////////////////////////////////////////////////////////	
-	   if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
-	   /////////////////////////////////////////////////////////////			
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;			
 	      
 	
 	    switch ($event) {
@@ -133,11 +122,8 @@ class maildbqueue  {
 	
 	function action($action=null) {
 	
-	   if (GetSessionParam('REMOTELOGIN')) 
-	     $out = setNavigator(seturl("t=cpremotepanel","Remote Panel"),$this->title); 	  
-	   else
-        $out = setNavigator(seturl("t=cp","Control Panel"),$this->title);
-		
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;
 	  
 	    switch ($action) {
 		
@@ -153,7 +139,7 @@ class maildbqueue  {
 					
 		
     //excuted every hour sending mails to limit		
-	function sendmail_daemon($limit=null,$forcelimits=null) {
+	public function sendmail_daemon($limit=null,$forcelimits=null) {
         $db = GetGlobal('db'); 		
 		//$limit = 2;//$limit?$limit:$this->batch;//batch in an hour or limit=3 in min		 
 		$sumi = 0;
@@ -355,13 +341,13 @@ class maildbqueue  {
 		return ($ret);   
     }	
 	
-    function is_valid_email($email) {
-		if (eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.([a-z]){2,4})$",$email)) return true;
-		else return false;
+    public function is_valid_email($email) {
+		$ret = filter_var($data, FILTER_VALIDATE_EMAIL);
+		return ($ret); 
 	}	
 	
 	//check mail queue to send more than limit
-	function force_mail_limits($limit=null,$forcelimits=null) {
+	protected function force_mail_limits($limit=null,$forcelimits=null) {
          $db = GetGlobal('db'); 	 
 		 
 		 //first this db
@@ -397,7 +383,7 @@ class maildbqueue  {
 		 return ($ret);		   
 	}
 	
-	function mail_limits_boost($mail_pool=null,$limit=null,$forcelimits=null) {
+	protected function mail_limits_boost($mail_pool=null,$limit=null,$forcelimits=null) {
 	  //$mail_pool = array('demosoft'=>653,'wayoflife'=>0,'panikidis'=>345,'netko'=>5677,'stereobit'=>23,'demosoft1'=>63,'wayoflife1'=>0,'panikidis1'=>0,'netko1'=>5437,'stereobit1'=>0);
 	  $x=0;
 	  foreach ($mail_pool as $t=>$ti)
@@ -484,90 +470,9 @@ class maildbqueue  {
 	  return null;
 	}
 	
-	//send mail to db queue
-	function sendmail_inqueue($from,$to,$subject,$mail_text='',$is_html=false) {
-	   $ishtml = $is_html?$is_html:0;
-       $sFormErr = GetGlobal('sFormErr');
-	   $ccs = GetParam('cc'); //echo $ccs;		 	      
-	   $bccs = GetParam('bcc');	//echo $bccs;	
-	   $altbody = GetParam('alttext'); 
-	   $origin = $this->path; 
-	   $user = $pass = $name = $server = null; //default values
-	    
-	   //client side (app depended) tracking var		
-	   if ($this->trackmail) {
-		 
-       		 
-		 $trackid = $this->get_trackid($from,$to);		 
-		 
-		 if (!$ishtml) {
-		   $ishtml = 1;		 
-		   $html_mail_text = '<HTML><BODY>' . $mail_text . '</BODY></HTML>';
-		   $body = $this->add_tracker_to_mailbody($html_mail_text,$trackid,$to,$ishtml);
-		 }
-		 else //already html body ...leave it as is
-	       $body = $this->add_tracker_to_mailbody($mail_text,$trackid,$to,$ishtml);
-	   }
-	   else
-	     $body = $mail_text;
-
-       if ((checkmail($from)) && ($subject)) {//echo $to,'<br>';
-	   
-         //add to db...local table
-		 $datetime = date('Y-m-d h:s:m');
-		 $active = 1;
-         if (($this->trackmail) && (isset($trackid))) 
-		   $sSQL = "insert into mailqueue (timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server,trackid) ";
-		 else  		 
-		   $sSQL = "insert into mailqueue (timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server) ";
-		   
-		 $sSQL .=  "values (" .
-				 $db->qstr($datetime) . "," . $active . "," .
-		 	     $db->qstr(strtolower($from)) . "," . $db->qstr(strtolower($to)) . "," .
-			     $db->qstr($subject) . "," . 
-				 $db->qstr($body) . "," .
-				 $db->qstr($altbody) . "," .				 
-				 $db->qstr($ccs) . "," .
-				 $db->qstr($bccs) . "," .
-				 $ishtml . ",";
-				 
-		 if ($this->mail_encoding)
-		   $sSQL .= $db->qstr($this->mail_encoding) . ",";
-		 else  
-		   $sSQL .= $db->qstr($this->encoding) . ",";
-				   
-		 $sSQL .= $db->qstr($origin) . "," .			 
-				 $db->qstr($user) . "," .
-				 $db->qstr($pass) .	"," .	
-				 $db->qstr($name) . "," .
-				 $db->qstr($server);
-				 
-         if (($this->trackmail) && (isset($trackid))) {
-		    $sSQL .= "," . $db->qstr($trackid) . ")";
-		 }
-		 else				 					 
-			$sSQL .= ")"; 
-	     //echo $sSQL;			
-	     $result = $db->Execute($sSQL,1);			 
-		 $ret = $result->Affected_Rows();
-					     	  	
-  	     if (!$ret) {
-		   SetGlobal('sFormErr',localize('_MLS2',getlocal()));	//send message ok
-		   return true;
-		 }         
-		 else { 
-		   SetGlobal('sFormErr',localize('_MLS9',getlocal()).'('.$err.')');	//error
-		   setInfo($err);//$info); //smtp error = global info
-		 }  
-       }
-       else 
-	     SetGlobal('sFormErr',localize('_MLS4',getlocal()));
-		 
-	   return false;			 
-	}
 	
 	//real send mail from db queue to mailer
-    function sendmail($from,$to,$subject,$mail_text='',$altbody=null,$mycc=null,$mybcc=null,$ishtml=null,$encoding=null,$user=null,$pass=null,$name=null,$server=null) {
+    protected function sendmail($from,$to,$subject,$mail_text='',$altbody=null,$mycc=null,$mybcc=null,$ishtml=null,$encoding=null,$user=null,$pass=null,$name=null,$server=null) {
        $db = GetGlobal('db');	
        $sFormErr = GetGlobal('sFormErr');
 	   if ($mycc) {
@@ -719,7 +624,7 @@ class maildbqueue  {
   	   
     } 
 	
-	function add_tracker_to_mailbody($mailbody=null,$id=null,$receiver=null,$is_html=false) {
+	protected function add_tracker_to_mailbody($mailbody=null,$id=null,$receiver=null,$is_html=false) {
 	
 	   if (!$id) return;
 	   
@@ -727,10 +632,10 @@ class maildbqueue  {
 	
 	   if ($receiver) {
 	     $r = rawurlencode(encode($receiver));
-	     $ret = "<img src=\"http://www.stereobit.gr/mtrack.php?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"2\">";
+	     $ret = "<img src=\"{$this->mtrackimg}?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"2\">";
 	   }
 	   else
-	     $ret = "<img src=\"http://www.stereobit.gr/mtrack.php?i=$i\" border=\"0\" width=\"1\" height=\"2\">";
+	     $ret = "<img src=\"{$this->mtrackimg}?i=$i\" border=\"0\" width=\"1\" height=\"2\">";
 		 
 	   if (($is_html) && (stristr($mailbody,'</BODY>')))
 	     $out = str_replace('</BODY>',$ret.'</BODY>',$mailbody);
@@ -740,26 +645,16 @@ class maildbqueue  {
 	   return ($out);	 
 	} 
 	
-	function sendmail_tracker() {
+	public function sendmail_tracker() {
 	
 	   //$i = 'VhAMbVwyATdWSQkTUzQEHFcCUFAIRgJQUAdVAAg0VWABQV0TWWVcSVZADDBTMV1CVxgLJ1QsAVBWEQFTVBEDW1YCDHxcZAEGVmkJE1NkBCJXD1B8CDwCUlAFVRAIa1UjAVtdElkzXFpWXgwGU0FdUFcZCwxUGgFnVgQBVFQVAzNWFgw3XH8BDlZuCWNTVQQNVx5QUwg8AkNQBVVgCEFVIwFBXTlZVFxcVlEMBlM1XWBXDQswVB0BTlYTAUNUYQNIVgEMU1xCAQZWRAkTU1EEGlcbUFUIMAJMUABVJghvVQIBVl0QWUBcWlZODAFTY11jVx4LbFQ7AUlWBwFpVB4DdFYQDHxcQgEfVloJPlN3BG1XD1BOCFkCQ1AaVRAIZ1U9AVtdZFl1XElWRgwwU2RdNVcMC25UAgFXVhEBVFRhA2pWFQxBXDIBAlZFCRNTWgQoVwxQbAhnAk1QNVUHCHxVcQExXRVZRlxhVn8MM1NiXTBXHAtpVBABeFYaAUBUHwNDVhEMcFxDAQFWfAkaU04EDlcbUGwIXQJKUGRVCQhDVQUBOl1iWUBcOVZZDANTYl1mV2MLE1QXAUVWLwFmVDEDM1YWDGlcRgESVj8JGFNPBA5XY1BuCEkCUVAAVXQIP1UQ';
 	   //$r = 'BGQMZ15pBzUDJllrX2MAKQBNUXQBdQdiUSJVNAdsB2RSOQB%2BDHkHM1VnW20%3D';
 	
 	   if (!$i = GetReq('i')) return;
-	   	
-	   //$di = rawurldecode($i); echo $di,'<br>';
-	   //$dr = rawurldecode($r);
-	   
+
 	   $trackid = $i;//decode($i); echo $i,'<br>';
 	   $receiver = $r;//decode($r);
 	   
-	   /*$p = explode('<DLM>',$id);
-	   print_r($p);
-	   if (!empty($p)) {
-	       echo 'z';
-	       $trackid = $p[0];
-		   $sender = $p[1];
-		   $app = $p[2];*/
 	   $p = explode('@',$trackid);	   
 	   if (!empty($p)) {	   
 	   
@@ -786,16 +681,9 @@ class maildbqueue  {
 	   }
 	}
 	
-	function get_trackid($from,$to) {
-	     //static $m = 0;
+	protected function get_trackid($from,$to) {
 		 
 		 $i = rand(1000,1999);//++$m;
-	
-		 /*$ta[] = encode(date('Ymd-H:m:s'));
-		 $ta[] = $from;
-		 $ta[] = $this->appname;
-		 $tc = implode('<DLM>',$ta);
-		 $tid = rawurlencode(encode($tc));*/
 		 
 		 //YmdHmsu u only at >5.2.2
 		 $tid = date('YmdHms') . $i . 'a@' . $this->appname;		 
