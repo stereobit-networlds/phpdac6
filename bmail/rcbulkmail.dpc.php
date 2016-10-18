@@ -27,6 +27,9 @@ $__EVENTS['RCBULKMAIL_DPC'][9]='cpcampcontent';
 $__EVENTS['RCBULKMAIL_DPC'][10]='cpdeletecamp';
 $__EVENTS['RCBULKMAIL_DPC'][11]='cptemplatenew';
 $__EVENTS['RCBULKMAIL_DPC'][12]='cptemplatesav';
+$__EVENTS['RCBULKMAIL_DPC'][13]='cppausecamp';
+$__EVENTS['RCBULKMAIL_DPC'][14]='cpstopcamp';
+$__EVENTS['RCBULKMAIL_DPC'][15]='cpstartcamp';
 
 $__ACTIONS['RCBULKMAIL_DPC'][0]='cpbulkmail';
 $__ACTIONS['RCBULKMAIL_DPC'][1]='cpsavemailadv';
@@ -41,6 +44,9 @@ $__ACTIONS['RCBULKMAIL_DPC'][9]='cpcampcontent';
 $__ACTIONS['RCBULKMAIL_DPC'][10]='cpdeletecamp';
 $__ACTIONS['RCBULKMAIL_DPC'][11]='cptemplatenew';
 $__ACTIONS['RCBULKMAIL_DPC'][12]='cptemplatesav';
+$__ACTIONS['RCBULKMAIL_DPC'][13]='cppausecamp';
+$__ACTIONS['RCBULKMAIL_DPC'][14]='cpstopcamp';
+$__ACTIONS['RCBULKMAIL_DPC'][15]='cpstartcamp';
 
 $__LOCALE['RCBULKMAIL_DPC'][0]='RCBULKMAIL_DPC;Mail queue;Mail queue';
 $__LOCALE['RCBULKMAIL_DPC'][1]='_campaigns;Campaigns;Καμπάνιες';
@@ -97,6 +103,14 @@ $__LOCALE['RCBULKMAIL_DPC'][51]='_code;Item;Κωδικός';
 $__LOCALE['RCBULKMAIL_DPC'][52]='_category;Category;Κατηγορία';
 $__LOCALE['RCBULKMAIL_DPC'][53]='_outoflist;out of list;εξήχθει απο';
 $__LOCALE['RCBULKMAIL_DPC'][54]='_FAILED;Bounce;Bounce';
+$__LOCALE['RCBULKMAIL_DPC'][55]='_pausecamp;Campaign paused;Καμπάνια σε παύση';
+$__LOCALE['RCBULKMAIL_DPC'][56]='_stopcamp;Campaign stoped;Καμπάνια σταματημένη';
+$__LOCALE['RCBULKMAIL_DPC'][57]='_unpausecamp;Campaign unpaused;Καμπάνια ενεργοποιήθηκε';
+$__LOCALE['RCBULKMAIL_DPC'][58]='_activecamp;Campaign active;Καμπάνια σε εξέλιξη';
+$__LOCALE['RCBULKMAIL_DPC'][59]='_completecamp;Campaign completed;Καμπάνια ολοκληρωμένη';
+$__LOCALE['RCBULKMAIL_DPC'][60]='_lastrun;Last submit;Τελευταία αποστολή';
+$__LOCALE['RCBULKMAIL_DPC'][61]='_instantmail;The first in lists will receive instant e-mail;Η πρώτη καταχώρηση θα λάβει το μήνυμα άμεσα';
+$__LOCALE['RCBULKMAIL_DPC'][62]='_neverrun;Not runned;Δεν εκτελέστηκε';
 
 class rcbulkmail {
 	
@@ -113,6 +127,7 @@ class rcbulkmail {
 	
 	var $userDemoIds, $crmLevel, $maxinpvars, $batchid, $ckeditver;
 	var $newtemplatebody, $saved, $savedname, $newsubtemplatebody, $newpatternbody;
+	var $_OPT;
 		
     function __construct() {
 	  
@@ -203,7 +218,9 @@ class rcbulkmail {
 		$this->newpatternbody = null;
 		$this->saved = false;
         $this->savedname = null;
-		$this->iscollection = false;	
+		$this->iscollection = false;
+
+		$this->_OPT = false;	
 	}
 	
     function event($event=null) {
@@ -258,6 +275,10 @@ class rcbulkmail {
 	        case 'cpsavemailadv'  : $this->save_campaign();
 									SetSessionParam('messages',$this->messages); //save messages
 			                        break;
+									
+			case 'cppausecamp'    : $this->pause_campaign(); break;
+			case 'cpstopcamp'     : $this->stop_campaign(); break;
+			case 'cpstartcamp'    : $this->start_campaign(); break;									
 														
 			case 'cpbulkmail'     :
 			default               :	if ($this->template) {
@@ -286,6 +307,9 @@ class rcbulkmail {
 			case 'cpcampcontent'       : 
             case 'cpdeletecamp'        :
 			case 'cppreviewcamp'       : 
+			case 'cppausecamp'         : 
+			case 'cpstopcamp'          : 
+			case 'cpstartcamp'         : 		
 			case 'cpviewcamp'          : $out = $this->campaigns_grid(null,140,5,'r', true);  break;
 			case 'cpbulkmail'          : 
 		    default                    : 
@@ -340,10 +364,10 @@ class rcbulkmail {
 		//_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   		
 		_m("mygrid.column use grid1+cdate|".localize('_date',getlocal())."|5|0|");		
 		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|1|");
-		_m("mygrid.column use grid1+cc|".localize('_email',getlocal())."|link|0|"."cpuliststats.php?t=cpadvsubscribe&cid={cid}".'||');
+		//_m("mygrid.column use grid1+cc|".localize('_email',getlocal())."|5|0|");//."cpuliststats.php?t=cpadvsubscribe&cid={cid}".'||');
 		_m("mygrid.column use grid1+title|".localize('_subject',getlocal())."|link|15|"."cpbulkmail.php?t=cpviewcamp&cid={cid}".'||'); //."javascript:cid(\"{cid}\");".'||');						
 		_m("mygrid.column use grid1+ctype|".localize('_type',getlocal())."|2|1|");		
-		_m("mygrid.column use grid1+ulists|".localize('_LISTNAME',getlocal())."|link|1|"."cpulists.php?t=cpadvsubscribe".'||');
+		//_m("mygrid.column use grid1+ulists|".localize('_LISTNAME',getlocal())."|link|1|"."cpulists.php?t=cpadvsubscribe".'||');
 		_m("mygrid.column use grid1+template|".localize('_template',getlocal())."|5|1|");
 		//_m("mygrid.column use grid1+collection|".localize('_collection',getlocal())."|5|1|");
 		_m("mygrid.column use grid1+owner|".localize('_owner',getlocal())."|5|0|");
@@ -743,6 +767,74 @@ class rcbulkmail {
 		return ($cid);		
 	}	
 	
+	public function isCampaignOwner($id=null) {
+		$db = GetGlobal('db');	
+		$cid = $id ? $id : $this->cid;
+		if (!$cid) return null;	
+		
+		if ($this->seclevid==9) return true;
+		
+		$sSQL = 'select id from mailcamp where cid=' . $db->qstr($cid) . ' and owner=' . $db->qstr($this->owner);
+		$res = $db->Execute($sSQL,2);
+
+		return ($res->fields[0] ? true : false);
+	}	
+	
+	public function isCampaignActive($id=null) {
+		$db = GetGlobal('db');	
+		$cid = $id ? $id : $this->cid;
+		if (!$cid) return null;	
+		
+		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=1';
+		$res = $db->Execute($sSQL,2);
+
+		return ($res->fields[0]>0 ? $res->fields[0] : false);
+	}
+	
+	public function isCampaignPaused($id=null) {
+		$db = GetGlobal('db');	
+		$cid = $id ? $id : $this->cid;
+		if (!$cid) return null;			
+		
+		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=-1';
+		$res = $db->Execute($sSQL,2);
+
+		return ($res->fields[0]>0 ? $res->fields[0] : false);		
+	}
+	
+	public function isCampaignStopped($id=null) {
+		$db = GetGlobal('db');	
+		$cid = $id ? $id : $this->cid;
+		if (!$cid) return null;	
+
+		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=-2';
+		$res = $db->Execute($sSQL,2);
+
+		return ($res->fields[0]>0 ? $res->fields[0] : false);		
+	}
+	
+	public function isCampaignCompleted($id=null) {
+		$db = GetGlobal('db');	
+		$cid = $id ? $id : $this->cid;
+		if (!$cid) return null;		
+
+		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=1';
+		$res = $db->Execute($sSQL,2);
+
+		return ($res->fields[0]>0 ? false : true);		
+	}		
+	
+	public function campaignLastRun($id=null) {
+		$db = GetGlobal('db');	
+		$cid = $id ? $id : $this->cid;
+		if (!$cid) return null;		
+
+		$sSQL = 'select timeout from mailqueue where cid=' . $db->qstr($cid) . ' and active=0 order by timeout DESC LIMIT 1';
+		$res = $db->Execute($sSQL,2);
+
+		return ($res->fields[0] ? $res->fields[0] : false);		
+	}	
+	
 	public function viewCampaigns() {
 		$db = GetGlobal('db');	
 		
@@ -771,82 +863,23 @@ class rcbulkmail {
 
 		return (implode('',$ret));			
 	}	
-	
-	function show_select_camp($name, $taction=null, $class=null) {
-		$db = GetGlobal('db');		
 
-		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner) . ' and ';			
-
-		$sSQL = 'select cdate,cid,title from mailcamp where ' . $ownerSQL ;
-		if ($text = GetParam('mail_text')) {
-			//$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail')); //when new post
-			$cid = $this->_CID($text, GetParam('subject'), GetParam('submail')); //when new post
-			$sSQL .= " cid = " . $db->qstr($cid);	
-			$sSQL .= GetParam('savecmp') ?  ' and active=1' : null; //temp camps without multiple selection
-		}
-        else {		
-		    $choose = "<option value=\"\">Select...</option>";
-			$sSQL .= " active=1";
-		}	
-		$sSQL .= " ORDER BY cdate desc";
-
-        $mycid = $cid ? $cid : $this->cid; //new post or load camp request  		
-
-	    $resultset = $db->Execute($sSQL,2);	
-	
-		$url = ($taction) ? seturl('t='.$taction.'&cid=',null,null,null,null) : 
-		                    seturl('t=cpviewcamp&cid=',null,null,null,null);
-		
-		$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
-		$ret .= $choose ? $choose : null; 
-		
-		if (empty($resultset)) return null;
-		foreach ($resultset as $n=>$rec) {
-			$selection = ($rec[1] == $mycid) ? " selected" : null;
-			$ret .= "<option value='".$url . $rec[1]."' $selection >". $rec[2]."</option>" ;
-        }		
-		$ret .= "</select>";			    	
-		       
-	    return ($ret);		
-	}		
-
-    public function campaignSelect($action=null) {
-
-		$ret = $this->show_select_camp('campaign', $action, 'class="span6 chzn-select" data-placeholder="Choose a Category" tabindex="1"');		
-		return ($ret);
-	}	
-	
 	protected function load_campaign($reset=false) {
 		$db = GetGlobal('db');		
         if (!$this->cid) return false;
 		
 		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);	
+		$ownerSQL = null;//($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);	
 		$cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
-		/*
-		if ($reset) {
-			//fetch ulists from bcc to cc
-			$rSQL = "update mailcamp set ulists=bcc where " . $ownerSQL . $cidSQL; 
-			$db->Execute($rSQL);
-			$rSQL = "update mailcamp set bcc='' where " . $ownerSQL . $cidSQL; 			
-			$db->Execute($rSQL);			
-			
-			$this->messages[] = 'Reload campaign';			
-		}
-		*/
+
 		$sSQL = 'select title,cdate,ulists,cc,bcc,user,pass,server from mailcamp where '. $ownerSQL . $cidSQL;
 		$res = $db->Execute($sSQL);
 		
 		SetParam('subject', $res->fields[0]); //make it global to used be html form
 		
 		SetParam('ulists', $res->fields[2]); //ulists
-		if ($reset) {
-			$ul = strstr($res->fields[2], ',') ? explode(',',$res->fields[2]) : array([0]=>$res->fields[2]);
-			$this->messages[] = $this->_checkmail($ul[0]) ? $ul[0] . ' will receive instant message!' : 'The first in list '.$ul[0]. ' will receive instant message!';
-		}
 		SetParam('from', $res->fields[3]); // from cc
-		//SetParam('bcc', $res->fields[4]); // bcc saved as hidden xbcc
+		SetParam('bcc', $res->fields[4]); // ulist copy after send
 			
 		//make it global to used be html form (hide default settings)
 		if ($res->fields[5]!=$this->mailuser) SetParam('user', $res->fields[5]); //alternative mail user
@@ -857,9 +890,91 @@ class rcbulkmail {
 		$realm = $this->userRealm();		
 		$m_realm = $realm ? $realm : $this->mailname; 
 		SetParam('realm', $m_realm);
+		
+		if ($reset) {
+			//...
+		}	
+		else {	
+			$ul = strstr($res->fields[2], ',') ? explode(',',$res->fields[2]) : array([0]=>$res->fields[2]);
+			$this->messages[] = $this->_checkmail($ul[0]) ? 
+			                    $ul[0] . ' ' . localize('_instantmail', getlocal())  : 
+								$ul[0] . ' ' . localize('_instantmail', getlocal()) ;
+		}		
 
+		
+		if ($timeout = $this->campaignLastRun()) {
+			if ($this->isCampaignActive())
+				$this->messages[] = localize('_activecamp', getlocal());		
+			if ($this->isCampaignPaused())
+				$this->messages[] = localize('_pausecamp', getlocal());
+			if ($this->isCampaignStopped())
+				$this->messages[] = localize('_stopcamp', getlocal());				
+			if ($this->isCampaignCompleted())
+				$this->messages[] = localize('_completecamp', getlocal());				
+			
+			$this->messages[] = localize('_lastrun', getlocal()) . ' ' . $timeout;
+		}	
+		else	
+		    $this->messages[] = localize('_neverrun', getlocal());
+	   
 		return ($rec[0]); //one rec
-	}			
+	}
+	
+	public function instanceCamp($template=null, $limit=null) {
+		if (!$cid = $_GET['cid']) return false;
+		$db = GetGlobal('db');			
+		$l = $limit ? $limit : 5;
+		$t = ($template!=null) ? $this->select_template($template) : null;
+		$tokens = array();
+		
+		$sSQL = "SELECT cid,subject, AVG(active),MIN(timeout),MAX(timeout) AS a FROM  mailqueue where cid='{$this->cid}' GROUP BY subject ORDER BY a DESC LIMIT ".$l;
+		$resultset = $db->Execute($sSQL,2);
+		foreach ($resultset as $n=>$rec) {
+			if ($t) {
+				$tokens[] = $rec[0];
+				$tokens[] = $rec[1];
+				$tokens[] = (100-intval($rec[2]*100));
+				$tokens[] = $rec[3];
+				$tokens[] = $rec[4];						
+				$ret .= $this->combine_tokens($t, $tokens);
+				unset($tokens);
+			}
+		}
+
+		return ($ret);	
+	}
+
+	public function controlCamp() {
+		if ($this->cid) {
+			
+			if (!$this->isCampaignOwner()) return false;
+		
+		    $complete = $this->isCampaignCompleted();
+			$pause = $this->isCampaignPaused();
+			$active = $this->isCampaignActive();
+			$lastrun = $this->campaignLastRun();
+		
+			if (!$active)
+				$ret = $this->sendOK ?	"<button type=\"submit\" class=\"btn btn-success\">Start</button>&nbsp;" : 
+										"<button type=\"submit\" class=\"btn btn-danger\">Start</button>&nbsp;" ;
+		
+			if (($lastrun) && (!$complete)) {
+		
+				$ret .= ($pause) ? "<a href=\"cpbulkmail.php?t=cpstartcamp&cid={$this->cid}\" class=\"btn btn-success\">Start</a>&nbsp;" :
+								   "<a href=\"cpbulkmail.php?t=cppausecamp&cid={$this->cid}\" class=\"btn btn-danger\">Pause</a>&nbsp;";
+												  
+				if (($active) || ($pause))
+					$ret .= "<a href=\"cpbulkmail.php?t=cpstopcamp&cid={$this->cid}\" class=\"btn btn-danger\">Stop</a>&nbsp;";
+			}
+			
+			if (!$complete)
+				$ret .= "<a href=\"cpbulkmail.php?t=cpdeletecamp&cid={$this->cid}\" class=\"btn btn-danger\">Delete</a>&nbsp;";
+		}
+		
+		$ret .= "<a href=\"cpbulkmail.php\" class=\"btn btn-success\">New campaign</a>&nbsp;";		
+
+		return ($ret);	
+	}	
 	
 	protected function preview_campaign() {
 		$db = GetGlobal('db');	
@@ -883,7 +998,7 @@ class rcbulkmail {
         if (!$this->cid) return false; //die("CID error");
 		
 		if ($this->isDemoUser()) {
-			$this->messages[] = "Campaign NOT deleted (demo user).";//localize('_delcamp', getlocal());
+			$this->messages[] = "Campaign NOT deleted (demo user).";
 			return true;
 		}	
 		
@@ -895,12 +1010,87 @@ class rcbulkmail {
 		$resultset = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
+			//stop sending mesages if it is active
+			$this->stop_campaign();
+			
 			$this->messages[] = localize('_delcamp', getlocal());
 			return true;
 		}	
 		
 		return false;
 	}	
+	
+	protected function pause_campaign() {
+		$db = GetGlobal('db');	
+        if (!$this->cid) return false; 
+		
+		if ($this->isDemoUser()) {
+			$this->messages[] = "Campaign NOT paused (demo user).";
+			return true;
+		}	
+		
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);
+        $cidSQL = 'and cid='. $db->qstr($this->cid);	
+		
+		$sSQL = 'update mailqueue set active=-1 where active=1'. $ownerSQL . $cidSQL;
+		$resultset = $db->Execute($sSQL,1);
+		
+		if ($db->Affected_Rows()) {
+			$this->messages[] = localize('_pausecamp', getlocal());
+			return true;
+		}	
+		
+		return false;
+	}	
+	
+	protected function start_campaign() {
+		$db = GetGlobal('db');	
+        if (!$this->cid) return false; 
+		
+		if ($this->isDemoUser()) {
+			$this->messages[] = "Campaign NOT paused (demo user).";
+			return true;
+		}	
+		
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);
+        $cidSQL = 'and cid='. $db->qstr($this->cid);	
+		
+		$sSQL = 'update mailqueue set active=1 where active=-1'. $ownerSQL . $cidSQL;
+		$resultset = $db->Execute($sSQL,1);
+		
+		if ($db->Affected_Rows()) {
+			$this->messages[] = localize('_unpausecamp', getlocal());
+			return true;
+		}	
+		
+		return false;
+	}		
+	
+	protected function stop_campaign() {
+		$db = GetGlobal('db');	
+        if (!$this->cid) return false; 
+		
+		if ($this->isDemoUser()) {
+			$this->messages[] = "Campaign NOT stoped (demo user).";
+			return true;
+		}	
+		
+		//all as 9 user or only owned		
+		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);
+        $cidSQL = 'and cid='. $db->qstr($this->cid);	
+		
+		$sSQL = 'update mailqueue set active=-2 where (active=1 or active=-1)'. $ownerSQL . $cidSQL;
+		$resultset = $db->Execute($sSQL,1);
+		
+		if ($db->Affected_Rows()) {
+			$this->messages[] = localize('_stopcamp', getlocal());
+			return true;
+		}	
+		
+		return false;
+	}		
 	
     /*type : 0 save text as mail body /1 save collections as text to reproduce (offers, katalogs) */	
     protected function save_campaign($type=null) {
@@ -1295,7 +1485,7 @@ class rcbulkmail {
 				
 				return ($res); 
 			}
-			else $this->messages[] = 'File not exist ('. $this->savehtmlpath .'/'. $cid . '.html)';			
+			else $this->messages[] = 'File not exist ('. $cid . '.html)';			
 		}
 		else $this->messages[] = "No recipients, send distribution completed!";
 		
@@ -1317,7 +1507,6 @@ class rcbulkmail {
 		$mailname = GetParam('realm') ? GetParam('realm') : $this->mailname; //a per user submit (realm)
 		$from = $mailuser ? $mailuser : $from; //replace sender when another server settings ? 
 		
-		//$bcc = GetParam('xbcc'); //disabled
 		$inc = GetParam('include'); 
 		//echo $inc;
 		//clean to, from remaing commas

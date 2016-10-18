@@ -67,7 +67,9 @@ class rculiststats  {
 		
 		$this->messages = array(); //reset messages any time page reload - local msg system
 		$this->stats = array();
-		$this->cpStats = false;			
+		$this->cpStats = false;	
+
+		$this->crmLevel = 9;		
 	}
 
     public function event($event=null) {
@@ -127,11 +129,12 @@ class rculiststats  {
 	
 	protected function show_select_camp($name, $taction=null, $class=null) {
 		$db = GetGlobal('db');		
+		$last6months = mktime(0, 0, 0, date("m")-6, date("d"),   date("Y"));
 
 		//all as 9 user or only owned		
 		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner) . ' and ';			
 
-		$sSQL = 'select cdate,cid,title from mailcamp where ' . $ownerSQL ;
+		$sSQL = 'select cdate,cid,title from mailcamp where timein>'.$last6months .' AND '. $ownerSQL ;
 		if ($text = GetParam('mail_text')) {
 			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail')); //when new post
 			$sSQL .= " cid = " . $db->qstr($cid);	
@@ -332,7 +335,7 @@ class rculiststats  {
 		$this->seclevid = GetSessionParam('ADMINSecID');			
 		
 		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner);	
+		$ownerSQL = null; //($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner);	
 		$timein = ($ownerSQL) ? $this->sqlDateRange('timein', true, true) : 
 							    $this->sqlDateRange('timein', true, false);
 		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : 'WHERE ' . $timein) : null;

@@ -181,9 +181,7 @@ class maildbqueue  {
 		       $cc = $rec['cc'];	
 		       $bcc = $rec['bcc'];				 			 
 		       $ishtml = $rec['ishtml'];	
-			   
-               //if (!$encoding = $this->mail_encoding)			   
-		         //$encoding = $rec['encoding']?$rec['encoding']:$this->encoding;		    
+			       
 		       $encoding = $rec['encoding'] ? $rec['encoding'] : ($this->mail_encoding ? $this->mail_encoding :$this->encoding);	
 				 
 		       $origin = $rec['origin'];	 
@@ -201,10 +199,10 @@ class maildbqueue  {
 		       $sSQL = "update mailqueue set timeout=".$db->qstr($datetime).
 			           ",mailstatus=".$db->qstr($error).
 			  		   ",active=" . $active .
+			  		   ",pass=''" .			   
 					   " where id=" . $id;
-	           //echo $sSQL . '<br>';			
+	
 	           $result = $db->Execute($sSQL,1);			 
-		       //$meter += $result->Affected_Rows();				 
 			 
 			   $i+=1;
 		   }
