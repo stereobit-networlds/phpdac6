@@ -796,7 +796,7 @@ class rcbulkmail {
 		$cid = $id ? $id : $this->cid;
 		if (!$cid) return null;			
 		
-		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=-1';
+		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=-8';
 		$res = $db->Execute($sSQL,2);
 
 		return ($res->fields[0]>0 ? $res->fields[0] : false);		
@@ -807,7 +807,7 @@ class rcbulkmail {
 		$cid = $id ? $id : $this->cid;
 		if (!$cid) return null;	
 
-		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=-2';
+		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=-9';
 		$res = $db->Execute($sSQL,2);
 
 		return ($res->fields[0]>0 ? $res->fields[0] : false);		
@@ -923,12 +923,13 @@ class rcbulkmail {
 	public function instanceCamp($template=null, $limit=null) {
 		if (!$cid = $_GET['cid']) return false;
 		$db = GetGlobal('db');			
-		$l = $limit ? $limit : 5;
+		$l = $limit ? $limit : 1;
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
-		$sSQL = "SELECT cid,subject, AVG(active),MIN(timeout),MAX(timeout) AS a FROM  mailqueue where cid='{$this->cid}' GROUP BY subject ORDER BY a DESC LIMIT ".$l;
+		$sSQL = "SELECT cid,subject, AVG(active),MIN(timein),MAX(timeout) AS a FROM mailqueue where active>=0 and cid='{$this->cid}' GROUP BY subject ORDER BY a DESC LIMIT ".$l;
 		$resultset = $db->Execute($sSQL,2);
+		//echo $sSQL;
 		foreach ($resultset as $n=>$rec) {
 			if ($t) {
 				$tokens[] = $rec[0];
@@ -1033,7 +1034,8 @@ class rcbulkmail {
 		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);
         $cidSQL = 'and cid='. $db->qstr($this->cid);	
 		
-		$sSQL = 'update mailqueue set active=-1 where active=1'. $ownerSQL . $cidSQL;
+		$sSQL = 'update mailqueue set active=-8,mailstatus='.$db->qstr('PAUSE'). 
+		        ' where active=1'. $ownerSQL . $cidSQL;
 		$resultset = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
@@ -1057,7 +1059,8 @@ class rcbulkmail {
 		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);
         $cidSQL = 'and cid='. $db->qstr($this->cid);	
 		
-		$sSQL = 'update mailqueue set active=1 where active=-1'. $ownerSQL . $cidSQL;
+		$sSQL = "update mailqueue set active=1,mailstatus=''". 
+		        ' where active=-8'. $ownerSQL . $cidSQL;
 		$resultset = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
@@ -1081,7 +1084,8 @@ class rcbulkmail {
 		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);
         $cidSQL = 'and cid='. $db->qstr($this->cid);	
 		
-		$sSQL = 'update mailqueue set active=-2 where (active=1 or active=-1)'. $ownerSQL . $cidSQL;
+		$sSQL = 'update mailqueue set active=-9,mailstatus='.$db->qstr('STOP'). 
+		        ' where (active=1 or active=-8)'. $ownerSQL . $cidSQL;
 		$resultset = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
@@ -1451,7 +1455,9 @@ class rcbulkmail {
 		
 		$resultset = $db->Execute($sSQL);
 
-		return array(0=>0,1=>0,2=>2500);//0;
+		$restToProceed = ($this->maxinpvars - $counter); //maxinpvars is modified
+		
+		return array(0=>0,1=>0,2=>$restToProceed);
 	}	
 	
 	protected function send_mails() {	  
@@ -1461,7 +1467,7 @@ class rcbulkmail {
 		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
 	    }
 		//print_r($_POST);
-		if (!$cid = $this->cid) { //jqgrid present (select cid,.. zero on post)
+		/*if (!$cid = $this->cid) { //jqgrid present (select cid,.. zero on post)
 			$this->messages[] = 'CID form error!';
 			return false;		
         }
@@ -1472,42 +1478,61 @@ class rcbulkmail {
 		if (!$subject = GetParam('subject')) {
 			$this->messages[] = 'Subject field missing!';
 			return false;
-		}				
+		}*/				
 		
-		if (GetParam('include')) {
+		//if (GetParam('include')) {
 			
 			if (is_readable($this->savehtmlpath .'/'. $cid.'.html')) {
 				
-				$rawtext = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html'); //$this->mailbody; //not exist in this post			
-				$res = $this->sendit($from, $subject, $rawtext, $cid); 
-				if (!$res) 
-					$this->messages[] = $this->batchid ? "Batch send" : "Send failed";				
+				//$rawtext = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html'); 			
+				$res = $this->sendit($from, $subject);//, $rawtext, $cid); 
+				//if (!$res) 
+					//$this->messages[] = $this->batchid ? "Batch send" : "Send failed";				
 				
 				return ($res); 
 			}
-			else $this->messages[] = 'File not exist ('. $cid . '.html)';			
-		}
-		else $this->messages[] = "No recipients, send distribution completed!";
+			else $this->messages[] = 'Failed: Empty content, file not exist ('. $cid . '.html)';			
+		//}
+		//else $this->messages[] = "No recipients, send distribution completed!";
 		
 	    return false;   
 	}	
 	
-	protected function sendit($from,$subject,$mail_text='',$cid=null) {
-	    if (!$mail_text) {
-		    $this->messages[] = 'Failed: Empty content';	
-			return 0; 
-		}	 
-		
+	protected function sendit($from=null,$subject=null, $include=null) {//,$mail_text='',$cid=null) {		
 		$db = GetGlobal('db');
 		$optSQL = null;	
+		
+		$cid = $this->cid;
+		if (!$cid) { 
+			$this->messages[] = 'CID form error!';
+			return false;		
+        }
+		
+		$mail_text = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html');
 		
 		$mailuser = GetParam('user') ? GetParam('user') : $this->mailuser;
 		$mailpass = GetParam('pass') ? GetParam('pass') : $this->mailpass;
 		$mailserver = GetParam('server') ? GetParam('server') : $this->mailserver;
 		$mailname = GetParam('realm') ? GetParam('realm') : $this->mailname; //a per user submit (realm)
-		$from = $mailuser ? $mailuser : $from; //replace sender when another server settings ? 
+		$from = $from ? $from : $mailuser; //replace sender when another server settings ? 
 		
-		$inc = GetParam('include'); 
+		if (!$from = GetParam('from')) {
+			$this->messages[] = 'From field missing!';
+			return false;
+		}	
+		
+		$subject = $subject ? $subject : GetParam('subject');		
+		if (!$subject = GetParam('subject')) {
+			$this->messages[] = 'Subject field missing!';
+			return false;
+		}			
+		
+		$inc = $include  ? $include : GetParam('include'); 
+		if (!$inc) {
+			$this->messages[] = "No recipients, e-mail distribution completed!";
+			return false;
+		}
+			
 		//echo $inc;
 		//clean to, from remaing commas
 		for ($i=0;$i<strlen($inc);$i++) 
@@ -1534,14 +1559,21 @@ class rcbulkmail {
 										$this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
 					$i+=1; 				
 					
-					list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, 1);		
+					list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, $i);		
 				}
 				else {//list name
 				
 					$mails = $this->get_mails_from_lists($m, true, $this->maxinpvars, $index);
 					
 					if (!empty($mails)) {
-						foreach ($mails as $z1=>$m1) {		
+						foreach ($mails as $z1=>$m1) {	
+
+							if ($z1==$this->maxinpvars) { 
+								$this->batchid += 1;
+								echo 'Stop:'.$m; echo ' Bid:'.$this->batchid; echo 'List length:'.$z1.':'.$i;
+								break 2; //js ajax to procced next batch !!!!							
+							}
+						
 							$text = str_replace('_SUBSCRIBER_', $m1, $mail_text); 	
 							if ($this->_OPT) //ERROR see below
 								$optSQL .= $this->sendmail_inqueue_opt($from,$m1,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);								
@@ -1550,13 +1582,15 @@ class rcbulkmail {
 							$i+=1; 
 						}
 						
-					    if ($this->maxinpvars==count($mails)) { 
+						list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, $i);
+						
+					    /*if ($this->maxinpvars==count($mails)) { 
 							$this->batchid += 1;
 							//echo 'Stop:'.$m; echo ' Bid:'.$this->batchid; echo 'List length:'.count($mails) *($this->batchid+1);
 							break 1;							
 						}//if not a full set page
 						else //next tag
-							list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, count($mails));							
+							list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, count($mails)); */
 					}//has mails
 					else //next tag
 						list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, 0);			

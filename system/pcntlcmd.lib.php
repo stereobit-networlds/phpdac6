@@ -635,10 +635,10 @@ class pcntl extends controller {
    }
    
    //overwrite
-   public function event($event=null) {
+   /*public function event($event=null) {
 
      controller::event($event);
-   }
+   }*/
    //overwrite
    public function action($action=null) {
    

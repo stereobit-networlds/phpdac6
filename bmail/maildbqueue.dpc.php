@@ -146,77 +146,72 @@ class maildbqueue  {
 		 
 		if ($forcelimits) {//calibrate mail send queue
 		 
-		   $boostlimits = $this->force_mail_limits($limit,$forcelimits);
-		   echo 'BOOST LIMITS ARRAY:';
-		   print_r($boostlimits);
+			$boostlimits = $this->force_mail_limits($limit,$forcelimits);
+			echo 'BOOST LIMITS ARRAY:';
+			print_r($boostlimits);
 		   
-		   if (is_array($boostlimits))
-		       $mylimit  = array_shift($boostlimits);//root app always 1st
-		   else	   
-               $mylimit = $limit;
+			$mylimit = (is_array($boostlimits)) ? array_shift($boostlimits) : $limit;
 		}
         else
-           $mylimit = $limit;		 
+			$mylimit = $limit;		 
 		 
-		 
-		echo "\r\nROOTAPP=",$mylimit,"\r\n";
 		 
 		//first this db
 		$sSQL = "select id,timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server from mailqueue where active=1 order by id ";
-		if ($limit>0)
-		   $sSQL .= "limit " . $mylimit;//$limit
-		else
-		   $sSQL .= "limit " . $this->batch; //max batch if 0  
-			 
-	    //echo $sSQL . '<br>';			
+		$sSQL .= ($mylimit>0) ? "limit " . $mylimit : "limit " . $this->batch; 		
 	    $result = $db->Execute($sSQL,2);
-	    if (!empty($result)) {		   
-	       foreach ($result as $n=>$rec) {
-		       $id = $rec['id'];	     
-			   $from = $rec['sender'];//$user . '@' . $domain;
-		       $to = $rec['receiver'];
-		       $subject = $rec['subject'];
-		       $body = $rec['body'];			 			 			 
-		       $altbody = $rec['altbody'];				 
-		       $cc = $rec['cc'];	
-		       $bcc = $rec['bcc'];				 			 
-		       $ishtml = $rec['ishtml'];	
+			
+		echo '\r\nROOTAPP-select:',$mylimit,'-',$this->batch,'-',$sSQL . "\r\n";		
+		
+	    if (!empty($result)) {		
+			$i = 0;	
+			foreach ($result as $n=>$rec) {
+				$id = $rec['id'];	     
+				$from = $rec['sender'];//$user . '@' . $domain;
+				$to = $rec['receiver'];
+				$subject = $rec['subject'];
+				$body = $rec['body'];			 			 			 
+				$altbody = $rec['altbody'];				 
+				$cc = $rec['cc'];	
+				$bcc = $rec['bcc'];				 			 
+				$ishtml = $rec['ishtml'];	
 			       
-		       $encoding = $rec['encoding'] ? $rec['encoding'] : ($this->mail_encoding ? $this->mail_encoding :$this->encoding);	
+				$encoding = $rec['encoding'] ? $rec['encoding'] : ($this->mail_encoding ? $this->mail_encoding :$this->encoding);	
 				 
-		       $origin = $rec['origin'];	 
-			   $user = $rec['user']; 			 		 
-			   $pass = $rec['pass']; 
-			   $name = $rec['name']; 
-			   $server = $rec['server']; 			 			 			 
+				$origin = $rec['origin'];	 
+				$user = $rec['user']; 			 		 
+				$pass = $rec['pass']; 
+				$name = $rec['name']; 
+				$server = $rec['server']; 			 			 			 
 			 
-   			   //server side root app depending tracking var..NOT FOR ROOT APP (appvar depends)
-			     
-               $error = $this->sendmail($from,$to,$subject,$body,$altbody,$cc,$bcc,$ishtml,$encoding,$user,$pass,$name,$server);			 
-			   //update db
-		       $datetime = date('Y-m-d h:s:m');
-		       $active = 0;
-		       $sSQL = "update mailqueue set timeout=".$db->qstr($datetime).
-			           ",mailstatus=".$db->qstr($error).
-			  		   ",active=" . $active .
-			  		   ",pass=''" .			   
-					   " where id=" . $id;
-	
-	           $result = $db->Execute($sSQL,1);			 
-			 
-			   $i+=1;
-		   }
-		   $sumi+=$i; //sum of messages of all app
-		   $ret .= '[mailqueue]'.$i.' message(s) send from root application!';
+				//server side root app depending tracking var..NOT FOR ROOT APP (appvar depends)			 
+				//update db
+				$datetime = date('Y-m-d h:s:m');
+				$active = 0;
+			    if ($this->is_valid_email($to)) { 
+					$error = $this->sendmail($from,$to,$subject,$body,$altbody,$cc,$bcc,$ishtml,$encoding,$user,$pass,$name,$server);				
+					$sSQL = "update mailqueue set timeout=".$db->qstr($datetime).
+			            ",mailstatus=".$db->qstr($error).",active=" . $active ." where id=" . $id;
+						
+					$i+=1;
+				}
+				else {//invalid email address...disable it 
+					$sSQL = "update mailqueue set status=-1,timeout=".$db->qstr($datetime).
+							",mailstatus=".$db->qstr('Invalid email address').",active=" . $active ." where id=" . $id;				   
+				}
+				//exec
+				$result = $db->Execute($sSQL,1);
+			}
+			$sumi+=$i; //sum of messages of all app
+			$ret .= '[mailqueue]'.$i.' message(s) send from root application!';		
+			
+			//SCAN FOR BOUNCED MAILS (this app)
+			$ret .= $this->scanBounce($from, false, $mylimit);						
 	    }
 		else {
-		   $ret .= '[mailqueue]...no messages to send from root application!';		 		 
-		   //in case of no message of prev app increase limit
-		   $limit+=$limit;
-		}  
-		
-        //SCAN FOR BOUNCED MAILS (this app)
-        $ret .= $this->scanBounce($from, false, $mylimit);		
+			$ret .= '[mailqueue]...no messages to send from root application!';		 		 
+			$limit += $limit;
+		}  	
 		
 		 
 		echo 'DAEMON LOOP:<pre>';		 
@@ -228,111 +223,87 @@ class maildbqueue  {
 		
         foreach ($this->app_pool as $aid=>$ap) {
 		 
-		   //$this->switch_db($ap);
-		   GetGlobal('controller')->calldpc_method('database.switch_db use '.$ap);		 
-           //$ret = $ap;
-           $db = GetGlobal('db'); 
-		 
-		   $i = 0;
-		   $meter = 0;
+			GetGlobal('controller')->calldpc_method('database.switch_db use '.$ap);		 
+			$db = GetGlobal('db'); 
 		   
-		   //get batch
-		   $sSQL = "select id,timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server from mailqueue where active=1 order by id ";
+			if ($forcelimits) {
+				$force_limit = $boostlimits[$ap];
+				$mylimit = $force_limit; 
+				echo "\r\nFORCE LIMITS:".$ap.'='.$mylimit;
+			}
+			else
+				$mylimit = $limit;		   
 		   
-		   if ($forcelimits) {
-		     $force_limit = $boostlimits[$ap];
-		     $mylimit = $force_limit; 
-		     echo "\r\nFORCE LIMITS:".$ap.'='.$mylimit;
-		   }
-           else
-             $mylimit = $limit;		   
-		   
-		   if ($mylimit>0)
-		     $sSQL .= "limit " . $mylimit;
-		   else  //boost return no value
-		     $sSQL .= "limit " . $this->batch; //max batch if 0  			 
-			 
-		   //$ret .= $sSQL;	 
-	       echo "\r\n".$ap.'-select:',$mylimit,'-',$this->batch,'-',$sSQL . "\r\n";			
-	       $result = $db->Execute($sSQL,2);			 
-		   //$mails2send = $result->Affected_Rows();		
-		   //print_r($result);
-		 
-	       if (!empty($result)) {		   
-	         foreach ($result as $n=>$rec) {
-		       $id = $rec['id'];	     
-			   $from = $rec['sender'];//$user . '@' . $domain;
-		       $to = $rec['receiver'];
-		       $subject = $rec['subject'];
-		       $body = $rec['body'];			 			 			 
-		       $altbody = $rec['altbody'];				 
-		       $cc = $rec['cc'];	
-		       $bcc = $rec['bcc'];				 			 
-		       $ishtml = $rec['ishtml'];	
-			   
-               //if (!$encoding = $this->mail_encoding)			   
-		         //$encoding = $rec['encoding']?$rec['encoding']:$this->encoding;	
-			   $encoding = $rec['encoding'] ? $rec['encoding'] : ($this->mail_encoding ? $this->mail_encoding :$this->encoding);
+			$sSQL = "select id,timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server from mailqueue where active=1 order by id ";		   
+			$sSQL .= ($mylimit>0) ? "limit " . $mylimit : "limit " . $this->batch; 		   			
+			$result = $db->Execute($sSQL,2);			 
 			
-		       $origin = $rec['origin'];	 
-			   $user = $rec['user']; 			 		 
-			   $pass = $rec['pass']; 
-			   $name = $rec['name']; 
-			   $server = $rec['server']; 		
+			echo "\r\n".$ap.'-select:',$mylimit,'-',$this->batch,'-',$sSQL . "\r\n";			
+		 
+			if (!empty($result)) {	
+				$i = 0;
+				foreach ($result as $n=>$rec) {
+					$id = $rec['id'];	     
+					$from = $rec['sender'];//$user . '@' . $domain;
+					$to = $rec['receiver'];
+					$subject = $rec['subject'];
+					$body = $rec['body'];			 			 			 
+					$altbody = $rec['altbody'];				 
+					$cc = $rec['cc'];	
+					$bcc = $rec['bcc'];				 			 
+					$ishtml = $rec['ishtml'];	
 			   
-			   //server side root app depending tracking var		
-	           if ($this->trackapp[$aid]) {
-		         $ta[] = encode(date('Ymd-H:m:s'));
-		         $ta[] = $from;
-		         $ta[] = $ap;
-		         $tc = implode('<DLM>',$ta);
-		         $tid = rawurlencode(encode($tc));		 
-		         $trackid = $tid;	
+					$encoding = $rec['encoding'] ? $rec['encoding'] : ($this->mail_encoding ? $this->mail_encoding :$this->encoding);
+			
+					$origin = $rec['origin'];	 
+					$user = $rec['user']; 			 		 
+					$pass = $rec['pass']; 
+					$name = $rec['name']; 
+					$server = $rec['server']; 		
+			   
+					//server side root app depending tracking var		
+					if ($this->trackapp[$aid]) {
+						$ta[] = encode(date('Ymd-H:m:s'));
+						$ta[] = $from;
+						$ta[] = $ap;
+						$tc = implode('<DLM>',$ta);
+						$tid = rawurlencode(encode($tc));		 
+						$trackid = $tid;	
 				 
-	             $mybody = $this->add_tracker_to_mailbody($body,$trackid,$to,$ishtml);				 			   
-			   }
-			   else
-			     $mybody = $body;
+						$mybody = $this->add_tracker_to_mailbody($body,$trackid,$to,$ishtml);				 			   
+					}
+					else
+						$mybody = $body;
 			   			   	 			 			
-			   $datetime = date('Y-m-d h:s:m');
-			   $active = 0;													
-			   //echo '>',$encoding,'>',$mybody;
-			   //if (checkmail($to)) {
-			   if ($this->is_valid_email($to) === true) {
-			        //echo $to,"\r\n";   
-					$error = $this->sendmail($from,$to,$subject,$mybody,$altbody,$cc,$bcc,$ishtml,$encoding,$user,$pass,$name,$server);			 
-					//update db
-					$sSQL = "update mailqueue set timeout=".$db->qstr($datetime).
-			           ",mailstatus=".$db->qstr($error).
-			  		   ",active=" . $active .
-					   " where id=" . $id;
-					//echo $ap . '-update:'.$sSQL . "\r\n";					 
-					//$meter += $result->Affected_Rows();				 
-			 
-					$i+=1;
-			   }
-			   else {//invalid email address...disable it
-			        //echo $to,"\r\n";   
-					$sSQL = "update mailqueue set status=-1,timeout=".$db->qstr($datetime).
-			           ",mailstatus=".$db->qstr('Invalid email address').
-			  		   ",active=" . $active .
-					   " where id=" . $id;
-					//echo $ap . '-update:'.$sSQL . "\r\n";						   
-			   }
-			   //exec
-			   $result = $db->Execute($sSQL,1);
-		     }
-		     $sumi+=$i; //sum of messages of all app
-		     $ret .= "\r\n[mailqueue]".$i.' message(s) send from application '. $ap ."!";
-	       }		   	 
-		   else {
-		     $ret .= "\r\n[mailqueue]...no messages to send from application ". $ap .'!';
-		     //in case of no message of prev app increase limit
-		     $limit+=$limit;			 	
-		   }	
+					$datetime = date('Y-m-d h:s:m');
+					$active = 0;													
 
-           //SCAN FOR BOUNCED MAILS
-           $ret .= $this->scanBounce($from, false, $mylimit);
+					if ($this->is_valid_email($to)) {
+						$error = $this->sendmail($from,$to,$subject,$mybody,$altbody,$cc,$bcc,$ishtml,$encoding,$user,$pass,$name,$server);			 
+						//update db
+						$sSQL = "update mailqueue set timeout=".$db->qstr($datetime).
+								",mailstatus=".$db->qstr($error).",active=" . $active . " where id=" . $id;				 
+			 
+						$i+=1;
+					}
+					else {//invalid email address...disable it 
+						$sSQL = "update mailqueue set status=-1,timeout=".$db->qstr($datetime).
+								",mailstatus=".$db->qstr('Invalid email address').",active=" . $active . " where id=" . $id;				   
+					}
+					//exec
+					$result = $db->Execute($sSQL,1);
+				}
+				
+				$sumi+=$i; //sum of messages of all app
+				$ret .= "\r\n[mailqueue]".$i.' message(s) send from application '. $ap ."!";			
+				
+				//SCAN FOR BOUNCED MAILS
+				$ret .= $this->scanBounce($from, false, $mylimit);				
+			}		   	 
+			else {
+				$ret .= "\r\n[mailqueue]...no messages to send from application ". $ap .'!';
+				$limit += $limit;			 	
+			}	
 		   
 		}//app loop
 		
@@ -340,7 +311,9 @@ class maildbqueue  {
     }	
 	
     public function is_valid_email($email) {
-		$ret = filter_var($data, FILTER_VALIDATE_EMAIL);
+		//if (eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.([a-z]){2,4})$",$email)) return true;
+		//else return false;		
+		$ret = filter_var($email, FILTER_VALIDATE_EMAIL);
 		return ($ret); 
 	}	
 	

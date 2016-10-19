@@ -129,30 +129,30 @@ class rculiststats  {
 	
 	protected function show_select_camp($name, $taction=null, $class=null) {
 		$db = GetGlobal('db');		
-		$last6months = mktime(0, 0, 0, date("m")-6, date("d"),   date("Y"));
-
+		$last3months = mktime(0, 0, 0, date("m")-3, date("d"),   date("Y"));
+		$timein = $this->sqlDateRange('timein', true, false);
 		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner) . ' and ';			
+		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);			
 
-		$sSQL = 'select cdate,cid,title from mailcamp where timein>'.$last6months .' AND '. $ownerSQL ;
-		if ($text = GetParam('mail_text')) {
+		$sSQL = 'select cdate,cid,title from mailcamp where '.$timein . $ownerSQL ;
+		/*if ($text = GetParam('mail_text')) {
 			$cid = md5($text . '|' . GetParam('subject') .'|'. GetParam('submail')); //when new post
-			$sSQL .= " cid = " . $db->qstr($cid);	
-			$sSQL .= GetParam('savecmp') ?  ' and active=1' : null; //temp camps without multiple selection
+			$sSQL .= " and cid = " . $db->qstr($cid);	
+			//$sSQL .= GetParam('savecmp') ?  ' and active=1' : null; //temp camps without multiple selection
 		}
-        else {		
+        else {	*/	
 		    $choose = "<option value=\"\">Select...</option>";
-			$sSQL .= " active=1";
-		}	
+			$sSQL .= " and active=1";
+		//}	
 		$sSQL .= " ORDER BY cdate desc";
-
+     
         $mycid = $cid ? $cid : $this->cid; /*new post or load camp request */ 		
 
 		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
 	
 		$url = ($taction) ? seturl('t='.$taction.'&cid=',null,null,null,null) : 
-		                    seturl('t=cpviewcamp&cid=',null,null,null,null);
+		                    seturl('t=cpmailstats&cid=',null,null,null,null);
 		
 	 
 		$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
@@ -214,10 +214,10 @@ class rculiststats  {
 			//$this->messages[] = 'Combo selection:'.$m.'-'.$y;
 		}	
         else {
-			//$dateSQL = null; 
-			
 			//always this year by default
-			$mstart = '01'; $mend = '12';
+			//$mstart = '01'; $mend = '12';
+			
+			$mstart = $mend = date('m');
 			$y = date('Y');
 			if ($istimestamp)
 				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
@@ -233,45 +233,46 @@ class rculiststats  {
 		$db = GetGlobal('db');
 		
 		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);		
+		$ownerSQL = null; // for all //($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);		
 		
-		if ($this->cid) $sSQLcid = " and cid=" . $db->qstr($this->cid); 
-		else $sSQLcid=null;
+		$sSQLcid = ($this->cid) ? " and cid=" . $db->qstr($this->cid) : null;
 		
-		$timein = $this->sqlDateRange('timein', true, true);
+		$timein = $this->sqlDateRange('startdate', false);
+		$datein = $this->sqlDateRange('datein', true);
 
-		$sSQL = "select count(id) from ulists where active=1";		
+		$sSQL = "select count(id) from ulists where active=0 and " . $datein;		
+		$this->runSql('inactiveSubscribers', $sSQL);			
+		$sSQL = "select count(id) from ulists where active=1 and " . $timein;		
 		$this->runSql('activeSubscribers', $sSQL);		
-		$sSQL = "select count(id) from ulists where active=0";		
-		$this->runSql('inactiveSubscribers', $sSQL);	
-		$sSQL = "select count(id) from ulists";	
+		$sSQL = "select count(id) from ulists where active=1";// . $timein;	
 		//echo $sSQL;
 		$ts = $this->runSql('totalSubscribers', $sSQL);		
 		//echo $ts;
-		$sSQL = "select count(id) from mailqueue where active=1" . $ownerSQL .$sSQLcid ;		
+		
+		$timein = $this->sqlDateRange('timein', true, true);		
+		
+		$sSQL = "select count(id) from mailqueue where active=1" . $ownerSQL . $sSQLcid ;		
 		$this->runSql('activeQueue', $sSQL);		
 		$sSQL = "select count(id) from mailqueue where active=0" . $ownerSQL . $timein . $sSQLcid ;		
 		$this->runSql('inactiveQueue', $sSQL);
 		
-		$sSQL = "select count(id) from mailqueue";	
-		//$tq = $this->runSql('totalQueue', $sSQL); //all			
-		if ($timein) $sSQL .= " where " . $this->sqlDateRange('timein', true); //where
-		if ($this->cid) $sSQL .= ($timein) ? " and cid=" . $db->qstr($this->cid) :
-		   							         " where cid=" . $db->qstr($this->cid);//where			
-		if ($ownerSQL) $sSQL .= ($timein) ? $ownerSQL : ($this->cid ? $ownerSQL : str_replace('and','where',$ownerSQL));									 
+		//dummy where to add owner and cid
+		$sSQL = "select count(id) from mailqueue where active is not null " . $ownerSQL . $sSQLcid ; //proceced whitout timerange (of cid)
 		$tq = $this->runSql('totalQueue', $sSQL); 		
+		//echo $tq, $sSQL;
 		
-		$sSQL = "select sum(reply) from mailqueue where status>0 and active=0" . $ownerSQL . $timein . $sSQLcid ;	
+		$cidortime = $sSQLcid ? $sSQLcid : $timein;
+		$sSQL = "select sum(reply) from mailqueue where status>0 and active=0" . $ownerSQL . $cidortime ;	
 		$this->runSql('repliedQueue', $sSQL);			
-		$sSQL = "select count(id) from mailqueue where status>0 and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)	
+		$sSQL = "select count(id) from mailqueue where status>0 and active=0" . $ownerSQL . $cidortime;  //on sent mails (active=0)	
 		$sc = $this->runSql('succeed', $sSQL);
-		$sSQL = "select count(id) from mailqueue where status IS NULL and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)		
+		$sSQL = "select count(id) from mailqueue where status IS NULL and active=0" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
 		$ul = $this->runSql('unread', $sSQL);	
-		$sSQL = "select count(id) from mailqueue where status=-1 and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)		
+		$sSQL = "select count(id) from mailqueue where status=-1 and active=0" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
 		$bl = $this->runSql('badmail', $sSQL);			
-		$sSQL = "select count(id) from mailqueue where status=-2 and active=0" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)		
+		$sSQL = "select count(id) from mailqueue where status=-2 and active=0" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
 		$fl = $this->runSql('bounced', $sSQL);			
-		$sSQL = "select count(id) from mailqueue where active=1" . $ownerSQL . $timein . $sSQLcid;  //on sent mails (active=0)		
+		$sSQL = "select count(id) from mailqueue where active=1" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
 		$sl = $this->runSql('notsentyet', $sSQL);			
 				
 		$sSQL = "SELECT COUNT(id) FROM mailcamp";	
@@ -299,14 +300,7 @@ class rculiststats  {
 		//percent of have to sent
 		$spercent = round($sl*100/$tq);
 		$this->stats['percentUnsend']['value'] = intval($spercent);			
-
-		if ($this->cid) {
-			$sSQL = "SELECT bcc FROM mailcamp WHERE cid=" . $db->qstr($this->cid) . $ownerSQL;	
-			$bcc = $this->runSql(null, $sSQL, true);	
-            $subs = explode(';', $bcc);
-   			$this->stats['totalSubscribers']['value'] = count($subs);  //overwrite after calc if cid
-			//echo $sSQL;
-		}		
+        //echo $sl,':',$tq,':',$spercent; 
 							
 		//print_r($this->stats);							
         $this->messages[] = 'Stats completed.';
@@ -325,6 +319,17 @@ class rculiststats  {
 		return (!empty($this->stats) ? true : false);
 	}
 	
+	public function getCampaignName($id=null) {
+		$db = GetGlobal('db');	
+		$cid = $id ? $id : $this->cid;
+		if (!$cid) return null;	
+		
+		$sSQL = 'select title from mailcamp where cid=' . $db->qstr($cid);
+		$res = $db->Execute($sSQL,2);
+
+		return ($res->fields[0] ? $res->fields[0] : null);
+	}	
+	
 	/* % of process of active camps*/
 	public function percentofCamps($template=null) {
 		$db = GetGlobal('db');			
@@ -335,14 +340,14 @@ class rculiststats  {
 		$this->seclevid = GetSessionParam('ADMINSecID');			
 		
 		//all as 9 user or only owned		
-		$ownerSQL = null; //($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner);	
+		$ownerSQL = null; //($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);	
 		$timein = ($ownerSQL) ? $this->sqlDateRange('timein', true, true) : 
 							    $this->sqlDateRange('timein', true, false);
-		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : 'WHERE ' . $timein) : null;
+		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : ' and ' . $timein) : null;
 		
-		$sSQL = "SELECT cid,subject,AVG(active),MIN(timein),MAX(timein) AS a FROM mailqueue $ownerSQL $dateRangeSQL group by cid,subject order by a desc";
+		$sSQL = "SELECT cid,subject,AVG(active),MIN(timein),MAX(timein) AS a FROM mailqueue where active>=0 $ownerSQL $dateRangeSQL group by cid,subject order by a desc";
 		$resultset = $db->Execute($sSQL,2);
-		//echo $sSQL, $resultset->fields[1];
+		//echo $sSQL; //, $resultset->fields[1];
 		
 		if (empty($resultset->fields)) return null;
 		foreach ($resultset as $n=>$rec) {
@@ -380,15 +385,15 @@ class rculiststats  {
 		$this->seclevid = GetSessionParam('ADMINSecID');			
 		
 		//all as 9 user or only owned	
-		$ownerSQL = ($this->seclevid==9) ? null : 'WHERE owner=' . $db->qstr($this->owner); 
+		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner); 
 		$timein = ($ownerSQL) ? $this->sqlDateRange('timein', true, true) : 
 							    $this->sqlDateRange('timein', true, false);
-		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : 'WHERE ' . $timein) : null;
+		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : ' and ' . $timein) : null;
 		
 		$l = $limit ? $limit : 3;	
         $limitSQL = $limit ? 'LIMIT '.$l : 'LIMIT 3'; 	
 		
-		$sSQL = "SELECT cid,subject,AVG(active),MIN(timeout),MAX(timeout) AS a FROM mailqueue $ownerSQL $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
+		$sSQL = "SELECT cid,subject,AVG(active),MIN(timeout),MAX(timeout) AS a FROM mailqueue where active>=0 $ownerSQL $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
@@ -420,7 +425,7 @@ class rculiststats  {
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
-		$sSQL = "SELECT cid,subject, AVG(active),MIN(timeout),MAX(timeout) AS a FROM  mailqueue where cid='$cid' GROUP BY subject ORDER BY a DESC LIMIT ".$l;
+		$sSQL = "SELECT cid,subject, AVG(active),MIN(timein),MAX(timeout) AS a FROM  mailqueue where cid='$cid' GROUP BY subject ORDER BY a DESC LIMIT ".$l;
 		$resultset = $db->Execute($sSQL,2);
 		//echo $sSQL;
 		foreach ($resultset as $n=>$rec) {
@@ -457,18 +462,19 @@ class rculiststats  {
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
-		$refsql = $cid ? "and mailqueue.cid='$cid'" : null;		
+		$refsql = $cid ? "and cid='$cid'" : null;		
 		
 		//all as 9 user or only owned
-		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
+		$ownerSQL = ($this->seclevid==9) ? null : 'and owner=' . $db->qstr($this->owner); 		
 		
-		$sSQL = "SELECT mailqueue.id,timeout,receiver,title FROM mailqueue,mailcamp where mailqueue.cid=mailcamp.cid $refsql $ownerSQL and mailqueue.active=0 and status=1 order by mailqueue.id desc LIMIT " . $l;
+		$sSQL = "SELECT id,timeout,receiver,subject FROM mailqueue where active=0 and status=1 $refsql $ownerSQL order by id desc LIMIT " . $l;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			$tokens[] = $rec[1] . ' '. $rec[3];
+			$saytime = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec[1]));
+			$tokens[] = $saytime . ', '. $rec[3];
 			$tokens[] = $crm ?	_m("crmforms.formsMenu use ".$rec[2]."+crmdoc") : $rec[2];
 			
 			$ret .= $this->combine_tokens($t, $tokens);
@@ -485,18 +491,19 @@ class rculiststats  {
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
-		$refsql = $cid ? "and mailqueue.cid='$cid'" : null;
+		$refsql = $cid ? "and cid='$cid'" : null;
 				
 		//all as 9 user or only owned
-		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
+		$ownerSQL = ($this->seclevid==9) ? null : 'and owner=' . $db->qstr($this->owner); 		
 		
-		$sSQL = "SELECT mailqueue.id,timeout,receiver,title FROM mailqueue,mailcamp where mailqueue.cid=mailcamp.cid $refsql $ownerSQL and mailqueue.active=0 and status<0 order by mailqueue.id desc LIMIT " . $l;
+		$sSQL = "SELECT id,timeout,receiver,subject FROM mailqueue where active=0 and status=-2 $refsql $ownerSQL order by id desc LIMIT " . $l;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			$tokens[] = $rec[1] . ' '. $rec[3];
+			$saytime = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec[1]));
+			$tokens[] = $saytime . ', '. $rec[3];
 			$tokens[] = $rec[2];
 			$ret .= $this->combine_tokens($t, $tokens);
 			unset($tokens);	
@@ -522,19 +529,19 @@ class rculiststats  {
 		
 		//$timein = $this->sqlDateRange('timein', true, false);
 		//if ($timein) return null; //no current tasks when time range
-		$refsql = $cid ? "and ref='$cid'" : null;
+		$refsql = $cid ? "and mailcamp.cid='$cid'" : null;
 		
 		//all as 9 user or only owned	
 		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
 		
-		//$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql order by date desc LIMIT " . $l;
 		$sSQL = "SELECT stats.id,date,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql $ownerSQL order by stats.id desc LIMIT " . $l;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			$tokens[] = $rec[1] . ' '. $rec[3];
+			$saytime = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec[1]));
+			$tokens[] = $saytime . ', '. $rec[3];
 			$tokens[] = $crm ?	_m("crmforms.formsMenu use ".$rec[2]."+crmdoc") : $rec[2];
 			
 			$ret .= $this->combine_tokens($t, $tokens);
@@ -643,10 +650,11 @@ class rculiststats  {
 				$mm = sprintf('%02d',$m);
 				$monthsli .= '<li>' . seturl('month='.$mm.'&year='.$year, $mm) .'</li>';
 			}	  
+	        
+			$camptitle = $this->getCampaignName();
+	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
 	  
-	        $posteddaterange = $daterange ? ' > ' . $daterange : ($year ? ' > ' . $month . ' ' . $year : null) ;
-	  
-			$tokens[] = localize('RCULISTSTATS_DPC',getlocal()) . $posteddaterange; 
+			$tokens[] = localize('RCULISTSTATS_DPC',getlocal()) . $posteddaterange . ' &gt ' . $camptitle; 
 			$tokens[] = $year;
 			$tokens[] = $month;
 			$tokens[] = localize('_year',getlocal());
