@@ -19,6 +19,7 @@ $__EVENTS['RCULISTS_DPC'][8]='cpactivatequeuerec';
 $__EVENTS['RCULISTS_DPC'][9]='cpdeactivatequeuerec';
 $__EVENTS['RCULISTS_DPC'][10]='cpviewtrace';
 $__EVENTS['RCULISTS_DPC'][11]='cpviewclicks';
+$__EVENTS['RCULISTS_DPC'][12]='cpcleanbounce';
 
 $__ACTIONS['RCULISTS_DPC'][0]='cpulists';
 $__ACTIONS['RCULISTS_DPC'][1]='cpulframe';
@@ -32,6 +33,7 @@ $__ACTIONS['RCULISTS_DPC'][8]='cpactivatequeuerec';
 $__ACTIONS['RCULISTS_DPC'][9]='cpdeactivatequeuerec';
 $__ACTIONS['RCULISTS_DPC'][10]='cpviewtrace';
 $__ACTIONS['RCULISTS_DPC'][11]='cpviewclicks';
+$__ACTIONS['RCULISTS_DPC'][12]='cpcleanbounce';
 
 $__DPCATTR['RCULISTS_DPC']['cpulists'] = 'cpulists,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -57,6 +59,7 @@ class rculists  {
 
     var $title, $urlpath, $path, $seclevid, $userDemoIds;
 	var $savehtmlpath;
+	var $messages;
 
 	public function __construct() {
 		$GRX = GetGlobal('GRX');
@@ -69,7 +72,9 @@ class rculists  {
 		$this->savehtmlpath = $savepath ? $this->urlpath . $savepath : null;		
 		
 		$this->seclevid = GetSessionParam('ADMINSecID');
-		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);		
+		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
+
+		$this->messages = null;	
 	}
 
     public function event($event=null) {
@@ -78,6 +83,9 @@ class rculists  {
 		if ($login!='yes') return null;
 
 		switch ($event) {	
+		
+			case 'cpcleanbounce'        :   $clean = $this->cleanListFromBounce(); 
+			                                break;
 
 			case 'cpsubscribe'    		: 	$s1 = $this->dosubscribe();
 											$s2 = (GetParam('scan')) ? $this->mass_subscribe() : $this->bulk_subscribe();				
@@ -122,6 +130,9 @@ class rculists  {
 
 		switch ($action) {
 			
+			case 'cpcleanbounce'       : $out = $this->viewMails(null,400,16,'r',false,true); 
+			                             break;
+			
 			case 'cpunsubscribe'       :	 
 			case 'cpsubscribe'         :			 
 		    case 'cpadvsubscribe' 	   : $out = $this->subscribeform(); 
@@ -137,12 +148,12 @@ class rculists  {
 			case 'cploadframe'         : 
 			case 'cpulframe' 		   : break;
 			
-			case 'cpviewsubsqueueactiv': $out = $this->viewMails(1); 
+			case 'cpviewsubsqueueactiv': $out = $this->viewMails(null,400,16,'r',false); 
 			                             break;				
 			case 'cpactivatequeuerec'  :
 			case 'cpdeactivatequeuerec':			
 			case 'cpulists'  		   :
-			default          		   : $out = $this->viewMails();
+			default          		   : $out = $this->viewMails(null,400,16,'r',false);
 		}
 
 		return ($out);
@@ -152,16 +163,19 @@ class rculists  {
 		return (in_array($this->seclevid, $this->userDemoIds));
 	}	
 	
-	protected function viewClicks() {
-		$db = GetGlobal('db');	
-		$active = $active ? $active : GetReq('active');
-		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;
-		$cid = $_GET['cid'] ? $_GET['cid'] : null;	
+	protected function viewClicks($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 600;
+        $rows = $rows ? $rows : 25;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'r';
+		$noctrl = $noctrl ? 0 : 1;	
+		$nosearch = $_GET['cid'] ? 1 : 1;//0; where in sql
 
+		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
 		$refsql = $cid ? "and ref='$cid'" : null;
-		$ownerSQL = ($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
+		$ownerSQL = null;//($this->seclevid==9) ? null : 'and mailcamp.owner=' . $db->qstr($this->owner); 		
 		   	
-		if (/*(!$active) && (!$isajax_window) &&*/ (defined('MYGRID_DPC'))) {
+		if (defined('MYGRID_DPC')) {
 		    $title = str_replace(' ','_',localize('_MAILCLICKS',getlocal()));
 		   
 			$sSQL = "select * from (SELECT stats.id,date,tid,attr1,attr3,title FROM stats,mailcamp where stats.ref=mailcamp.cid $refsql $ownerSQL order by date desc";
@@ -170,11 +184,11 @@ class rculists  {
 		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
 			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|10|1');		   
             _m("mygrid.column use grid9+attr3|".localize('_receiver',getlocal()).'|10|1');
-            _m("mygrid.column use grid9+title|".localize('_campaign',getlocal()).'|20|1');	
+            _m("mygrid.column use grid9+title|".localize('_subject',getlocal()).'|20|1');	
 			_m("mygrid.column use grid9+tid|".localize('_code',getlocal()).'|10|1');
             _m("mygrid.column use grid9+attr1|".localize('_category',getlocal()).'|20|1');			
 
-		    $out .= _m("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+11+260++0+1+1");
+		    $out .= _m("mygrid.grid use grid9+mailqueue+$sSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+$nosearch+1+1");
 			
 			//mail body ajax renderer
 			//$out = "<div id='mailbody'></div>";
@@ -233,15 +247,24 @@ class rculists  {
 			return ($frame);
 	}	
 	
-	protected function viewMails($active=null) {
-		$active = $active ? $active : GetReq('active');
-		$isajax_window = GetReq('ajax') ? GetReq('ajax') : null;
+	protected function viewMails($width=null, $height=null, $rows=null, $mode=null, $noctrl=false, $invalid=null) {
+	    $height = $height ? $height : 600;
+        $rows = $rows ? $rows : 25;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'r';
+		$noctrl = $noctrl ? 0 : 1;			
 		   	
 		if (defined('MYGRID_DPC')) {
 		    $title = str_replace(' ','_',localize('_MAILQUEUE',getlocal()));
 		   
-	        $sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue";
-            $sSQL.= ') as o';  				
+		    if ($invalid) {
+				$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue where status=-1 or status=-2) as o";	
+				$nosearch = 1;
+			}
+			else {
+				$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue) as o";  				
+				$nosearch = 0;
+			}	
 		   		   
 		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
 		    _m("mygrid.column use grid9+active|".localize('_active',getlocal()).'|link|2|'."javascript:disable({id});".'||');			
@@ -256,7 +279,7 @@ class rculists  {
 			//trace/mail body ajax renderer
 			$out = "<div id='tracebody'></div>";			
 			
-		    $out .= _m("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+16+400++0+1+1");
+		    $out .= _m("mygrid.grid use grid9+mailqueue+$sSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+$nosearch+1+1");
 			
 			//mail body ajax renderer
 			//$out .= "<div id='mailbody'></div>";
@@ -280,18 +303,11 @@ class rculists  {
     protected function show_mailbody() {
 		$db = GetGlobal('db'); 	
 		$cid = GetReq('id');
-	    /* DISABLED HTML DB
-		$sSQL = "select body from mailqueue where id=".$cid;
-		$result = $db->Execute($sSQL);
-        $htmlbody = $result->fields['body'];
-		*/
-		
-		//$htmlbody = @file_get_contents($this->savehtmlpath .'/'. $cid . '.html');
-		
+
         if (!$cid) die("CID error");
 		
 		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
+		$ownerSQL = null;//($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
         $cidSQL = $ownerSQL ? 'and cid='.$db->qstr($cid) : 'cid='.$db->qstr($cid);	
 		
 		$sSQL = 'select body from mailcamp where '. $ownerSQL . $cidSQL;
@@ -549,7 +565,58 @@ class rculists  {
 		return ($ret);			
 	}	
 
+	protected function cleanListFromBounce($fid=null) {
+		$db = GetGlobal('db');		
+		$fails = GetParam('fid') ? GetParam('fid') : ($fid ? $fid : 0);
+		$m=0;
+		
+		//clean Invalid mails
+		$sSQL = 'select receiver from mailqueue where status=-1 group by receiver order by receiver';		   
+	    $result = $db->Execute($sSQL,2);
+		if (!empty($result)) {
+		
+			foreach ($result as $i=>$rec) {
+				if ($fails) {
+					$sSQL = 'update ulists set active=0 where active=1 and email='.$db->qstr($rec[0]);
+					$resultset = $db->Execute($sSQL);
+					$this->messages[] = $rec[0] . ' is invalid, became inactive';				
+				}	
+				else
+					$this->messages[] = $rec[0] . ' is invalid';				
+			}
+			//echo 'Invalid:'.$i;
+			$m = $i;
+		}
+		
+		//clean bounced mails
+		$sSQL = 'select receiver from mailqueue where status=-2 group by receiver order by receiver';		   
+	    $result = $db->Execute($sSQL,2);
+		if (!empty($result)) {
+		
+			foreach ($result as $i=>$rec) {
+				if ($fails) {
+					$sSQL = 'update ulists set active=0 where active=1 and email='.$db->qstr($rec[0]) . ' and fails>=' . $fails;
+					$resultset = $db->Execute($sSQL);		
+					$this->messages[] = $rec[0] . ' does not exist, became inactive';
+				}
+				else
+					$this->messages[] = $rec[0] . ' does not exist';
+			}
+			//echo 'Bounce:'.$i;
+			$m+=$i;
+		}
+		//echo 'Sum:'.$m;
+		return $m;
+	}
+	
+	public function viewMessages() {
+		if (empty($this->messages)) return;
 
+		foreach ($this->messages as $m=>$message) {
+				$ret .= "<option value=\"$m\">$message</option>";
+		}
+		return ($ret);
+	}		
 
     protected function _checkmail($data) {
 

@@ -350,8 +350,8 @@ class rcbulkmail {
 	
 	
 	protected function campaigns_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
-	    $height = $height ? $height : 800;
-        $rows = $rows ? $rows : 36;
+	    $height = $height ? $height : 600;
+        $rows = $rows ? $rows : 25;
         $width = $width ? $width : null; //wide	
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
@@ -961,7 +961,7 @@ class rcbulkmail {
 		
 			if (($lastrun) && (!$complete)) {
 		
-				$ret .= ($pause) ? "<a href=\"cpbulkmail.php?t=cpstartcamp&cid={$this->cid}\" class=\"btn btn-success\">Start</a>&nbsp;" :
+				$ret .= ($pause) ? "<a href=\"cpbulkmail.php?t=cpstartcamp&cid={$this->cid}\" class=\"btn btn-success\">Continue</a>&nbsp;" :
 								   "<a href=\"cpbulkmail.php?t=cppausecamp&cid={$this->cid}\" class=\"btn btn-danger\">Pause</a>&nbsp;";
 												  
 				if (($active) || ($pause))
@@ -1262,7 +1262,7 @@ class rcbulkmail {
 	   
 		$sSQL = "SELECT email FROM ulists where active=1 and listname=" . $db->qstr($ulistname); 
 		$sSQL.= (isset($start)) ? ($limit ? " LIMIT " . $start . "," . $limit : ($limit ? " LIMIT " . $limit : null)) : null;
-		echo $sSQL;	
+		//echo $sSQL;	
 		$result = $db->Execute($sSQL,2);
 	   
 		if (count($result)>0) {		   
@@ -1444,7 +1444,7 @@ class rcbulkmail {
 		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);	
 		$cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
 		
-		$sSQL = 'update mailcamp set active=1, ctype=' . $step; //enable by updat if not enabled
+		$sSQL = 'update mailcamp set ctype=' . $step; //enable by updat if not enabled
 		if (($ulist) && ($segment)) {//email or ulist
 			//remove tag from ulists and move to bcc
 			$sSQL .= ", ulists= REPLACE(ulists, " . $db->qstr($segment) . ", '')" ;
@@ -1460,40 +1460,34 @@ class rcbulkmail {
 		return array(0=>0,1=>0,2=>$restToProceed);
 	}	
 	
+	protected function isPostFinished() {
+		$db = GetGlobal('db');	
+		
+		$sSQL = 'select ulists from mailcamp where cid=' . $db->qstr($this->cid); 
+		$res = $db->Execute($sSQL);
+		
+		$f = str_replace(',','',$res->fields[0]);
+		//echo $f,':',$res->fields[0];
+		
+		$ret = (trim($f)!='') ? false : true;
+		return ($ret);
+	}
+	
 	protected function send_mails() {	  
         //check expiration key
         if ($this->appkey->isdefined('RCBULKMAIL')==false) {
 	        //$this->messages[] = "Failed, module expired.";
 		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
 	    }
-		//print_r($_POST);
-		/*if (!$cid = $this->cid) { //jqgrid present (select cid,.. zero on post)
-			$this->messages[] = 'CID form error!';
-			return false;		
-        }
-		if (!$from = GetParam('from')) {
-			$this->messages[] = 'From field missing!';
-			return false;
-		}		
-		if (!$subject = GetParam('subject')) {
-			$this->messages[] = 'Subject field missing!';
-			return false;
-		}*/				
+
 		
-		//if (GetParam('include')) {
-			
-			if (is_readable($this->savehtmlpath .'/'. $cid.'.html')) {
-				
-				//$rawtext = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html'); 			
-				$res = $this->sendit($from, $subject);//, $rawtext, $cid); 
-				//if (!$res) 
-					//$this->messages[] = $this->batchid ? "Batch send" : "Send failed";				
-				
-				return ($res); 
-			}
-			else $this->messages[] = 'Failed: Empty content, file not exist ('. $cid . '.html)';			
-		//}
-		//else $this->messages[] = "No recipients, send distribution completed!";
+		if (is_readable($this->savehtmlpath .'/'. $this->cid.'.html')) {
+							
+			$res = $this->sendit($from, $subject);//, $rawtext, $cid); 					
+			return ($res); 
+		}
+		else 
+			$this->messages[] = 'Failed: Empty content, file not exist ('. $cid . '.html)';			
 		
 	    return false;   
 	}	
@@ -1617,7 +1611,8 @@ class rcbulkmail {
 		//$this->batchid = $bid ? $bid : 0;				
 		//return ($bid ? false : true);
 		//$ret = (!$cc) ? true : false;
-		$ret = (str_replace(',','',$to)==null) ? true : false; //to show the green button when its over
+		//$ret = (str_replace(',','',$to)==null) ? true : false; //to show the green button when its over
+        $ret = $this->isPostFinished();
 		return ($ret);
     }	
 	

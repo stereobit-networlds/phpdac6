@@ -261,7 +261,7 @@ class shsubscribe {
 	   if ($this->checkmail($mail))  {
 
           //disable from ulists
-		  if ($this->isin_ulists($mail, $ulistname)) {
+		  //if ($this->isin_ulists($mail, $ulistname)) { //!!!!!!!!!!!!!!!! not a known list name
 			$sSQL = "update ulists set active=0 where email=" . $db->qstr($mail);
 			//$sSQL .= ' and listname=' . $db->qstr($ulistname);  //from all the lists !!!!!(nwsletter have to include the list while unsub)
 			$result = $db->Execute($sSQL,1);
@@ -283,7 +283,7 @@ class shsubscribe {
 				else			   
 					$this->mailto($this->tell_from,$mail,$this->subject2,$this->body2);			  
 			}
-		  }  
+		  //}  
 	   }
 	   else 
 	     SetGlobal('sFormErr', localize('_MSG5',getlocal()));	  
