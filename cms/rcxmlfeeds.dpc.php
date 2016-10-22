@@ -207,7 +207,7 @@ class rcxmlfeeds {
 				GetGlobal('controller')->calldpc_method("mygrid.column use grid9+$f|".localize('_'.$f,getlocal())."|$type|$edit|$options|$link_option|$search|$hidden|$align");	
 			}
 			
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+products+$sSQL+e+$title+id+1+1+20+400++0+1+1");
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+products+$sSQL+e+$title+id+1+1+12+300++0+1+1");
 			
 		
 			return ($out);	

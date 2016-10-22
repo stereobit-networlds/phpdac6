@@ -180,23 +180,14 @@ class fronthtmlpage {
 	
     function render($actiondata) { 	
 
-      switch ($this->agent) {
-	      case 'WAP'  :
-		  case 'XML'  :	
-		  case 'GTK'  :			   
-		  case 'XUL'  :					   			   
-	      case 'HTML' :	  
-		  default     :$out = $this->action($actiondata);
-					   break;
-	  }			  
+		$out = $this->action($actiondata);		  
 	  		   	 
-	  //timer
-	  $this->t_fronthtmlpage->stop('fronthtmlpage');
-   	  //if (seclevel('_TIMERS',$this->userLevelID))
-	    //echo "fronthtmlpage " . $this->t_fronthtmlpage->value('fronthtmlpage');
-	  	  
-	  		  
-	  return ($out);
+		//timer
+		$this->t_fronthtmlpage->stop('fronthtmlpage');
+		//if (seclevel('_TIMERS',$this->userLevelID))
+			//echo "fronthtmlpage " . $this->t_fronthtmlpage->value('fronthtmlpage');
+	  	  		  
+		return ($out);
     }
 	
 	//dummy event
@@ -223,10 +214,6 @@ class fronthtmlpage {
 			$htmldata = $this->cpanel_iframe();
 		else
 			$htmldata = 'cptemplate missing';	
-		/*elseif ($this->dhtml)
-		    $htmldata = $this->fullpage_iframe();//ifwindows();
-		else
-	        $htmldata = $this->frameset();*/
 
 	    return ($htmldata);
 	  }
@@ -430,15 +417,17 @@ class fronthtmlpage {
 	function process_javascript($data) {
 	
 	  //call javascript 
-      if (iniload('JAVASCRIPT')) {	
+      if (defined('JAVASCRIPT_DPC')) {	
+	  /*
 		 $js = new jscript;
 		 $onload = $js->onLoad();//!!!!!!!!!!!!!!!MUST BE SET TO <BODY AT END>
 		 $jret = $js->callJavaS() . "</body>";	//body jqgrid problem 
 		 unset ($js);		 
-		 
-		 if ($jret) {
-		   $ret = str_replace("</body>",$jret,$data);
-		 }
+		*/ 
+		 GetGlobal('controller')->calldpc_method('javascript.onLoad');
+		 $jret = GetGlobal('controller')->calldpc_method('javascript.callJavaS') . "</body>";
+		 if ($jret) 
+		   $ret = str_replace("</body>", $jret, $data); //body jqgrid problem 
 		 
 		 return ($ret);
 	  }	
@@ -653,238 +642,7 @@ class fronthtmlpage {
 		
 		return ($ret);
 	}	
-	/*
-	function frameset($query=null) {
-		$is_oversized = $this->app_is_oversized();
-        if ($is_oversized)
-            die($this->self_addspace());//die('Oversized');		
-			
-			
-	    $is_cpwizard = $this->app_cp_wizard();	
-	    $encoding = $this->charset;
-		
-		if (is_array($_GET)) {
-		  foreach ($_GET as $i=>$t) {
-		    if ( ($i!='pcntladmin') && ($i!='action') ) 
-		      $newquery .= '&'.$i.'='.$t;  
-	      }
-		}
-		else 
-		  $newquery = '&t=';	   
-		  
-	    $query = $query?$query:$newquery;
-        $turl = urldecode(decode(GetReq('turl')));		
-        $mc_page = $this->mc_parse_editurl($turl);	
-        $this->MC_CURRENT_PAGE = $mc_page;			
-		$file2edit = $this->MC_TEMPLATE ? $mc_page : strtolower($this->argument).$this->htmlext;		
-		
-		$fu = $this->edithtml?30:1;
-        $fd = $this->editdpc?200:1;
-		
-		$edit_html_url = $this->edithtml ? "cp/cpmhtmleditor.php?encoding=".$encoding."&htmlfile=" . urlencode(base64_encode($file2edit)) : 'cp/cpside.html';
-		$edit_page_url = $this->editdpc ? "cp/cpmctrl.php?turl=" . urlencode(base64_encode($turl)) ."&encoding=". $encoding . '&htmlfile=' . urlencode(base64_encode($file2edit)) : 'cp/cpside.html';
-	    $edit_dpc_url = $this->editdpc ? "cp/cpmdpceditor.php?turl=" . urlencode(base64_encode($turl)) : 'cp/cpside.html';
-		
-	    $ret = "
-<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\" \"http://www.w3.org/TR/html4/frameset.dtd\">
-<html>
-<head>
-<title>".$this->urltitle." - Modify Page (".$turl.")</title>
-<meta http-equiv=\"Content-Type\" content=\"text/html; charset=$encoding\">
-</head>		
-<frameset rows=\"*\" cols=\"*,270\" framespacing=\"1\" frameborder=\"yes\" border=\"1\" bordercolor=\"#000000\">
-  <frameset rows=\"$fu,*,$fd\" framespacing=\"1\" frameborder=\"yes\" border=\"1\" bordercolor=\"#000000\">
-    <frame src=\"" . $edit_page_url . "\" name=\"topFrame\" scrolling=\"NO\"  >";
-	
-	//$ret .= "<frame src=\"cp/cpmhtmleditor.php?encoding=".$encoding."&htmlfile=" . urlencode(base64_encode($this->htmlfile)) . "\" name=\"mainFrame\" scrolling=\"YES\" >
-	if (GetSessionParam('LOGIN')=='yes') {
-	  if ($is_cpwizard) 
-	    //wizard action 
-	  $ret .= "<frame src=\"cp/cpmwiz.php?turl=".urlencode(base64_encode($turl)) ."&encoding=". $encoding . '&htmlfile=' . $htmlfile."\" name=\"mainFrame\" scrolling=\"YES\" >";
-	  elseif (($this->argument) && ($this->edithtml))
-	    //edit html...
-		$ret .= "<frame src=\"" . $edit_html_url . "\" name=\"mainFrame\" scrolling=\"YES\" >";
-	  else	
-	    $ret .= "<frame src=\"cp/cp.php?editmode=1&encoding=$encoding&turl=" . urlencode(base64_encode($turl)) ."\" name=\"mainFrame\" scrolling=\"YES\" >";
-	}  
-	else 
-	  $ret .= "<frame src=\"cp/cpside.html\" name=\"mainFrame\" scrolling=\"YES\" >";
-	  
-	
-	//hide in 1 px //was 200 (30,*,200))
-	$ret .= "<frame src=\"" . $edit_dpc_url . "\" name=\"bottomFrame\" scrolling=\"YES\" >
-  </frameset>
-  <frame src=\"cp/cpmdbrec.php?turl=" . urlencode(base64_encode($turl)) . '&encoding='.$encoding. "\" name=\"rightFrame\" scrolling=\"YES\">
-</frameset>
-<noframes>
-<body>
-<h1>frames not supported!</h1>
-</body>
-</noframes>
-</html>
-";
-//  <frame src=\"cp/cpmhtmlviewer.php?turl=" . urlencode(base64_encode($turl)) . "\" name=\"rightFrame\" scrolling=\"YES\">
-    
-	//abort the above method..send to cp
-    //header("Location: cp/cp.php");
 
-    return ($ret);		
-	}
-	
-	//dynamic html window system
-    function fullpage_iframe($query=null) {
-	    $encoding = $this->charset;
-		$fu = $this->edithtml?30:1;
-        $fd = $this->editdpc?200:1;			
-		//fetch cuurent size
-		$is_oversized = $this->app_is_oversized();
-		$is_cpwizard = $this->app_cp_wizard();
-		$is_cropwiz = (GetSessionParam('LOGIN')=='yes') ? $this->app_crop_wizard() : null;
-		
-		if (is_array($_GET)) {
-		  foreach ($_GET as $i=>$t) {
-		    if ( ($i!='pcntladmin') && ($i!='action') ) //??action //bypass pcntladmin=.. param for repoladn same url...
-		      $newquery .= '&'.$i.'='.$t;
-	      }
-		}
-		else 
-		  $newquery = '&t=';		  
-		  
-	    $query = $query?$query:$newquery;
-        $turl = urldecode(decode(GetReq('turl')));			
-		$mc_page = $this->mc_parse_editurl($turl);		
-        $this->MC_CURRENT_PAGE = $mc_page;		
-		$file2edit = $this->MC_TEMPLATE ? $mc_page : strtolower($this->argument).$this->htmlext;
-	
-		if (GetSessionParam('LOGIN')=='yes') {
-			if (($this->argument) && ($this->edithtml)) {
-				//edit html...
-				if ($is_cpwizard)
-				    $mainframe_url = "http://".$this->url;
-				elseif ($is_cropwiz)	
-					$mainframe_url = $turl; //$this->url;					
-				else
-				    $mainframe_url = $is_oversized ?
-				                     $this->self_addspace(true) : //"http://stereobit.com/netpanel.php?t=addon&appsize=".$is_oversized : 
-				                     "cp/cpmhtmleditor.php?cke4=1&encoding=".$encoding."&htmlfile=" . urlencode(base64_encode($file2edit));
-		    }						 
-			else {
-                if ($is_cpwizard)
-				    $mainframe_url = "http://".$this->url;
-				elseif ($is_cropwiz)	
-					$mainframe_url = $turl; 					
-				else			
-				    $mainframe_url = $is_oversized ?
-				                     $this->self_addspace(true) : //"http://stereobit.com/netpanel.php?t=addon&appsize=".$is_oversized :
-						    		 "cp/cp.php?editmode=1&encoding=".$encoding."&turl=" . urlencode(base64_encode($turl));
-			}					 
-		}  
-		else { 
-		    if ($is_cpwizard)
-				$mainframe_url = "http://".$this->url;
-			else
-			    $mainframe_url = $is_oversized ?
-				                 $this->self_addspace(true) : //"http://stereobit.com/netpanel.php?t=addon&appsize=".$is_oversized :
-							     "cp/cpside.html";
-	  	}
-		$exit_url       = $turl;//'../' . urldecode(base64_decode($_GET['turl'])) . "&editmode=-1";
-		$htmlfile       = urlencode(base64_encode($file2edit));
-		$topframe_url   = "cp/cpmctrl.php?turl=" . urlencode(base64_encode($turl)) ."&encoding=". $encoding . '&htmlfile=' . $htmlfile;
-		$bottomframe_url= "cp/cpmdpceditor.php?turl=" . urlencode(base64_encode($turl));
-        $rightframe_url = "cp/cpmdbrec.php?turl=" . urlencode(base64_encode($turl)) . '&encoding='.$encoding . '&htmlfile=' . $htmlfile;		
-        $wizframe_url   = "cp/cpmwiz.php?turl=" . urlencode(base64_encode($turl)) ."&encoding=". $encoding . '&htmlfile=' . $htmlfile;		
-		$wizcrop_url    = "cp/cpmwizcrop.php?turl=" . urlencode(base64_encode($turl)) ."&encoding=". $encoding . '&htmlfile=' . $htmlfile;				
-		
-		//standart menu..
-		if ((!$is_oversized) && (!$is_cpwizard) && (!$is_cropwiz)) {
-			$js_menuwin = "
-var menuwin=dhtmlwindow.open(\"rightframe\", \"iframe\", \"$rightframe_url\", \"Menu\", \"width=250px,height=450px,resize=1,scrolling=1,center=1\", \"recal\")
-menuwin.onclose=function(){ 
-//returns false if user clicks on \"No\" button:
-var returnval=confirm(\"You are about to exit editmode. Are you sure?\");
-//return returnval
-if (returnval==true) { 
-    //alert( \"$exit_url\");
-	window.location = \"$exit_url\";
-}
-return returnval;	
-}		
-";
-		}
-		else
-		    $js_menuwin = null;		
-		
-		if (($this->edithtml) && (GetSessionParam('LOGIN')=='yes') && 
-		    (!$is_oversized) && (!$is_cpwizard) && (!$is_cropwiz)) {
-			$js_cmdwin = "
-var cmdwin=dhtmlwindow.open(\"topframe\", \"iframe\", \"$topframe_url\", \"Cmd\", \"width=600px,height=450px,resize=1,scrolling=1,center=0\", \"recal\")
-cmdwin.onclose=function(){ 
-return window.confirm(\"Close window?\")
-}		
-";
-		}
-		else
-		    $js_cmdwin = null;
-				
-		    $js_codewin = null;
-			
-		if ($is_cpwizard) {
-			$js_wizard = "			
-var wizwin=dhtmlwindow.open(\"bottomframe\", \"iframe\", \"$wizframe_url\", \"Wizard\", \"width=660px,height=400px,resize=1,scrolling=1,center=1\", \"recal\")
-wizwin.onclose=function(){ 
-var returnval=confirm(\"You are about to exit. Are you sure?\");
-if (returnval==true) { 
-	window.location = \"$exit_url\";
-}
-return returnval;	
-}			
-";		
-	    }
-		elseif ($is_cropwiz) {
-			$js_wizard = "			
-var wizwin=dhtmlwindow.open(\"bottomframe\", \"iframe\", \"$wizcrop_url\", \"Crop wizard\", \"width=660px,height=400px,resize=1,scrolling=1,center=1\", \"recal\")
-wizwin.onclose=function(){ 
-var returnval=confirm(\"You are about to exit. Are you sure?\");
-if (returnval==true) { 
-	window.location = \"$exit_url\";
-}
-return returnval;	
-}			
-";			
-		}
-		else 
-		    $js_wizard = null;			
-		
-	    $fp = <<<EOF
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
-<html xmlns="http://www.w3.org/1999/xhtml" lang="EN"> 
-<head> 
-<meta http-equiv="Content-Type" content="text/html; charset=$encoding" />
-<link rel="stylesheet" href="cp/dhtmlwindow2.css" type="text/css" />
-<script type="text/javascript" src="cp/dhtmlwindow2.js"></script> 
-<title>{$this->urltitle} - Modify Page ($turl)</title> 
-<style type="text/css">
-    body { margin: 0; overflow: hidden; }
-   .mainframe { position: absolute; left: 0px; top: 0px; width: 100%; height: 100%;  }
-</style>
-</head> 
-<body> 
-<script type="text/javascript">
-$js_menuwin
-$js_codewin
-$js_cmdwin
-$js_wizard
-</script>
-<div class="mainframe">
-<iframe id="mainFrame" name="mainFrame" src="$mainframe_url" frameborder="0" marginheight="0" marginwidth="0" width="100%" height="100%" scrolling="auto"></iframe> 
-</div>
-</body> 
-</html>
-EOF;
-        return ($fp);		
-    }
-	
-*/	
 	function anel_panel($query=null) {
 	    $encoding = $this->charset;
 		$is_oversized = $this->app_is_oversized();
@@ -1037,16 +795,9 @@ EOF;
     function get_app_size() {
   
 		$tsize = $this->cached_disk_size();
-		//$tsize2 = $this->bytesToSize1024($tsize,1);
-        //$ret .= "<br>Folder size ". /*$tsize . '|' .*/ $tsize2;//." bytes";	
-
         $dsize = $this->cached_database_filesize();	
-		//$dsize2 = $this->bytesToSize1024($dsize,1);	
-        //$ret .= "<br>Database size ". /*$dsize . '|' .*/ $dsize2;//." bytes";
-
 		$total_size = $tsize + $dsize;
-		//$stotal = $this->bytesToSize1024($total_size,1);
-		//$ret .= "<br>Total used size ". $stotal;  
+ 
 		return ($total_size);
     }
 
@@ -1086,51 +837,51 @@ EOF;
     } 
   
     function cached_disk_size($path=null) {
-  	   $path = $path ? $path : $this->urlpath; 
-       $name = 'a';//strval(date('Ymd'));
-       $tsize = $this->prpath . $name . '-tsize.size';
-	   $size = 0;
+		$path = $path ? $path : $this->urlpath; 
+		$name = 'a';//strval(date('Ymd'));
+		$tsize = $this->prpath . $name . '-tsize.size';
+		$size = 0;
 
-       if (is_readable($tsize)) {
+		if (is_readable($tsize)) {
 	        //echo $tsize;
 			$size = file_get_contents($tsize);
 
-	   }
-	   else {
+		}
+		else {
             $size = $this->filesize_r($path);
 			@file_put_contents($tsize, $size);
-	   }
+		}
 	   
-	   return ($size);
+		return ($size);
     }
   
     function cached_database_filesize() {
-    $db = GetGlobal('db'); 
-	$size = 0;
+		$db = GetGlobal('db'); 
+		$size = 0;
 	
-	  if ($db) {
-		$name = 'a';//strval(date('Ymd'));
-		$dsize = $this->prpath . $name . '-dsize.size';	
+		if ($db) {
+			$name = 'a';//strval(date('Ymd'));
+			$dsize = $this->prpath . $name . '-dsize.size';	
     
-		if (is_readable($dsize)) {
-			//echo $dsize;
-			$size = file_get_contents($dsize);
-		}
-		else {
-			$sSQL = "SHOW TABLE STATUS";
-			$res = $db->Execute($sSQL,2);		
-			$size = 0;
-
-			if (!empty($res)) { 
-				foreach ($res as $n=>$rec) {
-					$size += $rec[ "Data_length" ] + $rec[ "Index_length" ];					
-				}
+			if (is_readable($dsize)) {
+				//echo $dsize;
+				$size = file_get_contents($dsize);
 			}
-			@file_put_contents($dsize, $size);
+			else {
+				$sSQL = "SHOW TABLE STATUS";
+				$res = $db->Execute($sSQL,2);		
+				$size = 0;
+
+				if (!empty($res)) { 
+					foreach ($res as $n=>$rec) {
+						$size += $rec[ "Data_length" ] + $rec[ "Index_length" ];					
+					}
+				}
+				@file_put_contents($dsize, $size);
+			}	
 		}	
-	  }	
 		
-	  return ($size);
+		return ($size);
     }	
 	
 	protected function self_addspace($retlink=false) {
@@ -1230,9 +981,9 @@ EOF;
 		   if ($verb)
 		     echo $call,'<br><hr>';
 		 }  
-		 //print_r($tokens);		 
+		 
 		 $out = $this->combine_tokens($mytemplate,$tokens,$dm);		 
-		 //echo '>',$mytemplate;
+
 		 return ($out);
     }  
 	
@@ -1273,7 +1024,6 @@ EOF;
 
 	public function nvl($param=null,$state1=null,$state2=null,$value=null) {
 	    global ${$param};
-	    //echo $param;
 		
 	    if (stristr($param,'.')) //dpc var
 		  $var = GetGlobal('controller')->calldpc_var($param);
@@ -1292,7 +1042,6 @@ EOF;
 	
 	public function nvltokens($token=null,$state1=null,$state2=null,$value=null) {
 	    //always string compare...
-		//echo '>',$token,':',$value,'<br/>';
 		if ($value) 	
 			$ret = ($token==$value) ? $state1 : $state2;  	
         else		
@@ -1303,7 +1052,7 @@ EOF;
     }	
 	
 	public function nvldecode($token=null,$state1=null,$state2=null,$value=null,$default=null) {
-		//echo '>',$token,':',$value,'<br/>';
+
 		if (is_numeric($value)) 
            $ret = $default ? $default : (($token==$value) ? $state1 : $state2);			
 		elseif ($value) 
@@ -1388,11 +1137,8 @@ EOF;
 	
 	//used in front page as login / logout
 	public static function myf_button($title,$link=null,$image=null) {
-	   //$browser = get_browser(null, true);
-       //print_r($browser);	
-       //echo $_SERVER['HTTP_USER_AGENT']; 
-	   //echo '1';
-	   $path = self::$staticpath;//$this->urlpath;//
+
+	   $path = self::$staticpath;
 	   
 	   if (($image) && (is_readable($path."/images/".$image.".png"))) {
 	      //echo 'a';
@@ -1644,7 +1390,6 @@ EOF;
 		$mctmpl = $tmplname ? $tmplname : $MC_TEMPLATE;
 		
 		if ($MC_TEMPLATE) {		
-		//if ($this->MC_TEMPLATE) {
 		
 			$sSQL = 'select mcname from wftmpl where ';
 			$sSQL.= ($pageid) ? 'mcid=' . '"' . $pageid . '" ' : 'mcid=' . '"' . $mc_page . '" ';
@@ -1659,7 +1404,7 @@ EOF;
 			else
 				$ret = $page ? $page : $mc_page;
 
-            $this->MC_CURRENT_PAGE = $mc_page;
+            $this->MC_CURRENT_PAGE = $ret;
 		    //echo $this->MC_CURRENT_PAGE;			
 			return ($ret); 
 		}
@@ -1679,7 +1424,6 @@ EOF;
 		$mctmpl = $tmplname ? $tmplname : $MC_TEMPLATE;
 		
 		if ($MC_TEMPLATE) {		
-		//if ($this->MC_TEMPLATE) {
 		
 			$sSQL = 'select mcname from wftmpl where ';
 			$sSQL.= 'mcid=' . '"' . $id . '" ';

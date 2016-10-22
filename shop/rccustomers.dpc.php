@@ -183,8 +183,7 @@ class rccustomers extends shcustomers {
 
 	   if (defined('RCTRANSACTIONS_DPC')) {
 		//user transactions
-		$out .= GetGlobal('controller')->calldpc_method("rctransactions.show_grid use +150+1");	   
-		//$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use trans");	   
+		$out .= GetGlobal('controller')->calldpc_method("rctransactions.show_grid use +150+1");	      
 	   }
        return ($out); 
     }		
@@ -218,10 +217,10 @@ class rccustomers extends shcustomers {
 			$xsSQL2 = "SELECT * FROM (SELECT id,timein,active,code2,name,afm,eforia,prfdescr,street,address,number,area,city,zip,voice1,voice2,fax,mail,attr1,attr2,attr3,attr4 FROM customers) x";
 			//$out.= $xsSQL2;
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('id',getlocal())."|5|0|||1");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+timein|".localize('_date',getlocal()). "|link|0|".seturl('t=cptransactions&cusmail={code2}').'||');
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+timein|".localize('_date',getlocal()). "|10|0|");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal())."|boolean|1|");	
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+code2|".localize('_code2',getlocal())."|10|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+name|".localize('_name',getlocal())."|30|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+name|".localize('_name',getlocal())."|link|30|".seturl('t=cptransactions&cusmail={code2}').'||');
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+prfdescr|".localize('_prfdescr',getlocal())."|20|1|");			
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+afm|".localize('_afm',getlocal())."|10|1|");
 	        GetGlobal('controller')->calldpc_method("mygrid.column use grid2+eforia|".localize('_doy',getlocal())."|20|1|");				

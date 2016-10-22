@@ -23,6 +23,7 @@ $__EVENTS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
 $__EVENTS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
+$__EVENTS['RCCONTROLPANEL_DPC'][13]='cpinbox';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
@@ -37,6 +38,7 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
 $__ACTIONS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
+$__ACTIONS['RCCONTROLPANEL_DPC'][13]='cpinbox';
 
 //$__DPCATTR['RCCONTROLPANEL_DPC']['cp'] = 'cp,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -58,12 +60,12 @@ $__LOCALE['RCCONTROLPANEL_DPC'][12]='_moretrans;All transactions;Όλες οι �
 $__LOCALE['RCCONTROLPANEL_DPC'][13]='_awstats;Web statistics;Στατιστικά';
 $__LOCALE['RCCONTROLPANEL_DPC'][14]='_google_analytics;Google Analytics;Στατιστικά Google';
 $__LOCALE['RCCONTROLPANEL_DPC'][15]='_siwapp;Siwapp;Siwapp τιμολόγηση';
-$__LOCALE['RCCONTROLPANEL_DPC'][16]='_MENU1;Size;Μέγεθος';
-$__LOCALE['RCCONTROLPANEL_DPC'][17]='_MENU2;People;Συναλλασόμενοι';
-$__LOCALE['RCCONTROLPANEL_DPC'][18]='_MENU3;Photos & attachments;Φωτογραφίες και έγγραφα';
-$__LOCALE['RCCONTROLPANEL_DPC'][19]='_MENU4;Inventory;Αποθήκη';
-$__LOCALE['RCCONTROLPANEL_DPC'][20]='_MENU5;Synchronize;Συγχρονισμοί';
-$__LOCALE['RCCONTROLPANEL_DPC'][21]='_MENU6;Newsletters;Αποστολές';
+$__LOCALE['RCCONTROLPANEL_DPC'][16]='_revenue;Revenue;Αξία';
+$__LOCALE['RCCONTROLPANEL_DPC'][17]='_inactives;Inactives;Μη ενεργά';
+$__LOCALE['RCCONTROLPANEL_DPC'][18]='_actives;Actives;Ενεργά';
+$__LOCALE['RCCONTROLPANEL_DPC'][19]='_resources;Resources;Κατανάλωση χώρου';
+$__LOCALE['RCCONTROLPANEL_DPC'][20]='_total;Total;Σύνολο';
+$__LOCALE['RCCONTROLPANEL_DPC'][21]='_alerts;Alerts;Ειδοποιήσεις';
 $__LOCALE['RCCONTROLPANEL_DPC'][22]='_MENU7;Orders;Κινήσεις';
 $__LOCALE['RCCONTROLPANEL_DPC'][23]='_add_categories;Upload Categories;Εισαγωγή κατηγοριών';
 $__LOCALE['RCCONTROLPANEL_DPC'][24]='_add_products;Upload Products;Εισαγωγή ειδών';
@@ -222,6 +224,9 @@ $__LOCALE['RCCONTROLPANEL_DPC'][174]='year;year;έτος';
 $__LOCALE['RCCONTROLPANEL_DPC'][175]='years;years;έτη';
 $__LOCALE['RCCONTROLPANEL_DPC'][176]='second;second;δεύτερόλεπτο';
 $__LOCALE['RCCONTROLPANEL_DPC'][177]='seconds;seconds;δευτερόλεπτα';
+$__LOCALE['RCCONTROLPANEL_DPC'][178]='_inactiveuser;Inactive user;Μη ενεργός χρήστης';
+$__LOCALE['RCCONTROLPANEL_DPC'][179]='_newactiveuser;New user;Νέος χρήστης';
+$__LOCALE['RCCONTROLPANEL_DPC'][180]='_formsubmit;Message from;Μηνυμα απο';
 
 class rccontrolpanel {
 
@@ -292,6 +297,7 @@ class rccontrolpanel {
 		
 		$this->messages = GetSessionParam('cpMessages') ? GetSessionParam('cpMessages') : array();
 		$this->tasks = GetSessionParam('cpTasks') ? GetSessionParam('cpTasks') : array();
+		$this->inbox = GetSessionParam('cpInbox') ? GetSessionParam('cpInbox') : array();		
 		
 		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath); //metro !!!!
 		
@@ -314,7 +320,12 @@ class rccontrolpanel {
 	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	   if ($login!='yes') return null;	
 	   
-	   $this->autoupdate();	  //!!!!! 	  		  			      
+	   $this->autoupdate();	  //!!!!! 
+	   
+	   /*if (defined('RCULISTSTATS')) {
+			_m('rculiststats.percentofCamps');//task dropdown, set task 
+			_m('rculiststats.getUnsubsToday'); //inbox dropdown	   
+	   }*/	
   
 	   switch ($sAction) {
 	   
@@ -325,13 +336,28 @@ class rccontrolpanel {
 							   $this->goto = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 							 }
 							 break;
+							 
+		 case 'cpinbox'    : //update inbox, tasks
+							 if (defined('RCULISTSTATS_DPC')) {
+								_m('rculiststats.getUnsubsToday');
+								_m('rculiststats.percentofCamps');
+							 }
+			
+			                 //ajax call
+							 $tsk = $this->getInbox();
+							 die('cpinbox|'.$tsk);
+							 break;								 
 							 							 	   
 		 case 'cptasks'    : //ajax call
 		                     $tsk = $this->getTasks();
 							 die('cptasks|'.$tsk);
 							 break;	   
 							 
-		 case 'cpmessages' : //ajax call
+		 case 'cpmessages' : //update msg
+							 $this->getSalesToday();	
+							 $this->getFormSubmit();
+		 
+		                     //ajax call
 		                     $msgs = $this->getMessages();
 							 die('cpmessages|'.$msgs);
 							 break;	 
@@ -380,6 +406,7 @@ class rccontrolpanel {
 							       $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
 							     die(GetReq('report').'|'.$out); //ajax return
 								 break;
+			case 'cpinbox'     : break; 								 
 			case 'cptasks'     : break;						
 		    case 'cpmessages'  : break;										  
 		    case 'cpdelMessage': break;	
@@ -467,7 +494,7 @@ function handleResponse() {if(http.readyState == 4){
         if(response.indexOf('|' != -1)) { /*alert(response);*/  update = response.split('|');
             document.getElementById(update[0]).innerHTML = update[1];
         }}}  		
-		function init(){ sndReqArg('cp.php?t=cpmessages','cpmessages');} 
+		function init(){ sndReqArg('cp.php?t=cptasks','cptasks'); /*sndReqArg('cp.php?t=cpmessages','cpmessages'); sndReqArg('cpuliststats.php?t=cpinbox','cpinbox');*/} 
 ";
 /*      //moved to footer.php, if init() execute
 		window.setInterval(\"sndReqArg('cp.php?t=cptasks','cptasks')\",63000);
@@ -2119,13 +2146,13 @@ function handleResponse() {if(http.readyState == 4){
         if ($result->fields[0]) return false;
 		
 		//add the message if not already in session		
-		if (array_key_exists($hash, $this->messages)) { /* in session */}
-		else {
+		//if (array_key_exists($hash, $this->messages)) { /* in session */}
+		//else {
 			$this->messages[$hash] = $message;
 			SetSessionParam('cpMessages', $this->messages);
 			return true;
-		}
-		return false;	
+		//}
+		//return false;	
 	}
 	
 	public function viewMessages($template=null) {
@@ -2283,13 +2310,13 @@ function handleResponse() {if(http.readyState == 4){
 		$id = explode('|',$task);
 		$hash = md5($id[0].$id[1]);
 		
-		if (array_key_exists($hash, $this->tasks)) {}
-		else {
+		//if (array_key_exists($hash, $this->tasks)) {}
+		//else {
 			$this->tasks[$hash] = $task;
 			SetSessionParam('cpTasks', $this->tasks);
 			return true;
-		}
-		return false;	
+		//}
+		//return false;	
 	}
 	
 	public function viewTasks($template=null) {
@@ -2307,8 +2334,57 @@ function handleResponse() {if(http.readyState == 4){
 		}
 		return ($ret);
 	}	
+	
+	public function setInbox($message=null) {
+		$db = GetGlobal('db');
+		if (!$message) return false;
+		
+		$interval = $daysback ? $daysback : 90;
+		$id = explode('|',$message);
+		$hash = md5($id[0].$id[1]);
+		
+		//add the message if not already in session		
+		//if (array_key_exists($hash, $this->inbox)) { /* in session */}
+		//else {
+			$this->inbox[$hash] = $message;
+			SetSessionParam('cpInbox', $this->inbox);
+			return true;
+		//}
+		//return false;	
+	}	
+	
+	/* cp header inbox */ 	
+	public function getInboxTotal() {
+		$ret = (empty($this->inbox)) ? 0 : count($this->inbox);
+		return $ret;		
+	}
+	
+	public function getInbox($limit=null) {
+		if (empty($this->inbox)) return null;
+		//print_r($this->inbox);
+		$tokens = array(); 
+		$lim = $limit ? $limit : 10;
+		$msgs = array_reverse($this->inbox, true);
+		$i = 0;
+		
+		$tdata = $this->select_template('dropdown-inbox-message');
+		
+		foreach ($msgs as $n=>$m) {
+			
+			$tokens = explode('|', $m); 
+			$tokens[] = $n; //add hash (for future deletes of msg)
+			
+			$ret .= $this->combine_tokens($tdata, $tokens, true);
+			unset($tokens);	
+			$i+=1;
+			if ($i>$lim) break;
+		}
+		
+		return ($ret);			
+	}		
+	
 
-	/*sales today as cp messages (3 days back)*/
+	/*sales today as cp messages (1 days back)*/
 	public function getSalesToday($template=null, $limit=null) {
 		$db = GetGlobal('db');	
 		$l = $limit ? $limit : 5;
@@ -2317,21 +2393,78 @@ function handleResponse() {if(http.readyState == 4){
 		$tokens = array();
 		$text = localize('_sale',getlocal());
 		
-		$sSQL = "SELECT timein,cid,tid FROM transactions where tstatus>=0 and timein BETWEEN DATE_SUB( NOW() , INTERVAL 3 DAY ) AND NOW() order by timein desc LIMIT " . $l;
-
-		//echo $sSQL;
+		$sSQL = "SELECT timein,cid,tid FROM transactions where tstatus>=0 and timein BETWEEN DATE_SUB( NOW() , INTERVAL 1 DAY ) AND NOW() order by timein desc LIMIT " . $l;
 		$resultset = $db->Execute($sSQL,2);
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
 			
 			$saytime = $this->timeSayWhen(strtotime($rec['timein']));
-			$msg = "success|" . $rec['cid'] .", ". $text .' '. $rec['tid'] . "|$saytime|cptransactions.php|".$rec['cid'];
-			$this->setMessage($msg);
+			if (defined('RCULISTSTATS_DPC')) {
+				$msg = $rec['cid'] . "|" . $text .' '. $rec['tid'] . "|$saytime|cptransactions.php|".$rec['cid'];
+				_m('rculiststats.setInbox use '.$msg);
+			}
+			else {
+				$msg = "success|" . $rec['cid'] .", ". $text .' '. $rec['tid'] . "|$saytime|cptransactions.php|".$rec['cid'];
+				$this->setMessage($msg);
+			}
 		}
 
 		return ($ret);			
 	}
+	
+	public function getFormSubmit() {
+		$db = GetGlobal('db');
+		$text = localize('_formsubmit',getlocal());
+		$sSQL = "select email,date from cform where DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 10 DAY ) ) AND DATE ( NOW() ) order by DATE(date) desc";
+		$result = $db->Execute($sSQL,2);
+		//echo $sSQL;
+		foreach ($result as $i=>$rec) {
+			$saytime = $this->timeSayWhen(strtotime($rec[1]));
+			
+			if (defined('RCULISTSTATS_DPC')) {
+				$msg = $rec[0] . "|" . $text . "|$saytime|cpform.php|".$rec[0];
+				_m('rculiststats.setInbox use '.$msg);
+			}
+			else {			
+				$msg = "info|" . $text .' '. $rec[0] . "|$saytime|cpform.php|".$rec[0];
+				$this->setMessage($msg);
+			}
+		}
+		return null;
+	} 	
+	
+	//last month check 
+	public function getInactiveUsers() {
+		if (!defined('RCCONTROLPANEL_DPC')) return false;
+		$db = GetGlobal('db');
+		$text = localize('_inactiveuser',getlocal());
+		$sSQL = "select username,timein from users where notes='DELETED' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
+		$result = $db->Execute($sSQL,2);
+		
+		foreach ($result as $i=>$rec) {
+			$saytime = $this->timeSayWhen(strtotime($rec[1]));
+			$msg = "warning|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];
+			$this->setMessage($msg);
+		}
+		return null;
+	} 
+	
+	//last month check 
+	public function getActiveUsers() {
+		if (!defined('RCCONTROLPANEL_DPC')) return false;
+		$db = GetGlobal('db');
+		$text = localize('_newactiveuser',getlocal());
+		$sSQL = "select username,timein from users where notes='ACTIVE' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 10 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
+		$result = $db->Execute($sSQL,2);
+		
+		foreach ($result as $i=>$rec) {
+			$saytime = $this->timeSayWhen(strtotime($rec[1]));
+			$msg = "success|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];
+			$this->setMessage($msg);
+		}
+		return null;
+	} 	
 
 	public function viewItemStatistics($template=null) {
 		$db = GetGlobal('db');
@@ -2477,31 +2610,11 @@ function handleResponse() {if(http.readyState == 4){
 	    return ($out);	
 	}		
 	
-	/* old ver */
-	public function timeSayWhen2($ts=null) {
-		$when = $ts ? $ts : time();
-		$now = time();
-		$diff = ($now-$when);	
-
-		if ($diff<1) 
-			$saytime = '0 ' . localize('_sec',getlocal());	
-		elseif ($diff<60) 
-			$saytime = date('s',$diff) . ' ' . localize('_sec',getlocal());		
-		elseif ($diff<3600) 
-			$saytime = date('i',$diff) . ' ' . localize('_min',getlocal());
-		elseif ($diff<86400) 
-			$saytime = date('G',$diff) . ' ' . localize('_hrs',getlocal());
-		else 
-			$saytime = date('d',$diff) . ' ' . localize('_days',getlocal());		
-		
-		return ($saytime);
-	}	
-	
 	public function timeSayWhen($ptime=null) {
 		$etime = time() - $ptime;
 
 		if ($etime < 1)
-			return '0 ' . localize('second', getlocal());
+			return '1 ' . localize('second', getlocal());
 
 		$a = array( 365 * 24 * 60 * 60  =>  'year',
 					 30 * 24 * 60 * 60  =>  'month',

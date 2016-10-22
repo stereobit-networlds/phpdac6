@@ -64,8 +64,7 @@ class rcdynsql {
       $this->status_exp = arrayload('RCTRANSACTIONS','sidexp'); 
 	  
 	  $this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
-	  $this->userDemoIds = array(5,6,7,8); 	  
-      //echo $this->seclevid;     
+	  $this->userDemoIds = array(5,6,7,8); 	    
 	}
 	
     function event($event=null) {
@@ -124,16 +123,6 @@ class rcdynsql {
 	  return ($out);
     }
 	
-	/*function grid_javascript() {
-      if (iniload('JAVASCRIPT')) {
-		      		   
-	       $code = $this->init_grids();			
-
-		   $js = new jscript;	   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }		
-	}*/
 	
 	public function isDemoUser() {
 		return (in_array($this->seclevid, $this->userDemoIds));
@@ -183,7 +172,7 @@ class rcdynsql {
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+status|".localize('_status',getlocal())."|5|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+sqlres|".localize('_sqlres',getlocal())."|10|1|");			
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+reference|".localize('_ref',getlocal())."|10|1|");
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+syncsql+$xsSQL2+r+".localize('RCDYNSQL_DPC',getlocal())."+id+1+1+17+400+$x+0+1+1");
+			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+syncsql+$xsSQL2+r+".localize('RCDYNSQL_DPC',getlocal())."+id+1+1+15+360+$x+0+1+1");
 
 	    }
 		else 
@@ -194,11 +183,11 @@ class rcdynsql {
 	}
 	
 	function show_grids() {
-		
-	   $ret = $this->show_grid();	
-       //$ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use trans");
-	   $ret .= "<div id='trans'></div>";
-	   return ($ret);	
+	
+       	$ret = "<div id='trans'></div>";	
+	    $ret .= $this->show_grid();	
+
+	    return ($ret);	
 	}	
 	
 	protected function load_sql_file($id=null) {
@@ -284,10 +273,8 @@ class rcdynsql {
 	    $bodyurl = seturl("t=cpdynview&tid=").GetReq('tid');
 		$frame = "<html><head></head><iframe src =\"$bodyurl\" width=\"100%\" height=\"300px\"><p>Your browser does not support iframes</p></iframe></html>";    
 
-		//$iframe = $this->form(GetReq('tid'));
-		
 		if ($ajaxdiv)
-			return $ajaxdiv.'|'.$frame;//$out;	//'<p>'.$bodyurl.'</p>';
+			return $ajaxdiv.'|'.$frame;
 		else
 			return ($frame);
 	}

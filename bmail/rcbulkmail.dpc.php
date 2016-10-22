@@ -29,7 +29,9 @@ $__EVENTS['RCBULKMAIL_DPC'][11]='cptemplatenew';
 $__EVENTS['RCBULKMAIL_DPC'][12]='cptemplatesav';
 $__EVENTS['RCBULKMAIL_DPC'][13]='cppausecamp';
 $__EVENTS['RCBULKMAIL_DPC'][14]='cpstopcamp';
-$__EVENTS['RCBULKMAIL_DPC'][15]='cpstartcamp';
+$__EVENTS['RCBULKMAIL_DPC'][15]='cpcontinuecamp';
+$__EVENTS['RCBULKMAIL_DPC'][16]='cpstartcamp';
+$__EVENTS['RCBULKMAIL_DPC'][17]='cpiscontent';
 
 $__ACTIONS['RCBULKMAIL_DPC'][0]='cpbulkmail';
 $__ACTIONS['RCBULKMAIL_DPC'][1]='cpsavemailadv';
@@ -46,7 +48,9 @@ $__ACTIONS['RCBULKMAIL_DPC'][11]='cptemplatenew';
 $__ACTIONS['RCBULKMAIL_DPC'][12]='cptemplatesav';
 $__ACTIONS['RCBULKMAIL_DPC'][13]='cppausecamp';
 $__ACTIONS['RCBULKMAIL_DPC'][14]='cpstopcamp';
-$__ACTIONS['RCBULKMAIL_DPC'][15]='cpstartcamp';
+$__ACTIONS['RCBULKMAIL_DPC'][15]='cpcontinuecamp';
+$__ACTIONS['RCBULKMAIL_DPC'][16]='cpstartcamp';
+$__ACTIONS['RCBULKMAIL_DPC'][17]='cpiscontent';
 
 $__LOCALE['RCBULKMAIL_DPC'][0]='RCBULKMAIL_DPC;Mail queue;Mail queue';
 $__LOCALE['RCBULKMAIL_DPC'][1]='_campaigns;Campaigns;Καμπάνιες';
@@ -111,6 +115,53 @@ $__LOCALE['RCBULKMAIL_DPC'][59]='_completecamp;Campaign completed;Καμπάνι
 $__LOCALE['RCBULKMAIL_DPC'][60]='_lastrun;Last submit;Τελευταία αποστολή';
 $__LOCALE['RCBULKMAIL_DPC'][61]='_instantmail;The first in lists will receive instant e-mail;Η πρώτη καταχώρηση θα λάβει το μήνυμα άμεσα';
 $__LOCALE['RCBULKMAIL_DPC'][62]='_neverrun;Not runned;Δεν εκτελέστηκε';
+$__LOCALE['RCBULKMAIL_DPC'][63]='_schedule;Set time;Χρονορύθμιση';
+$__LOCALE['RCBULKMAIL_DPC'][65]='_step;Step;Βήμα';
+$__LOCALE['RCBULKMAIL_DPC'][66]='_content;Content;Περιεχόμενο';
+$__LOCALE['RCBULKMAIL_DPC'][67]='_template;Template;Πρότυπο';
+$__LOCALE['RCBULKMAIL_DPC'][68]='_components;Components;Στοιχεία';
+$__LOCALE['RCBULKMAIL_DPC'][69]='_pattern;Pattern;Ακολουθία';
+$__LOCALE['RCBULKMAIL_DPC'][70]='_preview;Preview;Προεπισκόπηση';
+$__LOCALE['RCBULKMAIL_DPC'][71]='_prev;Previous;Προηγούμενο';
+$__LOCALE['RCBULKMAIL_DPC'][72]='_next;Next;Επόμενο';
+$__LOCALE['RCBULKMAIL_DPC'][73]='_startcamp;Start;Εκκίνηση';
+$__LOCALE['RCBULKMAIL_DPC'][74]='_campwiz;Campaign wizard;Οδηγός καμπάνιας';
+$__LOCALE['RCBULKMAIL_DPC'][75]='_distlist;Distribution lists;Λίστες διανομής';
+$__LOCALE['RCBULKMAIL_DPC'][76]='_options;Options;Ρυθμίσεις';
+$__LOCALE['RCBULKMAIL_DPC'][77]='_selectlist;Select list;Επιλογή λίστας';
+$__LOCALE['RCBULKMAIL_DPC'][78]='_addon;Addon components;Επιπλέον στοιχεία';
+$__LOCALE['RCBULKMAIL_DPC'][79]='_csv;CSV mails;CSV λίστα';
+$__LOCALE['RCBULKMAIL_DPC'][80]='_edit;Edit;Επεξεργασία';
+$__LOCALE['RCBULKMAIL_DPC'][81]='_new;New;Νέο';
+$__LOCALE['RCBULKMAIL_DPC'][82]='_customers;Application customers;Πελάτες εφαρμογής';
+$__LOCALE['RCBULKMAIL_DPC'][83]='_users;Application users;Χρήστες εφαρμογής';
+$__LOCALE['RCBULKMAIL_DPC'][84]='_timetable;Timetable;Χρονοπίνακας';
+$__LOCALE['RCBULKMAIL_DPC'][85]='_viewasweb;View as web page link;Σύνδεσμος προβολής στο web';
+$__LOCALE['RCBULKMAIL_DPC'][86]='_linetext;Show text;Προτροπή';
+$__LOCALE['RCBULKMAIL_DPC'][87]='_viewunsub;Unsubscribe link;Σύνδεσμος διαγραφής απο την λίστα διανομής';
+$__LOCALE['RCBULKMAIL_DPC'][88]='_tokens;Tokens;Tokens';
+$__LOCALE['RCBULKMAIL_DPC'][89]='_start;Start;Εκκίνηση';
+$__LOCALE['RCBULKMAIL_DPC'][90]='_finish;Finish;Τέλος';
+$__LOCALE['RCBULKMAIL_DPC'][91]='_savecamp;Save campaign;Αποθήκευση καμπάνιας';
+$__LOCALE['RCBULKMAIL_DPC'][92]='_details;Details;Λεπτομέριες';
+$__LOCALE['RCBULKMAIL_DPC'][93]='_select;Select;Επιλογή';
+$__LOCALE['RCBULKMAIL_DPC'][94]='_objselect;Object selection list;Επιλογή αντικειμένων';
+$__LOCALE['RCBULKMAIL_DPC'][95]='_up;Up;Πάνω';
+$__LOCALE['RCBULKMAIL_DPC'][96]='_dn;Dn;Κάτω';
+$__LOCALE['RCBULKMAIL_DPC'][97]='_save;Save;Αποθήκευση';
+$__LOCALE['RCBULKMAIL_DPC'][98]='_title;Title;Τίτλος';
+$__LOCALE['RCBULKMAIL_DPC'][99]='_templatewiz;Template wizard;Οδηγός κατασκευής περιεχομένου';
+$__LOCALE['RCBULKMAIL_DPC'][100]='_back;Return;Επιστροφή';
+$__LOCALE['RCBULKMAIL_DPC'][101]='_pause;Pause;Παύση';
+$__LOCALE['RCBULKMAIL_DPC'][102]='_stop;Stop;Σταμάτημα';
+$__LOCALE['RCBULKMAIL_DPC'][103]='_delete;Delete;Διαγραφή';
+$__LOCALE['RCBULKMAIL_DPC'][104]='_continue;Continue;Συνέχεια';
+$__LOCALE['RCBULKMAIL_DPC'][105]='_newcamp;New campaign;Νέα καμπάνια';
+$__LOCALE['RCBULKMAIL_DPC'][106]='_start;Start;Εκκίνηση';
+$__LOCALE['RCBULKMAIL_DPC'][107]='_end;End;Τέλος';
+$__LOCALE['RCBULKMAIL_DPC'][108]='_process;Processing;Αποστολή';
+$__LOCALE['RCBULKMAIL_DPC'][109]='_saybatch;e-mail(s) have been processed;μηνύματα έχουν επεξεργαστεί';
+$__LOCALE['RCBULKMAIL_DPC'][110]='_saybatchtotal;e-mail(s) as total, have been processed; συνολικά μηνύματα έχουν επεξεργαστεί.';
 
 class rcbulkmail {
 	
@@ -127,7 +178,7 @@ class rcbulkmail {
 	
 	var $userDemoIds, $crmLevel, $maxinpvars, $batchid, $ckeditver;
 	var $newtemplatebody, $saved, $savedname, $newsubtemplatebody, $newpatternbody;
-	var $_OPT;
+	var $_OPT, $exitCode;
 		
     function __construct() {
 	  
@@ -220,7 +271,8 @@ class rcbulkmail {
         $this->savedname = null;
 		$this->iscollection = false;
 
-		$this->_OPT = false;	
+		$this->_OPT = false;
+		$this->exitCode = '-001';	
 	}
 	
     function event($event=null) {
@@ -239,12 +291,7 @@ class rcbulkmail {
 								  
 			case 'cptemplatesav': $this->saved = $this->saveTemplate(); 
 								  $this->newcopyTemplate();	//load
-								  break;
-			
-	        case 'cpdeletecamp'    : $this->delete_campaign();
-			                         break;								
-	        case 'cpviewcamp'      : $this->load_campaign(true);
-			                         break;			
+								  break;		
 									 
 			case 'cppreviewcamp'   : break;
 			case 'cpcampcontent'   : die($this->preview_campaign());
@@ -263,22 +310,47 @@ class rcbulkmail {
 									  
 			                          if ($this->ulistselect = GetReq('ulistselect')) 
 											SetSessionParam('ulistselect', $this->ulistselect); 
-                                      break;			
+                                      break;
+
 									  
-			case "cpsubsend"      :	$this->sendOk = $this->send_mails();
-									//echo 'sendOK:',$this->sendOk;
-									SetSessionParam('messages',$this->messages);
+			case 'cpiscontent'    : die($this->is_content()); //ajax check content						  
+									  
+			case 'cpstartcamp'    :	die($this->sendit(true));//ajax based cpsubsend								  
 									
+			case "cpsubsend"      :	$this->sendOk = $this->send_mails();
+									SetSessionParam('messages',$this->messages);
 									$this->load_campaign();
+									//$this->javascript(); dont allow second push
 				                    break; 									 
 			
 	        case 'cpsavemailadv'  : $this->save_campaign();
 									SetSessionParam('messages',$this->messages); //save messages
+									$this->javascript(); 
 			                        break;
 									
-			case 'cppausecamp'    : $this->pause_campaign(); break;
-			case 'cpstopcamp'     : $this->stop_campaign(); break;
-			case 'cpstartcamp'    : $this->start_campaign(); break;									
+			case 'cppausecamp'    : $this->pause_campaign(); 
+									$this->load_campaign(true);
+									$this->javascript(); 			
+			                        break;
+									
+			case 'cpstopcamp'     : $this->stop_campaign(); 
+									$this->load_campaign(true);
+									$this->javascript();			
+			                        break;
+									
+			case 'cpcontinuecamp' : $this->continue_campaign(); 
+									$this->load_campaign(true);
+									$this->javascript(); 			
+			                        break;	
+
+	        case 'cpdeletecamp'   : $this->delete_campaign();
+									$this->load_campaign(true);
+									$this->javascript(); 
+			                        break;								
+									
+	        case 'cpviewcamp'     : $this->load_campaign(true);
+									$this->javascript(); 
+			                        break;				
 														
 			case 'cpbulkmail'     :
 			default               :	if ($this->template) {
@@ -299,8 +371,13 @@ class rcbulkmail {
 		
 	    switch ($action) {
 			
-			case 'cptemplatesav'       :  $out = ($this->saved==true) ? "Saved" : null; break;
-			case 'cptemplatenew'       :  break;									 
+			case 'cptemplatesav'       : $out = ($this->saved==true) ? "Saved" : null; 
+			                             break;
+			case 'cptemplatenew'       : break;
+			
+			case 'cpiscontent'         : break; 
+			case 'cpstartcamp'         : break; 
+			
 			case 'cpsubloadhtmlmail'   :
             case 'cpsavemailadv'       :		
 			case 'cpsubsend'           :
@@ -309,8 +386,9 @@ class rcbulkmail {
 			case 'cppreviewcamp'       : 
 			case 'cppausecamp'         : 
 			case 'cpstopcamp'          : 
-			case 'cpstartcamp'         : 		
-			case 'cpviewcamp'          : $out = $this->campaigns_grid(null,140,5,'r', true);  break;
+			case 'cpcontinuecamp'      : 		 			
+			case 'cpviewcamp'          : $out = $this->campaigns_grid(null,140,5,'r', true);  
+			                             break;
 			case 'cpbulkmail'          : 
 		    default                    : 
 		}			
@@ -347,6 +425,87 @@ class rcbulkmail {
         $ret = filter_var($data, FILTER_VALIDATE_EMAIL);
 		return ($ret);  
 	}
+	
+	protected function javascript() {	
+	    return null; //!!!!!!
+		//if ($this->isDemoUser()) return;
+		//if (!$this->cid) return;
+
+        if (iniload('JAVASCRIPT')) {   
+	        $code = $this->javascript_code();	   	
+		    $js = new jscript;
+            $js->load_js($code,null,1);   			   
+		    unset ($js);
+	    }	
+	}		
+	
+	//call from page
+	public function javascript_code()  {
+		
+	    $ajaxurl = seturl("t=");	
+		$process = localize('_process',getlocal());
+	
+		$js = <<<EOF
+
+function startcampaign(subject, from, xcid, bid, isrecur)
+{
+    var s = $('#subject').val(); 
+	var sub = subject ? subject : s;
+	
+	var f = $('#from').val(); 
+	var frm = from ? from : f;
+ 
+	var sbid = $('#bid').val();	
+	var xbid = bid ? bid : parseInt(sbid);	
+	
+	var cid = xcid ? xcid : '{$this->cid}';	
+	var to = isrecur ? '' : '&ulist=' + $('#include').val();	
+	
+	var xc = '{$this->exitCode}';
+	var lc = xc.length * -1;
+	
+	//$('#message_p').html('');
+	str = $('#message_p').html();
+	if (str.substr(lc) == xc) return; 
+	
+	$.ajax({
+	  url: '{$ajaxurl}cpiscontent&cid='+cid+to,
+	  type: 'GET',
+	  success:function(datavalid) {		
+	    if (datavalid == 1) {	
+		
+			$('#message_p').html('<img src="images/loading.gif" alt="Processing"> {$process}');
+			
+			setTimeout(function() { 
+
+			  $.ajax({
+				url: '{$ajaxurl}cpstartcamp',
+				type: 'POST',
+				data: {FormAction: 'cpstartcamp', xcid: cid, bid: xbid, subject: sub, from: frm},
+				success:function(postdata) {
+					if ((postdata.substr(lc)) == xc) {
+						$('#message_p').html(postdata);
+					}					
+					else {	
+						$('#message_p').append(postdata);				
+						var nxbid = parseInt(postdata.substr(lc));
+						setTimeout(function() { startcampaign(sub, frm, cid, nxbid, 1);},5000);
+					}
+					//$('#message_p').html('');
+				}
+			  });
+			}, 1000);  
+		}
+		else {
+			$('#message_p').html(datavalid);
+		}
+	  }
+	}); 
+}		
+EOF;
+		return ($js);	
+    }		
+	
 	
 	
 	protected function campaigns_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
@@ -396,6 +555,7 @@ class rcbulkmail {
 	
 	function show_select_ulist($name, $taction=null, $class=null) {
 		$db = GetGlobal('db');
+		$selecttitle = localize('_select', getlocal());
 			
 		$sSQL = 'select distinct listname from ulists ';		   
 		$sSQL .= " ORDER BY listname";	
@@ -407,7 +567,7 @@ class rcbulkmail {
 		
 	 
 		$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
-		$ret .= "<option value=\"\">Select...</option>";
+		$ret .= "<option value=\"\">$selecttitle</option>";
 
 		foreach ($resultset as $n=>$rec) {
 			$selection = ($rec[0] == $this->ulistselect) ? " selected" : null;
@@ -462,6 +622,7 @@ class rcbulkmail {
 	}
 	
 	function show_select_files($name, $taction=null, $ext=null, $class=null) {
+		$selecttitle = localize('_select', getlocal());		
 		$tmpl = $this->savedname ? $this->savedname :
 				(GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate'));
 	
@@ -483,7 +644,7 @@ class rcbulkmail {
 					sort($ddir);	 
 					
 					$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
-					$ret .= "<option value=\"$url\">Select...</option>";
+					$ret .= "<option value=\"$url\">$selecttitle</option>";
 					
 					foreach ($ddir as $id=>$fname) {
 						$parts = explode(".",$fname);
@@ -863,6 +1024,22 @@ class rcbulkmail {
 
 		return (implode('',$ret));			
 	}	
+	
+	//ajax use
+	protected function is_content() {
+        //check expiration key
+        //if ($this->appkey->isdefined('RCBULKMAIL')==false) 
+	        //return "Failed, module expired."; 
+
+		if (is_readable($this->savehtmlpath .'/'. $this->cid.'.html')) { 						
+		
+			$res = $this->load_campaign(true); //before start, load campaign once and update new ulists field
+			
+			return $res ? '1' : 'Failed: Campaign not loaded!'; 
+		}	
+		 
+		return 'Failed: Empty content, file not exist ('. $this->cid . '.html)';			
+	}	
 
 	protected function load_campaign($reset=false) {
 		$db = GetGlobal('db');		
@@ -872,10 +1049,13 @@ class rcbulkmail {
 		$ownerSQL = null;//($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);	
 		$cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
 
-		$sSQL = 'select title,cdate,ulists,cc,bcc,user,pass,server from mailcamp where '. $ownerSQL . $cidSQL;
+		$sSQL = 'select title,ctype,ulists,cc,bcc,user,pass,server from mailcamp where '. $ownerSQL . $cidSQL;
 		$res = $db->Execute($sSQL);
 		
 		SetParam('subject', $res->fields[0]); //make it global to used be html form
+		
+		//SetParam('bid', $res->fields[1]); //saved bid
+		$this->batchid = $res->fields[1]; //saved bid only in 1st time of re-post (semi-executed posts)
 		
 		SetParam('ulists', $res->fields[2]); //ulists
 		SetParam('from', $res->fields[3]); // from cc
@@ -892,7 +1072,17 @@ class rcbulkmail {
 		SetParam('realm', $m_realm);
 		
 		if ($reset) {
-			//...
+			if ($ulist = GetReq('ulist')) { //re-post (ajax call, is_content check - first call)
+		
+				$sSQL = 'update mailcamp set ulists=' . $db->qstr($ulist);
+				$sSQL .= ' where '. $ownerSQL . $cidSQL;	
+				$resultset = $db->Execute($sSQL);
+				$this->messages[] = $sSQL;	
+
+				SetParam('include', $ulist);
+			}
+			else
+				SetParam('include', $res->fields[2]);
 		}	
 		else {	
 			$ul = strstr($res->fields[2], ',') ? explode(',',$res->fields[2]) : array([0]=>$res->fields[2]);
@@ -917,13 +1107,13 @@ class rcbulkmail {
 		else	
 		    $this->messages[] = localize('_neverrun', getlocal());
 	   
-		return ($rec[0]); //one rec
+		return ($res->fields[0]); //one rec
 	}
 	
 	public function instanceCamp($template=null, $limit=null) {
 		if (!$cid = $_GET['cid']) return false;
 		$db = GetGlobal('db');			
-		$l = $limit ? $limit : 1;
+		$l = $limit ? $limit : 5;
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
@@ -945,8 +1135,17 @@ class rcbulkmail {
 		return ($ret);	
 	}
 
-	public function controlCamp() {
+	public function controlCamp($ajax=null) {
+		$newcamp = localize('_newcamp', getlocal());		
+		$submit = $ajax ? "onClick='startcampaign()'" : "type='submit'";
+		
 		if ($this->cid) {
+			
+			$start = localize('_start', getlocal());
+			$pause = localize('_pause', getlocal());
+			$continue = localize('_continue', getlocal());
+			$end = localize('_end', getlocal());
+			$delete = localize('_delete', getlocal());
 			
 			if (!$this->isCampaignOwner()) return false;
 		
@@ -956,23 +1155,26 @@ class rcbulkmail {
 			$lastrun = $this->campaignLastRun();
 		
 			if (!$active)
-				$ret = $this->sendOK ?	"<button type=\"submit\" class=\"btn btn-success\">Start</button>&nbsp;" : 
-										"<button type=\"submit\" class=\"btn btn-danger\">Start</button>&nbsp;" ;
+				if ($ajax)
+					$ret = "<button onClick='startcampaign()' class='btn btn-danger'>$start</button>&nbsp;" ;
+				else	
+					$ret = $this->sendOK ?	"<button type=\"submit\" class=\"btn btn-success\">$start</button>&nbsp;" : 
+											"<button type=\"submit\" class=\"btn btn-danger\">$start</button>&nbsp;" ;
 		
 			if (($lastrun) && (!$complete)) {
 		
-				$ret .= ($pause) ? "<a href=\"cpbulkmail.php?t=cpstartcamp&cid={$this->cid}\" class=\"btn btn-success\">Continue</a>&nbsp;" :
-								   "<a href=\"cpbulkmail.php?t=cppausecamp&cid={$this->cid}\" class=\"btn btn-danger\">Pause</a>&nbsp;";
+				$ret .= ($pause) ? "<a href=\"cpbulkmail.php?t=cpcontinuecamp&cid={$this->cid}\" class=\"btn btn-success\">$continue</a>&nbsp;" :
+								   "<a href=\"cpbulkmail.php?t=cppausecamp&cid={$this->cid}\" class=\"btn btn-danger\">$pause</a>&nbsp;";
 												  
 				if (($active) || ($pause))
-					$ret .= "<a href=\"cpbulkmail.php?t=cpstopcamp&cid={$this->cid}\" class=\"btn btn-danger\">Stop</a>&nbsp;";
+					$ret .= "<a href=\"cpbulkmail.php?t=cpstopcamp&cid={$this->cid}\" class=\"btn btn-danger\">$stop</a>&nbsp;";
 			}
 			
 			if (!$complete)
-				$ret .= "<a href=\"cpbulkmail.php?t=cpdeletecamp&cid={$this->cid}\" class=\"btn btn-danger\">Delete</a>&nbsp;";
+				$ret .= "<a href=\"cpbulkmail.php?t=cpdeletecamp&cid={$this->cid}\" class=\"btn btn-danger\">$delete</a>&nbsp;";
 		}
 		
-		$ret .= "<a href=\"cpbulkmail.php\" class=\"btn btn-success\">New campaign</a>&nbsp;";		
+		$ret .= "<a href=\"cpbulkmail.php\" class=\"btn btn-success\">$newcamp</a>&nbsp;";		
 
 		return ($ret);	
 	}	
@@ -1046,7 +1248,7 @@ class rcbulkmail {
 		return false;
 	}	
 	
-	protected function start_campaign() {
+	protected function continue_campaign() {
 		$db = GetGlobal('db');	
         if (!$this->cid) return false; 
 		
@@ -1262,13 +1464,16 @@ class rcbulkmail {
 	   
 		$sSQL = "SELECT email FROM ulists where active=1 and listname=" . $db->qstr($ulistname); 
 		$sSQL.= (isset($start)) ? ($limit ? " LIMIT " . $start . "," . $limit : ($limit ? " LIMIT " . $limit : null)) : null;
-		//echo $sSQL;	
+		//echo $sSQL;
+		$this->messages[] = $sSQL;	
 		$result = $db->Execute($sSQL,2);
 	   
 		if (count($result)>0) {		   
 			foreach ($result as $n=>$rec) {
-				if ($m = $this->checkmail(trim($rec['email']))) 		 
-					$ret[] = trim($m);
+				//MUST ALWAYS RETURN BATCH AS WHOLE, iF IT IS REDUCED BATCH WILL STOPPED
+				/*if ($m = $this->checkmail(trim($rec['email']))) 		 
+					$ret[] = trim($m);*/
+				$ret[] = $rec['email'];
 			}
 			
 			if (!empty($ret)) {  
@@ -1435,7 +1640,7 @@ class rcbulkmail {
 	}			
 	
 	/*on resend or batch send */
-	protected function resetbatch($xcid=null, $step=1, $ulist=null, $segment=null, $counter=0) {
+	protected function nextbatch($xcid=null, $step=0, $ulist=null, $segment=null, $counter=0) {
 		$db = GetGlobal('db');		
 		$cid = $xcid ? $xcid : $this->cid;
         if (!$cid) return false;
@@ -1455,7 +1660,7 @@ class rcbulkmail {
 		
 		$resultset = $db->Execute($sSQL);
 
-		$restToProceed = ($this->maxinpvars - $counter); //maxinpvars is modified
+		$restToProceed = $this->maxinpvars;// - $counter); //maxinpvars is modified
 		
 		return array(0=>0,1=>0,2=>$restToProceed);
 	}	
@@ -1479,27 +1684,26 @@ class rcbulkmail {
 	        //$this->messages[] = "Failed, module expired.";
 		    //return false;  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< appkey --------------------------!!
 	    }
-
 		
 		if (is_readable($this->savehtmlpath .'/'. $this->cid.'.html')) {
 							
-			$res = $this->sendit($from, $subject);//, $rawtext, $cid); 					
+			$res = $this->sendit();					
 			return ($res); 
 		}
 		else 
-			$this->messages[] = 'Failed: Empty content, file not exist ('. $cid . '.html)';			
+			$this->messages[] = 'Failed: Empty content, file not exist ('. $this->cid . '.html)';			
 		
 	    return false;   
 	}	
 	
-	protected function sendit($from=null,$subject=null, $include=null) {//,$mail_text='',$cid=null) {		
+	protected function sendit($ajax=null) {	
 		$db = GetGlobal('db');
 		$optSQL = null;	
-		
 		$cid = $this->cid;
+		
 		if (!$cid) { 
 			$this->messages[] = 'CID form error!';
-			return false;		
+			return ($ajax) ? 'CID form error!' : false;		
         }
 		
 		$mail_text = @file_get_contents($this->savehtmlpath .'/'. $cid.'.html');
@@ -1508,24 +1712,28 @@ class rcbulkmail {
 		$mailpass = GetParam('pass') ? GetParam('pass') : $this->mailpass;
 		$mailserver = GetParam('server') ? GetParam('server') : $this->mailserver;
 		$mailname = GetParam('realm') ? GetParam('realm') : $this->mailname; //a per user submit (realm)
-		$from = $from ? $from : $mailuser; //replace sender when another server settings ? 
 		
-		if (!$from = GetParam('from')) {
+		$from = GetParam('from') ? GetParam('from') : $mailuser; //replace sender when another server settings ? 
+		if (!$from) {
 			$this->messages[] = 'From field missing!';
-			return false;
+			return ($ajax) ? 'From field missing! '.$this->exitCode : false;
 		}	
 		
-		$subject = $subject ? $subject : GetParam('subject');		
 		if (!$subject = GetParam('subject')) {
 			$this->messages[] = 'Subject field missing!';
-			return false;
+			return ($ajax) ? 'Subject field missing! '.$this->exitCode : false;
 		}			
 		
-		$inc = $include  ? $include : GetParam('include'); 
-		if (!$inc) {
-			$this->messages[] = "No recipients, e-mail distribution completed!";
-			return false;
+		if (!$inc = GetParam('include')) {
+			$sSQL = 'select ulists from mailcamp where cid=' . $db->qstr($cid);
+			$result = $db->Execute($sSQL);
+			if (!$inc = $result->fields[0]) {
+				$this->messages[] = "No recipients, e-mail distribution completed!";
+				return ($ajax) ? "No recipients! ".$this->exitCode : false;
+			}
+			//else $this->messages[] = 'Load ulists from db:'.$inc;
 		}
+		//else $this->messages[] = 'Load ulists:'.$inc;
 			
 		//echo $inc;
 		//clean to, from remaing commas
@@ -1536,8 +1744,10 @@ class rcbulkmail {
 		
 		$i = 0;
 		$meter = 0;
+		$sum = ($this->batchid * $this->maxinpvars); //hold prev sends sum
         $index = $this->batchid * $this->maxinpvars;
-			
+		$this->messages[] = 'Index:' . $this->batchid .",".$this->maxinpvars.",".$index ;//."<br>post:" . implode('-',$_POST);
+		
 		if ($cc) {	
 	
 			set_time_limit(120); 
@@ -1553,21 +1763,16 @@ class rcbulkmail {
 										$this->sendmail_inqueue($from,$m,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);
 					$i+=1; 				
 					
-					list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, $i);		
+					list($this->batchid, $index, $this->maxinpvars) = $this->nextbatch($cid ,$this->batchid, $to, $m, $i);		
 				}
 				else {//list name
 				
 					$mails = $this->get_mails_from_lists($m, true, $this->maxinpvars, $index);
+					//$this->messages[] = $m .': '.count($mails);
 					
 					if (!empty($mails)) {
 						foreach ($mails as $z1=>$m1) {	
-
-							if ($z1==$this->maxinpvars) { 
-								$this->batchid += 1;
-								echo 'Stop:'.$m; echo ' Bid:'.$this->batchid; echo 'List length:'.$z1.':'.$i;
-								break 2; //js ajax to procced next batch !!!!							
-							}
-						
+                            
 							$text = str_replace('_SUBSCRIBER_', $m1, $mail_text); 	
 							if ($this->_OPT) //ERROR see below
 								$optSQL .= $this->sendmail_inqueue_opt($from,$m1,$subject,$text,$this->ishtml,$mailuser,$mailpass,$mailname,$mailserver);								
@@ -1576,25 +1781,31 @@ class rcbulkmail {
 							$i+=1; 
 						}
 						
-						list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, $i);
-						
-					    /*if ($this->maxinpvars==count($mails)) { 
+					    //if ($this->maxinpvars==count($mails)) { 
+						if ($i >= $this->maxinpvars) {
+							$i = 0;
 							$this->batchid += 1;
-							//echo 'Stop:'.$m; echo ' Bid:'.$this->batchid; echo 'List length:'.count($mails) *($this->batchid+1);
-							break 1;							
+							$this->nextbatch($cid ,$this->batchid); //set only the batchid
+							//$this->messages[] = 'Stop:'.$m.' Bid:'.$this->batchid. ' List length:'.(count($mails) * $this->batchid);
+							break 1;
+							
 						}//if not a full set page
 						else //next tag
-							list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, count($mails)); */
+							list($this->batchid, $index, $this->maxinpvars) = $this->nextbatch($cid ,$this->batchid, $to, $m, $i); 
 					}//has mails
 					else //next tag
-						list($this->batchid, $index, $this->maxinpvars) = $this->resetbatch($cid ,1, $to, $m, 0);			
+						list($this->batchid, $index, $this->maxinpvars) = $this->nextbatch($cid ,$this->batchid, $to, $m, $i);			
 				}
 			}	
 			
 			set_time_limit(ini_get('max_execution_time'));	//return to default			
 					
 		} 
-		else $this->messages[] =  'Send failed: NO receipients (cc)';
+		else {
+			$this->messages[] =  'Send failed: NO receipients (cc)';
+			//$this->batchid = -1;
+			return ($ajax) ? 'Send failed: NO receipients (cc) '.$this->exitCode : false;
+		}	
 		
 		if ($optSQL) {
 			$optimizeSQL = "insert into mailqueue (timein,active,sender,receiver,subject,body,altbody,cc,bcc,ishtml,encoding,origin,user,pass,name,server,trackid,cid,owner) values ";
@@ -1605,15 +1816,20 @@ class rcbulkmail {
 			$this->messages[] = $af . ' records added in mail queue.'.$s;
 			//ERROR : Allowed memory size of 268435456 bytes exhausted (tried to allocate 79088397 bytes) in /home/stereobi/public_html/cp/dpc/system/extensions/adodb/adodb.ext.php on line 1233	
 		}	
-	
-		$this->messages[] = $meter . ' e-mail(s) have just been sent' . ' ('.$this->batchid.')';		
-				
-		//$this->batchid = $bid ? $bid : 0;				
-		//return ($bid ? false : true);
-		//$ret = (!$cc) ? true : false;
-		//$ret = (str_replace(',','',$to)==null) ? true : false; //to show the green button when its over
-        $ret = $this->isPostFinished();
-		return ($ret);
+		
+		if ($this->isPostFinished()) {
+
+			$this->messages[] = ($sum + $meter) . ' '.localize('_saybatchtotal', getlocal());
+			
+			$this->nextbatch($cid ,0); //set only the batchid - reset = 0
+			$this->batchid = intval($this->exitCode);//-1; 		
+        }			
+		else
+			$this->messages[] = ($sum + $meter) . ' '.localize('_saybatch', getlocal()) . ' ('.$this->batchid.')';		
+			
+		
+		$ret = implode('<br/>',$this->messages) .' '. sprintf('%+04d',$this->batchid); //exitcode length !!!
+		return ($ret);			 
     }	
 	
 	//send mail to db queue optimized
@@ -1629,7 +1845,7 @@ class rcbulkmail {
 		
 		//test
 		//$this->messages[] = $to;
-		//return true; //test ..ADO MEM ERROR
+		return true; //test ..ADO MEM ERROR
 	   
 		//tracking var
 		if ($this->trackmail) {
@@ -1674,7 +1890,7 @@ class rcbulkmail {
 		
 		//test
 		//$this->messages[] = $to;
-		//return true; //test
+		return true; //test
 	   
 		//tracking var
 		if ($this->trackmail) {
@@ -1737,8 +1953,8 @@ class rcbulkmail {
 		$cid = $this->cid; 
 		
 		//test		
-		$this->messages[] = $to . ' instant message has been sent.';
-		//return true; //test
+		//$this->messages[] = $to . ' instant message has been sent.';
+		return true; //test
 	   
 		//tracking var
 		if ($this->trackmail) {

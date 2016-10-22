@@ -106,9 +106,6 @@ $__LOCALE['SHLOGIN_DPC'][122]='_editctag;Category Tags;Tags κατηγορίας
 $__LOCALE['SHLOGIN_DPC'][123]='_edititag;Item Tags;Tags είδους';
 $__LOCALE['SHLOGIN_DPC'][124]='_menu;Menu;Επιλογές Menu';
 $__LOCALE['SHLOGIN_DPC'][125]='_slideshow;Slideshow;Επιλογές Slideshow';
-$__LOCALE['SHLOGIN_DPC'][126]='_inactiveuser;Inactive user;Μη ενεργός χρήστης';
-$__LOCALE['SHLOGIN_DPC'][127]='_newactiveuser;New user;Νέος χρήστης';
-$__LOCALE['SHLOGIN_DPC'][128]='_formsubmit;Message from;Μηνυμα απο';
 
 class shlogin {
 
@@ -1253,57 +1250,8 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 		SetGlobal('sFormErr',$msg);
 		  
 		return ($ret);																			 
-     }     
+    }     
 	 
-	//last month check 
-	public function check_inactive_users() {
-		if (!defined('RCCONTROLPANEL_DPC')) return false;
-		$db = GetGlobal('db');
-		$text = localize('_inactiveuser',getlocal());
-		$sSQL = "select username,timein from users where notes='DELETED' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
-		$result = $db->Execute($sSQL,2);
-		
-		foreach ($result as $i=>$rec) {
-			$saytime = GetGlobal('controller')->calldpc_method("rccontrolpanel.timeSayWhen use ".strtotime($rec[1]));
-			//" (" .date("d-m-Y G:i", strtotime($rec[1])). 
-			$msg = "warning|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];
-			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
-		}
-		return null;
-	} 
-	
-	//last month check 
-	public function check_newactive_users() {
-		if (!defined('RCCONTROLPANEL_DPC')) return false;
-		$db = GetGlobal('db');
-		$text = localize('_newactiveuser',getlocal());
-		$sSQL = "select username,timein from users where notes='ACTIVE' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
-		$result = $db->Execute($sSQL,2);
-		
-		foreach ($result as $i=>$rec) {
-			$saytime = GetGlobal('controller')->calldpc_method("rccontrolpanel.timeSayWhen use ".strtotime($rec[1]));
-			$msg = "success|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];
-			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
-		}
-		return null;
-	} 
-
-	//last month check 
-	public function check_form_submitions() {
-		if (!defined('RCCONTROLPANEL_DPC')) return false;
-		$db = GetGlobal('db');
-		$text = localize('_formsubmit',getlocal());
-		$sSQL = "select email,date from cform where DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(date) desc";
-		$result = $db->Execute($sSQL,2);
-		//echo $sSQL;
-		foreach ($result as $i=>$rec) {
-			$saytime = GetGlobal('controller')->calldpc_method("rccontrolpanel.timeSayWhen use ".strtotime($rec[1]));
-			$msg = "info|" . $text .' '. $rec[0] . "|$saytime|cpform.php|".$rec[0];
-			GetGlobal('controller')->calldpc_method("rccontrolpanel.setMessage use ".$msg);
-		}
-		return null;
-	} 	
-   
 	public function combine_tokens($template_contents,$tokens) {
 	
 	    if (!is_array($tokens)) return;

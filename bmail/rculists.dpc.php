@@ -54,6 +54,8 @@ $__LOCALE['RCULISTS_DPC'][13]='_MAILTRACE;Actions;Ενέργειες';
 $__LOCALE['RCULISTS_DPC'][14]='_code;Item;Κωδικός';
 $__LOCALE['RCULISTS_DPC'][15]='_category;Category;Κατηγορία';
 $__LOCALE['RCULISTS_DPC'][16]='_mailstatus;Reason;Αιτία';
+$__LOCALE['RCULISTS_DPC'][17]='_cleanlist;Clean list;Καθαρισμός λίστας';
+$__LOCALE['RCULISTS_DPC'][18]='_failmargin;Fail margin;Αποτυχίες';
 
 class rculists  {
 

@@ -8,16 +8,26 @@ define("RCULISTSTATS_DPC",true);
 $__DPC['RCULISTSTATS_DPC'] = 'rculiststats';
 
 $__EVENTS['RCULISTSTATS_DPC'][0]='cpuliststats';
-$__EVENTS['RCULISTSTATS_DPC'][1]='cp'; //cp when first page
 
 $__ACTIONS['RCULISTSTATS_DPC'][0]='cpuliststats';
-$__ACTIONS['RCULISTSTATS_DPC'][1]='cp'; //cp when first page
 
 $__DPCATTR['RCULISTSTATS_DPC']['cpuliststats'] = 'cpuliststats,1,0,0,0,0,0,0,0,0,0,0,1';
 
 $__LOCALE['RCULISTSTATS_DPC'][0]='RCULISTSTATS_DPC;Statistics;Στατιστική';
 $__LOCALE['RCULISTSTATS_DPC'][1]='_viewallnotifications;View all notifications;Όλες οι ειδοποιήσεις';
-$__LOCALE['RCULISTSTATS_DPC'][2]='_outoflist;out of list;εξήχθει απο';
+$__LOCALE['RCULISTSTATS_DPC'][2]='_outoflist;out of list;αφαίρεση απο';
+$__LOCALE['RCULISTSTATS_DPC'][3]='_mailsent;e-Mails sent;e-Mails που στάλθηκαν';
+$__LOCALE['RCULISTSTATS_DPC'][4]='_mailtosend;e-Mails to send;e-Mails προς αποστολή';
+$__LOCALE['RCULISTSTATS_DPC'][5]='_taskprocess;Task process;Εξέλιξη εργασιών';
+$__LOCALE['RCULISTSTATS_DPC'][6]='_viewallnotifications;View all notifications;Όλα τα μηνύματα';
+$__LOCALE['RCULISTSTATS_DPC'][7]='_views;Views;Επισκέψεις';
+$__LOCALE['RCULISTSTATS_DPC'][8]='_bqueue;Queue;Λίστα';
+$__LOCALE['RCULISTSTATS_DPC'][9]='_runningcamps;Running campaigns;Καμπάνιες σε εξέλιξη';
+$__LOCALE['RCULISTSTATS_DPC'][10]='_activequeue;Active queue;Υπόλοιπο λίστας';
+$__LOCALE['RCULISTSTATS_DPC'][11]='_breg;Subscriptions;Εγγραφές';
+$__LOCALE['RCULISTSTATS_DPC'][12]='_bunreg;Unsubscribed;Διαγραφές';
+$__LOCALE['RCULISTSTATS_DPC'][13]='_bounce;Bounce mails;Επιστροφές e-mail';
+$__LOCALE['RCULISTSTATS_DPC'][14]='_bclick;Clicked;Μετάβαση στη σελίδα';
 
 class rculiststats  {
 
@@ -54,11 +64,11 @@ class rculiststats  {
 
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 		if ($login!='yes') return null;		
-
-		switch ($event) {				
-			case 'cp'            :	break;		
+		
+		switch ($event) {				 			
 			case 'cpuliststats'  :
-			default              : //$this->percentofCamps();                    
+			default              :  $this->percentofCamps(); //update task dropdown also TO HTML CP-DASHBOARD
+                                    $this->getUnsubsToday(); //update inbox dropdown also TO HTML CP-DASHBOARD	
 		}
     }
 
@@ -68,7 +78,6 @@ class rculiststats  {
 		if ($login!='yes') return null;	
 
 		switch ($action) {
-			case 'cp'                  : $this->runstats(); break; //when first page and need to run stats				
 			case 'cpuliststats'   	   :
 			default          		   : $this->runstats();	
 		}
@@ -245,13 +254,7 @@ class rculiststats  {
 		$fl = $this->runSql('bounced', $sSQL);			
 		$sSQL = "select count(id) from mailqueue where active=1" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
 		$sl = $this->runSql('notsentyet', $sSQL);			
-		/*		
-		$sSQL = "SELECT COUNT(id) FROM mailcamp";	
-		$sSQL.= $ownerSQL ? str_replace('and','where',$ownerSQL) : null;
-		$this->runSql('campaigns', $sSQL);		
-		$sSQL = "SELECT COUNT( DISTINCT (subject) ) FROM mailqueue";
-		$sSQL.= $ownerSQL ? str_replace('and','where',$ownerSQL) : null;	
-		$this->runSql('usedCampaigns', $sSQL);*/		
+	
 		$sSQL = "SELECT COUNT( DISTINCT (subject) ) FROM mailqueue where active=1" . $ownerSQL;	
 		$this->runSql('runningCampaigns', $sSQL);
 
@@ -400,19 +403,18 @@ class rculiststats  {
 		$resultset = $db->Execute($sSQL,2);
 		//echo $sSQL;
 		foreach ($resultset as $n=>$rec) {
-		    //if ($rec[2] == 0) { //float avg of actives (else must be 0)
-				if ($t) {
-					$tokens[] = $rec[0];
-					$tokens[] = $rec[1];
-					$tokens[] = (100-intval($rec[2]*100));
-					$tokens[] = $rec[3];
-					$tokens[] = $rec[4];						
-					$ret .= $this->combine_tokens($t, $tokens);
-					unset($tokens);
-				}
-				else
-					$ret[] = $rec[1]; //?? no mean
-			//}	
+
+			if ($t) {
+				$tokens[] = $rec[0];
+				$tokens[] = $rec[1];
+				$tokens[] = (100-intval($rec[2]*100));
+				$tokens[] = $rec[3];
+				$tokens[] = $rec[4];						
+				$ret .= $this->combine_tokens($t, $tokens);
+				unset($tokens);
+			}
+			else
+				$ret[] = $rec[1]; //no mean
 		}
 
 		return ($ret);	
@@ -582,6 +584,10 @@ class rculiststats  {
 		$t = ($template!=null) ? $this->select_template($template) : null;
 		$tokens = array();
 		
+		//reset inbox
+		SetSessionParam('cpInbox', '');
+		$this->inbox = null;
+		
 		//$timein = $this->sqlDateRange('timein', true, false);
 		//if ($timein) return null; //no current tasks when time range
 		$refsql = null; //$cid ? "and ref='$cid'" : null;
@@ -599,12 +605,17 @@ class rculiststats  {
 		foreach ($resultset as $n=>$rec) {
 
 		    $saytime = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec[0]));
-			$msg = "warning|" . $rec[2] .", ". $text .' '. $rec[1] . "|" . $saytime;//" (" .date("d-m-Y G:i", strtotime($rec[0])). ")";
-			_m("rccontrolpanel.setMessage use ".$msg);
+			//$msg = "warning|" . $rec[2] .", ". $text .' '. $rec[1] . "|" . $saytime;
+			//_m("rccontrolpanel.setMessage use ".$msg);
+			$msg = $rec[2] . "|" . $text .' '. $rec[1] . "|" . $saytime . '|cpsubscribers.php';
+			//$this->setInbox($msg);
+			_m("rccontrolpanel.setInbox use ".$msg);
 		}
 
 		return ($ret);			
 	}	
+
+	
 
     public function select_timeline($template,$year=null, $month=null) {
 		$year = GetParam('year') ? GetParam('year') : date('Y'); 

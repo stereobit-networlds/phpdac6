@@ -1105,8 +1105,8 @@ class rcitems {
 	} 	
 	
 	function form_insert2($width=null, $height=null, $rows=null, $editlink=null,$mode=null, $noctrl=false) {
-	    $height = $height ? $height : 800;
-        $rows = $rows ? $rows : 36;
+	    $height = $height ? $height : 600;
+        $rows = $rows ? $rows : 25;
         $width = $width ? $width : null; //wide	
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;			
@@ -2520,63 +2520,6 @@ class rcitems {
 	  return ($ret);
 	}	
 	
-	function reset_db() {
-        $db = GetGlobal('db'); 
-	 
-	    $sSQL0 = "drop table products";
-	    $result0 = $db->Execute($sSQL0,1);	
-	    if ($result0) $message = "Drop table ...\n";
-		
-	    //create table
-	    $sSQL1 = "
-CREATE TABLE `products` (
-  `id` int(11) NOT NULL auto_increment,
-  `code1` int(11) default NULL,
-  `code2` int(11) default NULL,
-  `code3` varchar(64) default NULL,
-  `code4` varchar(64) default NULL,
-  `code5` varchar(64) default NULL,
-  `itmname` varchar(128) default NULL,
-  `itmactive` tinyint(4) default NULL,
-  `itmfname` varchar(128) default NULL,
-  `itmremark` text,
-  `itmdescr` text,
-  `itmfdescr` text,
-  `sysins` datetime default '0000-00-00 00:00:00',
-  `uniida` int(11) default '0',
-  `uniname1` varchar(64) default NULL,
-  `uniname2` varchar(64) default NULL,
-  `uni1uni2` float default '0',
-  `uni2uni1` float default '0',
-  `ypoloipo1` float default '0',
-  `ypoloipo2` float default '0',
-  `price0` float default '0',
-  `price1` float default '0',
-  `cat0` varchar(128) default NULL,
-  `cat1` varchar(128) default NULL,
-  `cat2` varchar(128) default NULL,
-  `cat3` varchar(128) default NULL,
-  `cat4` varchar(128) default NULL,
-  `active` tinyint(4) default '0',
-  `price2` float default '0',
-  `pricepc` float default '0',
-  `p1` text,
-  `p2` text,
-  `p3` text,
-  `p4` text,
-  `p5` text,
-  PRIMARY KEY  (`id`),
-  UNIQUE KEY `code1` (`code1`,`code2`,`code3`,`code4`,`code5`),
-  KEY `itmname` (`itmname`,`cat0`,`cat1`,`cat2`,`cat3`,`cat4`),
-  FULLTEXT KEY `itmremark` (`itmremark`)
-) ENGINE=MyISAM  DEFAULT CHARSET=greek COMMENT='products table' AUTO_INCREMENT=73 ;
-";	    
-	    $result1 = $db->Execute($sSQL1,1);
-	    if ($result1) $message .= "Create table ...\n";
-	  
-	    setInfo($message);	  	
-	}
-	
 	function loadframe($ajaxdiv=null) {
 	    $db = GetGlobal('db');
 
@@ -2675,7 +2618,7 @@ function photo_item() {
 	   //..photo_item({".$id."});
 	   $editlink = "javascript:edit_item({".$id."});";//seturl('t=cpvmodify&id={'.$id.'}');		   	   	   
 	   
-	   $rd = $this->form_insert2(null,380,16, $editlink, 'e', true);
+	   $rd = $this->form_insert2(null,300,12, $editlink, 'e', true);
 
 	   
 	   if ($item_id) {//preselected item

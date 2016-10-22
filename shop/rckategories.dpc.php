@@ -853,7 +853,7 @@ class rckategories extends shkategories {
 	   $id = 'id';//$this->getmapf('code');
 	   $editlink = "javascript:edit_cat({".$id."})";
 	   
-	   $rd = $this->add_category2(null,440,18, $editlink, 'e', true);
+	   $rd = $this->add_category2(null,300,12, $editlink, 'e', true);
 
 	   if ($cat) {//preselected cat
 		 //$editurl = seturl("t=cpeditcat&editmode=1&cat=".$cat);//$id;

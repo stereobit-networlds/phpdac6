@@ -210,7 +210,7 @@ class rctransactions extends shtransactions {
 	        GetGlobal('controller')->calldpc_method("mygrid.column use grid2+qty|".localize('_qty',getlocal())."|5|0|||||right");				
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cost|".localize('_cost',getlocal())."|5|0|||||right");
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+customers+$xsSQL2+r+".localize('RCTRANSACTIONS_DPC',getlocal())."+recid+1+1+20+400+$x+0+1+1");
+			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+customers+$xsSQL2+r+".localize('RCTRANSACTIONS_DPC',getlocal())."+recid+1+1+12+300+$x+0+1+1");
 
 	    }
 		else 

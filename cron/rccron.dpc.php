@@ -93,8 +93,9 @@ class rccron  {
 							  break;					  
 	     case 'cpcron'      :
 
-		 default            : $out .= $this->crontab_grid(null,140,14,'d', true);	
-							  $out .= "<div id='cronjobs'></div>";
+		 default            : $out .= "<div id='cronjobs'></div>";
+		                      $out .= $this->crontab_grid(null,140,14,'d', true);	
+							  
 	  }	 
 
 	  return ($out);
