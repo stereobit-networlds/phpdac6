@@ -573,6 +573,9 @@ function addtocart(id,cartdetails)
 
 				SetSessionParam('cartstatus',0);
 				$this->status = 0;
+
+				if ($user = decode(GetGlobal('UserName')))
+					$this->update_statistics('cart-add', $user);
 			}
 			else
 				setInfo(localize('_MSG15',getlocal()));
@@ -603,6 +606,9 @@ function addtocart(id,cartdetails)
            }                                   
         }                    
 		$this->setStore();
+		
+		if ($user = decode(GetGlobal('UserName')))
+			$this->update_statistics('cart-remove', $user);
 		
  	    $this->quick_recalculate();	//re-update prices and totals	
 	}
@@ -688,6 +694,8 @@ function addtocart(id,cartdetails)
 				$this->logcart();
 				$this->goto_printer();
 				$this->clear();
+
+				$this->update_statistics('cart-submit', $user);
 				
 				//transport save
 				if (defined('TRANSPORT_DPC')) 
@@ -2224,18 +2232,10 @@ function addtocart(id,cartdetails)
 		return ($ret . $trans_button);
     }
 	
-    //TO BE DELETED
-    //called by the paypal,piraeus ... procesor at success to finalize cart //..also in viercart step 3
-    /*function finalize_cart($transno=null) {//, $tokensout=null) {
- 
-        //$this->status = 3;//already 3 in cartview but in case of load cart in payengines..must be set
-        $out = $this->finalize_cart_success($transno);//...moved down
-		
-		return ($out);
-		 
-    }
-    */
 	protected function finalize_cart_success($transno=null) {
+		$UserName = decode(GetGlobal('UserName'));		
+	
+		$this->update_statistics('cart-purchase', $UserName);	
 	
 	    //template
 	    $cart_template= "shcartsuccess.htm";
@@ -2275,6 +2275,10 @@ function addtocart(id,cartdetails)
 	}
 
 	protected function finalize_cart_error($transno=null) {
+		$UserName = decode(GetGlobal('UserName'));		
+	
+		$this->update_statistics('cart-error', $UserName);		
+		
 	    //template
 	    $cart_template= "shcarterror.htm";
 	    $template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
@@ -2302,25 +2306,6 @@ function addtocart(id,cartdetails)
 
 		return ($out);
 	}
-	/*
-	function send_template_message($templatename,$message,$forceencode=null) {
-	
-		$template = paramload('SHELL','prpath') . $templatename;
-		  
-		//convert to utf8
-		if ((stristr($charset,'utf8')) || (stristr($charset,'utf-8'))) {
-		    $myenc_source = $forceencode ? $forceencode : $this->s_enc;
-		    $mydata = file_get_contents($template);
-			$fdata = @mb_convert_encoding($mydata,$this->t_enc,$myenc_source);
-		}
-		else
-		    $fdata = file_get_contents($template);
-		  
-		$out .= str_replace("##_LINK_##",$message,$fdata);
-		  
-		return ($out);	
-	}
-    */
 	
 	protected function read_policy() {
 
@@ -3113,6 +3098,13 @@ function addtocart(id,cartdetails)
 			$out = $mailbody . $ret;	 	 
 		 
 		return ($out);	 
+	}	
+
+	protected function update_statistics($id, $user=null) {
+        if (defined('CMSVSTATS_DPC'))	
+			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
+		
+		return false;
 	}		
 	
 	protected function make_gmt_date($date=null,$mytmzid=null,$dst=null) {

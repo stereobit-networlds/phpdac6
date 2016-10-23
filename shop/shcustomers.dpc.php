@@ -989,6 +989,8 @@ window.onload=function(){
        if ($db->Affected_Rows()) {	   
          SetGlobal('sFormErr',"ok");
 		 
+		 //$this->update_statistics('registration', GetParam('mail'));
+		 
 	     if ($this->tellit) {
 		 
 	      $template= "customerinsert.htm";
@@ -1081,6 +1083,8 @@ window.onload=function(){
 	   //print_r($result->fields);
        if ($ret = $db->Affected_Rows()) {	   
          SetGlobal('sFormErr',"ok");
+		 
+		 //$this->update_statistics('registration', $email);
 		 
 		 //delivery address
 		 if (($this->mydelivery_address) && (!$error = $this->check_delivery_address(1))) {
@@ -2137,6 +2141,13 @@ window.onload=function(){
 			$out = $mailbody . $ret;	 	 
 		 
 		return ($out);	 
+	}	
+
+	protected function update_statistics($id, $user=null) {
+        if (defined('CMSVSTATS_DPC'))	
+			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
+		
+		return false;
 	}		
 	
 	function combine_tokens($template_contents,$tokens) {

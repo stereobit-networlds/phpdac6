@@ -858,7 +858,7 @@ window.setTimeout('neu()',10);
 				    if (defined('CMSSUBSCRIBE_DPC'))  
 						GetGlobal('controller')->calldpc_method('cmssubscribe.dosubscribe use '.$sUsername.'+1');
 					
-					$this->update_statistics('newuser', $sUsername);
+					$this->update_statistics('registration', $sUsername);
 				}	
 			  }	
 			  else {  

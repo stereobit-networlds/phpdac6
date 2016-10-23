@@ -1373,6 +1373,8 @@ class shusers  {
 
          if ($ret = $db->Affected_Rows()) {
 		   SetGlobal('sFormErr',"ok");
+		   
+		   $this->update_statistics('registration', $user_code);
 
 		   $this->after_insert_task($user_code,GetParam("pwd"),GetParam("fname"),GetParam("lname"));//send code to customer
 		   
@@ -1487,6 +1489,8 @@ class shusers  {
 						//echo 'user code:',$user_code;
 						$map = _m('shcustomers.map_customer use '.$user_code.'+'.$this->customer_exist_id);
 					}
+					
+					$this->update_statistics('registration', $user_code);
 		 
 					SetGlobal('sFormErr',"ok");
 					$this->after_insert_task($user_code,GetParam("pwd"),GetParam("fname"),GetParam("lname"));//send code to customer	   
@@ -1690,6 +1694,13 @@ class shusers  {
 			$out = $mailbody . $ret;	 	 
 		 
 		return ($out);	 
+	}		
+	
+	protected function update_statistics($id, $user=null) {
+        if (defined('CMSVSTATS_DPC'))	
+			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
+		
+		return false;
 	}		
 
    /////////////////////////////////////////////////////////////////
@@ -1979,6 +1990,8 @@ class shusers  {
 			//echo $sSQL;		 
 			$db->Execute($sSQL);
 			if($db->Affected_Rows()) {
+				
+				$this->update_statistics('activation', $user_code);
 		   
 				SetGlobal('sFormErr',localize('_ACTIVATEOK',getlocal()));
 				return (localize('_ACTIVATEOK',getlocal()));
