@@ -1,7 +1,7 @@
 <?php
-$__DPCSEC['SHSUBSCRIBE_DPC']='1;1;1;1;1;1;2;2;9;9;9';
+$__DPCSEC['CMSSUBSCRIBE_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ( (!defined("CMSSUBSCRIBE_DPC")) && (seclevel('CMSSUBSCRIBE_DPC',decode(GetSessionParam('UserSecID')))) ) {
+if (!defined("CMSSUBSCRIBE_DPC")) {
 define("CMSSUBSCRIBE_DPC",true);
 
 $__DPC['CMSSUBSCRIBE_DPC'] = 'cmssubscribe';
@@ -12,6 +12,7 @@ $__EVENTS['CMSSUBSCRIBE_DPC'][2]='subscribe';
 $__EVENTS['CMSSUBSCRIBE_DPC'][3]='advsubscribe';
 $__EVENTS['CMSSUBSCRIBE_DPC'][4]='subscribeajax';
 $__EVENTS['CMSSUBSCRIBE_DPC'][5]='unsubscribeajax';
+$__EVENTS['CMSSUBSCRIBE_DPC'][6]='shsubscribe'; //copmatibility
 
 $__ACTIONS['CMSSUBSCRIBE_DPC'][0]='cmssubscribe';
 $__ACTIONS['CMSSUBSCRIBE_DPC'][1]='unsubscribe';
@@ -19,6 +20,7 @@ $__ACTIONS['CMSSUBSCRIBE_DPC'][2]='subscribe';
 $__ACTIONS['CMSSUBSCRIBE_DPC'][3]='advsubscribe';
 $__ACTIONS['CMSSUBSCRIBE_DPC'][4]='subscribeajax';
 $__ACTIONS['CMSSUBSCRIBE_DPC'][5]='unsubscribeajax';
+$__ACTIONS['CMSSUBSCRIBE_DPC'][6]='shsubscribe'; //compatibility
 
 $__LOCALE['CMSSUBSCRIBE_DPC'][0]='CMSSUBSCRIBE_DPC;Subscribe;Εγγραφή';
 $__LOCALE['CMSSUBSCRIBE_DPC'][1]='_SUBSCR;Subscribe;Εγγραφή';
@@ -85,81 +87,48 @@ class cmssubscribe {
 	  $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	  
 	}
 	
-    function event($sAction) {	
-
-       if (!$this->msg) {
+    function event($event) {	
   
-	     switch ($sAction) {
-	        case 'subscribeajax'  ://subscribe 
-			                          $this->dosubscribe();
-	                                  break;											
-	        case 'unsubscribeajax' ://unsubscribe
-		                              $this->dounsubscribe();
-	                                  break;			 
+	    switch ($event) {
+	        case 'subscribeajax'   :  $this->dosubscribe(); break;											
+	        case 'unsubscribeajax' :  $this->dounsubscribe(); break;			 
 		 
-	        case 'subscribe'  ://subscribe 
-			                          $this->dosubscribe();
-	                                  break;											
-	        case 'unsubscribe' ://unsubscribe
-		                              $this->dounsubscribe();
+	        case 'subscribe'       :  $this->dosubscribe(); break;											
+	        case 'unsubscribe'     :  $this->dounsubscribe();
 	                                  break;				  								  
-         }
-      }
+									  
+			default                :
+        }
     }	
 
     function action($action)  { 
 
-		 $act = GetParam('act');
-		 if (!$act) $act = 'subscribe';
-		 
 		 switch ($action) {
-	        case 'subscribeajax'   :  die(GetGlobal('sFormErr'));
-	                                  break;											
-	        case 'unsubscribeajax' :  die(GetGlobal('sFormErr'));
-	                                  break;			 
-	        default :                 $out .= GetGlobal('sFormErr');
-			                          $out .= $this->form();
+	        case 'subscribeajax'   :  die(GetGlobal('sFormErr')); break;											
+	        case 'unsubscribeajax' :  die(GetGlobal('sFormErr')); break;
+			
+	        case 'subscribe'       : 										
+	        case 'unsubscribe'     :  			
+	        default 			   :  $f = (GetParam('FormAction')) ? GetParam('FormAction') : (GetReq('t') ? GetReq('t') : null);
+			                          $out = $this->form($f); 
          }
+		 
 	     return ($out);
 	}
 
     protected function form($action=null)  { 	
-		$action = $action?$action:GetReq('t');	
-
+        
 		switch ($action) {	   
 			case 'unsubscribe' : $stemplate= "unsubscribe.htm"; break;
 			case 'subscribe'   :
-			default : $stemplate= "subscribe.htm";
+			default 		   : $stemplate= "subscribe.htm";
 		}
 
 		$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$stemplate) ; 	
-		$tokens = array();
 		$mytemplate = file_get_contents($template);	
-	
-	    $filename = $action ? seturl("t=$action") : seturl("t=subscribe");      
-       
-		$tokens[] = "<FORM action=". "$filename" . " method=post>";		
-		$tokens[] = "<INPUT type=\"input\" name=\"submail\" maxlenght=\"64\" size=\"25\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255);\" >";
 
-		if ($action) {
-	   
-			$sub = localize('_SUBSCR',getlocal());
-			$usub = localize('_USUBSCR',getlocal());	     
-		 
-			switch ($action) {
-		   
-				case 'unsubscribe' : $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"$usub\"><input type=\"hidden\" name=\"FormAction\" value=\"$action\">";		   
-					                 break;
-				case 'subscribe'   :
-				default            : $tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"$sub\"><input type=\"hidden\" name=\"FormAction\" value=\"$action\">";		   
-			} 
-		}	 
-		else 
-			$tokens[] = "<input type=\"submit\" class=\"myf_button\" name=\"FormAction\" value=\"subscribe\">&nbsp;<input type=\"submit\" class=\"myf_button\" name=\"FormAction\" value=\"unsubscribe\">";
-	   
-	    $tokens[] = "</FORM>";
-		$tokens[] = GetGlobal('sFormErr');
-		 
+		$tokens = array();		
+		$tokens[] = $this->msg;		 
 		$out .= $this->combine_tokens($mytemplate,$tokens);
 
         return ($out);
@@ -180,11 +149,10 @@ class cmssubscribe {
 	
 	protected function dosubscribe($mail=null,$bypasscheck=null,$telltouser=null) {
        $db = GetGlobal('db');
-       $sFormErr = GetGlobal('sFormErr');	
 	   $name = $name ? $name : 'unknown';
 	   $dlist = 'default';		
        $mail_tell_user = isset($telltouser)?$telltouser:$this->tell_user;	
-	   $mail = $mail?$mail:GetParam('submail');	 
+	   $mail = $mail ? $mail : GetParam('submail');	 
 	   if (!$mail) return;	   
 	   
        $dtime = date('Y-m-d h:i:s');	   	
@@ -198,9 +166,10 @@ class cmssubscribe {
 		  
 		  if ($mymail==$mail) {//is in db but already enabled or disabled  re-enable subscription
 			   $sSQL = "update ulists set active=1 where listname='$dlist' and email=" . $db->qstr(strtolower($mail));  
-			   $db->Execute($sSQL,1);		
+			   $db->Execute($sSQL,1);
+			   //echo $sSQL;		
 			   if (!$bypasscheck)    
-			     SetGlobal('sFormErr', localize('_MSG6',getlocal()));	
+			     $this->msg =  localize('_MSG6',getlocal());	
 				 
                if ($this->tell_it) //tell to me
 			     $this->mailto($this->tell_from,$this->tell_it,$this->subject,$mail);
@@ -210,13 +179,13 @@ class cmssubscribe {
 		         $tokens[] = $mail;	
                  $tokens[] = $mail; //dummy at leats 2 elements				   	
                  $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		         if ($mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use subinsert.htm+".$sd."+1")) { 
+		         if ($mailbody = _m("fronthtmlpage.subpage use subinsert.htm+".$sd."+1")) { 
 				 				 
 			       $this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 
 			     }
 			     else			   
 			       $this->mailto($this->tell_from,$mail,$this->subject,$this->body);					 	  
-			  }	   
+			  }	  
 		  }		  
           else {
 	
@@ -227,7 +196,7 @@ class cmssubscribe {
 			   $db->Execute($sSQL,1);	
 			   
 			   if (!$bypasscheck)	    
-			     SetGlobal('sFormErr', localize('_MSG6',getlocal()));	
+			     $this->msg = localize('_MSG6',getlocal());	
 				 
 			   //echo $sSQL;
                if ($this->tell_it) //tell to me
@@ -237,7 +206,7 @@ class cmssubscribe {
 		       $tokens[] = $mail;	
                $tokens[] = $mail; //dummy at leats 2 elements				   					 
                $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		       if ($mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use subinsert.htm+".$sd."+1")) { 
+		       if ($mailbody = _m("fronthtmlpage.subpage use subinsert.htm+".$sd."+1")) { 
 				 
 			     $this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 
 			   }
@@ -248,14 +217,13 @@ class cmssubscribe {
 		  $this->update_statistics('subscribe', $mail);
 	   }
 	   else {
-	     if (!$bypasscheck)
-	       SetGlobal('sFormErr', localize('_MSG5',getlocal()));		   	 
+			if (!$bypasscheck)
+				$this->msg = localize('_MSG5',getlocal());		   	 
 	   }	   
 	}
 	
 	protected function dounsubscribe($mail=null,$telltouser=null) {
-       $db = GetGlobal('db');
-       $sFormErr = GetGlobal('sFormErr');			
+       $db = GetGlobal('db');	
 	   $mail_tell_user = isset($telltouser)?$telltouser:$this->tell_user;
 	   $ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';	    
 	   $mail = $mail ? $mail : GetReq('submail'); 
@@ -269,8 +237,8 @@ class cmssubscribe {
 			//$sSQL .= ' and listname=' . $db->qstr($ulistname);  //from all the lists !!!!!(nwsletter have to include the list while unsub)
 			$result = $db->Execute($sSQL,1);
             //echo $sSQL;
-			SetGlobal('sFormErr',localize('_MSG8',getlocal()));
-		  
+			$this->msg = localize('_MSG8',getlocal());
+		    
 			if ($this->tell_it) //tell to me
 				$this->mailto($this->tell_from,$this->tell_it,$this->subject2,$mail);
 				 			     							  
@@ -279,7 +247,7 @@ class cmssubscribe {
 				$tokens[] = $mail;				
 				$tokens[] = $mail; //dummy at leats 2 elements					
 				$sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-				if ($mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use subdelete.htm+".$sd."+1")) { 
+				if ($mailbody = _m("fronthtmlpage.subpage use subdelete.htm+".$sd."+1")) { 
 				 			 
 					$this->mailto($this->tell_from,$mail,$this->subject2,$mailbody);	 
 				}
@@ -291,7 +259,7 @@ class cmssubscribe {
 		  //}  
 	   }
 	   else 
-	     SetGlobal('sFormErr', localize('_MSG5',getlocal()));	  
+			$this->msg = localize('_MSG5',getlocal());	  
 	}
 	
     protected function isin($mail) {
@@ -332,12 +300,11 @@ class cmssubscribe {
 	
 	protected function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 	
-	    if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
+	    /*if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
 		  $ret = _m("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
         }
-		else {
-		     if ((defined('SMTPMAIL_DPC')) &&
-				 (seclevel('SMTPMAIL_DPC',$this->UserLevelID)) ) {
+		else {*/
+		    if (defined('SMTPMAIL_DPC'))  {
 		       $smtpm = new smtpmail;
 			   
 		       $smtpm->to($to); 
@@ -349,8 +316,10 @@ class cmssubscribe {
 			   unset($smtpm);
 			   
 			   if (!$mailerror) return (true);
-			 }
-		}
+			}
+			else
+				die('SMTP ERROR!');		
+		//}
 		
 	    return (false);  			 
 	}			

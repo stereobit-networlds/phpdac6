@@ -319,7 +319,7 @@ class shcustomers {
           case "removedeliv"      : $out .= $this->show_customer_delivery();
 						            break;	
           case "savenewdeliv"     : if (($this->delivok) && ($goto = GetSessionParam('afterdelivgoto'))) 
-		                              $out = GetGlobal('controller')->calldpc_method($goto); 
+		                              $out = _m($goto); 
 		                            else 
 			                          $out .= $this->show_customer_delivery(); 
 						            break;		   
@@ -332,7 +332,7 @@ class shcustomers {
 		  case "mapcus"            :									
 		  case "inscus"            :		  												  
           case "savenewcus"        :if (($this->cusok) && ($goto = GetSessionParam('aftercusgoto'))) 
-		                              $out = GetGlobal('controller')->calldpc_method($goto);
+		                              $out = _m($goto);
 		                            else 
 			                          $out .= $this->show_customers_list(); 
 						            break;		   
@@ -460,9 +460,9 @@ window.onload=function(){
 		    //already in...
 		    if (GetSessionParam('UserID')) {
 			    if (defined('SHCART_DPC')) { 
-				  $cartitems = GetGlobal('controller')->calldpc_method('shcart.getcartItems');
+				  $cartitems = _m('shcart.getcartItems');
 				  if ($cartitems) 
-			        $out = GetGlobal('controller')->calldpc_method('shcart.cartview');
+			        $out = _m('shcart.cartview');
 				  else
 				    $out = null; //goto fp	
 				}  
@@ -470,7 +470,7 @@ window.onload=function(){
 			      $out = null; //goto fp
 		    } 
 			else {
-			    $out .= GetGlobal('controller')->calldpc_method('cmslogin.html_form');
+			    $out .= _m('cmslogin.html_form');
 			    SetPreSessionParam('afterlogingoto','shcart.cartview');
 			}
 		} 		 
@@ -2202,12 +2202,10 @@ window.onload=function(){
 	function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 
 	    if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
-		  //echo 'z',$to,'>',$from,'<br>';
-		  $ret = GetGlobal('controller')->calldpc_method("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
+		  $ret = _md("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
         }
 		else {
-		    if ((defined('SMTPMAIL_DPC')) &&
-				 (seclevel('SMTPMAIL_DPC',$this->UserLevelID)) ) {
+		    if (defined('SMTPMAIL_DPC')) {
 				$smtpm = new smtpmail;
 			   
 				$smtpm->to($to); 
@@ -2229,21 +2227,19 @@ window.onload=function(){
 		if (defined('FRONTHTMLPAGE_DPC')) {
 		  $fp = new fronthtmlpage(null);
 		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+		  unset ($fp);	  		
 		}		  		
 		else
 		  $ret = $template_contents;
 		  
 		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 		//clean unused token marks
 		for ($x=$i;$x<20;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
+
 		return ($ret);
 	}
 
@@ -2253,7 +2249,6 @@ window.onload=function(){
 	    $bc = self::$myf_button_class;
 	   
 	    if (($image) && (is_readable($path."/images/".$image.".png"))) {
-	      //echo 'a';
 	      $imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
 	    }
 	   

@@ -55,7 +55,7 @@ class rcsubscribers  {
 		switch ($action) {
 			case 'cpsubsframe'  : $out .= $this->show_subscribers(null,200,8,'d', true); break;
 			case 'cpsubscribers':
-			default             : $out .= $this->show_subscribers();
+			default             : $out .= $this->show_subscribers(null,null,null,'e', true);
 		}
 
 		return ($out);

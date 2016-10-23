@@ -7,13 +7,6 @@ define("SHFORM_DPC",true);
 
 $__DPC['SHFORM_DPC'] = 'shform';
 
-//require_once("amail.dpc.php");
-$d = GetGlobal('controller')->require_dpc('mail/rcamail.dpc.php');
-require_once($d); 
-
-GetGlobal('controller')->get_parent('RCAMAIL_DPC','SHFORM_DPC');
- 
-
 $__EVENTS['SHFORM_DPC'][0]='call';
 $__EVENTS['SHFORM_DPC'][1]="sendamail";
 $__EVENTS['SHFORM_DPC'][2]="sendamailajax";
@@ -44,7 +37,7 @@ $__LOCALE['SHFORM_DPC'][14]='_INVALIDMAIL;Invalid mail address;Άκυρο e-mail
 $__LOCALE['SHFORM_DPC'][15]='_NAME;Name;Ονοματεπωνυμο';
 $__LOCALE['SHFORM_DPC'][16]='_RCAMTRUE;Email send!;Αποστολή επιτυχής!';
 
-class shform extends rcamail {
+class shform {
 
     var $path, $urlpath, $inpath;
 	var $recaptcha_public_key, $recaptcha_private_key;
@@ -59,17 +52,13 @@ class shform extends rcamail {
 	
 	var $recaptcha;
 	
-	function shform() {
-		
-		rcamail::rcamail();
+	function __construct() {
 		
 	    $this->title = localize('SHFORM_DPC',getlocal());	
 		$this->path = paramload('SHELL','prpath');
 	    $this->urlpath = paramload('SHELL','urlpath');
 	    $this->inpath = paramload('ID','hostinpath');					
 		
-		  
-		//overwrite  
 		$this->sendaddress = remote_paramload('SHFORM','mail',$this->path);  	   	   	   
 		$this->sendtype = remote_paramload('SHFORM','type',$this->path); 
 		$this->verify = remote_paramload('SHFORM','verify',$this->path);			
@@ -103,7 +92,6 @@ class shform extends rcamail {
 	   		
 	}
 	
-    //overwriten
     function event($action=null) {
 	   $db = GetGlobal('db');
   
@@ -145,9 +133,10 @@ class shform extends rcamail {
 								SetSessionParam("FORMMAIL", $m);
 								
 								//inform db
-	                            $sSQL = "insert into cform (email,postform) values (" . $db->qstr(addslashes($m)) . ",\"";
-								$sSQL.= $body; 
-								$sSQL.= "\")";
+	                            $sSQL = "insert into cform (email,subject,postform) values (" . 
+										$db->qstr(addslashes($m)) . "," .
+										$db->qstr(addslashes($subject)) . "," .
+										$db->qstr($body) . ")";
                                 //echo $sSQL;
                                 $ret = $db->Execute($sSQL);
 								
@@ -174,27 +163,26 @@ class shform extends rcamail {
   
     function action($action=null) {
 
-	 switch ($action) {
-	   case "sendamailajax"   : if ($this->post) die(localize('_RCAMTRUE',getlocal())); 
+		switch ($action) {
+			case "sendamailajax"   : if ($this->post) die(localize('_RCAMTRUE',getlocal())); 
 	                                        else die(localize('_RCAMFALSE',getlocal()));
-	                            break;
-	   case "sendamail"       :              
-	   case 'contact'         :
-	   case 'call'            :
-	   default                :
-	                           //$out = $this->advmailform();
-	 }
+									  break;
+			case "sendamail"       :              
+			case 'contact'         :
+			case 'call'            :
+			default                :
+		}
 	 
-	 return ($out);
+		return ($out);
     } 
 	
-	function onok_message() {
+	protected function onok_message() {
 		$tokens[] = GetParam("cperson");		
 		$tokens[] = GetParam("email");	
 		$tokens[] = GetParam("dLabel");			  
 			
         $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		if (!$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use contactformok.htm+".$sd."+1")) {
+		if (!$ret = _m("fronthtmlpage.subpage use contactformok.htm+".$sd."+1")) {
 		
 		//else {
 		  $m = paramload('SHFORM','message');
@@ -219,9 +207,9 @@ class shform extends rcamail {
 	}
 	 
     public function subscribe($mail=null) {
-       if (defined('SHSUBSCRIBE_DPC')) {
+       if (defined('CMSSUBSCRIBE_DPC')) {
 	  
-	     GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.$mail.'++0');
+	     _m('cmssubscribe.dosubscribe use '.$mail.'++0');
 		 return true;
 	   }
 	   return false; 	   
@@ -301,16 +289,15 @@ class shform extends rcamail {
 	 
 	 protected function valid_recaptcha() {
 	 
-	      if ((!defined('RECAPTCHA_DPC')) || ($this->recaptcha==false)) return true;
+	    if ((!defined('RECAPTCHA_DPC')) || ($this->recaptcha==false)) return true;
 		  
-          if ($_POST["recaptcha_response_field"]) {
+        if ($_POST["recaptcha_response_field"]) {
             $resp = recaptcha_check_answer ($this->recaptcha_private_key,
                                             $_SERVER["REMOTE_ADDR"],
                                             $_POST["recaptcha_challenge_field"],
                                             $_POST["recaptcha_response_field"]);
 											
-            //print_r($resp);
-            if ($resp->is_valid) {
+			if ($resp->is_valid) {
                 $error = null;
 				$ret = true;
             } 
@@ -318,28 +305,28 @@ class shform extends rcamail {
 				$ret = false;
 		        $this->formerror = $resp->error;				
             }
-		  }
-		  else {
+		}
+		else {
 		    $ret = false;
 		    $this->formerror = "Recaptcha entry required!";			  
-		  }
+		}
 		  
-		  SetGlobal('sFormErr',$this->formerror);
-		  return ($ret);																		 
-     }  
+		SetGlobal('sFormErr',$this->formerror);
+		return ($ret);																		 
+    }  
 	 
 	protected function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 				 
-		       $smtpm = new smtpmail;
+	    $smtpm = new smtpmail;
 			   
-		       $smtpm->to($to); 
-		       $smtpm->from($from); 
-		       $smtpm->subject($subject);
-		       $smtpm->body($body);			   
+	    $smtpm->to($to); 
+	    $smtpm->from($from); 
+	    $smtpm->subject($subject);
+	    $smtpm->body($body);			   
 
-			   $mailerror = $smtpm->smtpsend();
+	    $mailerror = $smtpm->smtpsend();
 
-			   unset($smtpm);
+	    unset($smtpm);
 	}	 
 	
 	protected function select_template($tfile=null) {

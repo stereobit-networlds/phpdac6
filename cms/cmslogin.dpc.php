@@ -851,8 +851,8 @@ window.setTimeout('neu()',10);
 					if (defined('SHUSERS_DPC'))  
 						GetGlobal('controller')->calldpc_method("shusers.mailtohost use $sUsername++".$userInfo['first_name'].'+'.$userInfo['last_name']);
 					
-				    if (defined('SHSUBSCRIBE_DPC'))  
-						GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.$sUsername.'+1');
+				    if (defined('CMSSUBSCRIBE_DPC'))  
+						GetGlobal('controller')->calldpc_method('cmssubscribe.dosubscribe use '.$sUsername.'+1');
 				}	
 			  }	
 			  else {  
@@ -1152,8 +1152,8 @@ window.setTimeout('neu()',10);
 			$this->mailto($this->it_sendfrom,$username,$subject,$mailbody);	  	
 	    }
 	  
-		if (defined('SHFORM_DPC'))
-			_m('shform.subscribe use '.$username);
+		if (defined('CMSFORM_DPC'))
+			_m('cmsform.subscribe use '.$username);
 		
 		return true;
 

@@ -191,7 +191,7 @@ class shusers  {
 							   //echo 'a>';
 			                   if ($this->check_existing_customer) {
 							     //echo 'b>';
-                                 if ($cid = GetGlobal('controller')->calldpc_method('shcustomers.customer_exist use 1')) {
+                                 if ($cid = _m('shcustomers.customer_exist use 1')) {
 		                           if ($cid<>-1) {//not mapped customer	
 								     //echo 'c1>';
 								     $checkcuserr = null;
@@ -208,12 +208,12 @@ class shusers  {
 								 }
 								 else  {//new customer
 								   //echo 'c>';
-								   $checkcuserr = GetGlobal('controller')->calldpc_method('shcustomers.checkFields use +'.$this->checkuseasterisk);   
+								   $checkcuserr = _m('shcustomers.checkFields use +'.$this->checkuseasterisk);   
 								   $this->map_customer = null; //new customer	
 								 } 
 							   }
 							   else {//new customer
-			                     $checkcuserr = GetGlobal('controller')->calldpc_method('shcustomers.checkFields use +'.$this->checkuseasterisk);
+			                     $checkcuserr = _m('shcustomers.checkFields use +'.$this->checkuseasterisk);
 								 //SetGlobal('sFormErr',$checkcuserr);
 							   }
 							 }
@@ -237,11 +237,11 @@ class shusers  {
 						   
             case "update":  if (!$this->checkFields(true,$this->checkuseasterisk)) {
 							  //auto subscribe
-                              if ( (defined('SHSUBSCRIBE_DPC')) && (seclevel('SHSUBSCRIBE_DPC',$this->userLevelID)) ) {
+                              if (defined('CMSSUBSCRIBE_DPC'))  {
 								if (trim(GetParam('autosub'))=='on')
-								  GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.GetParam("eml"));//.'++-1');
+								  _m('cmssubscribe.dosubscribe use '.GetParam("eml"));//.'++-1');
 								else
-							      GetGlobal('controller')->calldpc_method('shsubscribe.dounsubscribe use '.GetParam("eml"));//.'+-1');
+							      _m('cmssubscribe.dounsubscribe use '.GetParam("eml"));//.'+-1');
 							  }
 				              $this->update();
 			                }
@@ -250,8 +250,8 @@ class shusers  {
 								$this->fbjs();							
 				            break;
 							
-            case "delete":  if ( (defined('SHSUBSCRIBE_DPC')) && (seclevel('SHSUBSCRIBE_DPC',$this->userLevelID)) ) {
-							  GetGlobal('controller')->calldpc_method('shsubscribe.dounsubscribe use '.GetParam("eml").'+-1');
+            case "delete":  if (defined('CMSSUBSCRIBE_DPC')) {
+							  _m('cmssubscribe.dounsubscribe use '.GetParam("eml").'+-1');
 						    }
 				            $this->_delete();
 							
@@ -270,15 +270,14 @@ class shusers  {
        switch ($action) {
 	         case 'useractivate':   if (defined('CMSLOGIN_DPC')) { 
 									    if (defined('SHCART_DPC')) {
-										    //$out .= 'shcart';
-										    $carthasvalue = GetGlobal('controller')->calldpc_method("shcart.getcartTotal use 1");
+										    $carthasvalue = _m("shcart.getcartTotal use 1");
 											if ($carthasvalue>0)
-											   $out .= GetGlobal('controller')->calldpc_method("cmslogin.quickform use +viewcart+shcart>cartview+status+1");	 
+											   $out .= _m("cmslogin.quickform use +viewcart+shcart>cartview+status+1");	 
 											else   
-											   $out .= GetGlobal('controller')->calldpc_method('cmslogin.form use html');
+											   $out .= _m('cmslogin.form use html');
 										}
                                         else 										 
-											$out .= GetGlobal('controller')->calldpc_method('cmslogin.form');
+											$out .= _m('cmslogin.form');
 								    }		 	
 	                                break;
 										 
@@ -293,23 +292,12 @@ class shusers  {
 	}
 
 	
-    /*[id] => 1678788437
-    [name] => Βασίλης Κομήτης
-    [first_name] => Βασίλης
-    [last_name] => Κομήτης
-    [link] => https://www.facebook.com/stereobit.networlds
-    [gender] => male
-    [email] => vasalex21@gmail.com
-    [timezone] => 2
-    [locale] => el_GR
-    [verified] => 1
-    [updated_time] => 2013-05-14T09:01:06+0000
-    [username] => stereobit.networlds*/		
+
 	protected function fbjs() {
 		$code = "function fbfetch() {
 		FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(response) {\$('#fname').val(response.first_name); \$('#lname').val(response.last_name); })};		
 ";
-//alert ('Welcome ' + response.email + ': Your UID is ' + response.id);
+
         if (iniload('JAVASCRIPT')) {
 	   
 			$js = new jscript;		   	 	
@@ -336,14 +324,14 @@ class shusers  {
 	   if (isset($noinvtype))//no for update
 	     $invtype = '0';
 	   else {
-	     $invtype = GetGlobal('controller')->calldpc_method('shcustomers.get_invoice_type');
-		 $invtypedescr = GetGlobal('controller')->calldpc_method('shcustomers.get_invoice_type_descr');
+	     $invtype = _m('shcustomers.get_invoice_type');
+		 $invtypedescr = _m('shcustomers.get_invoice_type_descr');
 	   }	 
 		 
 	   if (isset($nodelivery))//no for update
 	     $delivery = '0';
 	   else	 	   
-	     $delivery = GetGlobal('controller')->calldpc_method('shcustomers.get_delivery_address');	 
+	     $delivery = _m('shcustomers.get_delivery_address');	 
 		 
   	   $myinvtype = GetReq('invtype');  //ger req when error
 	   //echo '>',$invtype,'>',$delivery;
@@ -562,18 +550,15 @@ class shusers  {
        if (($this->includecusform) && (!$noincludecusform)) {
 	   
          if ($tokensout) {
-		   $custokens = GetGlobal('controller')->calldpc_method('shcustomers.makesubform use 1');	
+		   $custokens = _m('shcustomers.makesubform use 1');	
 		   foreach ($custokens as $t)	 
 	         $tokens[] = $t;
 	     }
 	     else {		
-		     $out .= GetGlobal('controller')->calldpc_method('shcustomers.makesubform');	     
+		     $out .= _m('shcustomers.makesubform');	     
 		 }
 	   }	   
-	   //////////////////////////////////////////////////////////////////////////
-	   
-	   
-	   
+
        if ($tokensout) {
 	      $tokens[] = localize('_MSG9',getlocal());
 	   }
@@ -681,7 +666,7 @@ class shusers  {
 			$w8a = new window('',$field8a,$attr8a);  $out .= $w8a->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field8);  unset ($attr8);
 	   }
 	   
-       if ( (defined('SHSUBSCRIBE_DPC')) && (seclevel('SHSUBSCRIBE_DPC',$this->userLevelID)) ) {
+       if (defined('CMSSUBSCRIBE_DPC')) {
 	     $out .= "<br>";
 	     $subs = new window('',localize('_SUBSCRWARN',getlocal()));
 	     $out .= $subs->render(" ::100%::0::group_article_selected::center;100%;::");
@@ -689,7 +674,7 @@ class shusers  {
 	     $out .= "<br>";
 
 		 //check if user is in sub list
-		 if (GetGlobal('controller')->calldpc_method('shsubscribe.isin use '.$eml))  
+		 if (_m('cmssubscribe.isin use '.$eml))  
 		   $statin = 'checked';
 
          if ($tokensout) {
@@ -966,7 +951,7 @@ class shusers  {
 	    	$sSQL.= " WHERE " . $myfkey . "=" . $myrec;// ."'";	
 		 else
 		 	$sSQL.= " WHERE " . $myfkey . "='" . $myrec . "'";	   
-		 $sSQL.= " and lname<>'SUBSCRIBER'"; //compatibility with extra rec as subscriber		  
+		 //$sSQL.= " and lname<>'SUBSCRIBER'"; //compatibility with extra rec as subscriber		  
        }
 	   else {//????
          if ($isadmin) {//admin selection
@@ -1083,38 +1068,14 @@ class shusers  {
 				   
 	             $out .= $this->regform($record,$mycmd_update,1,null,1,1,1); //update action
 				 
-		 	     //VIEW TRANSACTIONS
-	             /*if (defined('SHTRANSACTIONS_DPC')) {
-	               $out .= seturl('t=transview&pl=20',localize('_TRANSLIST',getlocal()));
-		           $out .= GetGlobal('controller')->calldpc_method('shtransactions.viewTransactions');
-                 }*/
 				 //VIEW CUSTOMER LISTS
 				 if (defined('SHCUSTOMERS_DPC')) {
-                   //$out .= GetGlobal('controller')->calldpc_method('shcustomers.addcustomerform');	  
-	               //$out .= GetGlobal('controller')->calldpc_method('shcustomers.show_customer_delivery');  				 
+                   //$out .= _m('shcustomers.addcustomerform');	  
+	               //$out .= _m('shcustomers.show_customer_delivery');  				 
 				   
-				   $out .= GetGlobal('controller')->calldpc_method('shcustomers.show_customers_list');	  
+				   $out .= _m('shcustomers.show_customers_list');	  
 		         }
 			  }
-		   }
-		   else {
-		     //echo 'c';
-		     //$out = setNavigator(localize('_SIGNUP',getlocal()));
-			 //$out = setError(localize('_NOPRIV',getlocal()));
-
-             $b = new msgBox(localize('_NOPRIV',getlocal()),"OKOnly","Error");
-             //use the makeLinks() for the buttons to work
-             $links = array(seturl(''));//,seturl('t=slogout'));
-             $b->makeLinks($links);
-             $out .= $b->render();
-
-			 /*$a = new tabmenu(array(0=>"First",1=>"Second",2=>"Third"),
-			                  array(0=>"First content",1=>"Second content",2=>"Third content"),
-							  array(),
-							  0,
-							  '10','210','500','200'
-							 );
-			 $out .= $a->render();	*/
 		   }
 	   }
 
@@ -1133,21 +1094,21 @@ class shusers  {
 	    }
 	    elseif ($this->includecusform) {//customer has submited with user form
 			if ( (defined('SHCART_DPC')) && (seclevel('SHCART_DPC',$this->userLevelID)) ) {
-			    $out .= GetGlobal('controller')->calldpc_method('shcustomers.after_registration_goto');
+			    $out .= _m('shcustomers.after_registration_goto');
 			}
 			elseif ( (defined('CMSLOGIN_DPC')) && (seclevel('CMSLOGIN_DPC',$this->userLevelID)) ) {
-			    $out .= GetGlobal('controller')->calldpc_method('cmslogin.html_form');
+			    $out .= _m('cmslogin.html_form');
 		    }
 	    }
 	    else {//goto customer registration
        
 		    if (($this->continue_register_customer) && ( (defined('SHCUSTOMERS_DPC')) && (seclevel('SHCUSTOMERS_DPC',$this->userLevelID)) )) {
 				//find id......
-				$this->new_user_id = GetGlobal('controller')->calldpc_method('shcustomers.getmaxid')+1;
-                $out .= GetGlobal('controller')->calldpc_method('shcustomers.register use '.$this->new_user_id);
+				$this->new_user_id = _m('shcustomers.getmaxid')+1;
+                $out .= _m('shcustomers.register use '.$this->new_user_id);
 		    }	  
 		    elseif ( (defined('CMSLOGIN_DPC')) && (seclevel('CMSLOGIN_DPC',$this->userLevelID)) ) {
-			    $out .= GetGlobal('controller')->calldpc_method('cmslogin.html_form');
+			    $out .= _m('cmslogin.html_form');
 		    }
 		    else //continue rendering
 				$out .= '';	 
@@ -1171,7 +1132,7 @@ class shusers  {
 		           (defined('SHCUSTOMERS_DPC')) && 
 				   (seclevel('SHCUSTOMERS_DPC',$this->userLevelID)))) {
 				   
-                $out .= GetGlobal('controller')->calldpc_method('shcustomers.register');		   
+                $out .= _m('shcustomers.register');		   
 		   }
 	   }	
 	   
@@ -1194,10 +1155,10 @@ class shusers  {
 
 		  $WSQL = "NAME='$a' AND PRFDESCR='$b'";//PRFDESCR='$b'";
 
-		  $leeid = GetGlobal('controller')->calldpc_method('shcustomers.search_customer_id use '.$WSQL);
+		  $leeid = _m('shcustomers.search_customer_id use '.$WSQL);
 		  //echo "LEEID:",$leeid;
 		  if ($leeid) {
-		    $this->predef_customer = GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use '.$leeid);
+		    $this->predef_customer = _m('shcustomers.showcustomerdata use '.$leeid);
 
 			//overwrite default user leeid
 			$this->leeid = $leeid;
@@ -1316,20 +1277,19 @@ class shusers  {
 	}
 	
 	function auto_subscribe() {
-
-       if ($this->usemailasusername) 
-	     $submail = GetParam("uname");
-       else
-	     $submail = GetParam("eml");	
+		if (!$submail) return false;
+		$submail = ($this->usemailasusername)  ? GetParam("uname") : GetParam("eml");	
 		 
-	   if ($submail) {
-        if ( (defined('SHSUBSCRIBE_DPC')) && (seclevel('SHSUBSCRIBE_DPC',$this->userLevelID)) ) {
-	     if (trim(GetParam('autosub'))=='on') {
+
+		if (defined('CMSSUBSCRIBE_DPC')) {
+			if (trim(GetParam('autosub'))=='on') {
 		     
-			GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.$submail.'+1+-1');
-	     }  
+				_m('cmssubscribe.dosubscribe use '.$submail.'+1+-1');
+				return true;
+			}  
 	    }	
-	   }
+
+		return false;
 	}	
 
 	function insert() {
@@ -1413,7 +1373,7 @@ class shusers  {
 		   
 	       //INCLUDE CUSTOMER DATA TO MIX IN ONE FORM..SQL EXECUTE USER AND CUS QUERY... 
            if ($this->includecusform) {		
-		     $sFormErr = GetGlobal('controller')->calldpc_method('shcustomers.subinsert use '.$user_code);
+		     $sFormErr = _m('shcustomers.subinsert use '.$user_code);
 			 SetGlobal('sFormErr',$sFormErr);	   
 		   }
 		   //////////////////////////////////////////////////////////////////////////		   
@@ -1457,10 +1417,10 @@ class shusers  {
 		   elseif ($this->map_customer===false)//already mapped error	 
 		     $sFormErr = 'Customer is already mapped!';//will not be shown just err...
 		   else //is null = new customer	 
-		     $sFormErr = GetGlobal('controller')->calldpc_method('shcustomers.subinsert use '.$user_code.'+1');
+		     $sFormErr = _m('shcustomers.subinsert use '.$user_code.'+1');
 		 }
 		 else //register new customer
-		   $sFormErr = GetGlobal('controller')->calldpc_method('shcustomers.subinsert use '.$user_code.'+1');
+		   $sFormErr = _m('shcustomers.subinsert use '.$user_code.'+1');
 		 
 		 if ($sFormErr=='ok') {//start user registartion
 		
@@ -1520,7 +1480,7 @@ class shusers  {
 		   //map procedure cntinue after user registration
 		   if (($this->check_existing_customer) && ($this->map_customer===true)) {
 		     //echo 'user code:',$user_code;
-		     $map = GetGlobal('controller')->calldpc_method('shcustomers.map_customer use '.$user_code.'+'.$this->customer_exist_id);
+		     $map = _m('shcustomers.map_customer use '.$user_code.'+'.$this->customer_exist_id);
 		   }
 		 
 		   SetGlobal('sFormErr',"ok");
@@ -1530,7 +1490,7 @@ class shusers  {
 		   //rollback
 		   //delete inserted customer.....
 		   if ((!$this->check_existing_customer) && ($this->map_customer===null)) //if NOT map procedure
-		     $rollback = GetGlobal('controller')->calldpc_method('shcustomers.subdelete use '.$user_code);
+		     $rollback = _m('shcustomers.subdelete use '.$user_code);
 		 
 		   $ret = $db->ErrorMsg();
 		   //echo $ret;
@@ -1672,18 +1632,11 @@ class shusers  {
 	function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 	
 	    if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
-		  //echo 'z',$to,'>',$from,'<br>';
-		  $ret = GetGlobal('controller')->calldpc_method("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
+		  $ret = _m("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
         }
 		else {
-		  //echo 'AAAA',$to,'>',$from,'<br>';
-		     if ((defined('SMTPMAIL_DPC')) &&
-				 (seclevel('SMTPMAIL_DPC',$this->UserLevelID)) ) {
+		     if (defined('SMTPMAIL_DPC')) {
 		       $smtpm = new smtpmail;
-		       //$smtpm->to = $to;
-			   //$smtpm->from = $from;
-			   //$smtpm->subject = $subject;
-			   //$smtpm->body = $body ;
 			   
 		       $smtpm->to($to); 
 		       $smtpm->from($from); 
@@ -1694,8 +1647,7 @@ class shusers  {
 
 			   unset($smtpm);
 			 }
-		}
-			 
+		} 
 	}
 
 
@@ -2011,21 +1963,18 @@ class shusers  {
 		if (defined('FRONTHTMLPAGE_DPC')) {
 		  $fp = new fronthtmlpage(null);
 		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+		  unset ($fp);	  		
 		}		  		
 		else
 		  $ret = $template_contents;
 		  
 		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 		//clean unused token marks
 		for ($x=$i;$x<20;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
 		return ($ret);
 	}		
 
