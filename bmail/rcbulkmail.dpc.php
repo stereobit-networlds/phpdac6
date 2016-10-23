@@ -162,6 +162,7 @@ $__LOCALE['RCBULKMAIL_DPC'][107]='_end;End;Τέλος';
 $__LOCALE['RCBULKMAIL_DPC'][108]='_process;Processing;Αποστολή';
 $__LOCALE['RCBULKMAIL_DPC'][109]='_saybatch;e-mail(s) have been processed;μηνύματα έχουν επεξεργαστεί';
 $__LOCALE['RCBULKMAIL_DPC'][110]='_saybatchtotal;e-mail(s) as total, have been processed; συνολικά μηνύματα έχουν επεξεργαστεί.';
+$__LOCALE['RCBULKMAIL_DPC'][111]='_cancel;Cancel;Ακύρωση';
 
 class rcbulkmail {
 	
@@ -459,7 +460,7 @@ function startcampaign(subject, from, xcid, bid, isrecur)
 	var xbid = bid ? bid : parseInt(sbid);	
 	
 	var cid = xcid ? xcid : '{$this->cid}';	
-	var to = isrecur ? '' : '&ulist=' + $('#include').val();	
+	var to = isrecur ? '' : '&ulist=' + $('#tags_1').val();	
 	
 	var xc = '{$this->exitCode}';
 	var lc = xc.length * -1;
@@ -979,10 +980,18 @@ EOF;
 		$cid = $id ? $id : $this->cid;
 		if (!$cid) return null;		
 
-		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=1';
+		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active<=-8';
 		$res = $db->Execute($sSQL,2);
-
-		return ($res->fields[0]>0 ? false : true);		
+		
+        if (!$res->fields[0]) {
+			
+			$sSQL2 = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=1';
+			$res2 = $db->Execute($sSQL2,2);				
+			
+			return ($res->fields[0] ? false : true);
+		}
+				
+		return false;
 	}		
 	
 	public function campaignLastRun($id=null) {
@@ -1095,11 +1104,11 @@ EOF;
 		if ($timeout = $this->campaignLastRun()) {
 			if ($this->isCampaignActive())
 				$this->messages[] = localize('_activecamp', getlocal());		
-			if ($this->isCampaignPaused())
+			elseif ($this->isCampaignPaused())
 				$this->messages[] = localize('_pausecamp', getlocal());
-			if ($this->isCampaignStopped())
+			elseif ($this->isCampaignStopped())
 				$this->messages[] = localize('_stopcamp', getlocal());				
-			if ($this->isCampaignCompleted())
+			elseif ($this->isCampaignCompleted())
 				$this->messages[] = localize('_completecamp', getlocal());				
 			
 			$this->messages[] = localize('_lastrun', getlocal()) . ' ' . $timeout;
@@ -1142,6 +1151,7 @@ EOF;
 		if ($this->cid) {
 			
 			$start = localize('_start', getlocal());
+			$stop = localize('_cancel', getlocal());
 			$pause = localize('_pause', getlocal());
 			$continue = localize('_continue', getlocal());
 			$end = localize('_end', getlocal());
@@ -1150,7 +1160,7 @@ EOF;
 			if (!$this->isCampaignOwner()) return false;
 		
 		    $complete = $this->isCampaignCompleted();
-			$pause = $this->isCampaignPaused();
+			$paused = $this->isCampaignPaused();
 			$active = $this->isCampaignActive();
 			$lastrun = $this->campaignLastRun();
 		
@@ -1163,10 +1173,10 @@ EOF;
 		
 			if (($lastrun) && (!$complete)) {
 		
-				$ret .= ($pause) ? "<a href=\"cpbulkmail.php?t=cpcontinuecamp&cid={$this->cid}\" class=\"btn btn-success\">$continue</a>&nbsp;" :
+				$ret .= ($paused) ? "<a href=\"cpbulkmail.php?t=cpcontinuecamp&cid={$this->cid}\" class=\"btn btn-success\">$continue</a>&nbsp;" :
 								   "<a href=\"cpbulkmail.php?t=cppausecamp&cid={$this->cid}\" class=\"btn btn-danger\">$pause</a>&nbsp;";
 												  
-				if (($active) || ($pause))
+				if (($active) || ($paused))
 					$ret .= "<a href=\"cpbulkmail.php?t=cpstopcamp&cid={$this->cid}\" class=\"btn btn-danger\">$stop</a>&nbsp;";
 			}
 			
@@ -1184,7 +1194,7 @@ EOF;
         if (!$this->cid) return false; //die("CID error");
 		
 		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
+		$ownerSQL = null;//($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
         $cidSQL = $ownerSQL ? 'and cid='.$db->qstr($this->cid) : 'cid='.$db->qstr($this->cid);	
 		
 		$sSQL = 'select body from mailcamp where '. $ownerSQL . $cidSQL;
@@ -1196,6 +1206,7 @@ EOF;
 		return ($text);
 	}
 	
+	/* to be deleted permanetly, delete messages from mailqueue */
 	protected function delete_campaign() {
 		$db = GetGlobal('db');	
         if (!$this->cid) return false; //die("CID error");
@@ -1237,9 +1248,9 @@ EOF;
         $cidSQL = 'and cid='. $db->qstr($this->cid);	
 		
 		$sSQL = 'update mailqueue set active=-8,mailstatus='.$db->qstr('PAUSE'). 
-		        ' where active=1'. $ownerSQL . $cidSQL;
+		        ' where active=1 '. $ownerSQL . $cidSQL;
 		$resultset = $db->Execute($sSQL,1);
-		
+
 		if ($db->Affected_Rows()) {
 			$this->messages[] = localize('_pausecamp', getlocal());
 			return true;
@@ -1262,7 +1273,7 @@ EOF;
         $cidSQL = 'and cid='. $db->qstr($this->cid);	
 		
 		$sSQL = "update mailqueue set active=1,mailstatus=''". 
-		        ' where active=-8'. $ownerSQL . $cidSQL;
+		        ' where active=-8 '. $ownerSQL . $cidSQL;
 		$resultset = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
@@ -1287,7 +1298,7 @@ EOF;
         $cidSQL = 'and cid='. $db->qstr($this->cid);	
 		
 		$sSQL = 'update mailqueue set active=-9,mailstatus='.$db->qstr('STOP'). 
-		        ' where (active=1 or active=-8)'. $ownerSQL . $cidSQL;
+		        ' where (active=1 or active=-8) '. $ownerSQL . $cidSQL;
 		$resultset = $db->Execute($sSQL,1);
 		
 		if ($db->Affected_Rows()) {
@@ -1660,7 +1671,7 @@ EOF;
 		
 		$resultset = $db->Execute($sSQL);
 
-		$restToProceed = $this->maxinpvars;// - $counter); //maxinpvars is modified
+		$restToProceed = $this->maxinpvars;// - $counter; //maxinpvars is modified (MAXINPVARS MUST BE STORED IN AJAX LOOP!!!!)
 		
 		return array(0=>0,1=>0,2=>$restToProceed);
 	}	

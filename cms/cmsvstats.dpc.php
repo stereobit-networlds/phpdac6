@@ -287,6 +287,33 @@ EOF;
 		else 
 			return false;		
 	}	
+	
+	public function update_event_statistics($id, $user=null) {
+        $db = GetGlobal('db'); 
+
+	    $currentdate = time();	
+	    $myday  = date('d',$currentdate);	
+	    $mymonth= date('m',$currentdate);	
+	    $myyear = date('Y',$currentdate);
+						
+		$sSQL = "insert into stats (day,month,year,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT) values (";
+		$sSQL.= $myday . ",";
+		$sSQL.= $mymonth . ",";
+		$sSQL.= $myyear . ",";						
+		$sSQL.= $db->qstr('event') . ',';		
+		$sSQL.= $db->qstr($id) . ',';
+		$sSQL.= $db->qstr($user) . ',';
+		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
+		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ","; 
+		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ")";				
+
+		$db->Execute($sSQL,1);	 
+		
+		if ($db->Affected_Rows()) 
+			return true;
+		else 
+			return false;		
+	}	
 };
 }
 ?>

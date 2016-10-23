@@ -118,7 +118,7 @@ class rculiststats  {
 		$db = GetGlobal('db');		
 		$timein = $this->sqlDateRange('timein', true, false);
 		//all as 9 user or only owned		
-		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);			
+		$ownerSQL = null;//($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);			
 
 		$sSQL = 'select cdate,cid,title from mailcamp where '.$timein . $ownerSQL ;
 
@@ -133,7 +133,7 @@ class rculiststats  {
 	    $resultset = $db->Execute($sSQL,2);	
 	
 		$url = ($taction) ? seturl('t='.$taction.'&cid=',null,null,null,null) : 
-		                    seturl('t=cpmailstats&cid=',null,null,null,null);
+		                    seturl('t=cpuliststats&cid=',null,null,null,null);
 	 
 		$ret .= "<select name=\"$name\" onChange=\"location=this.options[this.selectedIndex].value\" $class>"; 
 		$ret .= $choose ? $choose : null; //"<option value=\"\">Select...</option>";
@@ -241,6 +241,8 @@ class rculiststats  {
 		$sSQL = "select count(id) from mailqueue where active is not null " . $ownerSQL . $cidortime ; 
 		$tq = $this->runSql('totalQueue', $sSQL); 		
 		//echo $tq, $sSQL;
+		$sSQL = "select count(id) from mailqueue where active=0 " . $ownerSQL . $cidortime ; 
+		$tq1 = $this->runSql('totalQueue', $sSQL); 			
 		
 		$sSQL = "select sum(reply) from mailqueue where status>0 and active=0" . $ownerSQL . $cidortime ;	
 		$this->runSql('repliedQueue', $sSQL);			
@@ -252,23 +254,23 @@ class rculiststats  {
 		$bl = $this->runSql('badmail', $sSQL);			
 		$sSQL = "select count(id) from mailqueue where status=-2 and active=0" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
 		$fl = $this->runSql('bounced', $sSQL);			
-		$sSQL = "select count(id) from mailqueue where active=1" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
+		$sSQL = "select count(id) from mailqueue where (active=1 or active=-8 or active=-9)" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
 		$sl = $this->runSql('notsentyet', $sSQL);			
 	
 		$sSQL = "SELECT COUNT( DISTINCT (subject) ) FROM mailqueue where active=1" . $ownerSQL;	
 		$this->runSql('runningCampaigns', $sSQL);
 
 		//percent of sends and replies (uniques=status)
-		$rpercent = round($sc*100/$tq);
+		$rpercent = round($sc*100/$tq1); // (on current inactive mails) - tq = all mails
 		$this->stats['percentSucceed']['value'] = intval($rpercent);
 
 		//percent of unread sents
-		$upercent = round($ul*100/$tq);
+		$upercent = round($ul*100/$tq1); //tq
 		$this->stats['percentUnread']['value'] = intval($upercent);	
 		
 		//percent of failed sents
 		$this->stats['failed']['value'] = $bl + $fl;	
-		$fpercent = round(($bl+$fl)*100/$tq);
+		$fpercent = round(($bl+$fl)*100/$tq1); //tq
 		$this->stats['percentFailed']['value'] = intval($fpercent);		
 
 		//percent of have to sent
