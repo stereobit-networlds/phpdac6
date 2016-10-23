@@ -131,7 +131,7 @@ class cmslogin {
 	var $login_goto, $logout_goto;  
 	var $recaptcha_public_key, $recaptcha_private_key;	
 	var $resetPass, $isLogin, $isRegistered;
-	var $inactive_on_register, $recaptcha;	
+	var $inactive_on_register, $recaptcha, $appname, $mtrackimg;	
 	var $facebook_id, $facebook_key, $facebook_userId, $facebook, $fbhash;		
 	
 	static $staticpath;
@@ -185,6 +185,10 @@ class cmslogin {
 	    $this->facebook_userId = null;	
 		$this->fbhash = GetSessionParam('fbhash');	
 	   	//echo $this->fbhash,'>';
+		
+		$this->appname = paramload('ID','instancename');
+		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
+		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";		
 		
         //timezone	   
         date_default_timezone_set('Europe/Athens');		   
@@ -843,8 +847,8 @@ window.setTimeout('neu()',10);
 				$fbpass	= md5($uret.'!@test@!'.time()); //auto gen password
 				  
 				//insert facebook user (active by def)	  
-				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid, password, vpass) values ";
-				$sSQL.= "('{$sUsername}','{$userInfo['first_name']}','{$userInfo['last_name']}','{$userInfo['email']}','ACTIVE','{$userInfo['email']}',1,1, '{$fbpass}','{$fbpass}')";
+				$sSQL = "insert into users (active,code2,fname,lname,email,notes,username,subscribe,seclevid, password, vpass, active, fb) values ";
+				$sSQL.= "('{$sUsername}','{$userInfo['first_name']}','{$userInfo['last_name']}','{$userInfo['email']}','ACTIVE','{$userInfo['email']}',1,1, '{$fbpass}','{$fbpass}',1,1)";
 				$ret = $db->Execute($sSQL);
 							  
 				if ($db->Affected_Rows()) {
@@ -853,11 +857,13 @@ window.setTimeout('neu()',10);
 					
 				    if (defined('CMSSUBSCRIBE_DPC'))  
 						GetGlobal('controller')->calldpc_method('cmssubscribe.dosubscribe use '.$sUsername.'+1');
+					
+					$this->update_statistics('newuser', $sUsername);
 				}	
 			  }	
 			  else {  
 			    //update existed user with facebook data (active by def)
-				$sSQL = "UPDATE users set fname='{$userInfo['first_name']}',lname='{$userInfo['last_name']}', notes='ACTIVE' WHERE username='{$userInfo['email']}'";
+				$sSQL = "UPDATE users set fname='{$userInfo['first_name']}',lname='{$userInfo['last_name']}', notes='ACTIVE', active=1, fb=1 WHERE username='{$userInfo['email']}'";
                 $uret = false; 				
 				$ret = $db->Execute($sSQL);
               } 
@@ -1038,6 +1044,13 @@ window.setTimeout('neu()',10);
 		
 		return false;
 	}
+	
+	protected function update_statistics($id, $user=null) {
+        if (defined('CMSVSTATS_DPC'))	
+			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
+		
+		return false;
+	}	
 
 	//special reg for cp
     protected function register() {
@@ -1067,8 +1080,10 @@ window.setTimeout('neu()',10);
 			$firstname = array_shift($fn);
 			$lastname = implode(' ', $fn);
 			
-            $sSQL = "insert into users (code2,fname,lname,username,password,vpass,email,notes,seclevid)" .  
-			        " values (" .
+			$activ = $this->inactive_on_register ? '0' : '1';
+			
+            $sSQL = "insert into users (active,code2,fname,lname,username,password,vpass,email,notes,seclevid)" .  
+			        " values ($activ," .
 				    $db->qstr(addslashes($uname)) . "," . 
                     $db->qstr(addslashes($firstname)) . "," . //first name
 			        $db->qstr(addslashes($lastname)) . "," . //rest as last name
@@ -1235,19 +1250,79 @@ window.setTimeout('neu()',10);
 	public function mailto($from,$to,$subject=null,$body=null) {
 
 		if (defined('SMTPMAIL_DPC')) {
+			
+			$trackid = $this->get_trackid($from,$to);
+			$mbody = $this->add_tracker_to_mailbody($body,$trackid,$to,1);
+			
 		    $smtpm = new smtpmail;
-		    $smtpm->to = $to;
-			$smtpm->from = $from;
-			$smtpm->subject = $subject;
-			$smtpm->body = $body ;
-
+		    $smtpm->to($to);
+			$smtpm->from($from);
+			$smtpm->subject($subject);
+			$smtpm->body($mbody);
 			$mailerror = $smtpm->smtpsend();
-
 			unset($smtpm);
+			
+			$this->save_outbox($from, $to, $subject, $body);
 
 			return ($mailerror);
 		}
 	}
+	
+	//send mail to db queue
+	protected function save_outbox($from,$to,$subject,$body=null) {
+		$db = GetGlobal('db');		
+		$ishtml = 1;
+		$origin = 'login'; 
+		$datetime = date('Y-m-d h:s:m');
+		$active = 0; 	
+		
+		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,cid) ";
+		$sSQL .=  "values (" .
+			 $db->qstr($datetime) . "," . 
+			 $db->qstr($datetime) . "," . 
+			 $active . "," .
+		     $db->qstr(strtolower($from)) . "," . 
+			 $db->qstr(strtolower($to)) . "," .
+		     $db->qstr($subject) . "," . 
+			 $db->qstr($body) . "," .
+			 $db->qstr($origin) . "," .			 
+			 $db->qstr($origin) . ")";
+			 		
+		$result = $db->Execute($sSQL,1);			 
+
+		return (true);			 
+	}	
+	
+	protected function add_tracker_to_mailbody($mailbody=null,$id=null,$receiver=null,$is_html=false) {
+		if (!$id) return;
+		$i = $id;
+	
+		if ($receiver) {
+			$r = $receiver;
+			$ret = "<img src=\"{$this->mtrackimg}?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"1\"/>";
+		}
+		else
+			$ret = "<img src=\"{$this->mtrackimg}?i=$i\" border=\"0\" width=\"1\" height=\"1\"/>";
+		 
+		if (($is_html) && (stristr($mailbody,'</BODY>'))) {
+			if (strstr($mailbody,'</BODY>'))
+				$out = str_replace('</BODY>',$ret.'</BODY>',$mailbody);
+			else  
+				$out = str_replace('</body>',$ret.'</body>',$mailbody);
+		}	 
+		else
+			$out = $mailbody . $ret;	 	 
+		 
+		return ($out);	 
+	}	
+
+	protected function get_trackid($from,$to) {
+	
+		$i = rand(100000,999999);//++$m;	 
+		$tid = date('YmdHms') .  $i . '@' . $this->appname;
+		 
+		return ($tid);	
+	}	
 
 	public function recaptcha() {
 		if ((defined('RECAPTCHA_DPC')) && ($this->recaptcha==true)) {

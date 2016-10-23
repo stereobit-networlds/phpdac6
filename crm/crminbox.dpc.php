@@ -15,6 +15,7 @@ $__LOCALE['CRMINBOX_DPC'][2]='_time;Time;Ώρα';
 $__LOCALE['CRMINBOX_DPC'][3]='_status;Status;Κατάσταση';
 $__LOCALE['CRMINBOX_DPC'][4]='_user;User;Πελάτης';
 $__LOCALE['CRMINBOX_DPC'][5]='_cid;cid;cid';
+$__LOCALE['CRMINBOX_DPC'][6]='_subject;Subject;Θέμα';
 
 
 class crminbox extends crmmodule  {
@@ -37,11 +38,12 @@ class crminbox extends crmmodule  {
 	
 	    if (defined('MYGRID_DPC')) {
 			
-			$xSQL2 = "select id,date,email from cform where email='$selected'";	
+			$xSQL2 = "select id,date,email,subject from cform where email='$selected'";	
 		
 			_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");
-			_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|link|10|"."javascript:showdetails({id});".'||');
+			_m("mygrid.column use grid1+date|".localize('_date',getlocal())."|5|1|");
 			_m("mygrid.column use grid1+email|".localize('_email',getlocal())."|5|0|");
+			_m("mygrid.column use grid1+subject|".localize('_subject',getlocal())."|link|10|"."javascript:showdetails({id});".'||');
 			
 			$ret .= _m("mygrid.grid use grid1+cform+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 

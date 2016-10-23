@@ -117,7 +117,7 @@ class shcart extends cart {
 	var $tmpl_path, $tmpl_name;
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
 
-    var $twig_invoice_template_name; 
+    var $twig_invoice_template_name, $appname, $mtrackimg; 
     var $agentIsIE, $baseurl;	
 	
     function __construct() {
@@ -259,7 +259,11 @@ class shcart extends cart {
 		$this->agentIsIE = (strpos($useragent, 'Trident') !== false) ? '1' : '0';	 //ie 11 
 		//echo '>'	,$this->agentIsIE;
 
-		$this->baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility	   
+		$this->baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility	  
+
+	    $this->appname = paramload('ID','instancename');	
+	    $tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
+	    $this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";			
     }
 
     //override
@@ -1576,38 +1580,6 @@ function addtocart(id,cartdetails)
 		return ($this->mailerror);
 	}	
 	
-	/*//a printed version of mail to send..disabled
-	protected function goto_mailer_4print() {
-        //$orderdataprint = GetSessionParam('orderdataprint2');
-		  	
-	    //template
-	    $cart_template= "shcartmail.htm";
-	    $template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
-		$mycarttemplate = file_get_contents($template);
-		$tokens = array();		
-		  
-		$_data = $mytitle . _m('shcustomers.showcustomerdata') . $this->quickview() . $details;	
-		if ($mycarttemplate) {
-		  
-			$tokens[] = $_data;
-			$mailout = $this->combine_tokens($mycarttemplate,$tokens,true);
-		}
-		else
-		    $mailout = $_data;			
-
-	    if ($ordermailsubject = remote_paramload('SHCART','ordermailsubject',$this->path)) {
-	        $subject = str_replace('@',$this->transaction_id,$ordermailsubject);	   
-		}
-		else
-		    $subject = localize('_ORDERSUBJECT',getlocal()) . $this->transaction_id;
-			
-		// MAIL THE ORDER TO HOST
- 		$this->mailerror = $this->cart_mailto(null,$subject,$mailout);
-        //TO CUSTOMER
-		$usermail = decode(GetGlobal('UserID'));
- 		$this->mailerror = $this->cart_mailto($usermail,$subject,$mailout);		      
-	}*/
-	
 	//override
 	public function payway($token=null) {
 
@@ -1948,7 +1920,7 @@ function addtocart(id,cartdetails)
 					 }	 
 		             break;
 	         case 3 :					 	 
-		     case 2 :$mycway = GetParam("customerway")?GetParam("customerway"):GetSessionParam("customerway");
+		     case 2 :$mycway = GetParam("customerway") ? GetParam("customerway") : GetSessionParam("customerway");
                      SetSessionParam('customerway',$mycway);	
 
 					 $subtokens[] = _m('shcustomers.showcustomers use customerway++++'.$mycway);
@@ -3064,15 +3036,20 @@ function addtocart(id,cartdetails)
 	    $to = $to?$to:$this->cartreceive_mail;
 		  
 	    if (defined('SMTPMAIL_DPC')) {
+			
+			$trackid = $this->get_trackid($from,$to);
+			$mbody = $this->add_tracker_to_mailbody($body,$trackid,$to,1);				
 				 
 	        $smtpm = new smtpmail;
 		   
 		    $smtpm->to($to); 
 		    $smtpm->from($from); 
 		    $smtpm->subject($subject);
-		    $smtpm->body($body);			   
+		    $smtpm->body($mbody);			   
 
 			$mailerror = $smtpm->smtpsend();
+			
+			$this->save_outbox($from, $to, $subject, $body);
 
 			unset($smtpm);
 		}
@@ -3081,6 +3058,62 @@ function addtocart(id,cartdetails)
 		  
 		  return ($mailerror);	   	
 	}
+	
+	//send mail to db queue
+	protected function save_outbox($from,$to,$subject,$body=null) {
+		$db = GetGlobal('db');		
+		$ishtml = 1;
+		$origin = 'cart'; 
+		$datetime = date('Y-m-d h:s:m');
+		$active = 0; 		
+		
+		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,cid) ";
+		$sSQL .=  "values (" .
+			 $db->qstr($datetime) . "," . 
+			 $db->qstr($datetime) . "," . 
+			 $active . "," .
+		     $db->qstr(strtolower($from)) . "," . 
+			 $db->qstr(strtolower($to)) . "," .
+		     $db->qstr($subject) . "," . 
+			 $db->qstr($body) . "," .
+			 $db->qstr($origin) . "," .				 
+			 $db->qstr($origin) . ")";
+			 		
+		$result = $db->Execute($sSQL,1);			 
+
+		return (true);			 
+	}	
+
+	protected function get_trackid($from,$to) {
+	
+		$i = rand(100000,999999);//++$m;	 
+		$tid = date('YmdHms') .  $i . '@' . $this->appname;
+		 
+		return ($tid);	
+	}	
+	
+	protected function add_tracker_to_mailbody($mailbody=null,$id=null,$receiver=null,$is_html=false) {
+		if (!$id) return;
+		$i = $id;
+	
+		if ($receiver) {
+			$r = $receiver;
+			$ret = "<img src=\"{$this->mtrackimg}?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"1\"/>";
+		}
+		else
+			$ret = "<img src=\"{$this->mtrackimg}?i=$i\" border=\"0\" width=\"1\" height=\"1\"/>";
+		 
+		if (($is_html) && (stristr($mailbody,'</BODY>'))) {
+			if (strstr($mailbody,'</BODY>'))
+				$out = str_replace('</BODY>',$ret.'</BODY>',$mailbody);
+			else  
+				$out = str_replace('</body>',$ret.'</body>',$mailbody);
+		}	 
+		else
+			$out = $mailbody . $ret;	 	 
+		 
+		return ($out);	 
+	}		
 	
 	protected function make_gmt_date($date=null,$mytmzid=null,$dst=null) {
 		

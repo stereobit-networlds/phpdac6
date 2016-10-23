@@ -382,11 +382,12 @@ class rcusers extends shusers {
 			
 			$where = null; //"where seclevid<5";  //order by id desc //disable search
 		
-            $xsSQL = "SELECT * from (select id,timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users $where) o ";		   
+            $xsSQL = "SELECT * from (select id,timein,active,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users $where) o ";		   
 		   
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|0|".seturl('t=cptransactions&cusmail={username}').'||');	   
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|link|0|".seturl('t=cpusractiv&rec={id}').'||');
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|link|5|".seturl('t=cpusractiv&rec={id}').'||');
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|20|0|");						
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|20|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|20|1|");
@@ -416,11 +417,12 @@ class rcusers extends shusers {
 			
 	    if (defined('MYGRID_DPC')) {
 		
-            $xsSQL = "SELECT * from (select id,timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users where $from and $to) o ";		   
+            $xsSQL = "SELECT * from (select id,timein,active,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users where $from and $to) o ";		   
 		   
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|1|".seturl('t=cptransactions&cusmail={username}').'||');	   
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|link|1|".seturl('t=cpusractiv&rec={id}').'||');
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|link|5|".seturl('t=cpusractiv&rec={id}').'||');
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|20|1|");						
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|20|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|20|1|");
@@ -512,7 +514,7 @@ class rcusers extends shusers {
 	     $db = GetGlobal('db');	
 		 $id = GetReq('rec');
 		 
-		 $sSQL = "update users set notes='ACTIVE' where id = " . $id;
+		 $sSQL = "update users set active=1,notes='ACTIVE' where id = " . $id;
 		 //echo $sSQL;		 
          $db->Execute($sSQL);
          if($db->Affected_Rows()) {
@@ -529,7 +531,7 @@ class rcusers extends shusers {
 	     $db = GetGlobal('db');	
 		 $id = GetReq('rec');
 		 
-		 $sSQL = "update users set notes='DELETED' where id = " . $id;
+		 $sSQL = "update users set active=0,notes='DELETED' where id = " . $id;
 		 //echo $sSQL;		 
          $db->Execute($sSQL);
          if($db->Affected_Rows()) {
@@ -546,15 +548,20 @@ class rcusers extends shusers {
 	     $db = GetGlobal('db');	
 		 $id = GetReq('rec');
 		 
-		 $sSQL = "select notes from users where id = " . $id;
+		 $sSQL = "select active,notes from users where id = " . $id;
 		 //echo $sSQL;		 
          $result = $db->Execute($sSQL,2);
 		 
+		 if ($result->fields['notes'])
+			return true;
+		 
+		 return false;
+		 /*
 		 $notes = $result->fields['notes'];
 		 if (substr($notes,0,7)=='DELETED')
 		   return false;
 		 else
-		   return true;  
+		   return true;  */
 	
 	}
 	

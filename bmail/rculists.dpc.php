@@ -304,6 +304,7 @@ class rculists  {
 	
     protected function show_mailbody() {
 		$db = GetGlobal('db'); 	
+		/*
 		$cid = GetReq('id');
 
         if (!$cid) die("CID error");
@@ -316,7 +317,12 @@ class rculists  {
         //echo $sSQL;		
 		
 		$result = $db->Execute($sSQL,2);
-		$htmlbody = base64_decode($result->fields[0]); 		
+		$htmlbody = base64_decode($result->fields[0]);*/
+
+        $id = GetReq('id');
+		$sSQL = 'select body from mailqueue where id='. $id;
+		$result = $db->Execute($sSQL,2);
+		$htmlbody = $result->fields[0]; 		
 
 		return ($htmlbody);	  
     }

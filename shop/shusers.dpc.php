@@ -109,7 +109,7 @@ class shusers  {
 	var $continue_register_customer, $deny_multiple_users;
 	var $check_existing_customer, $map_customer, $customer_exist_id;
     var $inactive_on_register, $stay_inactive;	
-	var $tmpl_path, $tmpl_name;	
+	var $tmpl_path, $tmpl_name, $appname, $mtrackimg;	
 
 	function shusers() {
 
@@ -173,6 +173,10 @@ class shusers  {
 	   
 	   $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
 	   $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);		
+	   
+	   $this->appname = paramload('ID','instancename');	
+	   $tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
+	   $this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	   
 	}
 
     function event($sAction) {
@@ -1243,6 +1247,7 @@ class shusers  {
 		$hash = md5('stereobit9networlds8and7the6heart5breakers');
 		$sectoken = urlencode(base64_encode($username.'|'.$hash));
 		$account_enable_link = seturl('t=useractivate&sectoken='.$sectoken);
+		//echo $account_enable_link;
 		
 		$mytemplate = file_get_contents($t);
 		$tokens = array(); //reset	
@@ -1314,8 +1319,9 @@ class shusers  {
 	   }
 	   else {
 		 
-		 //$code2 = $this->leeid;//?$this->leeid:$code; echo $code;
-         $sSQL = "insert into users" . " (" . "code2,fname,lname,username,password,vpass,email,CNTRYID,LANID,AGEID,GENID,timezone,notes";
+		 $activ = $this->inactive_on_register ? '0' : '1';
+		  
+         $sSQL = "insert into users" . " (" . "active,code2,fname,lname,username,password,vpass,email,CNTRYID,LANID,AGEID,GENID,timezone,notes,fb";
 
          if (seclevel('USERSMNG_',$this->userLevelID)) {
  	  	    $sSQL .= ",STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID";
@@ -1324,7 +1330,7 @@ class shusers  {
 		    $sSQL .= ",SECLEVID"; //only security
 		 }
 
-         $sSQL .= ")" .  " values (" .
+         $sSQL .= ")" .  " values ($activ," .
 				"'" . addslashes($user_code) . "'," . //username as usercode
                 "'" . addslashes(GetParam("fname")) . "'," .
 			    "'" . addslashes(GetParam("lname")) . "'," .
@@ -1343,13 +1349,12 @@ class shusers  {
 		  $gender = GetParam("gender")?GetParam("gender"):0;
 		  $tmz = GetParam("timezone")?GetParam("timezone"):0;
 		  
-		  $active = $this->inactive_on_register?'DELETED':'ACTIVE';
+		  $active = $this->inactive_on_register ? 'DELETED' : 'ACTIVE';
 		  
-          $sSQL .= $country . "," . $language . "," . $age . "," . $gender . "," . $db->qstr($tmz) . "," .	$db->qstr($active); 
+          $sSQL .= $country . "," . $language . "," . $age . "," . $gender . "," . $db->qstr($tmz) . "," .	$db->qstr($active) . ",0"; 
 
            if (seclevel('USERSMNG_',$this->userLevelID)) {
  	  	      $sSQL .= "," .
-           	    //"'" . GetParam("notes") . "'," . //became default active
                 GetParam("dcreate") . "," .
                 "'" . GetParam("ipins")  . "'," .
                 "'" . GetParam("ipupd")  . "'," .
@@ -1387,198 +1392,172 @@ class shusers  {
 	}
 	
 	function insert_with_customer() {
-       $db = GetGlobal('db');
-	   $sFormErr = GetGlobal('sFormErr');
-       $seclevid = $this->security?$this->security:'0';   
+		$db = GetGlobal('db');
+		$sFormErr = GetGlobal('sFormErr');
+		$seclevid = $this->security?$this->security:'0';   
 
-       $user_code = $this->pre_insert_task();	
-	   //echo '+',$user_code;
+		$user_code = $this->pre_insert_task();	
+		//echo '+',$user_code;
 	   
-	   if (!$user_code) {
-		   SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #3');
-		   return null;	   
-	   }	
+		if (!$user_code) {
+			SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #3');
+			return null;	   
+		}	
 	   
-	   //save it to restore if 2nd step exist to insert custime and to connect
-	   SetSessionParam('new_user_code',$user_code); 
+		//save it to restore if 2nd step exist to insert custime and to connect
+		SetSessionParam('new_user_code',$user_code); 
 
-	   if ($un = $this->username_exist()) {
-
-	     SetGlobal('sFormErr', localize('_MSG17',getlocal()) . ' ' . $un);
-	   }
-	   else {	 
-	     //start map procedure
-	     $map_customer = null;
+		if ($un = $this->username_exist()) {
+	
+			SetGlobal('sFormErr', localize('_MSG17',getlocal()) . ' ' . $un);
+		}
+		else {	 
+			//start map procedure
+			$map_customer = null;
 	     
-		 //echo '>',$this->check_existing_customer;
-	     if ($this->check_existing_customer) {
-		   if ($this->map_customer===true)//map a customer
-             $sFormErr = 'ok';
-		   elseif ($this->map_customer===false)//already mapped error	 
-		     $sFormErr = 'Customer is already mapped!';//will not be shown just err...
-		   else //is null = new customer	 
-		     $sFormErr = _m('shcustomers.subinsert use '.$user_code.'+1');
-		 }
-		 else //register new customer
-		   $sFormErr = _m('shcustomers.subinsert use '.$user_code.'+1');
+			//echo '>',$this->check_existing_customer;
+			if ($this->check_existing_customer) {
+				if ($this->map_customer===true)//map a customer
+					$sFormErr = 'ok';
+				elseif ($this->map_customer===false)//already mapped error	 
+					$sFormErr = 'Customer is already mapped!';//will not be shown just err...
+				else //is null = new customer	 
+					$sFormErr = _m('shcustomers.subinsert use '.$user_code.'+1');
+			}
+			else //register new customer
+				$sFormErr = _m('shcustomers.subinsert use '.$user_code.'+1');
 		 
-		 if ($sFormErr=='ok') {//start user registartion
+			if ($sFormErr=='ok') {//start user registartion
 		
-		 
-		 //$code2 = $this->leeid;//?$this->leeid:$code; echo $code;
-         $sSQL = "insert into users" . " (" . "code2,fname,lname,username,password,vpass,email,CNTRYID,LANID,AGEID,GENID,timezone,notes";
+				$activ = $this->inactive_on_register ? '0' : '1';	
+				  
+				//$code2 = $this->leeid;//?$this->leeid:$code; echo $code;
+				$sSQL = "insert into users (active,code2,fname,lname,username,password,vpass,email,CNTRYID,LANID,AGEID,GENID,timezone,notes,fb";
 
-         if (seclevel('USERSMNG_',$this->userLevelID)) {
- 	  	    $sSQL .= ",STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID";
-         }
-		 else {
-		    $sSQL .= ",SECLEVID"; //only security
-		 }
+				if (seclevel('USERSMNG_',$this->userLevelID)) {
+					$sSQL .= ",STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID";
+				}
+				else {
+					$sSQL .= ",SECLEVID"; //only security
+				}
 
-         $sSQL .= ")" .  " values (" .
-				"'" . addslashes($user_code) . "'," . //username as usercode
-                "'" . addslashes(GetParam("fname")) . "'," .
-			    "'" . addslashes(GetParam("lname")) . "'," .
-                "'" . addslashes($user_code) . "'," . //username=usercode
-                "'" . md5(addslashes(GetParam("pwd"))) . "'," .
-                "'" . md5(addslashes(GetParam("pwd2"))) . "',";
+				$sSQL .= ")" .  " values ($activ," .
+						"'" . addslashes($user_code) . "'," . //username as usercode
+						"'" . addslashes(GetParam("fname")) . "'," .
+						"'" . addslashes(GetParam("lname")) . "'," .
+						"'" . addslashes($user_code) . "'," . //username=usercode
+						"'" . md5(addslashes(GetParam("pwd"))) . "'," .
+						"'" . md5(addslashes(GetParam("pwd2"))) . "',";
 
-          if ($this->usemailasusername)
-                $sSQL .= "'" . addslashes($user_code) . "',";//email = usercode
-		  else
-                $sSQL .= "'" . addslashes(GetParam("eml")) . "',";
+				if ($this->usemailasusername)
+					$sSQL .= "'" . addslashes($user_code) . "',";//email = usercode
+				else
+					$sSQL .= "'" . addslashes(GetParam("eml")) . "',";
 				
-		  $active = $this->inactive_on_register?'DELETED':'ACTIVE';	
+				$active = $this->inactive_on_register ? 'DELETED ': 'ACTIVE';	
 
-          $sSQL .= GetParam("country_id")  ? (GetParam("country_id") . ",") : "0,";
-          $sSQL .= GetParam("language_id") ? (GetParam("language_id") . ",") : "0,";
-          $sSQL .= GetParam("age")         ? (GetParam("age") . ",") : "0,";
-          $sSQL .= GetParam("gender")      ? (GetParam("gender") . ",") : "0,";
-          $sSQL .= GetParam("timezone")    ? ($db->qstr(GetParam("timezone"))) : "'',";				
-		  $sSQL .= "'$active'"; //default active
+				$sSQL .= GetParam("country_id")  ? (GetParam("country_id") . ",") : "0,";
+				$sSQL .= GetParam("language_id") ? (GetParam("language_id") . ",") : "0,";
+				$sSQL .= GetParam("age")         ? (GetParam("age") . ",") : "0,";
+				$sSQL .= GetParam("gender")      ? (GetParam("gender") . ",") : "0,";
+				$sSQL .= GetParam("timezone")    ? ($db->qstr(GetParam("timezone"))) : "'',";				
+				$sSQL .= "'$active',0"; //default active
 
-          if (seclevel('USERSMNG_',$this->userLevelID)) {
- 	  	      $sSQL .= ",";
-           	  //$sSQL .= $db->qstr(GetParam("notes")) . ",";//became default active
-              $sSQL .= GetParam("dcreate") ? GetParam("dcreate") . "," : date('Y-m-d') . ",";
-              $sSQL .= $db->qstr(GetParam("ipins")) . ",";
-              $sSQL .= $db->qstr(GetParam("ipupd"))  . ",";
-              $sSQL .= $db->qstr(GetParam("llogin")) . ",";
-              $sSQL .= $db->qstr(GetParam("sparam")) . ",";
-              $sSQL .= $db->qstr(GetParam("sesid"))  . ",";
-              $sSQL .= GetParam("seclevid") ;
-		  }
-		  else {
-		      $sSQL .= "," . $seclevid ;//only security automated (predefined customer)
-		  }
+				if (seclevel('USERSMNG_',$this->userLevelID)) {
+					$sSQL .= ",";
+					$sSQL .= GetParam("dcreate") ? GetParam("dcreate") . "," : date('Y-m-d') . ",";
+					$sSQL .= $db->qstr(GetParam("ipins")) . ",";
+					$sSQL .= $db->qstr(GetParam("ipupd"))  . ",";
+					$sSQL .= $db->qstr(GetParam("llogin")) . ",";
+					$sSQL .= $db->qstr(GetParam("sparam")) . ",";
+					$sSQL .= $db->qstr(GetParam("sesid"))  . ",";
+					$sSQL .= GetParam("seclevid") ;
+				}
+				else {
+					$sSQL .= "," . $seclevid ;//only security automated (predefined customer)
+				}
 
-	      $sSQL .= ")";
-          //echo $sSQL;
-          $ret = $db->Execute($sSQL);	 //print_r($ret);
+				$sSQL .= ")";
+				//echo $sSQL;
+				$ret = $db->Execute($sSQL);	 
 
-          if ($ret = $db->Affected_Rows()) {
-		   //map procedure cntinue after user registration
-		   if (($this->check_existing_customer) && ($this->map_customer===true)) {
-		     //echo 'user code:',$user_code;
-		     $map = _m('shcustomers.map_customer use '.$user_code.'+'.$this->customer_exist_id);
-		   }
+				if ($ret = $db->Affected_Rows()) {
+					//map procedure cntinue after user registration
+					if (($this->check_existing_customer) && ($this->map_customer===true)) {
+						//echo 'user code:',$user_code;
+						$map = _m('shcustomers.map_customer use '.$user_code.'+'.$this->customer_exist_id);
+					}
 		 
-		   SetGlobal('sFormErr',"ok");
-		   $this->after_insert_task($user_code,GetParam("pwd"),GetParam("fname"),GetParam("lname"));//send code to customer	   
-		  }
-	      else {
-		   //rollback
-		   //delete inserted customer.....
-		   if ((!$this->check_existing_customer) && ($this->map_customer===null)) //if NOT map procedure
-		     $rollback = _m('shcustomers.subdelete use '.$user_code);
+					SetGlobal('sFormErr',"ok");
+					$this->after_insert_task($user_code,GetParam("pwd"),GetParam("fname"),GetParam("lname"));//send code to customer	   
+				}
+				else {
+					//rollback
+					//delete inserted customer.....
+					if ((!$this->check_existing_customer) && ($this->map_customer===null)) //if NOT map procedure
+						$rollback = _m('shcustomers.subdelete use '.$user_code);
 		 
-		   $ret = $db->ErrorMsg();
-		   //echo $ret;
-		   SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #4');
-		  }
-	     }	
-	   }//if customer inserted       
-	}
+					$ret = $db->ErrorMsg();
+					//echo $ret;
+					SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #4');
+				}
+			}	
+	    }//if customer inserted       
+	} 
 	
 	function update_user_code($c,$codef=null) {
-	   $db = GetGlobal('db');	
-	   $currentuser = decode($UserName);	   
+		$db = GetGlobal('db');	
+		$currentuser = decode($UserName);	   
 	
-	   $code = $codef?$codef:$this->leeid;
-       $sSQL = "UPDATE users set $code=" . $c;
-       $sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
+		$code = $codef?$codef:$this->leeid;
+		$sSQL = "UPDATE users set $code=" . $c;
+		$sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
 	   
-       $db->Execute($sSQL);
-       if($db->Affected_Rows()) return (true);
+		$db->Execute($sSQL);
+		if($db->Affected_Rows()) return (true);
 	                       else return (false);	   	    	
 	}
 
 	function update($id=null) {
-	   $db = GetGlobal('db');
-	   $UserName = GetGlobal('UserName');
-	   $sFormErr = GetGlobal('sFormErr');
-	   //print_r($_POST);
-       $rec = $id?$id:GetParam('rec');
-	   $a = GetReq('a');
-	   $g = GetReq('g');
-	   $currentuser = decode($UserName);
+		$db = GetGlobal('db');
+		$UserName = GetGlobal('UserName');
+		$sFormErr = GetGlobal('sFormErr');
+
+		$rec = $id ? $id : GetParam('rec');
+		$a = GetReq('a');
+		$g = GetReq('g');
+		$currentuser = decode($UserName);
 
 
-       $sSQL = "UPDATE users set " .
+		$sSQL = "UPDATE users set " .
                 "fname=" . $db->qstr(GetParam("fname"))  . "," .
-			    "lname=" . $db->qstr(GetParam("lname"));//  . ","; <<<< NOT THIS WAY			
-                /*"PASSWORD='" . md5(GetParam("pwd"))  . "'," .
-                "VPASS='" . md5(GetParam("pwd2"))  . "',";<<<< NOT THIS WAY*/
-	   /*<<<< NOT THIS WAY			
-       if ($this->usemailasusername) {
-                //$sSQL .= "USERNAME='" . GetParam("uname")  . "',";//foreign key to customers
-                $sSQL .= "email='" . GetParam("uname")  . "'"; 				
-	   }		
-	   else {
-                //$sSQL .= "USERNAME='" . GetParam("uname")  . "',";//foreign key to customers	   
-                $sSQL .= "email='" . GetParam("eml")  . "'"; 
-	   }*/			
-		
-	   $subscribe = GetParam('autosub')?1:0;	
-       $CNTRYID = GetParam("country_id") ? GetParam("country_id") : '0';	   
-	   $LANID = GetParam("language_id") ? GetParam("language_id") : '0';
-	   $AGEID = GetParam("age") ? GetParam("age") : '0';
-	   $GENID = GetParam("gender") ? GetParam("gender") : '0';
-	   $TIMEZONE = GetParam("timezone") ? GetParam("timezone") : '';
-	   
-	   if (!GetReq('editmode')) { 
-			$sSQL .= "," ;						
-			$sSQL .= "CNTRYID=" . $CNTRYID  . ",";
-			$sSQL .= "LANID=" . $LANID  . ",";
-			$sSQL .= "AGEID=" . $AGEID  . ",";
-			$sSQL .= "GENID=" . $GENID . ",";
-			$sSQL .= "TIMEZONE=" . $db->qstr($TIMEZONE) . ",";	
-			$sSQL .= "SUBSCRIBE=" . $subscribe . ",";	 			
-			$sSQL .= "CLOGON=0";
-        }
-        if ((seclevel('USERSMNG_',$this->userLevelID)) || (!GetReq('editmode'))) {
-		    //not these data....
- 	  	    /*$sSQL .= "," .
-           	    "NOTES='" . GetParam("notes")  . "'," .
-                //"STARTDATE=" . GetParam("dcreate")  . "," .
-                "IPINS='" . GetParam("ipins")  . "'," .
-                "IPUPD='" . GetParam("ipupd")  . "'," .
-                //"LASTLOGON=" . GetParam("llogin")  . "," .
-                //"SECPARAM=" . GetParam("sparam")  . "," .
-                "SESID='" . GetParam("sesid")  . "'," .
-                //"SECLEVID=" . GetParam("seclevid") ;
-				*/
-         }
-         
-		 if ($rec) {
-		   $sSQL .= " WHERE ID =" . $rec;		 
-		 }
-		 elseif ($a) {
-			$sSQL .= " WHERE CODE2 ='" . $a . "' AND USERNAME='" . $g . "'";		 
-		 }  
-	     else 
-		   $sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
+			    "lname=" . $db->qstr(GetParam("lname"));			
 
+		$subscribe = GetParam('autosub')?1:0;	
+		$CNTRYID = GetParam("country_id") ? GetParam("country_id") : '0';	   
+		$LANID = GetParam("language_id") ? GetParam("language_id") : '0';
+		$AGEID = GetParam("age") ? GetParam("age") : '0';
+		$GENID = GetParam("gender") ? GetParam("gender") : '0';
+		$TIMEZONE = GetParam("timezone") ? GetParam("timezone") : '';
+	   
+
+		$sSQL .= "," ;						
+		$sSQL .= "CNTRYID=" . $CNTRYID  . ",";
+		$sSQL .= "LANID=" . $LANID  . ",";
+		$sSQL .= "AGEID=" . $AGEID  . ",";
+		$sSQL .= "GENID=" . $GENID . ",";
+		$sSQL .= "TIMEZONE=" . $db->qstr($TIMEZONE) . ",";	
+		$sSQL .= "SUBSCRIBE=" . $subscribe . ",";	 			
+		$sSQL .= "CLOGON=0";
+         
+		if ($rec) {
+		   $sSQL .= " WHERE ID =" . $rec;		 
+		}
+		elseif ($a) {
+			$sSQL .= " WHERE CODE2 ='" . $a . "' AND USERNAME='" . $g . "'";		 
+		}  
+	    else 
+		   $sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
 
 	     //echo $sSQL;
 
@@ -1588,37 +1567,36 @@ class shusers  {
 	}
 
 	function _delete($id=null,$fkey=null) {
-	   $db = GetGlobal('db');
-	   $UserID = GetGlobal('UserID');
-	   $sFormErr = GetGlobal('sFormErr');	;
-	   $myfkey = $fkey?$fkey:'code2';
+		$db = GetGlobal('db');
+		$UserID = GetGlobal('UserID');
+		$sFormErr = GetGlobal('sFormErr');	;
+		$myfkey = $fkey?$fkey:'code2';
+	
+		$a = GetReq('a');
+		$g = GetReq('g');
 
-	   $a = GetReq('a');
-	   $g = GetReq('g');
+		if (!$a) $currentuserID = decode($UserID);
+			else $currentuserID = $a;
 
-	   if (!$a) $currentuserID = decode($UserID);
-	       else $currentuserID = $a;
+		$myrec = $id?$id:$currentuserID;
 
-	   $myrec = $id?$id:$currentuserID;
+		if (seclevel('USERSMNG_',$this->userLevelID)) {
 
-       if (seclevel('USERSMNG_',$this->userLevelID)) {
+			//exclude record 1=admin
+			if (GetReq('editmode')) {
+				$sSQL = "delete from users where id=" . GetReq('rec');
+			}
+			elseif ($g!='admin') {
+			//$sSQL = "DELETE from users WHERE user_id =" . $db->qstr($currentuserID) ;
 
-         //exclude record 1=admin
-		 if (GetReq('editmode')) {
-		 	$sSQL = "delete from users where id=" . GetReq('rec');
-		 }
-         elseif ($g!='admin') {
-		   //$sSQL = "DELETE from users WHERE user_id =" . $db->qstr($currentuserID) ;
-
-		   //virtual delete
-           $sSQL = "UPDATE users set " .
-                   "NOTES='DELETED'";//  .
-				   //"WHERE LEEID='" . $currentuserID . "'" ;
+			//virtual delete
+			$sSQL = "UPDATE users set active=0," .
+					"NOTES='DELETED'";
      
-	       if (!$a)
-		      $sSQL .= " WHERE $myfkey =" . $myrec . "'";
-		    else  		   
-			  $sSQL .= " WHERE $myfkey =" . $myrec . " AND USERNAME='" . $g . "'";
+			if (!$a)
+				$sSQL .= " WHERE $myfkey =" . $myrec . "'";
+			else  		   
+				$sSQL .= " WHERE $myfkey =" . $myrec . " AND USERNAME='" . $g . "'";
 
 		 }
 		 //echo $sSQL;		 
@@ -1631,25 +1609,88 @@ class shusers  {
 
 	function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 	
-	    if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
+	    /*if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
 		  $ret = _m("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
         }
-		else {
-		     if (defined('SMTPMAIL_DPC')) {
-		       $smtpm = new smtpmail;
+		else {*/
+		    if (defined('SMTPMAIL_DPC')) {
+				
+				$trackid = $this->get_trackid($from,$to);
+				$mbody = $this->add_tracker_to_mailbody($body,$trackid,$to,1);				
+				
+				$smtpm = new smtpmail;
 			   
-		       $smtpm->to($to); 
-		       $smtpm->from($from); 
-		       $smtpm->subject($subject);
-		       $smtpm->body($body);			   
-
-			   $mailerror = $smtpm->smtpsend();
-
-			   unset($smtpm);
-			 }
-		} 
+				$smtpm->to($to); 
+				$smtpm->from($from); 
+				$smtpm->subject($subject);
+				$smtpm->body($mbody);			   
+				$mailerror = $smtpm->smtpsend();
+				unset($smtpm);
+				
+				$this->save_outbox($from, $to, $subject, $body);
+				
+				return ($mailerror);
+			}
+			else
+				die('SMTP ERROR!');
+		//} 
 	}
 
+	//send mail to db queue
+	protected function save_outbox($from,$to,$subject,$body=null) {
+		$db = GetGlobal('db');		
+		$ishtml = 1;
+		$origin = 'users'; 
+		$datetime = date('Y-m-d h:s:m');
+		$active = 0; 		
+		
+		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,cid) ";
+		$sSQL .=  "values (" .
+			 $db->qstr($datetime) . "," . 
+			 $db->qstr($datetime) . "," . 
+			 $active . "," .
+		     $db->qstr(strtolower($from)) . "," . 
+			 $db->qstr(strtolower($to)) . "," .
+		     $db->qstr($subject) . "," . 
+			 $db->qstr($body) . "," .
+			 $db->qstr($origin) . "," .				 
+			 $db->qstr($origin) . ")";
+			 		
+		$result = $db->Execute($sSQL,1);			 
+
+		return (true);			 
+	}
+
+	protected function get_trackid($from,$to) {
+	
+		$i = rand(100000,999999);//++$m;	 
+		$tid = date('YmdHms') .  $i . '@' . $this->appname;
+		 
+		return ($tid);	
+	}	
+	
+	protected function add_tracker_to_mailbody($mailbody=null,$id=null,$receiver=null,$is_html=false) {
+		if (!$id) return;
+		$i = $id;
+	
+		if ($receiver) {
+			$r = $receiver;
+			$ret = "<img src=\"{$this->mtrackimg}?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"1\"/>";
+		}
+		else
+			$ret = "<img src=\"{$this->mtrackimg}?i=$i\" border=\"0\" width=\"1\" height=\"1\"/>";
+		 
+		if (($is_html) && (stristr($mailbody,'</BODY>'))) {
+			if (strstr($mailbody,'</BODY>'))
+				$out = str_replace('</BODY>',$ret.'</BODY>',$mailbody);
+			else  
+				$out = str_replace('</body>',$ret.'</body>',$mailbody);
+		}	 
+		else
+			$out = $mailbody . $ret;	 	 
+		 
+		return ($out);	 
+	}		
 
    /////////////////////////////////////////////////////////////////
    // generate user selection list
@@ -1900,24 +1941,20 @@ class shusers  {
 	}	
 	
 	function user_exists($username=null, $excludesubscriber=null) {
-	   $db = GetGlobal('db');	
-	   if (!$username) return false;
+		$db = GetGlobal('db');	
+		if (!$username) return false;
 	  
-       $sSQL = "select username from users";
-	   $sSQL .= " WHERE username=" . $db->qstr($username);
+		$sSQL = "select username from users";
+		$sSQL .= " WHERE username=" . $db->qstr($username);
 	   
-       if ($excludesubscriber)
-	     $sSQL .= " and lname <> 'SUBSCRIBER'";
+		if ($excludesubscriber)
+			$sSQL .= " and lname <> 'SUBSCRIBER'";
 	   
-       $result = $db->Execute($sSQL,2);
-       //if($db->Affected_Rows()) return (true);
-	     //                  else return (false);
-	   //echo $sSQL;	 	 
-	   //print_r($result->fields);	   	
-	   $res = $result->fields['username'];	  
+		$result = $db->Execute($sSQL,2);   	
+		$res = $result->fields['username'];	  
 	   
-	   $ret = $res?true:false;
-	   return ($ret); 
+		$ret = $res ? true : false;
+		return ($ret); 
 	}
 	
 	function user_activate() {
@@ -1938,7 +1975,7 @@ class shusers  {
 		 //echo '>',strcmp($hash,$hash2cmp);
          if (($this->user_exists($email)) && (strcmp($hash,$hash2cmp)==0)) {		 
 		 
-			$sSQL = "update users set notes='ACTIVE' where email = '" . $email ."'";
+			$sSQL = "update users set active=1,notes='ACTIVE' where email = '" . $email ."'";
 			//echo $sSQL;		 
 			$db->Execute($sSQL);
 			if($db->Affected_Rows()) {

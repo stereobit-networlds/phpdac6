@@ -38,7 +38,7 @@ class crmoutbox extends crmmodule  {
 	
 	    if (defined('MYGRID_DPC')) {
 			
-            $xSQL2 = "SELECT * from (select id,timein,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue where receiver='$selected' and origin='crm') o ";
+            $xSQL2 = "SELECT * from (select id,timein,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue where receiver='$selected' and (origin='crm' or origin='cart' or origin='users' or origin='customers')) o ";
 			//echo $xSQL2;
 			_m("mygrid.column use grid3+id|".localize('_id',getlocal())."|5|0|");
 			//_m("mygrid.column use grid3+timein|".localize('_date',getlocal())."|5|1|");//"|link|5|"."javascript:showdetails({id});".'||');
@@ -151,7 +151,7 @@ class crmoutbox extends crmmodule  {
 		
 		//return ("details:" . $data);
 		if (is_numeric($data)) //id for content preview
-			$bodyurl = 'cpbulkmail.php?t=cpmailbodyshow&id='.$data; 
+			$bodyurl = 'cpulists.php?t=cpmailbodyshow&id='.$data; 
 		//elseif ($this->_checkmail($data)) //email for attr3
 			//$bodyurl = 'cpcrm.php?t=cpcrmrun&mod=crmoutbox.taskclicks&id='.$data; 
 		else //campaign id

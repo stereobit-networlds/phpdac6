@@ -147,7 +147,7 @@ class cmssubscribe {
 	}
 
 	
-	protected function dosubscribe($mail=null,$bypasscheck=null,$telltouser=null) {
+	public function dosubscribe($mail=null,$bypasscheck=null,$telltouser=null) {
        $db = GetGlobal('db');
 	   $name = $name ? $name : 'unknown';
 	   $dlist = 'default';		
@@ -222,7 +222,7 @@ class cmssubscribe {
 	   }	   
 	}
 	
-	protected function dounsubscribe($mail=null,$telltouser=null) {
+	public function dounsubscribe($mail=null,$telltouser=null) {
        $db = GetGlobal('db');	
 	   $mail_tell_user = isset($telltouser)?$telltouser:$this->tell_user;
 	   $ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';	    
@@ -262,7 +262,7 @@ class cmssubscribe {
 			$this->msg = localize('_MSG5',getlocal());	  
 	}
 	
-    protected function isin($mail) {
+    public function isin($mail) {
        $db = GetGlobal('db');
 	   
        $sSQL = "SELECT id,email,startdate FROM ulists";	
@@ -273,7 +273,7 @@ class cmssubscribe {
        return (false);
     }	
 	
-    protected function isin_ulists($mail, $list=null) {
+    public function isin_ulists($mail, $list=null) {
        $db = GetGlobal('db');
 	   $ulist = $list ? $list : 'default';
 	   
