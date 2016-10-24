@@ -315,7 +315,7 @@ class rculiststats  {
 		$this->seclevid = GetSessionParam('ADMINSecID');			
 		
 		//all as 9 user or only owned		
-		$ownerSQL = null; //($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);	
+		$ownerSQL = ($this->seclevid==9) ? null : ' and owner=' . $db->qstr($this->owner);	
 		$timein = ($ownerSQL) ? $this->sqlDateRange('timein', true, true) : 
 							    $this->sqlDateRange('timein', true, false);
 		$dateRangeSQL = $timein ? (($ownerSQL) ? $timein : ' and ' . $timein) : null;

@@ -304,25 +304,28 @@ class rculists  {
 	
     protected function show_mailbody() {
 		$db = GetGlobal('db'); 	
-		/*
-		$cid = GetReq('id');
+		$_id = GetReq('id'); //as came from crmoubox ...
 
-        if (!$cid) die("CID error");
+		if (is_numeric($_id)) {
+			$sSQL = 'select body from mailqueue where id='. $_id;
+			$result = $db->Execute($sSQL,2);
+			$htmlbody = $result->fields[0]; 				
+			//echo $sSQL;
+		}
+		else {
+			$cid = $_id;
+			if (!$cid) die("CID error");
 		
-		//all as 9 user or only owned		
-		$ownerSQL = null;//($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
-        $cidSQL = $ownerSQL ? 'and cid='.$db->qstr($cid) : 'cid='.$db->qstr($cid);	
+			//all as 9 user or only owned		
+			$ownerSQL = null;//($this->seclevid==9) ? null : 'owner=' . $db->qstr($this->owner);
+			$cidSQL = $ownerSQL ? 'and cid='.$db->qstr($cid) : 'cid='.$db->qstr($cid);	
 		
-		$sSQL = 'select body from mailcamp where '. $ownerSQL . $cidSQL;
-        //echo $sSQL;		
+			$sSQL = 'select body from mailcamp where '. $ownerSQL . $cidSQL;
+			//echo $sSQL;		
 		
-		$result = $db->Execute($sSQL,2);
-		$htmlbody = base64_decode($result->fields[0]);*/
-
-        $id = GetReq('id');
-		$sSQL = 'select body from mailqueue where id='. $id;
-		$result = $db->Execute($sSQL,2);
-		$htmlbody = $result->fields[0]; 		
+			$result = $db->Execute($sSQL,2);
+			$htmlbody = base64_decode($result->fields[0]);	
+		}
 
 		return ($htmlbody);	  
     }
@@ -398,7 +401,10 @@ class rculists  {
 				$ret = true;					
             }
 			else {
-				//update (as is active or inactive)
+				//update DO NOT ENABLE ALREADY DISABLED emails
+				//$sSQL = "update ulists set active=1 where listname='".strtolower($ulistname)."' and email=" . $db->qstr(strtolower($mail));  
+				//$db->Execute($sSQL,1);	
+				//$ret = true;			   
 			}	
 		}
 		else 

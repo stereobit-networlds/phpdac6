@@ -2078,7 +2078,7 @@ window.onload=function(){
 				$mailerror = $smtpm->smtpsend();
 				unset($smtpm);
 				
-				$this->save_outbox($from, $to, $subject, $body);
+				$this->save_outbox($from, $to, $subject, $body, $trackid);
 
 				return ($mailerror);				
 			}
@@ -2088,7 +2088,7 @@ window.onload=function(){
 	}
 
 	//send mail to db queue
-	protected function save_outbox($from,$to,$subject,$body=null) {
+	protected function save_outbox($from,$to,$subject,$body=null, $trackid=null) {
 		$db = GetGlobal('db');		
 		$ishtml = 1;
 		$origin = 'customers'; 
@@ -2105,7 +2105,7 @@ window.onload=function(){
 		     $db->qstr($subject) . "," . 
 			 $db->qstr($body) . "," .
 			 $db->qstr($origin) . "," .				 
-			 $db->qstr($origin) . ")";
+			 $db->qstr($trackid) . ")";
 			 		
 		$result = $db->Execute($sSQL,1);			 
 
