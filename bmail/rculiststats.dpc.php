@@ -67,8 +67,7 @@ class rculiststats  {
 		
 		switch ($event) {				 			
 			case 'cpuliststats'  :
-			default              :  $this->percentofCamps(); //update task dropdown also TO HTML CP-DASHBOARD
-                                    $this->getUnsubsToday(); //update inbox dropdown also TO HTML CP-DASHBOARD	
+			default              :  	
 		}
     }
 
@@ -577,46 +576,6 @@ class rculiststats  {
 
 		return ($ret);			
 	}	
-	
-	/*unsubscribers today as cp messages */
-	public function getUnsubsToday($template=null, $limit=null) {
-		$db = GetGlobal('db');	
-		$l = $limit ? $limit : 5;
-		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
-		$t = ($template!=null) ? $this->select_template($template) : null;
-		$tokens = array();
-		
-		//reset inbox
-		SetSessionParam('cpInbox', '');
-		$this->inbox = null;
-		
-		//$timein = $this->sqlDateRange('timein', true, false);
-		//if ($timein) return null; //no current tasks when time range
-		$refsql = null; //$cid ? "and ref='$cid'" : null;
-		
-		//all as 9 user or only owned
-		$ownerSQL = null;//($this->seclevid==9) ? null : null;//'and ulists.owner=' . $db->qstr($this->owner); 		
-		
-		$lastday = mktime(0, 0, 0, date("m"), date("d")-1,   date("Y"));
-		$text = localize('_outoflist',getlocal());
-		
-		$sSQL = "SELECT datein,listname,email FROM ulists where active=0 and (datein>$lastday) $refsql $ownerSQL order by datein desc LIMIT " . $l;
-		$resultset = $db->Execute($sSQL,2);
-		
-		if (empty($resultset)) return null;
-		foreach ($resultset as $n=>$rec) {
-
-		    $saytime = _m('rccontrolpanel.timeSayWhen use '. strtotime($rec[0]));
-			//$msg = "warning|" . $rec[2] .", ". $text .' '. $rec[1] . "|" . $saytime;
-			//_m("rccontrolpanel.setMessage use ".$msg);
-			$msg = $rec[2] . "|" . $text .' '. $rec[1] . "|" . $saytime . '|cpsubscribers.php';
-			//$this->setInbox($msg);
-			_m("rccontrolpanel.setInbox use ".$msg);
-		}
-
-		return ($ret);			
-	}	
-
 	
 
     public function select_timeline($template,$year=null, $month=null) {

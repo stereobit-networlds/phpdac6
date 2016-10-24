@@ -116,28 +116,28 @@ $__LOCALE['RCCONTROLPANEL_DPC'][60]='_exit;Exit;Έξοδος';
 $__LOCALE['RCCONTROLPANEL_DPC'][61]='_dashboard;Dashboard;Πίνακας ελέγχου';
 $__LOCALE['RCCONTROLPANEL_DPC'][62]='_logout;Logout;Αποσύνδεση';
 $__LOCALE['RCCONTROLPANEL_DPC'][63]='_rssfeeds;RSS Feeds;RSS Feeds';
-$__LOCALE['RCCONTROLPANEL_DPC'][64]='_edititemtext;Edit Item Text;Μεταβολή κειμένου';// (text) αντικειμένου';
-$__LOCALE['RCCONTROLPANEL_DPC'][65]='_deleteitemattachment;Delete Item Attachment;Διαγραφή συνημμένου';// είδους';
+$__LOCALE['RCCONTROLPANEL_DPC'][64]='_edititemtext;Edit Item Text;Μεταβολή κειμένου';
+$__LOCALE['RCCONTROLPANEL_DPC'][65]='_deleteitemattachment;Delete Item Attachment;Διαγραφή συνημμένου';
 $__LOCALE['RCCONTROLPANEL_DPC'][66]='_editcat;Edit Category;Μεταβολή κατηγορίας';
 $__LOCALE['RCCONTROLPANEL_DPC'][67]='_addcat;Add Category;Νέα Κατηγορία';
 $__LOCALE['RCCONTROLPANEL_DPC'][68]='_additem;Add Item;Νέο Είδος';
 $__LOCALE['RCCONTROLPANEL_DPC'][69]='_webstatistics;Statistics;Στατιστικά';
-$__LOCALE['RCCONTROLPANEL_DPC'][70]='_addcathtml;Add Category Html;Προσθήκη κειμένου';// κατηγορίας';
-$__LOCALE['RCCONTROLPANEL_DPC'][71]='_editcathtml;Edit Category Html;Μεταβολή κειμένου';// κατηγορίας';
-$__LOCALE['RCCONTROLPANEL_DPC'][72]='_edititem;Edit Item;Μεταβολή είδους';// αντικειμένου';
-$__LOCALE['RCCONTROLPANEL_DPC'][73]='_edititemphoto;Edit Photo;Μεταβολή φωτογραφίας';// αντικειμένου';
-$__LOCALE['RCCONTROLPANEL_DPC'][74]='_edititemdbhtm;Edit Item Htm;Μεταβολή κειμένου';// (htm) αντικειμένου (db)';
-$__LOCALE['RCCONTROLPANEL_DPC'][75]='_edititemdbhtml;Edit Item Html;Μεταβολή κειμένου';// (html) αντικειμένου (db)';
-$__LOCALE['RCCONTROLPANEL_DPC'][76]='_edititemdbtext;Edit Item Text;Μεταβολή κειμένου';// (text) αντικειμένου (db)';
+$__LOCALE['RCCONTROLPANEL_DPC'][70]='_addcathtml;Add Category Html;Προσθήκη κειμένου';
+$__LOCALE['RCCONTROLPANEL_DPC'][71]='_editcathtml;Edit Category Html;Μεταβολή κειμένου';
+$__LOCALE['RCCONTROLPANEL_DPC'][72]='_edititem;Edit Item;Μεταβολή είδους';
+$__LOCALE['RCCONTROLPANEL_DPC'][73]='_edititemphoto;Edit Photo;Μεταβολή φωτογραφίας';
+$__LOCALE['RCCONTROLPANEL_DPC'][74]='_edititemdbhtm;Edit Item Htm;Μεταβολή κειμένου';
+$__LOCALE['RCCONTROLPANEL_DPC'][75]='_edititemdbhtml;Edit Item Html;Μεταβολή κειμένου';
+$__LOCALE['RCCONTROLPANEL_DPC'][76]='_edititemdbtext;Edit Item Text;Μεταβολή κειμένου';
 $__LOCALE['RCCONTROLPANEL_DPC'][77]='_senditemmail;Send e-mail;Αποστολή e-mail';
-$__LOCALE['RCCONTROLPANEL_DPC'][78]='_delitemattachment;Delete Text;Διαγραφή κειμένου';// (db)';
-$__LOCALE['RCCONTROLPANEL_DPC'][79]='_edititemtext;Edit Item Text;Μεταβολή κειμένου';// (text) αντικειμένου';
-$__LOCALE['RCCONTROLPANEL_DPC'][80]='_edititemhtm;Edit Item Htm;Μεταβολή κειμένου';// (htm) αντικειμένου';
-$__LOCALE['RCCONTROLPANEL_DPC'][81]='_edititemhtml;Edit Item Html;Μεταβολή κειμένου';// (html) αντικειμένου';
-$__LOCALE['RCCONTROLPANEL_DPC'][82]='_additemhtml;Add Item Html;Εισαγωγή κειμένου';// στο αντικείμενο';
+$__LOCALE['RCCONTROLPANEL_DPC'][78]='_delitemattachment;Delete Text;Διαγραφή κειμένου';
+$__LOCALE['RCCONTROLPANEL_DPC'][79]='_edititemtext;Edit Item Text;Μεταβολή κειμένου';
+$__LOCALE['RCCONTROLPANEL_DPC'][80]='_edititemhtm;Edit Item Htm;Μεταβολή κειμένου';
+$__LOCALE['RCCONTROLPANEL_DPC'][81]='_edititemhtml;Edit Item Html;Μεταβολή κειμένου';
+$__LOCALE['RCCONTROLPANEL_DPC'][82]='_additemhtml;Add Item Html;Εισαγωγή κειμένου';
 $__LOCALE['RCCONTROLPANEL_DPC'][83]='_transactions;Transactions;Συναλλαγές';
 $__LOCALE['RCCONTROLPANEL_DPC'][84]='_users;Users;Χρήστες';
-$__LOCALE['RCCONTROLPANEL_DPC'][85]='_itemattachments2db;Add Items to DB;Μεταφορά κειμένων στην Β.Δ.';//βάση δεδομένων';
+$__LOCALE['RCCONTROLPANEL_DPC'][85]='_itemattachments2db;Add Items to DB;Μεταφορά κειμένων στην Β.Δ.';
 $__LOCALE['RCCONTROLPANEL_DPC'][86]='_importdb;Import;Εισαγωγή';
 $__LOCALE['RCCONTROLPANEL_DPC'][87]='_config;Configuration;Ρυθμίσεις';
 $__LOCALE['RCCONTROLPANEL_DPC'][88]='_contactform;Contact Form;Φόρμα επικοινωνίας';
@@ -339,7 +339,7 @@ class rccontrolpanel {
 	     case 'cpzbackup' : break;
 							 
 		 case 'cpchartshow': if ($report = GetReq('report')) {//ajax call
-		                       $this->hasgraph = GetGlobal('controller')->calldpc_method("swfcharts.create_chart_data use $report");
+		                       $this->hasgraph = _m("swfcharts.create_chart_data use $report");
 							   $this->goto = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 							 }
 							 break;
@@ -352,15 +352,15 @@ class rccontrolpanel {
 							 die($tsk);
 							 break;								 
 
-		 case 'cptasksno'  : $this->site_stats(); 
+		 case 'cptasksno'  : $this->site_stats();  
 		                     if (defined('RCULISTSTATS')) 
 								_m('rculiststats.percentofCamps');//task dropdown, set task
 		                     $tsk = $this->getTasksTotal();
 							 die($tsk);
 							 break;	 							 
 		 case 'cptasks'    : $this->site_stats(); 
-		                     if (defined('RCULISTSTATS')) 
-								_m('rculiststats.percentofCamps');//task dropdown, set task
+		                     //if (defined('RCULISTSTATS')) NOT 2nd time 
+								//_m('rculiststats.percentofCamps');//task dropdown, set task
 		                     $tsk = $this->getTasks();
 							 die($tsk);
 							 break;	   
@@ -411,7 +411,7 @@ class rccontrolpanel {
 			                     break;
 		  
 		    case 'cpchartshow' : if ($this->hasgraph)//ajax call
-		                           $out = GetGlobal('controller')->calldpc_method("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");								  
+		                           $out = _m("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");								  
 							     else
 							       $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
 							     die(GetReq('report').'|'.$out); //ajax return
@@ -567,7 +567,11 @@ function inbox()
 	  }
 	}); 
 }
-window.setInterval("inbox()",60100);		
+
+$(document).ready(function(){
+	inbox();
+	window.setInterval("inbox()",60100);	
+});	
 EOF;
 
 		return $js;
@@ -1868,7 +1872,7 @@ EOF;
 		//return array of expirations
 		if (!defined('RCCONFIG_DPC')) return false;
 		
-		$exps = GetGlobal('controller')->calldpc_method("rcconfig.get_expirations");
+		$exps = _m("rcconfig.get_expirations");
 		$uexps = unserialize($exps);
 		if (!empty($uexps)) {
 			foreach ($uexps as $section=>$key) {
@@ -1978,7 +1982,7 @@ EOF;
 			}	  
 			
 			//call cpGet from rcpmenu not this (only def action)
-			$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');	
+			$cpGet = _v('rcpmenu.cpGet');	
 			if ($id = $cpGet['id'])
 				$section = ' &gt ' . $this->getItemName($id);
 			elseif ($cat = $cpGet['cat'])
@@ -2109,7 +2113,7 @@ EOF;
 		$result = $db->Execute($sSQL);		
 		$ret = $result->fields[0];
 		
-		return ($ret>10) ? 10 : $ret;		
+		return ($ret>10) ? '10' : strval($ret);		
 	}	
 
 	public function getMessages($limit=null) {
@@ -2124,7 +2128,8 @@ EOF;
 		foreach ($resultset as $n=>$rec) {		
 			
 			switch ($rec['attr1']) {
-				case 'fblogin'     : $text = localize('_fblogin',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break; 
+				case 'fblogin'     : $text = localize('_fblogin',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break;
+				case 'fblogout'    : $text = localize('_logout',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-important'; break;				
 				case 'login'       : $text = localize('_login',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break; 
 				case 'logout'      : $text = localize('_logout',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-important'; break;
 				case 'xyz'         : $text = localize('_formsubmit',getlocal()); $cmd = 'cpform.php'; $tmpl = 'dropdown-notification-success'; break;
@@ -2283,8 +2288,7 @@ EOF;
 			$rtokens[] = $hash; //hash when link to delete
 			
 			$rtokens[] = $tokens[4] ? 
-			   (((filter_var($tokens[4], FILTER_VALIDATE_EMAIL)) && $crm) ? 
-					GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$tokens[4]."+crmdoc") : null) : null;
+			   (((filter_var($tokens[4], FILTER_VALIDATE_EMAIL)) && $crm) ? _m("crmforms.formsMenu use ".$tokens[4]."+crmdoc") : null) : null;
 			
 			$st = $status ? '-' . $status : null;
 			$statusTmpl = str_replace($template, $template.$st ,$template);
@@ -2309,12 +2313,12 @@ EOF;
 			$sSQL = "select * from (SELECT id,date,type,msg FROM cpmessages $ownerSQL order by date desc";
             $sSQL.= ') as o';  				
 
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
+		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
+			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
+            _m("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
+            _m("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
 
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+cpmessages+$sSQL+r+$title+id+1+1+25+600++0+1+1");
+		    $out .= _m("mygrid.grid use grid9+cpmessages+$sSQL+r+$title+id+1+1+25+600++0+1+1");
 		}
         else  
 			$out .= null;
@@ -2361,12 +2365,12 @@ EOF;
 			$sSQL = "select * from (SELECT id,date,type,msg FROM cpmessages where type='system' or type='cron' or type= 'analyzer' order by id desc";
             $sSQL.= ') as o';  				
 
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
+		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
+			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
+            _m("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
+            _m("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
 
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+cpmessages+$sSQL+r+$title+id+1+1+25+600++0+1+1");
+		    $out .= _m("mygrid.grid use grid9+cpmessages+$sSQL+r+$title+id+1+1+25+600++0+1+1");
 		}
         else  
 			$out .= null;
@@ -2376,9 +2380,9 @@ EOF;
 	
 	
 	
-	public function getTasksTotal() {
+	public function getTasksTotal() { 
 		//print_r($this->tasks);
-		$ret = (empty($this->tasks)) ? 0 : count($this->tasks);
+		$ret = (empty($this->tasks)) ? null : strval(count($this->tasks));
 		return $ret;		
 	}		
 
@@ -2466,7 +2470,7 @@ EOF;
 		$result = $db->Execute($sSQL);		
 		$ret = $result->fields[0];
 		
-		return ($ret>10) ? 10 : $ret;		
+		return ($ret>10) ? '10' : strval($ret);		
 	}
 
 	public function getInbox_OLD($limit=null) {
@@ -2529,7 +2533,7 @@ EOF;
 	
 
 	/*sales today as cp messages (1 days back)*/
-	public function getSalesToday($template=null, $limit=null) {
+	/*public function getSalesToday($template=null, $limit=null) {
 		$db = GetGlobal('db');	
 		$l = $limit ? $limit : 5;
 		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
@@ -2562,7 +2566,7 @@ EOF;
 			$this->setMessage($msg);
 		}
 		return null;
-	} 	
+	} 	*/
 	
 	//last month check 
 	public function getInactiveUsers() {
@@ -2627,8 +2631,7 @@ EOF;
 			$rtokens[] = $crm ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
 			
-			$rtokens[] = ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) && $crm) ? 
-							GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
+			$rtokens[] = ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) && $crm) ? _m("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
 						
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
@@ -2642,8 +2645,8 @@ EOF;
 	
 	protected function viewItemVisits() {
 		$db = GetGlobal('db');	
-		//$id = $this->cpGet['id'];			
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		
+		$cpGet = _v('rcpmenu.cpGet');
 		$id = $cpGet['id']; 	
 		   	
 		if (defined('MYGRID_DPC')) {
@@ -2653,14 +2656,14 @@ EOF;
             $sSQL.= ') as o';  
 			//echo $sSQL;	
 
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0');		   
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr2|".localize('_attr2',getlocal()).'|10|0');			
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_attr3',getlocal()).'|10|0');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal()).'|10|0');			
+		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|0|");
+			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0');		   
+            _m("mygrid.column use grid9+tid|".localize('_tid',getlocal()).'|5|0');
+            _m("mygrid.column use grid9+attr2|".localize('_attr2',getlocal()).'|10|0');			
+            _m("mygrid.column use grid9+attr3|".localize('_attr3',getlocal()).'|10|0');
+            _m("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal()).'|10|0');			
 
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+25+600++1+1+1");
+		    $out .= _m("mygrid.grid use grid9+mailqueue+$sSQL+r+$title+id+1+1+25+600++1+1+1");
 		}
         else  
 			$out .= null;
@@ -2699,8 +2702,7 @@ EOF;
 			$rtokens[] = $crm ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
 			
-			$rtokens[] =  ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) && $crm) ? 
-							GetGlobal('controller')->calldpc_method("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
+			$rtokens[] =  ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) && $crm) ? _m("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
 						
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
@@ -2714,8 +2716,8 @@ EOF;
 	
 	protected function viewCatVisits() {
 		$db = GetGlobal('db');
-		//$cat = $this->cpGet['cat'];			
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		
+		$cpGet = _v('rcpmenu.cpGet');
 		$cat = $cpGet['cat']; 	
 		   	
 		if (defined('MYGRID_DPC')) {
@@ -2725,14 +2727,14 @@ EOF;
             $sSQL.= ') as o';  
 			//echo $sSQL;	
 
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|0|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0');		   
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr1|".localize('_attr1',getlocal()).'|10|0');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr2|".localize('_attr2',getlocal()).'|10|0');			
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+attr3|".localize('_attr3',getlocal()).'|10|0');
-            GetGlobal('controller')->calldpc_method("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal()).'|10|0');			
+		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|0|");
+			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0');		   
+            _m("mygrid.column use grid9+attr1|".localize('_attr1',getlocal()).'|10|0');
+            _m("mygrid.column use grid9+attr2|".localize('_attr2',getlocal()).'|10|0');			
+            _m("mygrid.column use grid9+attr3|".localize('_attr3',getlocal()).'|10|0');
+            _m("mygrid.column use grid9+REMOTE_ADDR|".localize('_ip',getlocal()).'|10|0');			
 
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+stats+$sSQL+r+$title+id+1+1+25+600++1+1+1");
+		    $out .= _m("mygrid.grid use grid9+stats+$sSQL+r+$title+id+1+1+25+600++1+1+1");
 		}
         else  
 			$out .= null;
@@ -2897,12 +2899,6 @@ EOF;
 	}	
 	
     public function checkmail($data) {
-
-		/*if( !eregi("^[a-z0-9]+([_\\.-][a-z0-9]+)*" . "@([a-z0-9]+([\.-][a-z0-9]{1,})+)*$", $data, $regs) )  
-			return false;
-
-		return true;  */
-		
 		return (filter_var($data, FILTER_VALIDATE_EMAIL) ? true : false);
 	}	
 	
