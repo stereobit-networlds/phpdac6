@@ -24,6 +24,9 @@ $__EVENTS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
 $__EVENTS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
 $__EVENTS['RCCONTROLPANEL_DPC'][13]='cpinbox';
+$__EVENTS['RCCONTROLPANEL_DPC'][14]='cpinboxno';
+$__EVENTS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
+$__EVENTS['RCCONTROLPANEL_DPC'][16]='cptasksno';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
@@ -39,6 +42,9 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
 $__ACTIONS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
 $__ACTIONS['RCCONTROLPANEL_DPC'][13]='cpinbox';
+$__ACTIONS['RCCONTROLPANEL_DPC'][14]='cpinboxno';
+$__ACTIONS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
+$__ACTIONS['RCCONTROLPANEL_DPC'][16]='cptasksno';
 
 //$__DPCATTR['RCCONTROLPANEL_DPC']['cp'] = 'cp,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -226,7 +232,13 @@ $__LOCALE['RCCONTROLPANEL_DPC'][176]='second;second;δεύτερόλεπτο';
 $__LOCALE['RCCONTROLPANEL_DPC'][177]='seconds;seconds;δευτερόλεπτα';
 $__LOCALE['RCCONTROLPANEL_DPC'][178]='_inactiveuser;Inactive user;Μη ενεργός χρήστης';
 $__LOCALE['RCCONTROLPANEL_DPC'][179]='_newactiveuser;New user;Νέος χρήστης';
-$__LOCALE['RCCONTROLPANEL_DPC'][180]='_formsubmit;Message from;Μηνυμα απο';
+$__LOCALE['RCCONTROLPANEL_DPC'][180]='_formsubmit;Message;Μηνυμα';
+$__LOCALE['RCCONTROLPANEL_DPC'][181]='_unsubinbox;Unsubscribed;Διαγράφτηκε';
+$__LOCALE['RCCONTROLPANEL_DPC'][182]='_subinbox;Subscribed;Εγγράφθηκε';
+$__LOCALE['RCCONTROLPANEL_DPC'][183]='_login;Login;Login';
+$__LOCALE['RCCONTROLPANEL_DPC'][184]='_fblogin;Login (fb);Login (fb)';
+$__LOCALE['RCCONTROLPANEL_DPC'][185]='_reginbox;Registration;Εγγραφή';
+$__LOCALE['RCCONTROLPANEL_DPC'][186]='_actinbox;Activation;Ενεργοποίηση';
 
 class rccontrolpanel {
 
@@ -321,11 +333,6 @@ class rccontrolpanel {
 	   if ($login!='yes') return null;	
 	   
 	   $this->autoupdate();	  //!!!!! 
-	   
-	   /*if (defined('RCULISTSTATS')) {
-			_m('rculiststats.percentofCamps');//task dropdown, set task 
-			_m('rculiststats.getUnsubsToday'); //inbox dropdown	   
-	   }*/	
   
 	   switch ($sAction) {
 	   
@@ -336,30 +343,33 @@ class rccontrolpanel {
 							   $this->goto = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 							 }
 							 break;
-							 
-		 case 'cpinbox'    : //update inbox, tasks
-							 if (defined('RCULISTSTATS_DPC')) {
-								_m('rculiststats.getUnsubsToday');
-								_m('rculiststats.percentofCamps');
-							 }
-			
-			                 //ajax call
-							 $tsk = $this->getInbox();
-							 die('cpinbox|'.$tsk);
+
+		 case 'cpinboxno'  : //ajax call
+							 $tsk = $this->getInboxTotal();
+							 die($tsk);
+		                     break;							 
+		 case 'cpinbox'    : $tsk = $this->getInbox();
+							 die($tsk);
 							 break;								 
-							 							 	   
-		 case 'cptasks'    : //ajax call
+
+		 case 'cptasksno'  : $this->site_stats(); 
+		                     if (defined('RCULISTSTATS')) 
+								_m('rculiststats.percentofCamps');//task dropdown, set task
+		                     $tsk = $this->getTasksTotal();
+							 die($tsk);
+							 break;	 							 
+		 case 'cptasks'    : $this->site_stats(); 
+		                     if (defined('RCULISTSTATS')) 
+								_m('rculiststats.percentofCamps');//task dropdown, set task
 		                     $tsk = $this->getTasks();
-							 die('cptasks|'.$tsk);
+							 die($tsk);
 							 break;	   
 							 
-		 case 'cpmessages' : //update msg
-							 $this->getSalesToday();	
-							 $this->getFormSubmit();
-		 
-		                     //ajax call
-		                     $msgs = $this->getMessages();
-							 die('cpmessages|'.$msgs);
+		 case 'cpmessagesno':$msgs = $this->getMessagesTotal();
+							 die($msgs);
+							 break;	 							 
+		 case 'cpmessages' : $msgs = $this->getMessages();
+							 die($msgs);
 							 break;	 
 
 		 case 'cpdelMessage': //ajax call
@@ -406,9 +416,13 @@ class rccontrolpanel {
 							       $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
 							     die(GetReq('report').'|'.$out); //ajax return
 								 break;
-			case 'cpinbox'     : break; 								 
-			case 'cptasks'     : break;						
-		    case 'cpmessages'  : break;										  
+								 
+			case 'cpinboxno'   :					 
+			case 'cpinbox'     : 
+			case 'cptasksno'   : 
+			case 'cptasks'     : 
+			case 'cpmessagesno': 
+		    case 'cpmessages'  : 
 		    case 'cpdelMessage': break;	
 			case 'cpshowMessages' : $out = $this->viewPastMessages(); break;				
 			case 'cpsysMessages'  : $out = $this->viewSystemMessages(); break;			
@@ -478,28 +492,83 @@ class rccontrolpanel {
 	}
 	
 	//called by footer html
-	public function javascript() {
-        $js = "
+	public function javascript() {		
+	
+		$js = <<<EOF
+		
 function createRequestObject() {var ro; var browser = navigator.appName;
-    if(browser == \"Microsoft Internet Explorer\"){ro = new ActiveXObject(\"Microsoft.XMLHTTP\");
+    if(browser == "Microsoft Internet Explorer"){ro = new ActiveXObject("Microsoft.XMLHTTP");
     }else{ro = new XMLHttpRequest();} return ro;}
 var http = createRequestObject();
-function sndReqArg(url) { var params = url+'&ajax=1'; http.open('post', params, true); http.setRequestHeader(\"Content-Type\", \"text/html; charset=utf-8\");
-    http.setRequestHeader(\"encoding\", \"utf-8\");	 http.onreadystatechange = handleResponse;	http.send(null);}
+function sndReqArg(url) { var params = url+'&ajax=1'; http.open('post', params, true); http.setRequestHeader("Content-Type", "text/html; charset=utf-8");
+    http.setRequestHeader("encoding", "utf-8");	 http.onreadystatechange = handleResponse;	http.send(null);}
 function handleResponse() {if(http.readyState == 4){
 	    var response = http.responseText;
         var update = new Array();
-        response = response.replace( /^\s+/g, \"\" ); // strip leading 
-        response = response.replace( /\s+$/g, \"\" ); // strip trailing		
-        if(response.indexOf('|' != -1)) { /*alert(response);*/  update = response.split('|');
+        response = response.replace( /^\s+/g, "" );  
+        response = response.replace( /\s+$/g, "" ); 
+        if(response.indexOf('|' != -1)) { update = response.split('|');
             document.getElementById(update[0]).innerHTML = update[1];
         }}}  		
-		function init(){ sndReqArg('cp.php?t=cptasks','cptasks'); /*sndReqArg('cp.php?t=cpmessages','cpmessages'); sndReqArg('cpuliststats.php?t=cpinbox','cpinbox');*/} 
-";
-/*      //moved to footer.php, if init() execute
-		window.setInterval(\"sndReqArg('cp.php?t=cptasks','cptasks')\",63000);
-		window.setInterval(\"sndReqArg('cp.php?t=cpmessages','cpmessages')\",61200);
-*/
+		function init(){ inbox(); } 	
+
+function inbox()
+{
+	$.ajax({
+	  url: 'cp.php?t=cpinboxno',
+	  type: 'GET',
+	  success:function(data) {			
+			$('#cpinboxno').html(data);
+			setTimeout(function() { 
+			  $.ajax({
+				url: 'cp.php?t=cpinbox',
+				type: 'GET',
+				success:function(indata) {
+					$('#cpinbox').html(indata);
+					setTimeout(function() { 
+					  $.ajax({
+						url: 'cp.php?t=cpmessagesno',
+						type: 'GET',
+						success:function(mdata) {
+							$('#cpmessagesno').html(mdata);
+							setTimeout(function() { 
+							  $.ajax({
+								url: 'cp.php?t=cpmessages',
+								type: 'GET',
+								success:function(msdata) {
+									$('#cpmessages').html(msdata);
+									setTimeout(function() { 
+									  $.ajax({
+										url: 'cp.php?t=cptasksno',
+										type: 'GET',
+										success:function(tdata) {
+											$('#cptasksno').html(tdata);
+											setTimeout(function() { 
+											  $.ajax({
+												url: 'cp.php?t=cptasks',
+												type: 'GET',
+												success:function(tsdata) {
+													$('#cptasks').html(tsdata);
+												}
+											  });
+											}, 50);											
+										}
+									  });
+									}, 40);									
+								}
+							  });
+							}, 30);							
+						}
+					  });
+					}, 20); 					
+				}
+			  });
+			}, 10);  
+	  }
+	}); 
+}
+window.setInterval("inbox()",60100);		
+EOF;
 
 		return $js;
 	}	  
@@ -2034,12 +2103,48 @@ function handleResponse() {if(http.readyState == 4){
 
 	/* cp header messages and tasks */ 	
 	public function getMessagesTotal() {
-		//print_r($this->messages);
-		$ret = (empty($this->messages)) ? 0 : count($this->messages);
-		return $ret;		
-	}		
+		//$ret = (empty($this->messages)) ? 0 : count($this->messages);
+		$db = GetGlobal('db');	
+		$sSQL = "SELECT count(id) from stats where tid='action' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() )order by date desc";
+		$result = $db->Execute($sSQL);		
+		$ret = $result->fields[0];
+		
+		return ($ret>10) ? 10 : $ret;		
+	}	
 
 	public function getMessages($limit=null) {
+		$db = GetGlobal('db');	
+		$lim = $limit ? $limit : 10;
+		//$tdata = $this->select_template('dropdown-inbox-message');
+		
+		$sSQL = "SELECT date,tid,attr1,attr3 from stats where tid='action' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc limit " . $lim;
+		$resultset = $db->Execute($sSQL);
+		
+		if (empty($resultset)) return null;
+		foreach ($resultset as $n=>$rec) {		
+			
+			switch ($rec['attr1']) {
+				case 'fblogin'     : $text = localize('_fblogin',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break; 
+				case 'login'       : $text = localize('_login',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break; 
+				case 'logout'      : $text = localize('_logout',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-important'; break;
+				case 'xyz'         : $text = localize('_formsubmit',getlocal()); $cmd = 'cpform.php'; $tmpl = 'dropdown-notification-success'; break;
+				default            : $text = null;  $cmd = 'cpform.php'; $tmpl = 'dropdown-notification-warning'; 
+			}
+			//if (!$text) continue;
+			
+			$tokens[] = $rec['attr3'] . ' ' . $text;
+			$tokens[] = $this->timeSayWhen(strtotime($rec[0]));			
+			$tokens[] = $cmd;
+			
+			$tdata = $this->select_template($tmpl);
+			$ret .= $this->combine_tokens($tdata, $tokens, true);
+			unset($tokens);	
+		}
+		
+		return ($ret);			
+	}		
+
+	public function getMessages_OLD($limit=null) {
 		if (empty($this->messages)) return null;
 		//print_r($this->messages);
 		$tokens = array(); 
@@ -2355,13 +2460,17 @@ function handleResponse() {if(http.readyState == 4){
 	
 	/* cp header inbox */ 	
 	public function getInboxTotal() {
-		$ret = (empty($this->inbox)) ? 0 : count($this->inbox);
-		return $ret;		
+		//$ret = (empty($this->inbox)) ? 0 : count($this->inbox);
+		$db = GetGlobal('db');	
+		$sSQL = "SELECT count(id) from stats where tid='event' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc";
+		$result = $db->Execute($sSQL);		
+		$ret = $result->fields[0];
+		
+		return ($ret>10) ? 10 : $ret;		
 	}
-	
-	public function getInbox($limit=null) {
+
+	public function getInbox_OLD($limit=null) {
 		if (empty($this->inbox)) return null;
-		//print_r($this->inbox);
 		$tokens = array(); 
 		$lim = $limit ? $limit : 10;
 		$msgs = array_reverse($this->inbox, true);
@@ -2372,12 +2481,47 @@ function handleResponse() {if(http.readyState == 4){
 		foreach ($msgs as $n=>$m) {
 			
 			$tokens = explode('|', $m); 
-			$tokens[] = $n; //add hash (for future deletes of msg)
+			$tokens[] = $n; 
 			
 			$ret .= $this->combine_tokens($tdata, $tokens, true);
 			unset($tokens);	
 			$i+=1;
 			if ($i>$lim) break;
+		}
+		
+		return ($ret);			
+	}
+	
+	public function getInbox($limit=null) {
+		$db = GetGlobal('db');	
+		$lim = $limit ? $limit : 10;
+		$tdata = $this->select_template('dropdown-inbox-message');
+		
+		$sSQL = "SELECT date,tid,attr1,attr3 from stats where tid='event' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc limit " . $lim;
+		$resultset = $db->Execute($sSQL);
+		
+		if (empty($resultset)) return null;
+		foreach ($resultset as $n=>$rec) {		
+			
+			$tokens[] = $rec['attr3']; 
+			
+			switch ($rec['attr1']) {
+				case 'registration': $text = localize('_reginbox',getlocal()); $cmd = 'cpusers.php'; break; 
+				case 'activation'  : $text = localize('_actinbox',getlocal()); $cmd = 'cpusers.php'; break; 
+				case 'subscribe'   : $text = localize('_subinbox',getlocal()); $cmd = 'cpsubscribers.php'; break; 
+				case 'unsubscribe' : $text = localize('_unsubinbox',getlocal()); $cmd = 'cpsubscribers.php'; break; 
+				case 'cart-submit' : $text = localize('_sale',getlocal()); $cmd = 'cptransactions.php'; break;
+				case 'contact'     : $text = localize('_formsubmit',getlocal()); $cmd = 'cpform.php'; break;
+				default            : $text = null; 
+			}
+			//if (!$text) continue;
+			
+			$tokens[] = $text;
+			$tokens[] = $this->timeSayWhen(strtotime($rec[0]));			
+			$tokens[] = $cmd;
+			
+			$ret .= $this->combine_tokens($tdata, $tokens, true);
+			unset($tokens);	
 		}
 		
 		return ($ret);			
@@ -2398,16 +2542,9 @@ function handleResponse() {if(http.readyState == 4){
 		
 		if (empty($resultset)) return null;
 		foreach ($resultset as $n=>$rec) {
-			
 			$saytime = $this->timeSayWhen(strtotime($rec['timein']));
-			if (defined('RCULISTSTATS_DPC')) {
-				$msg = $rec['cid'] . "|" . $text .' '. $rec['tid'] . "|$saytime|cptransactions.php|".$rec['cid'];
-				_m('rculiststats.setInbox use '.$msg);
-			}
-			else {
-				$msg = "success|" . $rec['cid'] .", ". $text .' '. $rec['tid'] . "|$saytime|cptransactions.php|".$rec['cid'];
-				$this->setMessage($msg);
-			}
+			$msg = "success|" . $rec['cid'] .", ". $text .' '. $rec['tid'] . "|$saytime|cptransactions.php|".$rec['cid'];
+			$this->setMessage($msg);
 		}
 
 		return ($ret);			
@@ -2421,15 +2558,8 @@ function handleResponse() {if(http.readyState == 4){
 		//echo $sSQL;
 		foreach ($result as $i=>$rec) {
 			$saytime = $this->timeSayWhen(strtotime($rec[1]));
-			
-			if (defined('RCULISTSTATS_DPC')) {
-				$msg = $rec[0] . "|" . $text . "|$saytime|cpform.php|".$rec[0];
-				_m('rculiststats.setInbox use '.$msg);
-			}
-			else {			
-				$msg = "info|" . $text .' '. $rec[0] . "|$saytime|cpform.php|".$rec[0];
-				$this->setMessage($msg);
-			}
+			$msg = "info|" . $text .' '. $rec[0] . "|$saytime|cpform.php|".$rec[0];
+			$this->setMessage($msg);
 		}
 		return null;
 	} 	
