@@ -76,7 +76,7 @@ class rccmsevents extends cmsplus  {
 	    if (defined('MYGRID_DPC')) {
 		
 			$sSQL = "select * from (";
-			$sSQL.= "SELECT id,date,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT from stats where tid='action'";
+			$sSQL.= "SELECT id,date,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT from stats where tid='event'";
 			$sSQL .= ') as o';  		   
 			//echo $sSQL;
 			_m("mygrid.column use grid1+id|".localize('_ID',getlocal()));

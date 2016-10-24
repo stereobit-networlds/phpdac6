@@ -1,7 +1,7 @@
 <?php
 $__DPCSEC['FRONTHTMLPAGE_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if (!defined("FRONTHTMLPAGE_DPC")) {//&& (seclevel('FRONTPAGE_DPC',decode(GetSessionParam('UserSecID')))) ){
+if (!defined("FRONTHTMLPAGE_DPC")) {
 define("FRONTHTMLPAGE_DPC",true);
 
 $__DPC['FRONTHTMLPAGE_DPC'] = 'fronthtmlpage';
@@ -64,7 +64,7 @@ class fronthtmlpage {
 		
         $this->prpath = paramload('SHELL','prpath');		
 		
-		$this->htmlpage = paramload('FRONTHTMLPAGE','path')?paramload('FRONTHTMLPAGE','path'):'html'; 
+		$this->htmlpage = paramload('FRONTHTMLPAGE','path') ? paramload('FRONTHTMLPAGE','path') : 'html'; 
 		$this->urlpath = paramload('SHELL','urlpath');			
 		$this->urltitle = paramload('SHELL','urltitle');					
 		
@@ -171,7 +171,7 @@ class fronthtmlpage {
 		$this->anel_signin = remote_paramload('FRONTHTMLPAGE','anelsignin',$this->prpath); 		
 		
 		//problem returning part (outside html body)
-		$this->preprocess = 0;//GetGlobal('controller')->calldpc_var('pcntl.preprosess')		
+		$this->preprocess = 0;//_v('pcntl.preprosess')		
 
 		//date_default_timezone_set('Europe/Athens');
 
@@ -234,7 +234,7 @@ class fronthtmlpage {
 		  $ret = str_replace("images/",$this->runasapp."/images/",$ret);
 		  
 		//::::update fpdata at pcntl to useit by advertisers,helpers etc  :::
-		$this->data = GetGlobal('controller')->calldpc_var('pcntl.fpdata',$ret); 
+		$this->data = _v('pcntl.fpdata',$ret); 
 		
 		$ret = $this->process_commands($ret);
 		
@@ -406,7 +406,7 @@ class fronthtmlpage {
 	  
       foreach ($matches[1] as $r=>$cmd) {
 		if (!$this->debug) {
-	      $ret = GetGlobal('controller')->calldpc_method($cmd,1); //no error stop 					 
+	      $ret = _m($cmd,1); //no error stop 					 
 		  $data = str_replace("<phpdac>".$cmd."</phpdac>",$ret,$data);
 		}
 	  }
@@ -424,8 +424,8 @@ class fronthtmlpage {
 		 $jret = $js->callJavaS() . "</body>";	//body jqgrid problem 
 		 unset ($js);		 
 		*/ 
-		 GetGlobal('controller')->calldpc_method('javascript.onLoad');
-		 $jret = GetGlobal('controller')->calldpc_method('javascript.callJavaS') . "</body>";
+		 _m('javascript.onLoad');
+		 $jret = _m('javascript.callJavaS') . "</body>";
 		 if ($jret) 
 		   $ret = str_replace("</body>", $jret, $data); //body jqgrid problem 
 		 
@@ -976,7 +976,7 @@ EOF;
 		 else {
 		   $precall = str_replace('->',' use ',$dpc2call);
 		   $call = str_replace('>','+',$precall);
- 	       $tokens = GetGlobal('controller')->calldpc_method($call);		 
+ 	       $tokens = _m($call);		 
 		 
 		   if ($verb)
 		     echo $call,'<br><hr>';
@@ -1026,7 +1026,7 @@ EOF;
 	    global ${$param};
 		
 	    if (stristr($param,'.')) //dpc var
-		  $var = GetGlobal('controller')->calldpc_var($param);
+		  $var = _v($param);
         else
           $var =  GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $_SESSION[$param]);		
 	        //${$param} ? ${$param} : ($_SESSION[$param] ? $_SESSION[$param] : $this->{$param});		
@@ -1068,20 +1068,20 @@ EOF;
 	    //global ${$param};
 	    
 	    if (stristr($param,'.')) //dpc var
-		  $var = GetGlobal('controller')->calldpc_var($param);
+		  $var = _v($param);
         else
           $var =  GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $this->{$param});		
 		
         if ($value) 
 		                           
 		   $ret = ($value==$var) ? 
-		           GetGlobal('controller')->calldpc_method(str_replace('::','+',$state1)) : 
-		           GetGlobal('controller')->calldpc_method(str_replace('::','+',$state2));   		
+		           _m(str_replace('::','+',$state1)) : 
+		           _m(str_replace('::','+',$state2));   		
 				   //in case of enfolded dpc cmd...
         else      
            $ret = $var ? 
-		          GetGlobal('controller')->calldpc_method(str_replace('::','+',$state1)) : 
-		          GetGlobal('controller')->calldpc_method(str_replace('::','+',$state2));
+		          _m(str_replace('::','+',$state1)) : 
+		          _m(str_replace('::','+',$state2));
                   //in case of enfolded dpc cmd...  				  
 
 		return ($ret);
@@ -1094,9 +1094,9 @@ EOF;
 		
 	    $mcmds = explode('::',$dcmds);
 		foreach ($mcmds as $c=>$cmd) { 
-		  $mycall = str_replace(array(':','|'),array(' use ','+'),$cmd);
-		  //echo $mycall,'<br/>';
-		  $ret .= GetGlobal('controller')->calldpc_method($mycall);
+		
+			$mycall = str_replace(array(':','|'),array(' use ','+'),$cmd);
+			$ret .= _m($mycall);
 		}  
 		return ($ret);
 	}
@@ -1105,7 +1105,7 @@ EOF;
 	    //global ${$param};
 	    //echo $param,'>',$value,'>',$states1,'<br/>',$states2,'<br/>',$value;
 	    if (stristr($param,'.')) //dpc var
-		  $var = GetGlobal('controller')->calldpc_var($param);
+		  $var = _v($param);
         else
           $var =  GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $this->{$param});		
 		
@@ -1233,7 +1233,7 @@ EOF;
 			if (is_readable($pathname)) {
 				/*if (defined('CCPP_VERSION')) {
 					$config = null;
-					$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); 
+					$preprocessor = _v('pcntl.preprocessor'); 
 					$contents = $preprocessor->execute($pathname, 0, false, true);
 					//echo 'a>',$pathname;
 				}
@@ -1298,7 +1298,7 @@ EOF;
 				/*if (defined('CCPP_VERSION')) {
 					$config = null;
 					$preprocessor = new CCPP($config, true); //new ccpp
-					//$preprocessor = GetGlobal('controller')->calldpc_var('pcntl.preprocessor'); 
+					//$preprocessor = _v('pcntl.preprocessor'); 
 					$contents = $preprocessor->execute($pathname, 0, false, true);
 					//echo 'a>',$pathname;
 				}
@@ -1538,7 +1538,7 @@ EOF;
 	
 	public function echostr($param=null) {
 		if (stristr($param,'.')) //dpc var
-		  $s = GetGlobal('controller')->calldpc_var($param);
+		  $s = _v($param);
 		else  
 		  $s = GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $param);		
 		return ($s);

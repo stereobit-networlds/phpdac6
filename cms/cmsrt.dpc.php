@@ -535,14 +535,5 @@ class cmsrt extends cms  {
 	}	
 	
 };
-
-function _v($v=null) {
-	return $v ? GetGlobal('controller')->calldpc_var($v) : null;
-}
-
-function _m($m=null) {
-	return $m ? GetGlobal('controller')->calldpc_method($m) : null;
-}
-
 }
 ?>

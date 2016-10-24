@@ -233,12 +233,13 @@ $__LOCALE['RCCONTROLPANEL_DPC'][177]='seconds;seconds;δευτερόλεπτα';
 $__LOCALE['RCCONTROLPANEL_DPC'][178]='_inactiveuser;Inactive user;Μη ενεργός χρήστης';
 $__LOCALE['RCCONTROLPANEL_DPC'][179]='_newactiveuser;New user;Νέος χρήστης';
 $__LOCALE['RCCONTROLPANEL_DPC'][180]='_formsubmit;Message;Μηνυμα';
-$__LOCALE['RCCONTROLPANEL_DPC'][181]='_unsubinbox;Unsubscribed;Διεγράφη';
-$__LOCALE['RCCONTROLPANEL_DPC'][182]='_subinbox;Subscribed;Εγγράφθηκε';
-$__LOCALE['RCCONTROLPANEL_DPC'][183]='_login;Login;Login';
-$__LOCALE['RCCONTROLPANEL_DPC'][184]='_fblogin;Login (fb);Login (fb)';
+$__LOCALE['RCCONTROLPANEL_DPC'][181]='_unsubinbox;Unsubscribed;Διαγραφή απο λίστα email ';
+$__LOCALE['RCCONTROLPANEL_DPC'][182]='_subinbox;Subscribed;Εγγραφή σε λίστα email';
+$__LOCALE['RCCONTROLPANEL_DPC'][183]='_login;Login;Σύνδεση';
+$__LOCALE['RCCONTROLPANEL_DPC'][184]='_fblogin;Login (fb);Σύνδεση (fb)';
 $__LOCALE['RCCONTROLPANEL_DPC'][185]='_reginbox;Registration;Εγγραφή';
 $__LOCALE['RCCONTROLPANEL_DPC'][186]='_actinbox;Activation;Ενεργοποίηση';
+$__LOCALE['RCCONTROLPANEL_DPC'][187]='_logfail;Login failed;Αποτυχημένη είσοδος';
 
 class rccontrolpanel {
 
@@ -2128,11 +2129,11 @@ EOF;
 		foreach ($resultset as $n=>$rec) {		
 			
 			switch ($rec['attr1']) {
-				case 'fblogin'     : $text = localize('_fblogin',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break;
-				case 'fblogout'    : $text = localize('_logout',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-important'; break;				
-				case 'login'       : $text = localize('_login',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break; 
-				case 'logout'      : $text = localize('_logout',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-important'; break;
-				case 'xyz'         : $text = localize('_formsubmit',getlocal()); $cmd = 'cpform.php'; $tmpl = 'dropdown-notification-success'; break;
+				case 'fblogin'     : $text = localize('_fblogin',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-success'; break;
+				case 'fblogout'    : $text = localize('_logout',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break;				
+				case 'login'       : $text = localize('_login',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-success'; break; 
+				case 'logout'      : $text = localize('_logout',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break;
+				case 'login-failed': $text = localize('_logfail',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-important'; break;
 				default            : $text = null;  $cmd = 'cpform.php'; $tmpl = 'dropdown-notification-warning'; 
 			}
 			//if (!$text) continue;

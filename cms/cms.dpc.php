@@ -1,32 +1,39 @@
 <?php
 $__DPCSEC['CMS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
+function _v($v=null) {
+	return $v ? GetGlobal('controller')->calldpc_var($v) : null;
+}
+
+function _m($m=null) {
+	return $m ? GetGlobal('controller')->calldpc_method($m) : null;
+}
+
 if ((!defined("CMS_DPC")) && (seclevel('CMS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("CMS_DPC",true);
 
 $__DPC['CMS_DPC'] = 'cms';
 
-class cms {
+$a = GetGlobal('controller')->require_dpc('cms/fronthtmlpage.dpc.php');
+require_once($a);
 
-    var $appname, $urlpath, $prpath, $url;
+class cms extends fronthtmlpage {
+
+    var $appname, $url;
 	var $seclevid, $userDemoIds;
-	var $cptemplate, $tpath, $template;
+	var $tpath, $template;
 		
 	function __construct() {
 		
+		fronthtmlpage::__construct();
+		
 		$this->appname = paramload('ID','instancename');		
-	
-		$this->urlpath = paramload('SHELL','urlpath');
-		$this->url = paramload('SHELL','urlbase');	
-		$this->prpath = paramload('SHELL','prpath'); 
 	  
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); //8 
 		
-	    $tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
-	    $this->cptemplate = $tmpl ? $tmpl : 'metro';
-		$this->tpath = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);	
-		$this->template = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);			
+		$this->tpath = $this->htmlpage; //remote_paramload('FRONTHTMLPAGE','path',$this->prpath);	
+		//$this->template = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);			
 	}
 	
 	public function isDemoUser() {

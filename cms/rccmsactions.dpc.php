@@ -64,7 +64,7 @@ class rccmsactions extends cmsplus  {
     }
 
 
-	protected function show_action($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	protected function show_actions($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 600;
         $rows = $rows ? $rows : 25;
         $width = $width ? $width : null; //wide	
@@ -76,7 +76,7 @@ class rccmsactions extends cmsplus  {
 	    if (defined('MYGRID_DPC')) {
 		
 			$sSQL = "select * from (";
-			$sSQL.= "SELECT id,date,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT from stats where tid='event'";
+			$sSQL.= "SELECT id,date,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT from stats where tid='action'";
 			$sSQL .= ') as o';  		   
 			//echo $sSQL;
 			_m("mygrid.column use grid1+id|".localize('_ID',getlocal()));
