@@ -406,7 +406,7 @@ class fronthtmlpage {
 	  
       foreach ($matches[1] as $r=>$cmd) {
 		if (!$this->debug) {
-	      $ret = _m($cmd,1); //no error stop 					 
+	      $ret = _m($cmd); //.'+1',1); //no error stop 					 
 		  $data = str_replace("<phpdac>".$cmd."</phpdac>",$ret,$data);
 		}
 	  }
@@ -418,12 +418,7 @@ class fronthtmlpage {
 	
 	  //call javascript 
       if (defined('JAVASCRIPT_DPC')) {	
-	  /*
-		 $js = new jscript;
-		 $onload = $js->onLoad();//!!!!!!!!!!!!!!!MUST BE SET TO <BODY AT END>
-		 $jret = $js->callJavaS() . "</body>";	//body jqgrid problem 
-		 unset ($js);		 
-		*/ 
+
 		 _m('javascript.onLoad');
 		 $jret = _m('javascript.callJavaS') . "</body>";
 		 if ($jret) 
@@ -895,27 +890,36 @@ EOF;
 	
 	/********* PUBLIC FUNCS *********/
 	
-    function combine_tokens($template_contents,$tokens=null,$doublemark=null) {
-	
-	    if (!is_array($tokens)) return;
-		
-		$mark = '$';
-		$dmark = $doublemark?'$':'';
-		
-		$ret = $this->process_commands($template_contents);
-		unset ($fp);
+	public function combine_tokens($template, $toks, $execafter=null) {
+		$tokens = (array) unserialize($toks);
+	    if (!is_array($tokens)) return ($template);		
+
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template;
 		  
-		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
-		    $ret = str_replace($mark.$i.$dmark,$tok,$ret);
+		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace($mark.$x.$dmark,'',$ret);
-		//echo $ret;
+		for ($x=$i;$x<40;$x++)
+		  $ret = str_replace("$".$x."$",'',$ret);
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
 		return ($ret);
-    }
+	}
   
     function is_tokens_var($var) {
   

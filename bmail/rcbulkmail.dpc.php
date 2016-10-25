@@ -1965,7 +1965,7 @@ EOF;
 		
 		//test		
 		//$this->messages[] = $to . ' instant message has been sent.';
-		return true; //test
+		//return true; //test
 	   
 		//tracking var
 		if ($this->trackmail) {

@@ -408,8 +408,8 @@ class cmsrt extends cms  {
 		return ($ret);
 	}
 
-	//tokens method	
-	public function combine_tokens($template, $toks, $execafter=null) {
+	//tokens method	(fronthtmlpage version)
+	/*public function combine_tokens($template, $toks, $execafter=null) {
 		$tokens = (array) unserialize($toks);
 	    if (!is_array($tokens)) return ($template);		
 
@@ -441,7 +441,7 @@ class cmsrt extends cms  {
 		}		
 		
 		return ($ret);
-	}
+	}*/
 	
 	public function select_template($tfile=null, $iscp=false) {
 		if (!$tfile) return;
