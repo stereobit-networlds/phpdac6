@@ -11,12 +11,14 @@ $__EVENTS['RCREPORTS_DPC'][1]='cprepshow';
 $__EVENTS['RCREPORTS_DPC'][2]='cprepframe';
 $__EVENTS['RCREPORTS_DPC'][3]='cprepcode';
 $__EVENTS['RCREPORTS_DPC'][4]='cprepcodesave';
+$__EVENTS['RCREPORTS_DPC'][5]='cprepcrm';
 
 $__ACTIONS['RCREPORTS_DPC'][0]='cpreports';
 $__ACTIONS['RCREPORTS_DPC'][1]='cprepshow';
 $__ACTIONS['RCREPORTS_DPC'][2]='cprepframe';
 $__ACTIONS['RCREPORTS_DPC'][3]='cprepcode';
 $__ACTIONS['RCREPORTS_DPC'][4]='cprepcodesave';
+$__ACTIONS['RCREPORTS_DPC'][5]='cprepcrm';
 
 
 $__LOCALE['RCREPORTS_DPC'][0]='RCREPORTS_DPC;Reports;Αναφορές';
@@ -51,6 +53,9 @@ class rcreports  {
 	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
+		 case 'cprepcrm'     : /*crm report call*/
+							   break; 		   
+		   
 		 case 'cprepcodesave': $this->save_report_code();	
 		                       break;  		   
 		   							   
@@ -73,18 +78,22 @@ class rcreports  {
 	  if ($login!='yes') return null;	
 	 
 	  switch ($action) {
-			
+		 case 'cprepcrm'      : /*crm report call*/
+								$out = $this->results_grid(null,250,10,'r', true); 
+								//$out .= $this->codeform();
+								$out .= $this->show_code_results();
+		                        break;	
+		 
 		 case 'cprepcodesave' : 										  
-		 case 'cprepshow'     : $out = $this->results_grid(null,140,14,'r', true); 
+		 case 'cprepshow'     : $out = $this->results_grid(null,140,5,'r', true); 
 								$out .= $this->codeform();
 								$out .= $this->show_code_results();
 							    break; 
-		 case 'cprepframe'    : 
-							  break;					  
+		 case 'cprepframe'    : break;					  
 	     case 'cpreports'     :
 
 		 default            : $out .= "<div id='report'></div>";
-		                      $out .= $this->reports_grid(null,140,14,'d', true);	
+		                      $out .= $this->reports_grid(null,140,5,'d', true);	
 							  
 	  }	 
 
@@ -148,7 +157,7 @@ class rcreports  {
 	
     protected function results_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 		$id = GetParam('id');
-		if ($_POST['id']) return;
+		if ($_POST['id']) return; //null when post code = execute
 		
 	    $height = $height ? $height : 440;
         $rows = $rows ? $rows : 18;

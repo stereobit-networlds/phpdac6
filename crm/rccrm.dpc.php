@@ -739,7 +739,6 @@ class rccrm  {
 		if (!$user) return false;		
 		
 		$id = GetReq('id') ? "&id=" . $user : null ;
-		//$this->crmplus = (defined('CRMPLUS_DPC')) ? true : false; 
 		
 		$l = getlocal();
 		$t_plus = localize('_plus', $l);
@@ -829,7 +828,7 @@ class rccrm  {
                                         </li>
 										
 										'.$crmplustree.'		
-										<li>
+										<!--li>
                                             <a id="nut3" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
                                                 '.$t_templates.'
                                             </a>
@@ -838,9 +837,10 @@ class rccrm  {
                                                 <li><a data-role="leaf" href="#"><i class="icon-user-md"></i> '.$t_attach.'</a></li>
                                                 <li><a data-role="leaf" href="#"><i class="icon-retweet"></i> '.$t_view.'</a></li>
                                             </ul>
-                                        </li>
-										
-                                        <li>
+                                        </li-->
+										<li><a data-role="leaf" href="javascript:subdetails(\'reports'.$id.'\')"><i class="icon-tags"></i> '.$t_reports.'</a></li>
+										<li><a data-role="leaf" href="javascript:subdetails(\'forms'.$id.'\')"><i class="icon-cloud"></i> '.$t_forms.'</a></li>
+                                        <!--li>
                                             <a id="nut8" data-value="Bootstrap_Tree" data-toggle="branch" class="tree-toggle closed" href="#">
                                                 '.$t_reports.'
                                             </a>
@@ -849,7 +849,7 @@ class rccrm  {
                                                 <li><a data-role="leaf" href="#"><i class="icon-magic"></i> ICT</a></li>
                                                 <li><a data-role="leaf" href="#"><i class="icon-user"></i> Human Resources</a></li>
                                             </ul>
-                                        </li>										
+                                        </li-->										
                                     </ul>
                                 </li>
                             </ul>		
