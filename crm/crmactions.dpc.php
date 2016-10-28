@@ -1,32 +1,32 @@
 <?php
-$__DPCSEC['CRMDOCS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['CRMACTIONS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ((!defined("CRMDOCS_DPC")) && (seclevel('CRMDOCS_DPC',decode(GetSessionParam('UserSecID')))) ) {
-define("CRMDOCS_DPC",true);
+if ((!defined("CRMACTIONS_DPC")) && (seclevel('CRMACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
+define("CRMACTIONS_DPC",true);
 
-$__DPC['CRMDOCS_DPC'] = 'crmdocs';
+$__DPC['CRMACTIONS_DPC'] = 'crmactions';
 
 $b = GetGlobal('controller')->require_dpc('crm/crmmodule.dpc.php');
 require_once($b);
 
-$__LOCALE['CRMDOCS_DPC'][0]='CRMDOCS_DPC;Documents;Έγγραφα';
-$__LOCALE['CRMDOCS_DPC'][1]='_date;Date;Ημερ.';
-$__LOCALE['CRMDOCS_DPC'][2]='_time;Time;Ώρα';
-$__LOCALE['CRMDOCS_DPC'][3]='_status;Status;Κατάσταση';
-$__LOCALE['CRMDOCS_DPC'][4]='_user;User;Πελάτης';
-$__LOCALE['CRMDOCS_DPC'][5]='_cid;cid;cid';
-$__LOCALE['CRMDOCS_DPC'][6]='_clicks;Clickpath;Clickpath';
-$__LOCALE['CRMDOCS_DPC'][7]='_price;Price;Αξία';
+$__LOCALE['CRMACTIONS_DPC'][0]='CRMACTIONS_DPC;Actions;Ενέργειες';
+$__LOCALE['CRMACTIONS_DPC'][1]='_ID;Id;Α/Α';
+$__LOCALE['CRMACTIONS_DPC'][2]='_MAIL;e-Mail;e-Mail';
+$__LOCALE['CRMACTIONS_DPC'][3]='_DATE;Date;Ημερομηνία';
+$__LOCALE['CRMACTIONS_DPC'][4]='_ΝΑΜΕ;Name;Όνομα';
+$__LOCALE['CRMACTIONS_DPC'][5]='_TYPE;Type;Τύπος';
+$__LOCALE['CRMACTIONS_DPC'][6]='_ip;Ip;Ip';
+$__LOCALE['CRMACTIONS_DPC'][7]='_agent;Agent;Agent';
 
 
-class crmdocs extends crmmodule  {
+class crmactions extends crmmodule  {
 		
 	function __construct() {
 	
 	  crmmodule::__construct();
 	}
 
-	public function docs_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	public function actions_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $selected = urldecode(GetReq('id'));
 		
 	    $height = $height ? $height : 800;
@@ -35,24 +35,23 @@ class crmdocs extends crmmodule  {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;	
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('CRMDOCS_DPC',getlocal());  
+		$title = localize('CRMACTIONS_DPC',getlocal());  
 	
 	    if (defined('MYGRID_DPC')) {
 			
-            $xSQL2 = "SELECT * from (select d.id,d.date,d.docid,d.cid,d.formname,d.title,d.owner,m.timeout,m.reply,m.status,m.mailstatus from crmdocs d, mailqueue m where d.docid=m.cid and d.cid='$selected') o ";
-			//echo $xSQL2;
-			_m("mygrid.column use grid3+id|".localize('_id',getlocal())."|2|0|");
-			_m("mygrid.column use grid3+date|".localize('_date',getlocal())."|5|1|");//"|link|5|"."javascript:showdetails({id});".'||');
-			_m("mygrid.column use grid3+docid|".localize('docid',getlocal())."|10|1||||1|");			
-			_m("mygrid.column use grid3+cid|".localize('_user',getlocal())."|10|1||||1|");
-			_m("mygrid.column use grid3+formname|".localize('form',getlocal())."|link|5|"."javascript:showdetails(\"{cid}\");".'||');						
-			_m("mygrid.column use grid3+title|".localize('_subject',getlocal())."|link|19|"."javascript:showdetails(\"{docid}\");".'||');//."|19|0|");
-			_m("mygrid.column use grid3+timeout|".localize('_date',getlocal())."|5|1|");
-		    _m("mygrid.column use grid3+reply|".localize('_reply',getlocal())."|2|0|");	
-			_m("mygrid.column use grid3+status|".localize('_status',getlocal())."|2|0|||||right");	
-		    _m("mygrid.column use grid3+mailstatus|".localize('_failed',getlocal())."|2|1|");			
+			$sSQL = "select * from (";
+			$sSQL.= "SELECT id,date,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT from stats where tid='action' and attr3='$selected'";
+			$sSQL .= ') as o';  		   
+			//echo $sSQL;
+			_m("mygrid.column use grid1+id|".localize('_ID',getlocal()).'|2|0');
+			_m("mygrid.column use grid1+date|".localize('_DATE',getlocal()).'|5|0');		   
+			_m("mygrid.column use grid1+attr1|".localize('_TYPE',getlocal()).'|5|0');	
+			//_m("mygrid.column use grid1+attr3|".localize('_MAIL',getlocal()).'|10|0');	
+			_m("mygrid.column use grid1+REMOTE_ADDR|".localize('_ip',getlocal()).'|5|1');	
+			_m("mygrid.column use grid1+HTTP_X_FORWARDED_FOR|".localize('_ip',getlocal()).'|5|1');		
+			_m("mygrid.column use grid1+HTTP_USER_AGENT|".localize('_agent',getlocal()).'|10|1');		
 			
-			$ret .= _m("mygrid.grid use grid3+crmdocs+$xSQL2+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+			$ret .= _m("mygrid.grid use grid1+stats+$sSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
 	    }
 		else 
@@ -62,7 +61,7 @@ class crmdocs extends crmmodule  {
   	
 	}	
 
-	protected function clicks_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	/*protected function clicks_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $selected = GetReq('id');
 		
 	    $height = $height ? $height : 800;
@@ -167,7 +166,7 @@ class crmdocs extends crmmodule  {
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";      
 
 		return ($frame);		
-	}	
+	}*/	
 	
 };
 }

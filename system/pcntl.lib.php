@@ -581,7 +581,8 @@ class pcntl extends controller {
 	  echo "postcode " , $t->value('postcode');	  */
 	  
 	  //INCLUDE FIRST
-	  $t->start('include');		  
+	  $t->start('include');	
+	  if (!empty($modules)) {   	  
 	  foreach  ($modules as $id=>$dpc) {
 	  
         if ( (!defined($dpc)) && ($this->seclevel($dpc)) ) {
@@ -598,6 +599,7 @@ class pcntl extends controller {
 		 }
 	    }   
 	  }
+	  }//empty
 	  $t->stop('include');
 	  if ($this->debug) echo "include " , $t->value('include');	 	   	 
    

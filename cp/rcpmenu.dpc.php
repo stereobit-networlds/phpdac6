@@ -210,16 +210,10 @@ class rcpmenu {
 
        $this->getTURL();	   
 	   
-	   //$adminsecid = GetSessionParam('ADMINSecID') ? GetSessionParam('ADMINSecID') : $GLOBALS['ADMINSecID'];
-	   //$this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;//...not instant sec level read//9; //test	  	   
-	   //echo GetSessionParam('ADMINSecID'),'>',$adminsecid,':', $seclevid;
-	   //$this->environment = $this->parse_environment(); //true !!! //inside render menu as manu params / used by CCPP
-	   //$this->seclevid = GetSessionParam('ADMINSecID');	   
-		
 	   $this->awstats = 'cgi-bin/awstats.php';
 	   
 	   $this->messages = GetSessionParam('menuMessages') ? GetSessionParam('menuMessages') : array();
-	   $this->cptemplate = 'metro'; //remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);
+	   $this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);
    }
    
 
@@ -253,8 +247,6 @@ class rcpmenu {
 			$urlquery = parse_url($this->turldecoded); 
 			parse_str($urlquery['query'], $getp); 	
 			$this->cpGet = $getp;
-			//echo 'inpost:';
-			//print_r($this->cpGet);
 			
 			SetSessionParam('turl', $postedTURL);
 			SetSessionParam('turldecoded', $this->turldecoded);		
@@ -264,9 +256,6 @@ class rcpmenu {
 			$this->turl = $turl;
 			$this->turldecoded = GetSessionParam('turldecoded');
 			$this->cpGet = unserialize(base64_decode($_SESSION['cpGet']));
-			//echo 'insession:';
-			//print_r($_GET);
-			//print_r($this->cpGet);
 	    }   
 	   
 	    return ($this->turldecoded);

@@ -2467,7 +2467,7 @@ EOF;
 	public function getInboxTotal() {
 		//$ret = (empty($this->inbox)) ? 0 : count($this->inbox);
 		$db = GetGlobal('db');	
-		$sSQL = "SELECT count(id) from stats where tid='event' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc";
+		$sSQL = "SELECT count(id) from stats where tid='event' and attr1 REGEXP 'registration|subscribe|unsubscribe|activation|contact|cart-submit' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc";
 		$result = $db->Execute($sSQL);		
 		$ret = $result->fields[0];
 		
@@ -2502,7 +2502,7 @@ EOF;
 		$lim = $limit ? $limit : 10;
 		$tdata = $this->select_template('dropdown-inbox-message');
 		
-		$sSQL = "SELECT date,tid,attr1,attr3 from stats where tid='event' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc limit " . $lim;
+		$sSQL = "SELECT date,tid,attr1,attr3 from stats where tid='event' and attr1 REGEXP 'registration|subscribe|unsubscribe|activation|contact|cart-submit' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc limit " . $lim;
 		$resultset = $db->Execute($sSQL);
 		
 		if (empty($resultset)) return null;

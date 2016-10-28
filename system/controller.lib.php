@@ -705,6 +705,7 @@ class controller extends sysdpc {
 		   }
 		 }
 		 else {
+		   if (!empty($__EVENTS)) {   	 
 	       reset($__EVENTS); //print_r($__EVENTS);
            foreach ($__EVENTS as $dpc_name => $command) {
 		   
@@ -739,7 +740,7 @@ class controller extends sysdpc {
 		       }
 			 }  
 	       }
-		   
+		   }//if __EVENTS
 		   //break =  end of multiple events or end of loop
 		   
 		   //start event queue
@@ -970,22 +971,26 @@ class controller extends sysdpc {
        $__ACTIONS = GetGlobal('__ACTIONS');		    	          
 	   
        if ($action) {
-	     reset($__EVENTS);
-         foreach ($__EVENTS as $dpc_name=>$commarray ) {
-		   if ((is_array($commarray)) && (in_array($action,$commarray))) {
-		     //print_r($commarray);
-			 //echo $dpc_name;
-			 return ($dpc_name); 
-		   }	 
-         }
-	     reset($__ACTIONS);
-         foreach ($__ACTIONS as $dpc_name=>$commarray ) {
-		   if ((is_array($commarray)) && (in_array($action,$commarray))) {
-		     //print_r($commarray);
-			 //echo $dpc_name;		 
-			 return ($dpc_name); 
-		   }	 
-         }		 
+		 if (!empty($__EVENTS)) {   
+			reset($__EVENTS);
+			foreach ($__EVENTS as $dpc_name=>$commarray ) {
+				if ((is_array($commarray)) && (in_array($action,$commarray))) {
+					//print_r($commarray);
+					//echo $dpc_name;
+					return ($dpc_name); 
+				}	 
+			}
+		 }
+		 if (!empty($__ACTIONS)) {   	
+			reset($__ACTIONS);
+			foreach ($__ACTIONS as $dpc_name=>$commarray ) {
+				if ((is_array($commarray)) && (in_array($action,$commarray))) {
+					//print_r($commarray);
+					//echo $dpc_name;		 
+					return ($dpc_name); 
+				}	 
+			}
+         }			
        }
 	   
 	   return (false);

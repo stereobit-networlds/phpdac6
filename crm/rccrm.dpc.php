@@ -120,6 +120,8 @@ $__LOCALE['RCCRM_DPC'][122]='_plus;Plus;Plus';
 $__LOCALE['RCCRM_DPC'][123]='_automations;Automations;Αυτοματισμοί';
 $__LOCALE['RCCRM_DPC'][124]='_finance;Finance;Οικονομικές';
 $__LOCALE['RCCRM_DPC'][125]='_outbox;Outbox;Εξερχόμενα';
+$__LOCALE['RCCRM_DPC'][126]='_docs;Documents;Έγγραφα';
+$__LOCALE['RCCRM_DPC'][127]='_events;Events;Περιστατικά';
 
 class rccrm  {
 
@@ -137,7 +139,8 @@ class rccrm  {
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); 		  
 		
-		$this->crmplus = false; /*must be loaded in php script to enable plus tree*/
+		$plus = remote_paramload('CRM','plus',$this->prpath);
+		$this->crmplus = $plus ? true : false; 
 		
 		$this->crmstats = array();
 	}
@@ -736,20 +739,26 @@ class rccrm  {
 		if (!$user) return false;		
 		
 		$id = GetReq('id') ? "&id=" . $user : null ;
-		$this->crmplus = (defined('CRMPLUS_DPC')) ? true : false; 
+		//$this->crmplus = (defined('CRMPLUS_DPC')) ? true : false; 
 		
 		$l = getlocal();
 		$t_plus = localize('_plus', $l);
 		$t_auto = localize('_automations', $l);
 		$t_projects = localize('_projects', $l);
 		$t_actions = localize('_actions', $l);
+		$t_events = localize('_events', $l);
+		$t_docs = localize('_docs', $l);
+		$t_behaviors = localize('_behaviors', $l);
 		
 		$crmplustree = $this->crmplus ? '
 										<li>
 											<a data-value="gh_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">'.$t_plus.'</a>
                                             <ul class="branch">
-											<li><a href="javascript:subdetails(\'docs'.$id.'\')">'.$t_actions.'</a></li>
-                                            <li><a href="javascript:subdetails(\'plus'.$id.'\')">'.$t_projects.'</a></li>
+											<li><a href="javascript:subdetails(\'docs'.$id.'\')"><i class="icon-book"></i>'.$t_docs.'</a></li>
+											<li><a href="javascript:subdetails(\'events'.$id.'\')"><i class="icon-book"></i>'.$t_events.'</a></li>
+											<li><a href="javascript:subdetails(\'actions'.$id.'\')"><i class="icon-book"></i>'.$t_actions.'</a></li>
+                                            <li><a href="javascript:subdetails(\'plus'.$id.'\')"><i class="icon-tasks"></i>'.$t_projects.'</a></li>
+											<li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_behaviors.'</a></li>
                                             <li>
                                                 <a data-value="GitHub_Repos" data-toggle="branch" class="tree-toggle closed" role="branch" href="#">'.$t_auto.'</a>
                                                 <ul class="branch">
@@ -778,7 +787,6 @@ class rccrm  {
 		$t_views = localize('_views', $l);
 		$t_returns = localize('_returns', $l);	
 		$t_offers = localize('_offers', $l);
-		$t_behaviors = localize('_behaviors', $l);
 		$t_templates = localize('_templates', $l);
 		$t_forms = localize('_forms', $l);	
 		$t_attach = localize('_attach', $l);
@@ -817,7 +825,6 @@ class rccrm  {
 												<li><a data-role="leaf" href="javascript:subdetails(\'itemstats'.$id.'\')"><i class="icon-tags"></i> '.$t_views.'</a></li>												
                                                 <li><a data-role="leaf" href="javascript:subdetails(\'docsitem'.$id.'\')"><i class="icon-tags"></i> '.$t_offers.'</a></li>
                                                 <li><a data-role="leaf" href="javascript:subdetails(\'returns'.$id.'\')"><i class="icon-tags"></i> '.$t_returns.'</a></li>												
-												<!--li><a data-role="leaf" href="#"><i class="icon-magic"></i> '.$t_behaviors.'</a></li-->
                                             </ul>
                                         </li>
 										

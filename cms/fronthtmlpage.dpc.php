@@ -740,6 +740,7 @@ EOF;
 								 //"cp/cpside.html";
 	  	}
 	
+	    //loading text : http://stackoverflow.com/questions/8626638/how-to-display-loading-message-when-an-iframe-is-loading
 		$fp = <<<EOF
  
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
@@ -749,7 +750,10 @@ EOF;
 <meta http-equiv="Content-Type" content="text/html; charset=$encoding" />   
 	<style type="text/css">
 		body { margin: 0; overflow: hidden; }
-		.mainframe { position: absolute; left: 0px; top: 0px; width: 100%; height: 100%;  }
+		.mainframe { position: absolute; left: 0px; top: 0px; width: 100%; height: 100%;  
+					 /*background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100% 100%"><text fill="%23FF0000" x="50%" y="50%" font-family="\'Lucida Grande\', sans-serif" font-size="24" text-anchor="middle">Loading</text></svg>') 0px 0px no-repeat;*/
+					 background:url(images/loading.gif) center center no-repeat; 
+				   }	   
 	</style>
 </head> 
 <body> 

@@ -79,12 +79,12 @@ class rccmsactions extends cmsplus  {
 			$sSQL.= "SELECT id,date,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT from stats where tid='action'";
 			$sSQL .= ') as o';  		   
 			//echo $sSQL;
-			_m("mygrid.column use grid1+id|".localize('_ID',getlocal()));
-			_m("mygrid.column use grid1+date|".localize('_DATE',getlocal()).'|10|0');		   
-			_m("mygrid.column use grid1+attr1|".localize('_TYPE',getlocal()).'|10|0');	
+			_m("mygrid.column use grid1+id|".localize('_ID',getlocal()).'|5|0');
+			_m("mygrid.column use grid1+date|".localize('_DATE',getlocal()).'|5|0');		   
+			_m("mygrid.column use grid1+attr1|".localize('_TYPE',getlocal()).'|5|0');	
 			_m("mygrid.column use grid1+attr3|".localize('_MAIL',getlocal()).'|10|0');	
 			_m("mygrid.column use grid1+REMOTE_ADDR|".localize('_ip',getlocal()).'|5|1');	
-			_m("mygrid.column use grid1+HTTP_X_FORWARDED_FOR|".localize('_ip',getlocal()).'|10|1');		
+			_m("mygrid.column use grid1+HTTP_X_FORWARDED_FOR|".localize('_ip',getlocal()).'|5|1');		
 			_m("mygrid.column use grid1+HTTP_USER_AGENT|".localize('_agent',getlocal()).'|10|1');
 			$out .= _m("mygrid.grid use grid1+stats+$sSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 
