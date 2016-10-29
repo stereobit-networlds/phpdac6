@@ -374,27 +374,33 @@ class rcreports  {
 		return $name;
 	}		
 	
-	public function execute_report($name=null, $mailto=false, $unique=false, $glue=null) {
-		$db = GetGlobal('db'); 		
+	public function runSQL($sql=null) {
+		$db = GetGlobal('db'); 
+		
+		if ($sql)
+			$res = $db->Execute($sql);		
+		
+		return ($db->Affected_Rows()) ?	$sql : 'sql error';
+	}		
+	
+	public function execute_report($name=null, $mailto=false, $unique=false, $glue=null) {		
 		if (!$name) return false;
 		
 		$id = $this->getIdFromName($name);
 		if (!$id) return false;
 		
-		//list($xsSQL, $fields, $table) = $this->load_report_sql($id); 
-		//$res = $db->Execute($xsSQL);
-		
 		if ($mailto) {
 			$body = $this->show_code_results($id, false, $unique, $glue);
 			$ret = $this->mailto($mailto, $name, $body);
+			return ($body);
 		}
-		else		
+		else 
 			$ret = $this->show_code_results($id, true);
 		
 		return true;
 	}
 	
-	protected function save_inbox($from,$to,$subject,$body=null, $trackid=null) {
+	protected function save_inbox($from,$subject,$body=null) {
 		$db = GetGlobal('db');		
 		$ishtml = 1;
 		$origin = 'cart'; 
