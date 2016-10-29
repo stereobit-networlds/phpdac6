@@ -172,7 +172,7 @@ class fronthtmlpage {
 			return ($htmldata);
 		}
 	  
-		if (is_file($this->htmlfile)) {
+		if (is_file($this->htmlfile)) { 
 			$htmdata = file_get_contents($this->htmlfile);
 			$this->process_javascript($htmdata, $pageout);		
 			$ret = $this->process_commands($pageout);
@@ -191,9 +191,6 @@ class fronthtmlpage {
 					$ret = $this->propagate_session($ret);			
 			}
 			else {
-				//if (!GetReq('editmode'))
-					//$admlink = $this->get_admin_link();
-
 				$hfile = $this->htmlfile ? $this->htmlfile : 'none';	
 				$ret = "Unknown html file (".$hfile.") or argument.\n" . $admlink;
 			}  
@@ -226,8 +223,8 @@ class fronthtmlpage {
 			_m('javascript.onLoad');
 			$jret = _m('javascript.callJavaS');
 			//echo $jret;
-			if ($jret) 
-				$pageout = str_replace("</body>", $jret . "</body>", $data); //body jqgrid problem 
+			//if ($jret) 
+			$pageout = str_replace("</body>", $jret."</body>", $data); //body jqgrid problem 
 		}	
 	}
 
@@ -998,8 +995,11 @@ EOF;
 					}				
 			    }				
 			
+			    //js 
+			    $this->process_javascript($contents, $pageout);
+				
 				//execute commands
-				$ret = $this->process_commands($contents);
+				$ret = $this->process_commands($pageout);
 			
 				return ($ret);
 			}
@@ -1251,6 +1251,7 @@ function handleResponse() {if(http.readyState == 4){
     response = response.replace( /\s+$/g, "" );		
     if(response.indexOf('|' != -1)) { /*alert(response); */ update = response.split('|');
         document.getElementById(update[0]).innerHTML = update[1];}}}
+
 EOF;
 
       return ($jscript);

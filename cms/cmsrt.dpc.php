@@ -81,7 +81,7 @@ class cmsrt extends cms  {
 		//$ff = $this->path.$m;
 		$this->message = $m; //(is_file($ff)) ? file_get_contents($ff) :  $m; //plain text	
 
-		$this->google_js();//always	
+		//$this->google_js();//always	
 	}
 	
 	public function event($event=null) {
@@ -124,16 +124,7 @@ class cmsrt extends cms  {
     function javascript() {
    
 		$ret = " 
-function neu()
-{	
-	top.frames.location.href = \"index.php\";
-}
-//window.setTimeout(\"neu()\",10);
-function goBack()
-{
-  window.history.back()
-}
-goBack();
+function neu() {top.frames.location.href = \"index.php\";} function goBack() { window.history.back() } goBack();
 ";	 
 		return ($ret);
     }	

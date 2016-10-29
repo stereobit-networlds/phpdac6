@@ -27,6 +27,7 @@ $__EVENTS['RCCONTROLPANEL_DPC'][13]='cpinbox';
 $__EVENTS['RCCONTROLPANEL_DPC'][14]='cpinboxno';
 $__EVENTS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
 $__EVENTS['RCCONTROLPANEL_DPC'][16]='cptasksno';
+$__EVENTS['RCCONTROLPANEL_DPC'][17]='lang'; //language selection by crmrt
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
@@ -45,8 +46,7 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][13]='cpinbox';
 $__ACTIONS['RCCONTROLPANEL_DPC'][14]='cpinboxno';
 $__ACTIONS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
 $__ACTIONS['RCCONTROLPANEL_DPC'][16]='cptasksno';
-
-//$__DPCATTR['RCCONTROLPANEL_DPC']['cp'] = 'cp,1,0,0,0,0,0,0,0,0,0,0,1';
+$__ACTIONS['RCCONTROLPANEL_DPC'][17]='lang'; //language selection by crmrt
 
 $__LOCALE['RCCONTROLPANEL_DPC'][0]='RCCONTROLPANEL_DPC;Control Panel;Control Panel';
 $__LOCALE['RCCONTROLPANEL_DPC'][1]='_BACKCP;Back;Επιστροφή';
@@ -503,12 +503,7 @@ class rccontrolpanel {
 			unset ($js);
 	    } 
 	}
-	
-	//called by footer html
-	public function javascript() {		
-	
-		$js = <<<EOF
-		
+/* LOADED BY FRONTHTMLPAGE
 function createRequestObject() {var ro; var browser = navigator.appName;
     if(browser == "Microsoft Internet Explorer"){ro = new ActiveXObject("Microsoft.XMLHTTP");
     }else{ro = new XMLHttpRequest();} return ro;}
@@ -522,9 +517,13 @@ function handleResponse() {if(http.readyState == 4){
         response = response.replace( /\s+$/g, "" ); 
         if(response.indexOf('|' != -1)) { update = response.split('|');
             document.getElementById(update[0]).innerHTML = update[1];
-        }}}  		
-		function init(){ inbox(); } 	
-
+        }}}
+*/	
+	//called by footer html
+	public function javascript() {		
+	
+		$js = "
+		  		
 function inbox()
 {
 	$.ajax({
@@ -581,11 +580,15 @@ function inbox()
 	}); 
 }
 
+function init(){ 
+	inbox(); 
+} 
+
 $(document).ready(function(){
 	inbox();
-	window.setInterval("inbox()",60100);	
+	window.setInterval('inbox()',60100);	
 });	
-EOF;
+";
 
 		return $js;
 	}	  
