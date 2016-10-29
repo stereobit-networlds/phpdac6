@@ -31,6 +31,7 @@ $__LOCALE['RCREPORTS_DPC'][11]='_id;ID;ID';
 $__LOCALE['RCREPORTS_DPC'][12]='_title;Title;Τίτλος';
 $__LOCALE['RCREPORTS_DPC'][13]='_type;Type;Τύπος';
 $__LOCALE['RCREPORTS_DPC'][15]='_save;Execute;Εκτέλεση';
+$__LOCALE['RCREPORTS_DPC'][16]='_daysback;Days back;Απο ημέρες';
 
 class rcreports  {
 
@@ -92,7 +93,7 @@ class rcreports  {
 		 case 'cprepcodesave' : 										  
 		 case 'cprepshow'     : $out = $this->results_grid(null,140,5,'r', true); 
 								$out .= $this->codeform();
-								$out .= $this->show_code_results();
+								$out .= $this->show_code_results(null,false,true,null,true);
 							    break; 
 		 case 'cprepframe'    : break;					  
 	     case 'cpreports'     :
@@ -130,16 +131,17 @@ class rcreports  {
 	    $lan = getlocal() ? getlocal() : 0;  
 		$title = localize('RCREPORTS_DPC',getlocal()); 
 
-        $myfields = "id,timein,title,description,rgroup,scode";  		
+        $myfields = "id,timein,title,description,rgroup,scode,daysback";  		
 		
 		$xsSQL = 'select * from (select '.$myfields . ' from reports) as o';
 		  
 		_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
-		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|1");//"|link|2|"."javascript:report(\"{id}\");".'||');			
-		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|2|"."javascript:report(\"{id}\");".'||');//."|5|1"); 
+		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|5|"."javascript:report(\"{id}\");".'||');			
+		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|5|1"); 
 		_m("mygrid.column use grid1+description|".localize('_description',getlocal())."|10|1|");
 		_m("mygrid.column use grid1+rgroup|".localize('_type',getlocal()).'|5|1');		
 		_m("mygrid.column use grid1+scode|".localize('_code',getlocal()).'|20|1');	
+		_m("mygrid.column use grid1+daysback|".localize('_daysback',getlocal()).'|5|1');	
 	
 		$out = _m("mygrid.grid use grid1+reports+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 		
@@ -370,6 +372,14 @@ class rcreports  {
 		return ($res->fields[0]);
 	}
 	
+	protected function getDescrFromName($name) {
+		$db = GetGlobal('db'); 		
+		$sSQL = 'select description from reports where title='.$db->qstr($name);
+		$res = $db->Execute($sSQL);
+		
+		return ($res->fields[0]);
+	}	
+	
 	public function test($name=null) {
 		return $name;
 	}		
@@ -380,7 +390,8 @@ class rcreports  {
 		if ($sql)
 			$res = $db->Execute($sql);		
 		
-		return ($db->Affected_Rows()) ?	$sql : 'sql error';
+		$a = $db->Affected_Rows();
+		return ($a>0) ?	$a : 'SQL:Not affected rows';
 	}		
 	
 	public function execute_report($name=null, $mailto=false, $unique=false, $glue=null) {		
@@ -390,8 +401,9 @@ class rcreports  {
 		if (!$id) return false;
 		
 		if ($mailto) {
+			$descr = $this->getDescrFromName($name);
 			$body = $this->show_code_results($id, false, $unique, $glue);
-			$ret = $this->mailto($mailto, $name, $body);
+			$ret = $this->mailto($mailto, $descr, str_replace($glue,'<br/>',$body)); //glue br at mail
 			return ($body);
 		}
 		else 
@@ -400,17 +412,13 @@ class rcreports  {
 		return true;
 	}
 	
-	protected function save_inbox($from,$subject,$body=null) {
-		$db = GetGlobal('db');		
-		$ishtml = 1;
-		$origin = 'cart'; 
-		$datetime = date('Y-m-d h:s:m');
-		$active = 0; 		
+	protected function save_inbox($email,$subject,$message=null) {
+		$db = GetGlobal('db');			
 		
 		$sSQL = "insert into cform (email,subject,postform) values ( ".
-		     $db->qstr(strtolower($from)) . "," . 
-		     $db->qstr($subject) . "," . 
-			 $db->qstr($body) . ")";
+				$db->qstr(addslashes($email)) . "," . 
+				$db->qstr(addslashes($subject)) . "," . 
+				$db->qstr(addslashes($message)) . ")";
 			 		
 		$result = $db->Execute($sSQL,1);			 
 
@@ -491,6 +499,8 @@ class rcreports  {
 			
 			$this->save_inbox($from, $subject, $body);
 			$this->save_outbox($from, $to, $subject, $htmlbody, $trackid);
+			
+			$this->update_event_statistics('contact', $from);
 
 			unset($smtpm);
 		}
@@ -498,6 +508,45 @@ class rcreports  {
 	        $mailerror =  "Mail not send! (smtp not loaded)";		
 		  
 		  return ($mailerror);	   	
+	}	
+	
+ 	protected function sqlDateRange($fieldname, $dayback=null, $istimestamp=false, $and=false) {
+		$sqland = $and ? ' AND' : null;
+		if (!$daysback) return;
+
+		if ($istimestamp)
+			$dateSQL = $sqland . " DATE($fieldname) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL $daysback DAY ) ) AND DATE ( NOW() )";
+		else
+			$dateSQL = $sqland . " $fieldname BETWEEN DATE( DATE_SUB( NOW() , INTERVAL $daysback DAY ) ) AND DATE ( NOW() )";			
+		
+		return ($dateSQL);
+	} 	
+	
+	protected function update_event_statistics($id, $user=null) {
+        $db = GetGlobal('db'); 
+
+	    $currentdate = time();	
+	    $myday  = date('d',$currentdate);	
+	    $mymonth= date('m',$currentdate);	
+	    $myyear = date('Y',$currentdate);
+						
+		$sSQL = "insert into stats (day,month,year,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT) values (";
+		$sSQL.= $myday . ",";
+		$sSQL.= $mymonth . ",";
+		$sSQL.= $myyear . ",";						
+		$sSQL.= $db->qstr('event') . ',';		
+		$sSQL.= $db->qstr($id) . ',';
+		$sSQL.= $db->qstr($user) . ',';
+		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
+		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ","; 
+		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ")";				
+
+		$db->Execute($sSQL,1);	 
+		
+		if ($db->Affected_Rows()) 
+			return true;
+		else 
+			return false;		
 	}	
 	
 };

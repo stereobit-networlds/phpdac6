@@ -11,23 +11,11 @@ class jscript {
     var $codearray;
 	var $extcodearray;
 	
-	var $encoding, $url, $jspath, $csspath;
+	var $url, $jspath, $csspath;
 
 	function jscript() { 
-	    //encoding
-        $char_set  = arrayload('SHELL','char_set');	  
-        $charset  = paramload('SHELL','charset');	  		
-	    if (($charset=='utf-8') || ($charset=='utf8'))
-	      $this->encoding = 'utf8';//must be utf8 not utf-8
-	    else  
-	      $this->encoding = $char_set[getlocal()];
-
-        //ip
-     	/*$murl = arrayload('SHELL','ip');
-		if (!empty($murl))
-			$this->url = $murl[0];
-        else*/ //http...must included...			
-			$this->url = paramload('SHELL','urlbase');
+			
+		$this->url = paramload('SHELL','urlbase');
 			
 		//js path
 		$jp = paramload('JAVASCRIPT','jspath');
@@ -96,7 +84,7 @@ function callJavaS() {
 function JS_function($code,$params) {
 
   $codebuffer = GetGlobal('codebuffer');
-
+/*
   //getparams
   $param = explode(";" , $params);
 
@@ -119,8 +107,7 @@ function JS_function($code,$params) {
 	 case "js_popimage" : $codeout = "onClick=\"jkpopimage('$param[0]',$param[1],$param[2],'$param[3]')\""; break;					  
   } 
   
-  /*if (strstr("js_openwin",$code)) {
-	    $codeout      = "onClick=\"MM_openBrWindow('$param[0]','$param[1]','$param[2]')\"";*/
+
     if (!$this->isincodebuffer($code)) {
        switch ($code) {	
 	     case "js_openwin"  : $codebuffer[] = $this->js_openwin(); break;
@@ -130,12 +117,12 @@ function JS_function($code,$params) {
 	     case "js_popimage" : $codebuffer[] = $this->js_popimage(); break;			 		 
 	   }
 	}  
-  //}	
+
   
   SetGlobal('codebuffer',$codebuffer);
   
   return ($codeout);
-
+*/
 }
 
 function isincodebuffer($command) {
@@ -152,7 +139,7 @@ function isincodebuffer($command) {
 }
 
 /////////////////////////////////////////////////////////// lib
-
+/*
 //open browser new window
 //onLoad="MM_openBrWindow('...
 function js_openwin() {
@@ -252,7 +239,7 @@ EOF;
   return ($js);
 }
 
-
+*/
 function load_js($jscript,$ver='',$istext=0,$additional_text=null,$nopath=null) {
     $externalcodebuffer = GetGlobal('externalcodebuffer');
 

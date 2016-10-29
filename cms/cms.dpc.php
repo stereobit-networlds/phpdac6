@@ -1,12 +1,12 @@
 <?php
 $__DPCSEC['CMS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-function _v($v=null) {
-	return $v ? GetGlobal('controller')->calldpc_var($v) : null;
+function _v($v=null,$val=null) {
+	return $v ? GetGlobal('controller')->calldpc_var($v, $val) : null;
 }
 
-function _m($m=null) {
-	return $m ? GetGlobal('controller')->calldpc_method($m) : null;
+function _m($m=null, $noerr=null) {
+	return $m ? GetGlobal('controller')->calldpc_method($m, $noerr) : null;
 }
 
 if ((!defined("CMS_DPC")) && (seclevel('CMS_DPC',decode(GetSessionParam('UserSecID')))) ) {

@@ -17,19 +17,19 @@ class fronthtmlpage {
     var $themepath,$themeurl;
 	var $htmlfile,$htmlpage;
 	
-	var $agent;
-	var $runas;
+	//var $agent;
+	//var $runas;
 	
 	var $argument;
 	var $debug;
 	
-	var $forms,$arrays;
+	//var $forms,$arrays;
 	
-	var $runasapp;
-	var $data;
+	//var $runasapp;
+	//var $data;
 	var $infolder, $urlpath, $url, $urltitle;
-	var $modify, $adminhtmlfile, $adminhtml,$admindpc,$admincmd,$adminview;
-	var $allow_edit;
+	var $modify; //, $adminhtmlfile, $adminhtml,$admindpc,$admincmd,$adminview;
+	//var $allow_edit;
 	var $charset;
 	var $verbose;
 	var $editmode_point;
@@ -44,22 +44,21 @@ class fronthtmlpage {
 	var $template, $cptemplate;
 	var $preprocess;	
 	 
-	function fronthtmlpage($file=null,$runasuser=null,$runasapp=null) {	
-	
+	function __construct($file=null) { //,$runasuser=null,$runasapp=null) {	
+	    $GRX = GetGlobal('GRX');
         $UserSecID = GetGlobal('UserSecID');
-	    $thema = GetGlobal('thema');
-	    $theme = GetGlobal('theme');	
-	    $__USERAGENT = GetGlobal('__USERAGENT');
-	    $GRX = GetGlobal('GRX');				
+	    //$thema = GetGlobal('thema');
+	    //$theme = GetGlobal('theme');	
+	    //$__USERAGENT = GetGlobal('__USERAGENT');				
 	 
 	    $this->t_fronthtmlpage = new ktimer;
 	    $this->t_fronthtmlpage->start('fronthtmlpage'); 						
 
         $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);  
-		$this->agent = $__USERAGENT;  	
+		//$this->agent = $__USERAGENT;  	
 		
-		if (isset($runasuser)) $this->runas = $runasuser; //run fp as a diferent user (see newsletter)
-		if (isset($runasapp)) $this->runasapp = $runasapp;
+		//if (isset($runasuser)) $this->runas = $runasuser; //run fp as a diferent user (see newsletter)
+		//if (isset($runasapp)) $this->runasapp = $runasapp;
 		//echo $this->runasapp,'>';
 		
         $this->prpath = paramload('SHELL','prpath');		
@@ -99,12 +98,12 @@ class fronthtmlpage {
 		}  
 		
 		//echo '>',$this->htmlfile;
-		$this->adminhtmlfile = $this->urlpath . $cphtmlpath . "/cpmframework.htm"; 
+		/*$this->adminhtmlfile = $this->urlpath . $cphtmlpath . "/cpmframework.htm"; 
 		$this->adminhtml = $this->urlpath . $cphtmlpath . "/cpmhtmleditor.htm"; 
 		$this->admindpc = $this->urlpath . $cphtmlpath . "/cpmdpcedtitor.htm"; 
 		$this->admincmd = $this->urlpath . $cphtmlpath . "/cpmctrl.htm"; 						
 		$this->adminview = $this->urlpath . $cphtmlpath . "/cpmhtmlviewer.htm"; 
-		
+		*/
 		$p = explode(".",$file);
 		//$this->argument = strtoupper($p[0]); //the name without ext		
 		//in case of dot(.) in name
@@ -117,9 +116,9 @@ class fronthtmlpage {
 		$this->session_use_cookie = paramload('SHELL','sessionusecookie');	
 		
 		//embedded forms and/or arrays
-		$this->forms = array();
-		$this->arrays = array();
-		$this->data = null;
+		//$this->forms = array();
+		//$this->arrays = array();
+		//$this->data = null;
 		
 		$this->modify = urldecode(base64_decode(GetReq('modify')))=='stereobit' ? true : false;
 
@@ -131,7 +130,7 @@ class fronthtmlpage {
 		else  
 	      $this->charset = $char_set[getlocal()]; 	  				
 		  
-		$this->allow_edit = remote_paramload('FRONTHTMLPAGE','alloweditpage',$this->prpath);  
+		//$this->allow_edit = remote_paramload('FRONTHTMLPAGE','alloweditpage',$this->prpath);  
 		$this->verbose = remote_paramload('FRONTHTMLPAGE','verbose',$this->prpath); 
 		
         if ($GRX)    
@@ -223,33 +222,33 @@ class fronthtmlpage {
 		$htmdata = file_get_contents($this->htmlfile);
 		
         $cssdata = $this->process_css($htmdata);
-        $jhtmdata = $this->process_javascript($cssdata);		
-        $chunks_data = $this->process_chunks($data,$jhtmdata,$pageout);				
+        $jhtmdata = $this->process_javascript($cssdata, $pageout);		
+        /*$chunks_data = $this->process_chunks($data,$jhtmdata,$pageout);				
 
 		$ret = ($this->debug) ? str_replace("<?". $this->argument ."?>",$this->argument,$pageout):
-		                        str_replace("<?". $this->argument ."?>",$chunks_data,$pageout);
+		                        str_replace("<?". $this->argument ."?>",$chunks_data,$pageout);*/
 		  
 		//recess app resources  
-		if (isset($this->runasapp))  
-		  $ret = str_replace("images/",$this->runasapp."/images/",$ret);
+		//if (isset($this->runasapp))  
+		  //$ret = str_replace("images/",$this->runasapp."/images/",$ret);
 		  
 		//::::update fpdata at pcntl to useit by advertisers,helpers etc  :::
-		$this->data = _v('pcntl.fpdata',$ret); 
+		//$this->data = _v('pcntl.fpdata',$ret); 
 		
-		$ret = $this->process_commands($ret);
+		$ret = $this->process_commands($pageout);
 		
 		/*repeat replace argument after process commands which may include file with arg into*/
-		$ret = ($this->debug) ? str_replace("<?". $this->argument ."?>",$this->argument,$ret):
-		                        str_replace("<?". $this->argument ."?>",$data,$ret);
+		/*$ret = ($this->debug) ? str_replace("<?". $this->argument ."?>",$this->argument,$ret):*/
+		$ret = str_replace("<?". $this->argument ."?>",$data,$ret);
 		  		
 		if (!$this->session_use_cookie)
 		  $ret = $this->propagate_session($ret);
 		
 		//set title if title of page = #TITLE#
-		if ($pagetitle=GetReq('g')) {
+		/*if ($pagetitle=GetReq('g')) {
 		  $maintitle = paramload('SHELL','urltitle');
 		  $ret = str_replace('#TITLE#',$maintitle.' > '.$pagetitle,$ret);
-		}  
+		}*/  
 	  }
 	  else {
 
@@ -260,23 +259,24 @@ class fronthtmlpage {
 		  //////////////////////////////////////////////////////////BYPASS....?
           //$cssdata = $this->process_css($htmdata);
           //$jhtmdata = $this->process_javascript($cssdata);		
-          $chunks_data = $this->process_chunks($data,$htmdata,$pageout);				
-          
+          /*$chunks_data = $this->process_chunks($data,$htmdata,$pageout);				
 		  if (!$this->debug) 
 		    $ret = str_replace("<?_HTML?>",$chunks_data,$pageout);
 		  else
-		    $ret = str_replace("<?_HTML?>",$this->argument,$pageout);
+		    $ret = str_replace("<?_HTML?>",$this->argument,$pageout);*/
+		  
+		  $this->process_javascript($cssdata, $pageout);
 
-		  $ret = $this->process_commands($ret);	
+		  $ret = $this->process_commands($pageout);//ret);	
 		  
 		  if (!$this->session_use_cookie)
 		    $ret = $this->propagate_session($ret);	
 			
 		  //set title if title of page = #TITLE#
-		  if ($pagetitle=GetReq('g')) {
+		  /*if ($pagetitle=GetReq('g')) {
 		    $maintitle = paramload('SHELL','urltitle');
 		    $ret = str_replace('#TITLE#',$maintitle.' > '.$pagetitle,$ret);
-		  }  			
+		  }*/  			
 		}
 		else {
 		  if (!GetReq('editmode'))
@@ -290,6 +290,7 @@ class fronthtmlpage {
 	  return ($ret);	
 	}	
 	
+/*
 	//handle chains of data in action ret such as text<@PHPCHUNK>seialized_array<@...
 	function process_chunks($actiondata=null,$htmldata,&$pageout) {
 	
@@ -395,7 +396,7 @@ class fronthtmlpage {
 	  $formdata = $html_form;
 	  return ($formdata);		  
 	}
-	
+*/	
 	function process_commands($data,$is_serialized=null) {
 	
 	  if ($is_serialized) 
@@ -406,7 +407,7 @@ class fronthtmlpage {
 	  
       foreach ($matches[1] as $r=>$cmd) {
 		if (!$this->debug) {
-	      $ret = _m($cmd); //.'+1',1); //no error stop 					 
+	      $ret = _m($cmd); //,1); //no error stop 					 
 		  $data = str_replace("<phpdac>".$cmd."</phpdac>",$ret,$data);
 		}
 	  }
@@ -414,20 +415,21 @@ class fronthtmlpage {
 	  return ($data);//as is
 	}
 	
-	function process_javascript($data) {
+	function process_javascript($data, &$pageout) {
 	
 	  //call javascript 
-      if (defined('JAVASCRIPT_DPC')) {	
+      if (defined('JAVASCRIPT_DPC')) {		  
 
 		 _m('javascript.onLoad');
-		 $jret = _m('javascript.callJavaS') . "</body>";
+		 $jret = _m('javascript.callJavaS');
+	
 		 if ($jret) 
-		   $ret = str_replace("</body>", $jret, $data); //body jqgrid problem 
+		   $pageout = str_replace("</body>", $jret . "</body>", $data); //body jqgrid problem 
 		 
-		 return ($ret);
+		 //return ($ret);
 	  }	
 	  
-	  return ($data);  	//as is
+	  //return ($data);  	//as is
 	}
 	
 	function process_css($data) {
@@ -451,7 +453,7 @@ class fronthtmlpage {
 	  
 	  return ($ret2);
 	}
-	
+/*	
 	function get_xml_links($mylan=null,$feed_id=null) {
 	  $lan = $mylan?$mylan:getlocal();//by hand per htm 0,1 page
 	  $lnk = array();
@@ -564,7 +566,7 @@ class fronthtmlpage {
 		
 		return ($ret);
 	}
-	
+*/	
 	function get_copyright($fromyear=null) {
 	    $is_cropwiz = (GetSessionParam('LOGIN')=='yes') ? $this->app_crop_wizard() : null;
 		$url = paramload('SHELL','urlbase');

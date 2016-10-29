@@ -326,6 +326,8 @@ class rccontrolpanel {
 		$this->crmLevel = 9;
 				
 		//ini_set('max_input_vars', '3000'); //NOT ALLOWED ADD IT TO .HTACCESS
+		
+		$this->load_javascript();	
 	}
 	 	
     function event($sAction) {    	  
@@ -385,8 +387,7 @@ class rccontrolpanel {
 	   	
          case "cplogout"    : $this->logout();
 		                     break;
-		 case "cplogin"     :$valid = $this->verify_login();
-		                     //$this->javascript();							  
+		 case "cplogin"     :$valid = $this->verify_login();						  
 							
 		 case "cpinfo"      ://ajax call
 							 $this->site_stats();  //run stats
@@ -490,6 +491,17 @@ class rccontrolpanel {
 		} 
 		
 		return false;
+	}
+	
+	protected function load_javascript() {
+        if (iniload('JAVASCRIPT')) {
+
+			$code = $this->javascript();
+		   
+			$js = new jscript;	
+			$js->load_js($code,null,1);		
+			unset ($js);
+	    } 
 	}
 	
 	//called by footer html
