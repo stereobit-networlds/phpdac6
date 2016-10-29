@@ -34,17 +34,23 @@ $__LOCALE['RCREPORTS_DPC'][15]='_save;Execute;Εκτέλεση';
 
 class rcreports  {
 
-    var $title, $path;
+    var $title, $prpath;
 	var $seclevid, $userDemoIds;
+	var $appname, $mtracking;
 		
 	function __construct() {
 	
-	  $this->path = paramload('SHELL','prpath');
+	  $this->prpath = paramload('SHELL','prpath');
 	  $this->title = localize('RCREPORTS_DPC',getlocal());	 
 	  
 	  $this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 	  $this->userDemoIds = array(5,6,7); //8 
 	  //echo $this->seclevid;  
+	  
+	  $this->appname = paramload('ID','instancename');	
+	  $tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
+	  $this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";
+	  $this->from = remote_paramload('RCBULKMAIL','user', $this->prpath);	
 	}
 	
     function event($event=null) {
@@ -129,8 +135,8 @@ class rcreports  {
 		$xsSQL = 'select * from (select '.$myfields . ' from reports) as o';
 		  
 		_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
-		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|2|"."javascript:report(\"{id}\");".'||');			
-		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|5|1"); 
+		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|1");//"|link|2|"."javascript:report(\"{id}\");".'||');			
+		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|2|"."javascript:report(\"{id}\");".'||');//."|5|1"); 
 		_m("mygrid.column use grid1+description|".localize('_description',getlocal())."|10|1|");
 		_m("mygrid.column use grid1+rgroup|".localize('_type',getlocal()).'|5|1');		
 		_m("mygrid.column use grid1+scode|".localize('_code',getlocal()).'|20|1');	
@@ -160,11 +166,12 @@ class rcreports  {
         $width = $width ? $width : null; //wide
         $mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;					
-        $lan = getlocal() ? getlocal() : 0;
-		$title = localize('_results', $lan);	
+        $lan = getlocal() ? getlocal() : 0;	
 		
 		$id = GetParam('id');
-		if ($_POST['id']) return; //null when post code = execute		
+		if ($_POST['id']) return; //null when post code = execute	
+
+		$title = localize('_results', $lan);// . '_' . $id;		
 
 		list($xsSQL, $fields, $table) = $this->load_report_sql($id); 
 		
@@ -176,11 +183,11 @@ class rcreports  {
 					default   : $length = 5;
 				}
 				//echo $f . $length . '<br/>';
-				_m("mygrid.column use grid1+$f|".localize($f,getlocal())."|$length|0|");		
+				_m("mygrid.column use grid1+$f|".localize($f,$lan)."|$length|0|");		
 			}	
 		}
 		
-		$out .= _m("mygrid.grid use grid1+$table+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");//+0+1+1");
+		$out = _m("mygrid.grid use grid1+$table+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");//+0+1+1");
 		
 	    return ($out);
     }		
@@ -262,15 +269,15 @@ class rcreports  {
 	}		
 	
 	
-	protected function show_code_results($rid=null, $silence=false) {
+	protected function show_code_results($rid=null, $silence=false, $unique=false, $glue=false, $html=false) {
 		$db = GetGlobal('db'); 
 		$id = $rid ? $rid : GetParam('id');
 		if (!$id) return;
 		
 		$postedCode = GetParam('repcode');	
 		$retline = array();
-		$header = '<h2>' . localize('_results',getlocal()) . '</h2>';
-		$footer = '<hr/>';
+		$header = $html ? '<h2>' . localize('_results',getlocal()) . '</h2>' : null;
+		$footer = $html ? '<hr/>' : null;
 		
 		$sql = "select scode,code from reports where id=".$id;
 		$result = $db->Execute($sql);	
@@ -294,8 +301,11 @@ class rcreports  {
 					if ($codex = eval($daccode))
 						$retline[] = $codex;
 				}
+				$gl = $glue ? $glue : '<br/>';
+				$_result = $unique ? array_unique($retline) : $retline;
+				$result =  implode($gl,$_result);
 				
-				$ret = $silence ? null : $header . implode('<br/>',$retline) . $footer .  $mysql;
+				$ret = $silence ? null : $header . $result . $footer;// .  $mysql;
 				return ($ret);
 			}
 		}
@@ -308,8 +318,7 @@ class rcreports  {
         $width = $width ? $width : null; //wide
         $mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;					
-        $lan = getlocal() ? getlocal() : 0;
-		$title = localize('_results', $lan);			
+        $lan = getlocal() ? getlocal() : 0;			
 		
 		$id = GetParam('id'); //as come from crm click
 		if (strstr($id,'~')) {
@@ -322,6 +331,8 @@ class rcreports  {
 			$_id = $id;
 			$where = null;
 		}	
+		
+		$title = localize('_results', $lan);// . '_' . $id;
 
 		list($xsSQL, $fields, $table) = $this->load_report_sql($_id); 
 		
@@ -342,11 +353,11 @@ class rcreports  {
 					default      : $attr = "5|0|";
 				}
 				//echo $f . $length . '<br/>';
-				_m("mygrid.column use grid1+$f|".localize($f,getlocal())."|".$attr);		
+				_m("mygrid.column use grid1+$f|".localize($f,$lan)."|".$attr);		
 			}	
 		}
 		
-		$out .= _m("mygrid.grid use grid1+$table+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");//+0+1+1");
+		$out = _m("mygrid.grid use grid1+$table+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");//+0+1+1");
 		
 	    return ($out);
     }	
@@ -363,17 +374,125 @@ class rcreports  {
 		return $name;
 	}		
 	
-	public function execute_report($name=null) {
+	public function execute_report($name=null, $mailto=false, $unique=false, $glue=null) {
 		$db = GetGlobal('db'); 		
 		if (!$name) return false;
 		
 		$id = $this->getIdFromName($name);
+		if (!$id) return false;
+		
 		//list($xsSQL, $fields, $table) = $this->load_report_sql($id); 
 		//$res = $db->Execute($xsSQL);
-		$ret = $this->show_code_results($id, true);
+		
+		if ($mailto) {
+			$body = $this->show_code_results($id, false, $unique, $glue);
+			$ret = $this->mailto($mailto, $name, $body);
+		}
+		else		
+			$ret = $this->show_code_results($id, true);
 		
 		return true;
 	}
+	
+	protected function save_inbox($from,$to,$subject,$body=null, $trackid=null) {
+		$db = GetGlobal('db');		
+		$ishtml = 1;
+		$origin = 'cart'; 
+		$datetime = date('Y-m-d h:s:m');
+		$active = 0; 		
+		
+		$sSQL = "insert into cform (email,subject,postform) values ( ".
+		     $db->qstr(strtolower($from)) . "," . 
+		     $db->qstr($subject) . "," . 
+			 $db->qstr($body) . ")";
+			 		
+		$result = $db->Execute($sSQL,1);			 
+
+		return (true);			 
+	}
+
+	//send mail to db queue
+	protected function save_outbox($from,$to,$subject,$body=null,$trackid=null) {
+		$db = GetGlobal('db');		
+		$ishtml = 1;
+		$origin = 'reports'; 
+		$datetime = date('Y-m-d h:s:m');
+		$active = 0; 		
+		
+		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,cid) ";
+		$sSQL .=  "values (" .
+			 $db->qstr($datetime) . "," . 
+			 $db->qstr($datetime) . "," . 
+			 $active . "," .
+		     $db->qstr(strtolower($from)) . "," . 
+			 $db->qstr(strtolower($to)) . "," .
+		     $db->qstr($subject) . "," . 
+			 $db->qstr($body) . "," .
+			 $db->qstr($origin) . "," .				 
+			 $db->qstr($trackid) . ")";
+			 		
+		$result = $db->Execute($sSQL,1);			 
+
+		return (true);			 
+	}	
+	
+	protected function get_trackid($from,$to) {
+	
+		$i = rand(100000,999999);//++$m;	 
+		$tid = date('YmdHms') .  $i . '@' . $this->appname;
+		 
+		return ($tid);	
+	}	
+	
+	protected function add_tracker_to_mailbody($mailbody=null,$id=null,$receiver=null,$is_html=false) {
+		if (!$id) return;
+		$i = $id;
+	
+		if ($receiver) {
+			$r = $receiver;
+			$ret = "<img src=\"{$this->mtrackimg}?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"1\"/>";
+		}
+		else
+			$ret = "<img src=\"{$this->mtrackimg}?i=$i\" border=\"0\" width=\"1\" height=\"1\"/>";
+		 
+		if (($is_html) && (stristr($mailbody,'</BODY>'))) {
+			if (strstr($mailbody,'</BODY>'))
+				$out = str_replace('</BODY>',$ret.'</BODY>',$mailbody);
+			else  
+				$out = str_replace('</body>',$ret.'</body>',$mailbody);
+		}	 
+		else
+			$out = $mailbody . $ret;	 	 
+		 
+		return ($out);	 
+	}		
+	
+	protected function mailto($to=null,$subject=null,$body=null) {
+		$htmlbody = '<html><body>'.$body.'</body></html>';
+		$from = $this->from;
+		  
+	    if (defined('SMTPMAIL_DPC')) {
+			
+			$trackid = $this->get_trackid($from,$to);
+			$mbody = $this->add_tracker_to_mailbody($htmlbody,$trackid,$to,1);				
+			
+	        $smtpm = new smtpmail;
+		    $smtpm->to($to); 
+		    $smtpm->from($from); 
+		    $smtpm->subject($subject);
+		    $smtpm->body($mbody);			   
+			$mailerror = $smtpm->smtpsend();
+			
+			$this->save_inbox($from, $subject, $body);
+			$this->save_outbox($from, $to, $subject, $htmlbody, $trackid);
+
+			unset($smtpm);
+		}
+	    else
+	        $mailerror =  "Mail not send! (smtp not loaded)";		
+		  
+		  return ($mailerror);	   	
+	}	
 	
 };
 }
