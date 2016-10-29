@@ -14,14 +14,14 @@ class fronthtmlpage {
 
 	var $t_fronthtmlpage;
 	var $userLevelID;
-    var $themepath,$themeurl;
-	var $htmlfile,$htmlpage;
+    //var $themepath,$themeurl;
+	var $htmlfile, $htmlpage;
 	
 	//var $agent;
 	//var $runas;
 	
 	var $argument;
-	var $debug;
+	//var $debug;
 	
 	//var $forms,$arrays;
 	
@@ -33,7 +33,8 @@ class fronthtmlpage {
 	var $charset;
 	var $verbose;
 	var $editmode_point;
-	var $editdpc, $edithtml, $prpath;
+	//var $editdpc;
+	var $edithtml, $prpath;
 	var $dhtml, $htmlext;
 	
 	static $staticpath;
@@ -112,7 +113,7 @@ class fronthtmlpage {
 		$pdotname = implode('.',$p);
 		$this->argument = strtoupper($pdotname); //the name with dots and without ext		
 		//echo $this->argument,'>';
-		$this->debug = GetReq('debug')?GetReq('debug'):GetSessionParam('debug');//0;		
+		//$this->debug = GetReq('debug')?GetReq('debug'):GetSessionParam('debug');//0;		
 		$this->session_use_cookie = paramload('SHELL','sessionusecookie');	
 		
 		//embedded forms and/or arrays
@@ -138,14 +139,14 @@ class fronthtmlpage {
 	    else
 	  	 $this->editmode_point  = '[Edit Mode]';
 
-        $this->editdpc = remote_paramload('FRONTHTMLPAGE','editdpc',$this->prpath); 		 
+        //$this->editdpc = remote_paramload('FRONTHTMLPAGE','editdpc',$this->prpath); 		 
 		$this->edithtml = remote_paramload('FRONTHTMLPAGE','edithtml',$this->prpath); 
 		
 	    //dynamic html loader
 	    $this->dhtml = remote_paramload('FRONTHTMLPAGE','dhtml',$this->prpath); 
 		
 		$htmlfile_extension = remote_paramload('FRONTHTMLPAGE','htmlext',$this->prpath);
-        $this->htmlext = $htmlfile_extension ? $htmlfile_extension :'.htm'; 		
+        $this->htmlext = $htmlfile_extension ? $htmlfile_extension : '.htm'; 		
 		
 		self::$staticpath = paramload('SHELL','urlpath');
 		
@@ -190,14 +191,14 @@ class fronthtmlpage {
     }
 	
 	//dummy event
-    /*function event($event=null) {
-	
+    function event($event=null) {
+		echo 'e';
         //switch($event)   {
         //}
-    }*/		
+    }		
 	
 	function action($actiondata) {
-		
+
 	   if ($this->modify) 
 	     $out = $this->modify_page();
  
@@ -406,10 +407,10 @@ class fronthtmlpage {
 	  preg_match_all($pattern,$data,$matches);
 	  
       foreach ($matches[1] as $r=>$cmd) {
-		if (!$this->debug) {
+		//if (!$this->debug) {
 	      $ret = _m($cmd); //,1); //no error stop 					 
 		  $data = str_replace("<phpdac>".$cmd."</phpdac>",$ret,$data);
-		}
+		//}
 	  }
 	  
 	  return ($data);//as is

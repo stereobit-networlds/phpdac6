@@ -6,6 +6,20 @@ define("CMSRT_DPC",true);
 
 $__DPC['CMSRT_DPC'] = 'cmsrt';
 
+$__EVENTS['CMSRT_DPC'][0]='shlangs';
+$__EVENTS['CMSRT_DPC'][1]='lang';
+$__EVENTS['CMSRT_DPC'][2]='setlanguage';
+
+$__ACTIONS['CMSRT_DPC'][0]='shlangs';
+$__ACTIONS['CMSRT_DPC'][1]='lang';
+$__ACTIONS['CMSRT_DPC'][2]='setlanguage';
+
+$__DPCATTR['CMSRT_DPC']['shlangs'] = 'shlangs,1,0,0,0,0,0,0,0,0,0,0,1';
+$__DPCATTR['CMSRT_DPC']['lang'] = 'lang,0,0,0,0,0,0,0,0,0,0,1';
+$__DPCATTR['CMSRT_DPC']['setlanguage'] = 'setlanguage,0,0,0,0,0,0,0,0,0,0,0';
+
+$__LOCALE['CMSRT_DPC'][0]='SHLANGS_DPC;Languanges;Γλώσσα';
+
 $a = GetGlobal('controller')->require_dpc('cms/cms.dpc.php');
 require_once($a);
 
@@ -16,7 +30,9 @@ class cmsrt extends cms  {
 	var $autoresize, $restype, $replacepolicy;	
 	var $items, $csvitems;
 	
-	function __construct() {
+	var $lan_set, $selected_lan, $message; 	
+	
+	public function __construct() {
 	
 		cms::__construct();
 	  
@@ -58,8 +74,33 @@ class cmsrt extends cms  {
 			$this->image_size_path = $ipath; //absolute path
 		
 		$this->items = null;
-		$this->csvitems = null;			
+		$this->csvitems = null;	
+
+		$this->lan_set = arrayload('SHELL','languages');
+		$m = remote_paramload('SHLANGS','message',$this->path);	
+		//$ff = $this->path.$m;
+		$this->message = $m; //(is_file($ff)) ? file_get_contents($ff) :  $m; //plain text			
 	}
+	
+	public function event($event=null) { echo 'e';
+	    $param1 = GetGlobal('param1');	
+		
+		switch ($event) {
+			case "lang"  		: $this->selected_lan = GetParam("langsel"); break;
+			case "setlanguage"  : $this->selected_lan = $param1; break;
+			default 			:
+		}
+	}
+	
+	public function action($action=null) { echo 'a';
+		switch ($action) {
+			case "lang"         : setlocal($this->selected_lan);
+		                          $out = $this->lan_set[$this->selected_lan]; 
+								  break;
+			case "setlanguage"  : //echo "Current language:",$this->lan_set[$this->selected_lan],"\n";  						
+			default 		 	:
+		}
+	}	
 	
 	public function renderTemplate($id=null, $items=null, $fsave=null) {
 		$db = GetGlobal('db');		
