@@ -144,7 +144,7 @@ class fronthtmlpage {
 
 		//date_default_timezone_set('Europe/Athens');
 
-		$this->javascript();	
+		//$this->javascript();	//moved to cmsrt
 	}	
 	
     public function render($actiondata) { 	

@@ -82,6 +82,7 @@ class cmsrt extends cms  {
 		$this->message = $m; //(is_file($ff)) ? file_get_contents($ff) :  $m; //plain text	
 
 		//$this->google_js();//always	
+		$this->javascript();
 	}
 	
 	public function event($event=null) {
@@ -112,7 +113,7 @@ class cmsrt extends cms  {
    
 		if (iniload('JAVASCRIPT')) {
 
-			$code = $this->javascript();
+			$code = $this->js_refresh();
 	   
 			$js = new jscript;
 			$js->load_js($code,"",1);			   
@@ -121,14 +122,16 @@ class cmsrt extends cms  {
     } 	
 	
     //refresh to set lang
-    function javascript() {
+    function js_refresh() {
    
 		$ret = " 
-function neu() {top.frames.location.href = \"index.php\";} function goBack() { window.history.back() } goBack();
+function neu() {top.frames.location.href = \"index.php\";} 
+function goBack() { window.history.back() } 
+goBack();
 ";	 
 		return ($ret);
     }	
-   
+/*   
     protected function google_js() {
    
 		$lan = getlocal();
@@ -194,7 +197,7 @@ function neu() {top.frames.location.href = \"index.php\";} function goBack() { w
 	 
 	 return ($ret);   
    }
-
+*/
    
 	
 	public function renderTemplate($id=null, $items=null, $fsave=null) {
@@ -668,6 +671,18 @@ function neu() {top.frames.location.href = \"index.php\";} function goBack() { w
 			}	
 	    }
 		return ($ret);
+	}	
+	
+	//overrite
+	protected function javascript() {
+        if (iniload('JAVASCRIPT')) {
+           	$code = $this->createcookie_js();				
+			$code.= $this->javascript_ajax();
+
+		    $js = new jscript;
+            $js->load_js($code,"",1);			   
+		    unset ($js);		
+     	}	  
 	}	
 	
 };

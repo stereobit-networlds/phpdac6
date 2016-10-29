@@ -503,22 +503,7 @@ class rccontrolpanel {
 			unset ($js);
 	    } 
 	}
-/* LOADED BY FRONTHTMLPAGE
-function createRequestObject() {var ro; var browser = navigator.appName;
-    if(browser == "Microsoft Internet Explorer"){ro = new ActiveXObject("Microsoft.XMLHTTP");
-    }else{ro = new XMLHttpRequest();} return ro;}
-var http = createRequestObject();
-function sndReqArg(url) { var params = url+'&ajax=1'; http.open('post', params, true); http.setRequestHeader("Content-Type", "text/html; charset=utf-8");
-    http.setRequestHeader("encoding", "utf-8");	 http.onreadystatechange = handleResponse;	http.send(null);}
-function handleResponse() {if(http.readyState == 4){
-	    var response = http.responseText;
-        var update = new Array();
-        response = response.replace( /^\s+/g, "" );  
-        response = response.replace( /\s+$/g, "" ); 
-        if(response.indexOf('|' != -1)) { update = response.split('|');
-            document.getElementById(update[0]).innerHTML = update[1];
-        }}}
-*/	
+
 	//called by footer html
 	public function javascript() {		
 	
