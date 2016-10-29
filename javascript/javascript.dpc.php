@@ -11,9 +11,16 @@ class jscript {
     var $codearray;
 	var $extcodearray;
 	
-	var $url, $jspath, $csspath;
+	var $encoding, $url, $jspath, $csspath;
 
 	function jscript() { 
+	    //encoding
+        $char_set  = arrayload('SHELL','char_set');	  
+        $charset  = paramload('SHELL','charset');	  		
+	    if (($charset=='utf-8') || ($charset=='utf8'))
+	      $this->encoding = 'utf8';//must be utf8 not utf-8
+	    else  
+	      $this->encoding = $char_set[getlocal()];
 			
 		$this->url = paramload('SHELL','urlbase');
 			
@@ -84,7 +91,7 @@ function callJavaS() {
 function JS_function($code,$params) {
 
   $codebuffer = GetGlobal('codebuffer');
-/*
+
   //getparams
   $param = explode(";" , $params);
 
@@ -117,12 +124,11 @@ function JS_function($code,$params) {
 	     case "js_popimage" : $codebuffer[] = $this->js_popimage(); break;			 		 
 	   }
 	}  
-
   
   SetGlobal('codebuffer',$codebuffer);
   
   return ($codeout);
-*/
+
 }
 
 function isincodebuffer($command) {
@@ -139,7 +145,7 @@ function isincodebuffer($command) {
 }
 
 /////////////////////////////////////////////////////////// lib
-/*
+
 //open browser new window
 //onLoad="MM_openBrWindow('...
 function js_openwin() {
@@ -239,7 +245,7 @@ EOF;
   return ($js);
 }
 
-*/
+
 function load_js($jscript,$ver='',$istext=0,$additional_text=null,$nopath=null) {
     $externalcodebuffer = GetGlobal('externalcodebuffer');
 

@@ -174,7 +174,7 @@ goBack();
       
 	  switch ($event) {
 	    case 'shlangs' : break;
-		default           : confbar::event($event);
+		default           : //confbar::event($event);
 	  }
    }
    
@@ -182,10 +182,10 @@ goBack();
       
 	  switch ($action) {
 	    case 'shlangs' : $ret = null; break;
-		default           :if ($this->message)
+		default           ://if ($this->message)
 		                     $ret = $this->message;
-						   else	  
-		                     $ret = confbar::action($action);
+						   //else	  
+		                     //$ret = confbar::action($action);
 		                   // $ret .= "Languange change to <" . $this->selected_lan . ">";
 	  }
 	  

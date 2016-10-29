@@ -32,8 +32,7 @@ class cms extends fronthtmlpage {
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); //8 
 		
-		$this->tpath = $this->htmlpage; //remote_paramload('FRONTHTMLPAGE','path',$this->prpath);	
-		//$this->template = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);			
+		$this->tpath = $this->htmlpage; //fronthtmlpage			
 	}
 	
 	public function isDemoUser() {

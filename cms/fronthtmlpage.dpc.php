@@ -14,30 +14,22 @@ class fronthtmlpage {
 
 	var $t_fronthtmlpage;
 	var $userLevelID;
-    //var $themepath,$themeurl;
+
 	var $htmlfile, $htmlpage;
-	
-	//var $agent;
-	//var $runas;
-	
 	var $argument;
-	//var $debug;
 	
-	//var $forms,$arrays;
-	
-	//var $runasapp;
-	//var $data;
 	var $infolder, $urlpath, $url, $urltitle;
-	var $modify; //, $adminhtmlfile, $adminhtml,$admindpc,$admincmd,$adminview;
-	//var $allow_edit;
+	var $modify; 
+
 	var $charset;
 	var $verbose;
 	var $editmode_point;
-	//var $editdpc;
+
 	var $edithtml, $prpath;
 	var $dhtml, $htmlext;
 	
 	static $staticpath;
+	
 	var $BASE_URL, $MC_ROOT, $MC_TEMPLATE, $MC_DEBUG, $MC_CURRENT_PAGE;
 	var $language, $isolanguage;
 	
@@ -45,7 +37,7 @@ class fronthtmlpage {
 	var $template, $cptemplate;
 	var $preprocess;	
 	 
-	function __construct($file=null) { //,$runasuser=null,$runasapp=null) {	
+	function __construct($file=null) { 
 	    $GRX = GetGlobal('GRX');
         $UserSecID = GetGlobal('UserSecID');
 	    //$thema = GetGlobal('thema');
@@ -56,11 +48,6 @@ class fronthtmlpage {
 	    $this->t_fronthtmlpage->start('fronthtmlpage'); 						
 
         $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);  
-		//$this->agent = $__USERAGENT;  	
-		
-		//if (isset($runasuser)) $this->runas = $runasuser; //run fp as a diferent user (see newsletter)
-		//if (isset($runasapp)) $this->runasapp = $runasapp;
-		//echo $this->runasapp,'>';
 		
         $this->prpath = paramload('SHELL','prpath');		
 		
@@ -99,12 +86,7 @@ class fronthtmlpage {
 		}  
 		
 		//echo '>',$this->htmlfile;
-		/*$this->adminhtmlfile = $this->urlpath . $cphtmlpath . "/cpmframework.htm"; 
-		$this->adminhtml = $this->urlpath . $cphtmlpath . "/cpmhtmleditor.htm"; 
-		$this->admindpc = $this->urlpath . $cphtmlpath . "/cpmdpcedtitor.htm"; 
-		$this->admincmd = $this->urlpath . $cphtmlpath . "/cpmctrl.htm"; 						
-		$this->adminview = $this->urlpath . $cphtmlpath . "/cpmhtmlviewer.htm"; 
-		*/
+
 		$p = explode(".",$file);
 		//$this->argument = strtoupper($p[0]); //the name without ext		
 		//in case of dot(.) in name
@@ -113,13 +95,8 @@ class fronthtmlpage {
 		$pdotname = implode('.',$p);
 		$this->argument = strtoupper($pdotname); //the name with dots and without ext		
 		//echo $this->argument,'>';
-		//$this->debug = GetReq('debug')?GetReq('debug'):GetSessionParam('debug');//0;		
+	
 		$this->session_use_cookie = paramload('SHELL','sessionusecookie');	
-		
-		//embedded forms and/or arrays
-		//$this->forms = array();
-		//$this->arrays = array();
-		//$this->data = null;
 		
 		$this->modify = urldecode(base64_decode(GetReq('modify')))=='stereobit' ? true : false;
 
@@ -180,7 +157,10 @@ class fronthtmlpage {
 	
     function render($actiondata) { 	
 
-		$out = $this->action($actiondata);		  
+	    if ($this->modify) 
+			$out = $this->modify_page();
+ 
+        $out .= $this->process_html_file($actiondata, null, $this->modify);		  
 	  		   	 
 		//timer
 		$this->t_fronthtmlpage->stop('fronthtmlpage');
@@ -188,23 +168,7 @@ class fronthtmlpage {
 			//echo "fronthtmlpage " . $this->t_fronthtmlpage->value('fronthtmlpage');
 	  	  		  
 		return ($out);
-    }
-	
-	//dummy event
-    function event($event=null) {
-		echo 'e';
-        //switch($event)   {
-        //}
-    }		
-	
-	function action($actiondata) {
-
-	   if ($this->modify) 
-	     $out = $this->modify_page();
- 
-       $out .= $this->process_html_file($actiondata, null, $this->modify);	
-	   return ($out);
-	}
+    }	
 	
 	function process_html_file($data,$stage=null, $admin=null) {
 	  if ($admin) { 
@@ -219,65 +183,26 @@ class fronthtmlpage {
 	  }
 	  
 	  if (is_file($this->htmlfile)) {
-				
 		$htmdata = file_get_contents($this->htmlfile);
-		
-        $cssdata = $this->process_css($htmdata);
-        $jhtmdata = $this->process_javascript($cssdata, $pageout);		
-        /*$chunks_data = $this->process_chunks($data,$jhtmdata,$pageout);				
-
-		$ret = ($this->debug) ? str_replace("<?". $this->argument ."?>",$this->argument,$pageout):
-		                        str_replace("<?". $this->argument ."?>",$chunks_data,$pageout);*/
-		  
-		//recess app resources  
-		//if (isset($this->runasapp))  
-		  //$ret = str_replace("images/",$this->runasapp."/images/",$ret);
-		  
-		//::::update fpdata at pcntl to useit by advertisers,helpers etc  :::
-		//$this->data = _v('pcntl.fpdata',$ret); 
-		
+        //$cssdata = $this->process_css($htmdata);
+        $this->process_javascript($htmdata, $pageout);		
 		$ret = $this->process_commands($pageout);
 		
-		/*repeat replace argument after process commands which may include file with arg into*/
-		/*$ret = ($this->debug) ? str_replace("<?". $this->argument ."?>",$this->argument,$ret):*/
 		$ret = str_replace("<?". $this->argument ."?>",$data,$ret);
 		  		
 		if (!$this->session_use_cookie)
-		  $ret = $this->propagate_session($ret);
-		
-		//set title if title of page = #TITLE#
-		/*if ($pagetitle=GetReq('g')) {
-		  $maintitle = paramload('SHELL','urltitle');
-		  $ret = str_replace('#TITLE#',$maintitle.' > '.$pagetitle,$ret);
-		}*/  
+		  $ret = $this->propagate_session($ret); 
 	  }
 	  else {
-
 		global $_html;//standart name .... 
-		
 	    if ($_html) {
 		  $htmdata = $_html; 
-		  //////////////////////////////////////////////////////////BYPASS....?
-          //$cssdata = $this->process_css($htmdata);
-          //$jhtmdata = $this->process_javascript($cssdata);		
-          /*$chunks_data = $this->process_chunks($data,$htmdata,$pageout);				
-		  if (!$this->debug) 
-		    $ret = str_replace("<?_HTML?>",$chunks_data,$pageout);
-		  else
-		    $ret = str_replace("<?_HTML?>",$this->argument,$pageout);*/
-		  
 		  $this->process_javascript($cssdata, $pageout);
-
-		  $ret = $this->process_commands($pageout);//ret);	
+		  
+		  $ret = $this->process_commands($pageout);	
 		  
 		  if (!$this->session_use_cookie)
-		    $ret = $this->propagate_session($ret);	
-			
-		  //set title if title of page = #TITLE#
-		  /*if ($pagetitle=GetReq('g')) {
-		    $maintitle = paramload('SHELL','urltitle');
-		    $ret = str_replace('#TITLE#',$maintitle.' > '.$pagetitle,$ret);
-		  }*/  			
+		    $ret = $this->propagate_session($ret);			
 		}
 		else {
 		  if (!GetReq('editmode'))
@@ -290,114 +215,7 @@ class fronthtmlpage {
 		
 	  return ($ret);	
 	}	
-	
-/*
-	//handle chains of data in action ret such as text<@PHPCHUNK>seialized_array<@...
-	function process_chunks($actiondata=null,$htmldata,&$pageout) {
-	
-	  $pageout = $htmldata; //default as is
-	  if (!$actiondata) return null; //fast return
-	  
-	  //find array elements
-	  $pattern = "@<phpdacarray.*?>(.*?)</phpdacarray>@";
-	  preg_match_all($pattern,$htmldata,$matches);
-	  $_arrays = $matches[0];
-	  $_arrays_id = 0;	  
-	  
-	  //find form elements
-	  $pattern = "@<phpdacform.*?>(.*?)</phpdacform>@";
-	  preg_match_all($pattern,$htmldata,$matches);
-	  $_forms = $matches[1];	
-	  $_forms_id = 0;  
-	  	
-      $chunks = explode('<@PHPCHUNK>',$actiondata);
-	  //print_r($chunks);	
-	  foreach ($chunks as $cid=>$cdata) {
-	    
-		$udata = unserialize($cdata);
-	    if (is_array($udata)) {//array element or form element
-		  
-		  if (stristr(key($udata),'form')) {//is form element
-			$result = $this->process_form($udata,$_forms[$_forms_id]);//get modified form
-            $pageout = str_replace($_forms[$_forms_id],$result,$pageout);//replace prototype
-		    $_forms_id+=1;//inc forms pointer				
-		  }
-		  else { //is array element
-		    $ret .= $this->process_array($udata,$_arrays[$_arrays_id]);//build array based at proto
-		    $pageout = str_replace($_arrays[$_arrays_id],'',$pageout);//remove proto(html) array		  
-		    $_arrays_id+=1;//inc arrays pointer	
-		   
-		    //clean unused param of type %n
-		    for ($i=0;$i<10;$i++)
-		      $ret = str_replace('%'.$i,'&nbsp;',$ret);
-		  }	  
-		}
-		else //text
-		  $ret .= $cdata;	  
-	  }
-	  
-	  return ($ret);		  
-	}
-	
-	function process_array($action_array,$html_array) {
-	
-	  $udata = $action_array;
-		
-	  if (is_array($udata)) {
 
-		  foreach ($udata as $i=>$line) {
-		    $content = $html_array;
-		    foreach ($line as $j=>$column) {
-			  $ret = str_replace('%'.($j+1),$column,$content); 
-			  $content = $ret;
-			}
-			$arraydata .= $ret;
-		  }
-	  }	
-	  
-	  return ($arraydata);	
-	}	
-	
-	function process_form($action_array,$html_form) {
-	
-	  $udata = $action_array['form'];
-	
-	  if (is_array($udata)) {
-	    //find form name's field value
-	    $pattern = "@name=.*?\"(.*?)\"@";
-	    preg_match_all($pattern,$html_form,$matches);
-	    $names = $matches[1];
-	  
-	    //find form value's field value
-	    $pattern = "@value=.*?\"(.*?)\"@";
-	    preg_match_all($pattern,$html_form,$matches);
-	    $values = $matches[1];	
-		//$values_exp = $matches[1]; 	  	
-		
-		$max = count($names)-1; //echo $max-1;//BEWARE OR NULL VALUES..REPLACE MORE THAN ONE NULL
-		$n = 0;
-		for ($i=0;$i<$max;$i++) {
-		  //replace names
-		  $html_form = str_replace("\"".$names[$i]."\"","\"".$udata[$n]."\"",$html_form);
-		  $n+=1;		  
-		  //replace values
-		  $html_form = str_replace("\"".$values[$i]."\"","\"".$udata[$n]."\"",$html_form);
-		  $n+=1;		  
-		}		
-		
-	    //find form action's field value
-	    $pattern = "@action=.*?(.*?) @";
-	    preg_match($pattern,$html_form,$matches);
-	    $get = $matches[1];	//echo $get;//print_r($get);		
-
-		if (isset($action_array['action']))
-		  $html_form = str_replace($get,$action_array['action'],$html_form);
-	  }	
-
-	  $formdata = $html_form;
-	  return ($formdata);		  
-	}
-*/	
 	function process_commands($data,$is_serialized=null) {
 	
 	  if ($is_serialized) 
@@ -432,7 +250,7 @@ class fronthtmlpage {
 	  
 	  //return ($data);  	//as is
 	}
-	
+	/*
 	function process_css($data) {
 	  $path = paramload('SHELL','prpath') . $this->htmlpage;	   
 	  $enccss = $path . '/style.css';	  
@@ -446,7 +264,7 @@ class fronthtmlpage {
 	  
 	  return ($ret);
 	}
-	
+	*/
 	function propagate_session($data,$ext='.php') {
 	
 	  $ret = str_replace($ext.'?',$ext."?".SID."&",$data);//.php with args	
@@ -454,120 +272,7 @@ class fronthtmlpage {
 	  
 	  return ($ret2);
 	}
-/*	
-	function get_xml_links($mylan=null,$feed_id=null) {
-	  $lan = $mylan?$mylan:getlocal();//by hand per htm 0,1 page
-	  $lnk = array();
-	  
-      if ($id = GetReq('id'))
-	    $feed_id = $id .'.xml';	  
-	  elseif ($cat = GetReq('cat'))
-	    $feed_id = $cat .'.xml';
-			
-	  $feed_file = $feed_id ? $feed_id : 'feed.xml';
-	  $upath = $this->infolder ? $this->urlpath.'/'.$this->infolder : $this->urlpath;
-	  
-      //RSS	
-	  if (($lan) && (is_readable($upath."/rss/$lan/".$feed_file))) {
-	    $lnk['RSS'] = "/rss/$lan/".$feed_file;	  
-	  }
-	  elseif (is_readable($upath."/rss/".$feed_file)) {
-	    $lnk['RSS'] = '/rss/'.$feed_file;
-	  }
 
-	  //ATOM
-	  if (($lan) && (is_readable($upath."/atom/$lan/".$feed_file))) {
-	    $lnk['ATOM'] = "/atom/$lan/".$feed_file;	  
-	  }	  
-	  elseif (is_readable($upath.'/atom/'.$feed_file)) {
-	    $lnk['ATOM'] = '/atom/'.$feed_file;
-	  }
-
-	  if (is_array($lnk)) {
-	    foreach ($lnk as $t=>$w) {    
-		  if ($w) {
-		    $icon_file = $this->urlpath.'/'.$this->infolder.'/images/'.strtolower($t).'.png';
-		    if (is_readable($icon_file))
-			  $mylink = "<img src=\"". $this->infolder.'/images/'.strtolower($t).'.png' ."\" border=\"0\" alt=\"$t\">";
-			else
-			  $mylink = $t;
-			  
-	        $ret .= "<A href=\"$w\">".$mylink."</A>&nbsp;";
-		  }	
-	    }
-	  }
-	  
-	  return $ret;  
-	}
-	
-	function get_seo_links($mylan=null) {
-	  $lan = $mylan?$mylan:getlocal();//auto languange
-	
-	  //xml seo links
-	  if (is_readable($this->urlpath."/seo/feed$lan.xml")) {
-	    $file = $this->urlpath."/seo/feed$lan.xml";
-	    //read xml and ret the links
-	    $ret = null;		
-	  }
-	  elseif (is_readable($this->urlpath.'/'.$this->infolder."/seo/feed$lan.xml")) {
-	    $file = $this->urlpath.'/'.$this->infolder."/seo/feed$lan.xml";
-	    //read xml and ret the links
-	    $ret = null;		
-	  }//txt seo links (plain html)
-	  elseif (is_readable($this->urlpath."/seolinks$lan.txt")) {
-	    $file = $this->urlpath."/seolinks$lan.txt";
-	    $ret = file_get_contents($file);		
-	  }	  
-	  elseif (is_readable($this->urlpath.'/'.$this->infolder."/seolinks$lan.txt")) {
-	    $file = $this->urlpath.'/'.$this->infolder."/seolinks$lan.txt";
-	    $ret = file_get_contents($file);		
-	  }	  
-
-	  
-	  return $ret;  
-	}	
-	
-	function get_file_contents($myfile,$type=null,$mylan=null) {
-	  $lan = $mylan?$mylan:getlocal();
-	
-	  switch ($type) {
-	  case 'xml'  :
-	              if (is_readable($this->urlpath."/$myfile")) {
-	                $file = $this->urlpath."/$myfile";
-	                //read xml and ret the links
-	                $ret = null;		
-	              }
-	              break;
-	  case  'txt':
-	  case  'htm':
-	  case 'html':
-	  default    :
-	             if (is_readable($this->urlpath."/$myfile")) {
-	               $file = $this->urlpath."/$myfile";
-	               $ret = file_get_contents($file);		
-	             }	    
-      }
-	  
-	  return $ret;  
-	}
-	
-	function getencoding() {
-
-	  return ($this->charset);
-	}		
-	
-	function get_stereobit_link() {
-		$icon_file = $this->urlpath.'/'.$this->infolder.'/images/stereobit.png';
-				
-	    if (is_readable($icon_file))
-		  $mylink = "<img src=\"". $this->infolder.'/images/stereobit.png' ."\" border=\"0\" alt=\"stereobit.networlds\">";
-		else
-		  $mylink = 'stereobit.networlds';	
-	    $ret .= "<A href=\"http://www.stereobit.com\">$mylink</A>";	  
-		
-		return ($ret);
-	}
-*/	
 	function get_copyright($fromyear=null) {
 	    $is_cropwiz = (GetSessionParam('LOGIN')=='yes') ? $this->app_crop_wizard() : null;
 		$url = paramload('SHELL','urlbase');

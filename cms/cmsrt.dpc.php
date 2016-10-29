@@ -79,11 +79,15 @@ class cmsrt extends cms  {
 		$this->lan_set = arrayload('SHELL','languages');
 		$m = remote_paramload('SHLANGS','message',$this->path);	
 		//$ff = $this->path.$m;
-		$this->message = $m; //(is_file($ff)) ? file_get_contents($ff) :  $m; //plain text			
+		$this->message = $m; //(is_file($ff)) ? file_get_contents($ff) :  $m; //plain text	
+
+		$this->google_js();//always	
 	}
 	
-	public function event($event=null) { echo 'e';
+	public function event($event=null) {
 	    $param1 = GetGlobal('param1');	
+		
+		$this->refresh_page_js();
 		
 		switch ($event) {
 			case "lang"  		: $this->selected_lan = GetParam("langsel"); break;
@@ -92,7 +96,7 @@ class cmsrt extends cms  {
 		}
 	}
 	
-	public function action($action=null) { echo 'a';
+	public function action($action=null) { 
 		switch ($action) {
 			case "lang"         : setlocal($this->selected_lan);
 		                          $out = $this->lan_set[$this->selected_lan]; 
@@ -100,7 +104,107 @@ class cmsrt extends cms  {
 			case "setlanguage"  : //echo "Current language:",$this->lan_set[$this->selected_lan],"\n";  						
 			default 		 	:
 		}
-	}	
+		
+		return ($out);
+	}
+
+    protected function refresh_page_js() {
+   
+		if (iniload('JAVASCRIPT')) {
+
+			$code = $this->javascript();
+	   
+			$js = new jscript;
+			$js->load_js($code,"",1);			   
+			unset ($js);
+		}   
+    } 	
+	
+    //refresh to set lang
+    function javascript() {
+   
+		$ret = " 
+function neu()
+{	
+	top.frames.location.href = \"index.php\";
+}
+//window.setTimeout(\"neu()\",10);
+function goBack()
+{
+  window.history.back()
+}
+goBack();
+";	 
+		return ($ret);
+    }	
+   
+    protected function google_js() {
+   
+		$lan = getlocal();
+		if ((iniload('JAVASCRIPT')) && (($this->googletrans) || ($this->mixglans[$lan]))) {
+	  
+			$code = $this->js_google_translate();
+	   
+			$js = new jscript;
+			$js->load_js($code,"",1);			   
+			unset ($js);
+		}   
+    }   
+
+   function js_google_translate() {
+     
+	 //select source lang
+	 $activelan = getlocal();
+	 switch ($activelan) {
+	   case 2 :  $lang_pair = 'de|de'; break; //german
+	   case 1 :  $lang_pair = 'el|el'; break; //greek	   
+   	   case 0 :  
+	   default : $lang_pair = 'en|en'; break; //english..default
+     }
+	 
+     //in case of edit...no frame deletion 
+	 if (defined('__EDITMODE')==false)
+	 if ((!defined('__EDITMODE')) || (!GetReq('editmode')) || (GetReq('editmode')<0))	 
+       $ret = "
+    //<![CDATA[
+    if(top.location!=self.location)top.location=self.location;
+	 ";
+   
+   
+     $ret .= "
+    function doTranslate(lang_pair) {
+	  if(lang_pair.value)
+	    lang_pair=lang_pair.value;
+	  if(location.hostname=='".$this->url."' && lang_pair=='".$lang_pair."')
+	    return;
+	  else 
+	  if(location.hostname!='".$this->url."' && lang_pair=='".$lang_pair."')
+	    location.href=unescape(gfg('u'));
+	  else 
+	  if(location.hostname=='".$this->url."' && lang_pair!='".$lang_pair."')
+	    location.href='http://translate.google.com/translate?client=tmpg&hl=en&langpair='+lang_pair+'&u='+escape(location.href);
+	  else 
+	    location.href='http://translate.google.com/translate?client=tmpg&hl=en&langpair='+lang_pair+'&u='+unescape(gfg('u'));
+	}
+	
+    function gfg(name) {
+	  name=name.replace(/[\[]/,\"\\\[\").replace(/[\]]/,\"\\\]\");
+	
+	  var regexS=\"[\\?&]\"+name+\"=([^&#]*)\";
+	  var regex=new RegExp(regexS);
+	  var results=regex.exec(location.href);
+	  
+	  if(results==null)
+	    return '';
+		
+	  return results[1];
+	}
+";
+	 
+	 return ($ret);   
+   }
+
+   
 	
 	public function renderTemplate($id=null, $items=null, $fsave=null) {
 		$db = GetGlobal('db');		
