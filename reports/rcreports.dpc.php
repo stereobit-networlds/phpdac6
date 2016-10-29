@@ -337,11 +337,12 @@ class rcreports  {
 			$_fields = explode(',',$fields);
 			foreach ($_fields as $i=>$f) {
 				switch ($f) {
-					case 'id' : $length = 2; break;
-					default   : $length = 5;
+					//case 'email' : $attr = "link|5|"."cpcrmtrace.php?t=cpcrmprofile&v={email}|"; break; //iframe
+					case 'id'    : $attr = "2|0|"; break;
+					default      : $attr = "5|0|";
 				}
 				//echo $f . $length . '<br/>';
-				_m("mygrid.column use grid1+$f|".localize($f,getlocal())."|$length|0|");		
+				_m("mygrid.column use grid1+$f|".localize($f,getlocal())."|".$attr);		
 			}	
 		}
 		
