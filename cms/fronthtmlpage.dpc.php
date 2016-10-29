@@ -26,7 +26,7 @@ class fronthtmlpage {
 	var $editmode_point;
 
 	var $edithtml, $prpath;
-	var $dhtml, $htmlext;
+	var $htmlext;
 	
 	static $staticpath;
 	
@@ -37,12 +37,9 @@ class fronthtmlpage {
 	var $template, $cptemplate;
 	var $preprocess;	
 	 
-	function __construct($file=null) { 
+	public function __construct($file=null) { 
 	    $GRX = GetGlobal('GRX');
-        $UserSecID = GetGlobal('UserSecID');
-	    //$thema = GetGlobal('thema');
-	    //$theme = GetGlobal('theme');	
-	    //$__USERAGENT = GetGlobal('__USERAGENT');				
+        $UserSecID = GetGlobal('UserSecID');			
 	 
 	    $this->t_fronthtmlpage = new ktimer;
 	    $this->t_fronthtmlpage->start('fronthtmlpage'); 						
@@ -107,20 +104,15 @@ class fronthtmlpage {
 		  $this->charset = 'utf-8';
 		else  
 	      $this->charset = $char_set[getlocal()]; 	  				
-		  
-		//$this->allow_edit = remote_paramload('FRONTHTMLPAGE','alloweditpage',$this->prpath);  
+		    
 		$this->verbose = remote_paramload('FRONTHTMLPAGE','verbose',$this->prpath); 
 		
         if ($GRX)    
          $this->editmode_point  = loadTheme('editmode','');
 	    else
 	  	 $this->editmode_point  = '[Edit Mode]';
-
-        //$this->editdpc = remote_paramload('FRONTHTMLPAGE','editdpc',$this->prpath); 		 
+		 
 		$this->edithtml = remote_paramload('FRONTHTMLPAGE','edithtml',$this->prpath); 
-		
-	    //dynamic html loader
-	    $this->dhtml = remote_paramload('FRONTHTMLPAGE','dhtml',$this->prpath); 
 		
 		$htmlfile_extension = remote_paramload('FRONTHTMLPAGE','htmlext',$this->prpath);
         $this->htmlext = $htmlfile_extension ? $htmlfile_extension : '.htm'; 		
@@ -155,125 +147,99 @@ class fronthtmlpage {
 		$this->javascript();	
 	}	
 	
-    function render($actiondata) { 	
+    public function render($actiondata) { 	
 
 	    if ($this->modify) 
 			$out = $this->modify_page();
  
-        $out .= $this->process_html_file($actiondata, null, $this->modify);		  
+        $out .= $this->process_html_file($actiondata, $this->modify);		  
 	  		   	 
 		//timer
 		$this->t_fronthtmlpage->stop('fronthtmlpage');
-		//if (seclevel('_TIMERS',$this->userLevelID))
-			//echo "fronthtmlpage " . $this->t_fronthtmlpage->value('fronthtmlpage');
 	  	  		  
 		return ($out);
     }	
 	
-	function process_html_file($data,$stage=null, $admin=null) {
-	  if ($admin) { 
-	    if ($this->anel) 
-		    $htmldata = $this->anel_panel(); //anel angular js
-		elseif ($this->cptemplate)
-			$htmldata = $this->cpanel_iframe();
-		else
-			$htmldata = 'cptemplate missing';	
+	protected function process_html_file($data, $admin=null) {
+		if ($admin) { 
+			if ($this->anel) 
+				$htmldata = $this->anel_panel(); //anel angular js
+			elseif ($this->cptemplate)
+				$htmldata = $this->cpanel_iframe();
+			else
+				$htmldata = 'cptemplate missing';	
 
-	    return ($htmldata);
-	  }
+			return ($htmldata);
+		}
 	  
-	  if (is_file($this->htmlfile)) {
-		$htmdata = file_get_contents($this->htmlfile);
-        //$cssdata = $this->process_css($htmdata);
-        $this->process_javascript($htmdata, $pageout);		
-		$ret = $this->process_commands($pageout);
-		
-		$ret = str_replace("<?". $this->argument ."?>",$data,$ret);
+		if (is_file($this->htmlfile)) {
+			$htmdata = file_get_contents($this->htmlfile);
+			$this->process_javascript($htmdata, $pageout);		
+			$ret = $this->process_commands($pageout);
+			$ret = str_replace("<?". $this->argument ."?>",$data,$ret);
 		  		
-		if (!$this->session_use_cookie)
-		  $ret = $this->propagate_session($ret); 
-	  }
-	  else {
-		global $_html;//standart name .... 
-	    if ($_html) {
-		  $htmdata = $_html; 
-		  $this->process_javascript($cssdata, $pageout);
-		  
-		  $ret = $this->process_commands($pageout);	
-		  
-		  if (!$this->session_use_cookie)
-		    $ret = $this->propagate_session($ret);			
+			if (!$this->session_use_cookie)
+				$ret = $this->propagate_session($ret); 
 		}
 		else {
-		  if (!GetReq('editmode'))
-		    $admlink = $this->get_admin_link();
+			global $_html;//standart name .... 
+			if ($_html) {
+				$this->process_javascript($_html, $pageout);
+				$ret = $this->process_commands($pageout);	
+		  
+				if (!$this->session_use_cookie)
+					$ret = $this->propagate_session($ret);			
+			}
+			else {
+				//if (!GetReq('editmode'))
+					//$admlink = $this->get_admin_link();
 
-		  $hfile = $this->htmlfile ? $this->htmlfile : 'none';	
-	      $ret = "Unknown html file (".$hfile.") or argument.\n" . $admlink;
-		}  
-	  }	
+				$hfile = $this->htmlfile ? $this->htmlfile : 'none';	
+				$ret = "Unknown html file (".$hfile.") or argument.\n" . $admlink;
+			}  
+		}	
 		
-	  return ($ret);	
+		return ($ret);	
 	}	
 
-	function process_commands($data,$is_serialized=null) {
+	public function process_commands($data,$is_serialized=null) {
 	
-	  if ($is_serialized) 
-	    $data = unserialize($data);
+		if ($is_serialized) 
+			$data = unserialize($data);
 	  
-	  $pattern = "@<phpdac.*?>(.*?)</phpdac>@";
-	  preg_match_all($pattern,$data,$matches);
+		$pattern = "@<phpdac.*?>(.*?)</phpdac>@";
+		preg_match_all($pattern,$data,$matches);
 	  
-      foreach ($matches[1] as $r=>$cmd) {
-		//if (!$this->debug) {
-	      $ret = _m($cmd); //,1); //no error stop 					 
-		  $data = str_replace("<phpdac>".$cmd."</phpdac>",$ret,$data);
-		//}
-	  }
+		foreach ($matches[1] as $r=>$cmd) {
+			$ret = _m($cmd); //,1); //no error stop 					 
+			$data = str_replace("<phpdac>".$cmd."</phpdac>",$ret,$data);
+		}
 	  
-	  return ($data);//as is
+		return ($data);//as is
 	}
 	
-	function process_javascript($data, &$pageout) {
+	protected function process_javascript($data, &$pageout) {
 	
-	  //call javascript 
-      if (defined('JAVASCRIPT_DPC')) {		  
+		//call javascript 
+		if (defined('JAVASCRIPT_DPC')) {		  
 
-		 _m('javascript.onLoad');
-		 $jret = _m('javascript.callJavaS');
-	
-		 if ($jret) 
-		   $pageout = str_replace("</body>", $jret . "</body>", $data); //body jqgrid problem 
-		 
-		 //return ($ret);
-	  }	
-	  
-	  //return ($data);  	//as is
-	}
-	/*
-	function process_css($data) {
-	  $path = paramload('SHELL','prpath') . $this->htmlpage;	   
-	  $enccss = $path . '/style.css';	  
-	  $cssdata = @file_get_contents($enccss);
-	  if ($cssdata) {
-	    $translated_css = "<style type='text/css'>" . $cssdata . "</style>";
-	    $ret = str_ireplace('</head>',$translated_css.'</head>',$data);	
-	  }
-	  else
-	    $ret = $data; //as is	
-	  
-	  return ($ret);
-	}
-	*/
-	function propagate_session($data,$ext='.php') {
-	
-	  $ret = str_replace($ext.'?',$ext."?".SID."&",$data);//.php with args	
-	  $ret2 = str_replace($ext.'"',$ext."?".SID.'"',$ret);//.php without args
-	  
-	  return ($ret2);
+			_m('javascript.onLoad');
+			$jret = _m('javascript.callJavaS');
+			//echo $jret;
+			if ($jret) 
+				$pageout = str_replace("</body>", $jret . "</body>", $data); //body jqgrid problem 
+		}	
 	}
 
-	function get_copyright($fromyear=null) {
+	protected function propagate_session($data,$ext='.php') {
+	
+		$ret = str_replace($ext.'?',$ext."?".SID."&",$data);//.php with args	
+		$ret2 = str_replace($ext.'"',$ext."?".SID.'"',$ret);//.php without args
+	  
+		return ($ret2);
+	}
+
+	public function get_copyright($fromyear=null) {
 	    $is_cropwiz = (GetSessionParam('LOGIN')=='yes') ? $this->app_crop_wizard() : null;
 		$url = paramload('SHELL','urlbase');
 	    $t = '<a href="'.$url.'">'.remote_paramload('INDEX','title',$this->prpath).'</a>';
@@ -287,7 +253,7 @@ class fronthtmlpage {
 		return ($ret);	
 	}
 
-	function get_admin_link() {	
+	public function get_admin_link() {	
 
 		if (is_array($_GET)) {
 		  foreach ($_GET as $i=>$t) {
@@ -312,12 +278,12 @@ class fronthtmlpage {
 		return ($ret);
 	}
 	
-	function modify_page() {
+	protected function modify_page() {
 	    //echo 'modify';
 	}
 	
 	//demo admin
-	function get_admin_demo_link($editmode_point=null) {
+	public function get_admin_demo_link($editmode_point=null) {
 
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
@@ -346,7 +312,7 @@ class fronthtmlpage {
 		return ($ret);
 	}	
 
-	function anel_panel($query=null) {
+	protected function anel_panel($query=null) {
 	    $encoding = $this->charset;
 		$is_oversized = $this->app_is_oversized();
 		$is_cpwizard = $this->app_cp_wizard();
@@ -390,7 +356,7 @@ EOF;
 	}
 
 	//cpanel template iframe win
-    function cpanel_iframe($query=null) {
+    protected function cpanel_iframe($query=null) {
 	    $encoding = $this->charset;
 		$is_oversized = $this->app_is_oversized();
 		$is_cpwizard = $this->app_cp_wizard();
@@ -477,7 +443,7 @@ EOF;
 	}	
 	
 	
-	function app_cp_wizard() {
+	protected function app_cp_wizard() {
 	    $wizfile = $this->prpath . 'cpwizard.ini';
 		
 	    if (is_readable($wizfile)) { 
@@ -488,7 +454,7 @@ EOF;
 		return false;
 	}
 	
-	function app_crop_wizard() {
+	protected function app_crop_wizard() {
 	    $cropfile = $this->prpath . 'crop.ini';
 		
 	    if ((is_readable($cropfile)) || (GetReq('cropwiz'))) { 
@@ -499,7 +465,7 @@ EOF;
 		return false;
 	}	
 
-    function get_app_size() {
+    protected function get_app_size() {
   
 		$tsize = $this->cached_disk_size();
         $dsize = $this->cached_database_filesize();	
@@ -508,7 +474,7 @@ EOF;
 		return ($total_size);
     }
 
-    function app_is_oversized() {
+    protected function app_is_oversized() {
   
         $allowed_size = is_readable($this->prpath .'/maxsize.conf.php') ?
 	                    intval(@file_get_contents($this->prpath .'/maxsize.conf.php')) : 0;
@@ -528,7 +494,7 @@ EOF;
     }  
  
  
-    function filesize_r($path){
+    protected function filesize_r($path){
 		if (!file_exists($path)) return 0;
 		
 	    if (is_file($path)) return filesize($path);
@@ -543,7 +509,7 @@ EOF;
 		return $ret;
     } 
   
-    function cached_disk_size($path=null) {
+    protected function cached_disk_size($path=null) {
 		$path = $path ? $path : $this->urlpath; 
 		$name = 'a';//strval(date('Ymd'));
 		$tsize = $this->prpath . $name . '-tsize.size';
@@ -562,7 +528,7 @@ EOF;
 		return ($size);
     }
   
-    function cached_database_filesize() {
+    protected function cached_database_filesize() {
 		$db = GetGlobal('db'); 
 		$size = 0;
 	
@@ -633,7 +599,7 @@ EOF;
 		return ($ret);
 	}
   
-    function is_tokens_var($var) {
+    public function is_tokens_var($var) {
   
 		if (stristr($var,'<TOKENS>'))
 		return true;
@@ -641,7 +607,7 @@ EOF;
 		return false;	  
     } 
   
-    function subpage($tmpl,$dpc2call,$dmarks=null,$extra_attr=null,$verbose=null) {
+    public function subpage($tmpl,$dpc2call,$dmarks=null,$extra_attr=null,$verbose=null) {
          $dm = $dmarks?$dmarks:null;
 		 $verb = $this->verbose ? $this->verbose : $verbose;
          
