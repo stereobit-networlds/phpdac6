@@ -53,8 +53,7 @@ class rcreports  {
 	   if ($login!='yes') return null;		 
 	
 	   switch ($event) {
-		 case 'cprepcrm'     : /*crm report call*/
-							   break; 		   
+		 case 'cprepcrm'     : break; 		   
 		   
 		 case 'cprepcodesave': $this->save_report_code();	
 		                       break;  		   
@@ -79,7 +78,7 @@ class rcreports  {
 	 
 	  switch ($action) {
 		 case 'cprepcrm'      : /*crm report call*/
-								$out = $this->results_grid(null,250,10,'r', true); 
+								$out = $this->crm_results_grid(null,250,10,'r', true); 
 								//$out .= $this->codeform();
 								$out .= $this->show_code_results();
 		                        break;	
@@ -126,7 +125,7 @@ class rcreports  {
 		$title = localize('RCREPORTS_DPC',getlocal()); 
 
         $myfields = "id,timein,title,description,rgroup,scode";  		
-
+		
 		$xsSQL = 'select * from (select '.$myfields . ' from reports) as o';
 		  
 		_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
@@ -155,10 +154,7 @@ class rcreports  {
 	}			
 	
 	
-    protected function results_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
-		$id = GetParam('id');
-		if ($_POST['id']) return; //null when post code = execute
-		
+    protected function results_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {		
 	    $height = $height ? $height : 440;
         $rows = $rows ? $rows : 18;
         $width = $width ? $width : null; //wide
@@ -166,16 +162,27 @@ class rcreports  {
 		$noctrl = $noctrl ? 0 : 1;					
         $lan = getlocal() ? getlocal() : 0;
 		$title = localize('_results', $lan);	
-
-		list($xsSQL, $fields, $table) = $this->load_report_sql($id); //"select * from (select id,startTimestamp,endTimestamp,code,concurrent,implementationId,results,pid from cronjob where crontabId=$id order by id desc) as o";
-        //echo $xsSQL;
 		
-		foreach ($fields as $i=>$f)
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$f|".localize($f,getlocal()).'|5|0|');		
+		$id = GetParam('id');
+		if ($_POST['id']) return; //null when post code = execute		
 
-		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+$table+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");//+0+1+1");
+		list($xsSQL, $fields, $table) = $this->load_report_sql($id); 
+		
+		if ($fields) { //not necessery except if set column attributes
+			$_fields = explode(',',$fields);
+			foreach ($_fields as $i=>$f) {
+				switch ($f) {
+					case 'id' : $length = 2; break;
+					default   : $length = 5;
+				}
+				//echo $f . $length . '<br/>';
+				_m("mygrid.column use grid1+$f|".localize($f,getlocal())."|$length|0|");		
+			}	
+		}
+		
+		$out .= _m("mygrid.grid use grid1+$table+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");//+0+1+1");
+		
 	    return ($out);
-	
     }		
 	
 	
@@ -222,7 +229,9 @@ class rcreports  {
 	protected function load_report_sql($id) {
 		$db = GetGlobal('db'); 
 		if (!$id) return;
+		
 		$sql = "select scode from reports where id=".$id;
+		//echo $sql;
 		$result = $db->Execute($sql);
 		
 		if ($mysql = $result->fields['scode']) {
@@ -253,12 +262,12 @@ class rcreports  {
 	}		
 	
 	
-	protected function show_code_results() {
+	protected function show_code_results($rid=null, $silence=false) {
 		$db = GetGlobal('db'); 
-		$id = GetParam('id');
-		$postedCode = GetParam('repcode');	
+		$id = $rid ? $rid : GetParam('id');
 		if (!$id) return;
 		
+		$postedCode = GetParam('repcode');	
 		$retline = array();
 		$header = '<h2>' . localize('_results',getlocal()) . '</h2>';
 		$footer = '<hr/>';
@@ -286,16 +295,84 @@ class rcreports  {
 						$retline[] = $codex;
 				}
 				
-				$ret = $header . implode('<br/>',$retline) . $footer .  $mysql;
+				$ret = $silence ? null : $header . implode('<br/>',$retline) . $footer .  $mysql;
 				return ($ret);
 			}
 		}
 		return false;
 	}
 	
+    protected function crm_results_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 440;
+        $rows = $rows ? $rows : 18;
+        $width = $width ? $width : null; //wide
+        $mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;					
+        $lan = getlocal() ? getlocal() : 0;
+		$title = localize('_results', $lan);			
+		
+		$id = GetParam('id'); //as come from crm click
+		if (strstr($id,'~')) {
+			$parts = explode('~', $id);
+			$_id = $parts[0];
+			$email = $parts[1]; //crm id
+			$where = " email='$email'";
+		}
+		else {
+			$_id = $id;
+			$where = null;
+		}	
+
+		list($xsSQL, $fields, $table) = $this->load_report_sql($_id); 
+		
+		if ($where) 
+			//$xsSQL .= strstr($xsSQL,' where ') ? ' and ' . $where : ' where ' . $where; //group by issue
+			if (strstr($xsSQL,' where ')) 
+				$xsSQL  = str_replace(' where ', ' where '.$where.' and ',$xsSQL); 
+			else
+				$xsSQL .= ' where ' . $where;
+        //echo $xsSQL;
+		
+		if ($fields) { //not necessery except if set column attributes
+			$_fields = explode(',',$fields);
+			foreach ($_fields as $i=>$f) {
+				switch ($f) {
+					case 'id' : $length = 2; break;
+					default   : $length = 5;
+				}
+				//echo $f . $length . '<br/>';
+				_m("mygrid.column use grid1+$f|".localize($f,getlocal())."|$length|0|");		
+			}	
+		}
+		
+		$out .= _m("mygrid.grid use grid1+$table+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");//+0+1+1");
+		
+	    return ($out);
+    }	
+	
+	protected function getIdFromName($name) {
+		$db = GetGlobal('db'); 		
+		$sSQL = 'select id from reports where title='.$db->qstr($name);
+		$res = $db->Execute($sSQL);
+		
+		return ($res->fields[0]);
+	}
+	
 	public function test($name=null) {
 		return $name;
-	}	
+	}		
+	
+	public function execute_report($name=null) {
+		$db = GetGlobal('db'); 		
+		if (!$name) return false;
+		
+		$id = $this->getIdFromName($name);
+		//list($xsSQL, $fields, $table) = $this->load_report_sql($id); 
+		//$res = $db->Execute($xsSQL);
+		$ret = $this->show_code_results($id, true);
+		
+		return true;
+	}
 	
 };
 }

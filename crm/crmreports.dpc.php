@@ -42,7 +42,7 @@ class crmreports extends crmmodule  {
 
 			_m("mygrid.column use grid1+id|".localize('_ID',getlocal())."|2|0");	
 			_m("mygrid.column use grid1+timein|".localize('_DATE',getlocal())."|2|0|");			
-			_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|5|javascript:showdetails({id});".'||'); 
+			_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|5|javascript:showdetails(\"{id}~$selected\");".'||'); 
 			_m("mygrid.column use grid1+description|".localize('_description',getlocal())."|10|0|");
 			_m("mygrid.column use grid1+rgroup|".localize('_TYPE',getlocal()).'|5|0');		
 			//_m("mygrid.column use grid1+scode|".localize('_code',getlocal()).'|20|0');			
