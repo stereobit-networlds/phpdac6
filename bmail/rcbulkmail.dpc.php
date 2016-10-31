@@ -938,7 +938,7 @@ EOF;
 		
 		$sSQL = 'select id from mailcamp where cid=' . $db->qstr($cid) . ' and owner=' . $db->qstr($this->owner);
 		$res = $db->Execute($sSQL,2);
-
+        //echo ($res->fields[0]>0) ? '-owner' : null;
 		return ($res->fields[0] ? true : false);
 	}	
 	
@@ -949,7 +949,7 @@ EOF;
 		
 		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=1';
 		$res = $db->Execute($sSQL,2);
-
+        //echo ($res->fields[0]>0) ? '-active' : null;
 		return ($res->fields[0]>0 ? $res->fields[0] : false);
 	}
 	
@@ -960,7 +960,7 @@ EOF;
 		
 		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=-8';
 		$res = $db->Execute($sSQL,2);
-
+        //echo ($res->fields[0]>0) ? '-paused' : null;
 		return ($res->fields[0]>0 ? $res->fields[0] : false);		
 	}
 	
@@ -971,7 +971,7 @@ EOF;
 
 		$sSQL = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=-9';
 		$res = $db->Execute($sSQL,2);
-
+        //echo ($res->fields[0]>0) ? '-stopped' : null;
 		return ($res->fields[0]>0 ? $res->fields[0] : false);		
 	}
 	
@@ -987,8 +987,8 @@ EOF;
 			
 			$sSQL2 = 'select count(id) from mailqueue where cid=' . $db->qstr($cid) . ' and active=1';
 			$res2 = $db->Execute($sSQL2,2);				
-			
-			return ($res->fields[0] ? false : true);
+			//echo ($res2->fields[0]>0) ? '-completed' : null;
+			return ($res2->fields[0] ? false : true);
 		}
 				
 		return false;
@@ -1164,13 +1164,13 @@ EOF;
 			$active = $this->isCampaignActive();
 			$lastrun = $this->campaignLastRun();
 		
-			if (!$active)
+			if (!$active) {
 				if ($ajax)
 					$ret = "<button onClick='startcampaign()' class='btn btn-danger'>$start</button>&nbsp;" ;
 				else	
 					$ret = $this->sendOK ?	"<button type=\"submit\" class=\"btn btn-success\">$start</button>&nbsp;" : 
 											"<button type=\"submit\" class=\"btn btn-danger\">$start</button>&nbsp;" ;
-		
+		    }
 			if (($lastrun) && (!$complete)) {
 		
 				$ret .= ($paused) ? "<a href=\"cpbulkmail.php?t=cpcontinuecamp&cid={$this->cid}\" class=\"btn btn-success\">$continue</a>&nbsp;" :
@@ -1901,7 +1901,7 @@ EOF;
 		
 		//test
 		//$this->messages[] = $to;
-		return true; //test
+		//return true; //test
 	   
 		//tracking var
 		if ($this->trackmail) {

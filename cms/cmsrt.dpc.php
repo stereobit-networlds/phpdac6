@@ -41,8 +41,10 @@ class cmsrt extends cms  {
 	var $lan_set, $selected_lan, $message;
 	var $selectSQL, $codef, $lastprice, $pager;	
 	var $lan, $itmname, $itmdescr, $itmeter;
-	var $picbg, $picmd, $picsm, $home, $cat_result;
+	var $picbg, $picmd, $picsm, $home, $cat_result, $isCAttach;
 	var $ogTags, $twigTags, $siteTitle, $siteTwiter, $siteFb, $httpurl;	
+	
+	var $scrollid, $load_mode;
 	
 	public function __construct() {
 	
@@ -95,8 +97,6 @@ class cmsrt extends cms  {
 
 		$this->lan_set = arrayload('SHELL','languages');
 		$this->message = remote_paramload('SHLANGS','message',$this->path);	
-
-		$this->javascript();
 		
 		$this->httpurl = paramload('SHELL','urlbase');  		
 		$this->home = localize(paramload('SHELL','rootalias'),getlocal());
@@ -109,6 +109,7 @@ class cmsrt extends cms  {
 		$this->twitTags = null;		
 		
 		$this->itmeter = 0;
+		$this->isCAttach = false;
 		$this->lan = getlocal() ? getlocal() : '0';
 		$this->itmname = $this->lan ? 'itmname' : 'itmfname';
 		$this->itmdescr = $this->lan ? 'itmdescr' : 'itmfdescr';			
@@ -118,7 +119,12 @@ class cmsrt extends cms  {
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 							$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname" .
-							" from products ";			
+							" from products ";	
+
+	    $this->scrollid = 0;//javascript scroll call meter
+		$this->load_mode = 0;		
+
+		$this->javascript();		
 	}
 	
 	public function event($event=null) {
@@ -126,7 +132,7 @@ class cmsrt extends cms  {
 
 		$this->refresh_page_js();
 		
-		//$this->get_data_info(); //????
+		//$this->get_data_info(); //???? tags read
 		
 		switch ($event) {
 			case "lang"  		: $this->selected_lan = GetParam("langsel"); break;
@@ -148,7 +154,9 @@ class cmsrt extends cms  {
 			
 			case 'kshow'        : if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_item();
 			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->show_item(); break;
-			case 'klist'        : if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_list(); 
+								  
+			case 'klist'        : $this->isCAttach = $this->get_attachment(GetReq('cat'));
+			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_list(); 
 			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->list_katalog(0,'klist','fpkatalog',null,null,3); break;			
 			case "index"        : 			
 			default 		 	: //$out .= $this->list_katalog(0); //call by home page (frontpage func)
@@ -160,9 +168,19 @@ class cmsrt extends cms  {
 	//overrite
 	protected function javascript() {
         if (iniload('JAVASCRIPT')) {
+			
            	$code = $this->createcookie_js();				
 			$code.= $this->javascript_ajax();
+			
+			if (!strstr($_ENV["SCRIPT_FILENAME"],'/cp/')) {/*CP script, jquery conflict with jqgrid*/	
 
+				switch ($this->load_mode) { 
+					case 1 : $code .= $this->scroll_javascript_code(); break;
+					case 0 :
+					default: $code .= $this->timeout_javascript_code();
+				}			
+            }
+			
 		    $js = new jscript;
             $js->load_js($code,"",1);			   
 		    unset ($js);		
@@ -627,8 +645,92 @@ goBack();
         //return ($adir);
 		return ($adir);
     }	
+	
+    protected function view_analyzedir($cmd=null,$prefix=null,$startup=0,$nolinks=null,$isroot=false) { 	
+		$t = $cmd ? $cmd : GetReq('t');	
+		$g = $this->replace_spchars(GetReq('cat'));	   	
+		
+		if ($prefix) 
+          $mytokens[] = $prefix;
 
-	protected function getcurrentkategory($toplevel=null, $url=null) {
+		//analyze dir		
+        $adirs = $this->analyzedir($g, $startup, $isroot);	
+
+        if (!empty($adirs)) {			
+		
+		    //startup meters
+		    $max = count($adirs)-1; 
+		    if ($startup) $m = 1;
+		             else $m = 0;		
+			$m2 = 0;		 	
+		    foreach ($adirs as $id=>$cname) {	
+			  if ($isroot) $curl = null; //reset
+		      $locname = $cname;	
+			  
+    		  if ($m2<=$max) { //< .......... link last element 
+			  
+			    if ($m2==$max)
+			      $title = "<b>$locname</b>";
+				else  
+				  $title = "$locname";			  
+			  
+                if ($cname != $this->home) {
+				
+		          if (($m2>$m)&&(!$isroot)) 
+					  $curl .= $this->cseparator . $this->replace_spchars($id);
+			      else 
+					  $curl .= $this->replace_spchars($id);
+					  
+			      $mygroup = $curl;
+			   
+			      $a = seturl("t=$t&cat=$mygroup",null,null,null,null,true);
+				  $b = "<a href=\"" . seturl("t=$t&cat=$mygroup",null,null,null,null,true) . "\">" . $locname . "</a>";
+		        }	
+	            else {
+   	              $a = seturl("t=",null,null,null,null,true);
+				  $b = "<a href=\"" . seturl("t=",null,null,null,null,true) . "\">" . $locname . "</a>";					
+			    }
+				
+			    $ablink = ($nolinks) ? $a : $b;						  
+				$mytokens[] = ($nolinks) ? $ablink.'@'.$locname.'@'.$mygroup : $ablink;				      
+	
+			  }	
+		      else 
+				$mytokens[] = $locname;				   
+	  	
+			  $m2+=1;	 
+			}//foreach  
+ 
+		}//adirs
+		//echo '<pre>';
+		//print_r($mytokens);
+		//echo '</pre>';
+		return ($mytokens);
+    }
+
+    public function tree_navigation($cmd=null,$prefix=null,$home=0,$tmpl=null) {
+        $t = $tmpl ? $tmpl : 'fpkatnav';
+		$mytemplate = $this->select_template($t);
+		
+		$navdata = $this->view_analyzedir($cmd,$prefix,null,null,true);
+		
+		if (!empty($navdata)) { 
+			foreach ($navdata as $n=>$data) {
+				$tdata = explode('@',$data);
+				$tok[] = $tdata[0]; //url
+				$tok[] = $tdata[1]; //title
+				$tok[] = $tdata[2];
+				//$tok[] = ($n==count($navdata)-1) ? 1 : 0; //for root
+				$tokens[] = $this->combine_tokens($mytemplate, serialize($tok), true);
+				unset($tok);
+			}    
+			$out = implode('',$tokens); 
+		}
+
+		return ($out);
+    }	
+
+	public function getcurrentkategory($toplevel=null, $url=null) {
 	  $g = $this->replace_spchars(GetReq('cat'));	
       $mycattree = $this->analyzedir($g);	
 		
@@ -656,6 +758,11 @@ goBack();
 	  }
   
 	  return ($ret);
+	}
+
+	public function getcurrentkategoryAttachment($type=null,$nolan=null) {
+		
+		return ($this->isCAttach); //$this->get_attachment(GetReq('cat'), $type, $nolan);
 	}		
 
 	protected function get_photo_url($code, $photosize=null) {
@@ -1223,7 +1330,7 @@ EOF;
 		$result = $db->Execute($sSQL);	
 	  
 		return ($result->fields[0]);
-	}	
+	}
 	
     //combine tokens with load tmpl data inside	
 	public function ct($template, $toks=null, $execafter=null) {
@@ -1365,7 +1472,59 @@ EOF;
 			}	
 	    }
 		return ($ret);
+	}
+
+
+
+    //overrite
+	public function included($fname=null, $uselans=null, $enable_ajax=false) {
+	
+		/*if (($enable_ajax) && (!GetReq('ajax'))) {
+			$out = $this->get_scrollid(get_class($this),'included',"fname|uselans","$fname|$uselans", true); 		
+			return ($out);
+		}
+
+		foreach ($_GET as $gname=>$gvalue) 
+			$$gname = $gvalue;
+	    */ 
+	    if ($fname) {
+			$name = ($uselans) ? str_replace('.', $this->lan . '.', $fname) : $fname;	
+			$pathname = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $name;
+
+			if (is_readable($pathname)) {
+				$contents = @file_get_contents($pathname);
+				$ret = $this->process_commands($contents);
+				return ($ret);
+			}
+
+        }	
+        return null; 		
 	}	
+	
+	//jquery call phpdac func for scroll fireup load
+	protected function get_scrollid($calling_object, $calling_function=null, $calling_vars=null, $calling_values=null, $variable_func=false) {
+	
+	    $scm = $this->scrollid++;	
+		
+	    if (($calling_object) && ($calling_function) && method_exists($calling_object,$calling_function)) {
+
+			$calling_function_varid = ($variable_func) ? $calling_function ."_{$scm}" : $calling_function;
+			
+			$divret = "<div id='load_{$calling_function_varid}'></div>";
+			$divret.= "<script>sc[{$scm}]='{$calling_function_varid}';</script>";
+			$divret.= "<div id='{$calling_function_varid}' style='visibility:hidden;'>{$calling_vars}-{$calling_values}</div>";	
+			return ($divret);
+		}	
+		
+		return ($scm);	
+	}
+	
+	protected function scroll_javascript_code() {	
+	}
+	
+	protected function timeout_javascript_code() {
+	}		
+	
 };
 }
 ?>

@@ -660,21 +660,14 @@ EOF;
     }  
 	
 	
-	public function included($fname=null, $uselans=null) {
+	public function included($fname=null, $uselans=null, $enable_ajax=false) {
 	
 	    if ($fname) {
-		    if ($uselans) {
-			    $lan = getlocal();
-			    $name = str_replace('.',$lan.'.', $fname);
-			}
-			else
-			    $name = $fname;
-				
+			$name = ($uselans) ? str_replace('.', getlocal() . '.', $fname) : $fname;	
 			$pathname = $this->urlpath . '/cp/'.$name;
 
 			if (is_readable($pathname)) {
 				$contents = @file_get_contents($pathname);
-				//execute commands
 				$ret = $this->process_commands($contents);
 				return ($ret);
 			}
