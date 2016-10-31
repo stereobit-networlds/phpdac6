@@ -77,8 +77,7 @@ class shtags {
    }
    
    function action($act=null) {
-     //echo 'z';
-	 //$this->get_data_info();
+
    }
    
    function get_category_info() {
@@ -120,34 +119,21 @@ class shtags {
 		  $thetree = (!empty($mytree))?implode(',',$mytree):null;
 		} 		
 		
-	    if ((!$this->result) || (!$item) || (!$cat)) {
-		  $out = @file_get_contents($this->prpath . $this->default_meta_file);
-		  //return ($out); 		
-		  $this->page_tags = $out;
-		}
-		
 	    if ($item) {
+			
 		  if (defined('SHKATALOGMEDIA_DPC')) {
-			//ECHO 'A'; 
 			$this->result = GetGlobal('controller')->calldpc_var("shkatalogmedia.result");
 			$ppol = GetGlobal('controller')->calldpc_method("shkatalogmedia.read_policy");
-			//print_r($this->result);
-		  }  
-		  elseif (defined('SHKATALOG_DPC')) {
-			//ECHO 'B';
-			$this->result = GetGlobal('controller')->calldpc_var("shkatalog.result");
-			$ppol = GetGlobal('controller')->calldpc_method("shkatalog.read_policy");		  
-		  } 		
+		  }  		
 		
 		  $this->item = $this->result->fields[$itmname];
 		  $this->descr = $this->result->fields[$itmdescr];
 		  $this->price = $this->result->fields[$ppol];
 		  $kwords = str_replace(' ',',',$this->item) . ',' ;
-		  //$kwords.= str_replace(' ',',',$this->descr) . ',' . $this->price . ',';
 		  $kwords.= $thetree;
 		  $this->keywords = str_replace(',,',',', $kwords);
 		}
-		elseif ($cat) {//echo 'z'; print_r($mytree);
+		elseif ($cat) {
 		  $cc = explode($this->cseparator, $cat);
 		  $xcat = array_pop($cc);
 		  $this->item = (!empty($mytree))? array_pop($mytree) : $this->replace_spchars($xcat,1);
@@ -161,33 +147,6 @@ class shtags {
 		  $this->price = null;
 		  $this->keywords = remote_paramload('INDEX','meta-keywords', $this->prpath);			
         }		
-		
-		
-	    $ret = $this->item . "<@>" . 
-		       $this->descr . "<@>" . 
-			   $this->price . "<@>" . 
-			   $this->keywords;
-			   
-		//echo '>',$ret;
-		
-	    if (!$ret) {
-		  //echo 'noret';
-		  $out = @file_get_contents($this->prpath . $this->default_meta_file);
-		  //return ($out); 		
-		  $this->page_tags = $out;
-		}			
-		
-        if (is_readable($this->prpath .'/'. $this->meta_file)) {
-		    //echo 'Z2';
-		    $out = $this->get_meta_file(explode('<@>',$ret));
-		}	
-		else {
-		    //default tags
-		    $out = @file_get_contents($this->prpath . $this->default_meta_file);
-		}
-		
-        //return ($out); //..not it called from event..call get_page_tags to retreive..		
-        $this->page_tags = $out;
    }
    
    function get_meta_file($tags=null) {
@@ -224,7 +183,7 @@ class shtags {
        elseif ($key=='tag')
 	     return ($this->itmtag ? $this->itmtag :null);			 
        else 
-	     return ($this->page_tags);
+	     return (null);
    }
    
    function get_tag_info() {

@@ -108,7 +108,7 @@ class fronthtmlpage {
 		$this->verbose = remote_paramload('FRONTHTMLPAGE','verbose',$this->prpath); 
 		
         if ($GRX)    
-         $this->editmode_point  = loadTheme('editmode','');
+         $this->editmode_point  = loadTheme('editmode','e-Enterprise');
 	    else
 	  	 $this->editmode_point  = '[Edit Mode]';
 		 
@@ -243,14 +243,13 @@ class fronthtmlpage {
 		$y = $fromyear?$fromyear.'-'.date('Y'):date('Y');
 	    $ret .= "&copy; $y, $t &nbsp;";// - All Rights Reserved. ";	  
 		
-		//if ($this->allow_edit)
 		if (!$is_cropwiz)
 		  $ret .= $this->get_admin_link();
 				
 		return ($ret);	
-	}
+	}	
 
-	public function get_admin_link() {	
+	public function get_admin_link($notheme=false) {	
 
 		if (is_array($_GET)) {
 		  foreach ($_GET as $i=>$t) {
@@ -270,7 +269,8 @@ class fronthtmlpage {
 		
         SetSessionParam('authverify',1);		
 				
-		$ret .= seturl("modify=".urlencode(base64_encode('stereobit'))."&turl=".$target_url.$mynewquery,$this->editmode_point); 	
+		$ret .= $notheme ? seturl("modify=".urlencode(base64_encode('stereobit'))."&turl=".$target_url.$mynewquery):
+		                   seturl("modify=".urlencode(base64_encode('stereobit'))."&turl=".$target_url.$mynewquery,$this->editmode_point); 	
 		
 		return ($ret);
 	}
@@ -301,7 +301,7 @@ class fronthtmlpage {
 
 		if ($editmode_point) {
 			$img = "<img src='$editmode_point' />";
-			$ret = "<a href='cp.php?turl=".$target_url ."'>".$editmode_point."</a>"; 	
+			$ret = "<a href='cp.php?turl=".$target_url ."' alt='e-Enterprise'>".$editmode_point."</a>"; 	
 		}	
 		else
             $ret = "cp.php?turl=".$target_url; 	
@@ -566,32 +566,25 @@ EOF;
 	/********* PUBLIC FUNCS *********/
 	
 	public function combine_tokens($template, $toks, $execafter=null) {
-		$tokens = (array) unserialize($toks);
-	    if (!is_array($tokens)) return ($template);		
+	    //if (!is_array($tokens)) return ($template);		
 
-		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template);
-		  unset ($fp);		  		
-		}		  		
+		if (!$execafter) 
+			$ret = $this->process_commands($template);	  		
 		else
-		  $ret = $template;
-		  
-	    foreach ($tokens as $i=>$tok) {
-		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
+			$ret = $template;
+		
+		$tokens = $toks ? unserialize($toks) : array();
+		$i=0;
+		if (!empty($tokens)) {	
+			foreach ($tokens as $i=>$tok) 
+				$ret = str_replace("$".$i."$",$tok,$ret);
+		}
 		//clean unused token marks
 		for ($x=$i;$x<40;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
+			$ret = str_replace("$".$x."$",'',$ret);
 		
-		//execute after replace tokens
-		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          
-		  return ($retout);
-		}		
+		if ($execafter) 
+			$ret = $this->process_commands($ret);
 		
 		return ($ret);
 	}
@@ -678,13 +671,11 @@ EOF;
 			    $name = $fname;
 				
 			$pathname = $this->urlpath . '/cp/'.$name;
-			//echo $pathname;
+
 			if (is_readable($pathname)) {
 				$contents = @file_get_contents($pathname);
-			
 				//execute commands
 				$ret = $this->process_commands($contents);
-			
 				return ($ret);
 			}
         }	
@@ -704,25 +695,37 @@ EOF;
 	public function nvl($param=null,$state1=null,$state2=null,$value=null) {
 	    global ${$param};
 		
-	    if (stristr($param,'.')) //dpc var
-		  $var = _v($param);
-        else
-          $var =  GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $_SESSION[$param]);		
-	        //${$param} ? ${$param} : ($_SESSION[$param] ? $_SESSION[$param] : $this->{$param});		
+	    $var = (stristr($param,'.')) ? _v($param) :
+					(GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $_SESSION[$param]));				
 		
-        if ($value) 
-		   $ret = ($value==$var) ? $state1 : $state2;   		
+        if ($value) { 
+			if (strstr($value, '|')) {
+			    $nvalues = explode('|',$value); 
+				$ret = (in_array($var, $nvalues)) ? $state1 : $state2; 
+			}
+			elseif (strstr($value, '.'))
+				$ret = (_v($value)==$var) ? $state1 : $state2; 			
+			else	
+				$ret = ($value==$var) ? $state1 : $state2;   		
+		}   
         else
            $ret = $var ? $state1 : $state2;
 		   
-        //echo '<hr>'.$ret;
 		return ($ret);
     }
 	
 	public function nvltokens($token=null,$state1=null,$state2=null,$value=null) {
 	    //always string compare...
-		if ($value) 	
-			$ret = ($token==$value) ? $state1 : $state2;  	
+		if ($value) {	
+			if (strstr($value, '|')) {
+			    $nvalues = explode('|',$value); 
+				$ret = (in_array($token, $nvalues)) ? $state1 : $state2; 
+			}
+			elseif (strstr($value, '.'))
+				$ret = (_v($value)==$token) ? $state1 : $state2;  	 			
+			else		
+				$ret = ($token==$value) ? $state1 : $state2;  	
+		}	
         else		
            $ret = $token ? $state1 : $state2;
 		   
@@ -732,10 +735,19 @@ EOF;
 	
 	public function nvldecode($token=null,$state1=null,$state2=null,$value=null,$default=null) {
 
-		if (is_numeric($value)) 
-           $ret = $default ? $default : (($token==$value) ? $state1 : $state2);			
-		elseif ($value) 
-			$ret = $default ? $default : (($token==$value) ? $state1 : $state2);  	
+		if (is_numeric($value)) { 
+            $ret = $default ? $default : (($token==$value) ? $state1 : $state2);			
+		}   
+		elseif ($value) {
+			if (strstr($value, '|')) {
+			    $nvalues = explode('|',$value); 
+				$ret = $default ? $default : ((in_array($token, $nvalues)) ? $state1 : $state2); 
+			}
+			elseif (strstr($value, '.'))
+				$ret = $default ? $default : ((_v($value)==$var) ? $state1 : $state2);   			
+			else			
+				$ret = $default ? $default : (($token==$value) ? $state1 : $state2);  	
+		}	
         else 	
            $ret = $token ? $state1 : $state2;
   
@@ -744,24 +756,22 @@ EOF;
 	
 	/*single dac cmds per state*/
 	public function nvldac($param=null,$state1=null,$state2=null,$value=null) {
-	    //global ${$param};
 	    
-	    if (stristr($param,'.')) //dpc var
-		  $var = _v($param);
-        else
-          $var =  GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $this->{$param});		
+	    $var = (stristr($param,'.')) ? _v($param) :
+						(GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $this->{$param}));		
 		
-        if ($value) 
-		                           
-		   $ret = ($value==$var) ? 
-		           _m(str_replace('::','+',$state1)) : 
-		           _m(str_replace('::','+',$state2));   		
-				   //in case of enfolded dpc cmd...
+        if ($value) { 
+		    if (strstr($value, '|')) {
+			    $nvalues = explode('|',$value); 
+				$ret = (in_array($var, $nvalues)) ? _m(str_replace('::','+',$state1)) : _m(str_replace('::','+',$state2)); 
+			}
+			elseif (strstr($value, '.'))
+				$ret = (_v($value)==$var) ? _m(str_replace('::','+',$state1)) : _m(str_replace('::','+',$state2));  		
+			else
+				$ret = ($value==$var) ? _m(str_replace('::','+',$state1)) : _m(str_replace('::','+',$state2));   		
+		}		   
         else      
-           $ret = $var ? 
-		          _m(str_replace('::','+',$state1)) : 
-		          _m(str_replace('::','+',$state2));
-                  //in case of enfolded dpc cmd...  				  
+           $ret = $var ? _m(str_replace('::','+',$state1)) : _m(str_replace('::','+',$state2));				  
 
 		return ($ret);
 
@@ -779,21 +789,25 @@ EOF;
 		}  
 		return ($ret);
 	}
+	
 	/*multiple dac cmds per state*/
 	public function nvldac2($param=null,$states1=null,$states2=null,$value=null) {
-	    //global ${$param};
-	    //echo $param,'>',$value,'>',$states1,'<br/>',$states2,'<br/>',$value;
-	    if (stristr($param,'.')) //dpc var
-		  $var = _v($param);
-        else
-          $var =  GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $this->{$param});		
-		
-        if ($value)                       
-		   $ret = ($value==$var) ? $this->dacexec($states1) :
-		                           $this->dacexec($states2) ;
+
+	    $var = (stristr($param,'.')) ? _v($param) : 
+		                (GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $this->{$param}));
+
+        if ($value) {    
+			if (strstr($value, '|')) {
+			    $nvalues = explode('|',$value); 
+				$ret = (in_array($var, $nvalues)) ? $this->dacexec($states1) : $this->dacexec($states2) ; 
+			}
+			elseif (strstr($value, '.'))
+				$ret = (_v($value)==$var) ? $this->dacexec($states1) : $this->dacexec($states2) ;
+			else		
+				$ret = ($value==$var) ? $this->dacexec($states1) : $this->dacexec($states2) ;
+		}						   
         else      
-           $ret = $var ? $this->dacexec($states1) :
-		                 $this->dacexec($states2) ;				  
+            $ret = $var ? $this->dacexec($states1) : $this->dacexec($states2) ;				  
 
 		return ($ret);
 
@@ -811,7 +825,7 @@ EOF;
 	
 	//dummy dpc exec
 	public function nvlnull() {
-	    return null; 
+	    return ''; 
     }	
 	
 	//used in front page as login / logout
@@ -819,10 +833,8 @@ EOF;
 
 	   $path = self::$staticpath;
 	   
-	   if (($image) && (is_readable($path."/images/".$image.".png"))) {
-	      //echo 'a';
+	   if (($image) && (is_readable($path."/images/".$image.".png"))) 
 	      $imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
-	   }
 	   
 	   if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
 	      //echo 'ie';

@@ -173,7 +173,7 @@ class cpflotcharts {
 	
 	/*read db results and convert it to js array */
 	protected function make_chart_data($chartID, $data=null, $couple=null, $label=null, $normalize=null) {
-		if (!$data) return null;
+		if (empty($data->fields)) return null;
 		if (!empty($couple)) {
 			list($x, $y) = $couple;
 			

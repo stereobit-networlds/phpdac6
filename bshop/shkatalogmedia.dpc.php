@@ -3200,6 +3200,34 @@ SCROLLTOP;
 		}	
         return ($toprint); 		
     }	
+	
+	protected function make_table($items=null, $mylinemax=null, $template=null, $pcat=null) {
+	    $cat = $pcat ? $pcat : GetReq('cat'); 	
+		$mytemplate = $template ? $this->select_template($template, $cat) : null;
+
+	    if ($items[0]) {
+	        //make table
+	        $itemscount = count($items);
+	        $timestoloop = floor($itemscount/$mylinemax)+1;
+	        $meter = 0;
+			$linetoken = null;
+			$tokens = array();
+			
+	        for ($i=0;$i<$timestoloop;$i++) {
+
+				for ($j=0;$j<$mylinemax;$j++) {
+					$linetoken .= $items[$meter];
+					$meter+=1;	 
+				}
+				$tokens[] = $linetoken; 
+                $toprint .= $this->combine_tokens($mytemplate, $tokens);					
+				$linetoken = null; 
+				$tokens = array();
+  
+	        }
+		}	
+        return ($toprint); 		
+    }		
 
 	//FILTERS
 	function filter($field=null, $template=null, $incategory=null, $cmd=null, $header=null) {	

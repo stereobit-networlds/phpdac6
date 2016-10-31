@@ -119,13 +119,14 @@ class cmssubscribe {
     protected function form($action=null)  { 	
         
 		switch ($action) {	   
-			case 'unsubscribe' : $stemplate= "unsubscribe.htm"; break;
+			case 'unsubscribe' : $stemplate= "unsubscribe"; break;
 			case 'subscribe'   :
-			default 		   : $stemplate= "subscribe.htm";
+			default 		   : $stemplate= "subscribe";
 		}
 
-		$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$stemplate) ; 	
-		$mytemplate = file_get_contents($template);	
+		//$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$stemplate) ; 	
+		//$mytemplate = file_get_contents($template);	
+		$mytemplate = _m('cmsrt.select_template use '.$stemplate);
 
 		$tokens = array();		
 		$tokens[] = $this->msg;		 

@@ -622,7 +622,7 @@ EOF;
 		return ($ret);
 	}
 	
-	function show_select_files($name, $taction=null, $ext=null, $class=null) {
+	protected function show_select_files($name, $taction=null, $ext=null, $class=null) {
 		$selecttitle = localize('_select', getlocal());		
 		$tmpl = $this->savedname ? $this->savedname :
 				(GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate'));

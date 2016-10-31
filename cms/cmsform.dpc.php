@@ -58,37 +58,38 @@ $__LOCALE['CMSFORM_DPC'][33]='_NOMOS;State;Νομός';
 class cmsform {
 
     var $path, $urlpath, $inpath;
-	var $recaptcha_public_key, $recaptcha_private_key;
+	var $recaptcha_public_key, $recaptcha_private_key, $userecaptcha;
 	
 	var $cntform, $cntformtitles, $checkuserasterisk, $asterisk;
 	var $country_id, $post, $msg;
 	
 	var $tmpl_path, $tmpl_name;	
 	
-	function __construct() {
+	public function __construct() {
 		
 	    $this->title = localize('CMSFORM_DPC',getlocal());	
 		$this->path = paramload('SHELL','prpath');
 	    $this->urlpath = paramload('SHELL','urlpath');
 	    $this->inpath = paramload('ID','hostinpath');					
 		
-		$this->sendaddress = remote_paramload('SHFORM','mail',$this->path);  	   	   	   
-		$this->sendtype = remote_paramload('SHFORM','type',$this->path); 
-		$this->verify = remote_paramload('SHFORM','verify',$this->path);			
-		$this->verify_address = remote_paramload('SHFORM','verifymailer',$this->path);			
-		$this->verify_subject = remote_paramload('SHFORM','vsubject',$this->path);		
-		$this->verify_message = remote_paramload('SHFORM','vmsg',$this->path);
-		$this->info_message = remote_paramload('SHFORM','vbody',$this->path);		
+		$this->sendaddress = remote_paramload('CMSFORM','mail',$this->path);  	   	   	   
+		$this->sendtype = remote_paramload('CMSFORM','type',$this->path); 
+		$this->verify = remote_paramload('CMSFORM','verify',$this->path);			
+		$this->verify_address = remote_paramload('CMSFORM','verifymailer',$this->path);			
+		$this->verify_subject = remote_paramload('CMSFORM','vsubject',$this->path);		
+		$this->verify_message = remote_paramload('CMSFORM','vmsg',$this->path);
+		$this->info_message = remote_paramload('CMSFORM','vbody',$this->path);		
 		
-	    $this->cntform = remote_arrayload('SHFORM','cntform',$this->path);		   
-	    $this->cntformtitles = remote_arrayload('SHFORM','cntformtitles',$this->path);		
-	    $this->checkuseasterisk = remote_paramload('SHFORM','checkasterisk',$this->path);	 
+	    $this->cntform = remote_arrayload('CMSFORM','cntform',$this->path);		   
+	    $this->cntformtitles = remote_arrayload('CMSFORM','cntformtitles',$this->path);		
+	    $this->checkuseasterisk = remote_paramload('CMSFORM','checkasterisk',$this->path);	 
 	    $this->asterisk = $this->checkuseasterisk?'&nbsp;':'*'; //echo $this->asterisk,'>';		
 		
 		$this->recaptcha_public_key = remote_paramload('RECAPTCHA','pubkey',$this->path);							  
 		$this->recaptcha_private_key = remote_paramload('RECAPTCHA','privkey',$this->path);		
+		$this->userecaptcha = remote_paramload('CMSFORM','recaptcha',$this->path);
 		
-		$this->country_id = remote_paramload('SHFORM','countryid',$this->path);
+		$this->country_id = remote_paramload('CMSFORM','countryid',$this->path);
 		
 		$this->post = false;
 		$this->msg = null;		
@@ -99,7 +100,7 @@ class cmsform {
 	}
 	
     //overwriten
-    function event($action=null) {
+    public function event($action=null) {
 	   $db = GetGlobal('db');
 	   
        $sFormErr = GetGlobal('sFormErr');	  	    		  	    
@@ -110,12 +111,13 @@ class cmsform {
 	   
 			case "sendamailajax":
 			case "sendamail"    :
-						    if (!$err=$this->checkFields()) {		
+						    if (!$err = $this->checkFields()) {		
 							
-								$email = GetParam("email");
-								$subject = GetParam("subject");
-								$message = GetParam("mail_text");
-								$body = $this->text2send();										
+							    $cperson = GetParam($this->cntform[0]);
+								$email = GetParam($this->cntform[1]); //GetParam("email");
+								$subject = $cperson ? $cperson .'-'. GetParam($this->cntform[2]) : GetParam($this->cntform[2]); //GetParam("subject");
+								$message = GetParam($this->cntform[3]); //GetParam("mail_text");
+								$body = $message; 										
 								
 								$sSQL = "insert into cform (email,subject,postform) values (" . 
 								        $db->qstr(addslashes($email)) . "," . 
@@ -123,8 +125,8 @@ class cmsform {
 										$db->qstr(addslashes($message)) . ")";
                                 //echo $sSQL;
                                 $ret = $db->Execute($sSQL);	 
-							  
-								//$this->mailto($this->sendaddress,$this->sendaddress,$subject,$message,1);							  
+								
+								$this->mailto($this->sendaddress,$this->sendaddress,$subject,$message,1);							  
 							  
 								$this->post = true;
 								$this->update_statistics('contact', $email);
@@ -145,13 +147,14 @@ class cmsform {
 								SetSessionParam("FORMMAIL",$email); //use for something...	
 							}
 							else 
-								$this->msg = localize('_RCAMFALSE',getlocal());						
+								$this->msg = $err;						
+							
 	                        break; 																											  						
 		}
       }  	   
     }
   
-    function action($action=null) {
+    public function action($action=null) {
 
 		switch ($action) {
 			case "sendamailajax"   : 	if ($this->post) 
@@ -161,178 +164,31 @@ class cmsform {
 										break;
 			case "sendamail"       :              
 			case 'contact'         :
-			default                : 	$out = $this->advmailform();
+			default                : 	$out = $this->mailform();
 		}
 	 
 		return ($out);
-    } 
-	  
-	  
-	function onok_message() {
-	
-	    /*$template = "contactformok.htm";
-	    $t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.',$template) ;
-		//echo $t;
-	    if (is_readable($t)) {		   
-		  $mytemplate = file_get_contents($t);*/
-			
-		  $tokens[] = GetParam("company");		  
-		  $tokens[] = GetParam("cperson");	
-		  $tokens[] = GetParam("activities");	
-		  $tokens[] = GetParam("address");	
-		  $tokens[] = GetParam("town");	
-		  $tokens[] = GetParam("zip");	
-		  $tokens[] =  get_selected_option_fromfile(GetParam("country"),'country');
-		  $tokens[] = GetParam("tel");	
-		  $tokens[] = GetParam("fax");	
-		  $tokens[] = GetParam("email");	
-		  $tokens[] = GetParam("web");			  		  		  		  		  		  		  		  		  	
-		  $tokens[] = GetParam("subscribe");			  
-		  $tokens[] = GetParam("subject");	
-		  $tokens[] = GetParam("mail_text");			  
-			
-		/*  $ret = $this->combine_tokens($mytemplate,$tokens);		
-	    }*/
-		
-        $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		if (!$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use contactformok.htm+".$sd."+1")) {
-		
-		//else {
-		  $m = paramload('SHFORM','message');
-			
-		  $ff = $this->path . $m;
-		  if (is_file($ff)) {
-		    $ret = file_get_contents($ff);
-		  }
-		  else
-		    $ret = $m; //plain text	
-		} 
-		//echo '>',$ret;
-		return ($ret); 
-	}
-	
-	protected function text2send() {
-	
-	    /*$template = "contactformmail.htm";
-	    $t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',getlocal().'.',$template) ;
-		//echo $t;
-	    if (is_readable($t)) {	
-		  $mytemplate = file_get_contents($t);*/
-			
-		  $tokens[] = GetParam("company");		  
-		  $tokens[] = GetParam("cperson");	
-		  $tokens[] = GetParam("activities");	
-		  $tokens[] = GetParam("address");	
-		  $tokens[] = GetParam("town");	
-		  $tokens[] = GetParam("zip");	
-		  $tokens[] =  get_selected_option_fromfile(GetParam("country"),'country');
-		  $tokens[] = GetParam("tel");	
-		  $tokens[] = GetParam("fax");	
-		  $tokens[] = GetParam("email");	
-		  $tokens[] = GetParam("web");			  		  		  		  		  		  		  		  		  
-		  $tokens[] = GetParam("subscribe");			  
-		  $tokens[] = GetParam("subject");	
-		  $tokens[] = GetParam("mail_text");			  
-			
-		 /* $ret = $this->combine_tokens($mytemplate,$tokens);			   
-				  
-	    }
-		else {	*/
-		
-        $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		if (!$ret = _m("fronthtmlpage.subpage use contactformmail.htm+".$sd."+1")) {
-				
-	
-	     $data =  localize('_COMP',getlocal()) . ":" . GetParam("company") ."\r\n".
-				  localize('_CPER',getlocal()) . ":" . GetParam("cperson") ."\r\n".
-				  localize('_ACTV',getlocal()) . ":" . GetParam("activities") ."\r\n".
-				  localize('_ADDR',getlocal()) . ":" . GetParam("address") ."\r\n".
-				  localize('_TOWN',getlocal()) . ":" . GetParam("town") ."\r\n".
-				  localize('_ZIP',getlocal()) . ":" . GetParam("zip") ."\r\n". 
-				  localize('_CNTR',getlocal()) . ":" . get_selected_option_fromfile(GetParam("country"),'country') ."\r\n". 
-				  localize('_TEL',getlocal()) . ":" . GetParam("tel") ."\r\n". 
-				  localize('_FAX',getlocal()) . ":" . GetParam("fax") ."\r\n". 					   					   					   
-				  localize('_MAIL',getlocal()) . ":" . GetParam("email") ."\r\n".
-				  localize('_WEB',getlocal()) . ":" . GetParam("web") ."\r\n".							   					   
-				  localize('_SUBSCR',getlocal()) . ":" . GetParam("subscribe") ."\r\n".			   					   
-				  localize('_SUBJECT',getlocal()) . ":" . GetParam("subject") ."\r\n".	
-				  localize('_BODY',getlocal()) . ":" . GetParam("mail_text")."\r\n";	
-				  
-		  $ret = str_replace("\r\n","<br/>",$data);
-	   }		
-	   		   
-       return ($ret);					   	
-	}	 		  
+    }  		  
   
-	protected function advmailform() {
-  
-		$formtitles = remote_arrayload('SHFORM','formtitles',$this->path);
-	 
-		$title1 = $formtitles[0]?localize($formtitles[0],getlocal()):"Στοιχεία ενδιαφερομένου.";
-		$title2 = $formtitles[1]?localize($formtitles[1],getlocal()):"Εγγραφή στην λίστα.";
-		$title3 = $formtitles[2]?localize($formtitles[2],getlocal()):"Σχόλια.";
-		$title4 = $formtitles[3]?localize($formtitles[3],getlocal()):"Στοιχεία ενδιαφερομένου.";	 	 	 
-
+	protected function mailform() {
 		$sFormErr = GetGlobal('sFormErr');
 	 
-		$myaction = seturl("t=");//"g=".GetReq('g'));//g=product id in case of try process   	
-
-		if ($this->post==true) {
+		/*if ($this->post==true) {
 	   
-	     $out .= $this->onok_message();
+			$out = $this->msg;
 		}
-		else { //show the form plus error if any
+		else { */
 	 
-			$formtemplate='cform.htm';	   
-			$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$formtemplate) ; 
-
-			if (is_readable($t)) {
-				$myform = file_get_contents($t);
+			$myform = _m('cmsrt._ct use cform');
 	   
-				if (defined('RECAPTCHA_DPC')) {
-					$recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	
-					$myform = str_replace('<@RECAPTCHA@>',$recaptcha,$myform);		   
-				}
+			if (defined('RECAPTCHA_DPC')) {
+				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	
+				$myform = str_replace('<@RECAPTCHA@>',$recaptcha,$myform);		   
+			}
 	 
-				$out .= $sFormErr . $this->msg;
-				$out .= $myform; 
-			}	 
-			else {
-				$tokens[] = $sFormErr . $this->msg . "<form method=\"POST\" action=\"" .$myaction. "\" name=\"amail\">";
-				$tokens[] = "<input type=\"text\" name=\"company\" maxlength=\"50\" value=\"". ToHTML(GetParam("company")) . "\" size=\"30\" >";		  
-				$tokens[] = "<input type=\"text\" name=\"cperson\" maxlength=\"50\" value=\"". ToHTML(GetParam("cperson")) . "\" size=\"30\" >";		  	
-				$tokens[] = "<input type=\"text\" name=\"activities\" maxlength=\"50\" value=\"". ToHTML(GetParam("activities")) . "\" size=\"30\" >";		  
-				$tokens[] = "<input type=\"text\" name=\"address\" maxlength=\"50\" value=\"". ToHTML(GetParam("address")) . "\" size=\"30\" >";		  	
-				$tokens[] = "<input type=\"text\" name=\"town\" maxlength=\"50\" value=\"". ToHTML(GetParam("town")) . "\" size=\"30\" >";		  
-				$tokens[] = "<input type=\"text\" name=\"zip\" maxlength=\"50\" value=\"". ToHTML(GetParam("zip")) . "\" size=\"30\" >";		  	
-	   
-				$cntr = GetParam("country")?GetParam("country"):$this->country_id; 
-				$tokens[] =  "<select name=\"country\">".get_options_file('country',false,true,$cntr)."</select>";
-	   
-				$tokens[] = "<input type=\"text\" name=\"tel\" maxlength=\"50\" value=\"". ToHTML(GetParam("tel")) . "\" size=\"30\" >";		  	
-				$tokens[] = "<input type=\"text\" name=\"fax\" maxlength=\"50\" value=\"". ToHTML(GetParam("fax")) . "\" size=\"30\" >";		  	
-				$tokens[] = "<input type=\"text\" name=\"email\" maxlength=\"50\" value=\"". ToHTML(GetParam("email")) . "\" size=\"30\" >";		  	
-				$tokens[] = "<input type=\"text\" name=\"web\" maxlength=\"50\" value=\"". ToHTML(GetParam("web")) . "\" size=\"30\" >";		  			  		  		  		  		  		  		  		  		  	
-	   
-				$statin = 'checked';
-				$tokens[] = "<input type=\"checkbox\" name=\"subscribe\"". $statin . ">";			  
-	   
-				$tokens[] = "<input type=\"text\" name=\"subject\" maxlength=\"50\" value=\"". ToHTML(GetParam("subject")) . "\" size=\"30\" >";		  	
-				$tokens[] = "<TEXTAREA name='mail_text' cols='50' rows='8' wrap='VIRTUAL'>" . GetParam("mail_text") . "</TEXTAREA>";	  
-	   
-				if (defined('RECAPTCHA_DPC')) {
-					$tokens[] = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
-				}
-	   
-				$tokens[] = "<input type=\"submit\" value=\"" . trim(localize('_POST',getlocal())) . "\">" .
-							"<input type=\"hidden\" name=\"FormAction\" value=\"sendamail\">" .
-							"</form>";	   
-	   
-				$sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-				$out = _m("fronthtmlpage.subpage use contactform.htm+".$sd."+1") ; 
-	    
-			}//cform
-		}//no post
+			//$out .= $sFormErr . $this->msg;
+			$out .= $myform; 
+		//}
 	   
 		return ($out);
 	}
@@ -387,13 +243,11 @@ class cmsform {
 		 }	     
        }
 	   
-	   //extra checks	
-		
 	   //mail chek	 
 	   if ((GetParam("email")) && (checkmail(GetParam("email"))==false))
 		   $this->msg .= localize('_INVALIDMAIL',getlocal()) . "<br>";	
 	   
-	   }//recaptcha
+	   }
 	   
        return ($this->msg);
     }	   
@@ -401,7 +255,7 @@ class cmsform {
 	 
 	protected function valid_recaptcha() {
 	 
-	    if (!defined('RECAPTCHA_DPC')) return true;
+	    if ((!defined('RECAPTCHA_DPC')) || (!$this->userecaptcha)) return true;
 		  
         if ($_POST["recaptcha_response_field"]) {
             $resp = recaptcha_check_answer ($this->recaptcha_private_key,
@@ -432,26 +286,21 @@ class cmsform {
 	 
 	protected function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 	
-	    /*if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
-			$ret = _m("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
-        }
-		else {*/
-		    if (defined('SMTPMAIL_DPC'))  {
+		if (defined('SMTPMAIL_DPC'))  {
 				 
-				$smtpm = new smtpmail;
+			$smtpm = new smtpmail;
 			   
-				$smtpm->to($to); 
-				$smtpm->from($from); 
-				$smtpm->subject($subject);
-				$smtpm->body($body);			   
+			$smtpm->to($to); 
+			$smtpm->from($from); 
+			$smtpm->subject($subject);
+			$smtpm->body($body);			   
 
-				$mailerror = $smtpm->smtpsend();
-
-				unset($smtpm);
-			}
-			else
-				die('SMTP ERROR');
-		//}	 
+			$mailerror = $smtpm->smtpsend();
+			unset($smtpm);
+			return ($mailerror);
+		}
+		else
+			die('SMTP ERROR');
 	}
 
 	protected function update_statistics($id, $user=null) {
@@ -460,31 +309,6 @@ class cmsform {
 		
 		return false;
 	}	
-  
-	/*function combine_tokens($template_contents,$tokens) {
-	
-	    if (!is_array($tokens)) return;
-		
-		if (defined('FRONTHTMLPAGE_DPC')) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
-		}		  		
-		else
-		  $ret = $template_contents;
-		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
-		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
-		//clean unused token marks
-		for ($x=$i;$x<20;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
-		return ($ret);
-	}	*/  
   
 };
 }

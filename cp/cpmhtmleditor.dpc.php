@@ -99,11 +99,9 @@ class cpmhtmleditor {
 	public function event($sEvent) {
 	
 		switch ($sEvent) {
-			case 'cpmdelitem'     : $this->delete_item();
-			                        //break;
-			case 'cpmnewitem'     :
-			case 'cpmedititem'    : $this->javascript();
-								    break;
+			case 'cpmdelitem'     : $this->delete_item();  break;
+			case 'cpmnewitem'     : $this->render_new();  break;
+			case 'cpmedititem'    : $this->render_edit(); break;
 			
 			case 'cpmvphotoadddb' : $this->add_photo2db(null,null,GetReq('size')); break;
 			case 'cpmvphotodeldb' : $this->delete_photodb(GetReq('size')); break;
@@ -111,37 +109,25 @@ class cpmhtmleditor {
 		    case 'cpmvdel'     	  : $this->delete_photo(); break;
 			case 'cpmvphoto'      : break; 
 		    case 'cpmdropzone'    : $this->dropzone(); break; //fast-entry photo
-			default 		      : $this->javascript();
+			default 		      : 
 		}
     }
 	
 	public function action($sAction) {
 		switch ($sAction) {
 			case 'cpmdelitem'     :
-		    case 'cpmnewitem'     : $out = $this->render_new(); break;
-		    case 'cpmedititem'    : $out = $this->render_edit(); break;
+		    case 'cpmnewitem'     : break;
+		    case 'cpmedititem'    : break;
 		
 			case 'cpmvphotoadddb' : 
 			case 'cpmvphotodeldb' : 		
-		    case 'cpmvdel'     :
-		    case 'cpmvphoto'   : $out = $this->gallery(); break; 
-			case 'cpmdropzone' : break;
-			default 		   : $out = $this->editor();
+		    case 'cpmvdel'        :
+		    case 'cpmvphoto'      : $out = $this->gallery(); break; 
+			case 'cpmdropzone'    : break;
+			default 		      : $out = $this->editor();
 		}	
 		return ($out);
     }
-	
-	
-    protected function javascript() {
-		
-		return true; //DISABLED	
-   
-		if (iniload('JAVASCRIPT')) {
-		 
-			//$js = new jscript;
-			//unset ($js);
-		}   
-    } 
 	
     public function editor($itemcode=null, $itemtype=null, $file = null) {
 		$type = $itemtype ? $itemtype : (GetReq('type') ? GetReq('type') : '.html');
@@ -218,7 +204,7 @@ class cpmhtmleditor {
     protected function render_new() {
 		$db = GetGlobal('db');		
 		$type = '.html'; //default type for text attachment
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		$id = GetParam('id');
 		
 		$activecode = $this->getmapf('code');
@@ -246,12 +232,20 @@ class cpmhtmleditor {
 				$this->messages[] = "Add category:".$category;		
 				
 				$sSQL = "insert into products ($activecode,itmname,itmfname,itmdescr,itmfdescr,sysins,active,itmactive,cat0,cat1,cat2,cat3,cat4) values (";
-				$sSQL .= $db->qstr($code).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr(date('Y-m-d h:m:s')).",$active,$itmactive,";			
+				$sSQL .= $db->qstr($code).",".$db->qstr($title).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr($descr).",".$db->qstr(date('Y-m-d h:m:s')).",$active,$itmactive,";			
 				$sSQL .= $db->qstr($cat[0]).",".$db->qstr($cat[1]).",".$db->qstr($cat[2]).",".$db->qstr($cat[3]).",".$db->qstr($cat[4]);			
 				$sSQL .= ")"; 
 
 				$result = $db->Execute($sSQL);				
 				$this->messages[] = "Add item:".$code;
+				
+				//read 
+				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,itmactive,code4,".
+						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$activecode.
+						" from products WHERE $activecode=" . $db->qstr($id);
+				$res = $db->Execute($sSQL);	
+				$this->record = $res->fields;
+				$this->messages[] = "Load record";				
 			
 				if (isset($_POST['htmltext'])) {
 					$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); 		 
@@ -261,11 +255,22 @@ class cpmhtmleditor {
 				}
 				
 				if ($mcpage = GetParam('mcpage')) {
-					$mydata = GetGlobal('controller')->calldpc_method("fronthtmlpage.mcSavePage use ".$title."+".$mcpage); 			
+					$mydata = _m("fronthtmlpage.mcSavePage use ".$title."+".$mcpage); 			
 					$this->messages[] = "MCPAGE:".$mcpage;
 				}
 			
 				$this->postok = $code; //active code
+				
+				//update turl global variables to change the exit
+				$newUrl = 'katalog.php?t='.$cpGet['t'].'&cat='.$cpGet['cat'].'&id='.$code;
+				$target_url = urlencode(encode($newUrl));
+				//echo $newUrl;
+				SetSessionParam('turl', $target_url);//urlencode(base64_encode($newUrl)));
+				SetSessionParam('turldecoded', $newUrl);
+				$urlquery = parse_url($newUrl);
+				parse_str($urlquery['query'], $getp);	
+				SetSessionParam('cpGet', base64_encode(serialize($getp)));
+				_v('rcpmenu.cpGet', $getp);	//update cpGet	
 			}
 			else
 				$this->messages[] = "Insert subject";			
@@ -282,7 +287,7 @@ class cpmhtmleditor {
     protected function render_edit() { 
 		$db = GetGlobal('db');
 		$type = '.html'; //default type for text attachment
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		$id = GetParam('id') ? GetParam('id') : $cpGet['id'];
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
@@ -337,7 +342,7 @@ class cpmhtmleditor {
 				}
 				
 				if ($mcpage = GetParam('mcpage')) {
-					$mydata = GetGlobal('controller')->calldpc_method("fronthtmlpage.mcSavePage use ".$title."+".$mcpage); 			
+					$mydata = _m("fronthtmlpage.mcSavePage use ".$title."+".$mcpage); 			
 					$this->messages[] = "MCPAGE:".$mcpage;
 				}				
 			
@@ -366,13 +371,13 @@ class cpmhtmleditor {
     }	
 	
 	public function hrefEshopDetails() {
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');		
+		$cpGet = _v('rcpmenu.cpGet');		
 		$id = $this->postok ? $this->postok : (GetParam('id') ? GetParam('id') : $cpGet['id']);
 		return $id ? seturl('t=cpmhtmldetails&id='.$id) : '#';
 	}
 	
 	public function hrefCopyItem() {
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');		
+		$cpGet = _v('rcpmenu.cpGet');		
 		$id = $this->postok ? $this->postok : (GetParam('id') ? GetParam('id') : $cpGet['id']);		
 		return $id ? seturl('t=cpmhtmlcopy&id='.$id) : '#';
 	}	
@@ -1122,7 +1127,7 @@ class cpmhtmleditor {
 	
 	public function itemText($isupdate=null) {
 		$type = '.html'; //default type for text attachment
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		if ($isupdate)
 			$id = GetParam('id') ? GetParam('id') : $cpGet['id'];	
 		else
@@ -1142,7 +1147,7 @@ class cpmhtmleditor {
 	public function getSelectedCategory() {
 		$db = GetGlobal('db');
 		$lan = getlocal();
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		$scat = $cpGet['cat'];
 		$sid = GetReq('id');//$cpGet['id'];
 			
@@ -1194,7 +1199,7 @@ class cpmhtmleditor {
 	public function getCategories() {
 		$db = GetGlobal('db');
 		$lan = getlocal();
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		$scat = $cpGet['cat'];			
 		$sid = GetReq('id'); //$cpGet['id'];
 		
@@ -1395,7 +1400,6 @@ class cpmhtmleditor {
 	  
 		$resultset = $db->Execute($sSQL,2);	
 		$result = $resultset;
-		//print_r($result);	
 	  
 		//$exist = $db->Affected_Rows();
 		foreach ($result as $i=>$rec) {
@@ -1490,13 +1494,6 @@ class cpmhtmleditor {
 		foreach ($mc_pages as $mcpage=>$mctitle) {
 			
 		    $mc_page = urlencode(base64_encode($mcpage . '.php'));
-		    /*$mc_title = ($mcpage==$mc_current_page) ?
-		               '<b>'.$mctitle.'</b>' : $mctitle;
-			*/
-			//select	
-		    //$qtokens[] = "<a href='cpmhtmleditor.php?htmlfile=" .$mc_page. "&mc_page=$mcpage&turl=".$_GET['turl']."&encoding=$encoding&editmode=1' target='mainFrame'>".$mc_title."</a>";
-			//edit
-			//$htokens[] = "<a href='cpmhtmleditor.php?htmlfile=" .$mc_page. "&encoding=$encoding&editmode=1' target='mainFrame'>".$mc_title."</a>";
 			$selected = ($mcpage==$mc_current_page) ? 'selected' : null;
 			$ret .= "<option value='$mctitle' $selected>$mctitle</option>";
 		}
@@ -1504,10 +1501,10 @@ class cpmhtmleditor {
 	}
 	
 	public function getMcPage() {
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		$id = GetParam('id') ? GetParam('id') : $cpGet['id'];
 		
-		$p = GetGlobal('controller')->calldpc_method('fronthtmlpage.mcSelectPage use '.$id);
+		$p = _m('fronthtmlpage.mcSelectPage use '.$id);
 		
 		return ($p);
 	}	
@@ -1537,7 +1534,7 @@ class cpmhtmleditor {
 
 	public function cpGet($var=null) {
 		
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		$cpGet = _v('rcpmenu.cpGet');
 		
 		if (!$var) return ($this->replace_spchars($cpGet['cat'],1)); //without special chars
 		return ($cpGet['id']);
