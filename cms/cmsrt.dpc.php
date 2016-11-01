@@ -13,6 +13,12 @@ $__EVENTS['CMSRT_DPC'][2]='setlanguage';
 //$__EVENTS['CMSRT_DPC'][3]='katalog';
 //$__EVENTS['CMSRT_DPC'][4]='klist';
 //$__EVENTS['CMSRT_DPC'][5]='kshow';
+$__EVENTS['CMSRT_DPC'][6] = 'included_0';
+$__EVENTS['CMSRT_DPC'][7] = 'included_1';
+$__EVENTS['CMSRT_DPC'][8] = 'included_2';
+$__EVENTS['CMSRT_DPC'][9] = 'included_3';
+$__EVENTS['CMSRT_DPC'][10] = 'included_4';
+$__EVENTS['CMSRT_DPC'][11] = 'cfrontpage';
 
 $__ACTIONS['CMSRT_DPC'][0]='shlangs';
 $__ACTIONS['CMSRT_DPC'][1]='lang';
@@ -122,7 +128,7 @@ class cmsrt extends cms  {
 							" from products ";	
 
 	    $this->scrollid = 0;//javascript scroll call meter
-		$this->load_mode = 0;		
+		$this->load_mode = 1;		
 
 		$this->javascript();		
 	}
@@ -135,6 +141,13 @@ class cmsrt extends cms  {
 		//$this->get_data_info(); //???? tags read
 		
 		switch ($event) {
+			case 'cfrontpage'   : die($this->frontpage()); break;
+			case 'included_4'   :
+			case 'included_3'   :
+			case 'included_2'   :
+			case 'included_1'   :
+		    case 'included_0'   : die($this->included()); break;				
+			
 			case "lang"  		: $this->selected_lan = GetParam("langsel"); break;
 			case "setlanguage"  : $this->selected_lan = $param1; break;
 			
@@ -157,9 +170,9 @@ class cmsrt extends cms  {
 								  
 			case 'klist'        : $this->isCAttach = $this->get_attachment(GetReq('cat'));
 			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_list(); 
-			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->list_katalog(0,'klist','fpkatalog',null,null,3); break;			
+			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->list_katalog(); break;			
 			case "index"        : 			
-			default 		 	: //$out .= $this->list_katalog(0); //call by home page (frontpage func)
+			default 		 	: //$out .= $this->list_katalog(); //call by home page (frontpage func)
 		}
 		
 		return ($out);
@@ -210,9 +223,9 @@ goBack();
     }	
 	
 	
-	protected function read_list() {
+	protected function read_list($page=null) {
         $db = GetGlobal('db');	
-		$page = GetReq('page') ? GetReq('page') : 0;
+		$_page = $page ? $page : (GetReq('page') ? GetReq('page') : 0);
 		$cat = GetReq('cat');	
 		$oper = '='; 			
 				     
@@ -246,25 +259,17 @@ goBack();
 		$sSQL .= $this->orderSQL();
 		  
 		if ($this->pager) {
-		    $p = $page * $this->pager;
-		    $sSQL .= " LIMIT $p,".$this->pager; //page element count
+		    $p = $_page * $this->pager;
+		    $sSQL .= " LIMIT $p," . $this->pager; 
 		}
 		//echo $sSQL;	
 	    $this->result = $db->Execute($sSQL,2);
- 	    $this->max_items = $db->Affected_Rows();//count($this->result);
-	      
-	    if ($this->max_items==1) {
-			return ($this->result->fields[$this->fcode]); //to view the item without click on dir
-		}
-		else { 
-	        //$this->max_selection = $this->get_max_result();			
-			return (null);
-		}		
+		return (null);
 	}		
 	
 	protected function list_katalog($imageclick=null,$cmd=null,$template=null,$no_additional_info=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$nolinemax=null,$originfunction=null) {
 	    $cmd = $cmd ? $cmd : 'klist';
-	    $pz = $photosize ? $photosize : 1;		   
+	    $pz = $photosize ? $photosize : 2;	//3	   
 	    $xdist = $this->imagex ? $this->imagex:100;
 	    $ydist = $this->imagey ? $this->imagey:null;	
         $cat = GetReq('cat');   
@@ -278,9 +283,7 @@ goBack();
 	    $mytemplate = $this->select_template($t);			      
 	   	
 	    if (!empty($this->result)) {		   
-
 			//$pp = $this->read_policy();
-
 			$item_code = $this->fcode;			
 	
 			foreach ($this->result as $n=>$rec) {
@@ -370,15 +373,36 @@ goBack();
 												  ));			
 
             $this->itmeter = $n+1; 	//echo $this->itmeter;
-	    }//empty result
+			
+			/*if ($this->load_mode = 1) {
+				$ret .= $this->cfrontpage($page, true, "class='tiles'", "section");
+			}*/
+	    }
 
 	    return ($ret);	
 	}		
 	
+	/*homepage call*/
 	public function frontpage() {
 		$this->read_list();
 		return $this->list_katalog(0,'klist','fpkatalog',null,null,3);
 	}
+	
+	/*ajax loading call after first loading*/
+	public function cfrontpage($page=null, $enable_ajax=false, $divargs=null, $divname=null) {
+		$param = $_GET['page'] ? $_GET['page'] : $page;
+	
+		if ($enable_ajax) {
+			$out = $this->get_scrollid(get_class($this),'frontpage', "$param", $divargs, $divname, true); 		
+			return ($out);
+		}
+
+		$pathname = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $param;
+		$contents = @file_get_contents($pathname);
+		$out = $this->process_commands($contents);
+		
+		return ($out);		
+	}	
 	
 	public function nextpage() {
 		$cat = GetReq('cat') ? GetReq('cat') : '0'; //dummy numeric		
@@ -1477,52 +1501,114 @@ EOF;
 
 
     //overrite
-	public function included($fname=null, $uselans=null, $enable_ajax=false) {
+	public function included($fname=null, $enable_ajax=false, $divargs=null, $divname=null) {
+
+		$param = $_GET['param'] ? $_GET['param'] : $fname;
 	
-		/*if (($enable_ajax) && (!GetReq('ajax'))) {
-			$out = $this->get_scrollid(get_class($this),'included',"fname|uselans","$fname|$uselans", true); 		
+		if ($enable_ajax) {
+			$out = $this->get_scrollid(get_class($this),'included', "$param", $divargs, $divname, true); 		
 			return ($out);
 		}
 
-		foreach ($_GET as $gname=>$gvalue) 
-			$$gname = $gvalue;
-	    */ 
-	    if ($fname) {
-			$name = ($uselans) ? str_replace('.', $this->lan . '.', $fname) : $fname;	
-			$pathname = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $name;
-
-			if (is_readable($pathname)) {
-				$contents = @file_get_contents($pathname);
-				$ret = $this->process_commands($contents);
-				return ($ret);
-			}
-
-        }	
-        return null; 		
+		$pathname = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $param;
+		$contents = @file_get_contents($pathname);
+		$out = $this->process_commands($contents);
+		
+		return ($out);		
 	}	
 	
 	//jquery call phpdac func for scroll fireup load
-	protected function get_scrollid($calling_object, $calling_function=null, $calling_vars=null, $calling_values=null, $variable_func=false) {
-	
+	protected function get_scrollid($calling_object, $calling_function=null, $param=null, $divargs=null, $divname=null, $variable_func=false) {
+	    $_d = $divname ? $divname : 'div';
 	    $scm = $this->scrollid++;	
 		
 	    if (($calling_object) && ($calling_function) && method_exists($calling_object,$calling_function)) {
 
 			$calling_function_varid = ($variable_func) ? $calling_function ."_{$scm}" : $calling_function;
 			
-			$divret = "<div id='load_{$calling_function_varid}'></div>";
-			$divret.= "<script>sc[{$scm}]='{$calling_function_varid}';</script>";
-			$divret.= "<div id='{$calling_function_varid}' style='visibility:hidden;'>{$calling_vars}-{$calling_values}</div>";	
+			$divret = "<script>sc[{$scm}]='{$calling_function_varid}';</script>";
+			$divret.= "<{$_d} {$divargs} id='{$calling_function_varid}' style='visibility:hidden;'>{$param}</{$_d}>";	
 			return ($divret);
 		}	
 		
 		return ($scm);	
 	}
 	
-	protected function scroll_javascript_code() {	
+	protected function scroll_javascript_code() {
+	    $keep_id = GetReq('id') ? 'id='.GetReq('id').'&cat='.GetReq('cat') : 'cat='.GetReq('cat');
+	    $ajaxurl = seturl($keep_id."&t=");	
+	
+		$jscroll = <<<JJSCROLL
+$(document).ready( function() {
+	$.ajaxSetup({ cache: false });
+	if (sc == undefined) return;
+	$(window).scroll(function() { 
+        if ($(window).scrollTop() + $(window).height() == $(document).height()) {	
+            read_scroll_data();
+		}
+	});	
+});
+function read_scroll_data() {
+	if (func = sc.shift()) {
+	var param = $('#'+func).html();
+	if (param) {					
+		setTimeout(function() {
+			$.ajax({
+				url: '{$ajaxurl}'+func+'&param='+param,
+				type: 'GET',
+				success: function(data) {					
+                if (data) {						
+					$('#'+func).html(data);
+					$('#'+func).css('visibility','visible');
+				}
+				else {
+				    $('#'+func).html('');
+					read_scroll_data();
+				}}	
+			});
+		},100);						
+	}
+	else {
+	    $.globalEval(func+'()');
+    }}	
+}
+	
+JJSCROLL;
+		return ($jscroll);			
 	}
 	
 	protected function timeout_javascript_code() {
+	    $keep_id = GetReq('id') ? 'id='.GetReq('id').'&cat='.GetReq('cat') : 'cat='.GetReq('cat');
+	    $ajaxurl = seturl($keep_id."&t=");	
+	
+		$jscroll = <<<JSCROLL
+//var sc = new Array(); //moved on top of file
+$(document).ready( function() {
+	$.ajaxSetup({ cache: false });
+	if (sc == undefined) return;
+	$.each( sc, function( index, func ) {
+		//console.log(func+':'+index);	
+		fetch_timeout_data(func, index*100);			    
+	});			
+});
+function fetch_timeout_data(func, outtime) {
+	if (func == undefined) return;			
+	var param = $('#'+func).html();
+	if (param) {		
+		setTimeout(function() {
+			$.ajax({
+				url: '{$ajaxurl}'+func+'&param='+param,
+				type: 'GET',
+				success: function(data) { $('#'+func).html(data); $('#'+func).css('visibility','visible')}});
+        },outtime);				  
+	}
+	else {
+	    $.globalEval(func+'()');
+    }
+	
+}
+JSCROLL;
+		return ($jscroll);			
 	}		
 	
 };
