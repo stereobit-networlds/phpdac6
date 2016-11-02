@@ -123,7 +123,7 @@ class shkatalogmedia {
 	var $orderid, $sortdef, $bypass_order_list;
 	var $isListView, $imgLargeDB, $imgMediumDB, $imgSmallDB;
 	var $ogTags, $siteTitle, $httpurl;
-	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan;
+	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan, $itmplpath;
 
 	function shkatalogmedia() {
 	  $GRX = GetGlobal('GRX');		
@@ -280,10 +280,12 @@ class shkatalogmedia {
 	  $this->twitTags = null;
 	  $this->filterajax = false; //true;
 	  
+	  $this->itmplpath = 'templates/';	  
+	  
 	  $this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-						$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname" .
-						" from products ";					
+						$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
+						"template,owner,itmactive from products ";					
     }
 	
 	function event($event=null) {
@@ -1290,6 +1292,10 @@ SCROLLTOP;
 			  $tokens[] = $rec['time'];
 			  $tokens[] = $rec['monthname'];
 			  
+			  $tokens[] = $rec['template'];
+			  $tokens[] = $rec['owner'];			  
+			  $tokens[] = $rec['itmactive'];
+			  
 			  if (!$custom_template) {
                 $items_grid[] = $this->combine_tokens($mytemplate, $tokens, true);//<<exec after tokens replace
                 $items_list[] = $this->combine_tokens($mytemplate_alt, $tokens, true);//<<exec after tokens replace			  
@@ -1438,6 +1444,10 @@ SCROLLTOP;
 			 $tokens[] = $rec['day'];
 			 $tokens[] = $rec['time'];
 			 $tokens[] = $rec['monthname'];
+			 
+			 $tokens[] = $rec['template'];
+		     $tokens[] = $rec['owner'];	
+             $tokens[] = $rec['itmactive'];			 
 						
 			 $items[] = $this->combine_tokens($mytemplate, $tokens, true);	
 			 unset($tokens);													 
@@ -1564,10 +1574,17 @@ SCROLLTOP;
 			 $tokens[] = $rec['month'];
 			 $tokens[] = $rec['day'];
 			 $tokens[] = $rec['time'];
-			 $tokens[] = $rec['monthname'];			 
+			 $tokens[] = $rec['monthname'];		
+
+			 $tokens[] = $rec['template'];
+			 $tokens[] = $rec['owner'];	
+             $tokens[] = $rec['itmactive'];			 
 			 
 			 //print_r($tokens);
-			 $out = $this->combine_tokens($mytemplate, $tokens, true);
+		 	 if ($itmpl = $rec['template'])
+		 		$out = $this->_ct($this->itmplpath . $itmpl, serialize($tokens), true);
+			else			 
+				$out = $this->combine_tokens($mytemplate, $tokens, true);
 			 
 			 $ogimage[] = $this->get_photo_url($rec[$item_code],2);
 			 

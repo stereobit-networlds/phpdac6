@@ -18,7 +18,7 @@ $__EVENTS['CMSRT_DPC'][7] = 'included_1';
 $__EVENTS['CMSRT_DPC'][8] = 'included_2';
 $__EVENTS['CMSRT_DPC'][9] = 'included_3';
 $__EVENTS['CMSRT_DPC'][10] = 'included_4';
-$__EVENTS['CMSRT_DPC'][11] = 'cfrontpage';
+$__EVENTS['CMSRT_DPC'][11] = 'frontpage';
 
 $__ACTIONS['CMSRT_DPC'][0]='shlangs';
 $__ACTIONS['CMSRT_DPC'][1]='lang';
@@ -45,7 +45,7 @@ class cmsrt extends cms  {
 	var $items, $csvitems;
 	
 	var $lan_set, $selected_lan, $message;
-	var $selectSQL, $codef, $lastprice, $pager;	
+	var $selectSQL, $codef, $lastprice, $pager, $itmplpath;	
 	var $lan, $itmname, $itmdescr, $itmeter;
 	var $picbg, $picmd, $picsm, $home, $cat_result, $isCAttach;
 	var $ogTags, $twigTags, $siteTitle, $siteTwiter, $siteFb, $httpurl;	
@@ -124,8 +124,9 @@ class cmsrt extends cms  {
 		$this->lastprice = $this->getmapf('lastprice') ? ','.$this->getmapf('lastprice') : ',xml';		
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-							$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname" .
-							" from products ";	
+							$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
+							"template,owner,itmactive from products ";	
+		$this->itmplpath = 'templates/';					
 
 	    $this->scrollid = 0;//javascript scroll call meter
 		$this->load_mode = 1;		
@@ -141,7 +142,7 @@ class cmsrt extends cms  {
 		//$this->get_data_info(); //???? tags read
 		
 		switch ($event) {
-			case 'cfrontpage'   : die($this->frontpage()); break;
+			case 'frontpage'    : die($this->frontpage()); break;
 			case 'included_4'   :
 			case 'included_3'   :
 			case 'included_2'   :
@@ -165,10 +166,14 @@ class cmsrt extends cms  {
 								  break;
 			case "setlanguage"  : //echo "Current language:",$this->lan_set[$this->selected_lan],"\n";  						
 			
-			case 'kshow'        : if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_item();
+			case 'kshow'        : _m("cmsvstats.update_item_statistics use ".GetReq('id'));
+			
+			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_item();
 			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->show_item(); break;
 								  
-			case 'klist'        : $this->isCAttach = $this->get_attachment(GetReq('cat'));
+			case 'klist'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat'));
+			
+			                      $this->isCAttach = $this->get_attachment(GetReq('cat'));
 			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_list(); 
 			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->list_katalog(); break;			
 			case "index"        : 			
@@ -263,7 +268,7 @@ goBack();
 		    $sSQL .= " LIMIT $p," . $this->pager; 
 		}
 		//echo $sSQL;	
-	    $this->result = $db->Execute($sSQL,2);
+	    $this->result = $db->Execute($sSQL);
 		return (null);
 	}		
 	
@@ -277,7 +282,7 @@ goBack();
 	    $ogImage = array();
 
 	    $mylinemax = ($nolinemax) ? null : $this->linemax;   
-	    $myimageclick = ($this->imageclick>0) ? 1 : $imageclick;
+	    $myimageclick = 1; // : $imageclick;
   
         $t = $template ? $template : 'fpkatalog';
 	    $mytemplate = $this->select_template($t);			      
@@ -354,6 +359,10 @@ goBack();
 				$tokens[] = $rec['time'];
 				$tokens[] = $rec['monthname'];
 				
+				$tokens[] = $rec['template'];
+				$tokens[] = $rec['owner'];
+				$tokens[] = $rec['itmactive'];
+				
                 //print_r($tokens);
 				$items[] = $this->combine_tokens($mytemplate, serialize($tokens), true);
 
@@ -374,8 +383,8 @@ goBack();
 
             $this->itmeter = $n+1; 	//echo $this->itmeter;
 			
-			/*if ($this->load_mode = 1) {
-				$ret .= $this->cfrontpage($page, true, "class='tiles'", "section");
+			/*if ($this->load_mode == 1) {
+				$ret .= $this->frontpage($page+1, true, "class='tiles'", "section");
 			}*/
 	    }
 
@@ -383,23 +392,22 @@ goBack();
 	}		
 	
 	/*homepage call*/
-	public function frontpage() {
+	/*public function frontpage() {
 		$this->read_list();
 		return $this->list_katalog(0,'klist','fpkatalog',null,null,3);
-	}
+	}*/
 	
 	/*ajax loading call after first loading*/
-	public function cfrontpage($page=null, $enable_ajax=false, $divargs=null, $divname=null) {
-		$param = $_GET['page'] ? $_GET['page'] : $page;
-	
+	public function frontpage($page=null, $enable_ajax=false, $divargs=null, $divname=null) {	
+		$param = $page ? $page : $_GET['param'];
+		
 		if ($enable_ajax) {
-			$out = $this->get_scrollid(get_class($this),'frontpage', "$param", $divargs, $divname, true); 		
+			$out = $this->get_scrollid(get_class($this),'frontpage', "$param", $divargs, $divname, false); 		
 			return ($out);
 		}
 
-		$pathname = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $param;
-		$contents = @file_get_contents($pathname);
-		$out = $this->process_commands($contents);
+		$this->read_list($param);
+		$out = $this->list_katalog($param,'klist','fpkatalog',null,null,3);
 		
 		return ($out);		
 	}	
@@ -547,10 +555,17 @@ goBack();
 				$tokens[] = $rec['month'];
 				$tokens[] = $rec['day'];
 				$tokens[] = $rec['time'];
-				$tokens[] = $rec['monthname'];			 
+				$tokens[] = $rec['monthname'];
+
+				$tokens[] = $rec['template'];
+				$tokens[] = $rec['owner'];
+                $tokens[] = $rec['itmactive'];				
 			 
 				//print_r($tokens);
-				$out = $this->combine_tokens($mytemplate, serialize($tokens), true);
+				if ($itmpl = $rec['template'])
+					$out = $this->_ct($this->itmplpath . $itmpl, serialize($tokens), true);
+				else	
+					$out = $this->combine_tokens($mytemplate, serialize($tokens), true);
 			 
 				$ogimage[] = $this->get_photo_url($rec[$item_code],2);
 			 
@@ -1510,7 +1525,7 @@ EOF;
 			return ($out);
 		}
 
-		$pathname = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $param;
+		$pathname = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $param . '.php';
 		$contents = @file_get_contents($pathname);
 		$out = $this->process_commands($contents);
 		

@@ -260,7 +260,7 @@ class rculists  {
 		    $title = str_replace(' ','_',localize('_MAILQUEUE',getlocal()));
 		   
 		    if ($invalid) {
-				$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue where status=-1 or status=-2) as o";	
+				$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue where (status=-1 or status=-2) and active>-9) as o";	
 				$nosearch = 1;
 			}
 			else {
@@ -581,43 +581,52 @@ class rculists  {
 
 	protected function cleanListFromBounce($fid=null) {
 		$db = GetGlobal('db');		
-		$fails = GetParam('fid') ? GetParam('fid') : ($fid ? $fid : 0);
+		$sendtimes = GetParam('fid') ? GetParam('fid') : ($fid ? $fid : 0);
 		$m=0;
 		
 		//clean Invalid mails
-		$sSQL = 'select receiver from mailqueue where status=-1 group by receiver order by receiver';		   
+		$sSQL = 'select receiver from mailqueue where active=0 and status=-1 group by receiver order by receiver';		   
 	    $result = $db->Execute($sSQL,2);
 		if (!empty($result)) {
-		
 			foreach ($result as $i=>$rec) {
-				if ($fails) {
-					$sSQL = 'update ulists set active=0 where active=1 and email='.$db->qstr($rec[0]);
+				if ($sendtimes) { // if post
+					$sSQL = 'update ulists set active=0 where active=1 and failed>0 and email='.$db->qstr($rec[0]);
 					$resultset = $db->Execute($sSQL);
 					$this->messages[] = $rec[0] . ' is invalid, became inactive';				
+					
+					//clean body data from queue
+					$sSQL2 = "update mailqueue set active=-9,pass='',body='' where active=0 and status=-1 and receiver=".$db->qstr($rec[0]);
+					$result = $db->Execute($sSQL2);
 				}	
 				else
 					$this->messages[] = $rec[0] . ' is invalid';				
 			}
 			//echo 'Invalid:'.$i;
-			$m = $i;
+			$m = $i+1;
 		}
 		
 		//clean bounced mails
-		$sSQL = 'select receiver from mailqueue where status=-2 group by receiver order by receiver';		   
+		$sSQL = 'select receiver,count(id) as c from mailqueue where active=0 and reply IS NULL and status=-2 group by receiver';		   
 	    $result = $db->Execute($sSQL,2);
 		if (!empty($result)) {
-		
+			$ix = 0;
 			foreach ($result as $i=>$rec) {
-				if ($fails) {
-					$sSQL = 'update ulists set active=0 where active=1 and email='.$db->qstr($rec[0]) . ' and fails>=' . $fails;
+				if (($sendtimes) && (intval($rec[1])>$sendtimes)) {	//if post
+					$sSQL = 'update ulists set active=0 where active=1 and failed>0 and email='.$db->qstr($rec[0]);
 					$resultset = $db->Execute($sSQL);		
-					$this->messages[] = $rec[0] . ' does not exist, became inactive';
+					$this->messages[] = $rec[0] . ' became inactive, has failed transmitions:'.$rec[1];			
+					
+					//clean body data from queue based on fails					
+					$sSQL2 = "update mailqueue set active=-9,pass='',body='' where active=0 and status=-2 and reply IS NULL and receiver=".$db->qstr($rec[0]);
+					$result = $db->Execute($sSQL2);	
+					$ix+=1;	
 				}
-				else
-					$this->messages[] = $rec[0] . ' does not exist';
+				//else
+					//$this->messages[] = $rec[0] . ' has failed transmitions:'.$rec[1];
 			}
-			//echo 'Bounce:'.$i;
-			$m+=$i;
+			//echo 'Bounce:'.$i.'->'.$ix;
+			$this->messages[] = ($ix ? $ix : $i+1) . ' emails failed to transmit';
+			$m+=$ix;
 		}
 		//echo 'Sum:'.$m;
 		return $m;

@@ -48,19 +48,19 @@ class cpflotcharts {
 		return implode(' , ', $charts);
 	}
 	
-	public function callChartGroupFirst($group=null, $param=null) {
-		if (empty($group)) return null;
+	public function callChartGroupFirst($group=null, $param=null, $default='0') {
+		if (empty($group)) return $default;
 
 		foreach ($group as $g) {
 			if ($this->isChart($g)) 
 				return $param ? $this->charts[$g][$param] : $this->callChart($g);
 		}	
 
-		return null;
+		return $default;
 	}		
 	
-	public function callChartGroupLast($group=null, $param=null) {
-		if (empty($group)) return null;
+	public function callChartGroupLast($group=null, $param=null, $default='0') {
+		if (empty($group)) return $default;
 		$rgroup = array_reverse($group); 
 
 		foreach ($rgroup as $g) {
@@ -68,27 +68,27 @@ class cpflotcharts {
 				return $param ? $this->charts[$g][$param] : $this->callChart($g);
 		}	
 
-		return null;
+		return $default;
 	}	
 
-	public function callChartGroupMin($group=null, $param=null) {
+	public function callChartGroupMin($group=null, $param=null, $default='0') {
 		$p = $param ? $param : 'ymin';
-		if (empty($group)) return null;	
+		if (empty($group)) return $default;	
 
 		foreach ($group as $g) 
 			$min[] = $this->charts[$g][$p];
 		
-		return (min($min));	
+		return ((!empty($min)) ? max($min) : $default );	
 	}	
 	
-	public function callChartGroupMax($group=null, $param=null) {
+	public function callChartGroupMax($group=null, $param=null, $default='0') {
 		$p = $param ? $param : 'ymax';
-		if (empty($group)) return null;	
+		if (empty($group)) return $default;	
 
 		foreach ($group as $g) 
-			$max[] = $this->charts[$g][$p];
-		
-		return (max($max));	
+			$max[] = isset($this->charts[$g][$p]) ? $this->charts[$g][$p] : 0;
+
+		return ((!empty($max)) ? max($max) : $default );	
 	}	
 	
 	protected function nformat($n, $dec=0) {
@@ -481,7 +481,7 @@ var Script = function () {
         });
 
         $("#setSelection").click(function () {
-            plot.setSelection({ xaxis: { from: 0, to: {$this->callChartGroupLast($this->chartGroup, 'xmax')} } });
+            plot.setSelection({ xaxis: { from: 0, to: {$this->callChartGroupLast($this->chartGroup, 'xmax', '0')} } });
         });
     });
 
@@ -811,8 +811,8 @@ var Script = function () {
                     labelBoxBorderColor: null
                 },
 
-                yaxis: { min: 0, max: {$this->callChartGroupMax($this->chartGroup, 'ymax')}},
-                xaxis: { min: 1, max: {$this->callChartGroupMax($this->chartGroup, 'xmax')}}
+                yaxis: { min: 0, max: {$this->callChartGroupMax($this->chartGroup, 'ymax','0')}},
+                xaxis: { min: 1, max: {$this->callChartGroupMax($this->chartGroup, 'xmax','1')}}
             });
 
         // plot tooltip show
@@ -957,8 +957,8 @@ var Script = function () {
                     labelBoxBorderColor: null
                 },
 
-                yaxis: { min: 0, max: {$this->callChartGroupMax($this->chartGroup, 'ymax')}},
-                xaxis: { min: 1, max: {$this->callChartGroupMax($this->chartGroup, 'xmax')}}
+                yaxis: { min: 0, max: {$this->callChartGroupMax($this->chartGroup, 'ymax', '0')}},
+                xaxis: { min: 1, max: {$this->callChartGroupMax($this->chartGroup, 'xmax', '1')}}
             });
 
         // plot tooltip show
@@ -1081,8 +1081,8 @@ var Script = function () {
                     labelBoxBorderColor: null
                 },
 
-                yaxis: { min: 0, max: {$this->callChartGroupMax($this->chartGroup, 'ymax')}},
-                xaxis: { min: 1, max: {$this->callChartGroupMax($this->chartGroup, 'xmax')}}
+                yaxis: { min: 0, max: {$this->callChartGroupMax($this->chartGroup, 'ymax','0')}},
+                xaxis: { min: 1, max: {$this->callChartGroupMax($this->chartGroup, 'xmax','1')}}
             });
 
         // plot tooltip show
@@ -1200,8 +1200,8 @@ var Script = function () {
                     labelBoxBorderColor: null
                 },
 
-                yaxis: { min: 0, max: {$this->callChartGroupMax($this->chartGroup, 'ymax')}},
-                xaxis: { min: 1, max: {$this->callChartGroupMax($this->chartGroup, 'xmax')}}
+                yaxis: { min: 0, max: {$this->callChartGroupMax($this->chartGroup, 'ymax','0')}},
+                xaxis: { min: 1, max: {$this->callChartGroupMax($this->chartGroup, 'xmax','1')}}
             });
 
         // plot tooltip show

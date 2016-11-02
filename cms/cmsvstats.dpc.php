@@ -159,6 +159,9 @@ EOF;
         $db = GetGlobal('db'); 
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
+		
+		if (GetSessionParam('ADMIN'))
+			return false;
 
 	    $currentdate = time();
 	    $mydate = $db->qstr(date('Y-m-d h:i:s',$currentdate));		
@@ -193,6 +196,9 @@ EOF;
 
 	public function update_category_statistics($cat, $tid=null, $iref=null) {
         $db = GetGlobal('db'); 
+		
+		if (GetSessionParam('ADMIN'))
+			return false;		
 
         $UserName = GetGlobal('UserName');		
 		$name = $UserName ? decode($UserName) : session_id();			
@@ -232,6 +238,9 @@ EOF;
         $db = GetGlobal('db'); 
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
+		
+		if (GetSessionParam('ADMIN'))
+			return false;		
 	
 	    $currentdate = time();
 	    $myday  = date('d',$currentdate);	
@@ -263,6 +272,9 @@ EOF;
 
 	public function update_action_statistics($id, $user=null) {
         $db = GetGlobal('db'); 
+		
+		if (GetSessionParam('ADMIN'))
+			return false;		
 
 	    $currentdate = time();	
 	    $myday  = date('d',$currentdate);	
@@ -290,6 +302,9 @@ EOF;
 	
 	public function update_event_statistics($id, $user=null) {
         $db = GetGlobal('db'); 
+		
+		if (GetSessionParam('ADMIN'))
+			return false;		
 
 	    $currentdate = time();	
 	    $myday  = date('d',$currentdate);	

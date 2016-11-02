@@ -47,6 +47,7 @@ class cpmhtmleditor {
 	var $htmlfile, $ckeditor4, $cke4, $ckjs;
 	var $urlpath, $urlbase, $msg;
 	var $photodb, $restype, $cseparator, $map_t, $map_f, $encodeimageid;
+	var $itmpath, $selectSQL;
 	
 	var $messages, $postok, $record;
 
@@ -91,6 +92,14 @@ class cpmhtmleditor {
 		$csep = remote_paramload('RCITEMS','csep',$this->path); 
 		$this->cseparator = $csep ? $csep : '^';
 
+		$this->itmplpath = 'templates/';
+		
+		$this->activecode = $this->getmapf('code');
+		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
+							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
+							$this->activecode . ",weight,volume,dimensions,size,color,manufacturer,orderid," .
+							"template,owner,itmactive from products ";		
+		
 		$this->record = null;
 		$this->messages = array();
 		$this->postok = false;	
@@ -206,8 +215,6 @@ class cpmhtmleditor {
 		$type = '.html'; //default type for text attachment
 		$cpGet = _v('rcpmenu.cpGet');
 		$id = GetParam('id');
-		
-		$activecode = $this->getmapf('code');
 
 		if (isset($_POST['insert'])) { 
 
@@ -219,6 +226,7 @@ class cpmhtmleditor {
 				$descr = GetParam('descr') ? GetParam('descr') : substr(trim(strip_tags($text)),0,250).'...';
 				$active = GetParam('active') ? '101' : '0';
 				$itmactive = GetParam('itmactive') ? '1' : '0';
+				$template = GetParam('mctemplate');
 				
 				if (!empty($_POST['include'])) 
 					$category = array_shift($_POST['include']); //get first from list
@@ -231,18 +239,17 @@ class cpmhtmleditor {
 				$save_cat = $this->add_kategory_data($category);
 				$this->messages[] = "Add category:".$category;		
 				
-				$sSQL = "insert into products ($activecode,itmname,itmfname,itmdescr,itmfdescr,sysins,active,itmactive,cat0,cat1,cat2,cat3,cat4) values (";
+				$sSQL = "insert into products ({$this->activecode},itmname,itmfname,itmdescr,itmfdescr,sysins,active,itmactive,cat0,cat1,cat2,cat3,cat4,template) values (";
 				$sSQL .= $db->qstr($code).",".$db->qstr($title).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr($descr).",".$db->qstr(date('Y-m-d h:m:s')).",$active,$itmactive,";			
-				$sSQL .= $db->qstr($cat[0]).",".$db->qstr($cat[1]).",".$db->qstr($cat[2]).",".$db->qstr($cat[3]).",".$db->qstr($cat[4]);			
+				$sSQL .= $db->qstr($cat[0]).",".$db->qstr($cat[1]).",".$db->qstr($cat[2]).",".$db->qstr($cat[3]).",".$db->qstr($cat[4]).",";			
+				$sSQL .= $db->qstr($template . '.php');
 				$sSQL .= ")"; 
 
 				$result = $db->Execute($sSQL);				
 				$this->messages[] = "Add item:".$code;
 				
 				//read 
-				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,itmactive,code4,".
-						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$activecode.
-						" from products WHERE $activecode=" . $db->qstr($id);
+				$sSQL = $this->selectSQL . " WHERE {$this->activecode}=" . $db->qstr($id);
 				$res = $db->Execute($sSQL);	
 				$this->record = $res->fields;
 				$this->messages[] = "Load record";				
@@ -254,10 +261,10 @@ class cpmhtmleditor {
 					$this->messages[] = "Save text:".$type;
 				}
 				
-				if ($mcpage = GetParam('mcpage')) {
+				/*if ($mcpage = GetParam('mcpage')) {
 					$mydata = _m("fronthtmlpage.mcSavePage use ".$title."+".$mcpage); 			
 					$this->messages[] = "MCPAGE:".$mcpage;
-				}
+				}*///DISABLED
 			
 				$this->postok = $code; //active code
 				
@@ -292,8 +299,6 @@ class cpmhtmleditor {
 	    $lan = $lang?$lang:getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';		
-
-		$activecode = $this->getmapf('code');	
       
 		if (isset($_POST['update'])) { //post edit
 
@@ -305,6 +310,7 @@ class cpmhtmleditor {
 				$descr = GetParam('descr');// ? GetParam('descr') : substr(trim(strip_tags($text)),0,250).'...';
 				$active = GetParam('active') ? '101' : '0';
 				$itmactive = GetParam('itmactive') ? '1' : '0';
+				$template = GetParam('mctemplate');
 				
 				if (!empty($_POST['include'])) 
 					$category = array_shift($_POST['include']); //get first from list
@@ -318,20 +324,17 @@ class cpmhtmleditor {
 				
 				//update
 				$sSQL = "update products set $itmname=" . $db->qstr($title) . ",$itmdescr=" . $db->qstr($descr);
-				$sSQL.= ",itmactive=" . $itmactive . ",active=" . $active;
+				$sSQL.= ",itmactive=" . $itmactive . ",active=" . $active . ",template=". $db->qstr($template);
 				foreach($cat as $i=>$c) 
 					$sSQL .= ",cat{$i}=" . $db->qstr($c);
-				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
+				$sSQL .= " WHERE {$this->activecode}=" . $db->qstr($id);
 				$res = $db->Execute($sSQL);	
-				$this->record = $res->fields;
 				$this->messages[] = "Update record";				
 				
 				//read 
-				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,itmactive,code4,".
-						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$activecode.
-						" from products WHERE $activecode=" . $db->qstr($id);
-				$res = $db->Execute($sSQL);	
-				$this->record = $res->fields;
+				$sSQL2 = $this->selectSQL . " WHERE {$this->activecode}=" . $db->qstr($id);
+				$res2 = $db->Execute($sSQL2);	
+				$this->record = $res2->fields;
 				$this->messages[] = "Load record";									
 				
 				if (isset($_POST['htmltext'])) {
@@ -341,10 +344,10 @@ class cpmhtmleditor {
 					$this->messages[] = "Save text:".$type;
 				}
 				
-				if ($mcpage = GetParam('mcpage')) {
+				/*if ($mcpage = GetParam('mcpage')) {
 					$mydata = _m("fronthtmlpage.mcSavePage use ".$title."+".$mcpage); 			
 					$this->messages[] = "MCPAGE:".$mcpage;
-				}				
+				}*///DISABLED				
 			
 				$this->postok = $id; //active code
 			}
@@ -356,10 +359,8 @@ class cpmhtmleditor {
 			$this->messages[] = $id ? "Load text" : null;
 			
 			if ($id) {
-				$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,itmactive,code4,".
-						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$activecode.
-						" from products ";	
-				$sSQL .= " WHERE $activecode=" . $db->qstr($id);
+				$sSQL = $this->selectSQL;	
+				$sSQL .= " WHERE {$this->activecode}=" . $db->qstr($id);
 				$res = $db->Execute($sSQL);	
 				$this->record = $res->fields;
 			
@@ -1287,6 +1288,21 @@ class cpmhtmleditor {
         return ($result);		
     }
 	
+	public function getTags() {
+		$cpGet = _v('rcpmenu.cpGet');
+		$code = GetParam('id') ? GetParam('id') : $cpGet['id'];		
+        if (!$code) return;
+		
+        $db = GetGlobal('db'); 
+	    $lan = getlocal();
+	    $itmkeywords = $lan?'keywords'.$lan:'keywords0';
+  
+        $sSQL = "select $itmkeywords from ptags where code=" . $db->qstr($code);
+		$result = $db->Execute($sSQL);
+		
+        return ($result->fields[0]);		
+    }		
+	
 	protected function add_kategory_data($cat=null) {
         if (!$cat) return;
         $db = GetGlobal('db'); 
@@ -1460,10 +1476,8 @@ class cpmhtmleditor {
 		$type = '.html'; //default type for text attachment
 		$id = GetReq('id');
 		
-		$activecode = $this->getmapf('code');		
-		
 		//delete product
-		$sSQL = "delete from products where $activecode=" . $db->qstr($id);
+		$sSQL = "delete from products where {$this->activecode}=" . $db->qstr($id);
 		$db->Execute($sSQL);
 
 		//delete ptags
@@ -1482,6 +1496,26 @@ class cpmhtmleditor {
 		return true;
 	}
 
+	//select templates to publish post with
+	public function templates() {
+		$path = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);
+		$tpath = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);
+		$t_current_page = GetParam('mctemplate') ? GetParam('mctemplate') : $this->getField('template'); 
+		
+		$templates = opendir($this->prpath . $path .'/'. $tpath . '/' . $this->itmplpath);
+		while($file= readdir($templates)){
+			
+			if (($file=='.') || ($file=='..')) continue;
+			
+			$tf = str_replace('.php','',$file);
+			$selected = ($tf==$t_current_page) ? 'selected' : null;
+			$ret .= "<option value='$tf' $selected>$tf</option>";
+		}
+		closedir();
+		
+		return ($ret);	
+	}	
+	
 	//select mcpage to publish post with
 	public function frontpages() {
 		
@@ -1494,7 +1528,7 @@ class cpmhtmleditor {
 		foreach ($mc_pages as $mcpage=>$mctitle) {
 			
 		    $mc_page = urlencode(base64_encode($mcpage . '.php'));
-			$selected = ($mcpage==$mc_current_page) ? 'selected' : null;
+			$selected = ($mc_page==$mc_current_page) ? 'selected' : null;
 			$ret .= "<option value='$mctitle' $selected>$mctitle</option>";
 		}
 		return ($ret);	
@@ -1522,7 +1556,7 @@ class cpmhtmleditor {
 			
 			if (!$scan)
 				return ($this->record[$field]);
-			
+
 		    switch ($field) {
 				case 'itmactive' : $ret = ($this->record[$field]>0) ? 'checked' : null; break;
 				case 'active'    : $ret = ($this->record[$field]>0) ? 'checked' : null; break;
