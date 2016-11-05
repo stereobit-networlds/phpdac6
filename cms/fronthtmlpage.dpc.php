@@ -386,9 +386,7 @@ EOF;
 				elseif ($is_cropwiz)	
 					$mainframe_url = $turl; //$this->url;					
 				else
-				    $mainframe_url = $is_oversized ?
-				                     $this->self_addspace(true) : 
-				                     "cp/cpmhtmleditor.php?cke4=1&encoding=".$encoding."&htmlfile=" . urlencode(base64_encode($file2edit));
+				    $mainframe_url = $is_oversized ? $this->self_addspace(true) : $this->cpeditor($file2edit);
 		    }						 
 			else {
                 if ($is_cpwizard)
@@ -396,19 +394,14 @@ EOF;
 				elseif ($is_cropwiz)	
 					$mainframe_url = $turl; 					
 				else			
-				    $mainframe_url = $is_oversized ?
-				                     $this->self_addspace(true) : 
-						    		 "cp/cp.php?editmode=1&encoding=".$encoding."&turl=" . urlencode(base64_encode($turl));
+				    $mainframe_url = $is_oversized ? $this->self_addspace(true) : $this->cpfp($turl);
 			}					 
 		}  
 		else { 
 		    if ($is_cpwizard)
 				$mainframe_url = "http://".$this->url;
 			else
-			    $mainframe_url = $is_oversized ?
-				                 $this->self_addspace(true) : 
-							     "cp/cp.php?editmode=1&encoding=".$encoding."&turl=" . urlencode(base64_encode($turl));
-								 //"cp/cpside.html";
+			    $mainframe_url = $is_oversized ?  $this->self_addspace(true) : $this->cpfp($turl);
 	  	}
 	
 	    //loading text : http://stackoverflow.com/questions/8626638/how-to-display-loading-message-when-an-iframe-is-loading
@@ -439,6 +432,24 @@ EOF;
 	   return ($fp);
 	}	
 	
+	protected function cpfp($turl) {
+			
+		$ret = 	"cp/cp.php?turl=" . urlencode(base64_encode($turl));		
+		return ($ret);
+	}	
+	
+	protected function cpeditor($file) {
+			
+		$ret = 	"cp/cpmhtmleditor.php?htmlfile=" . urlencode(base64_encode($file));		
+		return ($ret);
+	}		
+	
+	protected function self_addspace($retlink=false) {
+			
+		$ret = $retlink ? 'cp/cp.php?t=cpupgrade&wf=addspace' :
+			              "<h3><a href='cp/cp.php?t=cpupgrade&wf=addspace'>" . localize('_addspace', getlocal())."</a></h3>";				
+		return ($ret);
+	}	
 	
 	protected function app_cp_wizard() {
 	    $wizfile = $this->prpath . 'cpwizard.ini';
@@ -552,15 +563,7 @@ EOF;
 		}	
 		
 		return ($size);
-    }	
-	
-	protected function self_addspace($retlink=false) {
-			
-		$ret = $retlink ? 'cp/cp.php?t=cpupgrade&wf=addspace' :
-			              "<h3><a href='cp/cp.php?t=cpupgrade&wf=addspace'>" . localize('_addspace', getlocal())."</a></h3>";				
-			
-		return ($ret);
-	}	
+    }		
 	
 	
 	/********* PUBLIC FUNCS *********/

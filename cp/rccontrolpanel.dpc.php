@@ -28,6 +28,7 @@ $__EVENTS['RCCONTROLPANEL_DPC'][14]='cpinboxno';
 $__EVENTS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
 $__EVENTS['RCCONTROLPANEL_DPC'][16]='cptasksno';
 $__EVENTS['RCCONTROLPANEL_DPC'][17]='lang'; //language selection by crmrt
+$__EVENTS['RCCONTROLPANEL_DPC'][18]='cpupgrade';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
@@ -47,6 +48,7 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][14]='cpinboxno';
 $__ACTIONS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
 $__ACTIONS['RCCONTROLPANEL_DPC'][16]='cptasksno';
 $__ACTIONS['RCCONTROLPANEL_DPC'][17]='lang'; //language selection by crmrt
+$__ACTIONS['RCCONTROLPANEL_DPC'][18]='cpupgrade';
 
 $__LOCALE['RCCONTROLPANEL_DPC'][0]='RCCONTROLPANEL_DPC;Control Panel;Control Panel';
 $__LOCALE['RCCONTROLPANEL_DPC'][1]='_BACKCP;Back;Επιστροφή';
@@ -251,7 +253,6 @@ class rccontrolpanel {
 	var $editmode;
 	var $application_path;	
 	var $environment, $url, $murl, $urlpath;
-	var $dhtml, $tools, $has_eshop;
 	var $appkey, $awstats_url;
 	var $cptemplate, $stats, $cpStats;
 	var $turl, $cpGet, $turldecoded, $messages, $tasks;
@@ -395,6 +396,7 @@ class rccontrolpanel {
 							 die();
 		                     break;
 							 
+		 case "cpaupgrade"  :					 
 		 case "cp"          :
 		 default         	:
 		                     
@@ -431,6 +433,8 @@ class rccontrolpanel {
 			case 'cpitemVisits': $out = $this->viewItemVisits(); break;
 			case 'cpcatVisits' : $out = $this->viewCatVisits(); break;			
 		  	case "cpinfo"      : break;    
+			
+			case "cpupgrade"   :
 			case "cp"          :	
 			default            : $this->getTURL(); //save param for use by metro cp
 			
@@ -701,36 +705,28 @@ $(document).ready(function(){
 												$text = "Unknown tool.";										
                                         }										
                                         break;	
-               case 'add_domainname':  	
-			                            $text = "Domain name ($this->url) installed. ";
-										//if ($e1 = $this->call_wizard_url('add_domainname'))
-                                          //  $text .= "<a href='$e1'>Re-change.</a>"; 										
-                                        break;
-
-			   //case 'uninstalleshop'   :							
-               case 'eshop'   :         //$text = "e-shop feature installed"; break;
+               case 'add_domainname':   $text = "Domain name ($this->url) installed. ";									
+                                        break;						
+               case 'eshop'         :         
 										$message = localize('_uninstalleshop',getlocal());
 			                            if ($valid = $this->is_valid_eshop()) {//uninstall
-										 
 											$message .= ' ('.$valid.')';
-									
-										    //you can unistall before expired
 											if ($e1 = $this->call_wizard_url('uninstalleshop')) 
 											  $text = "<a href='$e1'>".$message."</a>"; 	
 											else
  										      $text = "Unknown tool.";
 										}
-                                        else {//uninstall
-										    if ($e1 = $this->call_wizard_url('uninstalleshop')) 
-											  $text = "<a href='$e1'>".$message."</a>"; 	
+                                        else {//install
+										    if ($e1 = $this->call_wizard_url('eshop')) 
+											  $text = "<a href='$e1'>".localize('_installeshop',getlocal())."</a>"; 	
 											else
  										      $text = "Unknown tool.";
                                         }										
                                         break;
-               case 'ckfinder':         $text = "CKfinder installed"; break;
-               case 'ieditor' :         $text = "IEditor installed"; break;
-			   case 'printer' :         $text = "Printer installed"; break;
-			   case 'awstats' :         $text = "AWStats installed"; break;	
+               case 'ckfinder'      :   $text = "CKfinder installed"; break;
+               case 'ieditor'       :   $text = "IEditor installed"; break;
+			   case 'printer'       :   $text = "Printer installed"; break;
+			   case 'awstats'       :   $text = "AWStats installed"; break;	
 			   
 			   case 'edit_htmlfiles':   //$text = $this->edit_html_files(false, true, true);
 			                            break; 

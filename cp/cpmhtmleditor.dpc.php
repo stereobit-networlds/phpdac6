@@ -32,8 +32,6 @@ $__ACTIONS['CPMHTMLEDITOR_DPC'][6]='cpmedititem';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][7]='cpmnewitem';
 $__ACTIONS['CPMHTMLEDITOR_DPC'][8]='cpmdelitem';
 
-//$__DPCATTR['CPMHTMLEDITOR_DPC']['cpmhtmleditor'] = 'cpmhtmleditor,1,0,0,0,0,0,0,0,0,0,0,1';
-
 $__LOCALE['CPMHTMLEDITOR_DPC'][0]='SHLOGIN_DPC;Login;Εισαγωγή';
 $__LOCALE['CPMHTMLEDITOR_DPC'][1]='_submit;Save;Αποθήκευση';
 $__LOCALE['CPMHTMLEDITOR_DPC'][2]='_title;Subject;Θέμα';
@@ -51,15 +49,13 @@ class cpmhtmleditor {
 	
 	var $messages, $postok, $record;
 
-	function __construct() {
+	public function __construct() {
 	
 		self::$staticpath = paramload('SHELL','urlpath');
 	
 		$this->urlpath = paramload('SHELL','urlpath');		  
 		$this->urlbase = paramload('SHELL','urlbase');	
 		
-		$this->encoding = $_GET['encoding']?$_GET['encoding']:'utf-8';
-		//echo '>',$encoding;
 		$this->prpath = paramload('SHELL','prpath');
 		$tmpl_path = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);
 		$this->template = $tmpl_path ? $tmpl_path .'/' : null;

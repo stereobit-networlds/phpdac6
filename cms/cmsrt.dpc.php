@@ -39,7 +39,7 @@ require_once($a);
 
 class cmsrt extends cms  {
 	
-	var $map_t, $map_f, $cseparator, $onlyincategory;
+	var $map_t, $map_f, $cseparator, $onlyincategory, $encodeimageid;
 	var $imgxval, $imgyval, $image_size_path;
 	var $autoresize, $restype, $replacepolicy;	
 	var $items, $csvitems;
@@ -63,6 +63,7 @@ class cmsrt extends cms  {
 		
 		$csep = remote_paramload('RCITEMS','csep',$this->prpath); 
 		$this->cseparator = $csep ? $csep : '^';	
+		$this->encodeimageid = remote_paramload('SHKATALOGMEDIA','encodeimageid',$this->path);		
 		$this->onlyincategory = remote_paramload('SHKATALOGMEDIA','onlyincategory',$this->prpath);
 		$this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->prpath);		
 		
@@ -830,7 +831,7 @@ goBack();
 		}
 		else {//ordinal image
 	  
-			$code = $this->encode_image_id($code); //_m('shkategories.encode_image_id use '.$code);			  
+			$code = $this->encode_image_id($code, $this->encodeimageid); 		  
 			$pfile = $code;
 			$photo_file = $this->urlpath . '/' .$tpath .'/'. $pfile . $this->restype;	  
 			if (!file_exists($photo_file)) {
