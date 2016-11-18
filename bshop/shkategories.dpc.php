@@ -330,22 +330,22 @@ class shkategories {
 				  				  				  
 				  
                   switch ($type) {
-                    case  2 :  $mytokens[] =  seturl("t=$ti&cat=$gr",$loctitle,null,null,null,true) . "<br>";
+                    case  2 :  $mytokens[] =  _m("cmsrt.url use t=$ti&cat=$gr+$loctitle") . '<br/>';//seturl("t=$ti&cat=$gr",$loctitle,null,null,null,true) . "<br>";
 							   break;
 							   
-                    case  3 :  $mytokens[] = seturl("t=$ti&cat=$gr","<B>".$loctitle."</B",null,null,null,true);
+                    case  3 :  $mytokens[] = _m("cmsrt.url use t=$ti&cat=$gr+<b>$loctitle</b>"); //seturl("t=$ti&cat=$gr","<b>".$loctitle."</b>",null,null,null,true);
                                break;
 							   
-					case  4 :  $mytokens[] = seturl("t=$ti&cat=$gr","<B>" . $loctitle . "</B>",null,null,null,true);
+					case  4 :  $mytokens[] = _m("cmsrt.url use t=$ti&cat=$gr+<b>$loctitle</b>"); //seturl("t=$ti&cat=$gr","<b>" . $loctitle . "</b>",null,null,null,true);
 					           break;
 
 					case  1 : 
                     default : 
-					             $mytokens[] = seturl("t=$ti&cat=$gr",$loctitle,null,null,null,true) . " " . $this->outpoint . " ";
-								 $tok2[$i][] = seturl("t=$ti&cat=$gr",$loctitle,null,null,null,true) . " " . $this->outpoint . " ";
+					             $mytokens[] = _m("cmsrt.url use t=$ti&cat=$gr+$loctitle") . " " . $this->outpoint . " "; //seturl("t=$ti&cat=$gr",$loctitle,null,null,null,true) . " " . $this->outpoint . " ";
+								 $tok2[$i][] = _m("cmsrt.url use t=$ti&cat=$gr+$loctitle") . " " . $this->outpoint . " "; //seturl("t=$ti&cat=$gr",$loctitle,null,null,null,true) . " " . $this->outpoint . " ";
 								 $tok2[$i][] = $gr; //cat name
 								 $tok2[$i][] = $loctitle; //cat title
-								 $tok2[$i][] = seturl("t=$ti&cat=$gr",null,null,null,null,true);//url
+								 $tok2[$i][] = _m("cmsrt.url use t=$ti&cat=$gr"); //seturl("t=$ti&cat=$gr",null,null,null,null,true);//url
 								 $tok2[$i][] = $this->get_image_icon($gr);//$this->show_category_image();//image
 							   
 							   
@@ -399,8 +399,9 @@ class shkategories {
 				
 
 			 
-			  $cgroup = $ptree[$cd+1]; 		 		
-              $mycat = "$treespaces$this->outpoint <a href=\"" . seturl("t=$t&cat=$gr",null,null,null,null,true) . "\">";
+			  $cgroup = $ptree[$cd+1];
+			  $_u = _m("cmsrt.url use t=$t&cat=$gr"); //	seturl("t=$t&cat=$gr",null,null,null,null,true)
+              $mycat = $treespaces . $this->outpoint . "<a href=\"" . $_u . "\">";
 			  $mycat .= summarize(($wordlength-$sp),$line);	
 			  $mycat .= "</a>";
 			  
@@ -475,7 +476,7 @@ class shkategories {
 						$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,true); 
+						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); 
 						$out .= $this->combine_tokens($template,$tokens,true);
 						unset($tokens);
 						unset($subcat_tokens);
@@ -486,12 +487,15 @@ class shkategories {
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,true); 
+						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); 
 						
-						if ($mode)
+						if ($mode) {
 							$out .= $this->combine_tokens($template,$tokens,true);						
-						else				   
-							$out .= ($group) ? '<li>'.seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line),null,null,null,true).'</li>' : null;										   					
+						}	
+						else {				   
+						    $_u = _m("cmsrt.url use t=$t&cat=$gr+" . summarize(($wordlength-$sp),$line)); //seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line);
+							$out .= ($group) ? '<li>' . $_u . '</li>' : null;										   					
+						}	
 						
 						//print_r($tokens);	
 						unset($tokens);
@@ -557,7 +561,7 @@ class shkategories {
 						$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 						$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,true); //$gr; //current cat / link
+						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); //$gr; //current cat / link
 						$out .= $this->combine_tokens($template,$tokens,true);
 						unset($tokens);
 						unset($subcat_tokens);
@@ -569,12 +573,15 @@ class shkategories {
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = seturl("t=$t&cat=$gr",null,null,null,null,true); //$gr; //current cat / link
+						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); //$gr; //current cat / link
 						
-						if ($mode)
+						if ($mode) {
 							$out .= $this->combine_tokens($template,$tokens,true);						
-						else			   
-							$out .= ($group) ? '<li>'.seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line),null,null,null,true).'</li>' : null;										   					
+						}	
+						else {
+							$_u = _m("cmsrt.url use t=$t&cat=$gr+".summarize(($wordlength-$sp),$line)); //seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line),null,null,null,true);
+							$out .= ($group) ? '<li>'.$_u.'</li>' : null;										   					
+						}
 						
 						unset($tokens);
 						unset($subcat_tokens);	
@@ -613,7 +620,7 @@ class shkategories {
 
 			  if ($outpoint)
 			    $mycat .= str_repeat('&nbsp;',$outpoint) . $this->outpoint;		  
-              $mycat .= "<a href=\"" . seturl("t=$t&cat=$gr",null,null,null,null,true);
+              $mycat .= "<a href=\"" . _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true);
 			  
 			  if ($linkclass) 
 			    $mycat .=  "\" class=\"$linkclass\">";
@@ -623,7 +630,7 @@ class shkategories {
 			  $mycat .= $line;		
 			  $mycat .= "</a>";	
 		
-			  $tokens[] = ($linksonly) ? seturl("t=$t&cat=$gr",null,null,null,null,true) :
+			  $tokens[] = ($linksonly) ? _m("cmsrt.url use t=$t&cat=$gr") /*seturl("t=$t&cat=$gr",null,null,null,null,true)*/ :
 				                        ($titlesonly ? $line : ($idsonly ? $id : $mycat));
 			  $tokens[] = $id;//$winbody;
 			  $out .= $this->combine_tokens($mytemplate, $tokens, true);					
@@ -917,19 +924,21 @@ class shkategories {
 			  
                 if ($cname != $this->home) {
 				
-		          if (($m2>$m)&&(!$isroot)) 
-					  $curl .= $this->cseparator . $this->replace_spchars($id);
-			      else 
-					  $curl .= $this->replace_spchars($id);
+					if (($m2>$m)&&(!$isroot)) 
+						$curl .= $this->cseparator . $this->replace_spchars($id);
+					else 
+						$curl .= $this->replace_spchars($id);
 					  
-			      $mygroup = $curl;
+					$mygroup = $curl;
 			   
-			      $a = seturl("t=$t&cat=$mygroup",null,null,null,null,true);
-				  $b = "<a href=\"" . seturl("t=$t&cat=$mygroup",null,null,null,null,true) . "\">" . $locname . "</a>";
+					$_u = _m("cmsrt.url use t=$t&cat=$mygroup");	//seturl("t=$t&cat=$mygroup",null,null,null,null,true)		   
+					$a = $_u; //seturl("t=$t&cat=$mygroup",null,null,null,null,true);
+					$b = "<a href=\"" . $_u . "\">" . $locname . "</a>";
 		        }	
 	            else {
-   	              $a = seturl("t=",null,null,null,null,true);
-				  $b = "<a href=\"" . seturl("t=",null,null,null,null,true) . "\">" . $locname . "</a>";					
+					$_u = _m("cmsrt.url use t=");	
+					$a = $_u; //seturl("t=",null,null,null,null,true);
+					$b = "<a href=\"" . $_u . "\">" . $locname . "</a>";					
 			    }
 				
 			    $ablink = ($nolinks) ? $a : $b;						  
@@ -964,14 +973,14 @@ class shkategories {
 		           break;
           case 1  ://toplevel
 		  default :if ($url) 
-		              $ret = seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
+		              $ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree)); //seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
                    else 
 		              $ret = array_pop(array_reverse($mycattree));	  
 		}
 	  }	
 	  else {//actual
 	    if ($url) 
-		  $ret = seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
+		  $ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree));//seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
         else	  
 	      $ret = array_pop($mycattree);	  	
 	  }
@@ -1118,35 +1127,35 @@ class shkategories {
 
                  if (($rec['cat0']) && ($this->depthview>=1)) {
 				      if ($links)
-					    $ck[0] = seturl("t=$cmd&cat=".$rec['cat0'],$_cat0,null,null,null,true);
+					    $ck[0] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'] . "+" . $_cat0); //seturl("t=$cmd&cat=".$rec['cat0'],$_cat0,null,null,null,true);
 					  else
                         $ck[0] = $_cat0;
 				 }  	
 				 	
                  if (($rec['cat1']) && ($this->depthview>=2)) {
 				      if ($links)
-					    $ck[1] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'],$_cat1,null,null,null,true);
+					    $ck[1] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'] . "+" . $_cat1); //seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'],$_cat1,null,null,null,true);
 					  else				   
                         $ck[1] = $_cat1;
 				 }		
 
                  if (($rec['cat2']) && ($this->depthview>=3)) {
 				      if ($links)
-					    $ck[2] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'],$_cat2,null,null,null,true);
+					    $ck[2] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'] . "+" . $_cat2); //seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'],$_cat2,null,null,null,true);
 					  else					 
                         $ck[2] = $_cat2;
 				 }		  
  
                  if (($rec['cat3']) && ($this->depthview>=4)) {
 				    if ($links)
-					  $ck[3] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'],$_cat3,null,null,null,true);
+					  $ck[3] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'] . "+" . $_cat3); //seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'],$_cat3,null,null,null,true);
 					else				 
                       $ck[3] = $_cat3;
 				 }	
 				   
                  if (($rec['cat4']) && ($this->depthview>=5)) {
 				    if ($links)
-					  $ck[4] = seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'].$this->cseparator.$rec['cat4'],$this->replace_spchars($rec['cat4']),null,null,null,true);
+					  $ck[4] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'].$this->cseparator.$rec['cat4'] . "+" . $_cat4); //seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'].$this->cseparator.$rec['cat4'],$this->replace_spchars($rec['cat4']),null,null,null,true);
 					else				 
                       $ck[4] = $this->replace_spchars($rec['cat4']);
 				 }	
@@ -1291,7 +1300,7 @@ function gocatsearch(url)
 	function getCombo ($cid,$name,$cat=null,$style="",$size=10,$multiple="",$values=null,$selection='',$cmd=null,$tmpl=null,$noselect=null) {
 	    $t = GetReq('t');
 		$mycmd = $cmd?$cmd:'klist';
-		$goto = seturl("t=$mycmd&cat=");
+		$goto = _m("cmsrt.url use t=$mycmd&cat=");//seturl("t=$mycmd&cat=");
 		$selected_cat = $cat?$cat:GetReq('cat');
 		$cats = explode($this->cseparator,$selected_cat);
 	    //print_r($values);
@@ -1383,14 +1392,10 @@ function gocatsearch(url)
 
 	       while(!$result->EOF) {
 		   
-		       $f = $result->fields[0];
+		       $f = $this->replace_spchars($result->fields[0]);
 		       $ff = $result->fields[1];			   
-		       if ($f) { 
-			     if ($ff)
-		           $data[$f] = $ff;
-				 else
-				   $data[$f] = $f;
-			   }	 
+		       if ($f) 
+		           $data[$f] = $ff ? $ff : $f; 
 
 		     $result->MoveNext();
 		     $i+=1;
@@ -1407,20 +1412,18 @@ function gocatsearch(url)
 	   $s2 = GetReq('s2');
 	   $s3 = GetReq('s3');
 	   $s4 = GetReq('s4');    
-	   if ($issearch) {
+	   if ($issearch) 
 	     $search_cmd = $issearch;
-	   }
-	   $cmd = $issearch?$search_cmd:'klist';
-	   
+	   $cmd = $issearch ? $search_cmd : 'klist';
 	   $loctitle = localize($title,getlocal());
-	   $mytitle = $loctitle?$loctitle:$this->title;
+	   $mytitle = $loctitle ? $loctitle : $this->title;
 	   if ($isleaf)
-	     $mytitle2 = $loctitle?$loctitle:$this->title2;
+	     $mytitle2 = $loctitle ? $loctitle : $this->title2;
 	   else
 	     $mytitle2 = $this->title2;	 
 	   
-	   $cat = $preselcat?$preselcat:GetReq('cat');
-	   $goto = $preselcat?seturl("t=$cmd&cat=".$preselcat):seturl("t=$cmd&cat=");	   
+	   $cat = $preselcat ? $preselcat : GetReq('cat');
+	   $goto = $preselcat ? _m("cmsrt.url use t=$cmd&cat=".$preselcat) : _m("cmsrt.url use t=$cmd&cat=");//seturl("t=$cmd&cat=".$preselcat) : seturl("t=$cmd&cat=");	   
 	   
 	   $mydata = $this->asksql('cat2');
 	   

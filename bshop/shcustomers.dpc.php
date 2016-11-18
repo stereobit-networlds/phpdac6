@@ -68,7 +68,7 @@ $__LOCALE['SHCUSTOMERS_DPC'][22]='area;Area;Περιοχή';
 $__LOCALE['SHCUSTOMERS_DPC'][23]='zip;Zip;Τ.Κ.';
 $__LOCALE['SHCUSTOMERS_DPC'][24]='voice2;Phone 2;Τηλέφωνο';
 $__LOCALE['SHCUSTOMERS_DPC'][25]='mail;e-mail;Ηλ. Ταχυδρομείο';
-$__LOCALE['SHCUSTOMERS_DPC'][26]="_MSG20;Can't procced your request please try later!;Λαθος καταχώρησης. Παρακαλουμε δοκιμάστε αργότερα.";
+$__LOCALE['SHCUSTOMERS_DPC'][26]="_MSG20;Record not affected;Η εγγραφή δεν καταχωρήθηκε.";
 $__LOCALE['SHCUSTOMERS_DPC'][27]='name;Name;Επωνυμια';
 $__LOCALE['SHCUSTOMERS_DPC'][28]='_UNKNOWNENTRY;WARNING:You are not an official registrated customer, please insert your details below and we will contact you as soon as possible.<br> You can not use our site advance services !;ΠΡΟΣΟΧΗ: Δεν ειστε έγκυρος πελάτης της εταιρείας μας και δεν θα έχετε δικαίωμα παραγγελίας,αν είστε νέος πελατης συμπληρωστε τα παρακατω στοιχεια διαφορετικα επικοιωνήστε τηλεφωνικώς με την εταιρεια μας!';
 $__LOCALE['SHCUSTOMERS_DPC'][29]='_UMAILSUBC;New customer;Νέος πελάτης';
@@ -78,7 +78,7 @@ $__LOCALE['SHCUSTOMERS_DPC'][32]='_DELIVADDRESS;Delivery Address;Παράδοσ�
 $__LOCALE['SHCUSTOMERS_DPC'][33]='_ADDDELIVADDRESS;Add Address;Νέα διεύθυνση';
 $__LOCALE['SHCUSTOMERS_DPC'][34]='_REMDELIVADDRESS;Remove;Διαγραφή';
 $__LOCALE['SHCUSTOMERS_DPC'][35]='_SELDELIVADDRESS;Select;Επιλογή';
-$__LOCALE['SHCUSTOMERS_DPC'][36]='_DEFDELIVADDRESS;Default;Βασική';//Default Address;Βασική διευθυνση';
+$__LOCALE['SHCUSTOMERS_DPC'][36]='_DEFDELIVADDRESS;Default;Βασική';
 $__LOCALE['SHCUSTOMERS_DPC'][37]='_INVALIDMAIL;Invalid e-mail address;Ακυρη ηλεκτρονικη διεύθυνση';
 $__LOCALE['SHCUSTOMERS_DPC'][38]='_CUSTOMER;Pay Detail;Πελάτης';
 $__LOCALE['SHCUSTOMERS_DPC'][39]='_CUSTOMERSLIST;Pay Details\'s;Στοιχεια τιμολογιου';
@@ -89,8 +89,11 @@ $__LOCALE['SHCUSTOMERS_DPC'][43]='_SELCUSTOMER;Select Detail;Επιλογή';
 $__LOCALE['SHCUSTOMERS_DPC'][44]='_UPDCUSTOMER;Edit Detail;Μεταβολή';
 $__LOCALE['SHCUSTOMERS_DPC'][45]='_CUSTEXISTS;Customer exists. Already registered!;Είστε ήδη καταχωρημενος!';
 $__LOCALE['SHCUSTOMERS_DPC'][46]='_OK;Submit;Αποστολή';
-$__LOCALE['SHCUSTOMERS_DPC'][47]='CustomerRegistration;Customer registration;Εγγραφή πελάτη';
-$__LOCALE['SHCUSTOMERS_DPC'][48]='_DELNOTALLOW;Delete not allowed;Η διαγραφή δεν είναι επιτρεπτή';
+$__LOCALE['SHCUSTOMERS_DPC'][47]='_DELNOTALLOW;Delete not allowed;Η διαγραφή δεν είναι επιτρεπτή';
+$__LOCALE['SHCUSTOMERS_DPC'][48]='CustomerRegistration;Customer registration;Εγγραφή πελάτη';
+$__LOCALE['SHCUSTOMERS_DPC'][49]='CustomerInsData;Customer details added;Εισαγωγή στοιχείων πελάτη';
+$__LOCALE['SHCUSTOMERS_DPC'][50]='CustomerUpdData;Customer details updated;Μεταβολή στοιχείων πελάτη';
+$__LOCALE['SHCUSTOMERS_DPC'][51]="_MSG21;Record not affected;Πρόβλημα κατά την αποθήκευση.";
 
 class shcustomers {
 	var $userLevelID;
@@ -284,15 +287,14 @@ class shcustomers {
 			                          }
 						              else
 			                            $this->cusok = $this->save_customer();
-									  echo 'a';
 						              break;
             case "searchcustomer"   :
 									  $this->searchres = $this->searchcustomer();
 						              break;
 									  
-            case "update2"			: $this->cusok = $this->update(GetParam('a'),'id');
+            case "update2"			: $this->cusok = $this->update(GetParam('a'),'id'); 
 									  break;
-            case "delete2"			: $this->_delete();
+            case "delete2"			: $this->_delete(); 
 									  break;									  
 									  
             case "insert2"			:if ($this->check_exist) {
@@ -901,36 +903,27 @@ window.onload=function(){
 				
 					$template= "customerinserttell.htm";
 					$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-					//echo $t;
-					if (is_readable($t)) {
-						$mytemplate = file_get_contents($t);
+					$mytemplate = file_get_contents($t);
 			
-						$tokens[] = GetParam('uname');GetParam('lname');			
-						$tokens[] = GetParam('lname'); //$db->qstr($res2->fields['name']);	
-						$tokens[] = $res2->fields['afm'];						
-						$tokens[] = $res2->fields['eforia'];			
-						$tokens[] = $res2->fields['prfdescr'];
-						$tokens[] = $res2->fields['address'];
-						$tokens[] = $res2->fields['area'];														
-						$tokens[] = $res2->fields['zip'];			
-						$tokens[] = $res2->fields['voice1'];			
-						$tokens[] = $res2->fields['voice2'];			
-						$tokens[] = $res2->fields['fax'];			
-						$tokens[] = $uid;	
-						$tokens[] = GetParam("fname");//subinsert user insert fname data to be send...			
-			
-						$mailbody = $this->combine_tokens($mytemplate,$tokens);
-					}	
-					else {			 
-						$mailcontent = "New mapped customer:<br>" . GetParam('name');
+					$tokens[] = GetParam('uname');GetParam('lname');			
+					$tokens[] = GetParam('lname'); //$db->qstr($res2->fields['name']);	
+					$tokens[] = $res2->fields['afm'];						
+					$tokens[] = $res2->fields['eforia'];			
+					$tokens[] = $res2->fields['prfdescr'];
+					$tokens[] = $res2->fields['address'];
+					$tokens[] = $res2->fields['area'];														
+					$tokens[] = $res2->fields['zip'];			
+					$tokens[] = $res2->fields['voice1'];			
+					$tokens[] = $res2->fields['voice2'];			
+					$tokens[] = $res2->fields['fax'];			
+					$tokens[] = $uid;	
+					$tokens[] = GetParam("fname");//subinsert user insert fname data to be send...			
+					
+					$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
-						$template = paramload('SHELL','prpath') . "insertusrusr.tpl";
-						$mailbody = str_replace("##_LINK_##",$mailcontent,file_get_contents($template));
-					}
 					$from = $this->it_sendfrom?$this->it_sendfrom:$email;
-					$subject = remote_paramload('SHCUSTOMERS','tellsubject',$this->path);
-					$mysubject = $subject?$subject:localize('_UMAILSUBC',getlocal());
-					$this->mailto($from,$this->tellit,$mysubject,$mailbody);
+					$subject = localize('CustomerRegistration',getlocal());
+					$this->mailto($from,$this->tellit,$subject,$mailbody);
 				}				 
 		   }
 			 	 
@@ -988,45 +981,41 @@ window.onload=function(){
        $result = $db->Execute($sSQL,1);
 	   //print_r($result->fields);
        if ($db->Affected_Rows()) {	   
-         SetGlobal('sFormErr',"ok");
+			SetGlobal('sFormErr',"ok");
 		 
-		 //$this->update_statistics('registration', GetParam('mail'));
-		 
-	     if ($this->tellit) {
-		 
-	      $template= "customerinsert.htm";
-	      $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		  //echo $t;
-	      if (is_readable($t)) {
-		    $mytemplate = file_get_contents($t);
+			//$this->update_statistics('registration', GetParam('mail'));	
 			
-		    foreach ($recfields as $field_num => $fieldname)
-		      $tokens[] = GetParam($fieldname);			
+			if ($this->tellit) {
+				$template= "customerinserttell.htm";
+				$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
+				$mytemplate = file_get_contents($t);
 			
-			$mailbody = $this->combine_tokens($mytemplate,$tokens);
-	      }	
-	   	  else {	 
-	        $mailcontent = "New customer:<br>";
+				$tokens[] = $uid;			
+				$tokens[] = GetParam('name');	
+				$tokens[] = GetParam('afm');						
+				$tokens[] = GetParam('eforia');			
+				$tokens[] = GetParam('prfdescr');
+				$tokens[] = GetParam('address');
+				$tokens[] = GetParam('area');														
+				$tokens[] = GetParam('zip');			
+				$tokens[] = GetParam('voice1');			
+				$tokens[] = GetParam('voice2');			
+				$tokens[] = GetParam('fax');			
+				$tokens[] = GetParam('mail');			
 			
-		    foreach ($recfields as $field_num => $fieldname)
-		      $mailcontent .= localize($recfields[$field_num],getlocal()) .' : '. GetParam($fieldname) . "<br>";
+				$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
-		    $template = paramload('SHELL','prpath') . "insertusrusr.tpl";
-		    $mailbody = str_replace("##_LINK_##",$mailcontent,file_get_contents($template));
-          }
-		  
-		  $from = $this->it_sendfrom?$this->it_sendfrom:GetParam('mail');
-		  $ss = remote_paramload('SHCUSTOMERS','tellsubject',$this->path);
-		  $subject = localize($ss, getlocal());
-		  $mysubject = $subject?$subject:localize('_UMAILSUBC',getlocal());
-	      $this->mailto($from,$this->tellit,$mysubject,$mailbody);
-	     }	
+				$from = $this->it_sendfrom?$this->it_sendfrom:$email;
+				$subject = localize('CustomerRegistration',getlocal());
+				//$this->tellit = 'b.alexiou@stereobit.gr'; //test
+				$this->mailto($from,$this->tellit,$subject,$mailbody);
+			}			
 		 
-		 return true;	 
+			return true;	 
 	   }
 	   else {
-		 echo $db->ErrorMsg();
-		 SetGlobal('sFormErr',localize('_MSG20',getlocal()));
+			//echo $db->ErrorMsg();
+			SetGlobal('sFormErr',localize('_MSG20',getlocal()));
 	   }	   	 
 
 	   return false;//($result);
@@ -1115,10 +1104,8 @@ window.onload=function(){
 		 }		 
 		 
 	     if ($this->tellit) {
-	      $template= "customerinserttell.htm";
-	      $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		  //echo $t;
-	      if (is_readable($t)) {
+			$template= "customerinserttell.htm";
+			$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
 		    $mytemplate = file_get_contents($t);
 			
 		    $tokens[] = GetParam('uname');			
@@ -1136,23 +1123,15 @@ window.onload=function(){
             $tokens[] = GetParam("fname");//subinsert user insert fname data to be send...				
 			
 			$mailbody = $this->combine_tokens($mytemplate,$tokens);
-	      }	
-	   	  else {			 
-	       $mailcontent = "New customer:<br>" . GetParam('name');
 
-		   $template = paramload('SHELL','prpath') . "insertusrusr.tpl";
-		   $mailbody = str_replace("##_LINK_##",$mailcontent,file_get_contents($template));
-          }
-		  $from = $this->it_sendfrom?$this->it_sendfrom:$email;
-		  $ss = remote_paramload('SHCUSTOMERS','tellsubject',$this->path);
-		  $subject = localize($ss, getlocal());
-		  $mysubject = $subject?$subject:localize('_UMAILSUBC',getlocal());
-	      $this->mailto($from,$this->tellit,$mysubject,$mailbody);
+			$from = $this->it_sendfrom ? $this->it_sendfrom : $email;
+			$subject = localize('CustomerRegistration',getlocal());
+			$this->mailto($from,$this->tellit,$subject,$mailbody);
 	     }		 
 	   }
 	   else {
 	     $ret = $db->ErrorMsg();
-		 echo $ret;
+		 //echo $ret;
 		 SetGlobal('sFormErr',localize('_MSG20',getlocal()));
 	   }	   	 
 
@@ -1179,7 +1158,7 @@ window.onload=function(){
 
 	function update($id=null,$fkey=null) {
 	    $db = GetGlobal('db');
-	    $myfkey = $fkey?$fkey:$this->fkey;
+	    $myfkey = $fkey ? $fkey : $this->fkey;
 	    $key = decode(GetGlobal('UserName'));//security..foreign to user
 
 	    if ($error = $this->checkFields(null,$this->checkuseasterisk)) {
@@ -1196,8 +1175,9 @@ window.onload=function(){
 	    else
 			$recfields = array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
 
-	    if (!$id) {
-			SetGlobal('sFormErr',localize('_MSG20',getlocal()));
+	    if (!$id) { //DISABLED ID AS PARAM ?
+			SetGlobal('sFormErr',localize('_MSG21',getlocal()));
+			return false;
 	    }	 
 
         $sSQL = "update customers set ";
@@ -1213,12 +1193,40 @@ window.onload=function(){
 	           'voice2='.$db->qstr(addslashes(GetParam('voice2'))) . ',' .
 	           'fax='.$db->qstr(addslashes(GetParam('fax'))) . ',' .
 	           'mail='.$db->qstr(addslashes(GetParam('mail')))  .
-	           " where $myfkey=".$id . " and " . "code2=" . $db->qstr($key);
+			   //" where code2=" . $db->qstr($key); //DISABLED UPDATE WITH ID AS PARAM ?
+	           " where $myfkey=".$id . " and " . "code2=" . $db->qstr($key); 
 
         //echo $sSQL;
         $result = $db->Execute($sSQL,1);
 		
-        if ($db->Affected_Rows()) {	   
+        if ($db->Affected_Rows()) {	  
+
+			if ($this->tellit) {
+				$template= "customerupdatetell.htm";
+				$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
+				$mytemplate = file_get_contents($t);
+			
+				$tokens[] = $key;			
+				$tokens[] = GetParam('name');	
+				$tokens[] = GetParam('afm');						
+				$tokens[] = GetParam('eforia');			
+				$tokens[] = GetParam('prfdescr');
+				$tokens[] = GetParam('address');
+				$tokens[] = GetParam('area');														
+				$tokens[] = GetParam('zip');			
+				$tokens[] = GetParam('voice1');			
+				$tokens[] = GetParam('voice2');			
+				$tokens[] = GetParam('fax');			
+				$tokens[] = GetParam('mail');			
+			
+				$mailbody = $this->combine_tokens($mytemplate,$tokens);
+
+				$from = $this->it_sendfrom?$this->it_sendfrom:$email;
+				$subject = localize('CustomerUpdData',getlocal());
+				//$this->tellit = 'b.alexiou@stereobit.gr'; //test
+				$this->mailto($from,$this->tellit,$subject,$mailbody);
+			}
+		
 			SetGlobal('sFormErr',"ok");
 			return true;
 	    }
@@ -1241,7 +1249,7 @@ window.onload=function(){
 			SetGlobal('sFormErr',"ok");
 		}
 		else {
-			echo $db->ErrorMsg();
+			//echo $db->ErrorMsg();
 			SetGlobal('sFormErr',localize('_MSG20',getlocal()));
 		}	
 
@@ -1911,34 +1919,62 @@ window.onload=function(){
 	}	
 	
 	
-	function save_customer($userid=null) { echo 'b';
+	function save_customer($userid=null) { 
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
-	    $myui = $userid?$userid:decode($UserName);
+	    $myui = $userid ? $userid : decode($UserName);
 	   
 	    if (!$error = $this->checkFields(null,$this->checkuseasterisk)) {
 	   
-		   //before set active the current record deactive all others  
-		   $d = $this->deactivatecustomers();	   
+			//before set active the current record deactive all others  
+			$d = $this->deactivatecustomers();	   
 	   
-   	       $recfields = $this->get_cus_record(1,1);	
+			$recfields = $this->get_cus_record(1,1);	
 
-		   foreach ($recfields as $fn=>$fname) {
-		     //echo $fname,':',$db->qstr(GetParam($fname)),'<br>';
-		     $cusdata[] = $db->qstr(GetParam($fname)); 
-		   }
-		   //print_r($cusdata);	 
+			foreach ($recfields as $fn=>$fname) {
+				//echo $fname,':',$db->qstr(GetParam($fname)),'<br>';
+				$cusdata[] = $db->qstr(GetParam($fname)); 
+			}
+			//print_r($cusdata);	 
 			  		   
-		   $cusfields = implode(',',$recfields);
-           $sSQL2 = "insert into customers (code2,active,$cusfields)";
-	       $sSQL2.= " values (". $db->qstr($myui). ",1,";
-           $sSQL2.= implode(',',$cusdata);
-	       $sSQL2.= ")";
+			$cusfields = implode(',',$recfields);
+			$sSQL2 = "insert into customers (code2,active,$cusfields)";
+			$sSQL2.= " values (". $db->qstr($myui). ",1,";
+			$sSQL2.= implode(',',$cusdata);
+			$sSQL2.= ")";
 
-           //echo $sSQL2;
-           $result2 = $db->Execute($sSQL2,1);	
-           if ($ret = $db->Affected_Rows()) 
-		     return true;			   	   	   
+			//echo $sSQL2;
+			$result2 = $db->Execute($sSQL2,1);	
+			if ($ret = $db->Affected_Rows()) {
+				
+				if ($this->tellit) {
+					$template= "customerinserttell.htm";
+					$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
+					$mytemplate = file_get_contents($t);
+			
+					$tokens[] = $myui;			
+					$tokens[] = GetParam('name');	
+					$tokens[] = GetParam('afm');						
+					$tokens[] = GetParam('eforia');			
+					$tokens[] = GetParam('prfdescr');
+					$tokens[] = GetParam('address');
+					$tokens[] = GetParam('area');														
+					$tokens[] = GetParam('zip');			
+					$tokens[] = GetParam('voice1');			
+					$tokens[] = GetParam('voice2');			
+					$tokens[] = GetParam('fax');			
+					$tokens[] = GetParam('mail');			
+			
+					$mailbody = $this->combine_tokens($mytemplate,$tokens);
+
+					$from = $this->it_sendfrom?$this->it_sendfrom:$email;
+					$subject = localize('CustomerInsData',getlocal());
+					//$this->tellit = 'b.alexiou@stereobit.gr'; //test
+					$this->mailto($from,$this->tellit,$subject,$mailbody);
+				}					
+				
+				return true;			   	   	 
+		   }
 	    }
 		else {
 		   //echo $db->ErrorMsg();

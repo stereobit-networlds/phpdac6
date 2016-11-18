@@ -58,7 +58,7 @@ $__LOCALE['SHUSERS_DPC'][24]='_FORMWARN;Fields with (*) required.;Τα πεδί�
 $__LOCALE['SHUSERS_DPC'][25]='_PDATA;Personal Data;Προσωπικά Στοιχεία';
 $__LOCALE['SHUSERS_DPC'][26]='SHUSERS_CNF;Manage my Account;Διαχείρηση Λογαριασμού';
 $__LOCALE['SHUSERS_DPC'][27]='_NOPRIV;Denied! No privileges.;Αρνηση! Δεν έχετε δικαίωμα.';
-$__LOCALE['SHUSERS_DPC'][28]="_MSG20;Can't procced your request please try later!;Λαθος καταχώρησης. Παρακαλουμε δοκιμάστε αργότερα.";
+$__LOCALE['SHUSERS_DPC'][28]="_MSG20;Record not affected;Η εγγραφή δεν καταχωρήθηκε.";
 $__LOCALE['SHUSERS_DPC'][29]="_MSG21;Password and verify password doesn't match!;Η επιβαιβαιωση κωδικου δεν συμφωνει με τον κωδικο σας.";
 $__LOCALE['SHUSERS_DPC'][30]='_UNMSG;Username will be send to you at the end of this proccess!;Το ονομα χρήστη θα σας αποσταλει μετα το τελος της διαδικασίας!';
 $__LOCALE['SHUSERS_DPC'][31]='_UMAILSUBH;New Registration ;Νεα εγγραφη';
@@ -75,6 +75,7 @@ $__LOCALE['SHUSERS_DPC'][41]='_USERREGISTRATION;User registration;Εγγραφή
 $__LOCALE['SHUSERS_DPC'][42]='_MSGPWD;Invalid password format, 8 characters length required;Μη αποδεκτός κωδικός, 8 χαρακτήρες τουλάχιστον είναι απαραίτητοι';
 $__LOCALE['SHUSERS_DPC'][43]='_ACTIVATEERR2;User is activated;Ο λογαριασμός είναι ενεργοποιημένος';
 $__LOCALE['SHUSERS_DPC'][44]='_USRPLEASETEXT;Create your account;Δημιουργήστε ενα λογαριασμό';
+$__LOCALE['SHUSERS_DPC'][45]="_MSG21;Record not affected;Πρόβλημα κατά την αποθήκευση.";
 
 class shusers  {
 
@@ -1306,7 +1307,7 @@ class shusers  {
 	   //echo '+',$user_code;
 	   
 	   if (!$user_code) {
-		   SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #1');
+		   SetGlobal('sFormErr',localize('_MSG21',getlocal()).' #1');
 		   return null;	   
 	   }
 	   
@@ -1387,7 +1388,7 @@ class shusers  {
 		 }
 	     else {
 		   $ret = $db->ErrorMsg();
-		   echo $ret;
+		   //echo $ret;
 		   SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #2');
 		 }
 	   }
@@ -1402,7 +1403,7 @@ class shusers  {
 		//echo '+',$user_code;
 	   
 		if (!$user_code) {
-			SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #3');
+			SetGlobal('sFormErr',localize('_MSG21',getlocal()).' #3');
 			return null;	   
 		}	
 	   

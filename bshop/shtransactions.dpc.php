@@ -362,6 +362,11 @@ class shtransactions extends transactions {
 		    //send mail to host
 		    $s = localize('_mailcancelsubject', getlocal()) . ' ' . $trid;
 			$b = $this->getTransactionHtml($trid);
+			
+			// MAIL THE ORDER TO HOST
+			$host = _v('shcart.cartreceive_mail');
+			$this->mailto($host,$s,$b);
+			//TO CUSTOMER
 		    $this->mailto(null,$s,$b);
 		
 			return true;
@@ -376,8 +381,9 @@ class shtransactions extends transactions {
 		if (!$UserName) return false;
 		  
         if ($template) {
-			$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
-			$mytemplate = file_get_contents($t);
+			//$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
+			//$mytemplate = file_get_contents($t);
+			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
 		
 			$tokens[] = $body ? $body : localize('_mailcancelbody', getlocal());			  					
 			$mailbody = $this->combine_tokens($mytemplate,$tokens);
@@ -533,16 +539,16 @@ class shtransactions extends transactions {
 			$preview_button = null;		  
 
 		//line details
-		$_template = 'fptransline.htm';
-		$_t = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$_template) ;
-		
-		$linetemplate = file_get_contents($_t);
+		//$_template = 'fptransline.htm';
+		//$_t = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$_template) ;
+		//$linetemplate = file_get_contents($_t);
+		$linetemplate = _m('cmsrt.select_template use fptransline');
 		$tokens[] = $this->details($id,'shcartpreview'); //use template for line
 		$line = $this->combine_tokens($linetemplate,$tokens);
 
 		//line			
-		$mtemplate='fptrans.htm';
-		$mt = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$mtemplate) ;
+		//$mtemplate='fptrans.htm';
+		//$mt = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$mtemplate) ;
 
 		$data[] = $id;
 		$data[] = $payway;
@@ -577,7 +583,8 @@ class shtransactions extends transactions {
 		
 		$data[] = $line;
 		
-		$mytemplate = file_get_contents($mt);
+		//$mytemplate = file_get_contents($mt);
+		$mytemplate = _m('cmsrt.select_template use fptrans');
 		$out = $this->combine_tokens($mytemplate,$data);		
 			
 	    return ($out);
@@ -604,39 +611,12 @@ class shtransactions extends transactions {
 		
 	//override
 	function headtitle() {
-	   $p = GetReq('p');
-	   $t = GetReq('t');
-	   $sort = GetReq('sort');  
-	
-       $data[] = seturl("t=$t&a=&g=1&p=$p&sort=$sort&col=0" ,  "Id" );
-	   $attr[] = "left;5%";							  
-	   $data[] = seturl("t=$t&a=&g=2&p=$p&sort=$sort&col=1" , localize('_TRANSACTION',getlocal()) );
-	   $attr[] = "center;20%";
-	   $data[] = seturl("t=$t&a=&g=3&p=$p&sort=$sort&col=2" , localize('_TRANSTAT',getlocal()) );
-	   $attr[] = "center;50%";
-	   $data[] = seturl("t=$t&a=&g=4&p=$p&sort=$sort&col=3" , localize('_DATE',getlocal()) );
-	   $attr[] = "center;20%";
-	   $data[] = seturl("t=$t&a=&g=4&p=$p&sort=$sort&col=4" , localize('_COST',getlocal()) );
-	   $attr[] = "center;10%";	 
 
-	   $mtemplate='fptrans.htm';
-	   $mt = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$mtemplate) ;
-	   //echo $t,'>';
-	   if (($mtemplate) && is_readable($mt)) {
-	   
-		//$mytemplate = file_get_contents($mt);
+		//$mytemplate = _m('cmsrt.select_template use fptrans');
 		//$out = $this->combine_tokens($mytemplate,$data);
+		//return ($out);		
+		
 		return null;//deactivate
-	   }	   
-	   else {	   
-
-  	    $mytitle = new window('',$data,$attr);
-	    $out = $mytitle->render(" ::100%::0::group_form_headtitle::center;100%;::");
-	    unset ($data);
-	    unset ($attr);
-       }	   
-	   
-	   return ($out);
 	}	
 
 	//tokens method	 $x
@@ -647,13 +627,11 @@ class shtransactions extends transactions {
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
 		  $fp = new fronthtmlpage(null);
 		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+		  unset ($fp);		  		
 		}		  		
 		else
 		  $ret = $template_contents;
 		  
-		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
             //echo $tok,'<br>';
 		    $ret = str_replace("$".$i,$tok,$ret);
@@ -661,7 +639,6 @@ class shtransactions extends transactions {
 		//clean unused token marks
 		for ($x=$i;$x<20;$x++)
 		  $ret = str_replace("$".$x,'',$ret);
-		//echo $ret;
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {

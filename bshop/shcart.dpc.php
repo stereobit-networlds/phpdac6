@@ -374,7 +374,7 @@ class shcart extends cart {
 	  
 		if (strcmp($payway,'PAYPAL')==0) {
 
-			if (($this->status==3) && ($this->autopay>0)/* && (defined('SHPAYPAL_DPC'))*/) {
+			if (($this->status==3) && ($this->autopay>0)) {
 				$this->submit_order(null, true, $this->twig_invoice_template_name);		  		  
 
 				SetSessionParam('paypalID',$this->transaction_id);
@@ -395,7 +395,7 @@ class shcart extends cart {
 		}
 		elseif (strcmp($payway,'PIRAEUS')==0) {	
 
-			if (($this->status==3) && ($this->autopay>0) /*&& (defined('SHPIRAEUS_DPC'))*/) {
+			if (($this->status==3) && ($this->autopay>0)) {
 
 				$this->submit_order(null, true, $this->twig_invoice_template_name);		  
 
@@ -417,7 +417,7 @@ class shcart extends cart {
 		}
 		elseif (strcmp($payway,'EUROBANK')==0) {
 			
-			if (($this->status==3) && ($this->autopay>0) /*&& (defined('SHEUROBANK_DPC'))*/)  {
+			if (($this->status==3) && ($this->autopay>0))  {
 
 				$this->submit_order(null, true, $this->twig_invoice_template_name);		  
 
@@ -490,7 +490,7 @@ function addtocart(id,cartdetails)
 			$js->load_js($code,"",1);			   
 			unset ($js);
 		}			   	   	     
-	}
+	}	
 
 	//overwrite
 	public function addtocart($item=null,$qty=null) {
@@ -690,9 +690,10 @@ function addtocart(id,cartdetails)
 
 			$error = $this->goto_mailer($this->transaction_id, false,$this->twig_invoice_template_name);//true);
 
-			if (!$this->mailerror) { 
+			if (!$error) { 
+			
+			    $this->analytics();
 				$this->logcart();
-				$this->goto_printer();
 				$this->clear();
 
 				$this->update_statistics('cart-submit', $user);
@@ -758,7 +759,7 @@ function addtocart(id,cartdetails)
 			$tokens[] = $this->transaction_id;
 		}  
 		
-	    $bclose = _m('javascript.JS_function use js_closewin+'.localize('_CLOSE',getlocal()));
+	    //$bclose = _m('javascript.JS_function use js_closewin+'.localize('_CLOSE',getlocal()));
 	    $bprint = _m('javascript.JS_function use js_printwin+'.localize('_PRINT',getlocal()));
         $tokens[] =  $bprint;			
 
@@ -791,7 +792,7 @@ function addtocart(id,cartdetails)
 				die();
 		    }
 			else {
-				$myprintcarttemplate = file_get_contents($t);	
+				$myprintcarttemplate = @file_get_contents($t);	
 			
 				$out = $this->combine_tokens($myprintcarttemplate,$tokens,true);		
 				$out .= '<!--end of document-->';		
@@ -799,7 +800,7 @@ function addtocart(id,cartdetails)
         }  		
 	    elseif (is_readable($t)) {
 
-		  $myprintcarttemplate = file_get_contents($t);
+		  $myprintcarttemplate = @file_get_contents($t);
 		  
 		  $tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails.htm');
 		  $tokens[] = GetSessionParam('orderdetails');
@@ -1011,9 +1012,10 @@ function addtocart(id,cartdetails)
 		$myaction = seturl("t=viewcart",0,1,null,null,$this->rewrite);
 	   
 		//template
-		$cart_template= "shcart.htm";
-		$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
-		$this->mycarttemplate = file_get_contents($t);
+		//$cart_template= "shcart.htm";
+		//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
+		//$this->mycarttemplate = file_get_contents($t);
+		$this->mycarttemplate = _m('cmsrt.select_template use shcart');
 	
 		//in case of no event fist..calldpc view...   
 		if (empty($this->loopcartdata)) 
@@ -1215,14 +1217,15 @@ function addtocart(id,cartdetails)
 				$out .= $this->combine_tokens($this->mycarttemplate,$tokens,true);
 		}	
 		else {	//empty 1 token
-			$emptycart_template= "shcartempty.htm";
-			$te = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$emptycart_template) ;
-			if (($emptycart_template) && is_readable($te)) {
-				$emptycarttemplate = @file_get_contents($te);		 
+			//$emptycart_template= "shcartempty.htm";
+			//$te = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$emptycart_template) ;
+			//if (($emptycart_template) && is_readable($te)) {
+				//$emptycarttemplate = @file_get_contents($te);		 
+				$emptycarttemplate = _m('cmsrt.select_template use shcartempty');
 				$out = $this->combine_tokens($emptycarttemplate,$tokens,true);
-			}
+			/*}
 			else
-				$out = $tokens[0];
+				$out = $tokens[0];*/
 		}		
 	   
 		return ($out);
@@ -1242,9 +1245,10 @@ function addtocart(id,cartdetails)
 	    $iyh = $iy ? "height=".$iy :null; //empty y=free dim	   
 	   
 		//loop template (status param)
-		$loopcart_template= "shcart".$status.".htm";
-		$t2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loopcart_template) ;
-		$this->myloopcarttemplate = file_get_contents($t2);
+		//$loopcart_template= "shcart".$status.".htm";
+		//$t2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loopcart_template) ;
+		//$this->myloopcarttemplate = file_get_contents($t2);
+		$this->myloopcarttemplate = _m('cmsrt.select_template use shcart'.$status);
 	   
         reset ($this->buffer);
 	    $this->qty_total = 0;
@@ -1384,9 +1388,11 @@ function addtocart(id,cartdetails)
 	    $iyh = $iy ? "height=".$iy : null; //empty y=free dim	   		
 		
 	    //loop template (status param)
-	    $loopcart_template= $template ? $template.'.htm' : "shcart".$status.".htm";
-	    $t2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loopcart_template) ;
-		$this->myloopcarttemplate = file_get_contents($t2);		
+	    //$loopcart_template = $template ? $template.'.htm' : "shcart".$status.".htm";
+	    //$t2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loopcart_template) ;
+		//$this->myloopcarttemplate = file_get_contents($t2);	
+        $loopcart_template = $template ? $template : 'shcart'.$status;
+		$this->myloopcarttemplate = _m('cmsrt.select_template use ' . $loopcart_template);
 
 		if (is_number($id)) {
 
@@ -1543,7 +1549,7 @@ function addtocart(id,cartdetails)
 				}
 				else {
 	            
-					$mycarttemplate = file_get_contents($template);		  
+					$mycarttemplate = @file_get_contents($template);		  
 			
 					$mailout .= $this->combine_tokens($mycarttemplate,$tokens,true);		
 					$mailout .= '<!--end of document-->';	
@@ -1552,7 +1558,7 @@ function addtocart(id,cartdetails)
 			elseif (is_readable($template)) {
         
 				$tokens = array();
-				$mycarttemplate = file_get_contents($template);
+				$mycarttemplate = @file_get_contents($template);
 			
 				//$tokens[] = $orderdataprint;	
 				$tokens[] = $this->transaction_id;
@@ -2033,7 +2039,7 @@ function addtocart(id,cartdetails)
 	protected function get_selection_text($id,$params=null,$hastitle=null,$title=null,$must_template=false) {
 		$mytitle = $title?$title:localize('_'.strtoupper($id),getlocal());//$id;
 		$mylan = getlocal();
-		$template = $id . ".htm";
+		/*$template = $id . ".htm";
 		$tmpl = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
 		//echo $tmpl,'<br/>';
 		//text is template file		
@@ -2097,10 +2103,11 @@ function addtocart(id,cartdetails)
 			   $out = $text_params .'<br/>'. $ret;		   
 		   }		   
 		}
-		else {//template
-			$mytemplate = file_get_contents($tmpl);   
+		else {//template*/
+			//$mytemplate = file_get_contents($tmpl);   
+			$mytemplate = _m('cmsrt.select_template use ' . $id);
 			$out = $this->combine_tokens($mytemplate,$params,true);
-		}
+		//}
 	   
 		return ($out);	   	    	
 	}	
@@ -2238,10 +2245,11 @@ function addtocart(id,cartdetails)
 		$this->update_statistics('cart-purchase', $UserName);	
 	
 	    //template
-	    $cart_template= "shcartsuccess.htm";
-	    $template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
-		$mycarttemplate = file_get_contents($template);
-	
+	    //$cart_template= "shcartsuccess.htm";
+	    //$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
+		//$mycarttemplate = file_get_contents($template);
+		$mycarttemplate = _m('cmsrt.select_template use shcartsuccess');
+		
 	    $aftersubmitgoto = remote_paramload('SHCART','aftersubmitgoto',$this->path);
         $goto = $aftersubmitgoto?$aftersubmitgoto:GetSessionParam('aftersubmitgoto');
 	    //in case of paypal return
@@ -2280,9 +2288,10 @@ function addtocart(id,cartdetails)
 		$this->update_statistics('cart-error', $UserName);		
 		
 	    //template
-	    $cart_template= "shcarterror.htm";
-	    $template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
-		$mycarttemplate = file_get_contents($template);	
+	    //$cart_template= "shcarterror.htm";
+	    //$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
+		//$mycarttemplate = file_get_contents($template);	
+		$mycarttemplate = _m('cmsrt.select_template use shcarterror');
 
 	    //in case of paypal return
 	    $tr_id = $this->transaction_id ? $this->transaction_id : $transno;
@@ -2348,12 +2357,14 @@ function addtocart(id,cartdetails)
 		if ($this->notempty()) {
 			
 			$template = $template1 ? $template1 : 'fpcartline.htm';
-			$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-			$mytemplate = file_get_contents($t);		
+			//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
+			//$mytemplate = file_get_contents($t);		
+			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
 		
 			$template2 = $template2 ? $template2 : 'fpcart.htm';
-			$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template2) ;
-			$mytemplate2 = file_get_contents($t); 			
+			//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template2) ;
+			//$mytemplate2 = file_get_contents($t); 
+			$mytemplate2 = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template2));
 	  
 			$ret = '';
 			foreach ($this->buffer as $prod_id => $product) {
@@ -2441,9 +2452,10 @@ function addtocart(id,cartdetails)
 	
 	//override
 	public function foot($token=null) {
-		$template='shcartfooter.htm';
-		$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		$mytemplate = @file_get_contents($t);	
+		//$template='shcartfooter.htm';
+		//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
+		//$mytemplate = @file_get_contents($t);	
+		$mytemplate = _m('cmsrt.select_template use shcartfooter');
 	
 		$this->quick_recalculate();
 	   
@@ -2539,9 +2551,10 @@ function addtocart(id,cartdetails)
 
 
 	public function myquickcartfoot() {
-		$template='fpcartfooter.htm';
-		$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		$mytemplate = @file_get_contents($t);	
+		//$template='fpcartfooter.htm';
+		//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
+		//$mytemplate = @file_get_contents($t);	
+		$mytemplate = _m('cmsrt.select_template use fpcartfooter');
 
 		$this->quick_recalculate();
 	   
@@ -2609,8 +2622,9 @@ function addtocart(id,cartdetails)
 
 	protected function todolist() {
 	 
-		$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$this->todo.'.htm') ; 
-		$mytemplate = file_get_contents($t);
+		//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$this->todo.'.htm') ; 
+		//$mytemplate = file_get_contents($t);
+		$mytemplate = _m('cmsrt.select_template use ' . $this->todo);
 		 
 		switch ($this->todo) {
 
@@ -3014,11 +3028,28 @@ function addtocart(id,cartdetails)
 		$value = number_format(floatval($vatprice),$this->dec_num,',','.');
 		$ret = $value . $this->moneysymbol;
         return ($ret);	
-    }	
+    }
+
+	/*ver 2 as shkatalogmedia */
+	public function pricewithtax($price,$tax=null) {
+	
+		if ($tax) {
+			$mytax = (($price*$tax)/100);	
+			$value = ($price+$mytax);		  
+		}
+		elseif ($tax = $this->tax) {
+			$mytax = (($price*$tax)/100);	
+			$value = ($price+$mytax);		  
+		}		
+		else
+			$value = $price;
+	
+		return ($value);
+	}		
 	
 	protected function cart_mailto($to=null,$subject=null,$body=null) {
 	    $from = $this->cartsend_mail;
-	    $to = $to?$to:$this->cartreceive_mail;
+	    $to = $to ? $to : $this->cartreceive_mail;
 		  
 	    if (defined('SMTPMAIL_DPC')) {
 			
@@ -3279,6 +3310,76 @@ function addtocart(id,cartdetails)
 		$g2 = array('_','~',"*","plus",":",'-','-n-');		
 	  
 		return str_replace($g2,$g1,$string);
+	}
+
+	/*call from shcartsuccess tmpl for analytics*/
+	public function postSubmitScript() {
+		$ret = "/* post submit script */";
+		return ($ret);
+	}
+
+	protected function submitScript() {
+		$ret = "/* submit analytics script */";
+		
+		//$amount = GetSessionParam('amount'); //this->myfinalcost					 								 
+		//$subtotal = GetSessionParam('subtotal'); //$this->total
+		//$total = GetSessionParam('total'); //this->myfinalcost
+		$roadway = GetSessionParam('roadway');
+		$payway = GetSessionParam('payway');	
+		$addressway = GetSessionParam('addressway');
+		$customerway = GetSessionParam('customerway');								 	   		   
+		$invway = GetSessionParam('invway');	
+		$sxolia = GetSessionParam('sxolia');								 
+		$qtytotal =	GetSessionParam('qty_total');	
+
+		$ordertotal = str_replace(',', '.', $this->myfinalcost);
+		$ordersubtotal = str_replace(',', '.', $this->total);
+		$orderdiscount = $this->discount ? str_replace(',', '.', $this->discount) : '0.0';
+		$shipcost = $this->shippingcost ? str_replace(',', '.', $this->shippingcost) : '0.0';
+		$taxcost = $this->mytaxcost ? str_replace(',', '.', $this->mytaxcost) : '0.0';
+		
+		$trid = GetSessionParam('TransactionID') ;//$this->transaction_id		
+		
+		$template1 = _m('cmsrt.select_template use cart-js-analytics');
+		$tokens = array(0=>$trid, 
+		                1=>number_format(floatval($ordertotal),$this->dec_num), 
+		                2=>number_format(floatval($ordersubtotal),$this->dec_num), 
+						3=>number_format(floatval($shipcost),$this->dec_num), 
+						4=>number_format(floatval($discount),$this->dec_num), 
+						5=>number_format(floatval($taxcost),$this->dec_num),
+						);	
+		$ret .= $this->combine_tokens2($template1,$tokens,true);
+		
+		$template2 = _m('cmsrt.select_template use cart-js-item-analytics');
+		$tokens = array();
+		foreach ($this->buffer as $prod_id => $product) {
+			if (($product) && ($product!='x')) {
+				
+				$toks = explode(';', $product);	
+				$tokens[0] = $toks[0]; //item code
+				$tokens[1] = addslashes($this->unreplace_cartchars($toks[1])); //item title
+				$tokens[8] = number_format(floatval($toks[8]),$this->dec_num); //item net price 
+				$tokens[9] = $toks[9]; //qty
+				//extra order tokens
+				$tokens[19] = $trid; //max combine no
+				
+				$ret .= $this->combine_tokens2($template2,$tokens,true);
+				unset($tokens);
+			}	
+		}		
+		
+		return ($ret);		
+
+	}
+    /*call from this submit_order */
+	protected function analytics() {
+	
+		if (iniload('JAVASCRIPT')) {
+			$code = $this->submitScript();	
+			$js = new jscript;	
+			$js->load_js($code,"",1);			   
+			unset ($js);
+		}			   	   	     
 	}	
 
 };

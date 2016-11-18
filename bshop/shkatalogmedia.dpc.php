@@ -331,7 +331,7 @@ class shkatalogmedia {
 		
 		  case 'showimage'    : $this->show_photodb(GetReq('id'), GetReq('type'));
 
-		  case 'kfilter'      : $filter = GetReq('input');
+		  case 'kfilter'      : $filter = GetParam('input');
 		                        $this->my_one_item = $this->fread_list($filter); 
 								$_filter = $this->replace_spchars($filter,1);
 								_m("cmsvstats.update_category_statistics use $_filter+filter");		  
@@ -1032,123 +1032,132 @@ SCROLLTOP;
 	
 	//override
 	function show_paging($pagecmd=null,$mytemplate=null,$nopager=null) {
-	   if ($nopager) return;
-		
-	   $cat = GetReq('cat'); // asis	
-	   $t = GetReq('t'); 	
-	   $page = GetReq('page')?GetReq('page'):0;
-	   $pager = GetReq('pager')?GetReq('pager'):$this->pager;
+	    if ($nopager) return;
+		 
+	    $cat = GetReq('cat'); // asis	
+		$inp = GetParam('input');
+	    $t = $inp ? 'search' : GetReq('t'); 	
+	    $page = GetReq('page') ? GetReq('page') : 0;
+	    $pager = GetReq('pager') ? GetReq('pager') : $this->pager;
 	   
-	   $pcmd = $pagecmd?$pagecmd:'klist';
+	    $pcmd = $pagecmd ? $pagecmd : 'klist';
 		  
-	   //echo '|paging>',$this->max_items,':',$this->max_cat_items,':',$this->max_selection;
+	    //echo '|paging>',$this->max_items,':',$this->max_cat_items,':',$this->max_selection;
 	   
-	   $mp = $this->max_cat_items;//$this->get_max_result(); //$this->max_selection
-	   $max_page = floor($mp/$this->pager);//<<<<<<<<<<<<<<<-1;	 plus ceil  
-	   //echo $max_page.">>>>".$mp.">>>>".$this->pager;
-	   $cutter = 2;//5	 
+	    $mp = $this->max_cat_items;//$this->get_max_result(); //$this->max_selection
+	    $max_page = floor($mp/$this->pager);//<<<<<<<<<<<<<<<-1;	 plus ceil  
+	    //echo $max_page.">>>>".$mp.">>>>".$this->pager;
+	    $cutter = 2;//5	 
 	   
-	   if ($mp<=$pager) return;  
+	    if ($mp<=$pager) return;  
 
-	   $tmplcontents = $this->select_template('fppager-button');
+	    $tmplcontents = $this->select_template('fppager-button');
 	   
-	   if ($page<$max_page) {//&& ($mp<$pager)) { 
+	    if ($page<$max_page) {//&& ($mp<$pager)) { 
 
-	     //next pages
-		 $m = 0;
-		 for($p=$page+1;$p<$max_page;$p++) {
-		   if ($m<$cutter) {
-                if ($pcmd=='kfilter') 				 
-					$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$p,$p+1,null,null,null,true);
-              	else		
-					$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);
-				$next .= $this->combine_template($tmplcontents,'',$next_page_no);
-		   }
-		   $m+=1;
-		 }	   
-	   	 if (($next) && (!$tmplcontents)) $next .= "|";
-	     $page_next = $page + 1;	
-            if ($pcmd=='kfilter') 		 
-				$next_label = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$page_next,'&gt;',null,null,null,true);
+			//next pages
+			$m = 0;
+			for($p=$page+1;$p<$max_page;$p++) {
+				if ($m<$cutter) {
+					if (($pcmd=='filter') || ($pcmd=='search'))				 
+						$next_page_no = seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);					
+					elseif ($pcmd=='kfilter')
+						$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$p,$p+1,null,null,null,true);
+					else		
+						$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);
+					$next .= $this->combine_template($tmplcontents,'',$next_page_no);
+				}
+				$m+=1;
+			}	   
+			if (($next) && (!$tmplcontents)) $next .= "|";
+			$page_next = $page + 1;	
+			if (($pcmd=='filter') || ($pcmd=='search'))	 		 
+				$next_label = seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$page_next,'&gt;',null,null,null,true);			
+			elseif ($pcmd=='kfilter')
+				$next_label = seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$page_next,'&gt;',null,null,null,true);
 			else	
 				$next_label = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_next,'&gt;',null,null,null,true);
 			$next .= $this->combine_template($tmplcontents,'',$next_label);
-	   }
+		}
 	    
-	   if ($page>0) {
-	     $page_prev = $page - 1;
-            if ($pcmd=='kfilter')		 
-				$prev_label = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$page_prev,'&lt;',null,null,null,true);		 
+	    if ($page>0) {
+			$page_prev = $page - 1;
+            if (($pcmd=='filter') || ($pcmd=='search'))			 
+				$prev_label = seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$page_prev,'&lt;',null,null,null,true);				
+            elseif ($pcmd=='kfilter') 
+				$prev_label = seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$page_prev,'&lt;',null,null,null,true);		 
 			else	
 				$prev_label = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_prev,'&lt;',null,null,null,true);		 
 			$prev = $this->combine_template($tmplcontents,'',$prev_label);	
 		 
-         //prev pages
-		 $m = $page-$cutter;
-		 for($p=0;$p<$page;$p++) {
-		   if ($p>=$m) {
-			 if ($pcmd=='kfilter')  
-				$prev_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&input='.GetReq('input').'&page='.$p,$p+1,null,null,null,true);
-			 else
-				$prev_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);
+			//prev pages
+			$m = $page-$cutter;
+			for($p=0;$p<$page;$p++) {
+				if ($p>=$m) {
+					if (($pcmd=='filter') || ($pcmd=='search'))	 
+						$prev_page_no = seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);					
+					elseif ($pcmd=='kfilter') 
+						$prev_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$p,$p+1,null,null,null,true);
+					else
+						$prev_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);
 			
-				$prev .= $this->combine_template($tmplcontents,'',$prev_page_no);
-
-		   }
-		 }  
-	   }	 
-	   $cp = $page+1;
-	   $current = $this->combine_template($tmplcontents, $this->pager_current_class ,"<a href=\"#\">$cp</a>");   
+					$prev .= $this->combine_template($tmplcontents,'',$prev_page_no);
+				}
+			}  
+	    }	 
+	    $cp = $page+1;
+	    $current = $this->combine_template($tmplcontents, $this->pager_current_class ,"<a href=\"#\">$cp</a>");   
 			
-	   $page_titles = $prev . $current . $next;	  	
-       $contents = $this->select_template('fppager');	   
-	   $ret = $this->combine_template($contents,$page_titles);	
+	    $page_titles = $prev . $current . $next;	  	
+        $contents = $this->select_template('fppager');	   
+	    $ret = $this->combine_template($contents,$page_titles);	
 	   
-	   return ($ret);
+	    return ($ret);
 	}	
 
 	//override
 	function show_asceding($cmd=null,$mytemplate=null,$style=null,$notview=null) {
 	
-	   if ($notview) return;
+		if ($notview) return;
 	   
-	   $cat = GetReq('cat');
-	   $t = GetReq('t');   
-	   $cmd = $cmd ? $cmd : 'klist';
-	   $pager = GetReq('pager') ? SetSessionParam('pager',GetReq('pager')) : GetSessionParam('pager');
-	   $asc = GetReq('asc') ? SetSessionParam('asc',GetReq('asc')) : GetSessionParam('asc');
-	   $order = GetReq('order') ? SetSessionParam('order',GetReq('order') ) : GetSessionParam('order');		   
-	   $a = localize('_title',getlocal());
-	   $b = localize('_axia',getlocal());
-	   $c = localize('_code',getlocal());	   
-	   $data = array(1=>$a,2=>$b,3=>$c);
-	   if ($this->deforder)
-	     $do = 3;
-	   else
-	     $do = 1;	 
-	   $selected_order = GetReq('order')?GetReq('order'):(GetSessionParam('order') ? GetSessionParam('order') : $do);
-	   $combo_char = $this->make_combo(seturl('t='.$cmd.'&cat='.$cat.'&order=#'),$data,null,$selected_order,$style);
+		$cat = GetReq('cat');
+		$inp = GetParam('input');
+		$t = $inp ? 'search' : GetReq('t');   
+		$cmd = $t ? $t : ($cmd ? $cmd : 'klist');
+		$pager = GetReq('pager') ? SetSessionParam('pager',GetReq('pager')) : GetSessionParam('pager');
+		$asc = GetReq('asc') ? SetSessionParam('asc',GetReq('asc')) : GetSessionParam('asc');
+		$order = GetReq('order') ? SetSessionParam('order',GetReq('order') ) : GetSessionParam('order');	
+		
+		$a = localize('_title',getlocal());
+		$b = localize('_axia',getlocal());
+		$c = localize('_code',getlocal());	   
+		$data = array(1=>$a,2=>$b,3=>$c);
+		$do = ($this->deforder) ? 3 : 1;
+ 
+		$url = (($cmd=='search') || ($cmd=='filter')) ? seturl('t='.$cmd.'&input='.$inp.'&cat='.$cat.'&order=#') : seturl('t='.$cmd.'&cat='.$cat.'&order=#');
+		$selected_order = GetReq('order') ? GetReq('order') : (GetSessionParam('order') ? GetSessionParam('order') : $do);
+		$combo_char = $this->make_combo($url,$data,null,$selected_order,$style);
 	   	      	   		   
-	   //asc/desc
-	   $a = localize('_asc',getlocal());
-	   $b = localize('_desc',getlocal());
-	   $data = array(1=>$a,2=>$b);
-	   if ($this->defasc<0)
-	     $da = 2;
-	   else
-	     $da = 1;	 
-	   $selected_asc = GetReq('asc')?GetReq('asc') : (GetSessionParam('asc') ? GetSessionParam('asc') : $do);   
-	   $combo_asceding = $this->make_combo(seturl('t='.$cmd.'&cat='.$cat.'&asc=#'),$data,null,$selected_asc,$style);
+		//asc/desc
+		$a = localize('_asc',getlocal());
+		$b = localize('_desc',getlocal());
+		$data = array(1=>$a,2=>$b);
+		$da = ($this->defasc<0) ? 2 : 1;
+ 
+        $url = (($cmd=='search') || ($cmd=='filter')) ? seturl('t='.$cmd.'&input='.$inp.'&cat='.$cat.'&asc=#') : seturl('t='.$cmd.'&cat='.$cat.'&asc=#');
+		$selected_asc = GetReq('asc') ? GetReq('asc') : (GetSessionParam('asc') ? GetSessionParam('asc') : $do);   
+		$combo_asceding = $this->make_combo($url,$data,null,$selected_asc,$style);
 	   
-	   //pager
-	   $max = $this->max_selection;
+		//pager
+		$max = $this->max_selection;
 	   
-       $data2 = array();  	
-	   for ($i=1;$i<4;$i++) {
-	      $n = ($this->default_pager * $i);
-          $data2[$n] = localize('_array',getlocal()).' '.$n;
-       }		  
-	   $combo_pager = $this->make_combo(seturl('t='.$cmd.'&cat='.$cat.'&pager=#'),$data2,null,$this->pager,$style);
+        $data2 = array();  	
+	    for ($i=1;$i<4;$i++) {
+			$n = ($this->default_pager * $i);
+			$data2[$n] = localize('_array',getlocal()).' '.$n;
+        }		  
+		$url = (($cmd=='search') || ($cmd=='filter')) ? seturl('t='.$cmd.'&input='.$inp.'&cat='.$cat.'&pager=#') : seturl('t='.$cmd.'&cat='.$cat.'&pager=#');
+	    $combo_pager = $this->make_combo($url,$data2,null,$this->pager,$style);
 	   	  		    	   	   		 	      
 	    $contents = $this->select_template('fpsort');
 	    $out = $this->combine_template($contents,localize('_order',getlocal()),$combo_char,$combo_asceding,$combo_pager);	     
@@ -3253,6 +3262,24 @@ SCROLLTOP;
 	    $db = GetGlobal('db');		
 		$baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility		
 		$command = $cmd ? $cmd : 'search';
+		$stype = GetParam('searchtype');
+		$scase = GetParam('searchcase');
+		$cat = GetParam('cat');	
+		if (!$cat) {
+			
+			return null;
+			
+			//no filter results when no cat, select cat
+			/*$combo = _m('shkategories.getKategoryCombo use 1++++++++search+search-combo+1');
+			return '<ul class="categories-filter animate-dropdown">
+                <li class="dropdown">
+                    <a class="dropdown-toggle"  data-toggle="dropdown" href="#">'.localize('SHKATEGORIES_DPC', getlocal()).'</a>
+                    <ul class="dropdown-menu" role="menu" >'.
+					$combo.'
+					</ul>
+                </li>
+            </ul>';*/
+		}	
 	  
 		$contents = ($this->filterajax) ? $this->select_template('searchfilter-ajax') : $this->select_template('searchfilter');
 		
@@ -3261,13 +3288,22 @@ SCROLLTOP;
 		
 	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
         if ($incategory) {	
-		    $cats = explode($this->sep(), GetReq('cat'));
-		    foreach ($cats as $c=>$mycat)
-		      $s[] = 'cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
+			$s = array();
+		    $cats = $cat ? explode($this->sep(), $cat) : null;
+			if (!empty($cats)) {
+				foreach ($cats as $c=>$mycat)
+					$s[] = 'cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
+			}  
 		}		
+		$where = (!empty($s)) ? implode(" AND ", $s) : null;		
+		
+		if (($text2find = GetParam('input')) && (defined("SHNSEARCH_DPC"))) {
+		   	$where .= $where ? ' AND ' : null;
+            $where .= _m('shnsearch.findsql use '.$text2find.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark++'.$stype.'+'.$scase);		  
+        }		
 
-		$sSQL .= implode(" AND ", $s);
-		$sSQL .= " and itmactive>0 and active>0";
+		$sSQL .= $where ? $where . ' AND ' : null;
+		$sSQL .= " itmactive>0 and active>0";
 		$sSQL .= " group by " . $field;
 		//echo $sSQL;	  
 	  
@@ -3278,8 +3314,8 @@ SCROLLTOP;
 			foreach ($result as $n=>$t) {
 				if (trim($t[0])!='') {
 			        $f = $this->replace_spchars($t[0]);
-					$section = $this->replace_spchars(GetReq('cat'),1);
-					$url = $baseurl . seturl('t='.$command.'&cat='.GetReq('cat').'&input='.$f,null,null,null,null,true);
+					$section = $this->replace_spchars($cat,1);
+					$url = $baseurl . seturl('t='.$command.'&cat='.$cat.'&input='.$f,null,null,null,null,true);
 					$theurl = ($this->filterajax) ? /*"filter('{$f}', '{$section}')" "ajaxcall('$section','$url')"*/ "sndReqArg('$url','$section')" : $url;
 					
 					$tokens[] = $t[0];
@@ -3296,7 +3332,7 @@ SCROLLTOP;
         if ($header) {		
 			$tokens[] = localize('_ALL',getlocal());
 			$tokens[] = GetReq('input') ? '*' : $this->max_cat_items; //$this->max_items; //'*';
-			$tokens[] = $baseurl . seturl('t=klist&cat='.GetReq('cat'),null,null,null,null,true);
+			$tokens[] = $baseurl . seturl('t=klist&cat='.$cat,null,null,null,null,true);
 			$tokens[] = (!GetReq('input')) ? 'checked="checked"' : null;
 			$r[] = $this->combine_tokens($contents,$tokens);
 			unset($tokens);
@@ -3486,7 +3522,6 @@ EOF;
 	    $mystyle = $style?$style:$this->asccombostyle;
 	
 		$r = "<select name=\"".$name."\" class=\"".$mystyle."\"".( $size != 0 ? "size=\"".$size."\"" : "").
-		      //" onChange=\"sndReqArg('index.php?t=$t&s1=CANON','combo2')\">";
 			  " onChange=\"location=this.options[this.selectedIndex].value\">";
 			  
 		if (!empty($values) && ($title)) 	  

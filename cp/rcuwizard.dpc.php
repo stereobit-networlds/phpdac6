@@ -25,12 +25,14 @@ $__EVENTS['RCUWIZARD_DPC'][21]='cpwizcancel';
 $__EVENTS['RCUWIZARD_DPC'][22]='cpupgcancel';
 $__EVENTS['RCUWIZARD_DPC'][23]='cpwupdate';
 $__EVENTS['RCUWIZARD_DPC'][24]='cpwbackup';
+$__EVENTS['RCUWIZARD_DPC'][25]='cpmupgrade';
 
 $__ACTIONS['RCUWIZARD_DPC'][20]='cpupgrade';
 $__ACTIONS['RCUWIZARD_DPC'][21]='cpwizcancel';
 $__ACTIONS['RCUWIZARD_DPC'][22]='cpupgcancel';
 $__ACTIONS['RCUWIZARD_DPC'][23]='cpwupdate';
 $__ACTIONS['RCUWIZARD_DPC'][24]='cpwbackup';
+$__ACTIONS['RCUWIZARD_DPC'][25]='cpmupgrade';
 
 $__LOCALE['RCUWIZARD_DPC'][0]='RCUWIZARD_DPC;Upgrade Wizard;Upgrade Wizard';
 $__LOCALE['RCUWIZARD_DPC'][1]='_backup;Backup;Αποθήκευση δεδομένων';
@@ -111,6 +113,9 @@ class rcuwizard extends rcwizard {
 	    //$this->pre_check_installation();
 	
 	    switch ($event) {
+			
+		  case 'cpmupgrade': echo $this->upgradeapp_ajax(); die();	
+			                 break;			
 		
 	      case 'cpwbackup' : break;		
 
@@ -169,7 +174,7 @@ class rcuwizard extends rcwizard {
 		  
 		  case 'cpwupdate' :
           case 'cpupgrade' : 
-		  default          : 
+		  default          : $this->javascript();
 		                     
         }			
     }
@@ -181,6 +186,8 @@ class rcuwizard extends rcwizard {
 	    if ($login!='yes') return null;
 	
 	    switch ($action) {	
+		
+		  case 'cpmupgrade':   break;		
 		
 		  case 'cpwbackup' :   $out = $this->backup_directory(GetReq('zpath'),GetReq('zname'));
 			                   break;		
@@ -232,24 +239,83 @@ class rcuwizard extends rcwizard {
 
     }
 	
+	protected function javascript() {	
+
+        if (iniload('JAVASCRIPT')) {   
+	        $code = $this->javascript_code();	   	
+		    $js = new jscript;
+            $js->load_js($code,null,1);   			   
+		    unset ($js);
+	    }	
+	}		
+	
+	//call from page
+	public function javascript_code()  {
+		
+	    $ajaxurl = seturl("t=");	
+		$m = count($this->updatePath());
+	
+		$js = <<<EOF
+
+function start(app,c)
+{	
+    var cc = c ? c : parseInt('$m');
+	$('#message_p').html('<img src="images/loading.gif" alt="Processing">');
+
+	$.ajax({
+	  url: '{$ajaxurl}cpmupgrade&id='+app,
+	  type: 'GET',
+	  success:function(data) {		
+	    if (data) {	
+			$('#message_p').html(data);
+			$('.label').html(cc+'%');
+			$('.bar').css({"width": cc+"%"});
+			setTimeout(function() { start(app, cc-1);},1000);
+		}
+		else {
+			$('.label').html('0%');
+			$('.bar').css({"width": "0%"});			
+			$('#message_p').html('');
+		}		
+	  }
+	}); 
+}		
+EOF;
+		return ($js);	
+    }		
+			
+	
 	/*scan root app files */
-	protected function runscan($acc=null) {
-							
+	protected function runscan() {
+		$u = explode('/', $this->urlpath);
+		$app = array_pop($u);
+		
 		foreach ($this->updatePath() as $path) {
-			$report .= $this->scan($acc, $path, null, true);
+			$report .= $this->scan($path, null, true);
 			$report .= '<hr/>';
 		}
+		$report .= "<button onClick='start(\"$app\")' class='btn btn-danger'>Start</button><br/>" ;		
 		
 		return ($report);
+	}
+
+	protected function upgradeapp_ajax() {
+		$u = explode('/', $this->urlpath);
+		$app = array_pop($u);
+		$index = intval(@file_get_contents($this->prpath . $app. '.app'));
+		
+		foreach ($this->updatePath() as $idx=>$path) {
+			if ($idx == $index)
+				return $this->scan($path, null, true, $index+1);
+		}
+		@unlink($this->prpath . $app . '.app'); //reset	
+		return false;
 	}	
 	
 	protected function updatePath() {
 		$u = explode('/', $this->urlpath);
 		$app = array_pop($u);
-		
 		$tpath = remote_paramload('FRONTHTMLPAGE', 'path', $this->prpath);
-		$template = remote_paramload('FRONTHTMLPAGE', 'template', $this->prpath);
-		$cptemplate = remote_paramload('FRONTHTMLPAGE', 'cptemplate', $this->prpath);
 		
 		$path = $this->upgrade_root_path;		
 		if (is_dir($path . $app . '-ext')) { //if app dir exclusive (=appname + '-ext') see dir for updates
@@ -258,45 +324,43 @@ class rcuwizard extends rcwizard {
 		else //common dir
 		$datalines = array(0=>$path . 'homefiles',
 		                    1=>$path . 'cgi-bin',
-							2=>$path . 'assets',
-							3=>$path . 'css',
-							4=>$path . 'images',
-							5=>$path . 'js',
-							6=>$path . 'javascripts',
-							7=>$path . 'newsletters',
-							8=>$path . 'cp/assets',
-							9=>$path . 'cp/font',
-							10=>$path . 'cp/dpc',
-							11=>$path . 'cp/css',
-							12=>$path . 'cp/images',
-							13=>$path . 'cp/js',
-							14=>$path . 'cp/sql',
-							15=>$path . 'cp/lang',
-							16=>$path . 'cp/cpfiles',
-							17=>$path . "cp/$tpath/$cptemplate",
-							18=>$path . "cp/$tpath/$template",
-							19=>$path . $app,							
-							20=>$this->urlpath . '/' . $app .  '/cp/replication',
+							2=>$path . 'newsletters',
+							3=>$path . 'js',
+							4=>$path . 'javascripts',
+							5=>$path . 'cp/images',
+							6=>$path . 'cp/assets',
+							7=>$path . 'cp/font',
+							8=>$path . 'cp/dpc',
+							9=>$path . 'cp/css',
+							10=>$path . 'cp/img',
+							11=>$path . 'cp/js',
+							12=>$path . 'cp/sql',
+							13=>$path . 'cp/lang',
+							14=>$path . 'cp/cpfiles',
+							15=>$path . "cp/$tpath",
+							16=>$path . $app,							
+							17=>$this->prpath . 'replication',
 							);
 							
 		return ($datalines);			
 	}	
 	
-	protected function scan($acc=null, $spath=null, $skipdir=null, $reportout=false) {
-		$db = GetGlobal('db');
+	protected function scan($path=null, $skipdir=null, $reportout=false, $ajaxid=false) {
+		$u = explode('/', $this->urlpath);
+		$app = array_pop($u);		
 		$repout = $reportout ? true : false;
-
-		$acct = $acc ? $acc : 'update';	
-		
-		$path = $spath; 
+	
 		$_p = explode('/',$path);
         $saypath = array_pop($_p);
 
 		$dpath = GetReq('upgpath') ? base64_decode(GetReq('upgpath')) :  false;	
-		$exec = ($dpath==$path) ? true : false;		
+		$exec = (($dpath==$path) || ($ajaxid)) ? true : false;	
+
+		//save step file for ajax or reset
+		$aj = ($ajaxid>0) ? @file_put_contents($this->prpath . $app . '.app', strval($ajaxid), LOCK_EX) : @unlink($this->prpath . $app . '.app');		
 		
-		if (!$path) return (nl2br("Acc file not defined ($acct)\r\n")); 
-		if (!is_dir($path)) return (nl2br("Invalid path ($saypath)\r\n"));
+		if (!is_dir($path)) 
+			return (nl2br("Invalid path ($saypath)\r\n"));
 		
 		$scan_path_length = strlen($path);
 
@@ -315,11 +379,7 @@ class rcuwizard extends rcwizard {
 		$current = array();
 		$added = array();
 
-		//	Limit first scan entries in history table
-		$firstscan = true;
 		$count_baseline = 0;
-
-		//	Start timer (scan duration)
 		$start = microtime(true);
 
 		//	SCAN		
@@ -361,12 +421,12 @@ class rcuwizard extends rcwizard {
 					}
 					elseif (!is_readable($_updFile)) {
 						if (strstr($_updFile, '.conf')) {
-							$conf = $this->urlpath . '/'. $app. '/cp/myconfig.txt';
+							$conf = $this->prpath . 'myconfig.txt';
 							if (filemtime($conf) < filemtime($file_path))
 								$added[$file_path] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);					
 						}
 						elseif (strstr($_updFile, '.sql')) {
-							$dbupd = $this->urlpath . '/'. $app. '/cp/sqlupgrade.txt';
+							$dbupd = $this->prpath. 'sqlupgrade.txt';
 							if (filemtime($dbupd) < filemtime($file_path))
 								$added[$file_path] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);							
 						}
@@ -407,7 +467,9 @@ class rcuwizard extends rcwizard {
         }
 
 		if ($count_added) {
-			$cmd = $exec ? null : seturl('t=cpupgrade&upgpath='.base64_encode($path), '[Upgrade]');
+			$url = seturl("t=cpupgrade&upgpath=".base64_encode($path));
+			$button = "<a href=\"$url\" class=\"btn btn-danger\">Upgrade</a>";
+			$cmd = $exec ? null : $button;//seturl('t=cpupgrade&upgpath='.base64_encode($path), '[Upgrade]');
 			
 			$report .= "\r\nSummary:
 Current Baseline: $count_current
@@ -418,10 +480,14 @@ Scan executed in $elapsed seconds.\r\n";
 		//	Destroy tables (release to memory)
 		$baseline = $current = $added = array();
 		
+		//log
+		if ($ajaxid>0)
+			$log = @file_put_contents($this->prpath . $app . '.log', $report, LOCK_EX | FILE_APPEND);		
+		
 		if ($repout) 
 			return(nl2br($report));
-		else		
-			return ($ret);	
+		
+		return (true);	
 	}
 
 	protected function _update($source, $dest, $mkdir=false) {
