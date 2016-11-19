@@ -1300,7 +1300,7 @@ function gocatsearch(url)
 	function getCombo ($cid,$name,$cat=null,$style="",$size=10,$multiple="",$values=null,$selection='',$cmd=null,$tmpl=null,$noselect=null) {
 	    $t = GetReq('t');
 		$mycmd = $cmd?$cmd:'klist';
-		$goto = _m("cmsrt.url use t=$mycmd&cat=");//seturl("t=$mycmd&cat=");
+		$goto = _m("cmsrt.seturl use t=$mycmd&cat=+++1");//seturl("t=$mycmd&cat=");
 		$selected_cat = $cat?$cat:GetReq('cat');
 		$cats = explode($this->cseparator,$selected_cat);
 	    //print_r($values);
@@ -1412,18 +1412,14 @@ function gocatsearch(url)
 	   $s2 = GetReq('s2');
 	   $s3 = GetReq('s3');
 	   $s4 = GetReq('s4');    
-	   if ($issearch) 
-	     $search_cmd = $issearch;
+	   if ($issearch) $search_cmd = $issearch;
 	   $cmd = $issearch ? $search_cmd : 'klist';
 	   $loctitle = localize($title,getlocal());
 	   $mytitle = $loctitle ? $loctitle : $this->title;
-	   if ($isleaf)
-	     $mytitle2 = $loctitle ? $loctitle : $this->title2;
-	   else
-	     $mytitle2 = $this->title2;	 
+	   $mytitle2 = ($isleaf) ? ($loctitle ? $loctitle : $this->title2) : $this->title2;	 
 	   
 	   $cat = $preselcat ? $preselcat : GetReq('cat');
-	   $goto = $preselcat ? _m("cmsrt.url use t=$cmd&cat=".$preselcat) : _m("cmsrt.url use t=$cmd&cat=");//seturl("t=$cmd&cat=".$preselcat) : seturl("t=$cmd&cat=");	   
+	   $goto = $preselcat ? _m("cmsrt.seturl use t=$cmd&cat=$preselcat+++1") : _m("cmsrt.seturl use t=$cmd&cat=+++1");//seturl("t=$cmd&cat=".$preselcat) : seturl("t=$cmd&cat=");	   
 	   
 	   $mydata = $this->asksql('cat2');
 	   

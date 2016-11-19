@@ -24,7 +24,7 @@ class cms extends fronthtmlpage {
 	var $tpath, $template;
 	
 	var $session_use_cookie, $protocol, $secprotocol, $sslpath;
-	var $activeSSL, $encURLparam;
+	var $activeSSL, $encURLparam, $shellfn, $dothtml;
 		
 	function __construct() {
 		
@@ -42,7 +42,10 @@ class cms extends fronthtmlpage {
 		$this->secprotocol = paramload('SHELL','secureprotocol');  
 		$this->sslpath  = paramload('SHELL','sslpath');	
 		$this->activeSSL = paramload('SHELL','ssl');
-        $this->encURLparam = paramload('SHELL','encodeurl');		
+        $this->encURLparam = paramload('SHELL','encodeurl');
+		$this->shellfn = paramload('SHELL','filename');
+
+		$this->dothtml = false; //true; //paramload('SHELL','rewritedothtml');		
 	}
 	
 	public function isDemoUser() {
@@ -53,82 +56,115 @@ class cms extends fronthtmlpage {
 		return ($this->seclevid>=$level ? true : false);
 	}
 
-	protected function seturl($query=null, $title=null, $jscript=null, $ssl=0) { //,$sid=1,$rewrite=null) {
-  
-		$rewrite = true; //$rewrite ? $rewrite : paramload('SHELL','rewrite');
-		//if ($this->session_use_cookie) $sid = 0; DISABLED SID  
-  
-		$subpath = pathinfo($_SERVER['PHP_SELF'],PATHINFO_DIRNAME);  
-  
-		$query_p = explode("|",$query); //holds path and ?pama=... in the form of xz/z/|t=1
-		//print_r($query_p);
-		if (isset($query_p[1])) {
-			$query = $query_p[1];
-			$subpath = $query_p[0];
+	
+	//page cntrl logic url creator
+	protected function getpurl($query=null, $title=null) {
+	
+		parse_str($query, $parts);
+	  
+		if (array_key_exists('t', $parts)) {
+	  
+			$pagename = $parts['t'];
+			$url = $this->urlpath;
+			
+			if ($this->activeSSL)
+				$url .= $this->sslpath;
+			
+			$url .= "/" . $pagename . ".php"; 
+
+			if (file_exists($url))
+				return ($pagename . ".php");
 		}	
-		else 
-			$query = $query_p[0];
-		//echo $query,">>>";	
- 
-		if ($subpath=="\\") $subpath = null;  
-  
+	  
+		return false;
+	} 	
+	
+	public function seturl($query=null, $title=null, $jscript=null, $norewrite=null) {   
+   
 		//look if ip is in ip pool	
 		$ipool = arrayload('SHELL','ip'); 
 		$ip = (in_array($_SERVER['HTTP_HOST'],$ipool)) ? $_SERVER['HTTP_HOST'] : $ipool[0]; //default  
   
-        $name = (($this->activeSSL) && ($ssl)) ? $this->secprotocol . $ip . $this->sslpath : $this->protocol . $ip; 
+        $name = $this->activeSSL ? $this->secprotocol . $ip . $this->sslpath : $this->protocol . $ip; 
                          
 		//mv controller or page controller caller???
-		$xurl = "/".pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);
+		$xurl = "/" . pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);
 
 		//fun called by mv cntrl
-		if (paramload('SHELL','filename')==$xurl) {
+		if ($this->shellfn == $xurl) {
 		    //get page if exist..(t=page)!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if ($page = getpurl($query, $title, $ssl, $jscript, $ssl)) {
+            if ($page = $this->getpurl($query, $title)) {
 			    $name .= "/" . $page;//page cntrl
 			    //echo "[",$name,"]<br>";
 			}
 			else						 
-			    $name .= paramload('SHELL','filename');				
+			    $name .= "/" . $this->shellfn;				
 		}  		   
-		else {//fun called by page cntrl  
-			$mysubpath = ($subpath<>'/') ? $subpath.'/' : $subpath;
-		    $name .= $mysubpath . pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);  //double slash //....solved
-			//echo $mysubpath,'>',pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME),'>';
-		}  
+		else  
+		    $name .= "/" . pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);  
 						 
 		//echo $name,"<br>";
 						 
         if (isset($query)) {
             if ($query!="#") {
-				//if ($rewrite) {
-				    $aquery = explode('&',$query);
-				    foreach ($aquery as $a=>$q) {
-				        $aparam = explode('=',$q);
-						$url .=  $aparam[1] .'/';
-				    }
-					//print_r($aquery);
-					//echo $url,'<br>';
-				/*}
-				else {
-	                $url = $name . "?"; //. $query;
-	                $url.= $this->encURLparam ? encode_url($query, $this->encURLparam) : $query;
-	                //if ($sid) $url .=  "&" . SID;
-				}*/
+				if ($norewrite) {
+					$url = $name . "?" . $query;
+				}	
+				elseif (strstr($query, '=')) { //NOT & (may t=) unparsed query
+					/*parse query*/
+					parse_str($query, $parts);
+					$url =  implode('/', $parts) . '/';
+				}
+				else  //already parsed query from this->url()
+	                $url = $query; //as is
 	        }  
 	        else 
 	            $url = "#"; 
         }				
         else  
-            $url = $name;//(isset($sid) ? $name . '?' . SID : $name; 
+            $url = $name; 
                          
         $out = $title ? "<a href='" . $url . "' $jscript>" . $title . "</a>" : $url;
 
 		return ($out);
 	}
 	
-	public function url($query=null, $title=null, $jscript=null, $ssl=0) {
-		return $this->seturl($query, $title, $jscript, $ssl);
+	public function url($query=null, $title=null, $jscript=null, $dothtml=null) {
+		$rewritedothtml = $dothtml ? $dothtml : $this->dothtml;
+			
+		/*.html handler for categories and items 
+		
+		RewriteCond %{REQUEST_FILENAME} !-f
+		RewriteRule ^([^\.]+)/([^\.]+).html$ katalog.php?t=kshow&cat=$1&id=$2 [L]
+		RewriteRule ^([^\.]+).html$ katalog.php?t=klist&cat=$1 [NC,L]
+		*/
+		if ($rewritedothtml) { 
+		
+			if (isset($query)) {
+
+				parse_str($query, $parsed_params);
+				$parsed_query =  implode('/', $parsed_params) . '/';
+				$cpq = count($parsed_params); //count query params
+				
+				switch ($cpq) {
+					case 3  : 	//t,cat,id
+								$ret = (($parsed_params['id']) && ($parsed_params['cat'])) ?
+										$parsed_params['cat'] . '/' . $parsed_params['id'] . '.html' :
+										$this->seturl($parsed_query, $title, $jscript);
+								break;	
+					case 2  : 	//t,cat
+								$ret = ($parsed_params['cat']) ?
+										$parsed_params['cat'] . '.html' :
+										$this->seturl($parsed_query, $title, $jscript);
+								break;	
+					case 1  : 	//t
+					default :	$ret = $this->seturl($parsed_query, $title, $jscript);			
+				}
+				return ($ret);
+			}
+		}
+		
+		return $this->seturl($query, $title, $jscript);
 	}
 };
 }

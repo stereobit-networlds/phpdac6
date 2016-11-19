@@ -417,7 +417,7 @@ class shkatalogmedia {
 	protected function js() {
 		$cat = GetReq('cat');
 		$baseurl = paramload('SHELL','urlbase') . '/';		
-		$furl = $baseurl . seturl('t=kfilter&cat='.$this->replace_spchars($cat),null,null,null,null,true); 
+		$furl = $baseurl . _m('cmsrt.url use t=kfilter&cat=' . $this->replace_spchars($cat)); //seturl('t=kfilter&cat='.$this->replace_spchars($cat),null,null,null,null,true); 
 		
 		$js = "
 function filter(f,div) { 
@@ -737,10 +737,10 @@ SCROLLTOP;
 	
 	//override
 	function get_photo_url($code, $photosize=null) {
-      $db = GetGlobal('db');
-	  if (!$code) return;  
+		$db = GetGlobal('db');
+		if (!$code) return;  
 
-	  switch ($photosize) {
+		switch ($photosize) {
 	       case 3  : $tpath = $this->thubpath_large; 
 		             $stype = $this->imgLargeDB ? $this->imgLargeDB : 'LARGE';
 		             break;	   
@@ -752,29 +752,22 @@ SCROLLTOP;
 		             break;
 	       default : $tpath = $this->thubpath;	
                      $stype = '';		   
-	  }
+		}
 	  
-	  if ($interface = $this->photodb) { 
-	     //echo $stype;
-         if (is_numeric($interface))	  
-	       $photo = seturl('t=showimage&id='.$code.'&type='.$stype);
-		 else  
-		   $photo = $interface . '?id='.$code.'&type='.$stype;
-	  }
-	  else {//ordinal image
-	  
-		 $code = $this->encode_image_id($code); //_m('shkategories.encode_image_id use '.$code);			  
-		 $pfile = $code;
-	     $photo_file = $this->urlpath . '/' .$tpath . $pfile . $this->restype;	  
-	     if (!file_exists($photo_file)) {
-	       $photo = $tpath . 'nopic' . $this->restype;	
-		 }
-	     else {
-	       $photo = $tpath . $pfile . $this->restype;	
-		 }  
-	   }
+		if ($interface = $this->photodb) { 
+			//echo $stype;
+			if (is_numeric($interface))	  
+				$photo = _m("cmsrt.url use t=showimage&id=$code&type=$stype");//seturl('t=showimage&id='.$code.'&type='.$stype);
+			else  
+				$photo = $interface . '?id='.$code.'&type='.$stype;
+		}
+		else {//ordinal image
+			$pfile = $this->encode_image_id($code); //_m('shkategories.encode_image_id use '.$code);
+			$photo_file = $this->urlpath . '/' .$tpath . $pfile . $this->restype;	  
+			$photo = (file_exists($photo_file)) ? $tpath . $pfile . $this->restype : $tpath . 'nopic' . $this->restype; 
+	    }
 	   
-	   return ($photo);	 	
+	    return ($photo);	 	
 	}	
 	
 	//override
@@ -805,7 +798,7 @@ SCROLLTOP;
             $myresource = "<img src=\"" . $photo . "\"";
 			$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";
 		  
-		    $purl = seturl("t=kshow"."&cat=".$cat."&id=".$code,null,null,null,null,true); 
+		    $purl = _m("cmsrt.url use t=kshow&cat=$cat&id=$code"); //seturl("t=kshow"."&cat=".$cat."&id=".$code,null,null,null,null,true); 
 		    $plink = "<A href=\"$purl\">";
             $ret = $plink . $myresource . "</A>";           
 		  }
@@ -813,13 +806,13 @@ SCROLLTOP;
 		  
 		    $myresource = "<img src=\"" . $photo . "\"";
 			$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";
-		    $ret = seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource,null,null,null,true);// . "</A>";
+		    $ret = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=$code+" . $myresource); //seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource,null,null,null,true);// . "</A>";
 		  } 
 		  else {//item link
 		  
             $myresource = "<img src=\"" . $photo . "\"";
 			$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";		  
-		    $ret = seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource,null,null,null,true);// . "</A>";
+		    $ret = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=$code+" . $myresource); //seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource,null,null,null,true);// . "</A>";
 		  } 
 		}
 		else {
@@ -1057,14 +1050,14 @@ SCROLLTOP;
 
 			//next pages
 			$m = 0;
-			for($p=$page+1;$p<$max_page;$p++) {
+			for($p=$page+1 ; $p<$max_page ; $p++) {
 				if ($m<$cutter) {
 					if (($pcmd=='filter') || ($pcmd=='search'))				 
-						$next_page_no = seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);					
+						$next_page_no = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$p+" . strval($p+1)); //seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);					
 					elseif ($pcmd=='kfilter')
-						$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$p,$p+1,null,null,null,true);
+						$next_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$p+" . strval($p+1)); //seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$p,$p+1,null,null,null,true);
 					else		
-						$next_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);
+						$next_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$p+" . strval($p+1)); //seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);
 					$next .= $this->combine_template($tmplcontents,'',$next_page_no);
 				}
 				$m+=1;
@@ -1072,34 +1065,34 @@ SCROLLTOP;
 			if (($next) && (!$tmplcontents)) $next .= "|";
 			$page_next = $page + 1;	
 			if (($pcmd=='filter') || ($pcmd=='search'))	 		 
-				$next_label = seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$page_next,'&gt;',null,null,null,true);			
+				$next_label = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$page_next+" . '&gt;');//seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$page_next,'&gt;',null,null,null,true);			
 			elseif ($pcmd=='kfilter')
-				$next_label = seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$page_next,'&gt;',null,null,null,true);
+				$next_label = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$page_next+" . '&gt;');//seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$page_next,'&gt;',null,null,null,true);
 			else	
-				$next_label = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_next,'&gt;',null,null,null,true);
+				$next_label = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$page_next+" . '&gt;'); //seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_next,'&gt;',null,null,null,true);
 			$next .= $this->combine_template($tmplcontents,'',$next_label);
 		}
 	    
 	    if ($page>0) {
 			$page_prev = $page - 1;
             if (($pcmd=='filter') || ($pcmd=='search'))			 
-				$prev_label = seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$page_prev,'&lt;',null,null,null,true);				
+				$prev_label = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$page_prev+" . '&lt;'); //seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$page_prev,'&lt;',null,null,null,true);				
             elseif ($pcmd=='kfilter') 
-				$prev_label = seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$page_prev,'&lt;',null,null,null,true);		 
+				$prev_label = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$page_prev+" . '&lt;'); //seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$page_prev,'&lt;',null,null,null,true);		 
 			else	
-				$prev_label = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_prev,'&lt;',null,null,null,true);		 
+				$prev_label = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$page_prev+" . '&lt;'); //seturl('t='.$pcmd.'&cat='.$cat.'&page='.$page_prev,'&lt;',null,null,null,true);		 
 			$prev = $this->combine_template($tmplcontents,'',$prev_label);	
 		 
 			//prev pages
 			$m = $page-$cutter;
-			for($p=0;$p<$page;$p++) {
+			for($p=0 ; $p<$page ; $p++) {
 				if ($p>=$m) {
 					if (($pcmd=='filter') || ($pcmd=='search'))	 
-						$prev_page_no = seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);					
+						$prev_page_no = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$p+" . strval($p+1)); //seturl('t='.$pcmd.'&input='.$inp.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);					
 					elseif ($pcmd=='kfilter') 
-						$prev_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$p,$p+1,null,null,null,true);
+						$prev_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$p+" . strval($p+1)); //seturl('t='.$pcmd.'&cat='.$cat.'&input='.$inp.'&page='.$p,$p+1,null,null,null,true);
 					else
-						$prev_page_no = seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);
+						$prev_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$p+" . strval($p+1)); //seturl('t='.$pcmd.'&cat='.$cat.'&page='.$p,$p+1,null,null,null,true);
 			
 					$prev .= $this->combine_template($tmplcontents,'',$prev_page_no);
 				}
@@ -1134,7 +1127,8 @@ SCROLLTOP;
 		$data = array(1=>$a,2=>$b,3=>$c);
 		$do = ($this->deforder) ? 3 : 1;
  
-		$url = (($cmd=='search') || ($cmd=='filter')) ? seturl('t='.$cmd.'&input='.$inp.'&cat='.$cat.'&order=#') : seturl('t='.$cmd.'&cat='.$cat.'&order=#');
+		$url = (($cmd=='search') || ($cmd=='filter')) ? _m("cmsrt.seturl use t=$cmd&input=$inp&cat=$cat&order=#+++1") /*seturl('t='.$cmd.'&input='.$inp.'&cat='.$cat.'&order=#')*/ : 
+		                                                _m("cmsrt.seturl use t=$cmd&cat=$cat&order=#+++1") /*seturl('t='.$cmd.'&cat='.$cat.'&order=#')*/ ;
 		$selected_order = GetReq('order') ? GetReq('order') : (GetSessionParam('order') ? GetSessionParam('order') : $do);
 		$combo_char = $this->make_combo($url,$data,null,$selected_order,$style);
 	   	      	   		   
@@ -1144,7 +1138,8 @@ SCROLLTOP;
 		$data = array(1=>$a,2=>$b);
 		$da = ($this->defasc<0) ? 2 : 1;
  
-        $url = (($cmd=='search') || ($cmd=='filter')) ? seturl('t='.$cmd.'&input='.$inp.'&cat='.$cat.'&asc=#') : seturl('t='.$cmd.'&cat='.$cat.'&asc=#');
+        $url = (($cmd=='search') || ($cmd=='filter')) ? _m("cmsrt.seturl use t=$cmd&input=$inp&cat=$cat&asc=#+++1") /*seturl('t='.$cmd.'&input='.$inp.'&cat='.$cat.'&asc=#')*/ : 
+		                                                _m("cmsrt.seturl use t=$cmd&cat=$cat&asc=#+++1") /*seturl('t='.$cmd.'&cat='.$cat.'&asc=#')*/ ;
 		$selected_asc = GetReq('asc') ? GetReq('asc') : (GetSessionParam('asc') ? GetSessionParam('asc') : $do);   
 		$combo_asceding = $this->make_combo($url,$data,null,$selected_asc,$style);
 	   
@@ -1156,7 +1151,8 @@ SCROLLTOP;
 			$n = ($this->default_pager * $i);
 			$data2[$n] = localize('_array',getlocal()).' '.$n;
         }		  
-		$url = (($cmd=='search') || ($cmd=='filter')) ? seturl('t='.$cmd.'&input='.$inp.'&cat='.$cat.'&pager=#') : seturl('t='.$cmd.'&cat='.$cat.'&pager=#');
+		$url = (($cmd=='search') || ($cmd=='filter')) ? _m("cmsrt.seturl use t=$cmd&input=$inp&cat=$cat&pager=#+++1") /*seturl('t='.$cmd.'&input='.$inp.'&cat='.$cat.'&pager=#')*/ : 
+		                                                _m("cmsrt.seturl use t=$cmd&cat=$cat&pager=#+++1") /*seturl('t='.$cmd.'&cat='.$cat.'&pager=#')*/ ;
 	    $combo_pager = $this->make_combo($url,$data2,null,$this->pager,$style);
 	   	  		    	   	   		 	      
 	    $contents = $this->select_template('fpsort');
@@ -1180,42 +1176,42 @@ SCROLLTOP;
 	    $myimageclick = ($this->imageclick>0) ? 1 : $imageclick;
   
         if (($template) && (!stristr($template,'searchres'))) { /*custom template list*/
-	     //echo $template;
-		 $custom_template=true;
-	     $tmpl = explode('.',$template);
-	     $mytemplate = $this->select_template($tmpl[0],$cat);		
+			//echo $template;
+			$custom_template=true;
+			$tmpl = explode('.',$template);
+			$mytemplate = $this->select_template($tmpl[0],$cat);		
 	    }
 	    elseif (($template) && (stristr($template,'searchres'))) { /*search list*/
-	     $tmpl = explode('.',$template);
-		 //search template
-	     $mytemplate = $this->select_template($tmpl[0],$cat);		
-	     //list-table search alternative template
-	     $mytemplate_alt = $this->select_template($tmpl[0].'-alt',$cat);	   
+			$tmpl = explode('.',$template);
+			//search template
+			$mytemplate = $this->select_template($tmpl[0],$cat);		
+			//list-table search alternative template
+			$mytemplate_alt = $this->select_template($tmpl[0].'-alt',$cat);	   
 	    }
 	    else { /*katalog list*/
-	     //default template
-	     $mytemplate = $this->select_template('fpkatalog',$cat);		
-	     //list-table alternative template
-	     $mytemplate_alt = $this->select_template('fpkatalog-alt',$cat);
+			//default template
+			$mytemplate = $this->select_template('fpkatalog',$cat);		
+			//list-table alternative template
+			$mytemplate_alt = $this->select_template('fpkatalog-alt',$cat);
 	    }
        
         if ($this->oneitemlist) {
 	     if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
-		   $is_one_item = $this->read_list(); //read records
-	       if ($is_one_item) { 
-	         //echo $is_one_item,'>';
-		     $this->read_item(null,$is_one_item);
-		     $out = $this->show_item();
-		     return ($out);
-	       }		   
+			$is_one_item = $this->read_list(); //read records
+			if ($is_one_item) { 
+				//echo $is_one_item,'>';
+				$this->read_item(null,$is_one_item);
+				$out = $this->show_item();
+				return ($out);
+			}		   
 		 }
 		 elseif (!$external_read) { //event read the list..if not called by a phpdac page call
-		   if ($itemcode = $this->my_one_item) {
-	         //echo $this->my_one_item,'>';
-		     $this->read_item(null,$itemcode);
-		     $out = $this->show_item();
-		     return ($out);		   
-		   }	   
+			if ($itemcode = $this->my_one_item) {
+				//echo $this->my_one_item,'>';
+				$this->read_item(null,$itemcode);
+				$out = $this->show_item();
+				return ($out);		   
+			}	   
 		 }		 
         } 	      
 	   	
@@ -1228,18 +1224,18 @@ SCROLLTOP;
 	
 	     foreach ($this->result as $n=>$rec) {
 		
-		   $mem = memory_get_peak_usage(true);//memory_get_usage();
+			$mem = memory_get_peak_usage(true);//memory_get_usage();
 	   
-           //$cat = $this->getkategories($rec);
-		   $cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-		   $ucat = $cat;
+			//$cat = $this->getkategories($rec);
+			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+			$ucat = $cat;
 		   
-		   if ($rec[$pp]>0)  
-		     $price = $this->spt($rec[$pp]); 
-		   else 	 
-		     $price = $this->zeroprice_msg;		
+			if ($rec[$pp]>0)  
+				$price = $this->spt($rec[$pp]); 
+			else 	 
+				$price = $this->zeroprice_msg;		
 		 
-			 if (defined("SHCART_DPC")) {
+			if (defined("SHCART_DPC")) {
 				$cart_code  = $rec[$this->fcode];
 				$cart_title = $this->replace_cartchars($rec[$this->itmname]);
 				$cart_group = $cat;
@@ -1251,76 +1247,75 @@ SCROLLTOP;
 				$cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
 				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]);
-			 }	
-			 else
+			}	
+			else
                 $cart = null;  			 
 		   
-		     $availability = $this->show_availability($rec['ypoloipo1']);	
-		     $details = null;
-             $detailink = null;
-		     $itemlink = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,true);
-		     $itemlinkname = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],$rec[$this->itmname],null,null,null,true);		   
+		    $availability = $this->show_availability($rec['ypoloipo1']);	
+		    $details = null;
+            $detailink = null;
+		    $itemlink = _m("cmsrt.url use t=kshow&cat=$ucat&page=$page&id=".$rec[$item_code]); //seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,true);
+		    $itemlinkname = _m("cmsrt.url use t=kshow&cat=$ucat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); //seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],$rec[$this->itmname],null,null,null,true);		   
 		   		   
 		  											 
-		      $tokens[] = $itemlinkname;//$rec[$this->itmname];
-			  $tokens[] = $rec[$this->itmdescr];
-			  $tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$ucat,$pz,null,$rec[$this->itmname]);
-			  $units = $rec['uniname2'] ? 
-			           localize($rec['uniname1'],getlocal()) .'/'. localize($rec['uniname2'],getlocal()):
-					   localize($rec['uniname1'],getlocal());  
-			  $tokens[] = $units;		  
+		    $tokens[] = $itemlinkname;//$rec[$this->itmname];
+			$tokens[] = $rec[$this->itmdescr];
+			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$ucat,$pz,null,$rec[$this->itmname]);
+			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()) .'/'. localize($rec['uniname2'],getlocal()):
+										localize($rec['uniname1'],getlocal());  
+			$tokens[] = $units;		  
 			  
-			  $tokens[] = $rec['itmremark'];
-			  $tokens[] = number_format(floatval($price),$this->decimals,',','.');
-			  $tokens[] = $cart;
-			  $tokens[] = $availability;
-			  $tokens[] = $details;
-			  $tokens[] = $detailink;
-			  $tokens[] = $rec[$item_code];
-			  $tokens[] = $itemlink;	
+			$tokens[] = $rec['itmremark'];
+			$tokens[] = number_format(floatval($price),$this->decimals,',','.');
+			$tokens[] = $cart;
+			$tokens[] = $availability;
+			$tokens[] = $details;
+			$tokens[] = $detailink;
+			$tokens[] = $rec[$item_code];
+			$tokens[] = $itemlink;	
 			  
-			  $tokens[] = $in_cart?$in_cart:'0';
-			  $tokens[] = $array_cart;
+			$tokens[] = $in_cart?$in_cart:'0';
+			$tokens[] = $array_cart;
 
-              $tokens[] = $this->get_photo_url($rec[$item_code],$pz);	
-              $tokens[] = $rec[$this->getmapf('lastprice')];	
-              $tokens[] = $rec[$this->itmname]; 
+            $tokens[] = $this->get_photo_url($rec[$item_code],$pz);	
+            $tokens[] = $rec[$this->getmapf('lastprice')];	
+            $tokens[] = $rec[$this->itmname]; 
 			  
-			  /*if (GetReq('id') || GetReq('cat') || ($originfunction))
+			/*if (GetReq('id') || GetReq('cat') || ($originfunction))
 			     $tokens[] = $this->get_xml_links(null,null,$originfunction);			  
-			  else*/
-                 $tokens[] = null;   
+			else*/
+                $tokens[] = null;   
 
-              $tokens[] = $this->item_has_discount($rec[$item_code]);
-              $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				  
+            $tokens[] = $this->item_has_discount($rec[$item_code]);
+            $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				  
 		      
-			  /*date time */
-			  $tokens[] = $rec['year'];
-			  $tokens[] = $rec['month'];
-			  $tokens[] = $rec['day'];
-			  $tokens[] = $rec['time'];
-			  $tokens[] = $rec['monthname'];
+			/*date time */
+			$tokens[] = $rec['year'];
+			$tokens[] = $rec['month'];
+			$tokens[] = $rec['day'];
+			$tokens[] = $rec['time'];
+			$tokens[] = $rec['monthname'];
 			  
-			  $tokens[] = $rec['template'];
-			  $tokens[] = $rec['owner'];			  
-			  $tokens[] = $rec['itmactive'];
+			$tokens[] = $rec['template'];
+			$tokens[] = $rec['owner'];			  
+			$tokens[] = $rec['itmactive'];
 			  
-			  if (!$custom_template) {
+			if (!$custom_template) {
                 $items_grid[] = $this->combine_tokens($mytemplate, $tokens, true);//<<exec after tokens replace
                 $items_list[] = $this->combine_tokens($mytemplate_alt, $tokens, true);//<<exec after tokens replace			  
-			  }
-			  else
+			}
+			else
 			    $items_custom[] = $this->combine_tokens($mytemplate, $tokens, true);//<<exec after tokens replace
 			
-			  $ogimage[] = $this->get_photo_url($rec[$item_code],2);
-			  unset($tokens);			  	 				   	   	   	
-		  }//foreach 
+			$ogimage[] = $this->get_photo_url($rec[$item_code],2);
+			unset($tokens);			  	 				   	   	   	
+		 }//foreach 
 		  
-		  if (!$custom_template) { 
+		 if (!$custom_template) { 
             if (($mytemplate) && ($mytemplate_alt)) 	
-              $toprint .= $this->make_table_list($items_grid, $items_list, 'fpkatalogtable', 'fpkataloglist', $cat);			
+				$toprint .= $this->make_table_list($items_grid, $items_list, 'fpkatalogtable', 'fpkataloglist', $cat);			
 	        else
-           	  $toprint .= $this->make_table($items, $mylinemax, 'fpkatalogtable', $cat);	  
+				$toprint .= $this->make_table($items, $mylinemax, 'fpkatalogtable', $cat);	  
 			  
 	        $toprint .= $this->show_paging($cmd,$mytemplate,$nopager);
 
@@ -1330,68 +1325,68 @@ SCROLLTOP;
 												   3=>$this->httpurl .'/klist/'. $cat . '/',
 												   4=>$ogimage, /*$ogimage array of images (with no httpurl)!!*/
 												  ));			
-		  }	
-          else //custom template
+		 }	
+         else //custom template
 		    $toprint .= (!empty($items_custom)) ? implode('',$items_custom) : null;
              		  
 	    }//empty result
 
-	    $out .= $toprint . $mem_msg;
+	    $out .= $toprint;
 
 	    return ($out);	
 	}	
 	
 	//override
     function list_katalog_table($linemax=2,$imgx=null,$imgy=null,$imageclick=0,$showasc=0,$cmd=null,$template=null,$no_additional_info=null,$lang=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$originfunction=null,$notable=null) {
-	   $cmd = $cmd?$cmd:'klist';
-	   $page = GetReq('page') ? GetReq('page') : 0;	   
-	   $pz = $photosize?$photosize:1;
-	   $xdist = ($imgx?$imgx:160);
-	   $ydist = ($imgy?$imgy:120);
-	   $cat = GetReq('cat');
+		$cmd = $cmd?$cmd:'klist';
+		$page = GetReq('page') ? GetReq('page') : 0;	   
+		$pz = $photosize?$photosize:1;
+		$xdist = ($imgx?$imgx:160);
+		$ydist = ($imgy?$imgy:120);
+		$cat = GetReq('cat');
 
-	   if (remote_paramload('SHKATALOG','imageclick',$this->path)>0)
-	     $myimageclick = 1;
-	   else	 
-	     $myimageclick = $imageclick;	   
+		if (remote_paramload('SHKATALOG','imageclick',$this->path)>0)
+			$myimageclick = 1;
+		else	 
+			$myimageclick = $imageclick;	   
 	   
-	   $mytemplate = $this->select_template($template,$cat,1);
+		$mytemplate = $this->select_template($template,$cat,1);
 	   
-       if ($this->oneitemlist) {
-	     if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
-		   $is_one_item = $this->read_list(); //read records
-	       if ($is_one_item) { 
-		     $this->read_item(null,$is_one_item);
-		     $out = $this->show_item();
-		     return ($out);
-	       }		   
-		 }
-		 elseif (!$external_read) { //event read the list..if not called by a phpdac page call
-		   if ($itemcode = $this->my_one_item) {
-		     $this->read_item(null,$itemcode);
-		     $out = $this->show_item();
-		     return ($out);		   
-		   }
-		 }		 
-       } 		   
+		if ($this->oneitemlist) {
+			if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
+				$is_one_item = $this->read_list(); //read records
+				if ($is_one_item) { 
+					$this->read_item(null,$is_one_item);
+					$out = $this->show_item();
+					return ($out);
+				}		   
+			}
+			elseif (!$external_read) { //event read the list..if not called by a phpdac page call
+				if ($itemcode = $this->my_one_item) {
+					$this->read_item(null,$itemcode);
+					$out = $this->show_item();
+					return ($out);		   
+				}
+			}		 
+        } 		   
 
-	   if (!empty($this->result)) {
+		if (!empty($this->result)) {
 	   
-        $pp = $this->read_policy();			
+          $pp = $this->read_policy();			
 	
-	    foreach ($this->result as $n=>$rec) {
+	      foreach ($this->result as $n=>$rec) {
 		
-		   $mem = memory_get_peak_usage(true);//memory_get_usage();
-		   $item_code = $this->fcode;
-		   $cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-		   $ucat = $cat;
+			$mem = memory_get_peak_usage(true);//memory_get_usage();
+			$item_code = $this->fcode;
+			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+			$ucat = $cat;
 		
-		   if ($rec[$pp]>0) 
-		     $price = $this->spt($rec[$pp]);	
-		   else 	 
-		     $price = $this->zeroprice_msg;
+			if ($rec[$pp]>0) 
+				$price = $this->spt($rec[$pp]);	
+			else 	 
+				$price = $this->zeroprice_msg;
 		   		   
-			 if (defined("SHCART_DPC")) {
+			if (defined("SHCART_DPC")) {
 				$cart_qty   = 1;
 				$cart_code  = $rec[$item_code];
 				$cart_title = $this->replace_cartchars($rec[$this->itmname]);
@@ -1403,83 +1398,81 @@ SCROLLTOP;
 				$icon_cart  = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
 				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]);
-			 }	
-			 else	
+			}	
+			else	
 			    $icon_cart = null;
 		   
-		   $availability = $this->show_availability($rec['ypoloipo1']);		
-		   $details = null;
-           $detailink = null;		   
-		   $itemlink = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,true);
-		   $itemlinkname = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],$rec[$this->itmname],null,null,null,true);			   
+			$availability = $this->show_availability($rec['ypoloipo1']);		
+			$details = null;
+			$detailink = null;		   
+			$itemlink = _m("cmsrt.url use t=kshow&cat=$ucat&page=$page&id=".$rec[$item_code]); //seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,true);
+			$itemlinkname = _m("cmsrt.url use t=kshow&cat=$ucat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); //seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],$rec[$this->itmname],null,null,null,true);			   
 		   
 		   
-             //// tokens method												 
-		     $tokens[] = $itemlinkname;//$rec[$this->itmname];
-			 $tokens[] = $rec[$this->itmdescr];
-			 $tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$ucat,$pz,null,$rec[$this->itmname]);
-			 $units = $rec['uniname2'] ? 
-			          localize($rec['uniname1'],getlocal()).'/'.localize($rec['uniname2'],getlocal()) :
-					  localize($rec['uniname1'],getlocal());  
-			 $tokens[] = $units;// . $incart;			 
+            //// tokens method												 
+		    $tokens[] = $itemlinkname;//$rec[$this->itmname];
+			$tokens[] = $rec[$this->itmdescr];
+			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$ucat,$pz,null,$rec[$this->itmname]);
+			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()).'/'.localize($rec['uniname2'],getlocal()) :
+										localize($rec['uniname1'],getlocal());  
+			$tokens[] = $units;// . $incart;			 
 			 
-			 $tokens[] = $rec['itmremark']; 
-			 $tokens[] = number_format(floatval($price),$this->decimals,',','.');
-			 $tokens[] = $icon_cart;
-			 $tokens[] = $availability;
-			 $tokens[] = $details;
-			 $tokens[] = $detailink;
-			 $tokens[] = $rec[$item_code];
-			 $tokens[] = $itemlink;			
+			$tokens[] = $rec['itmremark']; 
+			$tokens[] = number_format(floatval($price),$this->decimals,',','.');
+			$tokens[] = $icon_cart;
+			$tokens[] = $availability;
+			$tokens[] = $details;
+			$tokens[] = $detailink;
+			$tokens[] = $rec[$item_code];
+			$tokens[] = $itemlink;			
 			 
-			 $tokens[] = $in_cart ? $in_cart : '0';
-			 $tokens[] = $array_cart;
+			$tokens[] = $in_cart ? $in_cart : '0';
+			$tokens[] = $array_cart;
 			 
-			 $tokens[] = $this->get_photo_url($rec[$item_code],$pz);
-			 $tokens[] = $rec[$this->getmapf('lastprice')];
-			 $tokens[] = $rec[$this->itmname]; 
+			$tokens[] = $this->get_photo_url($rec[$item_code],$pz);
+			$tokens[] = $rec[$this->getmapf('lastprice')];
+			$tokens[] = $rec[$this->itmname]; 
 			 
-			 /*if (GetReq('id') || GetReq('cat') || ($originfunction))
+			/*if (GetReq('id') || GetReq('cat') || ($originfunction))
 			    $tokens[] = $this->get_xml_links(null,null,$originfunction);			  
-			 else*/
-                $tokens[] = null; 	
+			else*/
+               $tokens[] = null; 	
 
-             $tokens[] = $this->item_has_discount($rec[$item_code]);
-             $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				 
+            $tokens[] = $this->item_has_discount($rec[$item_code]);
+            $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				 
 			 			
-			 /*date time */
-			 $tokens[] = $rec['year'];
-			 $tokens[] = $rec['month'];
-			 $tokens[] = $rec['day'];
-			 $tokens[] = $rec['time'];
-			 $tokens[] = $rec['monthname'];
+			/*date time */
+			$tokens[] = $rec['year'];
+			$tokens[] = $rec['month'];
+			$tokens[] = $rec['day'];
+			$tokens[] = $rec['time'];
+			$tokens[] = $rec['monthname'];
 			 
-			 $tokens[] = $rec['template'];
-		     $tokens[] = $rec['owner'];	
-             $tokens[] = $rec['itmactive'];			 
+			$tokens[] = $rec['template'];
+		    $tokens[] = $rec['owner'];	
+            $tokens[] = $rec['itmactive'];			 
 						
-			 $items[] = $this->combine_tokens($mytemplate, $tokens, true);	
-			 unset($tokens);													 
+			$items[] = $this->combine_tokens($mytemplate, $tokens, true);	
+			unset($tokens);													 
 		   
-		}//foreach	
+		  }//foreach	
 	   
-		if ($notable) {/*single product view called by phpdac funcs*/
-		    $nt = (!empty($items)) ? implode('',$items) : null;
-		    return ($nt);
-		}	
-		//else	
-	    //make table			
-		$ret .= $this->make_table($items, $linemax, 'fpkatalogtable', $cat);  	  
+		  if ($notable) {/*single product view called by phpdac funcs*/
+				$nt = (!empty($items)) ? implode('',$items) : null;
+				return ($nt);
+		  }	
+		  //else	
+	      //make table			
+		  $ret .= $this->make_table($items, $linemax, 'fpkatalogtable', $cat);  	  
 	      				
-		if ($this->pager) 
-		  $ret .= $this->show_paging($cmd,$mytemplate,$nopager);					
+		  if ($this->pager) 
+			$ret .= $this->show_paging($cmd,$mytemplate,$nopager);					
 		
-	   }
+	    }
    	
-	   if ((count($this->result)>0) && ($no_additional_info==null))   
-	     $ret .= $this->show_availabillity_table(null,1);	   
+	    if ((count($this->result)>0) && ($no_additional_info==null))   
+			$ret .= $this->show_availabillity_table(null,1);	   
    
-	
 	   return ($ret);	
     } 
 	
@@ -1499,22 +1492,22 @@ SCROLLTOP;
 	   
 		 foreach ($this->result as $n=>$rec) {
 						 
-		   $cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 		   
-		   if ($rec[$pp]>0) 
-		     $price = $this->spt($rec[$pp],$tax);
-		   else 	 
-		     $price = $this->zeroprice_msg;	
+			if ($rec[$pp]>0) 
+				$price = $this->spt($rec[$pp],$tax);
+			else 	 
+				$price = $this->zeroprice_msg;	
 		 
-		     $cart_code = $rec[$item_code];
-			 $cart_title = $this->replace_cartchars($rec[$this->itmname]);
-			 $cart_group = $cat;
-			 $cart_page = GetReq('page')?GetReq('page'):0;
-			 $cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
-			 $cart_photo = $rec[$item_code];//$this->get_photo_url($rec[$this->fcode],1);
-			 $cart_price = $price;
-			 $cart_qty = 1;//???
-			 if (defined("SHCART_DPC")) {
+		    $cart_code = $rec[$item_code];
+			$cart_title = $this->replace_cartchars($rec[$this->itmname]);
+			$cart_group = $cat;
+			$cart_page = GetReq('page')?GetReq('page'):0;
+			$cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
+			$cart_photo = $rec[$item_code];//$this->get_photo_url($rec[$this->fcode],1);
+			$cart_price = $price;
+			$cart_qty = 1;//???
+			if (defined("SHCART_DPC")) {
 				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]); 
 				$icon_cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
 				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
@@ -1522,89 +1515,90 @@ SCROLLTOP;
 			    $units = $rec['uniname2'] ? localize($rec['uniname1'],$lan).'/'.localize($rec['uniname2'],$lan):
 				   						    localize($rec['uniname1'],$lan); 
                 $lastprice = $this->getmapf('lastprice');											
-			 }	
-			 else
+			}	
+			else
                 $icon_cart = null;	
 			
-			 $itemlink = seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,true); 
-		     $availability = $this->show_availability($rec['ypoloipo1']);	 
-		     $detailink = seturl("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code],null,null,null,null,true).'#details';		   
+			$_u = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]);
+			$itemlink =  $_u; //seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,true);  
+		    $detailink = $_u . '#details'; //seturl("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code],null,null,null,null,true).'#details';		   
+			$availability = $this->show_availability($rec['ypoloipo1']);	
 			 
-	         $linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
+	        $linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
 
-             $ahtml = $this->show_aditional_html_files($rec[$item_code]);			 
-             $atext = "";				 		 		   			  
-			 $afile = "";			 
-			 $details = "";//$ahtml . $atext . $afile;
+            $ahtml = $this->show_aditional_html_files($rec[$item_code]);			 
+            $atext = "";				 		 		   			  
+			$afile = "";			 
+			$details = "";//$ahtml . $atext . $afile;
 		 		   
-             //// tokens method												 
-		     $tokens[] = $rec[$this->itmname];
-			 $tokens[] = $rec[$this->itmdescr];
-			 $tokens[] = $linkphoto; 
-			 $tokens[] = $units;		 
-			 $tokens[] = $rec['itmremark'];
-			 $tokens[] = number_format(floatval($price),$this->decimals,',','.');
-			 $tokens[] = $icon_cart; //6
-			 $tokens[] = $availability;
-			 $tokens[] = $detailink;
-			 $tokens[] = $details;
-			 $tokens[] = $rec[$item_code];
+            //// tokens method												 
+		    $tokens[] = $rec[$this->itmname];
+			$tokens[] = $rec[$this->itmdescr];
+			$tokens[] = $linkphoto; 
+			$tokens[] = $units;		 
+			$tokens[] = $rec['itmremark'];
+			$tokens[] = number_format(floatval($price),$this->decimals,',','.');
+			$tokens[] = $icon_cart; //6
+			$tokens[] = $availability;
+			$tokens[] = $detailink;
+			$tokens[] = $details;
+			$tokens[] = $rec[$item_code];
 			 
-			 $tokens[] = $in_cart ? $in_cart : '0';
-			 $tokens[] = $array_cart;
+			$tokens[] = $in_cart ? $in_cart : '0';
+			$tokens[] = $array_cart;
 
-             $tokens[] = $ahtml;
-			 $tokens[] = $atext;  			 
-			 $tokens[] = $afile;
+            $tokens[] = $ahtml;
+			$tokens[] = $atext;  			 
+			$tokens[] = $afile;
 			 
-             $tokens[] = $rec[$lastprice];	
-             $tokens[] = $this->get_photo_url($rec[$item_code],1);
-             $tokens[] = $this->get_photo_url($rec[$item_code],2);			 
-			 $tokens[] = $this->get_photo_url($rec[$item_code],3);			 
+            $tokens[] = $rec[$lastprice];	
+            $tokens[] = $this->get_photo_url($rec[$item_code],1);
+            $tokens[] = $this->get_photo_url($rec[$item_code],2);			 
+			$tokens[] = $this->get_photo_url($rec[$item_code],3);			 
 			 
-			 $tokens[] = $rec['weight'];
-			 $tokens[] = $rec['volume'];
-			 $tokens[] = $rec['dimensions'];
-			 $tokens[] = $rec['size'];
-			 $tokens[] = $rec['color'];	
+			$tokens[] = $rec['weight'];
+			$tokens[] = $rec['volume'];
+			$tokens[] = $rec['dimensions'];
+			$tokens[] = $rec['size'];
+			$tokens[] = $rec['color'];	
 			 
-			 $tokens[] = $this->get_xml_links();
-             $tokens[] = $this->item_has_discount($rec[$item_code]);
-             $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";			 
+			$tokens[] = $this->get_xml_links();
+            $tokens[] = $this->item_has_discount($rec[$item_code]);
+            $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";			 
 			 
-			 $tokens[] = $rec['code1'];
-			 $tokens[] = $rec['code4'];
-			 $tokens[] = $rec['resources']; //id=30
-			 $tokens[] = $rec['ypoloipo1'];
-			 $tokens[] = $rec['manufacturer'];	
+			$tokens[] = $rec['code1'];
+			$tokens[] = $rec['code4'];
+			$tokens[] = $rec['resources']; //id=30
+			$tokens[] = $rec['ypoloipo1'];
+			$tokens[] = $rec['manufacturer'];	
 			 
-			 /*date time */
-			 $tokens[] = $rec['year'];
-			 $tokens[] = $rec['month'];
-			 $tokens[] = $rec['day'];
-			 $tokens[] = $rec['time'];
-			 $tokens[] = $rec['monthname'];		
+			/*date time */
+			$tokens[] = $rec['year'];
+			$tokens[] = $rec['month'];
+			$tokens[] = $rec['day'];
+			$tokens[] = $rec['time'];
+			$tokens[] = $rec['monthname'];		
 
-			 $tokens[] = $rec['template'];
-			 $tokens[] = $rec['owner'];	
-             $tokens[] = $rec['itmactive'];			 
+			$tokens[] = $rec['template'];
+			$tokens[] = $rec['owner'];	
+            $tokens[] = $rec['itmactive'];			 
 			 
-			 //print_r($tokens);
-		 	 if ($itmpl = $rec['template'])
+			//print_r($tokens);
+		 	if ($itmpl = $rec['template'])
 		 		$out = $this->_ct($this->itmplpath . $itmpl, serialize($tokens), true);
 			else			 
 				$out = $this->combine_tokens($mytemplate, $tokens, true);
 			 
-			 $ogimage[] = $this->get_photo_url($rec[$item_code],2);
+			$ogimage[] = $this->get_photo_url($rec[$item_code],2);
 			 
-			 $this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
-	                                               1=>$tokens[0],
-		    									   2=>$tokens[1],														
-												   3=>$this->httpurl .'/'. $itemlink,
-												   4=>$this->httpurl . str_replace('//','/','/'. $ogimage[0]),
-											      ));				 
+			$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
+													1=>$tokens[0],
+													2=>$tokens[1],														
+													3=>$this->httpurl .'/'. $itemlink,
+													4=>$this->httpurl . str_replace('//','/','/'. $ogimage[0]),
+													));				 
 			 
-			 unset($tokens);	 
+			unset($tokens);	 
 		 }//foreach	   
 	    }//if recs
 	    else {
@@ -1620,22 +1614,22 @@ SCROLLTOP;
 
     //overrided
 	public function show_aditional_files($id,$nojs=null,$altname=null,$tmpl=null) {
-	     if (!$id) return;
-	     $cat = GetReq('cat');
-		 $title = $altname ? $altname : $id;
-		 $name = $id;
-		 $id = $this->encode_image_id($id); //_m('shkategories.encode_image_id use '.$id);
+	    if (!$id) return;
+	    $cat = GetReq('cat');
+		$title = $altname ? $altname : $id;
+		$name = $id;
+		$id = $this->encode_image_id($id); //_m('shkategories.encode_image_id use '.$id);
 		 
-	     $addfx = $this->addfx?$this->addfx:100;
-	     $addfy = $this->addfy?$this->addfy:null;//free y size //75;	
-	     $this->allow_show_resource = true; //enable it after show main item image		
+	    $addfx = $this->addfx?$this->addfx:100;
+	    $addfy = $this->addfy?$this->addfy:null;//free y size //75;	
+	    $this->allow_show_resource = true; //enable it after show main item image		
 	
-	     $template= $tmpl ? $tmpl : 'fpitemaddfiles.htm';	    	
-		 $mytemplate = $this->select_template($template);
+	    $template= $tmpl ? $tmpl : 'fpitemaddfiles.htm';	    	
+		$mytemplate = $this->select_template($template);
          
-         $slide_index = 1; //start at 1, 1=main image 		 
-		 //multiple images
-		 for($i='A';$i<='Z';$i++) {
+        $slide_index = 1; //start at 1, 1=main image 		 
+		//multiple images
+		for($i='A';$i<='Z';$i++) {
 		 
            $slide_index+=1;		 
 		   
@@ -1649,7 +1643,7 @@ SCROLLTOP;
 
 			 switch ($restype) {
                 
-				default    : $addtional_photo_link = seturl('t=kshow&cat='.GetReq('cat').'&id='.GetReq('id').'&thub='.$i.'#photo');
+				default    : $addtional_photo_link = _m("cmsrt.seturl use t=kshow&cat=$cat&id=" . GetReq('id') . "&thub=" . $i . "#photo+++1"); //seturl('t=kshow&cat='.GetReq('cat').'&id='.GetReq('id').'&thub='.$i.'#photo');
 			                 $plink = "<A href=\"$addtional_photo_link\">";				  
 			 
 			                 $lo = "<img src=\"" . $ad_photo_big . "\"";
@@ -1665,16 +1659,15 @@ SCROLLTOP;
 			 break;   
 		   }//file exists
 		   }//foreach	 
-		 }//for		 
+		}//for		 
 		 
-	     $itemscount = count($items); 
-		 if (($itemscount>0) && ($this->additional_files_perline>1))	 {
-		   $out = $this->make_table($items, $this->additional_files_perline, 'fptreetable', $cat);	   
-		 }
-		 else 
+	    $itemscount = count($items); 
+		if (($itemscount>0) && ($this->additional_files_perline>1))	 
+		   $out = $this->make_table($items, $this->additional_files_perline, 'fptreetable', $cat);	 
+		else 
 		   $out = (!empty($items)) ? implode('',$items) : null; //without table template 
 
-		 return ($out);		 
+		return ($out);		 
 	}
 	
 	//overrwriiten
@@ -2390,7 +2383,7 @@ SCROLLTOP;
 					}
 					$title = $rec[$this->fcode] . "&nbsp;" . $rec[$this->itmname];
 			 
-					$itemlinkname = seturl('t=kshow&cat='.$linkcat.'&id='.$rec[$this->fcode],$title,null,null,null,true );		   
+					$itemlinkname = _m("cmsrt.url use t=kshow&cat=$linkcat&id=".$rec[$this->fcode]."+".$title); //seturl('t=kshow&cat='.$linkcat.'&id='.$rec[$this->fcode],$title,null,null,null,true );		   
 			 
 					if ($mytemplate) {
 						$tokens = array(); //reset 
@@ -2434,7 +2427,7 @@ SCROLLTOP;
 	    foreach ($result as $n=>$rec) {
 			if ($islink) {
 				$ucat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-				$itemlink = seturl('t=kshow&cat='.$ucat.'&id='.$rec[$this->fcode],$rec[$attr]);
+				$itemlink = _m("cmsrt.url use t=kshow&cat=$ucat&id=". $rec[$this->fcode] ."+". $rec[$attr]); //seturl('t=kshow&cat='.$ucat.'&id='.$rec[$this->fcode],$rec[$attr]);
 				return ($itemlink);
 			}
 			else
@@ -2619,7 +2612,8 @@ SCROLLTOP;
 			
 			       $cat = GetReq('cat');
 				   $c = $cat ? $cat . $sep . $g : $g;
-				   $cat_url = 'http://' . $this->url . '/' . seturl('t=klist&cat='. $c ,null,null,null,null,true);
+				   $_u = _m("cmsrt.url use t=klist&cat=$c");
+				   $cat_url = 'http://' . $this->url . '/' . $_u; //seturl('t=klist&cat='. $c ,null,null,null,null,true);
 			
 		           $p[] = $g;
 			       $p[] = $lan_g;
@@ -2652,35 +2646,35 @@ SCROLLTOP;
 					//$cat = $this->getkategories($rec); //GetReq('cat')..no category in url..			  
 					$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 
-                   $price = number_format(floatval($price1),2);					 
-			       //echo $price,'>';
-				      			      		   
-				   $item_url = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$rec[$code],null,null,null,null,true);
-                   if ($this->photodb)
-				     $item_photo_url = 'http://' . $this->url . '/showphoto.php?id='.$rec[$code].'&type=LARGE';
-				   else
-				     $item_photo_url = 'http://' . $this->url . '/' . $this->img_large . '/' . $rec[$code] . $this->restype;
+					$price = number_format(floatval($price1),2);					 
+					//echo $price,'>';
+				      		
+                    $_u = _m("cmsrt.url use t=kshow&cat=$cat&id=". $rec[$code]);							
+				    $item_url = 'http://' . $this->url . '/' . $_u; //seturl('t=kshow&cat='.$cat.'&id='.$rec[$code],null,null,null,null,true);
+                    if ($this->photodb)
+						$item_photo_url = 'http://' . $this->url . '/showphoto.php?id='.$rec[$code].'&type=LARGE';
+				    else
+						$item_photo_url = 'http://' . $this->url . '/' . $this->img_large . '/' . $rec[$code] . $this->restype;
 				   
 				   
-		           $p[] = $rec[$code];
-			       $p[] = $rec[$this->itmname];
-                   $p[] = $item_url;			   
-			       $p[] = $cat;
-			       $p[] = $rec[$this->itmdescr];
-			       $p[] = $item_photo_url;
-			       $p[] = $price;
-				   $p[] = $rec['cat0'];
-				   $p[] = $rec['cat1'];
-				   $p[] = $rec['cat2'];
-				   $p[] = $rec['cat3'];
-				   $p[] = $rec['cat4'];	
-                   $p[] = $rec['itmremark'];
+					$p[] = $rec[$code];
+					$p[] = $rec[$this->itmname];
+					$p[] = $item_url;			   
+					$p[] = $cat;
+					$p[] = $rec[$this->itmdescr];
+			        $p[] = $item_photo_url;
+			        $p[] = $price;
+				    $p[] = $rec['cat0'];
+				    $p[] = $rec['cat1'];
+				    $p[] = $rec['cat2'];
+				    $p[] = $rec['cat3'];
+				    $p[] = $rec['cat4'];	
+                    $p[] = $rec['itmremark'];
 				   
-			       $this->xml_formater($xml,$format,null,$p);
-				   unset($p);	//holds record data to pass it at xml formater				  	 
+			        $this->xml_formater($xml,$format,null,$p);
+				    unset($p);	//holds record data to pass it at xml formater				  	 
 			 
-			       $i+=1;	
-			  
+			        $i+=1;	
 				}
 			} //else echo '--';
 		}//off
@@ -2714,7 +2708,8 @@ SCROLLTOP;
 
 			foreach ($resultset as $n=>$rec) {      			      		   
 				$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-				$item_url = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$rec[$code],null,null,null,null,true);
+				$_u = _m("cmsrt.url use t=kshow&cat=$cat&id=". $rec[$code]);
+				$item_url = 'http://' . $this->url . '/' . $_u; //seturl('t=kshow&cat='.$cat.'&id='.$rec[$code],null,null,null,null,true);
 
 				$p[] = $item_url;
 				//in case of 0000-00-00..is null
@@ -2887,24 +2882,24 @@ SCROLLTOP;
 		//RSS	
 		if (stristr($this->feed_on,'rss')) {
 			if ($dpcfeed) //special phpdac page without params			  
-				$lnk['RSS'] = seturl("t=$feed_cmd&dpc=$dpcfeed&format=rss2",null,null,null,null,true);  
+				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&dpc=$dpcfeed&format=rss2"); //seturl("t=$feed_cmd&dpc=$dpcfeed&format=rss2",null,null,null,null,true);  
 			elseif ($id)
-				$lnk['RSS'] = seturl("t=$feed_cmd&cat=$cat&page=$page&id=$id&format=rss2",null,null,null,null,true);
+				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&id=$id&format=rss2"); //seturl("t=$feed_cmd&cat=$cat&page=$page&id=$id&format=rss2",null,null,null,null,true);
 			elseif ($cat)
-				$lnk['RSS'] = seturl("t=$feed_cmd&cat=$cat&page=$page&format=rss2",null,null,null,null,true); 
+				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&format=rss2"); //seturl("t=$feed_cmd&cat=$cat&page=$page&format=rss2",null,null,null,null,true); 
 			else  
-				$lnk['RSS'] = seturl("t=$feed_cmd&format=rss2",null,null,null,null,true); 
+				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&format=rss2"); //seturl("t=$feed_cmd&format=rss2",null,null,null,null,true); 
 		}
 		//ATOM
 		if (stristr($this->feed_on,'atom')) {	  
 			if ($dpcfeed) //special phpdac page without params		  
-				$lnk['ATOM'] = seturl("t=$feed_cmd&dpc=$dpcfeed&format=atom",null,null,null,null,true);//special phpdac page without params		  
+				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&dpc=$dpcfeed&format=atom"); //seturl("t=$feed_cmd&dpc=$dpcfeed&format=atom",null,null,null,null,true);//special phpdac page without params		  
 			elseif ($id)
-				$lnk['ATOM'] = seturl("t=$feed_cmd&cat=$cat&page=$page&id=$id&format=atom",null,null,null,null,true);
+				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&id=$id&format=atom"); //seturl("t=$feed_cmd&cat=$cat&page=$page&id=$id&format=atom",null,null,null,null,true);
 			elseif ($cat)
-				$lnk['ATOM'] = seturl("t=$feed_cmd&cat=$cat&page=$page&format=atom",null,null,null,null,true);	  
+				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&format=atom"); //seturl("t=$feed_cmd&cat=$cat&page=$page&format=atom",null,null,null,null,true);	  
 			else  
-				$lnk['ATOM'] = seturl("t=$feed_cmd&format=atom",null,null,null,null,true);	  
+				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&format=atom"); //seturl("t=$feed_cmd&format=atom",null,null,null,null,true);	  
 		}		
 
 		if (!empty($lnk)) {
@@ -2916,7 +2911,7 @@ SCROLLTOP;
 					else 
 						$mylink = $t;
 			  
-					$tokens[] = "<A href=\"$w\">".$mylink."</A>";
+					$tokens[] = "<a href=\"$w\">".$mylink."</a>";
 				}	
 			}
 		
@@ -2983,7 +2978,7 @@ SCROLLTOP;
 			
 			$_cat = _m('cmsrt.replace_spchars use '.$cat);//str_replace(' ','_', $cat);
 	
-			$tokens[] = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$_cat.'&id='.$id,null,null,null,null,1);
+			$tokens[] = 'http://' . $this->url . '/' . _m("cmsrt.url use t=kshow&cat=$_cat&id=$id"); //seturl('t=kshow&cat='.$_cat.'&id='.$id,null,null,null,null,1);
 			$tokens[] = 'http://' . $this->url . '/' . $imgxmlPath . $id . $this->restype;
 			$tokens[] = $cat;
 			//if ($n==0) print_r($tokens);
@@ -3315,7 +3310,7 @@ SCROLLTOP;
 				if (trim($t[0])!='') {
 			        $f = $this->replace_spchars($t[0]);
 					$section = $this->replace_spchars($cat,1);
-					$url = $baseurl . seturl('t='.$command.'&cat='.$cat.'&input='.$f,null,null,null,null,true);
+					$url = $baseurl . _m("cmsrt.url use t=$command&cat=$cat&input=$f"); //seturl('t='.$command.'&cat='.$cat.'&input='.$f,null,null,null,null,true);
 					$theurl = ($this->filterajax) ? /*"filter('{$f}', '{$section}')" "ajaxcall('$section','$url')"*/ "sndReqArg('$url','$section')" : $url;
 					
 					$tokens[] = $t[0];
@@ -3332,7 +3327,7 @@ SCROLLTOP;
         if ($header) {		
 			$tokens[] = localize('_ALL',getlocal());
 			$tokens[] = GetReq('input') ? '*' : $this->max_cat_items; //$this->max_items; //'*';
-			$tokens[] = $baseurl . seturl('t=klist&cat='.$cat,null,null,null,null,true);
+			$tokens[] = $baseurl . _m("cmsrt.url use t=klist&cat=$cat"); //seturl('t=klist&cat='.$cat,null,null,null,null,true);
 			$tokens[] = (!GetReq('input')) ? 'checked="checked"' : null;
 			$r[] = $this->combine_tokens($contents,$tokens);
 			unset($tokens);
