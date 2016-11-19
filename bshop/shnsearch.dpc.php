@@ -155,11 +155,11 @@ class shnsearch extends shsearch {
 	//override
     function form ($entry="",$cmd=null,$message=null)  {
 	  $entry = GetParam('input');
-	  $this->scase = GetParam('searchcase')?true:false;
-	  $this->stype = GetParam('searchtype')?GetParam('searchtype'):null;
+	  $this->scase = GetParam('searchcase') ? true : false;
+	  $this->stype = GetParam('searchtype') ? GetParam('searchtype') : null;
 	  
       $mycmd = $cmd?$cmd:'search';
-      $filename = seturl("t=$mycmd");//&a=$a&g=$g");  
+      $filename = _m("cmsrt.seturl use t=$mycmd+++1"); //seturl("t=$mycmd");//&a=$a&g=$g");  
 	  $lan = getlocal()?getlocal():'0';
 	  
 	  
@@ -479,7 +479,7 @@ function get_stype()
 		if (!$field) return;
 		
 	    $db = GetGlobal('db');		
-        $filename = seturl("t=$mycmd");//&a=$a&g=$g");  
+        $filename = _m("cmsrt.seturl use t=$mycmd+++1"); //seturl("t=$mycmd");//&a=$a&g=$g");  
 	    $lan = getlocal()?getlocal():'0';
 		$command = $cmd ? $cmd : 'search';
 	  
@@ -511,7 +511,7 @@ function get_stype()
 				if (trim($t[0])!='') {
 					$tokens[] = $t[0];
 					$tokens[] = $t[1];
-					$tokens[] = seturl('t='.$command.'&input='.$t[0].'&cat='.GetReq('cat'),null,null,null,null,true);
+					$tokens[] = _m("cmsrt.url use t=$command&input=" . $t[0] . "cat=$cat" . GetReq('cat')); //seturl('t='.$command.'&input='.$t[0].'&cat='.GetReq('cat'),null,null,null,null,true);
 					$tokens[] = ($t[0]==GetReq('input')) ? 'checked="checked"' : null;
 					$r[] = $template ? $this->combine_tokens($contents,$tokens) : $rec;	
 					unset($tokens);		
@@ -524,7 +524,7 @@ function get_stype()
         if ($header) {		
 			$tokens[] = localize('_ALL',getlocal());
 			$tokens[] = '*';
-			$tokens[] = seturl('t=klist&cat='.GetReq('cat'),null,null,null,null,true);
+			$tokens[] = _m("cmsrt.url use t=klist&cat=" . GetReq('cat')); //seturl('t=klist&cat='.GetReq('cat'),null,null,null,null,true);
 			$tokens[] = (!GetReq('input')) ? 'checked="checked"' : null;
 			if ($template) $r[] = $this->combine_tokens($contents,$tokens);
 			unset($tokens);
