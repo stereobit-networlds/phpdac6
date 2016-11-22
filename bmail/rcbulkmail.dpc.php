@@ -181,7 +181,7 @@ class rcbulkmail {
 	var $newtemplatebody, $saved, $savedname, $newsubtemplatebody, $newpatternbody;
 	var $_OPT, $exitCode;
 		
-    function __construct() {
+    public function __construct() {
 	  
 		$this->prpath = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');	
@@ -276,7 +276,7 @@ class rcbulkmail {
 		$this->exitCode = '-001';	
 	}
 	
-    function event($event=null) {
+    public function event($event=null) {
 	
 	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
@@ -287,97 +287,96 @@ class rcbulkmail {
   
 	    switch ($event) {
 			
-			case 'cptemplatenew': $this->newcopyTemplate(); 
-			                      break;
+			case 'cptemplatenew'	: 	$this->newcopyTemplate(); 
+										break;
 								  
-			case 'cptemplatesav': $this->saved = $this->saveTemplate(); 
-								  $this->newcopyTemplate();	//load
-								  break;		
+			case 'cptemplatesav'	: 	$this->saved = $this->saveTemplate(); 
+										$this->newcopyTemplate();	//load
+										break;		
 									 
-			case 'cppreviewcamp'   : break;
-			case 'cpcampcontent'   : die($this->preview_campaign());
-			                         break;							 
+			case 'cppreviewcamp'   	: 	break;
+			case 'cpcampcontent'   	: 	die($this->preview_campaign());
+										break;							 
 			 
-			case 'cpsubloadhtmlmail': if ($this->iscollection>0) {
-										if (!empty($_POST['colsort'])) { 
-											$slist = implode(',', $_POST['colsort']);	
-											_m("rccollections.saveSortedlist use " . $slist);
-										}
+			case 'cpsubloadhtmlmail': 	if ($this->iscollection>0) {
+											if (!empty($_POST['colsort'])) { 
+												$slist = implode(',', $_POST['colsort']);	
+												_m("rccollections.saveSortedlist use " . $slist);
+											}
 										
-										$this->loadTemplate2(); 	
-			                          }										
-									  else
-										$this->loadTemplate();	
-									  
-			                          if ($this->ulistselect = GetReq('ulistselect')) 
-											SetSessionParam('ulistselect', $this->ulistselect); 
-                                      break;
-
-									  
-			case 'cpiscontent'    : die($this->is_content()); //ajax check content						  
-									  
-			case 'cpstartcamp'    :	die($this->sendit(true));//ajax based cpsubsend								  
-									
-			case "cpsubsend"      :	$this->sendOk = $this->send_mails();
-									SetSessionParam('messages',$this->messages);
-									$this->load_campaign();
-									//$this->javascript(); dont allow second push
-				                    break; 									 
-			
-	        case 'cpsavemailadv'  : $this->save_campaign();
-									SetSessionParam('messages',$this->messages); //save messages
-									$this->javascript(); 
-			                        break;
-									
-			case 'cppausecamp'    : $this->pause_campaign(); 
-									$this->load_campaign(true);
-									$this->javascript(); 			
-			                        break;
-									
-			case 'cpstopcamp'     : $this->stop_campaign(); 
-									$this->load_campaign(true);
-									$this->javascript();			
-			                        break;
-									
-			case 'cpcontinuecamp' : $this->continue_campaign(); 
-									$this->load_campaign(true);
-									$this->javascript(); 			
-			                        break;	
-
-	        case 'cpdeletecamp'   : $this->delete_campaign();
-									$this->load_campaign(true);
-									$this->javascript(); 
-			                        break;								
-									
-	        case 'cpviewcamp'     : $this->load_campaign(true);
-									$this->javascript(); 
-			                        break;				
-														
-			case 'cpbulkmail'     :
-			default               :	if ($this->template) {
-				                        //also when returns in cp and template is selected
-										if ($this->iscollection>0)
-											$this->loadTemplate2(); //subtemp						  
+											$this->loadTemplate2(); 	
+										}										
 										else
-											$this->loadTemplate();						  
-			                        }									
+											$this->loadTemplate();	
+									  
+										if ($this->ulistselect = GetReq('ulistselect')) 
+											SetSessionParam('ulistselect', $this->ulistselect); 
+										break;
+	  
+			case 'cpiscontent'    	: 	die($this->is_content()); //ajax check content						  
+									  
+			case 'cpstartcamp'   	:	die($this->sendit(true));//ajax based cpsubsend								  
+									
+			case "cpsubsend"      	:	$this->sendOk = $this->send_mails();
+										SetSessionParam('messages',$this->messages);
+										$this->load_campaign();
+										//$this->javascript(); dont allow second push
+										break; 									 
+			
+	        case 'cpsavemailadv'  	:	$this->save_campaign();
+										SetSessionParam('messages',$this->messages); //save messages
+										$this->javascript(); 
+										break;
+									
+			case 'cppausecamp'    	: 	$this->pause_campaign(); 
+										$this->load_campaign(true);
+										$this->javascript(); 			
+										break;
+									
+			case 'cpstopcamp'     	: 	$this->stop_campaign(); 
+										$this->load_campaign(true);
+										$this->javascript();			
+										break;
+									
+			case 'cpcontinuecamp' 	: 	$this->continue_campaign(); 
+										$this->load_campaign(true);
+										$this->javascript(); 			
+										break;	
+
+	        case 'cpdeletecamp'   	: 	$this->delete_campaign();
+										$this->load_campaign(true);
+										$this->javascript(); 
+										break;								
+									
+	        case 'cpviewcamp'     	: 	$this->load_campaign(true);
+										$this->javascript(); 
+										break;				
+														
+			case 'cpbulkmail'     	:
+			default               	:	if ($this->template) {
+											//also when returns in cp and template is selected
+											if ($this->iscollection>0)
+												$this->loadTemplate2(); //subtemp						  
+											else
+												$this->loadTemplate();						  
+										}									
         }			
 			
     }	
 
-    function action($action=null)  { 	
+    public function action($action=null)  { 	
 
         $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
 		
 	    switch ($action) {
 			
-			case 'cptemplatesav'       : $out = ($this->saved==true) ? "Saved" : null; 
-			                             break;
-			case 'cptemplatenew'       : break;
+			case 'cptemplatesav'       : 	$out = ($this->saved==true) ? "Saved" : null; 
+											break;
+			case 'cptemplatenew'       : 	break;
 			
-			case 'cpiscontent'         : break; 
-			case 'cpstartcamp'         : break; 
+			case 'cpiscontent'         : 	break; 
+			case 'cpstartcamp'         : 	break; 
 			
 			case 'cpsubloadhtmlmail'   :
             case 'cpsavemailadv'       :		
@@ -388,8 +387,8 @@ class rcbulkmail {
 			case 'cppausecamp'         : 
 			case 'cpstopcamp'          : 
 			case 'cpcontinuecamp'      : 		 			
-			case 'cpviewcamp'          : $out = $this->campaigns_grid(null,140,5,'r', true);  
-			                             break;
+			case 'cpviewcamp'          : 	$out = $this->campaigns_grid(null,140,5,'r', true);  
+											break;
 			case 'cpbulkmail'          : 
 		    default                    : 
 		}			
@@ -547,9 +546,8 @@ EOF;
 		$sSQL .= " ORDER BY listname";	
 	    $resultset = $db->Execute($sSQL,2);	
 
-		foreach ($resultset as $n=>$rec) {
-			$ret  .= "<option value='".$rec[0]."'>". $rec[0]."</option>" ;
-        }		
+		foreach ($resultset as $n=>$rec) 
+			$ret  .= "<option value='".$rec[0]."'>". $rec[0]."</option>" ;	
         
 		return ($ret);			
 	}		
@@ -592,27 +590,26 @@ EOF;
 
         if (defined('RCFS_DPC')) {
 		   
-	    $path = $this->templatepath;
-		$myext = explode(',',$ext);
-	    $extensions = is_array($myext) ? $myext : array(0=>".png",1=>".gif",2=>".jpg");
-		$ret = null;
+			$path = $this->templatepath;
+			$myext = explode(',',$ext);
+			$extensions = is_array($myext) ? $myext : array(0=>".png",1=>".gif",2=>".jpg");
+			$ret = null;
 		
-		if (is_dir($path)) {
-			$this->fs= new rcfs($path);
-			$ddir = $this->fs->read_directory($path,$extensions); 
+			if (is_dir($path)) {
+				$this->fs= new rcfs($path);
+				$ddir = $this->fs->read_directory($path,$extensions); 
 			
-			if (!empty($ddir)) {
+				if (!empty($ddir)) {
 		  
-				sort($ddir);
-				foreach ($ddir as $i=>$name) {
-					$parts = explode(".",$name);
-					$title = $parts[0];
-					$ret .= "<option value=\"$name\">$title</option>";		
-				}	 			    
-			}
-	    }  	   
+					sort($ddir);
+					foreach ($ddir as $i=>$name) {
+						$parts = explode(".",$name);
+						$title = $parts[0];
+						$ret .= "<option value=\"$name\">$title</option>";		
+					}	 			    
+				}
+			}  	   
 	    }	  
-	    
 	    return ($ret);		
 	}	
 	
@@ -709,10 +706,8 @@ EOF;
 		$data = @file_get_contents($path . $template); 			 
 		$sub_template = str_replace($this->template_ext,$this->template_subext,$template);
 			 
-		//if sub template exist 
 		if (is_readable($path . $sub_template)) { 
 		    $sub_data = $this->get_mail_body($sub_template);//<<selected items sub-template !!!!!!!!!!!!!!!!!!!!!!!!
-		    //echo $sub_data,'>';
 			$data = str_replace('<!--?'.$sub_template.'?-->',$sub_data,$data);	/**changed the subtemplate mask **/	   
 		}
 
@@ -725,7 +720,6 @@ EOF;
 		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');				
 		   
 		if (is_readable($path . $template)) {
-		   
 		    SetSessionParam('stemplate', $template); //save tmpl 
 		    $this->mailbody = $this->loadData($template);			
 			return true;
@@ -738,7 +732,6 @@ EOF;
 		$template = GetReq('stemplate') ? GetReq('stemplate') : GetSessionParam('stemplate');
 		
 		if (($template) && (is_readable($path . $template))) {
-		  
 			SetSessionParam('stemplate', $template); //save tmpl 
 			$this->mailbody = @file_get_contents($path . $template); 			
 			return true;			
@@ -1022,10 +1015,7 @@ EOF;
 			$sSQL .= "active=1";
 		$sSQL .= " ORDER BY timein desc";	
 
-		//echo $sSQL;	
 	    $resultset = $db->Execute($sSQL,2);	
-		
-		//print_r($resultset);
 		foreach ($resultset as $n=>$rec) {
 			$selection = ($rec[1] == $cid) ? " selected" : null;
 			$ret[] = "<option value='".$rec[1]."' $selection>". $rec[2]."</option>" ;
@@ -1646,7 +1636,7 @@ EOF;
 			$this->messages[] = 'Extract duplicate mails';
 			$ret = implode($_s, $uret);
 		}	
-	    //echo $ret,'>'; 
+
 	    return $ret;	
 	}			
 	
@@ -2026,39 +2016,36 @@ EOF;
 
 		if (($this->_checkmail($to)) && ($subject)) {//echo $to,'<br>';
 	   
-         $smtpm = new smtpmail($this->encoding,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);
+			$smtpm = new smtpmail($this->encoding,$this->mailuser,$this->mailpass,$this->mailname,$this->mailserver);
 		   	   
-         if ((SMTP_PHPMAILER=='true') || ($method=='SMTP')) {
-	       //echo 'smtp';
-		   $smtpm->from($from,$this->mailname);		   
-		   $smtpm->to($to);  
-		   $smtpm->subject($subject);
-		   $smtpm->body($mail_text,$is_html);		   			   	   
-	     }
-         elseif ((SENDMAIL_PHPMAILER=='true') || ($method=='SENDMAIL')) {	  	   
-		   //echo 'phpmailer';
-		   $smtpm->from($from,$this->mailname);		   
-		   $smtpm->to($to);  			    
-		   $smtpm->subject($subject);
-		   $smtpm->body($mail_text,$is_html);		  		      
-		 } 
-		 else {
-		   //echo 'default';	
-		   $smtpm->to($to); 
-		   $smtpm->from($from); 
-		   $smtpm->subject($subject);
-		   $smtpm->body($mail_text);			   			   	    
-		 }
+			if ((SMTP_PHPMAILER=='true') || ($method=='SMTP')) {
+				$smtpm->from($from,$this->mailname);		   
+				$smtpm->to($to);  
+				$smtpm->subject($subject);
+				$smtpm->body($mail_text,$is_html);		   			   	   
+			}
+			elseif ((SENDMAIL_PHPMAILER=='true') || ($method=='SENDMAIL')) {	  	   
+				$smtpm->from($from,$this->mailname);		   
+				$smtpm->to($to);  			    
+				$smtpm->subject($subject);
+				$smtpm->body($mail_text,$is_html);		  		      
+			} 
+			else {
+				$smtpm->to($to); 
+				$smtpm->from($from); 
+				$smtpm->subject($subject);
+				$smtpm->body($mail_text);			   			   	    
+			}
 			 
-		 $err .= $smtpm->smtpsend();
-		 unset($smtpm);				 
+			$err .= $smtpm->smtpsend();
+			unset($smtpm);				 
 		  			     	  	
-  	     if (!$err) {
-			$this->messages[] = localize('_msgsuccess',getlocal());	//send message ok
-			return true;
-		 }         
-		 else 
-			$this->messages[] = "Error: " . $err;	//error
+			if (!$err) {
+				$this->messages[] = localize('_msgsuccess',getlocal());	//send message ok
+				return true;
+			}         
+			else 
+				$this->messages[] = "Error: " . $err;	//error
 		}
 		else 
 			$this->messages[] = localize('_msgerror',getlocal());

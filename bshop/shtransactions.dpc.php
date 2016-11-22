@@ -7,14 +7,12 @@ define("SHTRANSACTIONS_DPC",true);
 
 $__DPC['SHTRANSACTIONS_DPC'] = 'shtransactions';
 
-
 $d = GetGlobal('controller')->require_dpc('bshop/transactions.dpc.php');
 require_once($d);
 
 //in case of page cntrl pxml not exist so load
 $d = GetGlobal('controller')->require_dpc('shell/pxml.lib.php');
 require_once($d);
-
 
 //this transfer all actions,commands,attr from parent to child and parent disabled(=null)
 //it is important for inherit to still procced the commands of parent
@@ -26,7 +24,6 @@ $__EVENTS['SHTRANSACTIONS_DPC'][7]='cancelorder';
 $__ACTIONS['SHTRANSACTIONS_DPC'][6]='transviewhtml';
 $__ACTIONS['SHTRANSACTIONS_DPC'][7]='cancelorder';
 
-//overwrite for cmd line purpose
 $__LOCALE['SHTRANSACTIONS_DPC'][0]='SHTRANSACTIONS_CNF;Transaction List;Λίστα Συναλλαγών';	   
 $__LOCALE['SHTRANSACTIONS_DPC'][1]='_COST;Cost;Κόστος';	
 $__LOCALE['SHTRANSACTIONS_DPC'][2]='_LOADCART;Load;Στο καλάθι';	
@@ -49,7 +46,7 @@ class shtransactions extends transactions {
    
 	static $staticpath, $myf_button_class; 
 
-	function __construct() {
+	public function __construct() {
    
 		transactions::transactions();
 	   
@@ -371,44 +368,34 @@ class shtransactions extends transactions {
 		return ($ret);
 	} 	
 	
-	
-	function getTransactionsList() {
-       $db = GetGlobal('db');
-       $UserName = GetGlobal('UserName');	
-	   $name = $UserName?decode($UserName):null;		   
-	   
-	   if (!$name) return;
+	public function getTransactionsList() {
+		$db = GetGlobal('db');
+		$UserName = GetGlobal('UserName');	
+		$name = $UserName ? decode($UserName) : null;		   
+		if (!$name) return;
 	   	
-	   if ($this->storetype=='DB') {  //db	
+		if ($this->storetype=='DB') {  //db	
 	   	   
-	     $sSQL = "select tid,tdate,ttime,tstatus,payway,roadway,cost,costpt from transactions where cid=" . $db->qstr($name) . 
-		         "order by tid DESC";				 
+			$sSQL = "select tid,tdate,ttime,tstatus,payway,roadway,cost,costpt from transactions where cid=" . $db->qstr($name) . 
+					"order by tid DESC";				 
 				 
-	     $res = $db->Execute($sSQL,2);
-	     //print_r ($res->fields[5]);
-		 $i=0;
-	     if (!empty($res)) { 
-	       foreach ($res as $n=>$rec) {
-				$i+=1;
-				$transtbl[] = $rec[0].";".$rec[3].";".$rec[4]."/".$rec[5].";".$rec[1]." / ".$rec[2].";" .	
-							number_format($rec[7],2,',','.');		   
-		   }
+			$res = $db->Execute($sSQL,2);
+			//print_r ($res->fields[5]);
+			$i=0;
+			if (!empty($res)) { 
+				foreach ($res as $n=>$rec) {
+					$i+=1;
+					$transtbl[] = $rec[0].";".$rec[3].";".$rec[4]."/".$rec[5].";".$rec[1]." / ".$rec[2].";" .	
+								number_format($rec[7],2,',','.');		   
+				}
 		   
-           //browse
-		   //print_r($transtbl); 
-		   $ppager = GetReq('pl')?GetReq('pl'):10;
-           $browser = new browse($transtbl,null,$this->getpage($transtbl,$this->searchtext));
-	       $out .= $browser->render("transview",$ppager,$this,1,0,0,0);
-	       unset ($browser);	
-		      
-	     }
-		 else {
-           //empty message
-	       $w = new window(null,localize('_EMPTY',getlocal()));
-	       $out .= $w->render("center::40%::0::group_win_body::left::0::0::");//" ::100%::0::group_form_headtitle::center;100%;::");
-	       unset($w);
-
-		 }		 
+				$ppager = GetReq('pl')?GetReq('pl'):10;
+				$browser = new browse($transtbl,null,$this->getpage($transtbl,$this->searchtext));
+				$out .= $browser->render("transview",$ppager,$this,1,0,0,0);
+				unset ($browser);	
+			}
+			else 
+				$out = null;	 
 	   }	
 	   
 	   return ($out);
@@ -609,34 +596,34 @@ class shtransactions extends transactions {
 	}	
 	
 	protected static function myf_button($title,$link=null,$image=null) {
-	   $path = self::$staticpath;//$this->urlpath;//
-	   $bc = self::$myf_button_class;
+		$path = self::$staticpath;//$this->urlpath;//
+		$bc = self::$myf_button_class;
 	   
-	   if (($image) && (is_readable($path."/images/".$image.".png"))) {
-	      //echo 'a';
-	      $imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
-	   }
+		if (($image) && (is_readable($path."/images/".$image.".png"))) {
+			//echo 'a';
+			$imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
+		}
 	   
-	   if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
-	      //echo 'ie';
-		  $_b = $imglink ? $imglink : "[$title]";
-		  $ret = "&nbsp;<a href=\"$link\">$_b</a>&nbsp;";
-		  return ($ret);
-	   }	
+		if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
+			//echo 'ie';
+			$_b = $imglink ? $imglink : "[$title]";
+			$ret = "&nbsp;<a href=\"$link\">$_b</a>&nbsp;";
+			return ($ret);
+		}	
 	   
-	   if ($imglink)
+		if ($imglink)
 	       return ($imglink);
 	
-       //else button	
-	   if ($link)
-	      $ret = "<a href=\"$link\">";
+		//else button	
+		if ($link)
+			$ret = "<a href=\"$link\">";
 		  
-	   $ret .= "<input type=\"button\" class=\"$bc\" value=\"".$title."\" />";
+		$ret .= "<input type=\"button\" class=\"$bc\" value=\"".$title."\" />";
 	   
-	   if ($link)
-          $ret .= "</a>";	   
+		if ($link)
+			$ret .= "</a>";	   
 		  
-	   return ($ret);
+		return ($ret);
 	}	
 	
 };
