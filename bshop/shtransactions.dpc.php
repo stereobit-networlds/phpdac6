@@ -44,136 +44,116 @@ $__LOCALE['SHTRANSACTIONS_DPC'][13]='_mailcancelsubject;Canceled transaction;Î‘Î
 	   
 class shtransactions extends transactions {
 
-   var $path, $prpath;
-   var $initial_word;
+	var $path, $prpath;
+	var $initial_word;
    
-   static $staticpath, $myf_button_class; 
+	static $staticpath, $myf_button_class; 
 
-   var $tmpl_path, $tmpl_name;   
+	function __construct() {
+   
+		transactions::transactions();
+	   
+		self::$staticpath = paramload('SHELL','urlpath');
+		$this->prpath = paramload('SHELL','prpath');
+	   
+		//override if exist
+		if ($tpath = paramload('SHTRANSACTIONS','path'))
+			$this->path = $this->prpath . $tpath;	
 
-   function shtransactions() {
+		$this->initial_word = remote_paramload('SHTRANSACTIONS','trid',$this->prpath);     	   	   
+		$bc = remote_paramload('SHTRANSACTIONS','buttonclass',$this->prpath); 
+		self::$myf_button_class = $bc ? $bc : 'myf_button';	   
+	}
    
-       transactions::transactions();
-	   
-	   self::$staticpath = paramload('SHELL','urlpath');
-	   $this->prpath = paramload('SHELL','prpath');
-	   
-	   //override if exist
-	   if ($tpath = paramload('SHTRANSACTIONS','path'))
-	     $this->path = $this->prpath . $tpath;	
-
-       $this->initial_word = remote_paramload('SHTRANSACTIONS','trid',$this->prpath);  
-	   //echo $this->initial_word,'>';
-	   $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);
-	   $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);	   	   	   
-	   
-	   $bc = remote_paramload('SHTRANSACTIONS','buttonclass',$this->prpath); 
-	   self::$myf_button_class = $bc ? $bc : 'myf_button';
-	   	   
-   }
+	//override
+	public function event($event=null) {
    
-   //override
-   function event($event=null) {
-   
-       switch ($event) {
-		 case 'cancelorder'   : $this->cancelOrder(GetReq('tid')); break;   
+		switch ($event) {
+			case 'cancelorder'   : $this->cancelOrder(GetReq('tid')); break;   
 		   
-	     case 'transviewhtml' : $this->viewTransactionHtml();
-		                        die();
-		                        break;
+			case 'transviewhtml' : $this->viewTransactionHtml();
+									die();
+									break;
 								
-		 default              : transactions::event($event);						
-	   }
+			default              : transactions::event($event);						
+		}
    }
    
-   //override
-   function action($action=null)  { 
+	//override
+	public function action($action=null)  { 
 
 		switch ($action) {
-			
 			case 'cancelorder' : 
-			
-			default            : $out .= $this->viewTransactions();
+			default            : $out = $this->viewTransactions();
 		} 
 
 		return ($out);
-   }   
+	}   
    
-   //overwrite
-   function saveTransaction($data='',$user='',$payway=null,$roadway=null,$qty=null,$cost=null,$costpt=null) {
+	//overwrite
+	public function saveTransaction($data='',$user='',$payway=null,$roadway=null,$qty=null,$cost=null,$costpt=null) {
    
-      //execute default save and get id
-      $id = transactions::saveTransaction($data,$user,$payway,$roadway,$qty,$cost,$costpt);
+		//execute default save and get id
+		$id = transactions::saveTransaction($data,$user,$payway,$roadway,$qty,$cost,$costpt);
    
-      //save xml file
-      $xml = new pxml();
-
-	  $xml->addtag('ORDER',null,null,"id=".$id);							
-	  $xml->addtag('XUL','ORDER',null,null); 
-      $xml->addtag('GTKWINDOW','XUL',null,null);
+		//save xml file
+		$xml = new pxml();
+		$xml->addtag('ORDER',null,null,"id=".$id);							
+		$xml->addtag('XUL','ORDER',null,null); 
+		$xml->addtag('GTKWINDOW','XUL',null,null);
 							
-	  $ret = $xml->getxml();
-	  $this->save2disk($id,$ret);
+		$ret = $xml->getxml();
+		$this->save2disk($id,$ret);
 	  
-	  unset($xml);   
+		unset($xml);   
 							
-	  return ($id);						
-   }
+		return ($id);						
+	}
    
-   function save2disk($id,$data) {
+	protected function save2disk($id,$data) {
    
-      $file = $this->path . $id . ".xml"; 
-	  //echo $file,$data;
-      $fd = fopen($file, 'w');
-      fwrite($fd, $data);
-      fclose($fd);   
-   }
+		$file = $this->path . $id . ".xml"; 
+		//echo $file,$data;
+		$fd = fopen($file, 'w');
+		fwrite($fd, $data);
+		fclose($fd);   
+	}
 
     //override use tid instead of recid in db mode
-	function setTransactionStatus($trid,$state) {
+	public function setTransactionStatus($trid,$state) {
 		$db = GetGlobal('db');
-	   
-	    $sSQL = "update transactions set tstatus=" . $state .
-	             " where tid='" . $this->initial_word. $trid ."'";
+	    $sSQL = "update transactions set tstatus=" . $state . " where tid='" . $this->initial_word. $trid ."'";
         $result = $db->Execute($sSQL);
 		
-
         if ($db->Affected_Rows()) 
 			return true;
-	    else 
-			return false;   	   
-				  
-	}
-	
-	function getTransactionStatus($trid) {
-       $db = GetGlobal('db');
-	   
-	   $sSQL = "select tstatus from transactions" . 
-	           " where tid='" . $this->initial_word. $trid ."'";
-       $result = $db->Execute($sSQL);	
-	   
-	   $ret = $result->field['tstatus'];
-	   return ($ret);
-	}
-	
-	function setTransactionStoreData($trid,$fieldname,$value=null) {
-       $db = GetGlobal('db');
-	   	   
-	   $sSQL = "update transactions set $fieldname='" . $value .
-	           "' where tid='" . $this->initial_word. $trid ."'";
-       $result = $db->Execute($sSQL);
 		
-       if ($db->Affected_Rows()) 
-	     return true;
-	   else 
-	     return false;   	   
+		return false;   	   				  
 	}
 	
-	function getTransactionStoreData($fieldname,$trid) {
+	public function getTransactionStatus($trid) {
+		$db = GetGlobal('db');
+		$sSQL = "select tstatus from transactions where tid='" . $this->initial_word. $trid ."'";
+		$result = $db->Execute($sSQL);	
+	   
+		$ret = $result->field['tstatus'];
+		return ($ret);
+	}
+	
+	public function setTransactionStoreData($trid,$fieldname,$value=null) {
+		$db = GetGlobal('db');
+		$sSQL = "update transactions set $fieldname='" . $value . "' where tid='" . $this->initial_word. $trid ."'";
+		$result = $db->Execute($sSQL);
+		
+		if ($db->Affected_Rows()) 
+			return true;
+
+		return false;   	   
+	}
+	
+	public function getTransactionStoreData($fieldname,$trid) {
        $db = GetGlobal('db');
-	   	   
-	   $sSQL = "select $fieldname from transactions " .
-	           "where tid='" . $this->initial_word. $trid ."'";
+	   $sSQL = "select $fieldname from transactions where tid='" . $this->initial_word. $trid ."'";
        $result = $db->Execute($sSQL);
 		
        $ret = $result->fields[$fieldname]; 
@@ -181,62 +161,56 @@ class shtransactions extends transactions {
 	}	 
 	
 	//called by shpaypal to check txn_id
-	function checkPaypalTXNID($txnid) {
-       $db = GetGlobal('db');
-	   	   
-       $sSQL = "select type1 from transactions where payway='PAYPAL' and type1=";
-	   $sSQL .= $db->qstr($txnid);
-       $result = $db->Execute($sSQL);
+	public function checkPaypalTXNID($txnid) {
+		$db = GetGlobal('db');
+		$sSQL = "select type1 from transactions where payway='PAYPAL' and type1=";
+		$sSQL .= $db->qstr($txnid);
+		$result = $db->Execute($sSQL);
 		
-       if ($result->fields['type1']) 
-	     return false;
-	   else 
-	     return true;	
+		if ($result->fields['type1']) 
+			return false;
+		
+	    return true;	
 	} 
 	
 	//called by shpiraeus to check txn_id
-	function checkPiraeusTicket($txnid) {
-       $db = GetGlobal('db');
-	   	   
-       $sSQL = "select type1 from transactions where payway='PIRAEUS' and type1=";
-	   $sSQL .= $db->qstr($txnid);
-       $result = $db->Execute($sSQL);
+	public function checkPiraeusTicket($txnid) {
+		$db = GetGlobal('db');
+		$sSQL = "select type1 from transactions where payway='PIRAEUS' and type1=";
+		$sSQL .= $db->qstr($txnid);
+		$result = $db->Execute($sSQL);
 		
-       if ($result->fields['type1']) 
-	     return false;
-	   else 
-	     return true; 	
+		if ($result->fields['type1']) 
+			return false;
+
+		return true; 	
 	} 
 	
 	//replace 2 func above
-	function is_unique($id,$fieldnametocheck=null,$valtocheck=null,$field=null) {
-       $db = GetGlobal('db');
+	protected function is_unique($id,$fieldnametocheck=null,$valtocheck=null,$field=null) {
+		$db = GetGlobal('db');
+		$f = $field ? 'type2':'type1';
+		$sSQL = "select $f from transactions where ";
 	   
-	   $f = $field ? 'type2':'type1';
-	
-       $sSQL = "select $f from transactions where ";
+		if ($fieldnametocheck)
+			$sSQL .= $fieldnametocheck."=" . $db->qstr($valtocheck) . " and ";
 	   
-	   if ($fieldnametocheck)
-	     $sSQL .= $fieldnametocheck."=" . $db->qstr($valtocheck) . " and ";
-	   
-	   $f . "=" . $db->qstr($id);
+		$f . "=" . $db->qstr($id);
 		 
-	   $sSQL .= $db->qstr($txnid);
-       $result = $db->Execute($sSQL);
+		$sSQL .= $db->qstr($txnid);
+		$result = $db->Execute($sSQL);
 		
-       if ($result->fields[$f]) 
-	     return false;//exist ???
-	   else 
-	     return true;// not exist ok  		
+		if ($result->fields[$f]) 
+			return false;
+
+		return true;// not exist ok  		
 	}	 
 	
-	function saveTransactionHtml($id, $data, $template=null,$user=null,$fkey=null) {
+	public function saveTransactionHtml($id, $data, $template=null,$user=null,$fkey=null) {
 		$file = $this->path . $id . ".html"; 
-		//echo $file,'>',$template;//,$data;
 		
 		if (defined('TWIGENGINE_DPC')) {
-		
-			$dd = GetGlobal('controller')->calldpc_method('twigengine.render use '.$template.'++'.$data);
+			$dd = _m('twigengine.render use '.$template.'++'.$data);
         }
         else {  		
 		
@@ -252,7 +226,7 @@ class shtransactions extends transactions {
 		
 			if (($tm) && (is_readable($tm))) {
 				//echo $tm;
-				$myprintcarttemplate = file_get_contents($tm);
+				$myprintcarttemplate = @file_get_contents($tm);
 		  
 				//tokens=array=d seems to not come ok..so recall
 				$tokens[] = GetGlobal('controller')->calldpc_var('shcart.transaction_id');//$this->transaction_id;
@@ -262,7 +236,7 @@ class shtransactions extends transactions {
 					$tokens[] = '&nbsp;';//dummy
 				
 				//echo $user,'>',$fkey;
-				$tokens[] = GetGlobal('controller')->calldpc_method("shcustomers.showcustomerdata use $user+$fkey+cusdetails.htm");
+				$tokens[] = _m("shcustomers.showcustomerdata use $user+$fkey+cusdetails.htm");
 				$tokens[] = GetSessionParam('orderdetails');
 				$tokens[] = GetSessionParam('ordercart');
 		  
@@ -281,7 +255,7 @@ class shtransactions extends transactions {
         fclose($fd);   		
 	} 
 	
-	function getTransactionHtml($id) {
+	public function getTransactionHtml($id) {
         $file = $this->path . $id . ".html"; 
 
 		if (!$this->isTransOwner($id)) {
@@ -300,7 +274,7 @@ class shtransactions extends transactions {
 	} 	
 	
 	//override
-	function getTransaction($trid) {
+	public function getTransaction($trid) {
        $db = GetGlobal('db');
 	   
 	   if ($this->storetype=='DB') {  //db	
@@ -317,7 +291,7 @@ class shtransactions extends transactions {
 	
 	
 	//return array of relative sales id's
-	function getRelativeSales($limit=null,$id=null) {
+	public function getRelativeSales($limit=null,$id=null) {
        $db = GetGlobal('db');
 	   $id = $id?$id:GetReq('id');
 	   
@@ -381,8 +355,6 @@ class shtransactions extends transactions {
 		if (!$UserName) return false;
 		  
         if ($template) {
-			//$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
-			//$mytemplate = file_get_contents($t);
 			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
 		
 			$tokens[] = $body ? $body : localize('_mailcancelbody', getlocal());			  					
@@ -443,90 +415,84 @@ class shtransactions extends transactions {
 	} 	
 	
 	//override
-	function viewTransactions() {
-       $db = GetGlobal('db');
-	   $a = GetReq('a');
-       $UserName = GetGlobal('UserName');	   
+	public function viewTransactions() {
+		$db = GetGlobal('db');
+		$a = GetReq('a');
+		$UserName = GetGlobal('UserName');	   
 	   
-	   if (!$UserName) {
-	     if (defined('CMSLOGIN_DPC')) {
-		   GetGlobal('controller')->calldpc_method("cmslogin.login_javascript"); 	 
-		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +transview+shtransactions>viewTransactions");		   
-		 }  
-	     elseif (defined('SHLOGIN_DPC')) 
-		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +transview+shtransactions>viewTransactions");
-	     //else
-	       //$out = ("You must be logged in to view this page.");
+		if (!$UserName) {
+			if (defined('CMSLOGIN_DPC')) {
+				_m("cmslogin.login_javascript"); 	 
+				$out = _m("cmslogin.quickform use +transview+shtransactions>viewTransactions");		   
+			}  
+			elseif (defined('SHLOGIN_DPC')) 
+				$out = _m("shlogin.quickform use +transview+shtransactions>viewTransactions");
+			//else
+				//$out = ("You must be logged in to view this page.");
 		   
-		 return ($out);  
-	   }	 
-	   
-	   $apo = GetParam('apo'); //echo $apo;
-	   $eos = GetParam('eos');	//echo $eos;   
+			return ($out);  
+		}	 
 
-       $myaction = seturl("t=transview");	   
+		$myaction = seturl("transview/");	   
 	   
-       if (seclevel('TRANSADMIN_',$this->userLevelID)) {
-	     $this->admint=1;
-         $out .= "<form method=\"POST\" action=\"";
-         $out .= "$myaction";
-         $out .= "\" name=\"Transview\">";		 
-	   }
-	   elseif (seclevel('TRANSCANCEL_',$this->userLevelID)) { 
-	     $this->admint=2;	   
-         $out .= "<form method=\"POST\" action=\"";
-         $out .= "$myaction";
-         $out .= "\" name=\"Transview\">";		   
-	   }
-	   else {
-         $out .= "<form method=\"POST\" action=\"";
-         $out .= "$myaction";
-         $out .= "\" name=\"Transview\">";		   
-	   }
+		if (seclevel('TRANSADMIN_',$this->userLevelID)) {
+			$this->admint=1;
+			$out .= "<form method=\"POST\" action=\"";
+			$out .= "$myaction";
+			$out .= "\" name=\"Transview\">";		 
+		}
+		elseif (seclevel('TRANSCANCEL_',$this->userLevelID)) { 
+			$this->admint=2;	   
+			$out .= "<form method=\"POST\" action=\"";
+			$out .= "$myaction";
+			$out .= "\" name=\"Transview\">";		   
+		}
+		else {
+			$out .= "<form method=\"POST\" action=\"";
+			$out .= "$myaction";
+			$out .= "\" name=\"Transview\">";		   
+		}
 
-	 
-	   $out .= $this->getTransactionsList();	 
+		$out .= $this->getTransactionsList();	 
 		 
-	   if ($this->admint) {
-             $out .= "<input type=\"hidden\" name=\"FormName\" value=\"Transview\">";
-             $out .= "</FORM>";			 		   	 	
-	   }  	
+		if ($this->admint) {
+            $out .= "<input type=\"hidden\" name=\"FormName\" value=\"Transview\">";
+            $out .= "</form>";			 		   	 	
+		}  	
 	   
-	   return ($out);
+		return ($out);
 	}	
 	
 	//overide
-	function details($id,$template=null) {
+	public function details($id,$template=null) {
 	   
-	   if (defined('SHCART_DPC')) 
-	     $ret = GetGlobal('controller')->calldpc_method('shcart.previewcart use '.$id.'++'.$template);
+		if (defined('SHCART_DPC')) 
+			$ret = _m('shcart.previewcart use '.$id.'++'.$template);
 		 
-	   return ($ret);
+	    return ($ret);
 	}
 	
-	function viewTransactionHtml($id=null) {
+	public function viewTransactionHtml($id=null) {
 	    $id = $id?$id:GetReq('tid');
 		
 		if (!$this->isTransOwner($id)) {
-		  echo 'Invalid tranascrion id';
-		  die();		
+			echo 'Invalid tranascrion id';
+			die();		
 		}
 	
         $file = $this->path . $id . ".html"; 
-	    //echo $file;
+
 		if (is_readable($file)) {
-		  $ret = file_get_contents($file);
-		
-		  //return ($ret);	
-		  echo $ret;
-		  die();
+			$ret = file_get_contents($file);	
+			echo $ret;
+			die();
 		}
 		else
-		  return false;
+			return false;
 	} 		
 	
 	//override
-    function viewtrans($id,$status,$payway,$datetime,$trtotal,$dummy=null) {
+    public function viewtrans($id,$status,$payway,$datetime,$trtotal,$dummy=null) {
 	   
 		$link = 'trload/'.$id.'/';
 		$cload_button = $this->myf_button(localize('_LOADCART',getlocal()),$link);
@@ -539,16 +505,9 @@ class shtransactions extends transactions {
 			$preview_button = null;		  
 
 		//line details
-		//$_template = 'fptransline.htm';
-		//$_t = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$_template) ;
-		//$linetemplate = file_get_contents($_t);
 		$linetemplate = _m('cmsrt.select_template use fptransline');
 		$tokens[] = $this->details($id,'shcartpreview'); //use template for line
 		$line = $this->combine_tokens($linetemplate,$tokens);
-
-		//line			
-		//$mtemplate='fptrans.htm';
-		//$mt = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$mtemplate) ;
 
 		$data[] = $id;
 		$data[] = $payway;
@@ -583,7 +542,6 @@ class shtransactions extends transactions {
 		
 		$data[] = $line;
 		
-		//$mytemplate = file_get_contents($mt);
 		$mytemplate = _m('cmsrt.select_template use fptrans');
 		$out = $this->combine_tokens($mytemplate,$data);		
 			
@@ -591,27 +549,25 @@ class shtransactions extends transactions {
 	}
 	
 	//security function to not vew trans of other users
-	function isTransOwner($id=null) {
-       $db = GetGlobal('db');
-	   $id = $id?$id:GetReq('tid');
-	   $myuser = GetGlobal('UserID');	
-       $user = $myuser ? decode($myuser) : null;
+	public function isTransOwner($id=null) {
+		$db = GetGlobal('db');
+		$id = $id?$id:GetReq('tid');
+		$myuser = GetGlobal('UserID');	
+		$user = $myuser ? decode($myuser) : null;
 	   
-	   //search serialized data for id
-	   $sSQL = "select tid from transactions" .
-	           " where tid=" . $db->qstr($id) . ' and cid=' . $db->qstr($user);
-       $result = $db->Execute($sSQL,2);
-	   //echo $sSQL;
+		//search serialized data for id
+		$sSQL = "select tid from transactions" .
+				" where tid=" . $db->qstr($id) . ' and cid=' . $db->qstr($user);
+		$result = $db->Execute($sSQL,2);
 	   
-	   if ($result->fields['tid']==$id)
-	       return true;
+		if ($result->fields['tid']==$id)
+			return true;
 		   
-	   return false;	   
+		return false;	   
     }	   
 		
 	//override
-	function headtitle() {
-
+	public function headtitle() {
 		//$mytemplate = _m('cmsrt.select_template use fptrans');
 		//$out = $this->combine_tokens($mytemplate,$data);
 		//return ($out);		
@@ -620,7 +576,7 @@ class shtransactions extends transactions {
 	}	
 
 	//tokens method	 $x
-	function combine_tokens($template_contents,$tokens, $execafter=null) {
+	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
 		
