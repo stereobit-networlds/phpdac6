@@ -126,124 +126,110 @@ class shcustomers {
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
-	var $tmpl_path, $tmpl_name, $appname, $mtrackimg;
+	var $appname, $mtrackimg;
     var $rewrite; 	
 
-	function shcustomers() {
-	   $UserSecID = GetGlobal('UserSecID');
-	   $sFormErr = GetGlobal('sFormErr');
-	   $UserName = GetGlobal('UserName');
-	   $UserID = GetGlobal('UserID');
-       $this->path = paramload('SHELL','prpath');
+	function __construct() {
+		$UserSecID = GetGlobal('UserSecID');
+		$sFormErr = GetGlobal('sFormErr');
+		$UserName = GetGlobal('UserName');
+		$UserID = GetGlobal('UserID');
+		$this->path = paramload('SHELL','prpath');
 	   
-	   $this->urlpath = paramload('SHELL','urlpath');
-	   $this->inpath = paramload('ID','hostinpath');
+		$this->urlpath = paramload('SHELL','urlpath');
+		$this->inpath = paramload('ID','hostinpath');
 	   
-	   self::$staticpath = paramload('SHELL','urlpath');	   
+		self::$staticpath = paramload('SHELL','urlpath');	   
 
-	   //$this->userLevelID = decode($UserSecID);
-       $this->userLevelID = (((decode(GetSessionParam('UserSecID')))) ? (decode(GetSessionParam('UserSecID'))) : 0);
-	   $this->username = decode($UserName);
-	   $this->userid = decode($UserID);
-	   $this->msg = $sFormErr;
+		//$this->userLevelID = decode($UserSecID);
+		$this->userLevelID = (((decode(GetSessionParam('UserSecID')))) ? (decode(GetSessionParam('UserSecID'))) : 0);
+		$this->username = decode($UserName);
+		$this->userid = decode($UserID);
+		$this->msg = $sFormErr;
 
-       //select fields from table to get
-	   $this->selectedfields = remote_arrayload('SHCUSTOMERS','select',$this->path);
-	   $this->fieldalias = remote_arrayload('SHCUSTOMERS','selectalias',$this->path);
-	   //print_r($this->selectedfields);
+		//select fields from table to get
+		$this->selectedfields = remote_arrayload('SHCUSTOMERS','select',$this->path);
+		$this->fieldalias = remote_arrayload('SHCUSTOMERS','selectalias',$this->path);
+		//print_r($this->selectedfields);
 
-	   $this->fkey = remote_paramload('SHCUSTOMERS','fkey',$this->path);
-	   $this->mkey = remote_paramload('SHCUSTOMERS','mailkey',$this->path);
-	   $this->tellit = remote_paramload('SHCUSTOMERS','sendmailto',$this->path);
-	   $this->it_sendfrom = remote_paramload('SHCUSTOMERS','sendfrom',$this->path);
-	   $this->usemailasusername =  remote_paramload('SHCUSTOMERS','usemailasusername',$this->path);
+		$this->fkey = remote_paramload('SHCUSTOMERS','fkey',$this->path);
+		$this->mkey = remote_paramload('SHCUSTOMERS','mailkey',$this->path);
+		$this->tellit = remote_paramload('SHCUSTOMERS','sendmailto',$this->path);
+		$this->it_sendfrom = remote_paramload('SHCUSTOMERS','sendfrom',$this->path);
+		$this->usemailasusername =  remote_paramload('SHCUSTOMERS','usemailasusername',$this->path);
 	   
-	   //subform fields array
-	   $this->cusform =  remote_arrayload('SHCUSTOMERS','cusform',$this->path);
-	   $this->cusform2 =  remote_arrayload('SHCUSTOMERS','cusform2',$this->path);	   
-	   //unknown cus message 
-	   $this->unknown_customer_msg = remote_paramload('SHCUSTOMERS','unknowncusmsg',$this->path);	 
-	   //moved from users  
-	   $this->atok = remote_paramload('SHCUSTOMERS','atok',$this->path);	
+		//subform fields array
+		$this->cusform =  remote_arrayload('SHCUSTOMERS','cusform',$this->path);
+		$this->cusform2 =  remote_arrayload('SHCUSTOMERS','cusform2',$this->path);	   
+		//unknown cus message 
+		$this->unknown_customer_msg = remote_paramload('SHCUSTOMERS','unknowncusmsg',$this->path);	 
+		//moved from users  
+		$this->atok = remote_paramload('SHCUSTOMERS','atok',$this->path);	
 	   
-	   $this->checkuseasterisk = remote_paramload('SHCUSTOMERS','checkasterisk',$this->path);	 
-	   $this->asterisk = $this->checkuseasterisk?'&nbsp;':'*'; 	
-	   $this->error = null;	   
+		$this->checkuseasterisk = remote_paramload('SHCUSTOMERS','checkasterisk',$this->path);	 
+		$this->asterisk = $this->checkuseasterisk?'&nbsp;':'*'; 	
+		$this->error = null;	   
 	   
-	   $this->is_reseller = GetSessionParam('RESELLER');	
-	   $this->allow_inv_selection = remote_paramload('SHCUSTOMERS','invselect',$this->path);	   
-	   $definvval = remote_paramload('SHCUSTOMERS','invtype',$this->path);
-	   //echo $this->is_reseller,'>';
+		$this->is_reseller = GetSessionParam('RESELLER');	
+		$this->allow_inv_selection = remote_paramload('SHCUSTOMERS','invselect',$this->path);	   
+		$definvval = remote_paramload('SHCUSTOMERS','invtype',$this->path);
+		//echo $this->is_reseller,'>';
 	   
-       $invt = GetReq('invtype'); //echo $invt,'>';
-	   $invtses = GetSessionParam('invway');	   
-	   if ($invt) {
-	     //echo 'a';
-   	     //save in session for other procedures
-	     SetSessionParam('invtype',$invt);
-	     $this->invtype = $invt;
-	   }	
-	   elseif (isset($invtses)) {//cart selection is string???
-	     //echo 'b';
-	     //SetSessionParam('invtype',$invtses); //?????
-	     $this->invtype = $definvval;//$invtses;//?????	   
-	   }
-	   else {
-	     //echo 'c';
+		$invt = GetReq('invtype'); //echo $invt,'>';
+		$invtses = GetSessionParam('invway');	   
+		if ($invt) {
+			SetSessionParam('invtype',$invt);
+			$this->invtype = $invt;
+		}	
+		elseif (isset($invtses)) //cart selection is string???
+			$this->invtype = $definvval;//$invtses;//?????	   
+		else 
 	     $this->invtype = $definvval; //no type of cyustomer 9reseller in this phase/($this->is_reseller)?1:1;//$definvval;
-	   }	 
-	   //echo '+',$this->invtype,'+';		 	 
+		//echo '+',$this->invtype,'+';		 	 
 	   
-	   $delivaddress = remote_paramload('SHCUSTOMERS','deliveryaddress',$this->path);
-	   $this->mydelivery_address = $delivaddress?$delivaddress:0;  
+		$delivaddress = remote_paramload('SHCUSTOMERS','deliveryaddress',$this->path);
+		$this->mydelivery_address = $delivaddress?$delivaddress:0;  
 	   
-	   $deliveryfields = remote_arrayload('SHCUSTOMERS','delivform',$this->path);	
-	   if (empty($deliveryfields))
-	     $this->delivery_fields = array('address','area','zip','voice1','voice2','fax','mail');	   
-	   else
-	   	 $this->delivery_fields = (array) $deliveryfields;
+		$deliveryfields = remote_arrayload('SHCUSTOMERS','delivform',$this->path);	
+		if (empty($deliveryfields))
+			$this->delivery_fields = array('address','area','zip','voice1','voice2','fax','mail');	   
+		else
+			$this->delivery_fields = (array) $deliveryfields;
 		 
-	   $this->delivery_goto_url = "t=viewcart&status=1";
-	   $this->adddelivgoto = remote_paramload('SHCUSTOMERS','adddelivgoto',$this->path);
-	   $this->delivok = false;
-	   
+		$this->delivery_goto_url = "t=viewcart&status=1";
+		$this->adddelivgoto = remote_paramload('SHCUSTOMERS','adddelivgoto',$this->path);
+		$this->delivok = false;
 	   	   
-	   $this->customer_goto_url = "t=viewcart&status=1";
-	   $this->addcusgoto = remote_paramload('SHCUSTOMERS','adddelivgoto',$this->path);	   
-	   $this->cusok = false;	
+		$this->customer_goto_url = "t=viewcart&status=1";
+		$this->addcusgoto = remote_paramload('SHCUSTOMERS','adddelivgoto',$this->path);	   
+		$this->cusok = false;	
 	   
-	   $r_attr = remote_paramload('SHCUSTOMERS','reseller',$this->path);
-	   if (stristr($r_attr,',')) {//multiple attr
-	     $this->reseller_attr = (array) remote_arrayload('SHCUSTOMERS','reseller',$this->path);
-	     //print_r($this->reseller_attr);		 	   
-	   }	 
-	   else	{   
-	     $this->reseller_attr = $r_attr;
-	     //echo '>',$this->reseller_attr;	 
-	   }	 
-	   $this->reseller = $this->is_reseller(); 
+		$r_attr = remote_paramload('SHCUSTOMERS','reseller',$this->path);
+		if (stristr($r_attr,',')) //multiple attr
+			$this->reseller_attr = (array) remote_arrayload('SHCUSTOMERS','reseller',$this->path);	 	   	 
+		else
+			$this->reseller_attr = $r_attr;
+ 
+		$this->reseller = $this->is_reseller(); 
 	   
-	   $this->check_exist = remote_paramload('SHCUSTOMERS','checkexist',$this->path);	 
-	   $this->customer_exist_id = null; 
-
-	   $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	   $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	   	   	   
+		$this->check_exist = remote_paramload('SHCUSTOMERS','checkexist',$this->path);	 
+		$this->customer_exist_id = null; 	   	   	   
 	   
-	   $myf_button = remote_paramload('SHCUSTOMERS','buttonclass',$this->path);
-	   self::$myf_button_class = $myf_button ? $myf_button : 'myf_button';
-	   $myf_submit = remote_paramload('SHCUSTOMERS','buttonclasssubmit',$this->path);
-	   self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';
+		$myf_button = remote_paramload('SHCUSTOMERS','buttonclass',$this->path);
+		self::$myf_button_class = $myf_button ? $myf_button : 'myf_button';
+		$myf_submit = remote_paramload('SHCUSTOMERS','buttonclasssubmit',$this->path);
+		self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';
 	   	   
-	   $this->appname = paramload('ID','instancename');
-	   $tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
-	   $this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	   
+		$this->appname = paramload('ID','instancename');
+		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
+		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	   
 		   
-	   $this->rewrite = 1;	   
+		$this->rewrite = 1;	   
 	}
 
-    function event($sAction) {
+    public function event($sAction) {
 
-       if (!$this->msg) {
+		if (!$this->msg) {
 
 	     //$this->getFields();
 
@@ -316,12 +302,12 @@ class shcustomers {
 									 break;									  
 			default                 :							
           }
-       }
+		}
 	}
 
-	function action($action) {
+	public function action($action) {
 
-       switch ($action) {
+		switch ($action) {
 		   
           case "addnewdeliv"      :
           case "removedeliv"      : $out .= $this->show_customer_delivery();
@@ -351,19 +337,19 @@ class shcustomers {
 		  case "delete2"          :
 		  case "insert2"          :	  				  
 		  default                 : $out = $this->register();
-       }
-       return ($out);
+		}
+		return ($out);
 	}
 	
-	function js_map_customer() {	
-	  $message = 'Customer found. Map?';	
-	  $vars = $this->make_customerpost_get();  
-	  $insertcustomerurl = seturl('t=inscus&'.$vars);	  
-	  $mapcustomerurl = seturl('t=mapcus&id='.$this->customer_exist_id);	  
+	protected function js_map_customer() {	
+		$message = 'Customer found. Map?';	
+		$vars = $this->make_customerpost_get();  
+		$insertcustomerurl = seturl('t=inscus&'.$vars);	  
+		$mapcustomerurl = seturl('t=mapcus&id='.$this->customer_exist_id);	  
 	
-      if (iniload('JAVASCRIPT')) {
+		if (iniload('JAVASCRIPT')) {
 		
-	   $code = "
+			$code = "
 	   
 function map_alert() {
 
@@ -376,45 +362,42 @@ window.onload=function(){
   map_alert();
 }	
 ";	  
-		   $js = new jscript;		   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }
-	  else
-	    echo 'JAVASCRPIPT must be enabled!';		  	
+			$js = new jscript;		   
+			$js->load_js($code,"",1);			   
+			unset ($js);
+		}		  	
 	}	
 	
-	function js_exist_mapped_customer() {	
-	  $message = localize('_CUSTEXISTS',getlocal());//'Customer exist.';	  
+	protected function js_exist_mapped_customer() {	
+		$message = localize('_CUSTEXISTS',getlocal());//'Customer exist.';	  
 	
-      if (iniload('JAVASCRIPT')) {
+		if (iniload('JAVASCRIPT')) {
 		
-	   $code = "
+			$code = "
 window.onload=function(){
   alert('$message');	
 } 
 ";	  
-		   $js = new jscript;		   
-           $js->load_js($code,"",1);			   
-		   unset ($js);
-	  }	  	
+			$js = new jscript;		   
+			$js->load_js($code,"",1);			   
+			unset ($js);
+		}	  	
 	}		
 	
-	function make_customerpost_get() {
+	protected function make_customerpost_get() {
 	
-   	  $recfields = $this->get_cus_record(1,1);	
+		$recfields = $this->get_cus_record(1,1);	
 
-	  foreach ($recfields as $fn=>$fname) {
-	    
-	    $retdata[] = $fname . '=' . GetParam($fname); 
-	  }	
+		foreach ($recfields as $fn=>$fname) {
+			$retdata[] = $fname . '=' . GetParam($fname); 
+		}	
 	  
-	  $ret = implode('&',$retdata);
-	  return ($ret);
+		$ret = implode('&',$retdata);
+		return ($ret);
 	}
 
 
-    function register() {
+    public function register() {
 	    $sFormErr = GetGlobal('sFormErr');
         $mycus = GetReq('a');
 
@@ -461,7 +444,7 @@ window.onload=function(){
 	   return ($out);
 	}
 	
-	function after_registration_goto() {
+	public function after_registration_goto() {
 	
 		if ( (defined('CMSLOGIN_DPC')) && (seclevel('CMSLOGIN_DPC',$this->userLevelID)) ) {	
 		
@@ -486,7 +469,7 @@ window.onload=function(){
 		return ($out);	
 	}	
 	
-	function after_update_goto() {
+	protected function after_update_goto() {
 	   $myaction = GetParam('FormAction');
 	   if ((GetGlobal('UserID')) && ($myaction=='update2')) {//already in..modify account
 		  $out .= $this->show_customers_list();//$this->register();   
@@ -495,12 +478,12 @@ window.onload=function(){
 	   return ($out);
 	}
 	
-	function after_delete_goto() {
+	protected function after_delete_goto() {
 	
 	  return ($out);
 	}	
 
-    function getcustomer($id="",$fkey=null) {
+    public function getcustomer($id="",$fkey=null) {
 		$db = GetGlobal('db');
 		$a = GetReq('a');
 		//$un = GetGlobal('UserName');
@@ -543,149 +526,101 @@ window.onload=function(){
 	}
 
 	//return formed record data as html
-    function showcustomerdata($customer="",$fkey=null,$template=null,$ret_tokens=false) {
-	   $sFormErr = GetGlobal('sFormErr');
-	   $data = array();
-	   //template
-	   $template= $template ? $template : "showcustomerdata.htm";
-	   $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-	   if (is_readable($t)) {
-	     $tokens=1;
-		 $mytemplate = file_get_contents($t);
-	   }	
+    public function showcustomerdata($customer="",$fkey=null,$template=null,$ret_tokens=false) {
+		$sFormErr = GetGlobal('sFormErr');
+		$data = array();
+		
+		//template
+		$template= $template ? str_replace('.htm', '', $template) : "showcustomerdata";
+		$mytemplate = _m('cmsrt.select_template use ' . $template); 
 	   
-	   //$recfields = $this->cusform;//custom fields..NOT in this
+		if ($this->usemailasusername)
+			$recfields = array('name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
+		else
+			$recfields = array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
+		reset($recfields);
 	   
-	   if (!$recfields) {
-         //$this->getFields();
-	     if ($this->usemailasusername)
-           $recfields = array('name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
-	     else
-	       $recfields = array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
-       }
-       reset($recfields);
+		//when show activate viewed customer so deactivat all other same user clients
+		$this->deactivatecustomers();	   
 	   
-       //when show activate viewed customer so deactivat all other same user clients
-	   $this->deactivatecustomers();	   
-	   
-       //read data
-	   //$cus = GetSessionParam('customerway') ? GetSessionParam('customerway') : GetReq('customerway');
-	   if ($customerway = GetReq('customerway')) {
-	     //echo 'z22';
-	     $fields = $this->getcustomer($customerway,'id');
-		 SetSessionParam('scustomer',$customerway);
-		 $this->activatecustomer($customerway);		 
-	   }	 
-	   elseif ($selectedcustomer = GetSessionParam('scustomer')) {
-	     //echo 'a22'; 
-	     $fields = $this->getcustomer($selectedcustomer,'id');	
-		 $this->activatecustomer($selectedcustomer);		 
-	   }	    
-	   else	{ 
-	     //echo 'b22';
-	     $fields = $this->getcustomer($customer,$fkey,1);
-		 $this->activatecustomer();		 
-	   }	 
+		//read data
+		if ($customerway = GetReq('customerway')) {
+			//echo 'z22';
+			$fields = $this->getcustomer($customerway,'id');
+			SetSessionParam('scustomer',$customerway);
+			$this->activatecustomer($customerway);		 
+		}	 
+		elseif ($selectedcustomer = GetSessionParam('scustomer')) {
+			//echo 'a22'; 
+			$fields = $this->getcustomer($selectedcustomer,'id');	
+			$this->activatecustomer($selectedcustomer);		 
+		}	    
+		else	{ 
+			//echo 'b22';
+			$fields = $this->getcustomer($customer,$fkey,1);
+			$this->activatecustomer();		 
+		}	 
 
-       //in case of no customer data this must return null
-	   if (strlen($fields)>11) { //if empty returns ';;;;;;;;;'
+		//in case of no customer data this must return null
+		if (strlen($fields)>11) { //if empty returns ';;;;;;;;;'
 
-		   $myfields = explode(";",$fields);
-		   array_pop($myfields); //get out the empty last element
+			$myfields = explode(";",$fields);
+			array_pop($myfields); //get out the empty last element
 
-           //while (list ($field_num, $fieldname) = each ($this->recfields)) {
-           //print_r($myfields);
-           foreach ($myfields as $id=>$rec) {
+			foreach ($myfields as $id=>$rec) {
 		       $data[$id] = ($rec?$rec:"&nbsp;");
-		   }
+			}
 		   
-		   if ($tokens) {
-		     if (seclevel('CUSTOMERSMNG_',$this->userLevelID)) {
-               $uid = $this->userid;
-			   //signup2 became signup to handle user and customer
-               //$data[] = seturl("t=signup&a=$uid" , localize('_UPDATE',getlocal()) );			 
-			   $data[] = $this->myf_button(localize('_UPDATE',getlocal()),'signup/');//"<a href='signup/'><input type='button' class='myf_button' value='".localize('_UPDATE',getlocal())."' /></a>";
-			 }
+		    if (seclevel('CUSTOMERSMNG_',$this->userLevelID)) {
+				$uid = $this->userid;
+				//signup2 became signup to handle user and customer
+				//$data[] = seturl("t=signup&a=$uid" , localize('_UPDATE',getlocal()) );			 
+				$data[] = $this->myf_button(localize('_UPDATE',getlocal()),'signup/');
+			}
 			 
-			 if ($ret_tokens)//call from shcart to email invoice
+			if ($ret_tokens)//call from shcart to email invoice
 			    return ($data);
-			 else	
+			else	
 				$out = $this->combine_tokens($mytemplate,$data);
-		   }
-           else {
-             $aligntitle = "right;40%;";
-	         $alignfield = "left;60%;";
-
-             $out .= setTitle(localize('_TRANSDATA',getlocal()));
-
-             //show data
-             reset ($recfields);
-	         reset ($data);
-             //print_r($data); 
-             //while (list ($field_num, $fieldname) = each ($this->recfields)) {
-             foreach ($data as $id=>$rec) {
-
-               $field[] = localize($recfields[$id],getlocal()) . ":";
-	           $attr[] = $aligntitle;
-	           $field[] = $rec;
-	           $attr[] = $alignfield;
-	           $w = new window('',$field,$attr);
-		       $out .= $w->render("center::100%::0::group_article_selected::left::0::0::");
-		       unset ($field);  unset ($attr);
-	         }
-
-             if (seclevel('CUSTOMERSMNG_',$this->userLevelID)) {
-               $uid = $this->userid;
-			   $this->myf_button(localize('_UPDATE',getlocal()),'signup/');
-	           $w = new window('',$d);
-	           $out .= $w->render(" ::100%::0::group_form_foottitle::center;100%;::");
-	           unset($w);
-		     }
-		   }//template
-       }
-
-	   //$out = 'CUSTOMER';
-
-	   return ($out);
+		}
+		return ($out);
 	}
 
 	//return leeid of customer based on ageneric where (suitable for pre register user procedure)
-	function search_customer_id($where_statement) {
+	public function search_customer_id($where_statement) {
 		$db = GetGlobal('db');
 
 		$sSQL = "SELECT CODE2 FROM customers WHERE " .$where_statement;
-		//echo $sSQL;
 		$result = $db->Execute($sSQL,3);
 
 		return ($result->fields[0]);
 	}
 
-    function makeform($fields='',$notitle=null,$cmd=null,$isupdate=null,$go_to=null,$setinvtype=null) {
+    protected function makeform($fields='',$notitle=null,$cmd=null,$isupdate=null,$go_to=null,$setinvtype=null) {
 	    $sFormErr = GetGlobal('sFormErr');
 	    $goto = $go_to ? $go_to : "t=signup2&a=".GetParam('a'); 
 	   
 	    if (!$invtype = GetSessionParam('invtype'))
 			$invtype = GetParam('invtype') ? GetParam('invtype') : ($setinvtype ? $setinvtype : $this->invtype);
 	   
-        $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',/*$invtype .*/ getlocal().'.','cusregister.htm') ; 
-		$mytemplate = file_get_contents($t);  
+		$mytemplate = _m('cmsrt.select_template use cusregister');
 
 	    $data =  array();       //read data	  
 	    $recfields = $this->get_cus_record(1,1);		 
 	    reset($recfields);
 	   
 	    if ($fields) { //get record param
-		   $myfields = explode(";",$fields);
+		    $myfields = explode(";",$fields);
 
            foreach ($recfields as $recid => $rec) {
                 //btpass code by add +1
 		        $data[$recid] = ($myfields[$recid]?$myfields[$recid]:"&nbsp;");
-		   }
+		    }
 	    }
 	    else { //read form data
-           foreach ($recfields as $fnum => $fname) {
+            foreach ($recfields as $fnum => $fname) {
 		       $data[$fnum] = ToHTML(GetParam(_with($fname)));
-		   }
+		    }
 	    }
 
         //$sFileName = seturl($goto,0,1);	   
@@ -699,28 +634,27 @@ window.onload=function(){
         reset ($recfields);
 	    reset ($data);
         foreach ($recfields as $field_num => $fieldname) {
-           $tokens[] = $data[$field_num];
+			$tokens[] = $data[$field_num];
 	    }
 
 		if ((($cid = GetParam('a')) && (seclevel('CUSTOMERSMNG_',$this->userLevelID))) || ($isupdate)) {	   
 
+			if ((seclevel('UPDATECUSTOMER_',$this->userLevelID)) || ($isupdate)) { 
+				$updcmd = $cmd ? $cmd : 'update2';
+				$out2 = "<input type=\"hidden\" name=\"a\" value=\"".$cid."\">";
+				$out2 .= "<input type=\"hidden\" value=\"$updcmd\" name=\"FormAction\"/>";			  
+				$out2 .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"" . localize('_UPDATE',getlocal()) . "\">";// onclick=\"document.forms('Registration2').FormAction.value = '$updcmd';\">";
+			}
 
-           if ((seclevel('UPDATECUSTOMER_',$this->userLevelID)) || ($isupdate)) { 
-              $updcmd = $cmd ? $cmd : 'update2';
-			  $out2 = "<input type=\"hidden\" name=\"a\" value=\"".$cid."\">";
-              $out2 .= "<input type=\"hidden\" value=\"$updcmd\" name=\"FormAction\"/>";			  
-              $out2 .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"" . localize('_UPDATE',getlocal()) . "\">";// onclick=\"document.forms('Registration2').FormAction.value = '$updcmd';\">";
-		   }
-
-           if (seclevel('DELETECUSTOMER_',$this->userLevelID)) {
-              $out2 = "<input type=\"hidden\" value=\"delete2\" name=\"FormAction\"/>";		   
-              $out2 .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"" . localize('_DELETE',getlocal()) . "\">";// onclick=\"document.forms('Registration2').FormAction.value = 'delete2';\">";
-		   }
+			if (seclevel('DELETECUSTOMER_',$this->userLevelID)) {
+				$out2 = "<input type=\"hidden\" value=\"delete2\" name=\"FormAction\"/>";		   
+				$out2 .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"" . localize('_DELETE',getlocal()) . "\">";// onclick=\"document.forms('Registration2').FormAction.value = 'delete2';\">";
+			}
 		}
 		else {
-           $dpccmd = $cmd?$cmd:'insert2';
-           $out2 .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"" . localize('_SIGNUP',getlocal()) . "\" onclick=\"document.forms('Registration2').FormAction.value = '$dpccmd';\">";
-           $out2 .= "<input type=\"hidden\" value=\"$dpccmd\" name=\"FormAction\"/>";
+			$dpccmd = $cmd?$cmd:'insert2';
+			$out2 .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"" . localize('_SIGNUP',getlocal()) . "\" onclick=\"document.forms('Registration2').FormAction.value = '$dpccmd';\">";
+			$out2 .= "<input type=\"hidden\" value=\"$dpccmd\" name=\"FormAction\"/>";
 		}
        
 	    if ($usermail)//hidden user mail to check
@@ -734,33 +668,24 @@ window.onload=function(){
 	}
 	
 	//used by userform to combine form in one
-	function makesubform($tokensout=null) {
+	public function makesubform() {
 
-	   if (!$invtype = GetSessionParam('invtype'))	   
-	     $select_inv = GetParam('invtype')?GetParam('invtype'):$this->invtype;
+		if (!$invtype = GetSessionParam('invtype'))	   
+			$select_inv = GetParam('invtype') ? GetParam('invtype') : $this->invtype;
 	   
-	   if ($this->allow_inv_selection) {//show invoice selection
-         if ($tokensout) 
-           $tokens[] = $this->select_invoice($select_inv,'signup');	 
-		 else
-		   $out = $this->select_invoice($select_inv,'signup');    
-	   }
-	   else {
-         if ($tokensout) 
+		if ($this->allow_inv_selection) //show invoice selection
+			$tokens[] = $this->select_invoice($select_inv,'signup');	    
+		else 
            $tokens[] = null; //first token null	 	   
-		 else
-		   $out = null;  
-	   }  
 	   
-	   switch ($select_inv) {
-	      case 1 : $recfields = $this->cusform;
-		           break;  
-		  case 0 : 
-	     default : $recfields = $this->cusform2;
-	   }
-
-	   		 
-	   reset($recfields);
+	    switch ($select_inv) {
+			case 1  : 	$recfields = $this->cusform;
+						break;  
+			case 0  : 
+			default : 	$recfields = $this->cusform2;
+	    }
+	 
+	    reset($recfields);
 	   
 	   if ($fields) { //get record param
 		   $myfields = explode(";",$fields);
@@ -787,7 +712,7 @@ window.onload=function(){
 	   }
 		   
 	   if ($this->mydelivery_address) {
-		     $extratokens = $this->makedelivsubform($tokensout);
+		     $extratokens = $this->makedelivsubform();
 			 $etokens = array_merge($tokens,$extratokens);
 			 return ($etokens);
        }	 
@@ -811,14 +736,14 @@ window.onload=function(){
 	  return ($r);
 	}
 	
-	function get_invoice_type() {
+	public function get_invoice_type() {
 	  
 	  $ret = $this->invtype?$this->invtype:'0';
 	  return ($ret);
 	  //return (GetSessionParam('invtype'));
 	}
 	
-	function get_invoice_type_descr() {
+	public function get_invoice_type_descr() {
 	  
 	  $ret = $this->invtype ? localize('_INVOICE',getlocal()) :
 	                          localize('_APODEIXI',getlocal());
@@ -826,7 +751,7 @@ window.onload=function(){
 	  //return (GetSessionParam('invtype'));
 	}	
 	
-	function customer_exist($returnid=false) {
+	public function customer_exist($returnid=false) {
 	   $db = GetGlobal('db');
 	   $param = $this->check_exist;//afm
 	   $value = GetParam($param)?GetParam($param):null;
@@ -856,7 +781,7 @@ window.onload=function(){
 	}
 	
 	//new map param comes form users (dpc call)
-	function map_customer($userid=null,$id=null) {
+	public function map_customer($userid=null,$id=null) {
 	   $db = GetGlobal('db');
 	   //if already in id is in requets else in param (from new user)
 	   $id = $id?$id:GetReq('id');
@@ -897,13 +822,10 @@ window.onload=function(){
 				if ($this->tellit) {
 				
 					//fetch existing data and send mail to admin
-					$sSQL2 = "select code2,active,name,afm,eforia,prfdescr,address,area,zip,voice1,voice2,fax,mail from customers " . " where id=" . $id;//$db->qstr($value);
-					//echo $sSQL2;
+					$sSQL2 = "select code2,active,name,afm,eforia,prfdescr,address,area,zip,voice1,voice2,fax,mail from customers " . " where id=" . $id;
 					$res2 = $db->Execute($sSQL2,2); 				
 				
-					$template= "customerinserttell.htm";
-					$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-					$mytemplate = file_get_contents($t);
+					$mytemplate = _m('cmsrt.select_template use customerinserttell'); 
 			
 					$tokens[] = GetParam('uname');GetParam('lname');			
 					$tokens[] = GetParam('lname'); //$db->qstr($res2->fields['name']);	
@@ -933,36 +855,32 @@ window.onload=function(){
 	   return false;	 
 	}
 
-	function insert($userid=null) {
-	   $db = GetGlobal('db');
+	protected function insert($userid=null) {
+		$db = GetGlobal('db');
 	   
-	   if ($error = $this->checkFields(null,$this->checkuseasterisk)) {
-	       SetGlobal('sFormErr',$error);
-	       return false;//($error);
-	   }	   
-
-       //echo '>',GetSessionParam('new_user_code');   
-	   if ($userid) {//code inside
-	     $uid = $userid;
-	   }
-	   elseif ($userid = GetSessionParam('new_user_code')) {//if user has pre-insert???????
-	     $uid= $userid;
-	   }
-	   elseif ($userid = decode(GetSessionParam('UserID'))) {//has login already
-	     $uid= $userid;
-	   }	 
-	   else {//never must happen
-	     SetGlobal('sFormErr','Invalid user key!');
-		 return null;
-
-		 //$uid = $db->qstr(addslashes(GetParam('uname')));
-	   }	 
+		if ($error = $this->checkFields(null,$this->checkuseasterisk)) {
+			SetGlobal('sFormErr',$error);
+			return false;
+		}	   
+  
+		if ($userid) {//code inside
+			$uid = $userid;
+		}
+		elseif ($userid = GetSessionParam('new_user_code')) {//if user has pre-insert???????
+			$uid= $userid;
+		}
+		elseif ($userid = decode(GetSessionParam('UserID'))) {//has login already
+			$uid= $userid;
+		}	 
+		else {//never must happen
+			SetGlobal('sFormErr','Invalid user key!');
+			return null;
+		}	 
 	     	  
-	   
-	   $recfields = array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
+		$recfields = array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
 
-       $sSQL = "insert into customers (code2,active,name,afm,eforia,prfdescr,address,area,zip,voice1,voice2,fax,mail)";
-	   $sSQL.= " values (" .
+		$sSQL = "insert into customers (code2,active,name,afm,eforia,prfdescr,address,area,zip,voice1,voice2,fax,mail)";
+		$sSQL.= " values (" .
 	           $db->qstr($uid) . ',1,' .
 	           $db->qstr(addslashes(GetParam('name'))) . ',' .
 	           $db->qstr(addslashes(GetParam('afm'))) . ',' .
@@ -977,18 +895,16 @@ window.onload=function(){
 	           $db->qstr(addslashes(GetParam('mail'))) .
 	           ")";
 
-       //echo $sSQL;
-       $result = $db->Execute($sSQL,1);
-	   //print_r($result->fields);
-       if ($db->Affected_Rows()) {	   
+		//echo $sSQL;
+		$result = $db->Execute($sSQL,1);
+		if ($db->Affected_Rows()) {	   
 			SetGlobal('sFormErr',"ok");
 		 
 			//$this->update_statistics('registration', GetParam('mail'));	
 			
 			if ($this->tellit) {
-				$template= "customerinserttell.htm";
-				$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-				$mytemplate = file_get_contents($t);
+
+				$mytemplate = _m('cmsrt.select_template use customerinserttell'); 
 			
 				$tokens[] = $uid;			
 				$tokens[] = GetParam('name');	
@@ -1012,48 +928,42 @@ window.onload=function(){
 			}			
 		 
 			return true;	 
-	   }
-	   else {
-			//echo $db->ErrorMsg();
-			SetGlobal('sFormErr',localize('_MSG20',getlocal()));
-	   }	   	 
+		}
+		else 
+			SetGlobal('sFormErr',localize('_MSG20',getlocal()));  	 
 
-	   return false;//($result);
-
+		return false;//($result);
 	}
 	
 	//used by users in one form combination (usercode must fill to connect)
 	//..silent check existing customer
-	function subinsert($userid=null,$bypasscheck=null) {
-	   $db = GetGlobal('db');
+	public function subinsert($userid=null,$bypasscheck=null) {
+		$db = GetGlobal('db');
 	   
-	   if ($error = $this->checkFields($bypasscheck,$this->checkuseasterisk)) {
-	       SetGlobal('sFormErr',$error);
-	       return ($error);
-	   }
+		if ($error = $this->checkFields($bypasscheck,$this->checkuseasterisk)) {
+			SetGlobal('sFormErr',$error);
+			return ($error);
+		}
    
-	   if ($userid) {//code inside
-	     $uid = $userid;
-	   } 
-	   else {//never must happen
-	     SetGlobal('sFormErr','Invalid user key!');
-		 return null;
-
-		 //$uid = $db->qstr(addslashes(GetParam('uname')));
-	   }	 
+		if ($userid) {//code inside
+			$uid = $userid;
+		} 
+		else {//never must happen
+			SetGlobal('sFormErr','Invalid user key!');
+			return null;
+		}	 
 	   
-	   //what to store as mail ?  
-       if ($usemailasusername=GetGlobal('controller')->calldpc_var('shusers.usemailasusername'))	
-	     $email = $userid;//GetParam('uname');
-	   else	 
-	     $email = GetParam('eml');
+		//what to store as mail ?  
+		if ($usemailasusername=GetGlobal('controller')->calldpc_var('shusers.usemailasusername'))	
+			$email = $userid;//GetParam('uname');
+		else	 
+			$email = GetParam('eml');
 		 
-	   //before set active the current record deactive all others  
-	   $d = $this->deactivatecustomers($uid);			 			 
-		 
-	  
-       $sSQL = "insert into customers (code2,active,name,afm,eforia,prfdescr,address,area,zip,voice1,voice2,fax,mail)";
-	   $sSQL.= " values (" .
+		//before set active the current record deactive all others  
+		$d = $this->deactivatecustomers($uid);			 			 
+
+		$sSQL = "insert into customers (code2,active,name,afm,eforia,prfdescr,address,area,zip,voice1,voice2,fax,mail)";
+		$sSQL.= " values (" .
 	           $db->qstr($uid) . ',1,' .
 	           $db->qstr(addslashes(GetParam('lname'))) . ',' . //user's name
 	           $db->qstr(addslashes(GetParam('afm'))) . ',' .
@@ -1068,95 +978,89 @@ window.onload=function(){
 	           $db->qstr(addslashes(strtolower($email))) . //user email
 	           ")";
 
-       //echo $sSQL;
-       $result = $db->Execute($sSQL,1);
-	   //print_r($result->fields);
-       if ($ret = $db->Affected_Rows()) {	   
-         SetGlobal('sFormErr',"ok");
+		$result = $db->Execute($sSQL,1);
+
+		if ($ret = $db->Affected_Rows()) {	   
+			SetGlobal('sFormErr',"ok");
 		 
-		 //$this->update_statistics('registration', $email);
+			//$this->update_statistics('registration', $email);
 		 
-		 //delivery address
-		 if (($this->mydelivery_address) && (!$error = $this->check_delivery_address(1))) {
-		   //save at customer address book
-		   $save=0;
-		   foreach ($this->delivery_fields as $fn=>$fname) {
-		     $data_entry = GetParam($fname.'_d');
-		     $delivdata[] = $db->qstr($data_entry); //to separate from default address name fields  
-			 if ($data_entry) {
-			   //echo '>',$data_entry;
-			   $save=1;
-			 }  
-		   }	 
-		   if ($save) {	  
-		     //before set active the current record deactive all others  
-		     $d = $this->deactivatedeliveryaddress($uid);
+			//delivery address
+			if (($this->mydelivery_address) && (!$error = $this->check_delivery_address(1))) {
+				//save at customer address book
+				$save=0;
+				foreach ($this->delivery_fields as $fn=>$fname) {
+					$data_entry = GetParam($fname.'_d');
+					$delivdata[] = $db->qstr($data_entry); //to separate from default address name fields  
+					if ($data_entry) {
+						//echo '>',$data_entry;
+						$save=1;
+					}  
+				}
+				
+				if ($save) {	  
+					//before set active the current record deactive all others  
+					$d = $this->deactivatedeliveryaddress($uid);
 		   		   
-		     $addressfields = implode(',',$this->delivery_fields);
-             $sSQL2 = "insert into custaddress (ccode,active,$addressfields)";
-	         $sSQL2.= " values (". $db->qstr($uid). ",1,";
-             $sSQL2.= implode(',',$delivdata);
-	         $sSQL2.= ")";
+					$addressfields = implode(',',$this->delivery_fields);
+					$sSQL2 = "insert into custaddress (ccode,active,$addressfields)";
+					$sSQL2.= " values (". $db->qstr($uid). ",1,";
+					$sSQL2.= implode(',',$delivdata);
+					$sSQL2.= ")";
 
-             //echo $sSQL2;
-             $result2 = $db->Execute($sSQL2,1);		   	   
-		   }
-		 }		 
+					//echo $sSQL2;
+					$result2 = $db->Execute($sSQL2,1);		   	   
+				}
+			}		 
 		 
-	     if ($this->tellit) {
-			$template= "customerinserttell.htm";
-			$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		    $mytemplate = file_get_contents($t);
+			if ($this->tellit) {
+				$mytemplate = _m('cmsrt.select_template use customerinserttell'); 
 			
-		    $tokens[] = GetParam('uname');			
-		    $tokens[] = GetParam('lname');	
-		    $tokens[] = GetParam('afm');						
-		    $tokens[] = GetParam('eforia');			
-		    $tokens[] = GetParam('prfdescr');
-		    $tokens[] = GetParam('address');
-		    $tokens[] = GetParam('area');														
-		    $tokens[] = GetParam('zip');			
-		    $tokens[] = GetParam('voice1');			
-		    $tokens[] = GetParam('voice2');			
-		    $tokens[] = GetParam('fax');			
-		    $tokens[] = $email;	
-            $tokens[] = GetParam("fname");//subinsert user insert fname data to be send...				
+				$tokens[] = GetParam('uname');			
+				$tokens[] = GetParam('lname');	
+				$tokens[] = GetParam('afm');						
+				$tokens[] = GetParam('eforia');			
+				$tokens[] = GetParam('prfdescr');
+				$tokens[] = GetParam('address');
+				$tokens[] = GetParam('area');														
+				$tokens[] = GetParam('zip');			
+				$tokens[] = GetParam('voice1');			
+				$tokens[] = GetParam('voice2');			
+				$tokens[] = GetParam('fax');			
+				$tokens[] = $email;	
+				$tokens[] = GetParam("fname");//subinsert user insert fname data to be send...				
 			
-			$mailbody = $this->combine_tokens($mytemplate,$tokens);
+				$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
-			$from = $this->it_sendfrom ? $this->it_sendfrom : $email;
-			$subject = localize('CustomerRegistration',getlocal());
-			$this->mailto($from,$this->tellit,$subject,$mailbody);
-	     }		 
-	   }
-	   else {
-	     $ret = $db->ErrorMsg();
-		 //echo $ret;
-		 SetGlobal('sFormErr',localize('_MSG20',getlocal()));
-	   }	   	 
+				$from = $this->it_sendfrom ? $this->it_sendfrom : $email;
+				$subject = localize('CustomerRegistration',getlocal());
+				$this->mailto($from,$this->tellit,$subject,$mailbody);
+			}		 
+		}
+		else 
+			SetGlobal('sFormErr',localize('_MSG20',getlocal()));   	 
 
-	   return (GetGlobal('sFormErr'));
+		return (GetGlobal('sFormErr'));
 
 	}	
 	
 	//rollabck subinsert from users
-	function subdelete($userid=nul) {
-	   $db = GetGlobal('db');	
+	public function subdelete($userid=nul) {
+		$db = GetGlobal('db');	
 	   
-	   if ($userid) {
-         $sSQL = "delete from customers";
-	     $sSQL.= " where code2=". $db->qstr($userid);
-	     //echo $sSQL;	   
-         $result = $db->Execute($sSQL,1);	 
-	   }
+		if ($userid) {
+			$sSQL = "delete from customers";
+			$sSQL.= " where code2=". $db->qstr($userid);	   
+			$result = $db->Execute($sSQL,1);	 
+		}
 	     
-       if ($ret = $db->Affected_Rows())
-	     return true;		      
-	   else
-	     return false;		   
+		if ($ret = $db->Affected_Rows())
+			return true;		      
+
+		return false;		   
 	}   	
 
-	function update($id=null,$fkey=null) {
+	protected function update($id=null,$fkey=null) {
 	    $db = GetGlobal('db');
 	    $myfkey = $fkey ? $fkey : $this->fkey;
 	    $key = decode(GetGlobal('UserName'));//security..foreign to user
@@ -1202,9 +1106,8 @@ window.onload=function(){
         if ($db->Affected_Rows()) {	  
 
 			if ($this->tellit) {
-				$template= "customerupdatetell.htm";
-				$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-				$mytemplate = file_get_contents($t);
+
+				$mytemplate = _m('cmsrt.select_template use customerupdatetell');
 			
 				$tokens[] = $key;			
 				$tokens[] = GetParam('name');	
@@ -1236,27 +1139,23 @@ window.onload=function(){
 	    return false;//($result);
 	}
 
-	function _delete($id=null) {
+	protected function _delete($id=null) {
 	    $db = GetGlobal('db');
 
 	    if (!$id) return (false);
 
-       $sSQL = "delete from customers where id=" . $id;
-
+		$sSQL = "delete from customers where id=" . $id;
         $result = $db->Execute($sSQL,1);
 
-        if ($db->Affected_Rows()) {	   
+        if ($db->Affected_Rows()) 	   
 			SetGlobal('sFormErr',"ok");
-		}
-		else {
-			//echo $db->ErrorMsg();
+		else 
 			SetGlobal('sFormErr',localize('_MSG20',getlocal()));
-		}	
 
 	    return ($result);
 	}
 
-	function getmaxid() {
+	public function getmaxid() {
 		$db = GetGlobal('db');
 
 		$sSQL = "select max(id) from customers";
@@ -1265,7 +1164,7 @@ window.onload=function(){
 	    return ($result->fields[0]);
 	}
 
-    function checkFields($bypass=null,$checkasterisk=null) {
+    public function checkFields($bypass=null,$checkasterisk=null) {
 		$sFormErr = GetGlobal('sFormErr');
 	
 		if ($bypass) 
@@ -1302,7 +1201,7 @@ window.onload=function(){
 		return ($sFormErr);
     }
 	
-	function get_cus_type($id,$field=null,$istext=0) {
+	public function get_cus_type($id,$field=null,$istext=0) {
         $db = GetGlobal('db');
 		$mycode = $field?$field:'code2';
 
@@ -1321,7 +1220,7 @@ window.onload=function(){
 		return false;
 	}
 	
-	function is_reseller($id=null) {
+	public function is_reseller($id=null) {
 		$UserName = GetGlobal('UserName');		   
 	
 		if ($this->usemailasusername) {
@@ -1351,9 +1250,9 @@ window.onload=function(){
 		return false;
 	}	
 	
-	function get_cus_record($invtype=null,$default_records=null) {
+	protected function get_cus_record($invtype=null,$default_records=null) {
 	
-	    $invtype = $invtype?$invtype:$this->invtype;
+	    $invtype = $invtype ? $invtype : $this->invtype;
 	   
 	    if (!$default_records) 	
 			$recfields = ($invtype==1) ? $this->cusform : $this->cusform2;	    
@@ -1361,7 +1260,7 @@ window.onload=function(){
 		if (!$recfields) {
 			if ($this->usemailasusername) {
 		 
-				if ($usermail = GetParam('uname')) //= mail//????????????????????????
+				if ($usermail = GetParam('uname')) 
 					$recfields = ($invtype==1) ? array('name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax') :
 												 array('name','address','area','zip','voice1','voice2','fax');  
 				else 
@@ -1379,13 +1278,10 @@ window.onload=function(){
 	
 	/////////////////////////////////////////////////DELIVERY ADDRESS
 	
-	function makedelivsubform($tokensout=null) {
+	protected function makedelivsubform() {
 	
-		if ($tokensout)
-			$tokens[] = localize('_DELIVADDRESS',getlocal());
-		else
-			$out = localize('_DELIVADDRESS',getlocal());
-	   		 
+		$tokens[] = localize('_DELIVADDRESS',getlocal());
+ 
 		reset($this->delivery_fields);
         
 		foreach ($this->delivery_fields as $fnum => $fname) {
@@ -1396,25 +1292,15 @@ window.onload=function(){
 		reset ($this->delivery_fields);
 		reset ($data);
 		foreach ($this->delivery_fields as $field_num => $fieldname) {
-	   
-			if ($tokensout) {
-				//inputs .._d..to separate from default address name fields in the same form  
-				$tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"" . _with($fieldname.'_d') . "\" maxlength=\"" . $maxcharfields[$field_num] . "\" value=\"" .
-							$data[$field_num] . "\" size=\"" . "25" . "\" >";
-			}
-
+			//inputs .._d..to separate from default address name fields in the same form  
+			$tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"" . _with($fieldname.'_d') . "\" maxlength=\"" . $maxcharfields[$field_num] . "\" value=\"" .
+						$data[$field_num] . "\" size=\"" . "25" . "\" >";
 		}
 	   
-		if ($tokensout) {
-			return ($tokens);		   
-		}
-		else {	   
-			$wout .= 'SHCUSTOMERS DELIV VIEW DISABLED';//$out;
-			return ($wout);  
-		}		  
+		return ($tokens);		   
 	}
 	
-	function check_delivery_address($bypass=null,$checkasterisk=null) {
+	protected function check_delivery_address($bypass=null,$checkasterisk=null) {
 	
 	    if ($bypass) 
 			return null;	
@@ -1450,12 +1336,12 @@ window.onload=function(){
         return ($sFormErr);
 	}
 	
-	function get_delivery_address() {
+	public function get_delivery_address() {
 	
 		return ($this->mydelivery_address);	
 	}	
 	
-	function showdeliveryaddress($name=null,$combo=null,$uid=null,$style=null) {
+	public function showdeliveryaddress($name=null,$combo=null,$uid=null,$style=null) {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
 	    $myui=$uid?$uid:decode($UserName);
@@ -1463,8 +1349,6 @@ window.onload=function(){
 	    $out = null; 
 	    $style = $style ? $style : 'myf_select';
 	   
-        $out = setNavigator(localize('_SELDELIVADDRESS',getlocal()));		   
-	      
 	    $addressfields = implode(',',$this->delivery_fields);
         $sSQL = "select id,active,$addressfields from custaddress";
 	    $sSQL.= " where ccode=". $db->qstr($myui);
@@ -1474,79 +1358,70 @@ window.onload=function(){
 	   	 
 	    //echo $sSQL;	   
         $result = $db->Execute($sSQL,2);
-	    //print_r($result);
 
         if ($combo) {//not used....
-		   //$ret = localize('_DELIVADDRESS',getlocal());
-		   $out .= "<select name=\"".$name."\" class=\"".$style."\">";		     
+			$out .= "<select name=\"".$name."\" class=\"".$style."\">";		     
 		   
-		   foreach ($result as $n=>$na) {
-            if (!empty($na[0])) {	 
-				 		
-		      $title = $na[0];
-			  $value = $na[1];
-		      $out .= "<option value=\"$value\"".($value == $addressway ? " selected" : "").">$title</option>";
-			}  
-		   }
-		   
-		   $out .= "</select>";		   
+			foreach ($result as $n=>$na) {
+				if (!empty($na[0])) {	  		
+					$title = $na[0];
+					$value = $na[1];
+					$out .= "<option value=\"$value\"".($value == $addressway ? " selected" : "").">$title</option>";
+				}  
+			}
+			$out .= "</select>";		   
 	    }
 	    else {
-		   $hr = '';//'<hr>';
+			$hr = '';
 		   
-		   //$ret = localize('_DELIVADDRESS',getlocal()).';';
-		   if (!$addressway) {//add default address to list as first option
-		     $defaddr = localize('_DEFDELIVADDRESS',getlocal());	   		   
-		     $ret = $defaddr . $hr . '<COMMA>';
-		   }
+			//$ret = localize('_DELIVADDRESS',getlocal()).';';
+			if (!$addressway) {//add default address to list as first option
+				$defaddr = localize('_DEFDELIVADDRESS',getlocal());	   		   
+				$ret = $defaddr . $hr . '<COMMA>';
+			}
 		   
-		   foreach ($result as $n=>$na) {	
-		     if (!empty($na)) {
-			   
-			   $ret .= localize('_DELIVADDRESS',getlocal()) . ' #' . ($n+1);	
-   			   $ret .= '<br>';//'<b>' . localize('_DELIVADDRESS',getlocal()) . ' ' . $n+1  . '</b><br>';//title
+			foreach ($result as $n=>$na) {	
+				if (!empty($na)) {
+					$ret .= localize('_DELIVADDRESS',getlocal()) . ' #' . ($n+1);	
+					$ret .= '<br/>';
 			 
-			   foreach ($this->delivery_fields as $i=>$in) {
-				 
-				 $ret .= localize($in,getlocal()).':'.$na[$in].'<br>';
-			   }	
+					foreach ($this->delivery_fields as $i=>$in) {
+						$ret .= localize($in,getlocal()).':'.$na[$in].'<br>';
+					}	
 			   
-			   $ret .= $hr . '<COMMA>';
-			 }  
-		   }
+					$ret .= $hr . '<COMMA>';
+				}  
+			}
 		   
-		   if ($addressway) {//add default address to list as last option
-		     $defaddr =  localize('_DEFDELIVADDRESS',getlocal()) . $hr . '<COMMA>';	   		   
-		     $ret .= $defaddr;
-		   }	
+			if ($addressway) {//add default address to list as last option
+				$defaddr =  localize('_DEFDELIVADDRESS',getlocal()) . $hr . '<COMMA>';	   		   
+				$ret .= $defaddr;
+			}	
 		   
-	       $out = substr($ret,0,-7);//7=<COMMA>		   	    	 
+			$out = substr($ret,0,-7);//7=<COMMA>		   	    	 
 	    }  
 	   
 	    return ($out);		   
 	}
 	
-	function addnewdeliverylink($dpc_after_goto=null) {
-	   $mydpcgoto = $dpc_after_goto?$dpc_after_goto:$this->adddelivgoto;
+	public function addnewdeliverylink($dpc_after_goto=null) {
+		$mydpcgoto = $dpc_after_goto?$dpc_after_goto:$this->adddelivgoto;
 	
-       if ($mydpcgoto) {
-       	  SetSessionParam('afterdelivgoto',str_replace('>','.',$mydpcgoto));
-       }
+		if ($mydpcgoto) 
+			SetSessionParam('afterdelivgoto',str_replace('>','.',$mydpcgoto));
 
-	   $link = seturl('t=addnewdeliv');//,localize('_ADDDELIVADDRESS',getlocal()));	
-	   $out = $this->myf_button(localize('_ADDDELIVADDRESS',getlocal()),$link);
-	   return ($out);
+		$link = seturl('t=addnewdeliv');//,localize('_ADDDELIVADDRESS',getlocal()));	
+		$out = $this->myf_button(localize('_ADDDELIVADDRESS',getlocal()),$link);
+		return ($out);
 	}
 	
-	function show_customer_delivery() {
+	public function show_customer_delivery() {
         $db = GetGlobal('db');		   
 	    $UserName = GetGlobal('UserName');
 	    $myui = $uid ? $uid : decode($UserName);
 	   	   
 	    //template
-	    $template= "showdeliverylist.htm";
-	    $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		$mytemplate = file_get_contents($t);
+		$mytemplate = _m('cmsrt.select_template use showdeliverylist'); 
 			  		   
 	    $addressfields = implode(',',$this->delivery_fields);
         $sSQL = "select id,$addressfields from custaddress";
@@ -1556,18 +1431,15 @@ window.onload=function(){
         $result = $db->Execute($sSQL,2);
 	   
 	    if ($UserName) {
-	   
 		   foreach ($result as $n=>$na) {
 			   
 				if (!empty($na)) {	   
-			 
 					$id = $na[0];
 					$_deleteaddresslink = seturl('t=removedeliv&id='.$id);
 					$deleteaddresslink = $this->myf_button(localize('_REMDELIVADDRESS',getlocal()),$_deleteaddresslink);
 					$_selectaddresslink = seturl($this->delivery_goto_url . '&addressway='.$id);
 					$selectaddresslink = $this->myf_button(localize('_SELDELIVADDRESS',getlocal()),$_selectaddresslink);
 
-			   
 					foreach ($this->delivery_fields as $i=>$in) 
 						$tokens[] = $na[$in];	
 				   
@@ -1587,13 +1459,11 @@ window.onload=function(){
 	}
 	
 	
-	function adddeliveryform($retokensout=null) {
+	public function adddeliveryform($retokensout=null) {
 	    $sFormErr = GetGlobal('sFormErr');		
 	
 	    //template
-	    $template= "showdeliveryform.htm";
-	    $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		$mytemplate = file_get_contents($t);
+		$mytemplate = _m('cmsrt.select_template use showdeliveryform');
 	   
 	    $o = $sFormErr;  	   	
 		$tokens[] = $o;		 
@@ -1602,16 +1472,14 @@ window.onload=function(){
 			$tokens[] = GetParam($fieldname.'_d');
 	    }
 	   
-		if ($retokensout) {
+		if ($retokensout) 
 			return ($tokens);		   
-		}
-		else {	 
-			$wout = $this->combine_tokens($mytemplate,$tokens);			   		 
-			return ($wout); 
-		}	
+ 
+		$wout = $this->combine_tokens($mytemplate,$tokens);			   		 
+		return ($wout); 
 	}
 	
-	function savedeliveryaddress() {
+	protected function savedeliveryaddress() {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
 	    $myui = decode($UserName);
@@ -1619,34 +1487,32 @@ window.onload=function(){
 	    //delivery address
 	    if (!$error = $this->check_delivery_address(null,$this->checkuseasterisk)) {
 	   
-	       //before set active the current record deactive all others  
-		   $d = $this->deactivatedeliveryaddress();
+			//before set active the current record deactive all others  
+			$d = $this->deactivatedeliveryaddress();
 	   
-		   //save at customer address book
-		   //print_r($_POST);
-		   foreach ($this->delivery_fields as $fn=>$fname) {
-		     $delivdata[] = $db->qstr(GetParam($fname.'_d')); //to separate from default address name fields  
-		   }	  		   
-		   $addressfields = implode(',',$this->delivery_fields);
-           $sSQL2 = "insert into custaddress (ccode,active,$addressfields)";
-	       $sSQL2.= " values (". $db->qstr($myui). ",1,";
-           $sSQL2.= implode(',',$delivdata);
-	       $sSQL2.= ")";
+			//save at customer address book
+			//print_r($_POST);
+			foreach ($this->delivery_fields as $fn=>$fname) {
+				$delivdata[] = $db->qstr(GetParam($fname.'_d')); //to separate from default address name fields  
+			}	  		   
+			$addressfields = implode(',',$this->delivery_fields);
+			$sSQL2 = "insert into custaddress (ccode,active,$addressfields)";
+			$sSQL2.= " values (". $db->qstr($myui). ",1,";
+			$sSQL2.= implode(',',$delivdata);
+			$sSQL2.= ")";
 
-           //echo $sSQL2;
-           $result2 = $db->Execute($sSQL2,1);	
-           if ($ret = $db->Affected_Rows()) 
-		     return true;			   	   	   
+			//echo $sSQL2;
+			$result2 = $db->Execute($sSQL2,1);	
+			if ($ret = $db->Affected_Rows()) 
+				return true;			   	   	   
 	    }
-		else {
-		   echo $db->ErrorMsg();
-		   SetGlobal('sFormErr',$error);
-		}
+		else 
+			SetGlobal('sFormErr',$error);
 		
 		return false;	   	
 	}
 	
-	function removedeliveryaddress() {
+	protected function removedeliveryaddress() {
 	    $id = GetReq('id');
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
@@ -1666,7 +1532,7 @@ window.onload=function(){
 	}
 	
 	//id = logon name
-	function deactivatedeliveryaddress($id=null) {
+	protected function deactivatedeliveryaddress($id=null) {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
 	    $myui = $id?$id:decode($UserName);	   
@@ -1680,22 +1546,17 @@ window.onload=function(){
 	     
         if ($ret = $db->Affected_Rows()) 
 			return true;		     
-	    else
-			return false;		
+
+		return false;		
 	}
 	
 	
 	
 	/////////////////////////////////////////////////// CUSTOMER DETAILS
 	
-	function makecustomerform($tokensout=null) {
+	protected function makecustomerform($tokensout=null) {
 	
-	    if ($tokensout)
-			$tokens[] = localize('_CUSTOMER',getlocal());
-		else
-			$out = localize('_CUSTOMER',getlocal());
-	  
-
+		$tokens[] = localize('_CUSTOMER',getlocal());
 		$recfields = $this->get_cus_record(1);	
         
 		foreach ($recfields as $fnum => $fname) {
@@ -1707,23 +1568,15 @@ window.onload=function(){
 		reset ($data);
 		foreach ($recfields as $field_num => $fieldname) {
 	   
-			if ($tokensout) {
-				//inputs .._d..to separate from default address name fields in the same form  
-				$tokens[] = $data[$field_num];
-			}
+			//inputs .._d..to separate from default address name fields in the same form  
+			$tokens[] = $data[$field_num];
+
 		}
 	   
-		if ($tokensout) {
-			return ($tokens);		   
-		}
-		else {	   
-			$wout .= 'SHCUSTOMERS DISBALED VIEW';//$out;
-			return ($wout); 
-		}		  
+		return ($tokens);		   
 	}	
 
-	
-	function showcustomers($name=null,$combo=null,$uid=null,$style=null,$preselect=null) {
+	public function showcustomers($name=null,$combo=null,$uid=null,$style=null,$preselect=null) {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
 	    $myui=$uid?$uid:decode($UserName);
@@ -1787,34 +1640,28 @@ window.onload=function(){
 		}//result 
 	}	
 	
-	function addnewcustomerlink($dpc_after_goto=null) {
-	    $mydpcgoto = $dpc_after_goto?$dpc_after_goto:$this->addcusgoto;
+	public function addnewcustomerlink($dpc_after_goto=null) {
+	    $mydpcgoto = $dpc_after_goto ? $dpc_after_goto : $this->addcusgoto;
 	
-        if ($mydpcgoto) {
+        if ($mydpcgoto) 
        	  SetSessionParam('aftercusgoto',str_replace('>','.',$mydpcgoto));
-        }
-        //echo $dpc_after_goto;
 
-	    $link = seturl('t=addnewcus');//,localize('_ADDCUSTOMER',getlocal()));	
+	    $link = seturl('t=addnewcus');	
 	    $out = $this->myf_button(localize('_ADDCUSTOMER',getlocal()),$link);
 	    return ($out);
 	}	
 	
-	function show_customers_list() {
+	public function show_customers_list() {
         $db = GetGlobal('db');		   
 	    $UserName = GetGlobal('UserName');
 	    $myui=$uid?$uid:decode($UserName);
 	    $action = GetReq('t');
 	   
 	    //template 1
-	    $template= "showcustomerlist.htm";
-	    $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		$mytemplate = file_get_contents($t);	
+		$mytemplate = _m('cmsrt.select_template use showcustomerlist');	
 	   
 	    //template 2
-	    $template2 = "cusshow.htm";
-	    $t2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template2) ;
-		$mytemplate2 = file_get_contents($t2);
+		$mytemplate2 = _m('cmsrt.select_template use cusshow');	
 	   
 	    $recfields = $this->get_cus_record(1,1);	      
 			  		   
@@ -1883,13 +1730,11 @@ window.onload=function(){
 	    return ($out);
 	}	
 	
-	function addcustomerform($retokensout=null) {
+	public function addcustomerform($retokensout=null) {
 	    $sFormErr = GetGlobal('sFormErr');		
 	
-	    //template
-	    $template= "cusregister.htm";
-	    $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;	   
-		$mytemplate = file_get_contents($t);	
+	    //template	   
+		$mytemplate = _m('cmsrt.select_template use cusregister');		
 	   	
 		if ($sFormErr!="ok")    
 			$o = $sFormErr; 
@@ -1918,8 +1763,7 @@ window.onload=function(){
 	    }	
 	}	
 	
-	
-	function save_customer($userid=null) { 
+	protected function save_customer($userid=null) { 
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
 	    $myui = $userid ? $userid : decode($UserName);
@@ -1934,8 +1778,7 @@ window.onload=function(){
 			foreach ($recfields as $fn=>$fname) {
 				//echo $fname,':',$db->qstr(GetParam($fname)),'<br>';
 				$cusdata[] = $db->qstr(GetParam($fname)); 
-			}
-			//print_r($cusdata);	 
+			}	 
 			  		   
 			$cusfields = implode(',',$recfields);
 			$sSQL2 = "insert into customers (code2,active,$cusfields)";
@@ -1948,9 +1791,8 @@ window.onload=function(){
 			if ($ret = $db->Affected_Rows()) {
 				
 				if ($this->tellit) {
-					$template= "customerinserttell.htm";
-					$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-					$mytemplate = file_get_contents($t);
+
+					$mytemplate = _m('cmsrt.select_template use customerinserttell');	
 			
 					$tokens[] = $myui;			
 					$tokens[] = GetParam('name');	
@@ -1984,7 +1826,7 @@ window.onload=function(){
 		return false;	   	
 	}
 	
-	function remove_customer() {
+	protected function remove_customer() {
 	    $id = GetReq('id');
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
@@ -2019,26 +1861,25 @@ window.onload=function(){
         return false;	 
 	}	
 	
-	function deactivatecustomers($id=null) {
+	protected function deactivatecustomers($id=null) {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
 	    $myui = $id?$id:decode($UserName);	
 	   
 	    if ($myui) {
 			$sSQL = "update customers set active=0";
-			$sSQL.= " where code2=". $db->qstr($myui);
-			//echo $sSQL;	   
+			$sSQL.= " where code2=". $db->qstr($myui);   
 			$result = $db->Execute($sSQL,1);	 
 	    }
 	     
         if ($ret = $db->Affected_Rows()) 
 			return true;		     
-	    else
-			return false;		
+		
+		return false;		
 	}	
 	
 	//id = id record of table
-	function activatecustomer($id=null) {
+	protected function activatecustomer($id=null) {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');	   
 	    $myui = decode($UserName);		   
@@ -2053,24 +1894,22 @@ window.onload=function(){
 			$result = $db->Execute($sSQL,2);	
 			foreach ($result as $n=>$na) {	  
 				$id = $na[0];
-				//echo '>',$id;
 			}
 	    } 
 	   
 	    if ($id) {
 			$sSQL = "update customers set active=1";
-			$sSQL.= " where id=". $id;
-			//echo $sSQL;	   
+			$sSQL.= " where id=". $id;   
 			$result = $db->Execute($sSQL,1);	 
 	    }
 	     
         if ($ret = $db->Affected_Rows()) 
 			return true;		     
-	    else
-			return false;		
+
+		return false;		
 	}	
 	
-	function show_customer_title() {
+	public function show_customer_title() {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');	   
 	    $myui = decode($UserName);
@@ -2080,12 +1919,10 @@ window.onload=function(){
 			$sSQL = "select name from customers";
 			$sSQL.= " where code2=". $db->qstr($myui);
 			$sSQL .= " order by id "; //last to first..selected last address inserted
-	   	 
-			//echo $sSQL;	   
+   
 			$result = $db->Execute($sSQL,2);	
 			foreach ($result as $n=>$na) {	  
 				$ret = $na[0];
-				//echo '>',$id;
 			}
 		 
 			return ($ret);
@@ -2095,7 +1932,7 @@ window.onload=function(){
 	}
 	
 	
-	function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
+	public function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 
 	    /*if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
 		  $ret = _m("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
@@ -2187,7 +2024,7 @@ window.onload=function(){
 		return false;
 	}		
 	
-	function combine_tokens($template_contents,$tokens) {
+	protected function combine_tokens($template_contents,$tokens) {
 	
 	    if (!is_array($tokens)) return;
 		
@@ -2199,7 +2036,6 @@ window.onload=function(){
 		else
 		  $ret = $template_contents;
 		  
-		//echo $ret;
 	    foreach ($tokens as $i=>$tok) {
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }

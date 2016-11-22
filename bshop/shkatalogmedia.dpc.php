@@ -125,289 +125,286 @@ class shkatalogmedia {
 	var $ogTags, $siteTitle, $httpurl;
 	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan, $itmplpath;
 
-	function shkatalogmedia() {
-	  $GRX = GetGlobal('GRX');		
-	  $UserSecID = GetGlobal('UserSecID');	
+	function __construct() {
+		$GRX = GetGlobal('GRX');		
+		$UserSecID = GetGlobal('UserSecID');	
 	  
-      $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	  
+		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	  
 	
-	  $this->msg = null;
-	  $this->post = null;		  
-	  $this->path = paramload('SHELL','prpath');	//echo $this->path;
-	  $this->urlpath = paramload('SHELL','urlpath');
-	  $this->inpath = paramload('ID','hostinpath');		  
-	  $this->result = null;	 
+		$this->msg = null;
+		$this->post = null;		  
+		$this->path = paramload('SHELL','prpath');	//echo $this->path;
+		$this->urlpath = paramload('SHELL','urlpath');
+		$this->inpath = paramload('ID','hostinpath');		  
+		$this->result = null;	 
 
-	  $this->imgpath = $this->inpath . '/images/uphotos/';  	  
-	  $this->thubpath = $this->inpath . '/images/thub/';
-      $photo_bg = remote_paramload('SHKATALOG','photobgpath',$this->path);		  
-      $this->thubpath_large = $photo_bg?$this->inpath . "/images/$photo_bg/":$this->inpath . '/images/thub/';	  	  
-      $photo_md = remote_paramload('SHKATALOG','photomdpath',$this->path);		  
-      $this->thubpath_medium = $photo_md?$this->inpath . "/images/$photo_md/":$this->inpath . '/images/thub/';	  	  
-      $photo_sm = remote_paramload('SHKATALOG','photosmpath',$this->path);		  
-      $this->thubpath_small = $photo_sm?$this->inpath . "/images/$photo_sm/":$this->inpath . '/images/thub/';	  	  	  	  
+		$this->imgpath = $this->inpath . '/images/uphotos/';  	  
+		$this->thubpath = $this->inpath . '/images/thub/';
+		$photo_bg = remote_paramload('SHKATALOG','photobgpath',$this->path);		  
+		$this->thubpath_large = $photo_bg?$this->inpath . "/images/$photo_bg/":$this->inpath . '/images/thub/';	  	  
+		$photo_md = remote_paramload('SHKATALOG','photomdpath',$this->path);		  
+		$this->thubpath_medium = $photo_md?$this->inpath . "/images/$photo_md/":$this->inpath . '/images/thub/';	  	  
+		$photo_sm = remote_paramload('SHKATALOG','photosmpath',$this->path);		  
+		$this->thubpath_small = $photo_sm?$this->inpath . "/images/$photo_sm/":$this->inpath . '/images/thub/';	  	  	  	  
 	  
-	  $rt = remote_paramload('SHKATALOG','restype',$this->path);
-	  $this->restype = $rt?$rt:'.jpg';
-	  //fp img xy
-	  $this->itemfimagex = remote_paramload('SHKATALOG','itemfimagex',$this->path);	
-	  $this->itemfimagey = remote_paramload('SHKATALOG','itemfimagey',$this->path); 
-	  //thumb xy
-	  $this->imagex = remote_paramload('SHKATALOG','imagex',$this->path);	
-	  $this->imagey = remote_paramload('SHKATALOG','imagey',$this->path);	  
-	  //item xy
-      $this->itemimagex = remote_paramload('SHKATALOG','itemimagex',$this->path);	
-	  $this->itemimagey = remote_paramload('SHKATALOG','itemimagey',$this->path);
+		$rt = remote_paramload('SHKATALOG','restype',$this->path);
+		$this->restype = $rt?$rt:'.jpg';
+		//fp img xy
+		$this->itemfimagex = remote_paramload('SHKATALOG','itemfimagex',$this->path);	
+		$this->itemfimagey = remote_paramload('SHKATALOG','itemfimagey',$this->path); 
+		//thumb xy
+		$this->imagex = remote_paramload('SHKATALOG','imagex',$this->path);	
+		$this->imagey = remote_paramload('SHKATALOG','imagey',$this->path);	  
+		//item xy
+		$this->itemimagex = remote_paramload('SHKATALOG','itemimagex',$this->path);	
+		$this->itemimagey = remote_paramload('SHKATALOG','itemimagey',$this->path);
 
-      $this->addfx = remote_paramload('SHKATALOG','addimagex',$this->path);	
-	  $this->addfy = remote_paramload('SHKATALOG','addimagey',$this->path);	  	  
+		$this->addfx = remote_paramload('SHKATALOG','addimagex',$this->path);	
+		$this->addfy = remote_paramload('SHKATALOG','addimagey',$this->path);	  	  
 
-      $this->imageclick = remote_paramload('SHKATALOG','imageclick',$this->path);
-      $this->linemax = remote_paramload('SHKATALOG','itemsperline',$this->path); 	
+		$this->imageclick = remote_paramload('SHKATALOG','imageclick',$this->path);
+		$this->linemax = remote_paramload('SHKATALOG','itemsperline',$this->path); 	
 
-	  $this->htmlpath = $this->urlpath . $this->inpath . '/cp/html/';
-	  $this->pager = GetReq('pager')?GetReq('pager'): (GetSessionParam('pager')?GetSessionParam('pager') : remote_paramload('SHKATALOG','pager',$this->path));
-	  $this->zeroprice_msg = remote_paramload('SHKATALOG','zeroprice',$this->path);		  
+		$this->htmlpath = $this->urlpath . $this->inpath . '/cp/html/';
+		$this->pager = GetReq('pager')?GetReq('pager'): (GetSessionParam('pager')?GetSessionParam('pager') : remote_paramload('SHKATALOG','pager',$this->path));
+		$this->zeroprice_msg = remote_paramload('SHKATALOG','zeroprice',$this->path);		  
 	  
-	  $this->map_t = remote_arrayload('SHKATALOG','maptitle',$this->path);	
-	  $this->map_f = remote_arrayload('SHKATALOG','mapfields',$this->path);	
-	  $this->pprice = remote_arrayload('SHKATALOG','pricepolicy',$this->path);
-	  if (empty($this->pprice)){//default
-	    $this->pprice[0]='price0';
-		$this->pprice[1]='price1';
-	  }
+		$this->map_t = remote_arrayload('SHKATALOG','maptitle',$this->path);	
+		$this->map_f = remote_arrayload('SHKATALOG','mapfields',$this->path);	
+		$this->pprice = remote_arrayload('SHKATALOG','pricepolicy',$this->path);
+		if (empty($this->pprice)){//default
+			$this->pprice[0]='price0';
+			$this->pprice[1]='price1';
+		}
 
-	  $this->codetype = remote_paramload('SHKATALOG','codetype',$this->path);	  	
-	  $this->availability = remote_arrayload('SHKATALOG','qtyavail',$this->path);		  	
+		$this->codetype = remote_paramload('SHKATALOG','codetype',$this->path);	  	
+		$this->availability = remote_arrayload('SHKATALOG','qtyavail',$this->path);		  	
 	  	  
-	  $this->is_reseller = GetSessionParam('RESELLER'); 
-	  $this->carthandler = remote_paramload('SHKATALOG','carthandler',$this->path);	
-	  $this->one_attachment = remote_paramload('SHKATALOG','oneattach',$this->path);
-	  $this->max_selection = null;	  
-	  $this->deforder = remote_paramload('SHKATALOG','deforder',$this->path);	
-	  $this->defasc = remote_paramload('SHKATALOG','defasc',$this->path);  
-	  $this->global_hide_asceding = remote_paramload('SHKATALOG','hideasc',$this->path);  
-	  $this->asccombostyle = remote_paramload('SHKATALOG','asccombostyle',$this->path);	
+		$this->is_reseller = GetSessionParam('RESELLER'); 
+		$this->carthandler = remote_paramload('SHKATALOG','carthandler',$this->path);	
+		$this->one_attachment = remote_paramload('SHKATALOG','oneattach',$this->path);
+		$this->max_selection = null;	  
+		$this->deforder = remote_paramload('SHKATALOG','deforder',$this->path);	
+		$this->defasc = remote_paramload('SHKATALOG','defasc',$this->path);  
+		$this->global_hide_asceding = remote_paramload('SHKATALOG','hideasc',$this->path);  
+		$this->asccombostyle = remote_paramload('SHKATALOG','asccombostyle',$this->path);	
 
-	  $cb = remote_arrayload('SHKATALOG','categorybanner',$this->path);	 
-	  $this->catbanner = is_array($cb)?(array)$cb : remote_paramload('SHKATALOG','categorybanner',$this->path);	  
+		$cb = remote_arrayload('SHKATALOG','categorybanner',$this->path);	 
+		$this->catbanner = is_array($cb)?(array)$cb : remote_paramload('SHKATALOG','categorybanner',$this->path);	  
 	  
-	  $this->itemlockparam = remote_paramload('SHKATALOG','itemlockparam',$this->path);
-	  $this->itemlockgoto = remote_paramload('SHKATALOG','itemlockgoto',$this->path);	
-	  $this->isitemlocked = false;  
+		$this->itemlockparam = remote_paramload('SHKATALOG','itemlockparam',$this->path);
+		$this->itemlockgoto = remote_paramload('SHKATALOG','itemlockgoto',$this->path);	
+		$this->isitemlocked = false;  
 
-	  $this->set_order(); //reset ..init 
+		$this->set_order(); //reset ..init 
 
-	  $dec_num = remote_paramload('SHKATALOG','decimals',$this->path);
-	  $this->decimals = $dec_num?$dec_num:2;   
+		$dec_num = remote_paramload('SHKATALOG','decimals',$this->path);
+		$this->decimals = $dec_num?$dec_num:2;   
 	   
-	  $toggle = remote_arrayload('SHKATALOG','toggler',$this->path);  
-	  $deftoggle = array(0=>'no',1=>'yes');
-	  if (!empty($toggle))
-	    $this->toggler = $toggle;
-	  else
-	    $this->toggler = $deftoggle;	  
+		$toggle = remote_arrayload('SHKATALOG','toggler',$this->path);  
+		$deftoggle = array(0=>'no',1=>'yes');
+		if (!empty($toggle))
+			$this->toggler = $toggle;
+		else
+			$this->toggler = $deftoggle;	  
 	  
-	  
-	  
-	  $murl = arrayload('SHELL','ip');
-      $this->url = $murl[0];
-      $this->httpurl = 	paramload('SHELL','urlbase');  
+		$murl = arrayload('SHELL','ip');
+		$this->url = $murl[0];
+		$this->httpurl = 	paramload('SHELL','urlbase');  
 
-      $char_set  = arrayload('SHELL','char_set');	  
-      $charset  = paramload('SHELL','charset');	  		
-	  if (($charset=='utf-8') || ($charset=='utf8'))
-	    $this->encoding = 'utf8';//must be utf8 not utf-8
-	  else  
-	    $this->encoding = $char_set[getlocal()]; 	  
+		$char_set  = arrayload('SHELL','char_set');	  
+		$charset  = paramload('SHELL','charset');	  		
+		if (($charset=='utf-8') || ($charset=='utf8'))
+			$this->encoding = 'utf8';//must be utf8 not utf-8
+		else  
+			$this->encoding = $char_set[getlocal()]; 	  
 
-      $this->title = localize('SHKATALOGMEDIA_DPC',getlocal());
-	  $this->restype = $rt?$rt:$this->restype;	 //parent restype when no additional files....	  
+		$this->title = localize('SHKATALOGMEDIA_DPC',getlocal());
+		$this->restype = $rt?$rt:$this->restype;	 //parent restype when no additional files....	  
 	  
-	  $rt = remote_arrayload('SHKATALOGMEDIA','restype',$this->path);
-	  $rd = array('.jpg','.png');
-	  $this->advrestype = $rt?$rt:$rd;	 //advanced retypes to support multiple files as .png .swf ....
+		$rt = remote_arrayload('SHKATALOGMEDIA','restype',$this->path);
+		$rd = array('.jpg','.png');
+		$this->advrestype = $rt?$rt:$rd;	 //advanced retypes to support multiple files as .png .swf ....
 	  
-	  $this->onlyincategory = remote_paramload('SHKATALOGMEDIA','onlyincategory',$this->path);	
-	  $this->oneitemlist = remote_paramload('SHKATALOGMEDIA','oneitemlist',$this->path);
-	  $this->photodb = remote_paramload('SHKATALOGMEDIA','photodb',$this->path);
+		$this->onlyincategory = remote_paramload('SHKATALOGMEDIA','onlyincategory',$this->path);	
+		$this->oneitemlist = remote_paramload('SHKATALOGMEDIA','oneitemlist',$this->path);
+		$this->photodb = remote_paramload('SHKATALOGMEDIA','photodb',$this->path);
 	  
-	  $this->my_one_item = null;
-	  $this->feed_on = remote_paramload('SHKATALOGMEDIA','feed',$this->path);
+		$this->my_one_item = null;
+		$this->feed_on = remote_paramload('SHKATALOGMEDIA','feed',$this->path);
 	  
-	  $adfperline = remote_paramload('SHKATALOGMEDIA','addfilesperline',$this->path);
-	  $this->additional_files_perline = $adfperline ? $adfperline : null;	//3
-	  $this->notreebrowser = remote_paramload('SHKATALOGMEDIA','notreebrowser',$this->path);
-	  $this->encodeimageid = remote_paramload('SHKATALOGMEDIA','encodeimageid',$this->path);
-	  $this->default_pager = remote_paramload('SHKATALOG','pager',$this->path);	 
-	  $aclass = remote_paramload('SHKATALOGMEDIA','ascedingclass',$this->path);
-      $this->asceding_class = $aclass ? $aclass : 'myf_select_small';	  
-	  $this->nav = remote_paramload('SHKATALOGMEDIA','catnav',$this->path);
-	  $pagecurrentclass = remote_paramload('SHKATALOGMEDIA','pagecurrentclass',$this->path);
-	  $this->pager_current_class = $pagecurrentclass ? $pagecurrentclass : ' class="current"';
+		$adfperline = remote_paramload('SHKATALOGMEDIA','addfilesperline',$this->path);
+		$this->additional_files_perline = $adfperline ? $adfperline : null;	//3
+		$this->notreebrowser = remote_paramload('SHKATALOGMEDIA','notreebrowser',$this->path);
+		$this->encodeimageid = remote_paramload('SHKATALOGMEDIA','encodeimageid',$this->path);
+		$this->default_pager = remote_paramload('SHKATALOG','pager',$this->path);	 
+		$aclass = remote_paramload('SHKATALOGMEDIA','ascedingclass',$this->path);
+		$this->asceding_class = $aclass ? $aclass : 'myf_select_small';	  
+		$this->nav = remote_paramload('SHKATALOGMEDIA','catnav',$this->path);
+		$pagecurrentclass = remote_paramload('SHKATALOGMEDIA','pagecurrentclass',$this->path);
+		$this->pager_current_class = $pagecurrentclass ? $pagecurrentclass : ' class="current"';
 	  
-	  $sort = remote_paramload('SHKATALOGMEDIA','sortdef',$this->path);   
-	  $asc = GetReq('asc') ? GetReq('asc') : GetSessionParam('asc');
-	  switch ($asc) {
-	    case 1  : $this->sortdef = 'ASC'; break;
-		case 2  : $this->sortdef = 'DESC'; break;
-	    default : $this->sortdef = $sort ? $sort : 'ASC';
-	  }	
+		$sort = remote_paramload('SHKATALOGMEDIA','sortdef',$this->path);   
+		$asc = GetReq('asc') ? GetReq('asc') : GetSessionParam('asc');
+		switch ($asc) {
+			case 1  : $this->sortdef = 'ASC'; break;
+			case 2  : $this->sortdef = 'DESC'; break;
+			default : $this->sortdef = $sort ? $sort : 'ASC';
+		}	
 
-	  $this->fcode = $this->getmapf('code');
-	  $this->lastprice = $this->getmapf('lastprice') ? ','.$this->getmapf('lastprice') : ',xml';
+		$this->fcode = $this->getmapf('code');
+		$this->lastprice = $this->getmapf('lastprice') ? ','.$this->getmapf('lastprice') : ',xml';
 	  
-	  $this->lan = getlocal() ? getlocal() : '0';
-	  $this->itmname = $this->lan ? 'itmname' : 'itmfname';
-	  $this->itmdescr = $this->lan ? 'itmdescr' : 'itmfdescr';		  
+		$this->lan = getlocal() ? getlocal() : '0';
+		$this->itmname = $this->lan ? 'itmname' : 'itmfname';
+		$this->itmdescr = $this->lan ? 'itmdescr' : 'itmfdescr';		  
 	  
-	  $oid = remote_paramload('SHKATALOGMEDIA','orderid',$this->path);
-	  $this->orderid = $oid ? $oid . ' ' . $this->sortdef : 'orderid ' . $this->sortdef;	  	  
+		$oid = remote_paramload('SHKATALOGMEDIA','orderid',$this->path);
+		$this->orderid = $oid ? $oid . ' ' . $this->sortdef : 'orderid ' . $this->sortdef;	  	  
 	  
-	  $bpsl = remote_paramload('SHKATALOGMEDIA','bypasssortlist',$this->path);
-	  $this->bypass_order_list = $bpsl ? true : false;
+		$bpsl = remote_paramload('SHKATALOGMEDIA','bypasssortlist',$this->path);
+		$this->bypass_order_list = $bpsl ? true : false;
 
-	  $this->imgLargeDB = remote_paramload('SHKATALOGMEDIA','photobgDB',$this->path);	
-	  $this->imgMediumDB = remote_paramload('SHKATALOGMEDIA','photomdDB',$this->path);
-	  $this->imgSmallDB = remote_paramload('SHKATALOGMEDIA','photosmDB',$this->path);
+		$this->imgLargeDB = remote_paramload('SHKATALOGMEDIA','photobgDB',$this->path);	
+		$this->imgMediumDB = remote_paramload('SHKATALOGMEDIA','photomdDB',$this->path);
+		$this->imgSmallDB = remote_paramload('SHKATALOGMEDIA','photosmDB',$this->path);
 
-      $this->isListView = $_COOKIE['viewmode']=='list' ? 1 : 0;
+		$this->isListView = $_COOKIE['viewmode']=='list' ? 1 : 0;
       
-      $this->siteTitle = remote_paramload('SHELL','urltitle',$this->path);	
-	  $this->siteTwitter = remote_paramload('INDEX','twitter', $this->path);	  
-	  $this->siteFb = remote_paramload('INDEX','facebook', $this->path);
-      $this->ogTags = null;	  
-	  $this->twitTags = null;
-	  $this->filterajax = false; //true;
+		$this->siteTitle = remote_paramload('SHELL','urltitle',$this->path);	
+		$this->siteTwitter = remote_paramload('INDEX','twitter', $this->path);	  
+		$this->siteFb = remote_paramload('INDEX','facebook', $this->path);
+		$this->ogTags = null;	  
+		$this->twitTags = null;
+		$this->filterajax = false; //true;
 	  
-	  $this->itmplpath = 'templates/';	  
+		$this->itmplpath = 'templates/';	  
 	  
-	  $this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
-						"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-						$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
-						"template,owner,itmactive from products ";					
+		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
+							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
+							$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
+							"template,owner,itmactive from products ";					
     }
 	
-	function event($event=null) {
+	public function event($event=null) {
 	
 	    switch ($event) {
 			
-		  case 'sitemap'       : 
-								 if ($dpc = GetReq('dpc')) {
-								   $dpccmd = str_replace(',','+',$dpc);							   
-								   _m($dpccmd);		  
-								 }  
+			case 'sitemap'       : 	if ($dpc = GetReq('dpc')) {
+										$dpccmd = str_replace(',','+',$dpc);							   
+										_m($dpccmd);		  
+									}  
 		                      
-								 $xml = $this->sitemap_feed(true);
-								 die($xml);	//xml output
-		                         break;		
+									$xml = $this->sitemap_feed(true);
+									die($xml);	//xml output
+									break;		
 		
-		  case 'feed'          : if (GetReq('id'))
-		                           $this->read_item();
-								 elseif (GetReq('cat'))  
-		                           $this->read_list();
-								 else {
-								   $dpccmd = str_replace(',','+',GetReq('dpc'));								   
-								   _m($dpccmd);		  
-								 }  
-								 $xml = $this->katalog_feed();
-								 die($xml);	//xml output
-		                         break;
+			case 'feed'          :	if (GetReq('id'))
+										$this->read_item();
+									elseif (GetReq('cat'))  
+										$this->read_list();
+									else {
+										$dpccmd = str_replace(',','+',GetReq('dpc'));								   
+										_m($dpccmd);		  
+									}  
+									$xml = $this->katalog_feed();
+									die($xml);	//xml output
+									break;
 								 
-		  case 'xmlout'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
-		                         $this->xmlread_list();
-								 $xml = $this->xml_feed();
-								 die($xml);	//xml output
-		                         break;
-		  //cart override
-	      case 'addtocart'     : $cartstr = explode(';', GetReq('a')); 
-		                         $item = array_shift($cartstr); 
-		                         _m("cmsvstats.update_item_statistics use $item+cartin");
-		                         break; 
-		  case 'removefromcart': $cartstr = explode(';', GetReq('a'));
-		                         $item = array_shift($cartstr);
-		                         _m("cmsvstats.update_item_statistics use $item+cartout");	                         
-		                         break;		
+			case 'xmlout'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
+									$this->xmlread_list();
+									$xml = $this->xml_feed();
+									die($xml);	//xml output
+									break;
+			//cart override
+			case 'addtocart'     : 	$cartstr = explode(';', GetReq('a')); 
+									$item = array_shift($cartstr); 
+									_m("cmsvstats.update_item_statistics use $item+cartin");
+									break; 
+			case 'removefromcart': 	$cartstr = explode(';', GetReq('a'));
+									$item = array_shift($cartstr);
+									_m("cmsvstats.update_item_statistics use $item+cartout");	                         
+									break;		
 		
-		  case 'showimage'    : $this->show_photodb(GetReq('id'), GetReq('type'));
+			case 'showimage'    : 	$this->show_photodb(GetReq('id'), GetReq('type'));
 
-		  case 'kfilter'      : $filter = GetParam('input');
-		                        $this->my_one_item = $this->fread_list($filter); 
-								$_filter = $this->replace_spchars($filter,1);
-								_m("cmsvstats.update_category_statistics use $_filter+filter");		  
-		                        break;		
-		  case 'klist'        : $this->javascript();
-		                        $this->my_one_item = $this->read_list(); 
-		                        _m("cmsvstats.update_category_statistics use ".GetReq('cat'));//$this->replace_spchars(GetReq('cat'),1));		  
-		                        break;	
+			case 'kfilter'      :	$filter = GetParam('input');
+									$this->my_one_item = $this->fread_list($filter); 
+									$_filter = $this->replace_spchars($filter,1);
+									_m("cmsvstats.update_category_statistics use $_filter+filter");		  
+									break;		
+			case 'klist'        :   $this->javascript();
+									$this->my_one_item = $this->read_list(); 
+									_m("cmsvstats.update_category_statistics use ".GetReq('cat'));//$this->replace_spchars(GetReq('cat'),1));		  
+									break;	
 
-		  case 'kshow'        : $this->read_item(); 
-	                            _m("cmsvstats.update_item_statistics use ".GetReq('id'));
-                                break;
+			case 'kshow'        :	$this->read_item(); 
+									_m("cmsvstats.update_item_statistics use ".GetReq('id'));
+									break;
 								
-		  default             : //if (!GetReq('modify')) GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use ".GetReq('id'));
+			default             : 	//if (!GetReq('modify')) GetGlobal('controller')->calldpc_method("rcvstats.update_item_statistics use ".GetReq('id'));
 		}			
     }	
 	
-	function action($action=null) {
+	public function action($action=null) {
 
 	    switch ($action) {
 		
-		  case 'sitemap'       :
-		  case 'feed'          :
-		  case 'xmlout'        :		  
-		                         break;		
+			case 'sitemap'       :
+			case 'feed'          :
+			case 'xmlout'        :		  
+									break;		
 		
-		  //cart override
-	      case 'addtocart'     :
-		  case 'removefromcart':
-		                        if (($this->carthandler) || (GetSessionParam('fastpick')=='on')) {
-		                          if (GetReq('cat')) {
-									$this->my_one_item = $this->read_list(); 							  							
-									$out .= $this->list_katalog(0);											
-								  }
-								  else
-								    $out = $this->default_action();
-								}  
-								else
-								  $out = _m("shcart.cartview");   
-		                        break;			
+			//cart override
+			case 'addtocart'     :
+			case 'removefromcart':
+									if (($this->carthandler) || (GetSessionParam('fastpick')=='on')) {
+										if (GetReq('cat')) {
+											$this->my_one_item = $this->read_list(); 							  							
+											$out .= $this->list_katalog(0);											
+										}
+										else
+											$out = $this->default_action();
+									}  
+									else
+										$out = _m("shcart.cartview");   
+									break;			
 		
-          case 'kfilter'      :	if (in_array('beforeitemslist',$this->catbanner))//before
-								  $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();									  
+			case 'kfilter'      :	if (in_array('beforeitemslist',$this->catbanner))//before
+										$out .= _m('shkategories.show_category_banner');//$this->show_category_banner();									  
 								  								
-		                        if ($this->filterajax) {
-									$section = $this->replace_spchars(GetReq('cat'),1);
-									die($section .'|'.$this->list_katalog(0,'kfilter'));
-								}	
-								else	
-									$out .= $this->list_katalog(0,'kfilter');		
+									if ($this->filterajax) {
+										$section = $this->replace_spchars(GetReq('cat'),1);
+										die($section .'|'.$this->list_katalog(0,'kfilter'));
+									}	
+									else	
+										$out .= $this->list_katalog(0,'kfilter');		
 								
-								//banner down
-								if (in_array('afteritemslist',$this->catbanner))//after
-								  $out .= $this->show_category_banner();														 
-								break;
+									//banner down
+									if (in_array('afteritemslist',$this->catbanner))//after
+										$out .= $this->show_category_banner();														 
+									break;
 								
-		  case 'klist'        : if (in_array('beforeitemslist',$this->catbanner))//before
-								  $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();									  
+			case 'klist'        : 	if (in_array('beforeitemslist',$this->catbanner))//before
+										$out .= _m('shkategories.show_category_banner');//$this->show_category_banner();									  
 								   								
-		                        $out .= $this->list_katalog(0);		
+									$out .= $this->list_katalog(0);		
 								
-								//banner down
-								if (in_array('afteritemslist',$this->catbanner))//after
-								  $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();														 
-								break;
+									//banner down
+									if (in_array('afteritemslist',$this->catbanner))//after
+										$out .= _m('shkategories.show_category_banner');//$this->show_category_banner();														 
+									break;
 
-		  case 'kshow'        : if (in_array('beforeitem',$this->catbanner))
-		                          $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();	
+			case 'kshow'        : 	if (in_array('beforeitem',$this->catbanner))
+										$out .= _m('shkategories.show_category_banner');//$this->show_category_banner();	
 								  
-		                        $out .= $this->show_item();
+									$out .= $this->show_item();
 								
-								if (in_array('afteritem',$this->catbanner))
-		                          $out .= _m('shkategories.show_category_banner');//$this->show_category_banner();	
-		                        break;									
+									if (in_array('afteritem',$this->catbanner))
+										$out .= _m('shkategories.show_category_banner');//$this->show_category_banner();	
+									break;									
 		  
-		  default             : if (!GetReq('modify')) $out .= $this->default_action();	
+			default             : 	if (!GetReq('modify')) $out .= $this->default_action();	
 		  
 		}	
 		
@@ -533,98 +530,94 @@ SCROLLTOP;
 		
 		if ($text2find) {
 			
-		  _m("cmsvstats.update_category_statistics use $text2find+search");				
+			_m("cmsvstats.update_category_statistics use $text2find+search");				
 		
-		  $parts = explode(" ",$text2find);//get special words in text like code:  
+			$parts = explode(" ",$text2find);//get special words in text like code:  
 	
-	      $sSQL = $this->selectSQL;
-		  $sSQL .= " where ";
+			$sSQL = $this->selectSQL;
+			$sSQL .= " where ";
 		  
-		  switch ($parts[0]) {
+			switch ($parts[0]) {
 		  
-		    case 'code:' :  $sSQL .= " ( ".$this->fcode." like '%" . $this->decodeit($parts[1]) . "%')";
+				case 'code:' :  $sSQL .= " ( ".$this->fcode." like '%" . $this->decodeit($parts[1]) . "%')";
 			                break;
-		    default      : //normal search
+				default      : //normal search
 		  
-		    if (defined("SHNSEARCH_DPC")) {
-              $sSQL .= '('. _m('shnsearch.findsql use '.$text2find.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark++'.$stype.'+'.$scase);		  
-            }
-			else { 			  	
-	          $sSQL .= '(' . " ( {$this->itmname} like '%" . strtolower($text2find) . "%' or " .
-		               " {$this->itmname} like '%" . strtoupper($text2find) . "%')";	
-		      $sSQL .= " or ";		   
-			  $sSQL .= " ( {$this->itmdescr} like '%" . strtolower($text2find) . "%' or " .
-		               " {$this->itmdescr} like '%" . strtoupper($text2find) . "%')";				 
-		      $sSQL .= " or ";		   
-	          $sSQL .= " ( itmremark like '%" . strtolower($text2find) . "%' or " .
-		               " itmremark like '%" . strtoupper($text2find) . "%')";				 					 
-		      $sSQL .= " or ";		   			 
-	          $sSQL .= " ( ".$this->fcode." like '%" . strtolower($text2find) . "%' or " .
-		               " ".$this->fcode." like '%" . strtoupper($text2find) . "%')";						 
-		    }			   
+							if (defined("SHNSEARCH_DPC")) {
+								$sSQL .= '('. _m('shnsearch.findsql use '.$text2find.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark++'.$stype.'+'.$scase);		  
+							}
+							else { 			  	
+								$sSQL .= '(' . " ( {$this->itmname} like '%" . strtolower($text2find) . "%' or  {$this->itmname} like '%" . strtoupper($text2find) . "%')";	
+								$sSQL .= " or ";		   
+								$sSQL .= " ( {$this->itmdescr} like '%" . strtolower($text2find) . "%' or  {$this->itmdescr} like '%" . strtoupper($text2find) . "%')";				 
+								$sSQL .= " or ";		   
+								$sSQL .= " ( itmremark like '%" . strtolower($text2find) . "%' or  itmremark like '%" . strtoupper($text2find) . "%')";				 					 
+								$sSQL .= " or ";		   			 
+								$sSQL .= " ( ".$this->fcode." like '%" . strtolower($text2find) . "%' or  " . $this->fcode . " like '%" . strtoupper($text2find) . "%')";						 
+							}			   
 	   				 
-		  }			
-		  $sSQL .= ')' ;
+			}			
+			$sSQL .= ')' ;
 		  
-          if ($incategory) {	
-		    $cats = explode($this->sep(),$incategory);
-		    foreach ($cats as $c=>$mycat)
-		      $sSQL .= ' and cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
-		  }
+			if ($incategory) {	
+				$cats = explode($this->sep(),$incategory);
+				foreach ($cats as $c=>$mycat)
+					$sSQL .= ' and cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
+			}
 		   							  
-		  $sSQL .= " and itmactive>0 and active>0";	
-		  $sSQL .= $this->orderSQL();
+			$sSQL .= " and itmactive>0 and active>0";	
+			$sSQL .= $this->orderSQL();
 		  
-		  //LIMITED SEARCH
-		  if ($this->pager) {
-		    $p = $page * $this->pager;
-		    $sSQL .= " LIMIT $p,".$this->pager; //page element count
-		  }
+			//LIMITED SEARCH
+			if ($this->pager) {
+				$p = $page * $this->pager;
+				$sSQL .= " LIMIT $p,".$this->pager; //page element count
+			}
 		  
-	      $resultset = $db->Execute($sSQL,2); 
-	      $this->result = $resultset; 
-		  $this->meter = $db->Affected_Rows();
-		  $this->max_items = $db->Affected_Rows();
-	      $this->max_selection = $this->get_max_result($text2find);	
+			$resultset = $db->Execute($sSQL,2); 
+			$this->result = $resultset; 
+			$this->meter = $db->Affected_Rows();
+			$this->max_items = $db->Affected_Rows();
+			$this->max_selection = $this->get_max_result($text2find);	
 	   	}
 	}		
 	
 	
-	function do_filter_search($text2find,$incategory=null) {
+	public function do_filter_search($text2find,$incategory=null) {
         $db = GetGlobal('db');	
 		$page = GetReq('page') ? GetReq('page') : 0;	
 		$incategory = $incategory ? $incategory : GetReq('cat');							
 		
 		if ($text2find) {
 		
-	      $sSQL = $this->selectSQL;
-		  $sSQL .= " where manufacturer='" . $this->replace_spchars($text2find,1) . "'";
+			$sSQL = $this->selectSQL;
+			$sSQL .= " where manufacturer='" . $this->replace_spchars($text2find,1) . "'";
 		  
-          if ($incategory) {	
-		    $cats = explode($this->sep(),$incategory);
-		    foreach ($cats as $c=>$mycat)
-		      $sSQL .= ' and cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
-		  }
+			if ($incategory) {	
+				$cats = explode($this->sep(),$incategory);
+				foreach ($cats as $c=>$mycat)
+					$sSQL .= ' and cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
+			}
 		   							 
-		  $sSQL .= " and itmactive>0 and active>0";	
-		  $sSQL .= $this->orderSQL();
+			$sSQL .= " and itmactive>0 and active>0";	
+			$sSQL .= $this->orderSQL();
 		  
-		  //LIMITED SEARCH
-		  if ($this->pager) {
-		    $p = $page * $this->pager;
-		    $sSQL .= " LIMIT $p,".$this->pager; //page element count
-		  }
+			//LIMITED SEARCH
+			if ($this->pager) {
+				$p = $page * $this->pager;
+				$sSQL .= " LIMIT $p,".$this->pager; //page element count
+			}
 	  
-	      $resultset = $db->Execute($sSQL,2); 
-	      $this->result = $resultset; 
-		  $this->meter = $db->Affected_Rows();
-		  $this->max_items = $db->Affected_Rows();
-	      $this->max_selection = $this->get_max_result($text2find);																
+			$resultset = $db->Execute($sSQL,2); 
+			$this->result = $resultset; 
+			$this->meter = $db->Affected_Rows();
+			$this->max_items = $db->Affected_Rows();
+			$this->max_selection = $this->get_max_result($text2find);																
 	   	}
 	}	
 	
 	//override
-	function get_max_result($text2find=null,$filter=null) {
+	protected function get_max_result($text2find=null,$filter=null) {
         $db = GetGlobal('db');
 		$cat = GetReq('cat');	  
 		if ($cat{0}=='-') {
@@ -640,61 +633,54 @@ SCROLLTOP;
 		
 		if ($text2find) {
 		
-		  if (defined("SHNSEARCH_DPC")) {
-			  $mytext = $filter ? $this->replace_spchars($text2find,1) : $text2find; //search by user or filter 
-              $whereClause = _m('shnsearch.findsql use '.$mytext.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark<@>manufacturer++'.$stype.'+'.$scase);		  
-          }
-		  else {		
-			 $mytext = $filter ? $this->replace_spchars($text2find,1) : strtolower($text2find); //search by user or filter			  
-	         $whereClause = " ( {$this->itmname} like '%" . $mytext . "%' or " .
-							" {$this->itmname} like '%" . $mytext . "%')";	
-		     $whereClause .= " or ";		   
-	         $whereClause .= " ( {$this->itmdescr} like '%" . $mytext . "%' or " .
-							 " {$this->itmdescr} like '%" . $mytext . "%')";				 
-		     $whereClause .= " or ";		   
-	         $whereClause .= " ( itmremark like '%" . strtolower($text2find) . "%' or " .
-		               " itmremark like '%" . $mytext . "%')";				 					 
-		     $whereClause .= " or ";		   			 
-	         $whereClause .= " ( ".$this->fcode." like '%" . $mytext . "%' or " .
-		               " ".$this->fcode." like '%" . $mytext . "%')";								  		
-		  }	
-		  //search in cat...				  
-          if ($cat_tree[0])
+			if (defined("SHNSEARCH_DPC")) {
+				$mytext = $filter ? $this->replace_spchars($text2find,1) : $text2find; //search by user or filter 
+				$whereClause = _m('shnsearch.findsql use '.$mytext.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark<@>manufacturer++'.$stype.'+'.$scase);		  
+			}
+			else {		
+				$mytext = $filter ? $this->replace_spchars($text2find,1) : strtolower($text2find); //search by user or filter			  
+				$whereClause = " ( {$this->itmname} like '%" . $mytext . "%' or {$this->itmname} like '%" . $mytext . "%')";	
+				$whereClause .= " or ";		   
+				$whereClause .= " ( {$this->itmdescr} like '%" . $mytext . "%' or  {$this->itmdescr} like '%" . $mytext . "%')";				 
+				$whereClause .= " or ";		   
+				$whereClause .= " ( itmremark like '%" . strtolower($text2find) . "%' or itmremark like '%" . $mytext . "%')";				 					 
+				$whereClause .= " or ";		   			 
+				$whereClause .= " ( ".$this->fcode." like '%" . $mytext . "%' or " . $this->fcode . " like '%" . $mytext . "%')";								  		
+			}	
+			//search in cat...				  
+			if ($cat_tree[0])
 			    $whereClause .= ' and cat0'.$oper . $db->qstr($this->replace_spchars($cat_tree[0],1));		  
-		  if ($cat_tree[1])	
+			if ($cat_tree[1])	
 		 	    $whereClause .= 'and cat1'.$oper . $db->qstr($this->replace_spchars($cat_tree[1],1));		 
-		  if ($cat_tree[2])	
+			if ($cat_tree[2])	
 			    $whereClause .= 'and cat2'.$oper . $db->qstr($this->replace_spchars($cat_tree[2],1));		   
-		  if ($cat_tree[3])	
+			if ($cat_tree[3])	
 			    $whereClause .= 'and cat3'.$oper . $db->qstr($this->replace_spchars($cat_tree[3],1));
 		   						  
 		}
-		else {//katalog page
-		      	  
-		     if ($cat_tree[0])
+		else {//katalog page	  
+		    if ($cat_tree[0])
 			    $whereClause .= ' cat0'.$oper . $db->qstr($this->replace_spchars($cat_tree[0],1));	
-			 elseif ($this->onlyincategory)
+			elseif ($this->onlyincategory)
 			 	$whereClause .= ' cat1=\'\' ';					  
-		     if ($cat_tree[1])	
+		    if ($cat_tree[1])	
 		 	    $whereClause .= ' and cat1'.$oper . $db->qstr($this->replace_spchars($cat_tree[1],1));
-			 elseif ($this->onlyincategory)
+			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and cat1=\'\' ';						 
-		     if ($cat_tree[2])	
+		    if ($cat_tree[2])	
 			    $whereClause .= ' and cat2'.$oper . $db->qstr($this->replace_spchars($cat_tree[2],1));		
-			 elseif ($this->onlyincategory)
+			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and cat2=\'\' ';				   
-		     if ($cat_tree[3])	
+		    if ($cat_tree[3])	
 			    $whereClause .= ' and cat3'.$oper . $db->qstr($this->replace_spchars($cat_tree[3],1));
-			 elseif ($this->onlyincategory)
-			 	$whereClause .= ' and cat3=\'\' ';				
-		   		
+			elseif ($this->onlyincategory)
+			 	$whereClause .= ' and cat3=\'\' ';				   		
 		}
 		    
 		$sSQL .= $whereClause;		
-		  if ($filter)
+		if ($filter)
             $sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));		
 		$sSQL .= " and itmactive>0 and active>0";
-		//echo 'get_max_res:' . $sSQL . '<br/>';	 
 		
 	    $resultset = $db->Execute($sSQL,2);	
  	    $this->max_cat_items = $resultset->fields[0];//$db->Affected_Rows();			 					
@@ -702,41 +688,38 @@ SCROLLTOP;
 		return ($this->max_cat_items);
 	}	
 
-	function show_photodb($itmcode=null, $stype=null, $type=null) {
-      $db = GetGlobal('db');
-	  if (!$itmcode) return;
-	  $type = $type?$type:$this->restype;
+	public function show_photodb($itmcode=null, $stype=null, $type=null) {
+		$db = GetGlobal('db');
+		if (!$itmcode) return;
+		$type = $type ? $type : $this->restype;
 	  	  
-      $sSQL = "select data,type,code from pphotos ";
-	  $sSQL .= " WHERE code='" . $itmcode . "'";
-	  if (isset($type))
-	    $sSQL .= " and type='". $type ."'";
-	  if (isset($stype))
-	    $sSQL .= " and stype='". $stype ."'";		
-      //echo $sSQL;
+		$sSQL = "select data,type,code from pphotos  WHERE code='" . $itmcode . "'";
+		if (isset($type))
+			$sSQL .= " and type='". $type ."'";
+		if (isset($stype))
+			$sSQL .= " and stype='". $stype ."'";		
 	  
-	  $resultset = $db->Execute($sSQL,2);	
-	  $result = $resultset;	  
-	  $mime_type = 'image/'.str_replace('.','',$result->fields['type']);
-	  $mime_type = 'image/jpeg';
-	  header('Content-type: ' . $mime_type);
+		$resultset = $db->Execute($sSQL,2);	
+		$result = $resultset;	  
+		$mime_type = 'image/'.str_replace('.','',$result->fields['type']);
+		$mime_type = 'image/jpeg';
+		header('Content-type: ' . $mime_type);
 
-	  if ($result->fields['code']) //photo exists
-        echo base64_decode($result->fields['data']);
-	  else {//additional photo or standart nopic
-	    switch ($stype) {
-			case 'LARGE' : echo file_get_contents(getcwd().'/images/photo_bg/nopic.jpg'); break;
-			case 'MEDIUM': echo file_get_contents(getcwd().'/images/photo_md/nopic.jpg'); break;
-			case 'SMALL' : echo file_get_contents(getcwd().'/images/photo_sm/nopic.jpg'); break;
-			default      : echo file_get_contents(getcwd().'/images/photo_sm/nopic.jpg'); 
-		}
-      }  
+		if ($result->fields['code']) //photo exists
+			echo base64_decode($result->fields['data']);
+		else {//additional photo or standart nopic
+			switch ($stype) {
+				case 'LARGE' : echo file_get_contents(getcwd().'/images/photo_bg/nopic.jpg'); break;
+				case 'MEDIUM': echo file_get_contents(getcwd().'/images/photo_md/nopic.jpg'); break;
+				case 'SMALL' : echo file_get_contents(getcwd().'/images/photo_sm/nopic.jpg'); break;
+				default      : echo file_get_contents(getcwd().'/images/photo_sm/nopic.jpg'); 
+			}
+		}  
 	  
-	  die();
+		die();
 	}	
 	
-	//override
-	function get_photo_url($code, $photosize=null) {
+	public function get_photo_url($code, $photosize=null) {
 		$db = GetGlobal('db');
 		if (!$code) return;  
 
@@ -755,7 +738,6 @@ SCROLLTOP;
 		}
 	  
 		if ($interface = $this->photodb) { 
-			//echo $stype;
 			if (is_numeric($interface))	  
 				$photo = _m("cmsrt.url use t=showimage&id=$code&type=$stype");//seturl('t=showimage&id='.$code.'&type='.$stype);
 			else  
@@ -770,61 +752,52 @@ SCROLLTOP;
 	    return ($photo);	 	
 	}	
 	
-	//override
-	function list_photo($code,$x=100,$y=null,$imageclick=1,$mycat=null,$photosize=null,$clickphotosize=null,$altname=null) {
-	   $page = GetReq('page')?GetReq('page'):0;		
-	   $cat = $mycat?$mycat:GetReq('cat');  
-	   $a_name = $altname ? $altname : $code;   
+	protected function list_photo($code,$x=100,$y=null,$imageclick=1,$mycat=null,$photosize=null,$clickphotosize=null,$altname=null) {
+		$page = GetReq('page')?GetReq('page'):0;		
+		$cat = $mycat?$mycat:GetReq('cat');  
+		$a_name = $altname ? $altname : $code;   
 	   
-	   $photo = $this->get_photo_url($code,$photosize);//define size
+		$photo = $this->get_photo_url($code,$photosize);//define size
 	   
 	   	   
 	    if (($imageclick==null) || ((is_numeric($imageclick)) && ($imageclick>=0))) {
 	    
-	     if ($imageclick==1) {//phot url	
-	   
-           $clickphoto = $clickphotosize?$this->get_photo_url($code,$clickphotosize):
-		                                 $this->get_photo_url($code,$photosize);
-		   
-             $plink = "<A href=\"$photo\">";
-
-			$lo = "<img src=\"" . $photo . "\"";
- 			$lo.= $y ? "height=\"$y\"" : null; 
-			$lo.= "border=\"0\" alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">" . "</A>"; 
-	        $ret = $plink . $lo;
-		  }
-		  elseif ($imageclick==2) {//product url
+			if ($imageclick==1) {//phot url	
+				$clickphoto = $clickphotosize ? $this->get_photo_url($code,$clickphotosize) : $this->get_photo_url($code,$photosize);
+				$plink = "<a href=\"$photo\">";
+				$lo = "<img src=\"" . $photo . "\"";
+				$lo.= $y ? "height=\"$y\"" : null; 
+				$lo.= "border=\"0\" alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">" . "</a>"; 
+				$ret = $plink . $lo;
+			}
+			elseif ($imageclick==2) {//product url
+				$myresource = "<img src=\"" . $photo . "\"";
+				$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";
 		  
-            $myresource = "<img src=\"" . $photo . "\"";
-			$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";
-		  
-		    $purl = _m("cmsrt.url use t=kshow&cat=$cat&id=$code"); //seturl("t=kshow"."&cat=".$cat."&id=".$code,null,null,null,null,true); 
-		    $plink = "<A href=\"$purl\">";
-            $ret = $plink . $myresource . "</A>";           
-		  }
-		  elseif ($imageclick==0) {//item link
-		  
-		    $myresource = "<img src=\"" . $photo . "\"";
-			$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";
-		    $ret = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=$code+" . $myresource); //seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource,null,null,null,true);// . "</A>";
-		  } 
-		  else {//item link
-		  
-            $myresource = "<img src=\"" . $photo . "\"";
-			$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";		  
-		    $ret = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=$code+" . $myresource); //seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource,null,null,null,true);// . "</A>";
-		  } 
+				$purl = _m("cmsrt.url use t=kshow&cat=$cat&id=$code"); 
+				$plink = "<a href=\"$purl\">";
+				$ret = $plink . $myresource . "</a>";           
+			}
+			elseif ($imageclick==0) {//item link
+				$myresource = "<img src=\"" . $photo . "\"";
+				$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";
+				$ret = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=$code+" . $myresource); 
+			} 
+			else {//item link
+				$myresource = "<img src=\"" . $photo . "\"";
+				$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";		  
+				$ret = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=$code+" . $myresource); 
+			} 
 		}
 		else {
-		  $plink = "<a href=\"$imageclick\">";
-          $ret = $plink . "<img src=\"" . $photo . "\"" . "></a>";           		
+			$plink = "<a href=\"$imageclick\">";
+			$ret = $plink . "<img src=\"" . $photo . "\"" . "></a>";           		
 	    } 	   		
 		
 	    return ($ret);
 	}				
 	
-	//override
-	function read_list() {
+	protected function read_list() {
         $db = GetGlobal('db');	
 		$page = GetReq('page')?GetReq('page'):0;
 		$negative = false;	
@@ -839,115 +812,105 @@ SCROLLTOP;
 		
 		if ($cat!=null) {		   
 		  
-		  $cat_tree = explode($this->sep(), $cat); 
+			$cat_tree = explode($this->sep(), $cat); 
 			
-	      $sSQL = $this->selectSQL;
-		  $sSQL .= " WHERE ";		   
+			$sSQL = $this->selectSQL;
+			$sSQL .= " WHERE ";		   
 		      	  
-		  if ($cat_tree[0])
-		    $whereClause .= ' cat0'.$oper . $db->qstr($this->replace_spchars($cat_tree[0],1));		
-		  elseif ($this->onlyincategory)
-		 	$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
-		  if ($cat_tree[1])	
-		    $whereClause .= ' and cat1'.$oper . $db->qstr($this->replace_spchars($cat_tree[1],1));	
-		  elseif ($this->onlyincategory)
-			$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
-		  if ($cat_tree[2])	
-		    $whereClause .= ' and cat2'.$oper . $db->qstr($this->replace_spchars($cat_tree[2],1));	
-		  elseif ($this->onlyincategory)
+			if ($cat_tree[0])
+				$whereClause .= ' cat0'.$oper . $db->qstr($this->replace_spchars($cat_tree[0],1));		
+			elseif ($this->onlyincategory)
+				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
+			if ($cat_tree[1])	
+				$whereClause .= ' and cat1'.$oper . $db->qstr($this->replace_spchars($cat_tree[1],1));	
+			elseif ($this->onlyincategory)
+				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
+			if ($cat_tree[2])	
+				$whereClause .= ' and cat2'.$oper . $db->qstr($this->replace_spchars($cat_tree[2],1));	
+			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
-		  if ($cat_tree[3])	
-		    $whereClause .= ' and cat3'.$oper . $db->qstr($this->replace_spchars($cat_tree[3],1));
-		  elseif ($this->onlyincategory)
-			$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
-		   		
-		    
-		  $sSQL .= $whereClause;				 
-		  $sSQL .= " and itmactive>0 and active>0";	
-		  $sSQL .= $this->orderSQL();
+			if ($cat_tree[3])	
+				$whereClause .= ' and cat3'.$oper . $db->qstr($this->replace_spchars($cat_tree[3],1));
+			elseif ($this->onlyincategory)
+				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
+		   		  
+			$sSQL .= $whereClause;				 
+			$sSQL .= " and itmactive>0 and active>0";	
+			$sSQL .= $this->orderSQL();
 		  
-		  if ($this->pager) {
-		    $p = $page * $this->pager;
-		    $sSQL .= " LIMIT $p,".$this->pager; //page element count
-		  }
-		  //echo $sSQL;	
-	      $resultset = $db->Execute($sSQL,2);
-	      $this->result = $resultset; 
- 	      $this->max_items = $db->Affected_Rows();//count($this->result);
+			if ($this->pager) {
+				$p = $page * $this->pager;
+				$sSQL .= " LIMIT $p,".$this->pager; //page element count
+			}
+
+			$resultset = $db->Execute($sSQL,2);
+			$this->result = $resultset; 
+			$this->max_items = $db->Affected_Rows();//count($this->result);
 	      
-	      if ($this->max_items==1) {
-			return ($this->result->fields[$this->fcode]); //to view the item without click on dir
-		  }
-		  else { 
+			if ($this->max_items==1) 
+				return ($this->result->fields[$this->fcode]); //to view the item without click on dir
+
 	        $this->max_selection = $this->get_max_result();			
-			return (null);
-		  }	
-		}
+		}	
 		
+		return null;
 	}	
 	
 	/* filter */
-	function fread_list($filter=null) {
+	protected function fread_list($filter=null) {
         $db = GetGlobal('db');	
 		$page = GetReq('page')?GetReq('page'):0;			
 	    $f = $this->lan; 
 		$oper = '=';
-
 		$cat = GetReq('cat');		
 		
 		if ($cat!=null) {		   
-		  
-		  $cat_tree = explode($this->sep(),$cat); 
-
-	      $sSQL = $this->selectSQL;
-		  $sSQL .= " WHERE ";		   
+			$cat_tree = explode($this->sep(),$cat); 
+			$sSQL = $this->selectSQL;
+			$sSQL .= " WHERE ";		   
 		      	  
-		  if ($cat_tree[0])
-		    $whereClause = ' cat0'.$oper . $db->qstr($this->replace_spchars($cat_tree[0],1));		
-		  elseif ($this->onlyincategory)
-		 	$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
-		  if ($cat_tree[1])	
-		    $whereClause .= ' and cat1'.$oper . $db->qstr($this->replace_spchars($cat_tree[1],1));	
-		  elseif ($this->onlyincategory)
-			$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
-		  if ($cat_tree[2])	
-		    $whereClause .= ' and cat2'.$oper . $db->qstr($this->replace_spchars($cat_tree[2],1));	
-		  elseif ($this->onlyincategory)
+			if ($cat_tree[0])
+				$whereClause = ' cat0'.$oper . $db->qstr($this->replace_spchars($cat_tree[0],1));		
+			elseif ($this->onlyincategory)
+				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
+			if ($cat_tree[1])	
+				$whereClause .= ' and cat1'.$oper . $db->qstr($this->replace_spchars($cat_tree[1],1));	
+			elseif ($this->onlyincategory)
+				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
+			if ($cat_tree[2])	
+				$whereClause .= ' and cat2'.$oper . $db->qstr($this->replace_spchars($cat_tree[2],1));	
+			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
-		  if ($cat_tree[3])	
-		    $whereClause .= ' and cat3'.$oper . $db->qstr($this->replace_spchars($cat_tree[3],1));
-		  elseif ($this->onlyincategory)
-			$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
+			if ($cat_tree[3])	
+				$whereClause .= ' and cat3'.$oper . $db->qstr($this->replace_spchars($cat_tree[3],1));
+			elseif ($this->onlyincategory)
+				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		
-		    
-		  $sSQL .= $whereClause;
+			$sSQL .= $whereClause;
 		  
-		  if ($filter)
-            $sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));
+			if ($filter)
+				$sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));
 		
-		  $sSQL .= " and itmactive>0 and active>0";	
+			$sSQL .= " and itmactive>0 and active>0";	
 
-		  $sSQL .= $this->orderSQL();
+			$sSQL .= $this->orderSQL();
 		  
-		  if ($this->pager) {
-		    $p = $page * $this->pager;
-		    $sSQL .= " LIMIT $p,".$this->pager; //page element count
-		  }
-	      //echo 'fread_list:' . $sSQL . '<br/>';
+			if ($this->pager) {
+				$p = $page * $this->pager;
+				$sSQL .= " LIMIT $p,".$this->pager; //page element count
+			}
 		  
-	      $resultset = $db->Execute($sSQL,2);
-	      $this->result = $resultset; 
- 	      $this->max_items = $db->Affected_Rows();//count($this->result);
+			$resultset = $db->Execute($sSQL,2);
+			$this->result = $resultset; 
+			$this->max_items = $db->Affected_Rows();//count($this->result);
 	      
-	      if ($this->max_items==1) {
-			return ($this->result->fields[$this->fcode]); //to view the item without click on dir
-		  }
-		  else { 
+			if ($this->max_items==1) 
+				return ($this->result->fields[$this->fcode]); //to view the item without click on dir
+
 	        $this->max_selection = $this->get_max_result(null, $filter);			
-			return (null);
-		  }	
 		}
 		
+		return null;
 	}
 
 	/* xml read */
@@ -990,12 +953,11 @@ SCROLLTOP;
 		$sSQL .= $xmlitems ? "xml=1 and itmactive>0 and active>0" : "itmactive>0 and active>0";		  		   
 		$sSQL .= " ORDER BY ".$this->itmname .' '. $this->sortdef; //$this->orderid;
 
-		//echo $sSQL;	
 	    $this->result = $db->Execute($sSQL,2);
 	}		
 	
 	//override
-	function read_item($direction=null,$item_id=null) {
+	protected function read_item($direction=null,$item_id=null) {
         $db = GetGlobal('db');	
 		$item = $item_id ? $item_id : GetReq('id');
 		$cat = GetReq('cat');				  	
@@ -1023,8 +985,7 @@ SCROLLTOP;
 	    return ($resultset);   
 	}		
 	
-	//override
-	function show_paging($pagecmd=null,$mytemplate=null,$nopager=null) {
+	protected function show_paging($pagecmd=null,$mytemplate=null,$nopager=null) {
 	    if ($nopager) return;
 		 
 	    $cat = GetReq('cat'); // asis	
@@ -1032,11 +993,9 @@ SCROLLTOP;
 	    $t = $inp ? 'search' : GetReq('t'); 	
 	    $page = GetReq('page') ? GetReq('page') : 0;
 	    $pager = GetReq('pager') ? GetReq('pager') : $this->pager;
-	   
 	    $pcmd = $pagecmd ? $pagecmd : 'klist';
 		  
 	    //echo '|paging>',$this->max_items,':',$this->max_cat_items,':',$this->max_selection;
-	   
 	    $mp = $this->max_cat_items;//$this->get_max_result(); //$this->max_selection
 	    $max_page = floor($mp/$this->pager);//<<<<<<<<<<<<<<<-1;	 plus ceil  
 	    //echo $max_page.">>>>".$mp.">>>>".$this->pager;
@@ -1108,9 +1067,7 @@ SCROLLTOP;
 	    return ($ret);
 	}	
 
-	//override
-	function show_asceding($cmd=null,$mytemplate=null,$style=null,$notview=null) {
-	
+	public function show_asceding($cmd=null,$mytemplate=null,$style=null,$notview=null) {
 		if ($notview) return;
 	   
 		$cat = GetReq('cat');
@@ -1161,8 +1118,7 @@ SCROLLTOP;
 	   return ($out);	      
 	}		
 	
-	//override
-	function list_katalog($imageclick=null,$cmd=null,$template=null,$no_additional_info=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$nolinemax=null,$originfunction=null) {
+	protected function list_katalog($imageclick=null,$cmd=null,$template=null,$no_additional_info=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$nolinemax=null,$originfunction=null) {
 	    $cmd = $cmd?$cmd:'klist';
 	    $pz = $photosize?$photosize:1;		   
 	    $xdist = $this->imagex?$this->imagex:100;
@@ -1336,19 +1292,14 @@ SCROLLTOP;
 	    return ($out);	
 	}	
 	
-	//override
-    function list_katalog_table($linemax=2,$imgx=null,$imgy=null,$imageclick=0,$showasc=0,$cmd=null,$template=null,$no_additional_info=null,$lang=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$originfunction=null,$notable=null) {
-		$cmd = $cmd?$cmd:'klist';
+    protected function list_katalog_table($linemax=2,$imgx=null,$imgy=null,$imageclick=0,$showasc=0,$cmd=null,$template=null,$no_additional_info=null,$lang=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$originfunction=null,$notable=null) {
+		$cmd = $cmd ? $cmd : 'klist';
 		$page = GetReq('page') ? GetReq('page') : 0;	   
-		$pz = $photosize?$photosize:1;
+		$pz = $photosize ? $photosize : 1;
 		$xdist = ($imgx?$imgx:160);
 		$ydist = ($imgy?$imgy:120);
 		$cat = GetReq('cat');
-
-		if (remote_paramload('SHKATALOG','imageclick',$this->path)>0)
-			$myimageclick = 1;
-		else	 
-			$myimageclick = $imageclick;	   
+		$myimageclick = ($this->imageclick>0) ? 1 : $imageclick;	   
 	   
 		$mytemplate = $this->select_template($template,$cat,1);
 	   
@@ -1476,8 +1427,7 @@ SCROLLTOP;
 	   return ($ret);	
     } 
 	
-	//overrided
-	function show_item($template=null,$no_additional_info=null,$lang=null,$lnktype=1,$pcat=null,$boff=null,$tax=null) {
+	protected function show_item($template=null,$no_additional_info=null,$lang=null,$lnktype=1,$pcat=null,$boff=null,$tax=null) {
 	    $cat = $pcat ? $pcat : GetReq('cat'); 	
         $page = GetReq('page') ? GetReq('page') : 0;		
 	    $id = GetReq('id');
@@ -1672,20 +1622,20 @@ SCROLLTOP;
 	
 	//overrwriiten
 	public function show_aditional_html_files($id) {	
-         $db = GetGlobal('db');	
-	     $lan = getlocal();
-		 $slan =  ($this->one_attachment) ? $slan : ($lan ? $lan : '0'); 
+        $db = GetGlobal('db');	
+	    $lan = getlocal();
+		$slan =  ($this->one_attachment) ? $slan : ($lan ? $lan : '0'); 
 		 
-	     $code = $this->fcode;	  
-         $sSQL = "select data from pattachments ";
-	     $sSQL .= " WHERE (type='.html' or type='.htm') and code='" . $id . "'";
-	     if (isset($slan))
+	    $code = $this->fcode;	  
+        $sSQL = "select data from pattachments ";
+	    $sSQL .= " WHERE (type='.html' or type='.htm') and code='" . $id . "'";
+	    if (isset($slan))
 	       $sSQL .= " and lan=" . $slan;	
 	  
-	     $resultset = $db->Execute($sSQL,2);	
-		 $ret = $resultset->fields['data'];   
+	    $resultset = $db->Execute($sSQL,2);	
+		$ret = $resultset->fields['data'];   
 		 
-		 return ($ret);  		 
+		return ($ret);  		 
 	}	
 	
 	
@@ -1704,7 +1654,6 @@ SCROLLTOP;
 		$sSQL .= $this->bypass_order_list ? null : 
 		         ($this->orderid ? ",{$this->itmname} {$this->sortdef} " : "{$this->itmname} {$this->sortdef} ");
 		$sSQL .= $items ? " LIMIT " . $items: null;			
-	    //echo $sSQL,'<br>';
 		
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
@@ -1713,9 +1662,9 @@ SCROLLTOP;
 		$ymax = $imgy?$imgy:75;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_p use $p,$items");
+			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_p use $p,$items");
 		else  	
-          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_p use $p,$items");
+			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_p use $p,$items");
 		  
 		return ($out);	
 	}		
@@ -2202,37 +2151,37 @@ SCROLLTOP;
 	
 		if ( (defined('SHTRANSACTIONS_DPC')) && (seclevel('SHTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 
-	     $itemslist = _m('shtransactions.getRelativeSales use '.$items.'+'.$myid);
-	     //print_r($itemslist); //echo 'z';
+			$itemslist = _m('shtransactions.getRelativeSales use '.$items.'+'.$myid);
+			//print_r($itemslist); //echo 'z';
 		 
-		 if (!empty($itemslist)) {
+			if (!empty($itemslist)) {
 		 
-           $sSQL = $this->selectSQL;
-		   $sSQL .= " WHERE (";	
+				$sSQL = $this->selectSQL;
+				$sSQL .= " WHERE (";	
 		
-		   foreach ($itemslist as $i=>$code)
-		     $preSQL[] = $this->fcode . " = '" . $code ."'";
+				foreach ($itemslist as $i=>$code)
+					$preSQL[] = $this->fcode . " = '" . $code ."'";
 			 
-		   $sSQL .= implode(' or ',$preSQL);
+				$sSQL .= implode(' or ',$preSQL);
 		  		
-		   $sSQL .= ") and itmactive>0 and active>0";	
-		   $sSQL .= " ORDER BY {$this->orderid} ";			
-		   $sSQL .= $this->bypass_order_list ? null : 
-		            ($this->orderid ? ",{$this->itmname} {$this->sortdef} " : "{$this->itmname} {$this->sortdef} ");		
-		   $sSQL .= $items ? " LIMIT " . $items : null;
-	       //echo $sSQL;
+				$sSQL .= ") and itmactive>0 and active>0";	
+				$sSQL .= " ORDER BY {$this->orderid} ";			
+				$sSQL .= $this->bypass_order_list ? null : 
+								($this->orderid ? ",{$this->itmname} {$this->sortdef} " : "{$this->itmname} {$this->sortdef} ");		
+				$sSQL .= $items ? " LIMIT " . $items : null;
+				//echo $sSQL;
 		
-	       $resultset = $db->Execute($sSQL,2);	
-		   $this->result = $resultset;
+				$resultset = $db->Execute($sSQL,2);	
+				$this->result = $resultset;
 		
-		   $xmax = $imgx?$imgx:100;
-		   $ymax = $imgy?$imgy:null;//free y 75;		
+				$xmax = $imgx?$imgx:100;
+				$ymax = $imgy?$imgy:null;//free y 75;		
 		
-		   if ($linemax>1)
-		     $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_relative_sales use $myid,$items");
-		   else  	
-             $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,1,1,"shkatalogmedia.show_relative_sales use $myid,$items");
-		 }	 		 		 
+				if ($linemax>1)
+					$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_relative_sales use $myid,$items");
+				else  	
+					$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,1,1,"shkatalogmedia.show_relative_sales use $myid,$items");
+			}	 		 		 
 		}
 		return ($out);  
 	}
@@ -2251,30 +2200,30 @@ SCROLLTOP;
 		$sSQL .= " WHERE ";	
 		
 		foreach ($cat as $i=>$c) {
-		  $myc = $this->replace_spchars($c,1);		
-		  $sSQL .= " cat{$i}='$myc' and ";	
+			$myc = $this->replace_spchars($c,1);		
+			$sSQL .= " cat{$i}='$myc' and ";	
 		}  
 		//only items inside category ..when category param not specified
 	    if ((!$category) && ($this->onlyincategory)) {
-		  $ii = $i+1;
-		  $sSQL .= " (cat{$ii} IS NULL or cat{$ii}='') and ";		
+			$ii = $i+1;
+			$sSQL .= " (cat{$ii} IS NULL or cat{$ii}='') and ";		
 		}  		
 		
 		if (($selected_item = GetReq('id')) && (!$xor)) 
-		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
+			$sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  
 		//MULTIPLE CHECKS  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		if ($selected_cat0 = $fields['cat0']) 
-		  $sSQL .= "cat0 not like '" . $selected_cat0 . "' and ";		  
+			$sSQL .= "cat0 not like '" . $selected_cat0 . "' and ";		  
 		  	
 		if ($selected_cat1 = $fields['cat1']) 
-		  $sSQL .= "cat1 not like '" . $selected_cat1 . "' and ";		 
+			$sSQL .= "cat1 not like '" . $selected_cat1 . "' and ";		 
 		  		  
 		if ($selected_cat2 = $fields['cat2']) 
-		  $sSQL .= "cat2 not like '" . $selected_cat2 . "' and ";
+			$sSQL .= "cat2 not like '" . $selected_cat2 . "' and ";
 		  
 		if ($selected_cat3 = $fields['cat3']) 
-		  $sSQL .= "cat3 not like '" . $selected_cat3 . "' and ";
+			$sSQL .= "cat3 not like '" . $selected_cat3 . "' and ";
 		  		  		  
 		  
 		$sSQL .= "itmactive>0 and active>0";	
@@ -2291,9 +2240,9 @@ SCROLLTOP;
 		$ymax = $imgy?$imgy:null;//free y 75;	
 		
 		if ($linemax>1) 
-		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_kategory_items use $category,$items");
+			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_kategory_items use $category,$items");
 		else  	
-          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,1,1,"shkatalogmedia.show_kategory_items use $category,$items"); 
+			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,1,1,"shkatalogmedia.show_kategory_items use $category,$items"); 
 		  
 		return ($out);	
 	}		
@@ -2321,9 +2270,9 @@ SCROLLTOP;
 		$ymax = $imgy?$imgy:null;//free y 75;	
 		
 		if ($linemax>1) 
-		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_kategory_items use $category,$items");
+			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_kategory_items use $category,$items");
 		else  	
-          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,1,1,"shkatalogmedia.show_kategory_items use $category,$items"); 
+			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,1,1,"shkatalogmedia.show_kategory_items use $category,$items"); 
 		  
 		return ($out);	
 	}		
@@ -2357,16 +2306,6 @@ SCROLLTOP;
 	
 			foreach ($result as $n=>$rec) {
 		
-				//memory limit prevention
-				//echo 'mem limit 33554432:',memory_get_peak_usage(true);//memory_get_usage();
-		   
-				/*$mem = memory_get_peak_usage(true);//memory_get_usage();
-				if ($mem>16000000) {
-					$np = $meter-1;
-					$nextpage = "<br><h2><a href='sitemap.php?start=$np&headcat=$headcat'> Next Page</a></h2>";
-					$out .= $nextpage;//'<br><h2>WARNING:Memory allocation failed, reduce page view limit!</h2>';
-					break;
-				}*/
 				if (!empty($rec)) {
 		   
 					$meter+=1;
@@ -2406,17 +2345,14 @@ SCROLLTOP;
 				$out .= $ret;
 		}   
 	   
-		//feed links
-		//$ret .= $this->get_xml_links(null,null,'shkatalogmedia.show_sitemap_items');		   
-	   
-	   return ($ret);		   		   	
+		return ($ret);		   		   	
 	}
 	
 	public function read_item_attr($item=null,$attr=null,$islink=null) {
         $db = GetGlobal('db');					
 		
 		if (!$item) 
-		  $item = GetReq('id');	
+			$item = GetReq('id');	
 		
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";
@@ -2467,9 +2403,8 @@ SCROLLTOP;
 		elseif ($linemax==1)  	
 			$out = $this->list_katalog(null,null,$template,$ainfo,null,$external_read,$pz,1,null,$linemax);
 		else {//return val
-			foreach ($this->result as $n=>$rec) {
+			foreach ($this->result as $n=>$rec) 
 				$out[$rec[$this->fcode]] = floatval($rec['weight']);
-			}
 		}  
 		return ($out);	
 	}		
@@ -2493,9 +2428,9 @@ SCROLLTOP;
 		$sSQL .= " WHERE stats.tid=products.".$this->fcode." and products.itmactive>0 and products.active>0";				
 		
 		if ($UserName)
-		  $sSQL .= " and (attr2='" . decode($UserName) . "' or attr2='". session_id() . "')";
+			$sSQL .= " and (attr2='" . decode($UserName) . "' or attr2='". session_id() . "')";
 		else  
-		  $sSQL .= " and attr2='" . session_id() . "'";
+			$sSQL .= " and attr2='" . session_id() . "'";
 		  
 		$sSQL .= " GROUP BY stats.tid ORDER BY stats.id DESC limit " . $items;
 		
@@ -2506,9 +2441,9 @@ SCROLLTOP;
 		$ymax = $imgy?$imgy:null;// free y 75;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
+			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
 		else  	
-          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$resources,$nopager,1);
+			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$resources,$nopager,1);
 		  
 		return ($out);				
 	}	
@@ -2556,9 +2491,9 @@ SCROLLTOP;
 		$sSQL .= " WHERE ";	
 
 		if ($cat) {
-		  $c = explode($this->sep(), $this->replace_spchars($cat,1)); //print_r($cat);
-		  foreach ($c as $cc=>$category)
-			$sSQL .= "cat".$cc."='" . $category . "' and ";
+			$c = explode($this->sep(), $this->replace_spchars($cat,1)); //print_r($cat);
+			foreach ($c as $cc=>$category)
+				$sSQL .= "cat".$cc."='" . $category . "' and ";
 	    }
 		
 		if ($selected_item = GetReq('id')) 
@@ -2578,9 +2513,9 @@ SCROLLTOP;
 		$ymax = $imgy?$imgy:null;// free y 75;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
+			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
 		else  	
-          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);
+			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);
 		  
 		return ($out);	
 	}	
@@ -2640,10 +2575,8 @@ SCROLLTOP;
 		//items  
 		if (!$off_items) {
 			if (!empty($this->result)) {		  	
-		
 				foreach ($this->result as $n=>$rec) {
-			  
-					//$cat = $this->getkategories($rec); //GetReq('cat')..no category in url..			  
+	  
 					$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 
 					$price = number_format(floatval($price1),2);					 
@@ -2655,7 +2588,6 @@ SCROLLTOP;
 						$item_photo_url = 'http://' . $this->url . '/showphoto.php?id='.$rec[$code].'&type=LARGE';
 				    else
 						$item_photo_url = 'http://' . $this->url . '/' . $this->img_large . '/' . $rec[$code] . $this->restype;
-				   
 				   
 					$p[] = $rec[$code];
 					$p[] = $rec[$this->itmname];
@@ -2736,21 +2668,21 @@ SCROLLTOP;
 	    if ($init) {
 		  
 		    if ($this->encoding)
-			   $enc = $this->encoding;
+				$enc = $this->encoding;
 			else
-			   $enc = $xml->charset;
+				$enc = $xml->charset;
 
             switch ($format) {
-			   case 'sitemap' : $enc ='utf8';
+				case 'sitemap' : $enc ='utf8';
 			                    $xml->addtag('urlset',null,null,"xmlns=http://www.sitemaps.org/schemas/sitemap/0.9");							
                                 break; 			   
-	           case 'skroutz' : $enc ='utf8';
+				case 'skroutz' : $enc ='utf8';
 			                    $xml->addtag('skroutzstore',null,null,"url=$this->url|name=$xml->urltitle|encoding=$enc");							
 	                            $xml->addtag('products','skroutzstore',null,null);
 								break;
-			   case 'rss1'    : echo 'rss1';
+				case 'rss1'    : echo 'rss1';
 	   					        break; 								
-			   case 'rss2'    : $enc ='utf-8';
+				case 'rss2'    : $enc ='utf-8';
 			                    $xml->addtag('rss',null,null,"version=2.0");							
 	                            $xml->addtag('channel','rss',$xml->urltitle,null);
 	                            $xml->addtag('title','channel',$xml->urltitle.', '.$cat_title,null);								
@@ -2765,7 +2697,7 @@ SCROLLTOP;
 	                            $xml->addtag('webMaster','channel',null,null);									
 	                            $xml->addtag('ttl','channel','15',null);									
 	   					        break; 
-			   case 'atom'    : $enc ='utf-8';
+				case 'atom'    : $enc ='utf-8';
 			                    $xml->addtag('feed',null,null,"xmlns=http//www.w3.org/2005/Atom");							
 	                            $xml->addtag('title','feed',$xml->urltitle,null);
 	                            $xml->addtag('subtitle','feed',null,null);								
@@ -2777,7 +2709,7 @@ SCROLLTOP;
 	                            $xml->addtag('name','author',$xml->urltitle,null);																	
 	                            $xml->addtag('email','author',null,null);									
 	   					        break; 								
-               default        : $xml->addtag('default-xml',null,null,"url=$this->url|name=$xml->urltitle|encoding=$enc");							
+				default        : $xml->addtag('default-xml',null,null,"url=$this->url|name=$xml->urltitle|encoding=$enc");							
 	                            $xml->addtag('products','default-xml',null,null);
 												
 		    }		  
@@ -2786,83 +2718,79 @@ SCROLLTOP;
 		else {
             //product loop xml tags 		  
             switch ($format) {
-			   case 'sitemap' : 
-			   $xml->addtag('url','urlset',null,null);
-			   
-               //$xml->addtag('name','url',$xml->cdata($params[1]),null); 
-			   $xml->addtag('loc','url',$params[0],null); 
-			   if ($params[1]) //in case of 0000-00-00..is null
-				$xml->addtag('lastmod','url',$params[1],null);  			   
-			   $xml->addtag('changefreq','url','daily',null); 
-			   $xml->addtag('priority','url','0.5',null);
-			   break;
+				case 'sitemap' :$xml->addtag('url','urlset',null,null);
+								//$xml->addtag('name','url',$xml->cdata($params[1]),null); 
+								$xml->addtag('loc','url',$params[0],null); 
+								if ($params[1]) //in case of 0000-00-00..is null
+									$xml->addtag('lastmod','url',$params[1],null);  			   
+								$xml->addtag('changefreq','url','daily',null); 
+								$xml->addtag('priority','url','0.5',null);
+								break;
 			 
-	           case 'skroutz' : 
-			   $cats = explode($this->sep() ,$params[3]);	
-			   $manufacturer = $this->replace_spchars(array_shift($cats),1);
-			   $category = $this->replace_spchars($params[3],1);
-			   $category = str_replace($this->sep() ,'/',$category);
-	           $xf = ($this->itemfimagex?$this->itemfimagex:640);
-	           $yf = ($this->itemfimagey?$this->itemfimagey:480);	
-	           $xt = ($this->imagex?$this->imagex:160);
-	           $yt = ($this->imagey?$this->imagey:120);				   		   
+	           case 'skroutz' : $cats = explode($this->sep() ,$params[3]);	
+								$manufacturer = $this->replace_spchars(array_shift($cats),1);
+								$category = $this->replace_spchars($params[3],1);
+								$category = str_replace($this->sep() ,'/',$category);
+								$xf = ($this->itemfimagex?$this->itemfimagex:640);
+								$yf = ($this->itemfimagey?$this->itemfimagey:480);	
+								$xt = ($this->imagex?$this->imagex:160);
+								$yt = ($this->imagey?$this->imagey:120);				   		   
 			   	  
-               $xml->addtag('product','products',null,"id=".$params[0]);
+								$xml->addtag('product','products',null,"id=".$params[0]);
 			   
-               $xml->addtag('name','product',$xml->cdata($params[1]),null);  //cdata val
-               $xml->addtag('link','product',$params[2],null);  //http://... val
-               $xml->addtag('price_with_vat','product',$params[6],null);  //price 11.11
-               $xml->addtag('category','product',$xml->cdata($category),"id=".$params[3]); //cdata val = descr, id=code
-               $xml->addtag('image','product',$params[5],"width=$xf|height=$yf");  //http://... image
-               $xml->addtag('thumbnail','product',$params[5],"width=$xt|height=$yt");  //http://... thumbnail
-               $xml->addtag('manufacturer','product',$xml->cdata($manufacturer),null);  //cdata val
-               $xml->addtag('shipping','product',null,"type=accurate|currency=euro");  //ship cost 11.11
-               $xml->addtag('sku','product','/',null);  //...
-               $xml->addtag('ssku','product','/',null);  //...
-               $xml->addtag('description','product',$xml->cdata($params[4]),null);  //cdata val		  
-		       break;
+								$xml->addtag('name','product',$xml->cdata($params[1]),null);  //cdata val
+								$xml->addtag('link','product',$params[2],null);  //http://... val
+								$xml->addtag('price_with_vat','product',$params[6],null);  //price 11.11
+								$xml->addtag('category','product',$xml->cdata($category),"id=".$params[3]); //cdata val = descr, id=code
+								$xml->addtag('image','product',$params[5],"width=$xf|height=$yf");  //http://... image
+								$xml->addtag('thumbnail','product',$params[5],"width=$xt|height=$yt");  //http://... thumbnail
+								$xml->addtag('manufacturer','product',$xml->cdata($manufacturer),null);  //cdata val
+								$xml->addtag('shipping','product',null,"type=accurate|currency=euro");  //ship cost 11.11
+								$xml->addtag('sku','product','/',null);  //...
+								$xml->addtag('ssku','product','/',null);  //...
+								$xml->addtag('description','product',$xml->cdata($params[4]),null);  //cdata val		  
+								break;
 			   case 'rss1'    : //echo 'rss1';
-	   		   break; 								
+								break; 								
 			   case 'rss2'    : //echo 'rss2';
-	           $xml->addtag('item','channel',null,null);				   
+								$xml->addtag('item','channel',null,null);				   
 			   
-               $xml->addtag('title','item',$xml->cdata($params[1]),null);				   
-               $xml->addtag('link','item',$params[2],null);
-               $xml->addtag('description','item',$xml->cdata($params[4]),null);				   			   				   			   
-			   $xml->addtag('author','item',$xml->urltitle,null);
-			   $xml->addtag('category','item',$xml->cdata($params[3]),null);
-			   $xml->addtag('comments','item',$xml->cdata(strip_tags($params[12])),null);
-               $xml->addtag('pubDate','item',$date,null);				   			   
-               $xml->addtag('guid','item',$params[0],null);			   
-	           break; 
+								$xml->addtag('title','item',$xml->cdata($params[1]),null);				   
+								$xml->addtag('link','item',$params[2],null);
+								$xml->addtag('description','item',$xml->cdata($params[4]),null);				   			   				   			   
+								$xml->addtag('author','item',$xml->urltitle,null);
+								$xml->addtag('category','item',$xml->cdata($params[3]),null);
+								$xml->addtag('comments','item',$xml->cdata(strip_tags($params[12])),null);
+								$xml->addtag('pubDate','item',$date,null);				   			   
+								$xml->addtag('guid','item',$params[0],null);			   
+								break; 
 			   case 'atom'    : //echo 'atom';
-	           $xml->addtag('entry','feed',null,null);				   
+								$xml->addtag('entry','feed',null,null);				   
 			   
-               $xml->addtag('title','entry',$params[1],null);				   
-               $xml->addtag('link','entry',$params[2],null);
-               $xml->addtag('id','entry',$params[0],null);				   			   				   			   
-               $xml->addtag('updated','entry',$date,null);				   			   
-               $xml->addtag('summary','entry',$params[4],null);				   
-	   		   break; 
+								$xml->addtag('title','entry',$params[1],null);				   
+								$xml->addtag('link','entry',$params[2],null);
+								$xml->addtag('id','entry',$params[0],null);				   			   				   			   
+								$xml->addtag('updated','entry',$date,null);				   			   
+								$xml->addtag('summary','entry',$params[4],null);				   
+								break; 
 			   default ://seo links
-               $xml->addtag('product','products',null,"id=");
+								$xml->addtag('product','products',null,"id=");
 			   
-               $xml->addtag('name','product',$xml->cdata('name'),null);  //cdata val
-               $xml->addtag('link','product',null,null);  //http://... val
-               $xml->addtag('price_with_vat','product',null,null);  //price 11.11
-               $xml->addtag('category','product',$xml->cdata('category'),"id=\"\""); //cdata val = descr, id=code
-               $xml->addtag('image','product',null,"width=|height=");  //http://... image
-               $xml->addtag('thumbnail','product',null,"width=|height=");  //http://... thumbnail
-               $xml->addtag('manufacturer','product',$xml->cdata('manufacturer'),null);  //cdata val
-               $xml->addtag('shipping','product',null,"type=|currency=");  //ship cost 11.11
-               $xml->addtag('description','product',$xml->cdata('description'),null);  //cdata val		  			   
+								$xml->addtag('name','product',$xml->cdata('name'),null);  //cdata val
+								$xml->addtag('link','product',null,null);  //http://... val
+								$xml->addtag('price_with_vat','product',null,null);  //price 11.11
+								$xml->addtag('category','product',$xml->cdata('category'),"id=\"\""); //cdata val = descr, id=code
+								$xml->addtag('image','product',null,"width=|height=");  //http://... image
+								$xml->addtag('thumbnail','product',null,"width=|height=");  //http://... thumbnail
+								$xml->addtag('manufacturer','product',$xml->cdata('manufacturer'),null);  //cdata val
+								$xml->addtag('shipping','product',null,"type=|currency=");  //ship cost 11.11
+								$xml->addtag('description','product',$xml->cdata('description'),null);  //cdata val		  			   
 			}
 			//dump xml  
 			//echo '<pre>';
 			//$xml->dumpxml();
 			//print_r($xml->index);
 			//echo '</pre>';
-			 
 		    return 1;
 		}
 		 
@@ -2994,52 +2922,52 @@ SCROLLTOP;
 	}	
 	
 	public function show_last_edited_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$photosize=null,$nopager=null) {	
-	     $limit = $items ? $items : 5;
-         $db = GetGlobal('db');	
-	     $lan = getlocal();	
-		 $pz = $photosize?$photosize:1;		
-		 $lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;	
+	    $limit = $items ? $items : 5;
+        $db = GetGlobal('db');	
+	    $lan = getlocal();	
+		$pz = $photosize?$photosize:1;		
+		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;	
 		 
-		 if ($this->one_attachment)
+		if ($this->one_attachment)
 			$slan = null;
-		 else
+		else
 			$slan = $lan ? $lan : '0';
 		 
-	     $code = $this->fcode;	  
+	    $code = $this->fcode;	  
 		 
-         $sSQL = "select code from pattachments ";
-	     $sSQL .= " WHERE (type='.html' or type='.htm')";
-	     if (isset($slan))
+        $sSQL = "select code from pattachments ";
+	    $sSQL .= " WHERE (type='.html' or type='.htm')";
+	    if (isset($slan))
 			$sSQL .= " and lan=" . $slan;
-		 $sSQL .= " ORDER BY id desc ";	
-         $sSQL .= $items ? " LIMIT " . $items : null;		 
-	     //echo $sSQL;
+		$sSQL .= " ORDER BY id desc ";	
+        $sSQL .= $items ? " LIMIT " . $items : null;		 
+	    //echo $sSQL;
 	  
-	     $resultset = $db->Execute($sSQL,2);	
-	     $result = $resultset;
-	     if ($exist = $db->Affected_Rows()) {
+	    $resultset = $db->Execute($sSQL,2);	
+	    $result = $resultset;
+	    if ($exist = $db->Affected_Rows()) {
 		   $ret = $result->fields['data'];
-		 }	
+		}	
 		 
-         $sSQL2 = $this->selectSQL;
-		 $sSQL2 .= " WHERE ";
-         foreach ($result as $n=>$rec) {
+        $sSQL2 = $this->selectSQL;
+		$sSQL2 .= " WHERE ";
+        foreach ($result as $n=>$rec) {
 		    $or[] = $this->fcode ."='". $rec['code'] ."'";
-         }
-         $sSQL2 .= '(' . implode(' or ',$or) . ')'; 
-		 $sSQL2 .= " and (itmactive>0 and active>0)";
-		 $sSQL2 .= " ORDER BY " . $this->fcode . " desc LIMIT " . $items;			 
-         //echo $sSQL2;
+        }
+        $sSQL2 .= '(' . implode(' or ',$or) . ')'; 
+		$sSQL2 .= " and (itmactive>0 and active>0)";
+		$sSQL2 .= " ORDER BY " . $this->fcode . " desc LIMIT " . $items;			 
+        //echo $sSQL2;
 		 
-	     $resultset = $db->Execute($sSQL2,2);	
-		 $this->result = $resultset;		 
+	    $resultset = $db->Execute($sSQL2,2);	
+		$this->result = $resultset;		 
 		 
-		 if ($linemax>1)
+		if ($linemax>1)
 			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$nopager);
-		 else  	
+		else  	
 			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);
 		  
-		 return ($out);			 
+		return ($out);			 
 	}	
 	
 	public function item_var($field=null,$code=null, $photosize=null, $array=null) {	
@@ -3091,40 +3019,35 @@ SCROLLTOP;
 	    $data_array = parse_ini_file($file,1);
 	    //print_r($data_array);
 		if ($policyqty) {
-		  if (is_array($data_array['QTY'])) {
-		    foreach ($data_array['QTY'] as $ix=>$ax) {
-			  if ($policyqty>=$ax) {
-			    $pc = intval($data_array['PRICE'][$ix]);
-			    $retprice = $price?$price+($price*$pc/100):$pc;
-			  }
+			if (is_array($data_array['QTY'])) {
+				foreach ($data_array['QTY'] as $ix=>$ax) {
+					if ($policyqty>=$ax) {
+						$pc = intval($data_array['PRICE'][$ix]);
+						$retprice = $price?$price+($price*$pc/100):$pc;
+					}
+				}
+				return ($retprice);
 			}
-			return ($retprice);
-		  }
 		}
 		else {
-		  $style = $data_array['style'];
-		  $titlesON = $data_array['titles'];
-		  $elements = $titlesON?1:0;	
-		  $template = $data_array['template'] ? $data_array['template'] : 'fpitempolicy';
+			$style = $data_array['style'];
+			$titlesON = $data_array['titles'];
+			$elements = $titlesON?1:0;	
+			$template = $data_array['template'] ? $data_array['template'] : 'fpitempolicy';
 		  
 			$mylooptemplate = $this->select_template($template);
 			
 			foreach ($data_array['PRICE'] as $ix=>$ax) {
-			  $data[] = $data_array['QTY'][$ix];
-	 
-			  $cartd[8] = $price ? $price+($price*$ax/100) : $ax;
-			  $cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
-			  
-		      $data[] =	number_format($cartd[8],$this->decimals,',','.');		  
-			  
-			  $cartout = implode(';',$cartd);
-			  $data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
-			  $data[] = $itemcode;
-			  $data[] = "addcart/$cartout/$cat/0/";
-			 
-			  $body .= $this->combine_tokens($mylooptemplate,$data,true);	
-			  //echo $body,'>';
-			  unset($data);			  
+				$data[] = $data_array['QTY'][$ix];
+				$cartd[8] = $price ? $price+($price*$ax/100) : $ax;
+				$cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
+				$data[] =	number_format($cartd[8],$this->decimals,',','.');		  
+				$cartout = implode(';',$cartd);
+				$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+				$data[] = $itemcode;
+				$data[] = "addcart/$cartout/$cat/0/";
+				$body .= $this->combine_tokens($mylooptemplate,$data,true);	
+				unset($data);			  
 			}		
         }
 		//echo $body;
@@ -3170,13 +3093,12 @@ SCROLLTOP;
 	public function show_availability($qty=null) {
 		if (!$this->availability) 
 			return 0;
-		//echo $qty;
+
 		$r_scale = array_reverse($this->availability,1);
 		
-		foreach ($r_scale as $i=>$s) {
+		foreach ($r_scale as $i=>$s) 
 			if (floatval($qty)>=floatval($s)) return ($i+1);
-		}
-		
+
 		return 0;
 	}	
 	
@@ -3337,8 +3259,7 @@ SCROLLTOP;
 		return ($ret);  
 	}
 	
-	//override
-	function replace_spchars($string, $reverse=false) {
+	protected function replace_spchars($string, $reverse=false) {
 		
 		$rp = _v('shkategories.replacepolicy');
 	
@@ -3624,36 +3545,31 @@ EOF;
 	
 	//tokens method	
 	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
-		
 		//$toks = serialize($tokens);
 		//return _m("cmsrt.combine_tokens use $template_contents+$toks+$execafter");
-	
-	
 	    if (!is_array($tokens)) return;
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template_contents);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template_contents;
+			$ret = $template_contents;
 		  
 	    foreach ($tokens as $i=>$tok) {
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
-		//clean unused token marks
+
 		for ($x=$i;$x<40;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
+			$ret = str_replace("$".$x."$",'',$ret);
 		
-		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
           
-		  return ($retout);
+			return ($retout);
 		}		
 		
 		return ($ret);
@@ -3664,19 +3580,15 @@ EOF;
 		$params = explode('<#>',"$p0<#>$p1<#>$p2<#>$p3<#>$p4<#>$p5<#>$p6<#>$p7<#>$p8<#>$p9");
 		
 		if (defined('FRONTHTMLPAGE_DPC')) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template_contents);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template_contents;
+			$ret = $template_contents;
 
-	    foreach ($params as $p=>$pp) {
-		  if ($pp)
-	        $ret = str_replace("$".$p,$pp,$ret);
-		  else	
-		    $ret = str_replace("$".$p,'',$ret);
-	    }
+	    foreach ($params as $p=>$pp) 
+			$ret = ($pp) ? str_replace("$".$p,$pp,$ret) : str_replace("$".$p,'',$ret);
 
 		return ($ret);
 	}			

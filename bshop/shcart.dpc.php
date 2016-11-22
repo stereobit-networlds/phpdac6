@@ -668,13 +668,13 @@ function addtocart(id,cartdetails)
 		 
 				if ($tokenout) {
 					$tokens[] = $this->transaction_id;
-					$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails.htm');
+					$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');
 					$tokens[] = GetSessionParam('orderdetails');
 					$tokens[] = GetSessionParam('ordercart');
 					_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.serialize($tokens).'+shcartprint.htm'."+$customer+$fkey");			
 				}
 				else {
-					$_data = _m('shcustomers.showcustomerdata use ++cusdetails.htm');
+					$_data = _m('shcustomers.showcustomerdata use ++cusdetails');
 					$_data .= GetSessionParam('ordercart');
 					$_data .= GetSessionParam('orderdetails');
 					_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.serialize($_data));
@@ -688,7 +688,7 @@ function addtocart(id,cartdetails)
 
 		if (($sendordermail) && ($this->transaction_id)) {
 
-			$error = $this->goto_mailer($this->transaction_id, false,$this->twig_invoice_template_name);//true);
+			$error = $this->goto_mailer($this->transaction_id, $this->twig_invoice_template_name);
 
 			if (!$error) { 
 			
@@ -802,7 +802,7 @@ function addtocart(id,cartdetails)
 
 		  $myprintcarttemplate = @file_get_contents($t);
 		  
-		  $tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails.htm');
+		  $tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');
 		  $tokens[] = GetSessionParam('orderdetails');
 		  $tokens[] = GetSessionParam('ordercart');					  
 		  $out = $this->combine_tokens($myprintcarttemplate,$tokens,true);
@@ -1049,7 +1049,7 @@ function addtocart(id,cartdetails)
 
 				  //CUSTOMER SUPPORT : get customer data or register new customer
 				  if (defined('SHCUSTOMERS_DPC')) {
-					$ret = _m('shcustomers.showcustomerdata use ++cusdetails.htm');
+					$ret = _m('shcustomers.showcustomerdata use ++cusdetails');
 
 					if ($ret) {
 		                if ($this->mycarttemplate) {
@@ -1481,7 +1481,7 @@ function addtocart(id,cartdetails)
     }
 
     //called with trid from payengines when success to send the mails
-	public function goto_mailer($trid=null, $simplebody=false, $invoice_template=null, $invoice_subject=null) {
+	public function goto_mailer($trid=null, $invoice_template=null, $invoice_subject=null) {
 		
 		$this->transaction_id = $trid ? $trid : $this->transaction_id;		
 	
@@ -1489,19 +1489,8 @@ function addtocart(id,cartdetails)
 			$mailout = _m('shtransactions.getTransactionHtml use '.$mytrid);
 		}
         else {		
-	
-			$headtitle = paramload('SHELL','urltitle');	
-
 			//template
-			$cart_template = $invoice_template ? $invoice_template : "shcartmail.htm";
-			$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
-				
-			if (!$mystyle = remote_paramload('SHCART','printstyle',$this->path))
-				$mystyle = 'themes/style.css';
-			if (!$mytitle = $this->print_title)		
-				$mytitle = "<h1>$headtitle | Order No:".$this->transaction_id."</h1>";
-			else
-				$mytitle = "<h1>$mytitle | Order No:".$this->transaction_id."</h1>";
+			$template = $invoice_template ? str_replace('.htm', '', $invoice_template) : "shcartmail";
 		  	
 			$details  = '<br/>'.localize('_PWAY',getlocal()) .':'. GetSessionParam('payway');
 			$details .= '<br/>'.localize('_RWAY',getlocal()) .':'. GetSessionParam('roadway');
@@ -1509,19 +1498,7 @@ function addtocart(id,cartdetails)
 			$details .= '<br/>'.localize('_DELIVADDRESS',getlocal()) .':'. GetSessionParam('addressway');	   
 			$details .= '<br/>'.localize('_SXOLIA',getlocal()) .':'. GetSessionParam('sxolia');		   	  
 
-			if ($simplebody) {//simplefied body
-				$_htmldata = $mytitle;
-				$_htmldata .= _m('shcustomers.showcustomerdata  use ++cusdetails.htm');
-				$_htmldata .= GetSessionParam('ordercart');
-				$_htmldata .= GetSessionParam('orderdetails');  
-		  
-				$headtitle = paramload('SHELL','urltitle');			
-				$hpage = new phtml($mystyle,$_htmldata,"<B><h1>$headtitle</h1></B>");
-				$mailout = $hpage->render();
-				unset($hpage);	
-			}	
-			elseif (($invoice_template) && (is_readable($template))) {
-		   
+			if ($invoice_template) {
 				//init tokens
 				$invoice_tokens = array();
 				$invoice_tokens['trid']       = $this->transaction_id;
@@ -1549,30 +1526,24 @@ function addtocart(id,cartdetails)
 				}
 				else {
 	            
-					$mycarttemplate = @file_get_contents($template);		  
+					$mycarttemplate = _m('cmsrt.select_template use ' . $template);		  
 			
 					$mailout .= $this->combine_tokens($mycarttemplate,$tokens,true);		
 					$mailout .= '<!--end of document-->';	
 				}
 			}		  
-			elseif (is_readable($template)) {
-        
+			else {
 				$tokens = array();
-				$mycarttemplate = @file_get_contents($template);
+				$mycarttemplate = _m('cmsrt.select_template use ' . $template);
 			
 				//$tokens[] = $orderdataprint;	
 				$tokens[] = $this->transaction_id;
-				$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails.htm');			
-				$tokens[] = $details;//'&nbsp;AAA';//details
+				$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');			
+				$tokens[] = $details;
 				$tokens[] = $this->quickview(); //no need to call session param ordercart
 
 				$mailout = $this->combine_tokens($mycarttemplate,$tokens,true);		
 				$mailout .= '<!--end of document-->';
-			}
-			else {		  		  
-				$xtemplate = paramload('SHELL','prpath') . "cartorder.tpl";
-				$_data = $mytitle .	_m('shcustomers.showcustomerdata') . $this->quickview() . $details;
-				$mailout = str_replace("##_LINK_##", $_data, @file_get_contents($xtemplate));		  
 			}
         }//printout		  
 	   

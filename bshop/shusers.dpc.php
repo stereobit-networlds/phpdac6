@@ -105,82 +105,76 @@ class shusers  {
 	var $usemail2send,$usemailasusername;
 	var $urlpath, $inpath;	
 	var $includecusform;
-	var $tokensout,$mytemplate;
 	var $usrform,$usrformtitles,$checkuseasterisk,$asterisk;
 	var $continue_register_customer, $deny_multiple_users;
 	var $check_existing_customer, $map_customer, $customer_exist_id;
     var $inactive_on_register, $stay_inactive;	
-	var $tmpl_path, $tmpl_name, $appname, $mtrackimg;	
+	var $appname, $mtrackimg;	
 
-	function shusers() {
+	function __construct() {
 
-	   $UserSecID = GetGlobal('UserSecID');
-	   $sFormErr = GetGlobal('sFormErr');
-	   $UserName = GetGlobal('UserName');
-	   $UserID = GetGlobal('UserID');
+		$UserSecID = GetGlobal('UserSecID');
+		$sFormErr = GetGlobal('sFormErr');
+		$UserName = GetGlobal('UserName');
+		$UserID = GetGlobal('UserID');
 
-       $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
-	   $this->username = decode($UserName);
-	   $this->userid = decode($UserID);
-	   $this->msg = $sFormErr;
-	   $this->pagenum = 30;
-	   $this->searchtext = trim(GetParam("usernum"));
-	   $this->path = paramload('SHELL','prpath');
+		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
+		$this->username = decode($UserName);
+		$this->userid = decode($UserID);
+		$this->msg = $sFormErr;
+		$this->pagenum = 30;
+		$this->searchtext = trim(GetParam("usernum"));
+		$this->path = paramload('SHELL','prpath');
 	   
-	   $this->urlpath = paramload('SHELL','urlpath');
-	   $this->inpath = paramload('ID','hostinpath');		   
+		$this->urlpath = paramload('SHELL','urlpath');
+		$this->inpath = paramload('ID','hostinpath');		   
 
-	   //startup select vals
-	   $this->country_id = remote_paramload('SHUSERS','countryid',$this->path);
-	   $this->language_id = remote_paramload('SHUSERS','lanid',$this->path);
-	   $this->age_id = remote_paramload('SHUSERS','ageid',$this->path);
-	   $this->gender_id = remote_paramload('SHUSERS','genderid',$this->path);
-	   $this->tmz_id = remote_paramload('SHUSERS','tmzid',$this->path);	   
-	   $this->job_id = 0;
+		//startup select vals
+		$this->country_id = remote_paramload('SHUSERS','countryid',$this->path);
+		$this->language_id = remote_paramload('SHUSERS','lanid',$this->path);
+		$this->age_id = remote_paramload('SHUSERS','ageid',$this->path);
+		$this->gender_id = remote_paramload('SHUSERS','genderid',$this->path);
+		$this->tmz_id = remote_paramload('SHUSERS','tmzid',$this->path);	   
+		$this->job_id = 0;
 
-	   $this->atok = remote_paramload('SHUSERS','atok',$this->path);
-	   $this->leeid = remote_paramload('SHUSERS','leeid',$this->path);
-	   $this->customer_sec = remote_paramload('SHUSERS','ifcustomer',$this->path);
-	   $this->unknown_sec = remote_paramload('SHUSERS','else',$this->path);
-	   $this->c_message = remote_paramload('SHUSERS','mailmsg',$this->path);
-	   $this->it_sendfrom = remote_paramload('SHUSERS','sendusernamefrom',$this->path);
+		$this->atok = remote_paramload('SHUSERS','atok',$this->path);
+		$this->leeid = remote_paramload('SHUSERS','leeid',$this->path);
+		$this->customer_sec = remote_paramload('SHUSERS','ifcustomer',$this->path);
+		$this->unknown_sec = remote_paramload('SHUSERS','else',$this->path);
+		$this->c_message = remote_paramload('SHUSERS','mailmsg',$this->path);
+		$this->it_sendfrom = remote_paramload('SHUSERS','sendusernamefrom',$this->path);
 
-	   //init security
-	   $this->security = $this->unknown_sec?$this->unknown_sec:0; //default
+		//init security
+		$this->security = $this->unknown_sec?$this->unknown_sec:0; //default
 
-	   $this->predef_customer = null;
-	   $this->usemailasusername =  remote_paramload('SHUSERS','usemailasusername',$this->path);
-	   $this->usemail2send =  remote_paramload('SHUSERS','usemail2send',$this->path);
-	   $this->tell_it = remote_paramload('SHUSERS','tellregisterto',$this->path);
+		$this->predef_customer = null;
+		$this->usemailasusername =  remote_paramload('SHUSERS','usemailasusername',$this->path);
+		$this->usemail2send =  remote_paramload('SHUSERS','usemail2send',$this->path);
+		$this->tell_it = remote_paramload('SHUSERS','tellregisterto',$this->path);
 	   
-	   $cusform = remote_paramload('SHUSERS','includecusform',$this->path); 
-	   $this->includecusform = $cusform?true:false;	 
-	   $usrt = GetSessionParam('usrtokens');
-	   $this->tokensout = $usrt?true:false;
+		$cusform = remote_paramload('SHUSERS','includecusform',$this->path); 
+		$this->includecusform = $cusform?true:false;	 
 	   
-	   $this->usrform = remote_arrayload('SHUSERS','usrform',$this->path);		   
-	   $this->usrformtitles = remote_arrayload('SHUSERS','usrformtitles',$this->path);		
-	   $this->checkuseasterisk = remote_paramload('SHUSERS','checkasterisk',$this->path);	 
-	   $this->asterisk = $this->checkuseasterisk?'&nbsp;':'*'; //echo $this->asterisk,'>'; 
+		$this->usrform = remote_arrayload('SHUSERS','usrform',$this->path);		   
+		$this->usrformtitles = remote_arrayload('SHUSERS','usrformtitles',$this->path);		
+		$this->checkuseasterisk = remote_paramload('SHUSERS','checkasterisk',$this->path);	 
+		$this->asterisk = $this->checkuseasterisk?'&nbsp;':'*'; //echo $this->asterisk,'>'; 
 	   
-	   $this->continue_register_customer = remote_paramload('SHUSERS','continueregcus',$this->path);
-	   $this->deny_multiple_users = remote_paramload('SHUSERS','denymultuser',$this->path);	   
+		$this->continue_register_customer = remote_paramload('SHUSERS','continueregcus',$this->path);
+		$this->deny_multiple_users = remote_paramload('SHUSERS','denymultuser',$this->path);	   
 		   	   	   
-       $this->check_existing_customer = remote_paramload('SHCUSTOMERS','checkexist',$this->path);
-	   $this->map_customer = null;
-	   $this->customer_exist_id = null;
-       $this->inactive_on_register = remote_paramload('SHUSERS','inactive_on_register',$this->path);	   
-	   $this->stay_inactive = remote_paramload('SHUSERS','stay_inactive',$this->path); 
-	   
-	   $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	   $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);		
-	   
-	   $this->appname = paramload('ID','instancename');	
-	   $tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
-	   $this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	   
+		$this->check_existing_customer = remote_paramload('SHCUSTOMERS','checkexist',$this->path);
+		$this->map_customer = null;
+		$this->customer_exist_id = null;
+		$this->inactive_on_register = remote_paramload('SHUSERS','inactive_on_register',$this->path);	   
+		$this->stay_inactive = remote_paramload('SHUSERS','stay_inactive',$this->path); 
+	   	
+		$this->appname = paramload('ID','instancename');	
+		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
+		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	   
 	}
 
-    function event($sAction) {
+    public function event($sAction) {
 
        if (!$this->msg) {
 
@@ -270,7 +264,7 @@ class shusers  {
        }
 	}
 
-	function action($action) {
+	public function action($action) {
 
        switch ($action) {
 	         case 'useractivate':   if (defined('CMSLOGIN_DPC')) { 
@@ -317,777 +311,322 @@ class shusers  {
       return ($levels);
     }
 
-    function regform($fields='',$cmd=null,$isupdate=null,$isadmin=null,$nodelivery=null,$noinvtype=null,$noincludecusform=null) {
-       //echo $fields;
-	   $UserName = GetGlobal('UserName');
-       $sFormErr = GetGlobal('sFormErr');
-	   //readonly username field when update
-	   $is_update = $UserName?true:false; 
-	   if ($is_update)
-         $readonly = 'READONLY';	   
+    public function regform($fields='',$cmd=null,$isupdate=null,$isadmin=null,$nodelivery=null,$noinvtype=null,$noincludecusform=null) {
+		$UserName = GetGlobal('UserName');
+		$sFormErr = GetGlobal('sFormErr');
+		//readonly username field when update
+		$is_update = $UserName ? true : false; 
+		if ($is_update)
+			$readonly = 'READONLY';	   
 	   
-	   if (isset($noinvtype))//no for update
-	     $invtype = '0';
-	   else {
-	     $invtype = _m('shcustomers.get_invoice_type');
-		 $invtypedescr = _m('shcustomers.get_invoice_type_descr');
-	   }	 
+		if (isset($noinvtype))//no for update
+			$invtype = '0';
+		else {
+			$invtype = _m('shcustomers.get_invoice_type');
+			$invtypedescr = _m('shcustomers.get_invoice_type_descr');
+		}	 
 		 
-	   if (isset($nodelivery))//no for update
-	     $delivery = '0';
-	   else	 	   
-	     $delivery = _m('shcustomers.get_delivery_address');	 
+		if (isset($nodelivery))//no for update
+			$delivery = '0';
+		else	 	   
+			$delivery = _m('shcustomers.get_delivery_address');	 
 		 
-  	   $myinvtype = GetReq('invtype');  //ger req when error
-	   //echo '>',$invtype,'>',$delivery;
-       $dpccmd = $cmd?$cmd:'insert';
-	   $usernamemsg = localize('_UNMSG',getlocal());
-	   $a = GetReq('a'); //id
-	   $g = GetReq('g'); //username 
-	   
-       //$t = $this->urlpath .'/' . $this->inpath . '/cp/html/'. str_replace('.',$delivery . $invtype . getlocal().'.','usrregister.htm') ; 
-	   if ($isupdate) //update form
-	     $t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',$delivery . $invtype . getlocal().'.','usrupdate.htm') ; 
-	   else //insert form
-	     $t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',$delivery . $invtype . getlocal().'.','usrregister.htm') ; 
-	   //echo $t;
-	   
-	   if (is_readable($t)) {//echo 'z';
-		 $this->mytemplate = file_get_contents($t);
-		 $this->tokensout = $tokensout = 1;
-		 SetSessionParam('usrtokens',1);
-       }		   
-	   
-	   if ($fields) {
-		   $myfields = explode(";",$fields); //print_r($myfields);
-           //print_r($myfields);
-		   $fname = $myfields[0];
-		   $lname = $myfields[1];
-		   $uname = $myfields[2];
-		   $pwd = $myfields[3];
-		   $pwd2 = $myfields[4];
-		   $eml = $myfields[5];
-		   $country_id = $myfields[6];
-		   $language_id = $myfields[7];
-		   $age_id = $myfields[8];
-		   $gender_id = $myfields[9];   
+		$myinvtype = GetReq('invtype');  //ger req when error
+		//echo '>',$invtype,'>',$delivery;
 
-           if (seclevel('USERSMNG_',$this->userLevelID)) {
-		       $notes = $myfields[10];
-		       $dcreate = $myfields[11];
-		       $ipins = $myfields[12];
-		       $ipupd = $myfields[13];
-		       $llogin = $myfields[14];
-		       $sparam = $myfields[15];
-		       $sesid = $myfields[16];
-		       $seclevid = $myfields[17];
-		       $tmz_id = $myfields[18];					   
-		   }
-		   else
-		   	   $tmz_id = $myfields[10];		
-	   }
-	   else {//get post data on error
-		   $fname = GetParam('fname');
-		   $lname = GetParam('lname');
-		   $uname = GetParam('uname');
-		   //$pwd = $myfields[3];
-		   //$pwd2 = $myfields[4];
-		   $eml = GetParam('eml');  
-	   }
+		$_t = ($isupdate) ? 'usrupdate' . $delivery . $invtype : 'usrregister' . $delivery . $invtype;	   
+		$mytemplate = _m('cmsrt.select_template use ' . $_t);
+	   
+		if ($fields) {
+			$myfields = explode(";",$fields); //print_r($myfields);
+			//print_r($myfields);
+			$fname = $myfields[0];
+			$lname = $myfields[1];
+			$uname = $myfields[2];
+			$pwd = $myfields[3];
+			$pwd2 = $myfields[4];
+			$eml = $myfields[5];
+			$country_id = $myfields[6];
+			$language_id = $myfields[7];
+			$age_id = $myfields[8];
+			$gender_id = $myfields[9];   
+		   	$tmz_id = $myfields[10];		
+		}
+		else {//get post data on error
+			$fname = GetParam('fname');
+			$lname = GetParam('lname');
+			$uname = GetParam('uname');
+			//$pwd = $myfields[3];
+			//$pwd2 = $myfields[4];
+			$eml = GetParam('eml');  
+		}
 
-       $aligntitle = "right;40%;";
-	   $alignfield = "left;60%;";
+		$sFileName = seturl("t=signup&a=$a&g=$g&invtype=".$myinvtype,0,1);
 
-	   $edmode = GetReq('editmode') ? "&editmode=".GetReq('editmode') : null;  
-       $sFileName = seturl("t=signup&a=$a&g=$g&invtype=".$myinvtype.$edmode,0,1);
+        $tokens[] = localize('_FORMWARN',getlocal()) . '<br>' . $sFormErr . "<form method=\"POST\" action=\"" .$sFileName. "\" name=\"Registration\">";	   
+	    $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"fname\" maxlength=\"50\" value=\"" . ToHTML($fname) . "\" size=\"30\" >";
+	    $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"lname\" maxlength=\"50\" value=\"" . ToHTML($lname) . "\" size=\"30\" >";
+	    $tokens[] =  ($this->usemailasusername)  ? "<input type=\"text\" class=\"myf_input\" name=\"uname\" maxlength=\"55\" value=\"" . ToHTML($uname) . "\" size=\"25\" $readonly>" :
+		 										   "<input type=\"text\" class=\"myf_input\" name=\"uname\" maxlength=\"50\" value=\"" . ToHTML($uname) . "\" size=\"15\" $readonly>";
+	    $tokens[] = "<input type=\"password\" class=\"myf_input\" name=\"pwd\" maxlength=\"50\" value=\"" . ToHTML($pwd) . "\" size=\"15\" >";
+	    $tokens[] = "<input type=\"password\" class=\"myf_input\" name=\"pwd2\" maxlength=\"50\" value=\"" . ToHTML($pwd2) . "\" size=\"15\" >";
+	   
+        if (!$this->usemailasusername) 
+	        $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"eml\" maxlength=\"55\" value=\"" . ToHTML($eml) . "\" size=\"25\" >";
+	   
+	   
+	    //INCLUDE CUSTOMER DATA TO MIX IN ONE FORM..SQL EXECUTE USER AND CUS QUERY... 
+        if (($this->includecusform) && (!$noincludecusform)) {
+			$custokens = _m('shcustomers.makesubform');	
+			foreach ($custokens as $t)	 
+				$tokens[] = $t;    
+	    }	   
 
-	   //echo $this->tokensout,'>';
-       if ($tokensout) {
-	     //message at top
-         $tokens[] = localize('_FORMWARN',getlocal()) . '<br>' . $sFormErr .
-		             "<form method=\"POST\" action=\"" .$sFileName. "\" name=\"Registration\">";	   
-	   }	   
-	   else {	   
-	     $warning = new window('',localize('_FORMWARN',getlocal()));
-	     $out .= $warning->render(" ::100%::0::group_article_selected::center;100%;::");
-	     unset($warning);
+	    $tokens[] = localize('_MSG9',getlocal());
 
-         $out .= "<form method=\"POST\" action=\"";
-         $out .= "$sFileName";
-         $out .= "\" name=\"Registration\">";
-	   }
+	    $cntr = isset($country_id) ? $country_id : $this->country_id;	   
+	    $tokens[] = "<select name=\"country_id\" class=\"myf_select\">" . get_options_file('country',false,true,$cntr) . "</select>";
 	   
+	    $lan = isset($language_id) ? $language_id : $this->language_id;   
+	    $tokens[] = "<select name=\"language_id\" class=\"myf_select\">" . get_options_file('languages',false,true,$lan) . "</select>";
 	   
-       if ($tokensout) {
-	      $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"fname\" maxlength=\"50\" value=\"" .
-                      ToHTML($fname) . "\" size=\"30\" >";
-	   }
-	   else {
-       $field[] = localize('_FNAME',getlocal()) . $this->asterisk;
-	   $attr[] = $aligntitle;
-       $f  = "<input type=\"text\" class=\"myf_input\" name=\"fname\" maxlength=\"50\" value=\"";
-       $f .= ToHTML($fname);
-       $f .= "\" size=\"30\" >";
-	   $field[] = $f;
-	   $attr[] = $alignfield;
-	   $w = new window('',$field,$attr);  $out .= $w->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field);  unset ($attr);
-       }
+	    $age = isset($age_id) ? $age_id : $this->age_id;  
+	    $tokens[] = "<select name=\"age\" class=\"myf_select\">" . get_options_file('age',false,true,$age) . "</select>";
 	   
-       if ($tokensout) {
-	      $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"lname\" maxlength=\"50\" value=\"".
-                      ToHTML($lname) . "\" size=\"30\" >";
-	   }
-	   else {	   
-       $field0[] = localize('_LNAME',getlocal()) . $this->asterisk;
-	   $attr0[] = $aligntitle;
-       $f0  = "<input type=\"text\" class=\"myf_input\" name=\"lname\" maxlength=\"50\" value=\"";
-       $f0 .= ToHTML($lname);
-       $f0 .= "\" size=\"30\" >";
-	   }
+	    $gender = isset($gender_id) ? $gender_id : $this->gender_id;   
+	    $tokens[] = "<select name=\"gender\" class=\"myf_select\">" . get_options_file('gender',false,true,$gender) . "</select>";
 	   
+		$tmz = isset($tmz_id) ? $tmz_id : $this->tmz_id;   
+		$tokens[] = "<select name=\"timezone\" class=\"myf_select\">" . get_options_file('timezones',false,true,$tmz) . "</select>";
 	   
-	   //DISABLE SELECTIOn LIST OF PRF DESCRIPTIONS
-       /*$f0  = "<select name=\"lname\" class=\"myf_select\">";
-	   $jobid = isset($lname) ? $lname : $this->job_id;
-       $f0 .= $this->get_options('select pinid, pindescr from prf order by pindescr',false,true,$jobid);
-       $f0 .= "</select>";	   */
-	   	   
-	   $field0[] = $f0;
-	   $attr0[] = $alignfield;
-	   $w0 = new window('',$field0,$attr0);  $out .= $w0->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field0);  unset ($attr0);
-	   
+		if (defined('CMSSUBSCRIBE_DPC')) {
+			//check if user is in sub list
+			if (_m('cmssubscribe.isin use '.$eml))  
+				$statin = 'checked';
+
+			$tokens[] = "<input type=\"checkbox\" class=\"myf_checkbox\" name=\"autosub\"". $statin . ">";      
+	    }
 		 
-       if ($this->usemailasusername) {
-	   
-         if ($tokensout) {
-	 
-	       $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"uname\" maxlength=\"55\" value=\"".
-                      ToHTML($uname) . "\" size=\"25\" $readonly>";
-	     }
-	     else {	   
-         $field1[] = localize('_EMAIL',getlocal()) . $this->asterisk;
-	     $attr1[] = $aligntitle;
-         $f1  = "<input type=\"text\" class=\"myf_input\" name=\"uname\" maxlength=\"55\" value=\"";
-         $f1 .= ToHTML($uname);
-         $f1 .= "\" size=\"25\" $readonly>";
-	     $field1[] = $f1;
-	     $attr1[] = $alignfield;
-		 }
-	   }
-       else {
-         if ($tokensout) {
-	       /*if ($fields) 
-		     $tokens[] = ToHTML($uname);
-		   else
-		     $tokens[] = ToHTML($usernamemsg);*/
-			 
-	       $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"uname\" maxlength=\"50\" value=\"".
-                      ToHTML($uname) . "\" size=\"15\" $readonly>";
-	     }
-	     else {	   
-         $field1[] = '<br>' . localize('_USERNAME',getlocal()) . ":&nbsp;<br>";
-	     $attr1[] = $aligntitle;
-         $f1  = "<input type=\"text\" class=\"myf_input\" name=\"uname\" maxlength=\"50\" value=\"";
-         $f1 .= ToHTML($uname);
-         $f1 .= "\" size=\"15\" $readonly>";
-	     if ($fields) {
-	       $field1[] = "<br><label>" . ToHTML($uname) . "</label><br>";//$f1; NOT EDITABLE!!!!
-	     }
-	     else
-	   	  $field1[] = "<br><label>" . ToHTML($usernamemsg) . "</label><br>";//message
-	     $attr1[] = $alignfield;
-		 }
-	   }
-	   $w1 = new window('',$field1,$attr1);  $out .= $w1->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field1);  unset ($attr1);
-
-       if ($tokensout) {
-	      $tokens[] = "<input type=\"password\" class=\"myf_input\" name=\"pwd\" maxlength=\"50\" value=\"".
-                      ToHTML($pwd) . "\" size=\"15\" >";
-	   }
-	   else {		   
-       $field2[] = localize('_PASSWORD',getlocal()) . $this->asterisk;
-	   $attr2[] = $aligntitle;
-       $f2  = "<input type=\"password\" class=\"myf_input\" name=\"pwd\" maxlength=\"50\" value=\"";
-       $f2 .= ToHTML($pwd);
-       $f2 .= "\" size=\"15\" >";
-	   $field2[] = $f2;
-	   $attr2[] = $alignfield;
-	   $w2 = new window('',$field2,$attr2);  $out .= $w2->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field2);  unset ($attr2);
-       }
-	   
-       if ($tokensout) {
-	      $tokens[] = "<input type=\"password\" class=\"myf_input\" name=\"pwd2\" maxlength=\"50\" value=\"".
-                      ToHTML($pwd2) . "\" size=\"15\" >";
-	   }
-	   else {		   
-       $field3[] = localize('_VPASS',getlocal()) . $this->asterisk;
-	   $attr3[] = $aligntitle;
-       $f3  = "<input type=\"password\" class=\"myf_input\" name=\"pwd2\" maxlength=\"50\" value=\"";
-       $f3 .= ToHTML($pwd2);
-       $f3 .= "\" size=\"15\" >";
-	   $field3[] = $f3;
-	   $attr3[] = $alignfield;
-	   $w3 = new window('',$field3,$attr3);  $out .= $w3->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field3);  unset ($attr3);
-       }
-	   
-       if ($this->usemailasusername) {
-	     //do nothing
-	   }
-	   else {
-         if ($tokensout) {
-	        $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"eml\" maxlength=\"55\" value=\"".
-                        ToHTML($eml) . "\" size=\"25\" >";
-	     }
-	     else {		   
-         $field4[] = localize('_EMAIL',getlocal()) . $this->asterisk;
-	     $attr4[] = $aligntitle;
-         $f4  = "<input type=\"text\" class=\"myf_input\" name=\"eml\" maxlength=\"55\" value=\"";
-         $f4 .= ToHTML($eml);
-         $f4 .= "\" size=\"25\" >";
-	     $field4[] = $f4;
-	     $attr4[] = $alignfield;
-	     $w4 = new window('',$field4,$attr4);  $out .= $w4->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field4);  unset ($attr4);
-		 }
-       }
-	   
-	   
-	   //INCLUDE CUSTOMER DATA TO MIX IN ONE FORM..SQL EXECUTE USER AND CUS QUERY... 
-       if (($this->includecusform) && (!$noincludecusform)) {
-	   
-         if ($tokensout) {
-		   $custokens = _m('shcustomers.makesubform use 1');	
-		   foreach ($custokens as $t)	 
-	         $tokens[] = $t;
-	     }
-	     else {		
-		     $out .= _m('shcustomers.makesubform');	     
-		 }
-	   }	   
-
-       if ($tokensout) {
-	      $tokens[] = localize('_MSG9',getlocal());
-	   }
-	   else {		   
-	   $out .= "<br>";
-	   $warning1 = new window('',localize('_MSG9',getlocal()));
-	   $out .= $warning1->render(" ::100%::0::group_article_selected::center;100%;::");
-	   unset($warning1);
-	   $out .= "<br>";
-	   }
-
-       if ($tokensout) {
-	      $cntr = isset($country_id) ? $country_id : $this->country_id;	   
-	      $tokens[] = "<select name=\"country_id\" class=\"myf_select\">".
-		              get_options_file('country',false,true,$cntr).
-					  "</select>";
-	   }
-	   else {	   
-       $field5[] = localize('_COUNTRY',getlocal()) . "&nbsp;";
-	   $attr5[] = $aligntitle;
-       $f5  = "<select name=\"country_id\" class=\"myf_select\">";
-	   $cntr = isset($country_id) ? $country_id : $this->country_id;
-       //$f5 .= $this->dbase->get_options('select country_id, country_desc from lookup_countries order by 2',false,true,$cntr);
-       $f5 .= get_options_file('country',false,true,$cntr);
-       $f5 .= "</select>";
-	   $field5[] = $f5;
-	   $attr5[] = $alignfield;
-	   $w5 = new window('',$field5,$attr5);  $out .= $w5->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field5);  unset ($attr5);
-       }
-	   
-       if ($tokensout) {
-	      $lan = isset($language_id) ? $language_id : $this->language_id;   
-	      $tokens[] = "<select name=\"language_id\" class=\"myf_select\">".
-		              get_options_file('languages',false,true,$lan).
-					  "</select>";
-	   }
-	   else {	   
-       $field6[] = localize('_LANGUAGE',getlocal()) . "&nbsp;";
-	   $attr6[] = $aligntitle;
-       $f6  = "<select name=\"language_id\" class=\"myf_select\">";
-	   $lan = isset($language_id) ? $language_id : $this->language_id;
-       //$f6 .= $this->dbase->get_options('select lang_id, name from lookup_languages order by 2',false,true,$lan);
-       $f6 .= get_options_file('languages',false,true,$lan);
-       $f6 .= "</select>";
-	   $field6[] = $f6;
-	   $attr6[] = $alignfield;
-	   $w6 = new window('',$field6,$attr6);  $out .= $w6->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field6);  unset ($attr6);
-       }
-	   
-       if ($tokensout) {
-	      $age = isset($age_id) ? $age_id : $this->age_id;  
-	      $tokens[] = "<select name=\"age\" class=\"myf_select\">".
-		              get_options_file('age',false,true,$age).
-					  "</select>";
-	   }
-	   else {		   
-       $field7[] = localize('_AGE',getlocal()) . "&nbsp;";
-	   $attr7[] = $aligntitle;
-       $f7  = "<select name=\"age\" class=\"myf_select\">";
-	   $age = isset($age_id) ? $age_id : $this->age_id;
-       //$f7 .= $this->dbase->get_options('select age_id, age_desc from lookup_ages order by 2',false,true,$age);
-       $f7 .= get_options_file('age',false,true,$age);
-       $f7 .= "</select>";
-	   $field7[] = $f7;
-	   $attr7[] = $alignfield;
-	   $w7 = new window('',$field7,$attr7);  $out .= $w7->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field7);  unset ($attr7);
-       }
-	   
-       if ($tokensout) {
-	      $gender = isset($gender_id) ? $gender_id : $this->gender_id;   
-	      $tokens[] = "<select name=\"gender\" class=\"myf_select\">".
-		              get_options_file('gender',false,true,$gender).
-					  "</select>";
-	   }
-	   else {		   
-       $field8[] = localize('_GENDER',getlocal()) . "&nbsp;";
-	   $attr8[] = $aligntitle;
-       $f8  = "<select name=\"gender\" class=\"myf_select\">";
-	   $gender = isset($gender_id) ? $gender_id : $this->gender_id;
-       //$f8 .= $this->dbase->get_options('select gender_id, gender_desc from lookup_genders order by 2',false,true,$gender);
-       $f8 .= get_options_file('gender',false,true,$gender);
-       $f8 .= "</select>";
-	   $field8[] = $f8;
-	   $attr8[] = $alignfield;
-	   $w8 = new window('',$field8,$attr8);  $out .= $w8->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field8);  unset ($attr8);
-       }
-	   
-       if ($tokensout) {
-			$tmz = isset($tmz_id) ? $tmz_id : $this->tmz_id;   
-			$tokens[] = "<select name=\"timezone\" class=\"myf_select\">".
-		              get_options_file('timezones',false,true,$tmz).
-					  "</select>";
-	   }
-	   else {		   
-			//timezone field
-			$field8a[] = localize('_TIMEZONE',getlocal()) . "&nbsp;";
-			$attr8a[] = $aligntitle;
-			$f8a  = "<select name=\"timezone\" class=\"myf_select\">";
-			$tmz = isset($tmz_id) ? $tmz_id : $this->tmz_id;
-			//$f8 .= $this->dbase->get_options('select gender_id, gender_desc from lookup_genders order by 2',false,true,$gender);
-			$f8a .= get_options_file('timezones',false,true,$tmz);
-			$f8a .= "</select>";
-			$field8a[] = $f8a;
-			$attr8a[] = $alignfield;
-			$w8a = new window('',$field8a,$attr8a);  $out .= $w8a->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field8);  unset ($attr8);
-	   }
-	   
-       if (defined('CMSSUBSCRIBE_DPC')) {
-	     $out .= "<br>";
-	     $subs = new window('',localize('_SUBSCRWARN',getlocal()));
-	     $out .= $subs->render(" ::100%::0::group_article_selected::center;100%;::");
-	     unset($subs);
-	     $out .= "<br>";
-
-		 //check if user is in sub list
-		 if (_m('cmssubscribe.isin use '.$eml))  
-		   $statin = 'checked';
-
-         if ($tokensout) {
-	       $tokens[] = "<input type=\"checkbox\" class=\"myf_checkbox\" name=\"autosub\"". $statin . ">";
-	     }
-	     else {				 
-	       $subwin[] = localize('_SUBSCRTEXT',getlocal());
-	       $subattr[] = $aligntitle;
-	       $subwin[] = "<input type=\"checkbox\" class=\"myf_checkbox\" name=\"autosub\"". $statin . ">";
-	       $subattr[] = $alignfield;
-	       $ss = new window('',$subwin,$subattr);  $out .= $ss->render("center::100%::0::group_article_selected::left::0::0::");   unset ($subwin);  unset ($subattr);
-		 }
-		          
-		 $out .= "<br>";
-	   }
-
-	   //admin section  
-       if ((seclevel('USERSMNG_',$this->userLevelID)) || ($isadmin) || (GetReq('editmode'>0))) {
-
-	   $adminout = "<br>";
-
-       $field9[] = "Notes&nbsp;";
-	   $attr9[] = $aligntitle;
-       $f9  = "<textarea name=\"notes\" cols=\"50\" rows=\"8\">";
-       $f9 .= ToHTML($notes);
-       $f9 .= "</textarea>";
-	   $field9[] = $f9;
-	   $attr9[] = $alignfield;
-	   $w9 = new window('',$field9,$attr9);  
-	   $adminout .= $w9->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field9);  unset ($attr9);
-
-	   $adminout .= "<br>";
-
-       $field10[] = "Date Created&nbsp;";
-	   $attr10[] = $aligntitle;
-       $f10  = "<input type=\"text\" class=\"myf_input\" name=\"dcreate\" maxlength=\"15\" value=\"";
-       $f10 .= ToHTML($dcreate);
-       $f10 .= "\" size=\"15\" >";
-	   $field10[] = $f10;
-	   $attr10[] = $alignfield;
-	   $w10 = new window('',$field10,$attr10);  
-	   $adminout .= $w10->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field10);  unset ($attr10);
-
-       $field11[] = "IP insert&nbsp;";
-	   $attr11[] = $aligntitle;
-       $f11  = "<input type=\"text\" class=\"myf_input\" name=\"ipins\" maxlength=\"15\" value=\"";
-       $f11 .= ToHTML($ipins);
-       $f11 .= "\" size=\"15\" >";
-	   $field11[] = $f11;
-	   $attr11[] = $alignfield;
-	   $w11 = new window('',$field11,$attr11);  
-	   $adminout .= $w11->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field11);  unset ($attr11);
-
-       $field12[] = "IP update&nbsp;";
-	   $attr12[] = $aligntitle;
-       $f12  = "<input type=\"text\" class=\"myf_input\" name=\"ipupd\" maxlength=\"15\" value=\"";
-       $f12 .= ToHTML($ipupd);
-       $f12 .= "\" size=\"15\" >";
-	   $field12[] = $f12;
-	   $attr12[] = $alignfield;
-	   $w12 = new window('',$field12,$attr12);  
-	   $adminout .= $w12->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field12);  unset ($attr12);
-
-       $field13[] = "last Login&nbsp;";
-	   $attr13[] = $aligntitle;
-       $f13  = "<input type=\"text\" class=\"myf_input\" name=\"llogin\" maxlength=\"15\" value=\"";
-       $f13 .= ToHTML($llogin);
-       $f13 .= "\" size=\"15\" >";
-	   $field13[] = $f13;
-	   $attr13[] = $alignfield;
-	   $w13 = new window('',$field13,$attr13);  
-	   $adminout .= $w13->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field13);  unset ($attr13);
-
-       $field14[] = "Security Param&nbsp;";
-	   $attr14[] = $aligntitle;
-       $f14  = "<input type=\"text\" class=\"myf_input\" name=\"sparam\" maxlength=\"15\" value=\"";
-       $f14 .= ToHTML($sparam);
-       $f14 .= "\" size=\"15\" >";
-	   $field14[] = $f14;
-	   $attr14[] = $alignfield;
-	   $w14 = new window('',$field14,$attr14);  
-	   $adminout .= $w14->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field14);  unset ($attr14);
-
-       $field15[] = "Session ID&nbsp;";
-	   $attr15[] = $aligntitle;
-       $f15  = "<input type=\"text\" class=\"myf_input\" name=\"sesid\" maxlength=\"50\" value=\"";
-       $f15 .= ToHTML($sesid);
-       $f15 .= "\" size=\"15\" >";
-	   $field15[] = $f15;
-	   $attr15[] = $alignfield;
-	   $w15 = new window('',$field15,$attr15);  
-	   $adminout .= $w15->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field15);  unset ($attr15);
-
-       $field16[] = "SecLevel ID&nbsp;";
-	   $attr16[] = $aligntitle;
-       $f16  = "<input type=\"text\" class=\"myf_input\" name=\"seclevid\" maxlength=\"15\" value=\"";
-       $f16 .= ToHTML($seclevid);
-       $f16 .= "\" size=\"15\" >";
-	   $field16[] = $f16;
-	   $attr16[] = $alignfield;
-	   $w16 = new window('',$field16,$attr16);  
-	   $adminout .= $w16->render("center::100%::0::group_article_selected::left::0::0::");   unset ($field16);  unset ($attr16);
-	   
-       if ($tokensout) {   
-	      $tokens[] = $adminout;
-	   }
-	   else
-	     $out .= $adminout;
-	   }//admin section	 
-		 
-       //submit section
-	   
-	   if (GetReq('editmode')>0) {
-           if ((seclevel('UPDATEUSR_',$this->userLevelID)) || ($isupdate) || (GetReq('editmode'))) {
-              $updcmd = $cmd?$cmd:'update';
+		//submit section
+        if ((seclevel('UPDATEUSR_',$this->userLevelID)) || ($isupdate)) {
+              $updcmd = $cmd ? $cmd : 'update';
               $submitout .= "<input type=\"submit\" class=\"myf_button\" value=\"" . trim(localize('_UPDATE',getlocal())) . "\">";// onclick=\"document.forms('Registration').FormAction.value = '$updcmd';\">";
               $submitout .= "<input type=\"hidden\" value=\"$updcmd\" name=\"FormAction\"/>";			  
-		   }
+		}     
+		$submitout .= "<input type=\"hidden\" value=".GetReq('rec')." name=\"rec\"/>";		   
+		$submitout .= "<input type=\"hidden\" name=\"FormName\" value=\"Registration\">";
+		$submitout .= "</form>";
 
-           /*if (seclevel('DELETEUSR_',$this->userLevelID)) {
-		      $submitout .= "&nbsp;";
-              $submitout .= "<input type=\"submit\" class=\"myf_button\" value=\"" . trim(localize('_DELETE',getlocal())) . "\">";// onclick=\"document.forms('Registration').FormAction.value = 'delete';\">";
-              $submitout .= "<input type=\"hidden\" value=\"delete\" name=\"FormAction\"/>";			  
-		   }*/	   
-		   
-		   $submitout .= "<input type=\"hidden\" value=".GetReq('rec')." name=\"rec\"/>";		   
-	   }
-	   else {
-	     $un = decode($UserName);
-         if (!$un) {
-           $submitout .= "<input type=\"submit\" class=\"myf_button\" value=\"" . trim(localize('_SIGNUP',getlocal())) . "\" onclick=\"document.forms('Registration').FormAction.value = '$dpccmd';\">";
-           $submitout .= "<input type=\"hidden\" value=\"insert\" name=\"FormAction\"/>";
-         }
-         else {
-           //$submitout .= "<input type=\"hidden\" value=\"update\" name=\"FormAction\"/>";
-
-           if ((seclevel('UPDATEUSR_',$this->userLevelID)) || ($isupdate) || (GetReq('editmode'))) {
-              $updcmd = $cmd?$cmd:'update';
-              $submitout .= "<input type=\"submit\" class=\"myf_button\" value=\"" . trim(localize('_UPDATE',getlocal())) . "\">";// onclick=\"document.forms('Registration').FormAction.value = '$updcmd';\">";
-              $submitout .= "<input type=\"hidden\" value=\"$updcmd\" name=\"FormAction\"/>";			  
-		   }
-
-           if (seclevel('DELETEUSR_',$this->userLevelID)) {
-              $submitout .= "<input type=\"submit\" class=\"myf_button\" value=\"" . trim(localize('_DELETE',getlocal())) . "\">";// onclick=\"document.forms('Registration').FormAction.value = 'delete';\">";
-              $submitout .= "<input type=\"hidden\" value=\"delete\" name=\"FormAction\"/>";			  
-		   }
-         }
-       }
-       $submitout .= "<input type=\"hidden\" name=\"FormName\" value=\"Registration\">";
-       $submitout .= "</form>";
-
-       if ($tokensout) {  
-	      $tokens[] = $submitout;
-		  if ($isupdate) { 
+	    $tokens[] = $submitout;
+		if ($isupdate) { 
 		    $tokens[] = $fname;
 		    $tokens[] = $lname;
 			$tokens[] = $statin; //subscription
-		  }
-		  else
+		}
+		else
 		    $tokens[] = $invtypedescr;//$myinvtype ? 'B' : 'A'; /*inv type title*/
 				  
-		  $ret = $this->combine_tokens($this->mytemplate,$tokens);
-		  return ($ret);			  
-	   }
-	   else {
-	     $out .= $submitout;	   
-		 
-	     $uwin = new window(localize('_PDATA',getlocal()),$out);
-	     $winout = $uwin->render();
-	     unset($uwin);
-
-	     return ($winout);
-	   }
-
+		$ret = $this->combine_tokens($mytemplate,$tokens);
+		
+		return ($ret);			  
 	}
 
-    function checkFields($bypass=null,$checkasterisk=null) {
-	   $sFormErr = GetGlobal('sFormErr');
-	   SetGlobal('sFormErr',"");	   
+    protected function checkFields($bypass=null,$checkasterisk=null) {
+		$sFormErr = GetGlobal('sFormErr');
+		SetGlobal('sFormErr',"");	   
 	   
-	   if ($bypass) 
-	     return null;		   
+		if ($bypass) 
+			return null;		   
 	   
-	   $recfields = (array) $this->usrform;//custom fields
-	   $titlefields = (array) $this->usrformtitles;
+		$recfields = (array) $this->usrform;//custom fields
+		$titlefields = (array) $this->usrformtitles;
 	   
-       if (!$recfields) {
-         if ($this->usemailasusername) { 
-	         $recfields = array('uname','pwd','pwd2','fname','lname');
-			 $titlefields = array('_EMAIL','_PASS','_VPASS','_FNAME','_LNAME');
-	     }
-	     else {
-	       $recfields = array('eml','pwd','pwd2','fname','lname');
-		   $titlefields = array('_EMAIL','_PASS','_VPASS','_FNAME','_LNAME');
-		 }  
-       }	   
-	   
-	   
-	   if ($checkasterisk) {
-	     //$sFormErr = implode('-',$_POST);
-		 
-	     foreach ($recfields as $field_num => $fieldname) {
-    		//$title = localize($titlefields[$field_num],getlocal());
-			$titles = explode('/',remote_paramload('SHUSERS',$fieldname,$this->path));
-			$title = $titles[getlocal()];
-	     	if (strstr($title,'*')) { //check by title using *
-			
-              //$sFormErr .= $fieldname .'-'.$_POST[$fieldname].'<br/>';
-              if (!strlen(GetParam(_with($fieldname)))) {
-                $sFormErr .= localize('_MSG12',getlocal()) . " <font color=\"red\">" .
-		                     $title . "</font> " .
-		                     localize('_MSG11',getlocal()) . "<br>";		  			
-			  }
+		if (!$recfields) {
+			if ($this->usemailasusername) { 
+				$recfields = array('uname','pwd','pwd2','fname','lname');
+				$titlefields = array('_EMAIL','_PASS','_VPASS','_FNAME','_LNAME');
 			}
-		 }		   
-	   }	
-	   else { 
-         foreach ($recfields as $field_num => $fieldname) {
-           //echo $fieldname,'<br>';
-           if(!strlen(GetParam(_with($fieldname)))) {
-             $sFormErr .= localize('_MSG12',getlocal()) . " <font color=\"red\">" .
-		                  localize($titlefields[$field_num],getlocal()) . "</font> " .
-		                  localize('_MSG11',getlocal()) . "<br>";
-             //echo $fieldname;
-           }
-		 }	     
-       }
+			else {
+				$recfields = array('eml','pwd','pwd2','fname','lname');
+				$titlefields = array('_EMAIL','_PASS','_VPASS','_FNAME','_LNAME');
+			}  
+		}	   
 	   
-	   //extra checks
-	   if ((is_numeric(GetParam("pwd"))) && (strlen(GetParam("pwd"))<8))
-         $sFormErr .= localize('_MSGPWD',getlocal()) . "<br>";		 	   
 	   
-	   //...password verification
-       if (GetParam("pwd")!=GetParam("pwd2"))
-         $sFormErr .= localize('_MSG13',getlocal()) . "<br>";	
+		if ($checkasterisk) {
+			//$sFormErr = implode('-',$_POST);
+			foreach ($recfields as $field_num => $fieldname) {
+				//$title = localize($titlefields[$field_num],getlocal());
+				$titles = explode('/',remote_paramload('SHUSERS',$fieldname,$this->path));
+				$title = $titles[getlocal()];
+				if (strstr($title,'*')) { //check by title using *
+			
+					//$sFormErr .= $fieldname .'-'.$_POST[$fieldname].'<br/>';
+					if (!strlen(GetParam(_with($fieldname)))) {
+						$sFormErr .= localize('_MSG12',getlocal()) . " <font color=\"red\">" . $title . "</font> " . localize('_MSG11',getlocal()) . "<br/>";		  			
+					}
+				}
+			}		   
+		}	
+		else { 
+			foreach ($recfields as $field_num => $fieldname) {
+				//echo $fieldname,'<br>';
+				if(!strlen(GetParam(_with($fieldname)))) {
+					$sFormErr .= localize('_MSG12',getlocal()) . " <font color=\"red\">" . localize($titlefields[$field_num],getlocal()) . "</font> " . localize('_MSG11',getlocal()) . "<br/>";
+				//echo $fieldname;
+				}
+			}	     
+		}
+	   
+		//extra checks
+		if ((is_numeric(GetParam("pwd"))) && (strlen(GetParam("pwd"))<8))
+			$sFormErr .= localize('_MSGPWD',getlocal()) . "<br>";		 	   
+	   
+		//...password verification
+		if (GetParam("pwd")!=GetParam("pwd2"))
+			$sFormErr .= localize('_MSG13',getlocal()) . "<br>";	
 		 
-	   //mail check	 
-       if ($this->usemailasusername) { 
-	     if ((GetParam("uname")) && (checkmail(GetParam("uname"))==false))
-		   $sFormErr .= localize('_INVALIDMAIL',getlocal()) . "<br>";	
-	   }
-	   else {
-	     if ((GetParam("eml")) && (checkmail(GetParam("eml"))==false))
-		   $sFormErr .= localize('_INVALIDMAIL',getlocal()) . "<br>";		   
-	   }
+		//mail check	 
+		if ($this->usemailasusername) { 
+			if ((GetParam("uname")) && (checkmail(GetParam("uname"))==false))
+				$sFormErr .= localize('_INVALIDMAIL',getlocal()) . "<br>";	
+		}
+		else {
+			if ((GetParam("eml")) && (checkmail(GetParam("eml"))==false))
+				$sFormErr .= localize('_INVALIDMAIL',getlocal()) . "<br>";		   
+		}
 	   
-	   //if (GetGlobal('FormAction')=='insert') {//only at insert
-	   if (GetParam('FormAction')!=='update') {//only when no update
-	     if (($this->deny_multiple_users) && ($this->user_exists(GetParam("uname")))) {
-		   $sFormErr .= localize('_USEREXISTS',getlocal()) . "<br>";		 
-	     }
-	   }
+		//if (GetGlobal('FormAction')=='insert') {//only at insert
+		if (GetParam('FormAction')!=='update') {//only when no update
+			if (($this->deny_multiple_users) && ($this->user_exists(GetParam("uname")))) {
+				$sFormErr .= localize('_USEREXISTS',getlocal()) . "<br>";		 
+			}
+		}
 		 	   
-	   SetGlobal('sFormErr',$sFormErr);
-       return $sFormErr;
+		SetGlobal('sFormErr',$sFormErr);
+		return $sFormErr;
     }
 
-    function getuser($id="",$fkey=null,$isadmin=null,$isupdate=null) {
-       $db = GetGlobal('db');
-	   $UserName = GetGlobal('UserName');
-	   $myfkey = $fkey?$fkey:'username';
-	   $a = GetReq('a');
-	   $g = GetReq('g');
-	   $un = decode($UserName); //echo $un;
-	   $myrec = $id?$id:$un;
+    protected function getuser($id="",$fkey=null,$isadmin=null,$isupdate=null) {
+		$db = GetGlobal('db');
+		$UserName = GetGlobal('UserName');
+		$myfkey = $fkey?$fkey:'username';
+		$a = GetReq('a');
+		$g = GetReq('g');
+		$un = decode($UserName); //echo $un;
+		$myrec = $id?$id:$un;
 	   
 
-	   if ($isupdate) {    
-	     $recfields = array('fname','lname','username','password','vpass','email');//,'lname');
-	     $basicfields = implode(',',$recfields);	   
+		if ($isupdate) {    
+			$recfields = array('fname','lname','username','password','vpass','email');//,'lname');
+			$basicfields = implode(',',$recfields);	   
 		 
-	     $sSQL = "select " . $basicfields . ",CNTRYID,LANID,AGEID,GENID,TIMEZONE,SUBSCRIBE from users";//,NOTES,STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID,TIMEZONE FROM users" .
-		 if (strstr($myfkey,'id'))
-	    	$sSQL.= " WHERE " . $myfkey . "=" . $myrec;// ."'";	
-		 else
-		 	$sSQL.= " WHERE " . $myfkey . "='" . $myrec . "'";	   
+			$sSQL = "select " . $basicfields . ",CNTRYID,LANID,AGEID,GENID,TIMEZONE,SUBSCRIBE from users";//,NOTES,STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID,TIMEZONE FROM users" .
+			if (strstr($myfkey,'id'))
+				$sSQL.= " WHERE " . $myfkey . "=" . $myrec;// ."'";	
+			else
+				$sSQL.= " WHERE " . $myfkey . "='" . $myrec . "'";	   
 		 //$sSQL.= " and lname<>'SUBSCRIBER'"; //compatibility with extra rec as subscriber		  
-       }
-	   else {//????
-         if ($isadmin) {//admin selection
-	         $sSQL = "SELECT FNAME,LNAME,USERNAME,PASSWORD,VPASSWRD,EMAIL,CNTRYID,LANID,AGEID,GENID,NOTES,STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID,TIMEZONE FROM users" .
-			 " WHERE ".$myfkey."='" . $myrec . "'";// . " AND USERNAME='" . $g . "'";
-	     }
-         elseif ((!$a) || (!seclevel('USERSMNG_',$this->userLevelID))) { //unique selection
-	         $sSQL = "SELECT FNAME,LNAME,USERNAME,PASSWORD,VPASS,EMAIL,CNTRYID,LANID,AGEID,GENID,NOTES,STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID,TIMEZONE FROM users" .
-			 " WHERE " . $myfkey . "='" . $myrec . "'";// ."'";
-	     }
-	     else {//admin selection
-	         $sSQL = "SELECT FNAME,LNAME,USERNAME,PASSWORD,VPASSWRD,EMAIL,CNTRYID,LANID,AGEID,GENID,NOTES,STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID,TIMEZONE FROM users" .
-			 " WHERE ".$myfkey."='" . $a . "' AND USERNAME='" . $g . "'";
-	     }
-		 	 
-       }//elseif
+		}
+		else {//????
+			if ($isadmin) {//admin selection
+				$sSQL = "SELECT FNAME,LNAME,USERNAME,PASSWORD,VPASSWRD,EMAIL,CNTRYID,LANID,AGEID,GENID,NOTES,STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID,TIMEZONE FROM users" .
+				" WHERE ".$myfkey."='" . $myrec . "'";// . " AND USERNAME='" . $g . "'";
+			}
+			elseif ((!$a) || (!seclevel('USERSMNG_',$this->userLevelID))) { //unique selection
+				$sSQL = "SELECT FNAME,LNAME,USERNAME,PASSWORD,VPASS,EMAIL,CNTRYID,LANID,AGEID,GENID,NOTES,STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID,TIMEZONE FROM users" .
+				" WHERE " . $myfkey . "='" . $myrec . "'";// ."'";
+			}
+			else {//admin selection
+				$sSQL = "SELECT FNAME,LNAME,USERNAME,PASSWORD,VPASSWRD,EMAIL,CNTRYID,LANID,AGEID,GENID,NOTES,STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID,TIMEZONE FROM users" .
+				" WHERE ".$myfkey."='" . $a . "' AND USERNAME='" . $g . "'";
+			} 
+		}//elseif
 	   
-       $result = $db->Execute($sSQL,2);
-	   
-	   //echo $sSQL;	   
+		$result = $db->Execute($sSQL,2);
+		//echo $sSQL;	   
 
-	   if (count($result->fields)>1) {//check result...
-	    
-		foreach ($result->fields as $i=>$rec) {
-	      if (is_numeric($i)) {
-		    $record[] = $rec;
-		  }
-		}  
-        $ret = implode(";",$record); //echo $record;		   
-	   }	
-		 
-       //echo $ret;  
+		if (count($result->fields)>1) {//check result...
+			foreach ($result->fields as $i=>$rec) {
+				if (is_numeric($i)) {
+					$record[] = $rec;
+				}
+			}  
+			$ret = implode(";",$record); //echo $record;		   
+	   }	 
+  
 	   return ($ret);
 	}
 
 	//return array of record
-    function getuserdata($what=null) {
-
-       //read data
-	   $fields = $this->getuser();
-
-       //in case of no customer data this must return null
-	   if (strlen($fields)>3) { //if empty returns ';;;'
-
-		   $myfields = explode(";",$fields);
-
-		   $data = $myfields;
-       }
-
-       //print_r($data);
-	   if (isset($what)) {
-	     //echo $data[$what];
-	     return ($data[$what]);
-	   }
-	   else {
-	     return ($data);
-	   }
+    protected function getuserdata($what=null) {
+		//read data
+		$fields = $this->getuser();
+		//in case of no customer data this must return null
+		if (strlen($fields)>3) { //if empty returns ';;;'
+			$myfields = explode(";",$fields);
+			$data = $myfields;
+		}
+		
+		//print_r($data);
+		if (isset($what)) 
+			return ($data[$what]);
+	   
+	     
+		return ($data);
 	}
 
-	function register($myuser=null,$myfkey=null,$selectid=null,$cmd=null) {
-       $user = decode(GetGlobal('UserID'));
-	   $sFormErr = GetGlobal('sFormErr');
-	   $a = GetReq($selectid)?GetReq($selectid):GetReq('a');
-	   $mycmd_update = $cmd?$cmd:'update';	   
-	   
-	   
-       //echo $sFormErr,'<br>';
-       if ($sFormErr=="ok") {
+	protected function register($myuser=null,$myfkey=null,$selectid=null,$cmd=null) {
+        $user = decode(GetGlobal('UserID'));
+	    $sFormErr = GetGlobal('sFormErr');
+	    $a = GetReq($selectid) ? GetReq($selectid) : GetReq('a');
+	    $mycmd_update = $cmd ? $cmd : 'update';	   
 
-   		   SetGlobal('sFormErr',"");
+        if ($sFormErr=="ok") {
 
-	       $myaction = GetGlobal('dispatcher')->getqueue(); //echo $myaction,"<><><><";
-		   switch ($myaction) {
+			SetGlobal('sFormErr',"");
 
-            case "insert": $out .= setError(localize('_SUCCESSREG',getlocal()));
-						   //SetGlobal('sFormErr',localize('_SUCCESSREG',getlocal()));
-						   $out .= $this->after_registration_goto();
-						   break;
-            case "update": 
-						   $out = setError(localize('_MSG10',getlocal()));
-						   $out .= $this->after_update_goto();
-						   break;
-            case "delete": $out = setError(localize('_MSG10',getlocal()));
-			               $out .= $this->after_delete_goto();
-			               break;
-		   }
+			$myaction = GetGlobal('dispatcher')->getqueue(); //echo $myaction,"<><><><";
+			switch ($myaction) {
 
-	   }
-	   else {
-
-		   if ((!$user) && (seclevel('SIGNUP_',$this->userLevelID))) {
-		     //echo 'a';
-	         //if (!GetReq('editmode'))
-		       //$out = setNavigator(localize('_SIGNUP',getlocal()));
-			 
- 			 if (!$this->tokensout)			 
-			   $out .= setError($sFormErr);
-			  
-	         $out .= $this->regform(); //insert action
-		   }	   
-   	       elseif (seclevel('ACCOUNTMNG_',$this->userLevelID)) {
-              //echo 'b';
-   	          if ((seclevel('USERSMNG_',$this->userLevelID)) && (!$a)) {
-			     //disabled
-		      }
-			  else {
-				 if ($myuser)
-                   $record = $this->getuser($myuser,$myfkey,null,1);
-				 else				 
-                   $record = $this->getuser(null,null,null,1);
-				 
- 				 if (!$this->tokensout)
-	               $out .= setError($sFormErr);
+				case "insert":  $out .= setError(localize('_SUCCESSREG',getlocal()));
+								$out .= $this->after_registration_goto();
+								break;
+				case "update":  $out = setError(localize('_MSG10',getlocal()));
+								$out .= $this->after_update_goto();
+								break;
+				case "delete":  $out = setError(localize('_MSG10',getlocal()));
+								$out .= $this->after_delete_goto();
+								break;
+			}
+	    }
+	    else {
+			if ((!$user) && (seclevel('SIGNUP_',$this->userLevelID))) {
+				//echo 'a';			  
+				$out .= $this->regform(); //insert action
+			}	   
+			elseif (seclevel('ACCOUNTMNG_',$this->userLevelID)) {
+				//echo 'b';
+				if ($myuser)
+					$record = $this->getuser($myuser,$myfkey,null,1);
+				else				 
+					$record = $this->getuser(null,null,null,1);
 				   
-	             $out .= $this->regform($record,$mycmd_update,1,null,1,1,1); //update action
+	            $out .= $this->regform($record,$mycmd_update,1,null,1,1,1); //update action
 				 
-				 //VIEW CUSTOMER LISTS
-				 if (defined('SHCUSTOMERS_DPC')) {
-                   //$out .= _m('shcustomers.addcustomerform');	  
-	               //$out .= _m('shcustomers.show_customer_delivery');  				 
-				   
-				   $out .= _m('shcustomers.show_customers_list');	  
-		         }
-			  }
+				//VIEW CUSTOMER LISTS
+				if (defined('SHCUSTOMERS_DPC')) {
+					//$out .= _m('shcustomers.addcustomerform');	  
+					//$out .= _m('shcustomers.show_customer_delivery');  				 
+					$out .= _m('shcustomers.show_customers_list');	  
+		        }
 		   }
 	   }
 
 	   return ($out);
 	}
 	
-	function after_registration_goto() {
+	protected function after_registration_goto() {
 	    $sFormErr = GetGlobal('sFormErr');	
 	
         if ($this->predef_customer) {//repdefined customer
@@ -1123,40 +662,40 @@ class shusers  {
 	    return ($out);
 	}	
 	
-	function after_update_goto() {
-	   $myaction = GetParam('FormAction');
-	   //echo '>',$myaction;
-	   //print_r($_POST);
-	   if ((GetGlobal('UserID')) && (stristr($myaction,'update'))) {//already in..modify account
-	       //update1 or update2 (user or customer)
+	protected function after_update_goto() {
+	    $myaction = GetParam('FormAction');
+	    //echo '>',$myaction;
+	    //print_r($_POST);
+	    if ((GetGlobal('UserID')) && (stristr($myaction,'update'))) {//already in..modify account
+			//update1 or update2 (user or customer)
 	      
-		   if ($myaction=='update') {//user
-		     $out .= $this->register();
-		   }
-		   elseif ((($myaction=='update2') && 
+			if ($myaction=='update') {//user
+				$out .= $this->register();
+			}
+			elseif ((($myaction=='update2') && 
 		           (defined('SHCUSTOMERS_DPC')) && 
 				   (seclevel('SHCUSTOMERS_DPC',$this->userLevelID)))) {
 				   
                 $out .= _m('shcustomers.register');		   
-		   }
-	   }	
+			}
+	    }	
 	   
-	   return ($out);
+	    return ($out);
 	}
 	
-	function after_delete_goto() {
+	protected function after_delete_goto() {
 	
-	  return ($out);
+		return ($out);
 	}
 	
 	//check if the registered user is a valid sen user and if it is return his leeid
 	//preset is used to pass lanme+fname as default username	
-	function find_predefined_customer() {
-	   $a = GetParam('fname');
-	   $b = GetParam('lname');	
+	protected function find_predefined_customer() {
+	    $a = GetParam('fname');
+	    $b = GetParam('lname');	
 	
-       //SEN SUPPORT : get customer data or register new customer
-       if ( (defined('SHCUSTOMERS_DPC')) && (seclevel('SHCUSTOMERS_DPC',$this->UserLevelID)) ) {
+        //SEN SUPPORT : get customer data or register new customer
+        if ( (defined('SHCUSTOMERS_DPC')) && (seclevel('SHCUSTOMERS_DPC',$this->UserLevelID)) ) {
 
 		  $WSQL = "NAME='$a' AND PRFDESCR='$b'";//PRFDESCR='$b'";
 
@@ -1173,41 +712,39 @@ class shusers  {
 			return ($leeid);
 		  }
 
-	   }
+	    }
 	   
-	   return null;	
+	    return null;	
 	}
 
-
-	function pre_insert_task($preset=null) {
-	   $a = GetParam('fname');
-	   $b = GetParam('lname');	
-	   $c = GetParam('uname');		
-	   
-	   //echo $a,$b,$c,'<br>';   
+	protected function pre_insert_task($preset=null) {
+		$a = GetParam('fname');
+		$b = GetParam('lname');	
+		$c = GetParam('uname');		 
+		//echo $a,$b,$c,'<br>';   
 	          
-       if ($this->usemailasusername) {
-	     if (checkmail(GetParam("uname"))==true)
-	       $genun = strtolower(trim($c)); //string = code of cus
-		 else
-		   return null;  
-	   }	 
-	   else	{//find predef customer
-         $genun = $this->find_predefined_customer(); //number=code2 of cus	 
+		if ($this->usemailasusername) {
+			if (checkmail(GetParam("uname"))==true)
+				$genun = strtolower(trim($c)); //string = code of cus
+			else
+				return null;  
+		}	 
+		else	{//find predef customer
+			$genun = $this->find_predefined_customer(); //number=code2 of cus	 
        
-	     //CHECK
-	     //default username = the combination of fname (as inserted by user) plus lname=job title
-	     //else if is customer this function return leeid of customer where is the username
-	     if (!$genun)	{
-	       if ($preset)
-		     $genun = $preset;
-		   else  
-	         $genun = $a.' '.$b; //combine fisrt last name
-	     }	
-	   } 
+			//CHECK
+			//default username = the combination of fname (as inserted by user) plus lname=job title
+			//else if is customer this function return leeid of customer where is the username
+			if (!$genun)	{
+				if ($preset)
+					$genun = $preset;
+				else  
+					$genun = $a.' '.$b; //combine fisrt last name
+			}	
+		} 
 		 
-	   //echo '>'.$genun;	 
-	   return ($genun);
+		//echo '>'.$genun;	 
+		return ($genun);
 	}
 	
     //mail registration info to the company
@@ -1217,9 +754,7 @@ class shusers  {
 		
 	  if ($tellit) {
 		  
-	    $template= "userinserttell.htm";
-		$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
-  	    $mytemplate = file_get_contents($t);
+  	    $mytemplate = _m('cmsrt.select_template use userinserttell');
 		
 		$tokens = array(); //reset		
 		$tokens[] = $username;	
@@ -1241,16 +776,13 @@ class shusers  {
 	protected function mailtoclient($username=null,$password=null,$fname=null,$lname=null) {
 		
 	  if ($this->it_sendfrom) {
-		  
-	    $template= "userinsert.htm";
-		$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.',$template) ;
 
 		$hash = md5('stereobit9networlds8and7the6heart5breakers');
 		$sectoken = urlencode(base64_encode($username.'|'.$hash));
 		$account_enable_link = seturl('t=useractivate&sectoken='.$sectoken);
 		//echo $account_enable_link;
 		
-		$mytemplate = file_get_contents($t);
+		$mytemplate = _m('cmsrt.select_template use userinsert'); 
 		$tokens = array(); //reset	
 		$tokens[] = $username;	
 		$tokens[] = $password;
@@ -1270,7 +802,7 @@ class shusers  {
 	}	
 
 	//parameter is the result of input = username
-	function after_insert_task($username=null,$password=null,$fname=null,$lname=null) {
+	protected function after_insert_task($username=null,$password=null,$fname=null,$lname=null) {
 
       //mail registration info to the company
 	  $this->mailtohost($username,$password,$fname,$lname);
@@ -1279,17 +811,14 @@ class shusers  {
 	  $this->mailtoclient($username,$password,$fname,$lname);
 	  
 	  $this->auto_subscribe();
-
 	}
 	
-	function auto_subscribe() {
+	protected function auto_subscribe() {
 		if (!$submail) return false;
 		$submail = ($this->usemailasusername)  ? GetParam("uname") : GetParam("eml");	
 		 
-
 		if (defined('CMSSUBSCRIBE_DPC')) {
 			if (trim(GetParam('autosub'))=='on') {
-		     
 				_m('cmssubscribe.dosubscribe use '.$submail.'+1+-1');
 				return true;
 			}  
@@ -1298,40 +827,40 @@ class shusers  {
 		return false;
 	}	
 
-	function insert() {
-       $db = GetGlobal('db');
-	   $sFormErr = GetGlobal('sFormErr');
-       $seclevid = $this->security?$this->security:'0';  	   
+	protected function insert() {
+		$db = GetGlobal('db');
+		$sFormErr = GetGlobal('sFormErr');
+		$seclevid = $this->security?$this->security:'0';  	   
 
-       $user_code = $this->pre_insert_task();	
-	   //echo '+',$user_code;
+		$user_code = $this->pre_insert_task();	
+		//echo '+',$user_code;
 	   
-	   if (!$user_code) {
-		   SetGlobal('sFormErr',localize('_MSG21',getlocal()).' #1');
-		   return null;	   
-	   }
+		if (!$user_code) {
+			SetGlobal('sFormErr',localize('_MSG21',getlocal()).' #1');
+			return null;	   
+		}
 	   
-	   //save it to restore if 2nd step exist to insert custime and to connect
-	   SetSessionParam('new_user_code',$user_code); 
+		//save it to restore if 2nd step exist to insert custime and to connect
+		SetSessionParam('new_user_code',$user_code); 
 
-	   if ($un = $this->username_exist()) {
+		if ($un = $this->username_exist()) {
 
-	     SetGlobal('sFormErr', localize('_MSG17',getlocal()) . ' ' . $un);
-	   }
-	   else {
+			SetGlobal('sFormErr', localize('_MSG17',getlocal()) . ' ' . $un);
+		}
+		else {
 		 
-		 $activ = $this->inactive_on_register ? '0' : '1';
+			$activ = $this->inactive_on_register ? '0' : '1';
 		  
-         $sSQL = "insert into users" . " (" . "active,code2,fname,lname,username,password,vpass,email,CNTRYID,LANID,AGEID,GENID,timezone,notes,fb";
+			$sSQL = "insert into users" . " (" . "active,code2,fname,lname,username,password,vpass,email,CNTRYID,LANID,AGEID,GENID,timezone,notes,fb";
 
-         if (seclevel('USERSMNG_',$this->userLevelID)) {
- 	  	    $sSQL .= ",STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID";
-         }
-		 else {
-		    $sSQL .= ",SECLEVID"; //only security
-		 }
+			if (seclevel('USERSMNG_',$this->userLevelID)) {
+				$sSQL .= ",STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID";
+			}
+			else {
+				$sSQL .= ",SECLEVID"; //only security
+			}
 
-         $sSQL .= ")" .  " values ($activ," .
+			$sSQL .= ")" .  " values ($activ," .
 				"'" . addslashes($user_code) . "'," . //username as usercode
                 "'" . addslashes(GetParam("fname")) . "'," .
 			    "'" . addslashes(GetParam("lname")) . "'," .
@@ -1339,62 +868,60 @@ class shusers  {
                 "'" . md5(addslashes(GetParam("pwd"))) . "'," .
                 "'" . md5(addslashes(GetParam("pwd2"))) . "',";
 
-          if ($this->usemailasusername)
-                $sSQL .= "'" . addslashes($user_code) . "',";//email = usercode
-		  else
+			if ($this->usemailasusername)
+				$sSQL .= "'" . addslashes($user_code) . "',";//email = usercode
+			else
                 $sSQL .= "'" . addslashes(GetParam("eml")) . "',";
 
-          $country = GetParam("country_id")?GetParam("country_id"):0;
-		  $language = GetParam("language_id")?GetParam("language_id"):0;
-		  $age = GetParam("age")?GetParam("age"):0;
-		  $gender = GetParam("gender")?GetParam("gender"):0;
-		  $tmz = GetParam("timezone")?GetParam("timezone"):0;
+			$country = GetParam("country_id")?GetParam("country_id"):0;
+			$language = GetParam("language_id")?GetParam("language_id"):0;
+			$age = GetParam("age")?GetParam("age"):0;
+			$gender = GetParam("gender")?GetParam("gender"):0;
+			$tmz = GetParam("timezone")?GetParam("timezone"):0;
 		  
-		  $active = $this->inactive_on_register ? 'DELETED' : 'ACTIVE';
+			$active = $this->inactive_on_register ? 'DELETED' : 'ACTIVE';
 		  
-          $sSQL .= $country . "," . $language . "," . $age . "," . $gender . "," . $db->qstr($tmz) . "," .	$db->qstr($active) . ",0"; 
+			$sSQL .= $country . "," . $language . "," . $age . "," . $gender . "," . $db->qstr($tmz) . "," .	$db->qstr($active) . ",0"; 
 
-           if (seclevel('USERSMNG_',$this->userLevelID)) {
- 	  	      $sSQL .= "," .
-                GetParam("dcreate") . "," .
-                "'" . GetParam("ipins")  . "'," .
-                "'" . GetParam("ipupd")  . "'," .
-                "'" . GetParam("llogin")  . "'," .
-                "'" . GetParam("sparam")  . "'," .
-                "'" . GetParam("sesid")  . "'," .
-                "'" . GetParam("seclevid") ;
-		   }
-		   else {
+			if (seclevel('USERSMNG_',$this->userLevelID)) {
+				$sSQL .= "," .
+					GetParam("dcreate") . "," .
+					"'" . GetParam("ipins")  . "'," .
+					"'" . GetParam("ipupd")  . "'," .
+					"'" . GetParam("llogin")  . "'," .
+					"'" . GetParam("sparam")  . "'," .
+					"'" . GetParam("sesid")  . "'," .
+					"'" . GetParam("seclevid") ;
+			}
+			else 
 		       $sSQL .= "," . $seclevid;//only security automated (predefined customer)
-		   }
 
-	     $sSQL .= ")";
-         //echo $sSQL;
-         $ret = $db->Execute($sSQL);	 //print_r($ret);
+			$sSQL .= ")";
+			//echo $sSQL;
+			$ret = $db->Execute($sSQL);	 //print_r($ret);
 
-         if ($ret = $db->Affected_Rows()) {
-		   SetGlobal('sFormErr',"ok");
+			if ($ret = $db->Affected_Rows()) {
+				SetGlobal('sFormErr',"ok");
 		   
-		   $this->update_statistics('registration', $user_code);
+				$this->update_statistics('registration', $user_code);
 
-		   $this->after_insert_task($user_code,GetParam("pwd"),GetParam("fname"),GetParam("lname"));//send code to customer
+				$this->after_insert_task($user_code,GetParam("pwd"),GetParam("fname"),GetParam("lname"));//send code to customer
 		   
-	       //INCLUDE CUSTOMER DATA TO MIX IN ONE FORM..SQL EXECUTE USER AND CUS QUERY... 
-           if ($this->includecusform) {		
-		     $sFormErr = _m('shcustomers.subinsert use '.$user_code);
-			 SetGlobal('sFormErr',$sFormErr);	   
-		   }
-		   //////////////////////////////////////////////////////////////////////////		   
-		 }
-	     else {
-		   $ret = $db->ErrorMsg();
-		   //echo $ret;
-		   SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #2');
-		 }
-	   }
+				//INCLUDE CUSTOMER DATA TO MIX IN ONE FORM..SQL EXECUTE USER AND CUS QUERY... 
+				if ($this->includecusform) {		
+					$sFormErr = _m('shcustomers.subinsert use '.$user_code);
+					SetGlobal('sFormErr',$sFormErr);	   
+				}
+				//////////////////////////////////////////////////////////////////////////		   
+			}
+			else {
+				$ret = $db->ErrorMsg();
+				SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #2');
+			}
+		}
 	}
 	
-	function insert_with_customer() {
+	protected function insert_with_customer() {
 		$db = GetGlobal('db');
 		$sFormErr = GetGlobal('sFormErr');
 		$seclevid = $this->security?$this->security:'0';   
@@ -1510,7 +1037,7 @@ class shusers  {
 	    }//if customer inserted       
 	} 
 	
-	function update_user_code($c,$codef=null) {
+	public function update_user_code($c,$codef=null) {
 		$db = GetGlobal('db');	
 		$currentuser = decode($UserName);	   
 	
@@ -1523,7 +1050,7 @@ class shusers  {
 	                       else return (false);	   	    	
 	}
 
-	function update($id=null) {
+	protected function update($id=null) {
 		$db = GetGlobal('db');
 		$UserName = GetGlobal('UserName');
 		$sFormErr = GetGlobal('sFormErr');
@@ -1565,13 +1092,12 @@ class shusers  {
 		   $sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
 
 	     //echo $sSQL;
-
          $db->Execute($sSQL,1);
          if($db->Affected_Rows()) SetGlobal('sFormErr',"ok");
 	                         else SetGlobal('sFormErr',localize('_MSG18',getlocal()));
 	}
 
-	function _delete($id=null,$fkey=null) {
+	protected function _delete($id=null,$fkey=null) {
 		$db = GetGlobal('db');
 		$UserID = GetGlobal('UserID');
 		$sFormErr = GetGlobal('sFormErr');	;
@@ -1592,27 +1118,25 @@ class shusers  {
 				$sSQL = "delete from users where id=" . GetReq('rec');
 			}
 			elseif ($g!='admin') {
-			//$sSQL = "DELETE from users WHERE user_id =" . $db->qstr($currentuserID) ;
-
-			//virtual delete
-			$sSQL = "UPDATE users set active=0," .
-					"NOTES='DELETED'";
+				$sSQL = "UPDATE users set active=0, NOTES='DELETED'";
      
-			if (!$a)
-				$sSQL .= " WHERE $myfkey =" . $myrec . "'";
-			else  		   
-				$sSQL .= " WHERE $myfkey =" . $myrec . " AND USERNAME='" . $g . "'";
+				if (!$a)
+					$sSQL .= " WHERE $myfkey =" . $myrec . "'";
+				else  		   
+					$sSQL .= " WHERE $myfkey =" . $myrec . " AND USERNAME='" . $g . "'";
 
-		 }
-		 //echo $sSQL;		 
-         $db->Execute($sSQL);
-         if($db->Affected_Rows()) SetGlobal('sFormErr',"ok");
-	                         else SetGlobal('sFormErr',localize('_MSG18',getlocal()));		 
-	   }
+			}
+			//echo $sSQL;		 
+			$db->Execute($sSQL);
+			if($db->Affected_Rows()) 
+				SetGlobal('sFormErr',"ok");
+	        else 
+				SetGlobal('sFormErr',localize('_MSG18',getlocal()));		 
+	    }
 	}
 
 
-	function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
+	public function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 	
 	    /*if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
 		  $ret = _m("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
@@ -1704,74 +1228,71 @@ class shusers  {
 		return false;
 	}		
 
-   /////////////////////////////////////////////////////////////////
-   // generate user selection list
-   /////////////////////////////////////////////////////////////////
-   function selectUser($select=0) {
+    /////////////////////////////////////////////////////////////////
+    // generate user selection list
+    /////////////////////////////////////////////////////////////////
+    protected function selectUser($select=0) {
+		$levels = explode(",",paramload('SHUSERS','groups'));
 
-     $levels = explode(",",paramload('SHUSERS','groups'));
+		if ($levels) {
+			reset ($levels);
+			//asort ($levels);
 
-     if ($levels) {
-       reset ($levels);
-       //asort ($levels);
+			$toprint .= "<select name=\"userlevel\" class=\"myf_select\">";//<OPTION value=\"1\">ALL</OPTION>\n";
 
-       $toprint .= "<select name=\"userlevel\" class=\"myf_select\">";//<OPTION value=\"1\">ALL</OPTION>\n";
+			foreach ($levels as $lan_num => $lan_descr) {
 
-       foreach ($levels as $lan_num => $lan_descr) {
+				//not display users above this user
+				if ($lan_num<=$this->userLevelID) {
 
-	     //not display users above this user
-	     if ($lan_num<=$this->userLevelID) {
+					//is selected ?
+					if ($lan_num==$select) $issel = 'selected';
+									  else $issel = '';
+					//have description
+					if ($lan_descr!='')
+						$toprint .= "<OPTION value=\"$lan_num\" $issel>$lan_descr</OPTION>\n";
+				}
+			}
 
-	       //is selected ?
-		   if ($lan_num==$select) $issel = 'selected';
-		                     else $issel = '';
-		   //have description
-           if ($lan_descr!='')
-		     $toprint .= "<OPTION value=\"$lan_num\" $issel>$lan_descr</OPTION>\n";
-		 }
-       }
+			$toprint .= "\n</select>";
+		}
 
-	   $toprint .= "\n</select>";
-     }
-
-     return ($toprint);
-   }
+		return ($toprint);
+    }
 
     //- function returns options for HMTL control "<select>" as one string
-    function get_options($sql,$is_search,$is_required,$selected_value) {
+    protected function get_options($sql,$is_search,$is_required,$selected_value) {
 	    $db = GetGlobal('db');
-
         $options_str="";
 
         if ($is_search)
-          $options_str.="<option value=\"\">All</option>";
+			$options_str.="<option value=\"\">All</option>";
         else  {
-          if (!$is_required) {
-            $options_str.="<option value=\"\"></option>";
-          }
-         }
+			if (!$is_required) 
+				$options_str.="<option value=\"\"></option>";
+        }
 
-         $result = $db->Execute($sql,3);
+        $result = $db->Execute($sql,3);
 
-         if ($result) {
-           while (!$result->EOF)  {
+        if ($result) {
+			while (!$result->EOF)  {
 
-             $id=$result->fields[0];
-             $value=$result->fields[1];
-             $selected="";
-             if ($id == $selected_value) {
-               $selected = "SELECTED";
-             }
-             $options_str.= "<option value='".$id."' ".$selected.">".$value."</option>";
+				$id=$result->fields[0];
+				$value=$result->fields[1];
+				$selected="";
+				if ($id == $selected_value) 
+					$selected = "SELECTED";
 
-	         $result->MoveNext();
-           }
-         }
+				$options_str.= "<option value='".$id."' ".$selected.">".$value."</option>";
 
-         return $options_str;
+				$result->MoveNext();
+			}
+        }
+
+        return $options_str;
     }
 	
-	function get_cus_type($id,$field='username',$istext=1) {
+	public function get_cus_type($id,$field='username',$istext=1) {
         $db = GetGlobal('db');
 		$mycode = $field;
 
@@ -1784,19 +1305,17 @@ class shusers  {
 		}
 		
 		$sSQL .= " and customers.code2=users.code2";
-		//echo $sSQL;
 		$ret = $db->Execute($sSQL,2);
 		
 		return ($ret->fields[0]);		
 	}	
 	
-	function get_cus_name() {
+	public function get_cus_name() {
         $db = GetGlobal('db');
 		$user = decode(GetGlobal('UserID'));
 
 	    $sSQL = "select name,username from customers,users where users.code2=" . $db->qstr($user);
 		$sSQL .= " and active=1 and customers.code2=users.code2";
-		//echo $sSQL;
 		$res = $db->Execute($sSQL,2);
 		
 		//incase of no mapped customer get username
@@ -1804,155 +1323,143 @@ class shusers  {
 		
 		//$nk = seturl('t=signup');//addnewcus&select=1');
 		$ret = "<a href='signup/'>" . $name . "</a>";
-		//echo '>',$ret;
 		return ($ret);		
 	}
 	
-	function get_user_name($prefix=null,$edituser=null) {
+	public function get_user_name($prefix=null,$edituser=null) {
         $db = GetGlobal('db');
 		$user = decode(GetGlobal('UserID'));
-		
 		if (!$user) return;
-
-	    /*$sSQL = "select name,username from customers,users where users.code2=" . $db->qstr($user);
-		$sSQL .= " and active=1 and customers.code2=users.code2";
-		//echo $sSQL;
-		$res = $db->Execute($sSQL,2);*/
-		
-		//incase of no mapped customer get username
-		//$name = $res->fields['name']?$res->fields['name']:$user;
 		$name = $user;
 		
 		if ($prefix) {
-		  if ($edituser) {
-		    $nk = seturl('t=signup');
-		    $ret = $prefix . "<a href='$nk'>" . '&nbsp;'. $name . "</a>";
-	      }
-		  else
-		    $ret = $prefix . $name;
+			if ($edituser) {
+				$nk = seturl('t=signup');
+				$ret = $prefix . "<a href='$nk'>" . '&nbsp;'. $name . "</a>";
+			}
+			else
+				$ret = $prefix . $name;
 		}  
 		else {
-		  if ($edituser) {
-		    $nk = seturl('t=signup');		
-		    $ret = "<a href='$nk'>" . $name . "</a>";
-	      }
-		  else
-		    $ret = $name;			
+			if ($edituser) {
+				$nk = seturl('t=signup');		
+				$ret = "<a href='$nk'>" . $name . "</a>";
+			}
+			else
+				$ret = $name;			
 		}  
-		//echo '>',$ret;
+
 		return ($ret);		
 	}					
 	
-	function get_user_timezone($c=null, $codef=null) {
-	   $db = GetGlobal('db');	
-	   $currentuser = $this->username;	   
+	public function get_user_timezone($c=null, $codef=null) {
+		$db = GetGlobal('db');	
+		$currentuser = $this->username;	   
 	
-	   $code = $codef?$codef:$this->leeid;
-       $sSQL = "select timezone from users";
-	   if ($c)
-	    $sSQL .= " WHERE " . $code."=" . $c;
-	   else	
-        $sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
+		$code = $codef?$codef:$this->leeid;
+		$sSQL = "select timezone from users";
+		if ($c)
+			$sSQL .= " WHERE " . $code."=" . $c;
+		else	
+			$sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
 	   
-       $result = $db->Execute($sSQL);
-       //if($db->Affected_Rows()) return (true);
-	     //                  else return (false);	 	
-	   $timezone_descr = $result->fields['timezone'];
-	   $tmzid = $this->create_timezone_id($timezone_descr);
+		$result = $db->Execute($sSQL);	 	
+		$timezone_descr = $result->fields['timezone'];
+		$tmzid = $this->create_timezone_id($timezone_descr);
 	   
-	   return ($tmzid);	//+- hours 
+		return ($tmzid);	//+- hours 
 	}
 	
-	function set_user_timezone($tmz, $c=null, $codef=null) {
-	   $db = GetGlobal('db');	
-	   $currentuser = $this->username;	   
+	public function set_user_timezone($tmz, $c=null, $codef=null) {
+		$db = GetGlobal('db');	
+		$currentuser = $this->username;	   
 	
-	   $code = $codef?$codef:$this->leeid;
-       $sSQL = "update users set timezone='$tmz'";
-	   if ($c)
-	    $sSQL .= " WHERE " . $code."=" . $c;
-	   else	
-        $sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
+		$code = $codef?$codef:$this->leeid;
+		$sSQL = "update users set timezone='$tmz'";
+		if ($c)
+			$sSQL .= " WHERE " . $code."=" . $c;
+		else	
+			$sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
 	   
-       $db->Execute($sSQL);
-       if($db->Affected_Rows()) return (true);
-	                       else return (false);	 		 
+		$db->Execute($sSQL);
+		if($db->Affected_Rows()) 
+			return true;
+		
+	    return false;	 		 
 	}
 	
-	function  create_timezone_id($timezone=null) {
+	protected function create_timezone_id($timezone=null) {
 	
-	   if (!$timezone) return 0;
+		if (!$timezone) return 0;
 	
-	   $p = explode(' ',$timezone);
-	   if (stristr($p[0],':')) {
+		$p = explode(' ',$timezone);
+		if (stristr($p[0],':')) {
 	   
-	     if (stristr($p[0],'+')) {
-	       $t = explode('+',$p[0]);
-		   $ret = floatval(str_replace(':','.',$t[1]));
-		   //echo '+++',$ret;		   
-		 }  
-		 elseif (stristr($p[0],'-')) {  
-		   $t = explode('-',$p[0]);
-		   $ret = (floatval(str_replace(':','.',$t[1])) * -1);
-		   //echo '---',$ret;
-		 }  
-		 else 
-		   $ret = 0;//...  
-	   }
-	   else
-	     $ret = 0; //gmt time
+			if (stristr($p[0],'+')) {
+				$t = explode('+',$p[0]);
+				$ret = floatval(str_replace(':','.',$t[1]));
+				//echo '+++',$ret;		   
+			}  
+			elseif (stristr($p[0],'-')) {  
+				$t = explode('-',$p[0]);
+				$ret = (floatval(str_replace(':','.',$t[1])) * -1);
+				//echo '---',$ret;
+			}  
+			else 
+				$ret = 0;//...  
+		}
+		else
+			$ret = 0; //gmt time
 		 
-	   return ($ret);	 
+		return ($ret);	 
 	}	
 	
-	function get_user_country($c=null, $codef=null) {
-	   $db = GetGlobal('db');	
-	   $currentuser = $this->username;	   
+	public function get_user_country($c=null, $codef=null) {
+		$db = GetGlobal('db');	
+		$currentuser = $this->username;	   
 	
-	   $code = $codef?$codef:$this->leeid;
-       $sSQL = "select cntryid from users";
-	   if ($c)
-	    $sSQL .= " WHERE " . $code."=" . $c;
-	   else	
-        $sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
-	   //echo $sSQL;
-       $result = $db->Execute($sSQL);	 	
-	   $country_id = $result->fields['cntryid'];
+		$code = $codef?$codef:$this->leeid;
+		$sSQL = "select cntryid from users";
+		if ($c)
+			$sSQL .= " WHERE " . $code."=" . $c;
+		else	
+			$sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
+
+		$result = $db->Execute($sSQL);	 	
+		$country_id = $result->fields['cntryid'];
 	   
-	   return ($country_id);	 
+		return ($country_id);	 
 	}
 	
-	function set_user_country($cntryid, $c=null, $codef=null) {
-	   $db = GetGlobal('db');	
-	   $currentuser = $this->username;	   
+	public function set_user_country($cntryid, $c=null, $codef=null) {
+		$db = GetGlobal('db');	
+		$currentuser = $this->username;	   
 	
-	   $code = $codef?$codef:$this->leeid;
-       $sSQL = "update users set cntryid='$cntryid'";
-	   if ($c)
-	    $sSQL .= " WHERE " . $code."=" . $c;
-	   else	
-        $sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
+		$code = $codef?$codef:$this->leeid;
+		$sSQL = "update users set cntryid='$cntryid'";
+		if ($c)
+			$sSQL .= " WHERE " . $code."=" . $c;
+		else	
+			$sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
 	   
-       $db->Execute($sSQL);
-       if($db->Affected_Rows()) return (true);
-	                       else return (false);	 		 
+		$db->Execute($sSQL);
+		if($db->Affected_Rows()) 
+			return true;
+		
+	    return false;	 		 
 	}	
 	
-	function username_exist($myusername=null) {
+	public function username_exist($myusername=null) {
        $db = GetGlobal('db');	
 	
-	   //ask if username exist
-	   $sSQL1 = "select USERNAME from users where USERNAME='" . $myusername/*trim(GetParam("uname"))*/ . "'";
-       //echo $sSQL1;
-
+	   $sSQL1 = "select USERNAME from users where USERNAME='" . $myusername . "'";
        $res1 = $db->Execute($sSQL1,3);
-	   //print_r($res1->fields);
 	   $existed_username = trim($res1->fields[0]);	
 	   
 	   return ($existed_username);
 	}	
 	
-	function user_exists($username=null, $excludesubscriber=null) {
+	public function user_exists($username=null, $excludesubscriber=null) {
 		$db = GetGlobal('db');	
 		if (!$username) return false;
 	  
@@ -1969,23 +1476,23 @@ class shusers  {
 		return ($ret); 
 	}
 	
-	function user_activate() {
-	     if ($this->stay_inactive) return false;
+	protected function user_activate() {
+	    if ($this->stay_inactive) return false;
 	
-	     $db = GetGlobal('db');	
-		 $id = GetReq('sectoken'); //by mail link
-		 if (!$id) {
+	    $db = GetGlobal('db');	
+		$id = GetReq('sectoken'); //by mail link
+		if (!$id) {
 		   SetGlobal('sFormErr',localize('_ACTIVATEERR',getlocal()));
 		   return false;
 		   //return (localize('_ACTIVATEERR',getlocal()));
-		 } 		 
+		} 		 
 		 
-		 $toks = explode('|',base64_decode(urldecode($id)));
-		 $email = $toks[0];
-         $hash = $toks[1];
-		 $hash2cmp = md5('stereobit9networlds8and7the6heart5breakers');
-		 //echo '>',strcmp($hash,$hash2cmp);
-         if (($this->user_exists($email)) && (strcmp($hash,$hash2cmp)==0)) {		 
+		$toks = explode('|',base64_decode(urldecode($id)));
+		$email = $toks[0];
+        $hash = $toks[1];
+		$hash2cmp = md5('stereobit9networlds8and7the6heart5breakers');
+		//echo '>',strcmp($hash,$hash2cmp);
+        if (($this->user_exists($email)) && (strcmp($hash,$hash2cmp)==0)) {		 
 		 
 			$sSQL = "update users set active=1,notes='ACTIVE' where email = '" . $email ."'";
 			//echo $sSQL;		 
@@ -2002,12 +1509,12 @@ class shusers  {
 				return false;
 				//return (localize('_ACTIVATEERR',getlocal()));
 			}  
-		 }
+		}
 		 
-		 return false;
+		return false;
 	}	
 	
-	function combine_tokens($template_contents,$tokens) {
+	protected function combine_tokens($template_contents,$tokens) {
 	
 	    if (!is_array($tokens)) return;
 		
@@ -2029,7 +1536,7 @@ class shusers  {
 		return ($ret);
 	}		
 
-	function free() {
+	public function free() {
 	}
 };
 }
