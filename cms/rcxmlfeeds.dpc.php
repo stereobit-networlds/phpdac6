@@ -18,75 +18,92 @@ $__LOCALE['RCXMLFEEDS_DPC'][1]='_XMLFILE;XML file;XML file';
 $__LOCALE['RCXMLFEEDS_DPC'][2]='_XMLITEMS;XML items;XML είδη';
 $__LOCALE['RCXMLFEEDS_DPC'][3]='_dimensions;Dimension;Διαστάσεις';
 $__LOCALE['RCXMLFEEDS_DPC'][4]='_size;Size;Μέγεθος';
-$__LOCALE['RCXMLFEEDS_DPC'][5]='_dimensions;Dimensions;Διαστάσεις';
+$__LOCALE['RCXMLFEEDS_DPC'][5]='_resources;Resources;Resources';
 $__LOCALE['RCXMLFEEDS_DPC'][6]='_xmlcreate;Create XML;Δημιούργησε XML';
 $__LOCALE['RCXMLFEEDS_DPC'][7]='_xml;XML item;Είδος XML';
 $__LOCALE['RCXMLFEEDS_DPC'][8]='_manufacturer;Manufacturer;Κατασκευαστής';
+$__LOCALE['RCXMLFEEDS_DPC'][9]='_cat0;Category 1;Κατηγορία 1';
+$__LOCALE['RCXMLFEEDS_DPC'][10]='_cat1;Category 2;Κατηγορία 2';
+$__LOCALE['RCXMLFEEDS_DPC'][11]='_cat2;Category 3;Κατηγορία 3';
+$__LOCALE['RCXMLFEEDS_DPC'][12]='_cat3;Category 4;Κατηγορία 4';
+$__LOCALE['RCXMLFEEDS_DPC'][13]='_cat4;Category 5;Κατηγορία 5';
+$__LOCALE['RCXMLFEEDS_DPC'][14]='_code0;Code 0;Κωδικός 0';
+$__LOCALE['RCXMLFEEDS_DPC'][15]='_code1;Code 1;Κωδικός 1';
+$__LOCALE['RCXMLFEEDS_DPC'][16]='_code2;Code 2;Κωδικός 2';
+$__LOCALE['RCXMLFEEDS_DPC'][17]='_code3;Code 3;Κωδικός 3';
+$__LOCALE['RCXMLFEEDS_DPC'][18]='_code4;Code 4;Κωδικός 4';
+$__LOCALE['RCXMLFEEDS_DPC'][19]='_code5;Code 5;Κωδικός 5';
+$__LOCALE['RCXMLFEEDS_DPC'][20]='_itmactive;Active;Ενεργό';
+$__LOCALE['RCXMLFEEDS_DPC'][21]='_active;Active;Ενεργό';
+$__LOCALE['RCXMLFEEDS_DPC'][22]='_itmname;Title;Τίτλος';
+$__LOCALE['RCXMLFEEDS_DPC'][23]='_uniname;Unit;Μονάδα μ.';
+$__LOCALE['RCXMLFEEDS_DPC'][24]='_ypoloipo1;Qty 1;Υπόλοιπο 1';
+$__LOCALE['RCXMLFEEDS_DPC'][25]='_ypoloipo2;Qty 2;Υπόλοιπο 2';
+$__LOCALE['RCXMLFEEDS_DPC'][26]='_price0;Price 1;Αξία 1';
+$__LOCALE['RCXMLFEEDS_DPC'][27]='_price1;Price 2;Αξία 2';
+$__LOCALE['RCXMLFEEDS_DPC'][28]='_color;Color;Χρώμα';
+$__LOCALE['RCXMLFEEDS_DPC'][29]='_resources;Res;Συσχ.';
 
 class rcxmlfeeds {
 
     var $prpath, $title, $select_fields, $xmlindex, $cdate, $savepath;
 	var $cseparator, $url, $imgpath, $restype;
 	var $pricef, $pricevat, $decimal;
-	//var $map_t, $map_f;
 
-    function __construct() {
+    public function __construct() {
 	  
-	   $this->title = localize('RCXMLFEEDS_DPC',getlocal());	  
-	  
-	   $this->prpath = paramload('SHELL','prpath');
-	   $this->urlpath = paramload('SHELL','urlpath');
+		$this->title = localize('RCXMLFEEDS_DPC',getlocal());	  
+		
+		$this->prpath = paramload('SHELL','prpath');
+		$this->urlpath = paramload('SHELL','urlpath');
+		
+		$this->xmlfiles = remote_arrayload('RCXMLFEEDS','files',$this->prpath); 
 	   
-	   $this->xmlfiles = remote_arrayload('RCXMLFEEDS','files',$this->prpath); 
+		$this->savepath = $this->urlpath . remote_paramload('RCXMLFEEDS','savepath',$this->prpath);
+		$this->imgpath = remote_paramload('RCXMLFEEDS','imgpath',$this->prpath);	   
 	   
-	   $this->savepath = $this->urlpath . remote_paramload('RCXMLFEEDS','savepath',$this->prpath);
-	   $this->imgpath = remote_paramload('RCXMLFEEDS','imgpath',$this->prpath);	   
+		$this->select_fields = remote_arrayload('RCXMLFEEDS','selectfields',$this->prpath); 
+		$this->xmlindex = remote_arrayload('RCXMLFEEDS','xmlindex',$this->prpath);	   	
 	   
-	   $this->select_fields = remote_arrayload('RCXMLFEEDS','selectfields',$this->prpath); 
-       $this->xmlindex = remote_arrayload('RCXMLFEEDS','xmlindex',$this->prpath);	   	
+		$this->cdate = date(DATE_RFC822);//'m-d-Y');
 	   
-	   $this->cdate = date(DATE_RFC822);//'m-d-Y');
+		$csep = remote_paramload('RCXMLFEEDS','csep',$this->path); 
+		$this->cseparator = $csep ? $csep : '^';	
 	   
-       $csep = remote_paramload('RCXMLFEEDS','csep',$this->path); 
-       $this->cseparator = $csep ? $csep : '^';	
-	   
-	   $this->pricef = remote_arrayload('RCXMLFEEDS','pricefields',$this->path); //not used
-	   $this->pricevat = remote_arrayload('RCXMLFEEDS','pricevat',$this->path); //use inside templates <phpdac>rcxmlfeeds.pricewithtax use $8$+23</phpdac>
-	   $this->decimal = remote_paramload('RCXMLFEEDS','decimal',$this->path);
+		$this->pricef = remote_arrayload('RCXMLFEEDS','pricefields',$this->path); //not used
+		$this->pricevat = remote_arrayload('RCXMLFEEDS','pricevat',$this->path); //use inside templates <phpdac>rcxmlfeeds.pricewithtax use $8$+23</phpdac>
+		$this->decimal = remote_paramload('RCXMLFEEDS','decimal',$this->path);
 
-       $murl = arrayload('SHELL','ip');
-       $this->url = $murl[0]; 	 
-	   //$this->map_t = remote_arrayload('RCITEMS','maptitle',$this->path);	
-	   //$this->map_f = remote_arrayload('RCITEMS','mapfields',$this->path);
-       $this->restype = remote_paramload('RCITEMS','restype',$this->path);	   
+		$murl = arrayload('SHELL','ip');
+		$this->url = $murl[0]; 	 
+
+		$this->restype = remote_paramload('RCITEMS','restype',$this->path);	   
 	}
 	
-    function event($event=null) {
+    public function event($event=null) {
 	
-	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') die("Not logged in!");//	
-	   /////////////////////////////////////////////////////////////			
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;			
 
-       if (!$this->msg) {
-  
-	     switch ($event) {
-		 
-		    case 'cpxmlcreate'  : $this->create_xml();
-	                              break;
-			default             :		
+		if (!$this->msg) {
+			switch ($event) {
+				case 'cpxmlcreate'  : 	$this->create_xml();
+										break;
+				default             :		
 			                        						  
-         }
-      }
+			}
+		}
     }	
 
-    function action($action=null)  { 
-
-
-	     switch ($action) {
-           case 'cpxmlcreate'  :
-		   default             :
-		                         $out .= $this->form();
-		 }			 
+    public function action($action=null)  { 
+	
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;
+		
+	    switch ($action) {
+			case 'cpxmlcreate'  :
+			default             :  $out = $this->form();
+		}			 
 
 	     return ($out);
 	}	
@@ -119,98 +136,83 @@ class rcxmlfeeds {
 	
 	protected function form() {
 	
-	    //if ($this->msg) $out = $this->msg;
-	    /*
-	    $commands = seturl("t=cpxmlfeeds&editmode=".GetReq('editmode'),"Reset Campaign") . '|'.  seturl("t=cpadvsubscribe&editmode=".GetReq('editmode'),"Subscribe");
-	   
-	    $myadd = new window('',$commands);
-	    $out .= $myadd->render("center::100%::0::group_article_selected::right::0::0::");	   
-	    unset ($myadd);  
-	
-	    */
-        $out .= $this->xmlform(); 	   
+        $out = $this->xmlform(); 	   
 	    $out .= $this->show_grids(1);  
-	  
 	    return ($out);		
 	}	
 	
     protected function xmlform()  { 	
 	
-	   if (GetParam('FormAction')) {
-  		  $f = explode('=', GetParam('xmlfeed'));
-		  $file = array_pop($f);
+		if (GetParam('FormAction')) {
+			$f = explode('=', GetParam('xmlfeed'));
+			$file = array_pop($f);
 		}
         else
-          $file = GetReq('xmlfeed');	   
+			$file = GetReq('xmlfeed');	   
 
-       $opt = "<option value='#'>".localize('RCXMLFEEDS_DPC',getlocal())."</option>";	   
-	   //$opt .= implode("</option><option>",$this->xmlfiles);
-	   foreach ($this->xmlfiles as $i=>$v) {
+		$opt = "<option value='#'>".localize('RCXMLFEEDS_DPC',getlocal())."</option>";	   
+		//$opt .= implode("</option><option>",$this->xmlfiles);
+		foreach ($this->xmlfiles as $i=>$v) {
 		    $myvalue = str_replace('#',$i,seturl('t=cpxmlfeeds&xmlfeed='.$v)); 
 			$opt .= "<option value=\"$myvalue\"".($v == $file ? " selected" : "").">$v</option>";		
-	   }  
-	   $opt .= "</option>";	
+		}  
+		$opt .= "</option>";	
 	
-       $filename = seturl("t=cpxmlfeeds&editmode=".GetReq('editmode'));
-
-	   /*$toprint = '<h2>'. localize('RCXMLFEEDS_DPC',getlocal());
-       $toprint .= $file ? ' - ' . $file . '.xml' : '';		   
-	   $toprint .=  '</h2>';*/
+		$filename = seturl("t=cpxmlfeeds&editmode=".GetReq('editmode'));
     
-       $toprint .= "<FORM action=". "$filename" . " method=post>";
-       $toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1><STRONG>";
-	   $toprint .= localize('_XMLFILE',getlocal());
-	   $toprint .= "</STRONG><br>";
-	   //$toprint .= "<INPUT type=\"text\" name=submail maxlenght=\"64\" size=25><br>"; 
-	   $toprint .= "<select name='xmlfeed' onChange='location=this.options[this.selectedIndex].value'>" .
+		$toprint .= "<FORM action=". "$filename" . " method=post>";
+		$toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1><STRONG>";
+		$toprint .= localize('_XMLFILE',getlocal());
+		$toprint .= "</STRONG><br>";
+		//$toprint .= "<INPUT type=\"text\" name=submail maxlenght=\"64\" size=25><br>"; 
+		$toprint .= "<select name='xmlfeed' onChange='location=this.options[this.selectedIndex].value'>" .
 				   $opt . "</select>";
 	   
-       $toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"csvmails\" ROWS=10 cols=60 wrap=\"virtual\" readonly>";
-	   $toprint .=  $this->load_xml_file();		 
-       $toprint .= "</TEXTAREA></DIV><br>";	   
+		$toprint .= "<DIV class=\"monospace\"><TEXTAREA style=\"width:100%\" NAME=\"csvmails\" ROWS=10 cols=60 wrap=\"virtual\" readonly>";
+		$toprint .=  $this->load_xml_file();		 
+		$toprint .= "</TEXTAREA></DIV><br>";	   
 	   
  
-       $toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"xmlcreate\">"; 
-       $toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_xmlcreate',getlocal()) . "\">&nbsp;";  
-	   $toprint .= "<input type=\"checkbox\" name=\"actives\" value=\"1\" checked>&nbsp;All active items" ; 
-       $toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpxmlcreate" . "\">";	 	   
+		$toprint .= "<input type=\"hidden\" name=\"FormName\" value=\"xmlcreate\">"; 
+		$toprint .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . localize('_xmlcreate',getlocal()) . "\">&nbsp;";  
+		$toprint .= "<input type=\"checkbox\" name=\"actives\" value=\"1\" checked>&nbsp;All active items" ; 
+		$toprint .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . "cpxmlcreate" . "\">";	 	   
 	   	    
-       $toprint .= "</FONT></FORM>";	    
+		$toprint .= "</FONT></FORM>";	    
 
-       return ($toprint);
+		return ($toprint);
     }		
 	
 	
 	protected function show_grids() {
 
-		    $title = str_replace(' ','_',localize('_XMLITEMS',getlocal()));
-            $myfields = implode(',', $this->select_fields);	
+		$title = str_replace(' ','_',localize('_XMLITEMS',getlocal()));
+        $myfields = implode(',', $this->select_fields);	
 
-			$sSQL = 'select * from (select id,'.$myfields . ' from products) as o';	   
-		    //echo $sSQL;
+		$sSQL = 'select * from (select id,'.$myfields . ' from products) as o';	   
+		//echo $sSQL;
 
-			foreach ($this->select_fields as $i=>$f) {
-				if (stristr($f,'active')) {
-					$type = 'boolean';
-					$edit = 0;
-					$options = ($f=='itmactive') ? "1:0" : "101:0";	
-					$align = 'left';
-                    //$title = localize('_'.$f,getlocal());					
-				}
-				else {
-					$type = 10;
-					$edit = /*stristr($f,$this->xmlindex*/in_array($f, $this->xmlindex) ? 1 : 0;
-					$options = null; 
-					$align = 'left';
-					//$title = stristr($f,$this->xmlindex) ? localize('_xmlindex',getlocal()) : localize('_'.$f,getlocal());
-				}				
-				GetGlobal('controller')->calldpc_method("mygrid.column use grid9+$f|".localize('_'.$f,getlocal())."|$type|$edit|$options|$link_option|$search|$hidden|$align");	
+		foreach ($this->select_fields as $i=>$f) {
+			if (stristr($f,'active')) {
+				$type = 'boolean';
+				$edit = 0;
+				$options = ($f=='itmactive') ? "1:0" : "101:0";	
+				$align = 'left';
+                //$title = localize('_'.$f,getlocal());					
 			}
+			else {
+				$type = 10;
+				$edit = /*stristr($f,$this->xmlindex*/in_array($f, $this->xmlindex) ? 1 : 0;
+				$options = null; 
+				$align = 'left';
+				//$title = stristr($f,$this->xmlindex) ? localize('_xmlindex',getlocal()) : localize('_'.$f,getlocal());
+			}				
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+$f|".localize('_'.$f,getlocal())."|$type|$edit|$options|$link_option|$search|$hidden|$align");	
+		}
 			
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+products+$sSQL+e+$title+id+1+1+12+300++0+1+1");
+		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+products+$sSQL+e+$title+id+1+1+12+300++0+1+1");
 			
-		
-			return ($out);	
+		return ($out);	
 	}	
 	
 	
@@ -258,9 +260,8 @@ class rcxmlfeeds {
 		return ($ret_array);		
 	}		
 	
-	function create_data($template=null) {
-		//echo 'a>'.$this->savepath .'/'. $template.'.xht';
-		
+	protected function create_data($template=null) {
+
 	    if (($template) && (is_readable($this->savepath .'/'. $template.'.xht'))) {
 	        $xmltemplate = @file_get_contents($this->savepath .'/'. $template.'.xht');
 			$xmltemplate_products = @file_get_contents($this->savepath .'/'. $template.'.xhm');
@@ -295,54 +296,35 @@ class rcxmlfeeds {
 		return ($ret);
 	}	
 
-	function combine_tokens($template_contents,$tokens, $execafter=null) {
+	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
 	    //print_r($tokens); //<<<<<<<<<<<<<, test
 	    if (!is_array($tokens)) return;
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template_contents);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template_contents;
+			$ret = $template_contents;
 		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
+	    foreach ($tokens as $i=>$tok) 
 		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
+
 		//clean unused token marks
 		for ($x=$i;$x<20;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
+			$ret = str_replace("$".$x."$",'',$ret);
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          //echo $retout;
-		  return ($retout);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
+			return ($retout);
 		}		
 		
 		return ($ret);
 	}
-    /*
-	protected function getmapf($name) {
-	
-	  if (empty($this->map_t)) return 0;
-	  
-	  foreach ($this->map_t as $id=>$elm)
-	    if ($elm==$name) break;
-				
-	  //$id = key($this->map_t[$name]) ;
-	  $ret = $this->map_f[$id];
-	  return ($ret);
-	}
-	*/
-	
 	
 	public function fnum($n, $dec_digits, $dp=null, $tp=null) {
 	  $dec = $dp ? $dp : $this->decimal;
@@ -351,17 +333,17 @@ class rcxmlfeeds {
 	}
 
 	public function pricewithtax($price,$tax=null) {
-	  //echo $price;
-      if ($tax) {
-          $mytax = (($price*$tax)/100);	
-	      $value = ($price+$mytax);		  
-	  }
-	  else
-	     $value = $price;
+
+		if ($tax) {
+			$mytax = (($price*$tax)/100);	
+			$value = ($price+$mytax);		  
+		}
+		else
+			$value = $price;
 	 
-	  $ret = $this->fnum($value,2,',',''); //'.'
+		$ret = $this->fnum($value,2,',',''); //'.'
 	
-	  return ($ret);
+		return ($ret);
 	}	
 	
 	//override from fronthtmlpage (use rcxmlfeeds.nvltokens)
@@ -374,7 +356,6 @@ class rcxmlfeeds {
         else 	
            $ret = $token ? $state1 : $state2;
  
-		   
 		return ($ret);
     }		
 };

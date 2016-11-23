@@ -56,6 +56,7 @@ $__LOCALE['RCULISTS_DPC'][15]='_category;Category;Κατηγορία';
 $__LOCALE['RCULISTS_DPC'][16]='_mailstatus;Reason;Αιτία';
 $__LOCALE['RCULISTS_DPC'][17]='_cleanlist;Clean list;Καθαρισμός λίστας';
 $__LOCALE['RCULISTS_DPC'][18]='_failmargin;Fail margin;Αποτυχίες';
+$__LOCALE['RCULISTS_DPC'][19]='_denyview;Hidden;Απόκρυψη';
 
 class rculists  {
 
@@ -74,7 +75,7 @@ class rculists  {
 		$this->savehtmlpath = $savepath ? $this->urlpath . $savepath : null;		
 		
 		$this->seclevid = GetSessionParam('ADMINSecID');
-		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
+		$this->userDemoIds = array(5,6);//,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 
 		$this->messages = null;	
 	}
@@ -155,7 +156,7 @@ class rculists  {
 			case 'cpactivatequeuerec'  :
 			case 'cpdeactivatequeuerec':			
 			case 'cpulists'  		   :
-			default          		   : $out = $this->viewMails(null,400,16,'r',false);
+			default          		   : $out = $this->viewMails(null,280,12,'r',false);
 		}
 
 		return ($out);
@@ -360,7 +361,7 @@ class rculists  {
 	
     protected function subscribeform()  { 		
 	    if ($this->isDemoUser())  //deny list from demo users
-			$out = "[List view kept hidden]";
+			$out = localize('_denyview',getlocal()); //"[List view kept hidden]";
 		else {	
 			//$out .= $this->ulistform(GetParam('ulistname'));
 			$bodyurl = 'cpsubscribers.php?t=cpsubsframe';; 

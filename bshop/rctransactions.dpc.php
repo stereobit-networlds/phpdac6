@@ -56,83 +56,69 @@ class rctransactions extends shtransactions {
     var $title, $path;
     var $status_sid, $status_sidexp;
 		
-	function rctransactions() {
+	public function rctransactions() {
 	
-       shtransactions::shtransactions();
+		shtransactions::__construct();
 
-	   if ($tpath = paramload('RCTRANSACTIONS','path'))
-	     $this->path = paramload('SHELL','prpath') . $tpath;
+		if ($tpath = paramload('RCTRANSACTIONS','path'))
+			$this->path = paramload('SHELL','prpath') . $tpath;
      	 
-	  $this->title = localize('RCTRANSACTIONS_DPC',getlocal());		
-	  
-	  $this->ajaxLink = seturl('t=cptransshow&statsid='); //for use with...	      
-	  
-	  $this->hasgraph = false;
-	  $this->hasgauge = false;	  
-	  $this->graphx = remote_paramload('RCTRANSACTIONS','graphx',$this->path);
-	  $this->graphy = remote_paramload('RCTRANSACTIONS','graphy',$this->path);
-
-      $this->status_sid = arrayload('RCTRANSACTIONS','sid');  
-
-      $this->status_exp = arrayload('RCTRANSACTIONS','sidexp'); 
-           
+		$this->title = localize('RCTRANSACTIONS_DPC',getlocal());		
+		$this->status_sid = arrayload('RCTRANSACTIONS','sid');  
+		$this->status_exp = arrayload('RCTRANSACTIONS','sidexp');    
 	}
 	
-    function event($event=null) {
+    public function event($event=null) {
 	
-	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	   if ($login!='yes') return null;		 
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+		if ($login!='yes') return null;		 
 	
-	   switch ($event) {
-	     case 'cptransviewhtml' : echo $this->viewTransactionHtml();
-		                          die();
-		                        break;	   
-		 case 'cptransview': 
-		                     break;		   
-		 case 'cptranslink': echo $this->show_transaction_data();//'trans');
-		                     die();
-		                     break;	   
-		 case 'cploadframe': echo $this->loadframe('trans');
-		                     die();
-		                     break;								 
-		 case 'cptransshow': 
-							  break; 	   
-	     case 'cptransactions':
-		 default            : 
-	   }
-			
+		switch ($event) {
+			case 'cptransviewhtml' 	: 	echo $this->viewTransactionHtml();
+										die();
+										break;	   
+			case 'cptransview'		:   break;		   
+			case 'cptranslink'		:	echo $this->show_transaction_data();//'trans');
+										die();
+										break;	   
+			case 'cploadframe'		: 	echo $this->loadframe('trans');
+										die();
+										break;								 
+			case 'cptransshow'		:   break; 	   
+			case 'cptransactions'	:
+			default            	: 
+		}		
     }   
 	
-    function action($action=null) {
+    public function action($action=null) {
 		
-	  $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	  if ($login!='yes') return null;	
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+		if ($login!='yes') return null;	
 	 
-	  switch ($action) {
-	     case 'cptransviewhtml' : //$out = $this->viewTransactionHtml();
-		                        break;		  
-		 case 'cptransview': $out = $this->viewTransactions();
-		                     break;
+		switch ($action) {
+			case 'cptransviewhtml' 	: 	//$out = $this->viewTransactionHtml();
+										break;		  
+			case 'cptransview'		: 	$out = $this->viewTransactions();
+										break;
 							 	  
-		 case 'cptranssshow':   break; 
-	     case 'cptransactions'    :
+			case 'cptranssshow'		:   break; 
+			case 'cptransactions'   :
+			default            		: 	$out .= $this->show_transactions();
+		}	 
 
-		 default            : $out .= $this->show_transactions();
-	  }	 
-
-	  return ($out);
+		return ($out);
     }
 	
-	protected function show_transactions() {
-	
-	   if ($this->msg) $out = $this->msg;
+	protected function show_transactions() {	
+		if ($this->msg) 
+			$out = $this->msg;
 
-	   $out = $this->show_grids();	   	
+		$out = $this->show_grids();	   	
 	   
-	   //HIDDEN FIELD TO HOLD STATS ID FOR AJAX HANDLE
-	   $out .= "<INPUT TYPE= \"hidden\" ID= \"statsid\" VALUE=\"0\" >";	   	    
+		//HIDDEN FIELD TO HOLD STATS ID FOR AJAX HANDLE
+		$out .= "<INPUT TYPE= \"hidden\" ID= \"statsid\" VALUE=\"0\" >";	   	    
 	  
-	   return ($out);		   
+		return ($out);		   
 	}		
 	
 	public function show_grid($x=null,$y=null,$filter=null,$bfilter=null) {
@@ -154,24 +140,11 @@ class rctransactions extends shtransactions {
 								  "'".localize('Logistics',getlocal())."',".
 								  "'".localize('Courier',getlocal())."') as rw";								  
 		
-		    if ($selected_cus) {
-				//$xsSQL2= "CREATE TEMPORARY TABLE temp1 ENGINE=MEMORY "; 
-				//$xsSQL2.= "as (select * from users where username='$selected_cus');";
-				
-				//$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.tdate,i.ttime,i.tstatus,i.payway,i.roadway,i.qty,i.cost,i.costpt,c.username FROM transactions i";
-				//$xsSQL2.= " LEFT JOIN users c ON (c.code2 = i.cid AND c.code2='$selected_cus')) x";				
-				
+		    if ($selected_cus) 
 				$xsSQL2 = "SELECT * FROM (SELECT DISTINCT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i WHERE i.cid='$selected_cus') x";
-				//echo $xsSQL2;
-			}
-			else {
-				//$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.tdate,i.ttime,i.tstatus,i.payway,i.roadway,i.qty,i.cost,i.costpt,c.username FROM transactions i";
-				//$xsSQL2.= " LEFT JOIN users c ON c.code2 = i.cid) x";
-				
+			else 
 				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i) x";
-				//echo $xsSQL2;
-			}
-			//$out.= $xsSQL2;
+
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+recid|".localize('id',getlocal())."|5|0|||1|1");
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tid|".localize('id',getlocal())."|5|0|||0");
 			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tid|".localize('id',getlocal())."|5|0|||1|0");//"|link|5|".seturl('t=cptransviewhtml&editmode=1&tid={tid}').'||');
@@ -192,7 +165,7 @@ class rctransactions extends shtransactions {
 
 	    }
 		else 
-		   $ret .= 'Initialize jqgrid.';
+			$ret .= 'Initialize jqgrid.';
         
         return ($ret);
   	
@@ -200,90 +173,76 @@ class rctransactions extends shtransactions {
 	
 	protected function show_grids() {
 		
-	   $ret = $this->show_grid();	
-       //$ret .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use trans");	   
-	   $ret .= "<div id='trans'></div>";
-	   return ($ret);	
+		$ret = $this->show_grid();		   
+		$ret .= "<div id='trans'></div>";
+		return ($ret);	
 	}	
 	
+	protected function show_transaction_data() {
+		$db = GetGlobal('db'); 	
+		$tid = GetReq('tid');
+		$cid = GetReq('cid');
+	  
+		$customer_data = GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use '.$cid.'+code2');	
 	
-	protected function show_transaction_data() {//$ajaxdiv=null) {
-      $db = GetGlobal('db'); 	
-	  $tid = GetReq('tid');
-	  $cid = GetReq('cid');
+		$sSQL = "select tdata,cost,costpt from transactions where tid=".$this->initial_word.$tid;
+		$result = $db->Execute($sSQL);
 	  
-	  $customer_data = GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use '.$cid.'+code2');	
+		if (!$out = $this->loadTransactionHtml($this->initial_word.$tid)) {	
+	  
+			$cart_data = unserialize($result->fields['tdata']);
+			$cartshow = GetGlobal('controller')->calldpc_method('shcart.head');	  
+			//print_r($cart_data);
+			foreach ($cart_data as $cart_id=>$cart_val) {
+				$vals = explode(';',$cart_val);
+				//$cartshow .= GetGlobal('controller')->calldpc_method('shcart.viewcart use '.$vals[0].'+'.$vals[1].'++++++++'.$vals[8].'+'.$vals[9]);
+				$pvals = implode('+',$vals);
+				$cartshow .= GetGlobal('controller')->calldpc_method('shcart.viewcart use '.$pvals);
+			}
+	  
+			$cartshow .= "<hr>".localize('_SUBTOTAL',getlocal()).':'.$result->fields['cost'].
+						"<hr>".localize('_TOTAL',getlocal()).':'.$result->fields['costpt'];
 	
-	  $sSQL = "select tdata,cost,costpt from transactions where tid=".$this->initial_word.$tid;
-	  $result = $db->Execute($sSQL);
-	  
-	  if (!$out = $this->loadTransactionHtml($this->initial_word.$tid)) {	
-	  
-	    $cart_data = unserialize($result->fields['tdata']);
-	    $cartshow = GetGlobal('controller')->calldpc_method('shcart.head');	  
-	    //print_r($cart_data);
-	    foreach ($cart_data as $cart_id=>$cart_val) {
-	      $vals = explode(';',$cart_val);
-	      //$cartshow .= GetGlobal('controller')->calldpc_method('shcart.viewcart use '.$vals[0].'+'.$vals[1].'++++++++'.$vals[8].'+'.$vals[9]);
-		  $pvals = implode('+',$vals);
-		  $cartshow .= GetGlobal('controller')->calldpc_method('shcart.viewcart use '.$pvals);
-	    }
-	  
-	    $cartshow .= "<hr>".localize('_SUBTOTAL',getlocal()).':'.$result->fields['cost'].
-	                 "<hr>".localize('_TOTAL',getlocal()).':'.$result->fields['costpt'];
-	
-	    $ret = $customer_data . $cartshow;// . $result->fields['tdata'] .'123';
+			$ret = $customer_data . $cartshow;
 	  
 	
-	    $headtitle = paramload('SHELL','urltitle');			
-   	    $printpage = new phtml('../themes/style.css',$ret,"<B><h1>$headtitle</h1></B>");
-        $out = $printpage->render();	
-	    unset($printpage);	
-	  }  
+			$headtitle = paramload('SHELL','urltitle');			
+			$printpage = new phtml('../themes/style.css',$ret,"<B><h1>$headtitle</h1></B>");
+			$out = $printpage->render();	
+			unset($printpage);	
+		}  
 
 	     return ($out);
 	}
 	
 	protected function loadframe($ajaxdiv=null) {
-	    $bodyurl = seturl("t=cptranslink&tid=").GetReq('tid');
-	
+		$bodyurl = seturl("t=cptranslink&tid=").GetReq('tid');
 		$frame = "<iframe src =\"$bodyurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
-
-		if ($ajaxdiv)
-			return $ajaxdiv.'|'.$frame;//$out;	//'<p>'.$bodyurl.'</p>';
-		else
-			return ($frame);
+		
+		return ($ajaxdiv) ? $ajaxdiv.'|'.$frame : $frame;
 	}
 	
 	protected function loadTransactionHtml($id) {
-	
         $file = $this->path . $id . ".html"; 
-	    //echo $file;
+
 		if (is_readable($file)) {
-          /*$fd = fopen($file, 'r');
-          $ret = fread($fd, filesize($file));
-          fclose($fd);   	*/
-		  $ret = file_get_contents($file);
-		
+		  $ret = @file_get_contents($file);
 		  return ($ret);	
 		}
-		else
-		  return false;
+
+		return false;
 	} 		
 		
-	
 	public function viewTransactionHtml($id=null) {
-	    $id = $id?$id:GetReq('tid');
-	
+	    $id = $id ? $id : GetReq('tid');
         $file = $this->path . $id . ".html"; 
-	    //echo $file;
+
 		if (is_readable($file)) {
-		  $ret = file_get_contents($file);
-		
+		  $ret = @file_get_contents($file);
 		  return ($ret);	
 		}
-		else
-		  return false;
+
+		return false;
 	} 
 
 };

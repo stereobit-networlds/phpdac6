@@ -397,11 +397,9 @@ class shkategories {
 	public function show_tree2($cmd=null,$group=null,$treespaces='',$sp=0,$mode=0,$wordlength=19,$notheme=null,$stylesheet=null,$template=null) {		
 		$cat = GetReq('cat'); //$this->replace_spchars(GetReq('cat'),1);
 		if (!$wordlength) $wordlength = 25;//for calldpc purposes
-		$mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
+		$mystylesheet = $stylesheet ? $stylesheet : 'group_category_title';	
 		$mystylesheet_selected = $mystylesheet . '_selected';	   
 		$t = $cmd ? $cmd : 'shkategories';			
-		
-		$mytemplate = _m('cmsrt.select_template use ' . $template);
 	   
 	   	static $cd = -1;
 	   
@@ -444,7 +442,7 @@ class shkategories {
 							$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 							$tokens[5] = $group ? 1 : 0; //check for subtree
 							$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); 
-							$out .= $this->combine_tokens($mytemplate,$tokens,true);
+							$out .= $this->combine_tokens($template,$tokens,true);
 							unset($tokens);
 							unset($subcat_tokens);
 						}
@@ -457,7 +455,7 @@ class shkategories {
 						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); 
 						
 						if ($mode) {
-							$out .= $this->combine_tokens($mytemplate,$tokens,true);						
+							$out .= $this->combine_tokens($template,$tokens,true);						
 						}	
 						else {				   
 						    $_u = _m("cmsrt.url use t=$t&cat=$gr+" . summarize(($wordlength-$sp),$line)); //seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line);
@@ -666,18 +664,20 @@ class shkategories {
 	}	
 	
     public function show_menu($cmd=null,$viewtype=3,$viewtree=0,$group=null,$title=null,$tree=null,$template=null) { 
-	    
-		$group = $group ? $group : $this->replace_spchars(GetReq('cat'),1);	  				  
+		$group = $group ? $group : $this->replace_spchars(GetReq('cat'),1);	 
 		
 		if ($group) {
+			
+			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));		
+			$subtemplate = _m('cmsrt.select_template use fpkatnav-accordion-group');			
+			
 			switch ($viewtype) { 
 				case 3  : /*experimental for unfolded kategories..*/
-                case 2  : $stree[] = $this->show_tree3($cmd,null,'',0,1,60,1,null,'fpkatnav-accordion-group');	break;	 			 
+                case 2  : $stree[] = $this->show_tree3($cmd,null,'',0,1,60,1,null,$subtemplate); break;	 			 
 			    case 1  :
-				default : $stree[] = $this->show_tree2($cmd,null,'',0,0,60,1,null,'fpkatnav-accordion-group');		 
+				default : $stree[] = $this->show_tree2($cmd,null,'',0,0,60,1,null,$subtemplate);		 
 			}
 			 
-		    $mytemplate = _m('cmsrt.select_template use ' . $template);
             $out = $this->combine_tokens($mytemplate,$stree);			 
 		}		
         return ($out);

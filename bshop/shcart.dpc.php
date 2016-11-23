@@ -120,7 +120,7 @@ class shcart extends cart {
     var $twig_invoice_template_name, $appname, $mtrackimg; 
     var $agentIsIE, $baseurl;	
 	
-    function __construct() {
+    public function __construct() {
 		$UserName = GetGlobal('UserName');		
 
 		cart::cart();   
@@ -266,9 +266,8 @@ class shcart extends cart {
 	    $this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";			
     }
 
-    //override
-    function event($event) {
-		//echo $event,'>';
+    public function event($event) {
+
 		switch ($event) {
 	  
 		  case 'calc'          : //for auto select and calc reason
@@ -337,8 +336,7 @@ class shcart extends cart {
 		}     
     }
 
-	//override
-    function action($act=null) {	
+    public function action($act=null) {	
 
 		switch ($act) {
 			case "sship"     :  $out .= $this->show_supershipping();
@@ -1566,7 +1564,7 @@ function addtocart(id,cartdetails)
 	}	
 	
 	//override
-	public function payway($token=null) {
+	public function payway() {
 
 	    $pways = remote_arrayload('SHCART','payways',$this->path);
 		if (!$pways) return null;
@@ -1588,53 +1586,31 @@ function addtocart(id,cartdetails)
 		$params = implode(',',$choices);
 
         switch ($this->status) {
-			 case 1 :
-					 $pp = new multichoice('payway',$params,$default_pay,false);
-					 $radios = $pp->render();
-					 unset($pp);
+			 case 1 :	$pp = new multichoice('payway',$params,$default_pay,false);
+						$radios = $pp->render();
+						unset($pp);
 					 
-					 $subtokens[] = $radios;					 
-					 
-					 if ($token) {
-						$s1 = $this->get_selection_text('payway',$subtokens,1,localize('_PWAY',getlocal()),true);
-						if ($s1) 
-							$tokens[] = $s1;
-						else 
-						    $tokens =  $subtokens;
-					 }
-					 else
-						$out = $this->get_selection_text('payway',$subtokens,1,localize('_PWAY',getlocal()));						 
-		             break;
+						$subtokens[] = $radios;					 
+						$s1 = $this->get_selection_text('payway',$subtokens);
+						$tokens[] = $s1 ? $s1 : $subtokens;						 
+						break;
 	         case 3 :
-		     case 2 :$mypway = GetParam("payway")?GetParam("payway"):GetSessionParam("payway");
-		 	         //hold param
-                     SetSessionParam('payway',$mypway);	
-					 
-					 $subtokens[] = localize($mypway, getlocal());
-					 
-					 if ($token) {
-						$s1 = $this->get_selection_text('payway',$subtokens,1,localize('_PWAY',getlocal()),true);
-						if ($s1) 
-							$tokens[] = $s1;
-						else 
-						    $tokens =  $subtokens;
-					 }
-					 else					 
-						$out = $this->get_selection_text('payway',$subtokens,1,localize('_PWAY',getlocal()));						 				 
-			         break;
+		     case 2 :	$mypway = GetParam("payway")?GetParam("payway"):GetSessionParam("payway");
+						//hold param
+						SetSessionParam('payway',$mypway);	
+						$subtokens[] = localize($mypway, getlocal());
+						$s1 = $this->get_selection_text('payway',$subtokens);
+						$tokens[] = $s1 ? $s1 :$subtokens;						 				 
+						break;
 
-			 default : if ($token) {
-							$tokens[] = '&nbsp;';
-					   }
-					   else
-							$out = null;
+			 default : 	$tokens[] = '&nbsp;';
 		}
 
-		return ($token ? $tokens : $out);
+		return ($tokens);
 	}	
 
 	//overwrite
-	public function roadway($token=null) {
+	public function roadway() {
 	    $ways = remote_arrayload('SHCART','roadways',$this->path);
 		if (!$ways) return null;
 		   
@@ -1649,61 +1625,48 @@ function addtocart(id,cartdetails)
 	    $params = implode(',',$choices2);
 
         switch ($this->status) {
-			 case 1 :
-					 $pp = new multichoice('roadway',$params,$default_ship,false);
-					 $radios = $pp->render();
-					 unset($pp);
+			 case 1 :	$pp = new multichoice('roadway',$params,$default_ship,false);
+						$radios = $pp->render();
+						unset($pp);
 					 
-					 $subtokens[] = $radios;
-
-   		             if ($message = remote_arrayload('SHCART','roadwaystext',$this->path)) {
-					   $subtokens[] = $message[getlocal()];
-					 }
-					 else
-					   $subtokens[] = '&nbsp;';
+						$subtokens[] = $radios;
+						if ($message = remote_arrayload('SHCART','roadwaystext',$this->path)) 
+							$subtokens[] = $message[getlocal()];
+						else
+							$subtokens[] = '&nbsp;';
 					   
-					 if ($token) {
-						$s1 = $this->get_selection_text('roadway',$subtokens,1,localize('_RWAY',getlocal()),true);
+						$s1 = $this->get_selection_text('roadway',$subtokens);
 						if ($s1) {
 							$tokens[] = $s1;
 							$tokens[] = '&nbsp;';//dummy							
 						}	
 						else 
-						    $tokens =  $subtokens;
-					 }
-					 else    
-						$out = $this->get_selection_text('roadway',$subtokens,1,localize('_RWAY',getlocal()));	    					   					   
-		             break;
+							$tokens =  $subtokens;   					   					   
+						break;
 	         case 3 :
-		     case 2 :$myrway = GetParam("roadway")?GetParam("roadway"):GetSessionParam("roadway");
-		 	         //hold param
-                     SetSessionParam('roadway',$myrway);
+		     case 2 :	$myrway = GetParam("roadway")?GetParam("roadway"):GetSessionParam("roadway");
+						//hold param
+						SetSessionParam('roadway',$myrway);
 					 
-					 $subtokens[] = localize($myrway, getlocal());
-					 $subtokens[] = '&nbsp;';
-					 
-					 if ($token) {
-						$s1 = $this->get_selection_text('roadway',$subtokens,1,localize('_RWAY',getlocal()),true);
+						$subtokens[] = localize($myrway, getlocal());
+						$subtokens[] = '&nbsp;';
+						$s1 = $this->get_selection_text('roadway',$subtokens);
 						if ($s1) { 
 							$tokens[] = $s1;
 							$tokens[] = '&nbsp;';//dummy
 						}	
 						else 
-						    $tokens =  $subtokens;
-					 }
-					 else  					 
-						$out = $this->get_selection_text('roadway',$subtokens,1,localize('_RWAY',getlocal()));	 							 					 
-			         break;
+							$tokens =  $subtokens;	 							 					 
+						break;
 
 			 default : $tokens[] = '&nbsp;';
 			           $tokens[] = '&nbsp;';
-			           $out = null;
 		}
 
-		return ($token ? $tokens : $out);
+		return ($tokens);
 	}
 	
-	public function invoiceway($token=null) {
+	public function invoiceway() {
 		$ways = remote_arrayload('SHCART','invways',$this->path);
 		$defway = remote_paramload('SHCART','invway_default',$this->path); 	
 		$default_invoice = $defway ? $defway : 0;//override customers default invoice ??
@@ -1726,80 +1689,64 @@ function addtocart(id,cartdetails)
 		$params = implode(',',$choices2);		   
 		   
 		switch ($this->status) {
-			 case 1 : 
-					 $pp = new multichoice('invway',$params,$default_invoice,false);
-					 $radios = $pp->render();
-					 unset($pp);
+			 case 1 : 	$pp = new multichoice('invway',$params,$default_invoice,false);
+						$radios = $pp->render();
+						unset($pp);
 
-					 $subtokens[] = $radios;		
-
-   		             if ($message = remote_paramload('SHCART','invwaystext',$this->path)) {
-					   $subtokens[] = $message;
-					 }
-					 else
-					   $subtokens[] = '&nbsp;';
+						$subtokens[] = $radios;		
+						if ($message = remote_paramload('SHCART','invwaystext',$this->path)) 
+							$subtokens[] = $message;
+						else
+							$subtokens[] = '&nbsp;';
 					   
-					 if ($token) {
-						$s1 = $this->get_selection_text('invoiceway',$subtokens,1,localize('_IWAY',getlocal()),true);	
+						$s1 = $this->get_selection_text('invoiceway',$subtokens);	
 						if ($s1) { 
 							$tokens[] = $s1;
 							$tokens[] = '&nbsp;';//dummy
 						}	
 						else 
-						    $tokens =  $subtokens;
-					 }
-					 else 					     
-						$out = $this->get_selection_text('invoiceway',$subtokens,1,localize('_IWAY',getlocal()));	    					   					   
-		             break;
+							$tokens =  $subtokens;   					   					   
+						break;
 	         case 3 :
-		     case 2 :$myiway = GetParam("invway")?GetParam("invway"):GetSessionParam("invway");
-                     SetSessionParam('invway',$myiway);
+		     case 2 :	$myiway = GetParam("invway")?GetParam("invway"):GetSessionParam("invway");
+						SetSessionParam('invway',$myiway);
 					 
-					 $subtokens[] = localize($myiway, getlocal());
-					 $subtokens[] = '&nbsp;';
+						$subtokens[] = localize($myiway, getlocal());
+						$subtokens[] = '&nbsp;';
 					 
-					 if ($token) {
-						$s1 = $this->get_selection_text('invoiceway',$subtokens,1,localize('_IWAY',getlocal()),true);	
+						$s1 = $this->get_selection_text('invoiceway',$subtokens);	
 						if ($s1) { 
 							$tokens[] = $s1;
 							$tokens[] = '&nbsp;';//dummy
 						}	
 						else 
-						    $tokens =  $subtokens;
-					 }
-					 else					 
-						$out = $this->get_selection_text('invoiceway',$subtokens,1,localize('_IWAY',getlocal()));						 					 
-			         break;
+							$tokens =  $subtokens;	 					 
+						break;
 
 			 default : $tokens[] = '&nbsp;';
 			           $tokens[] = '&nbsp;';
-			           $out = null;
 	    }		 
 			 
-	    return ($token ? $tokens : $out);	   	
+	    return ($tokens);	   	
 	}
 	
-	public function addressway($token=null) {
+	public function addressway() {
 		   	   
         switch ($this->status) {
-			 case 1 :
-			   	      if (defined('SHCUSTOMERS_DPC')) {
-					    $combo=0;
+			 case 1 : if (defined('SHCUSTOMERS_DPC')) {
+					    //$combo=0;
 	                    if ($deliv = _m('shcustomers.showdeliveryaddress use addressway')) {
-							if ($combo) {
+							/*if ($combo) {
 								$choice = $cus;
 							}
-							else {					
+							else {	*/
 								$pp = new multichoice('addressway',str_replace('<COMMA>',',',$deliv),null,false);
 								$con = $pp->render();
-								unset($pp);
-													
+								unset($pp);					
 								$choice = $con;
-							}	
+							//}	
 						}
-						
 						$addnewlink = _m('shcustomers.addnewdeliverylink use shcart>cartview');
-						
 	                  }
 					  else
 					    $con = "<input class=\"myf_input\" type=\"text\" name=\"addressway\" maxlenght=\"255\" value=\"\">"; 			 
@@ -1814,19 +1761,14 @@ function addtocart(id,cartdetails)
 					 else
 					   $subtokens[] = '&nbsp;';
 					   
-					   
-					 if ($token) {
-					    $s1 = $this->get_selection_text('addressway',$subtokens,1,localize('_DELIVADDRESS',getlocal()),true);	
-						if ($s1) { 
-							$tokens[] = $s1;
-							$tokens[] = '&nbsp;';//dummy
-							$tokens[] = '&nbsp;';//dummy
-						}	
-						else 
-						    $tokens =  $subtokens;
-					 }
-					 else
-						$out = $this->get_selection_text('addressway',$subtokens,1,localize('_DELIVADDRESS',getlocal()));	    						   
+					 $s1 = $this->get_selection_text('addressway',$subtokens);	
+					 if ($s1) { 
+						$tokens[] = $s1;
+						$tokens[] = '&nbsp;';//dummy
+						$tokens[] = '&nbsp;';//dummy
+					 }	
+					 else 
+					    $tokens =  $subtokens;	   
 		             break;
 	         case 3 :					 	 
 		     case 2 :$myiway = GetParam("addressway") ? GetParam("addressway") : GetSessionParam("addressway");
@@ -1836,18 +1778,15 @@ function addtocart(id,cartdetails)
 					 $subtokens[] = '&nbsp;';
 					 $subtokens[] = '&nbsp;';
 					 
-					 if ($token) {
-					    $s1 = $this->get_selection_text('addressway',$subtokens,1,localize('_DELIVADDRESS',getlocal()),true);	
-						if ($s1) { 
-							$tokens[] = $s1;
-							$tokens[] = '&nbsp;';//dummy
-							$tokens[] = '&nbsp;';//dummy
-						}	
-						else 
-						    $tokens =  $subtokens;
-					 }
-					 else					 
-						$out = $this->get_selection_text('addressway',$subtokens,1,localize('_DELIVADDRESS',getlocal()));						 			 
+					 $s1 = $this->get_selection_text('addressway',$subtokens);	
+					 if ($s1) { 
+						$tokens[] = $s1;
+						$tokens[] = '&nbsp;';//dummy
+						$tokens[] = '&nbsp;';//dummy
+					 }	
+					 else 
+					    $tokens =  $subtokens;
+					 			 
 			         break;
 
 			 default : $tokens[] = '&nbsp;';
@@ -1857,10 +1796,10 @@ function addtocart(id,cartdetails)
 			 	 
 	    }
 	   
-	    return ($token ? $tokens : $out);
+	    return ($tokens);
 	}
 	
-	public function customerway($token=null) {
+	public function customerway() {
 		   	   
         switch ($this->status) {
 			 case 1 :
@@ -1890,18 +1829,15 @@ function addtocart(id,cartdetails)
 						else
 						  $subtokens[] = '&nbsp;';
 						  
-					    if ($token) {
-							$s1 = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',getlocal()),true);	
-							if ($s1) { 
-								$tokens[] = $s1;
-								$tokens[] = '&nbsp;';//dummy
-								$tokens[] = '&nbsp;';//dummy
-							}	
-							else 
-								$tokens =  $subtokens;
-					    }
-					    else							  
-							$out = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',getlocal()));	  						  				
+						$s1 = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',getlocal()),true);	
+						if ($s1) { 
+							$tokens[] = $s1;
+							$tokens[] = '&nbsp;';//dummy
+							$tokens[] = '&nbsp;';//dummy
+						}	
+						else 
+							$tokens =  $subtokens;
+						  				
 					 }	 
 		             break;
 	         case 3 :					 	 
@@ -1912,18 +1848,14 @@ function addtocart(id,cartdetails)
 					 $subtokens[] = '&nbsp;';
 					 $subtokens[] = '&nbsp;';
 					 
-					 if ($token) {
-							$s1 = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',getlocal()),true);	
-							if ($s1) { 
-								$tokens[] = $s1;
-								$tokens[] = '&nbsp;';//dummy
-								$tokens[] = '&nbsp;';//dummy
-							}	
-							else 
-								$tokens =  $subtokens;
-					 }
-					 else					 
-						$out = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',getlocal()));							 				 
+					 $s1 = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',getlocal()),true);	
+					 if ($s1) { 
+						$tokens[] = $s1;
+						$tokens[] = '&nbsp;';//dummy
+						$tokens[] = '&nbsp;';//dummy
+					 }	
+					 else 
+						$tokens =  $subtokens;						 				 
 			         break;
 
 			 default : $tokens[] = '&nbsp;';
@@ -1932,61 +1864,35 @@ function addtocart(id,cartdetails)
 			           $out = null;					  	 	 	 
 	    }
 	   
-	    return ($token ? $tokens : $out);
+	    return ($tokens);
 	}	
 	
 	
 	//override
-	public function comments($token=null) {
+	public function comments() {
 	
         switch ($this->status) {
-			 case 1 :$subtokens[] = "<input class=\"myf_input\" type=\"text\" name=\"sxolia\" maxlenght=\"255\" value=\"$this->sxolia\">";
+			case 1  :	$subtokens[] = "<input class=\"myf_input\" type=\"text\" name=\"sxolia\" maxlenght=\"255\" value=\"$this->sxolia\">";
+						$s1 = $this->get_selection_text('sxolia',$subtokens);	
+						$tokens[] = $s1 ? $s1 : $subtokens;	  
+						break;
+	        case 3  :	$subtokens[] = GetSessionParam("sxolia");
+						$s1 = $this->get_selection_text('sxolia',$subtokens);	
+						$tokens[] = $s1 ? $s1 : $subtokens;
+						break;
+		    case 2  :	$sxolia = GetParam("sxolia") ? GetParam("sxolia") : GetSessionParam("sxolia");
+						$subtokens[] = $sxolia;
+						$s1 = $this->get_selection_text('sxolia',$subtokens);	
+						$tokens[] = $s1 ? $s1 : $subtokens;					 
+						//hold param
+						SetSessionParam('sxolia',$sxolia);					 
+						break;		     
 					 
-					if ($token) {
-						$s1 = $this->get_selection_text('sxolia',$subtokens,1,localize('_SXOLIA',getlocal()),true);	
-						if ($s1) 
-							$tokens[] = $s1;
-						else 
-							$tokens =  $subtokens;
-					}
-					else					 
-						$out = $this->get_selection_text('sxolia',$subtokens,1);						 						  
-		             break;
-	         case 3 :$subtokens[] = GetSessionParam("sxolia");
-					 
-					if ($token) {
-						$s1 = $this->get_selection_text('sxolia',$subtokens,1,localize('_SXOLIA',getlocal()),true);	
-						if ($s1) 
-							$tokens[] = $s1;
-						else 
-							$tokens =  $subtokens;
-					}
-					else					 
-						$out = $this->get_selection_text('sxolia',$subtokens,1);	
-					 
-			         break;
-		     case 2 :$sxolia = GetParam("sxolia")?GetParam("sxolia"):GetSessionParam("sxolia");
-					 $subtokens[] = $sxolia;
-					 
-					if ($token) {
-						$s1 = $this->get_selection_text('sxolia',$subtokens,1,localize('_SXOLIA',getlocal()),true);	
-						if ($s1) 
-							$tokens[] = $s1;
-						else 
-							$tokens =  $subtokens;
-					}
-					else					 
-						$out = $this->get_selection_text('sxolia',$subtokens,1);	
-					 
-     		 	     //hold param
-                     SetSessionParam('sxolia',$sxolia);					 
-			         break;		     
-					 
-			 default : $tokens[] = '&nbsp;';
-			           $out = null;
+			default : 	$tokens[] = '&nbsp;';
+						$out = null;
 		   }	 
 		   
-		   return ($token ? $tokens : $out); 	
+		   return ($tokens); 	
 	}
 
 	//call from tmpls to add sxolia 
@@ -2007,78 +1913,10 @@ function addtocart(id,cartdetails)
 		return null;
 	}	
 	
-	protected function get_selection_text($id,$params=null,$hastitle=null,$title=null,$must_template=false) {
-		$mytitle = $title?$title:localize('_'.strtoupper($id),getlocal());//$id;
-		$mylan = getlocal();
-		/*$template = $id . ".htm";
-		$tmpl = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		//echo $tmpl,'<br/>';
-		//text is template file		
-		if (!is_readable($tmpl)) {
-	   
-	       //in case of token ..dont return inline html
-	       if ($must_template)
-			    return;
-	   
-	       if (!empty($params))
-	         $text_params = implode('<br/>',$params); 
-	   
-	       //text in project dir file	
-	       if (!$ret = @file_get_contents($this->path.$id.$mylan.'.txt')) {
-		   
-		     if (!$ret = remote_arrayload('SHCART',$id,$this->path)) {
-			    $ret = $mytitle;//localize('_'.strtoupper($id),getlocal());
+	protected function get_selection_text($id,$params=null) {
 
-				if ($hastitle) {
-				  $mtitle = $mytitle . " : ";		
-                  $data1[] = $mtitle;
-                  $attr1[] = "left;20%";	
-	              $data1[] = $text_params;
-                  $attr1[] = "left;80%";		   
-                  $myway = new window('',$data1,$attr1);
-                  $out = $myway->render(" ::100%::0::group_article_body::center;100%;::");
-		          unset ($myway);					  
-				}
-				else 
-				  $out = $text_params .'<br/>'. $ret;  		
-			 } 
-		     else {//text in config
-		        $ret = $ret[$mylan];
-				if ($hastitle) {
-				  $mtitle = $mytitle . " : ";		
-                  $data1[] = $mtitle;
-                  $attr1[] = "left;20%";	
-	              $data1[] = strlen(trim($text_params))>0?$text_params .'<br/>'. $ret : $ret;
-                  $attr1[] = "left;80%";		   
-                  $myway = new window('',$data1,$attr1);
-                  $out = $myway->render(" ::100%::0::group_article_body::center;100%;::");
-		          unset ($myway);						  
-				}  
-				else  
-				  $out = $text_params .'<br/>'. $ret;
-		     }		
-		   }
-		   else {
-		   
-			 if ($hastitle) {
-			   $mtitle = $mytitle . " : ";		
-               $data1[] = $mtitle;
-               $attr1[] = "left;20%";	
-	           $data1[] = strlen(trim($text_params))>0?$text_params .'<br/>'. $ret : $ret;
-               $attr1[] = "left;80%";		   
-               $myway = new window('',$data1,$attr1);
-               $out = $myway->render();
-		       unset ($myway);				   
-			 }  
-			 else 	  
-			   $out = $text_params .'<br/>'. $ret;		   
-		   }		   
-		}
-		else {//template*/
-			//$mytemplate = file_get_contents($tmpl);   
-			$mytemplate = _m('cmsrt.select_template use ' . $id);
-			$out = $this->combine_tokens($mytemplate,$params,true);
-		//}
+		$mytemplate = _m('cmsrt.select_template use ' . $id);
+		$out = $this->combine_tokens($mytemplate,$params,true);
 	   
 		return ($out);	   	    	
 	}	
@@ -2497,13 +2335,13 @@ function addtocart(id,cartdetails)
 			else
 				$tokens[] = '';	
 		 
-		    foreach ($this->customerway(true) as $t=>$tt)
+		    foreach ($this->customerway() as $t=>$tt)
 				$tokens[] = $tt;
-			foreach ($this->invoiceway(true) as $t=>$tt)
+			foreach ($this->invoiceway() as $t=>$tt)
 				$tokens[] = $tt;
-			foreach ($this->roadway(true) as $t=>$tt)
+			foreach ($this->roadway() as $t=>$tt)
 				$tokens[] = $tt;
-			foreach ($this->payway(true) as $t=>$tt)
+			foreach ($this->payway() as $t=>$tt)
 				$tokens[] = $tt;
 				
 			if (!$nodeliv = remote_paramload('SHCART','nodelivery',$this->path)) {			 
@@ -2511,7 +2349,7 @@ function addtocart(id,cartdetails)
 					$tokens[] = $tt;
 			}	
 			if (!$nocomm = remote_paramload('SHCART','nocomments',$this->path)) {		 
-				foreach ($this->comments(true) as $t=>$tt)
+				foreach ($this->comments() as $t=>$tt)
 					$tokens[] = $tt;
 			}			   
 	    } 

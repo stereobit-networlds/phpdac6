@@ -780,7 +780,7 @@ EOF;
 	    $mcmds = explode('::',$dcmds);
 		foreach ($mcmds as $c=>$cmd) { 
 		
-			$mycall = str_replace(array(':','|'),array(' use ','+'),$cmd);
+			$mycall = str_replace(array(':','|','^'),array(' use ','+','|'),$cmd);
 			$ret .= _m($mycall);
 		}  
 		return ($ret);

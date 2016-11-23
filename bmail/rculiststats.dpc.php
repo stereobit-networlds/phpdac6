@@ -48,7 +48,7 @@ class rculiststats  {
 		$this->savehtmlpath = $savepath ? $this->urlpath . $savepath : null;		
 		
 		$this->seclevid = GetSessionParam('ADMINSecID');
-		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
+		$this->userDemoIds = array(5,6);//,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName'); //decode(GetSessionParam('UserName'));		
 		
 		$this->cid = $_GET['cid'] ? $_GET['cid'] : $_POST['cid'];

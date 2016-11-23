@@ -261,7 +261,7 @@ class rccontrolpanel {
 	
 	var $rootapp_path, $tool_path;
 		
-	function rccontrolpanel() {
+	public function __construct() {
 		
 	    $this->title = localize('RCCONTROLPANEL_DPC',getlocal());
         $this->urlpath = paramload('SHELL','urlpath');		
@@ -331,7 +331,7 @@ class rccontrolpanel {
 		$this->load_javascript();	
 	}
 	 	
-    function event($sAction) {    	  
+    public function event($sAction) {    	  
 	
 	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	   if ($login!='yes') return null;	
@@ -404,7 +404,7 @@ class rccontrolpanel {
 
     }
   
-    function action($sAction) {
+    public function action($sAction) {
 
 	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
@@ -650,226 +650,228 @@ $(document).ready(function(){
     }
   
     protected function _show_addon_tools() {
-	  $sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
-	  //$sl = $this->seclevid;
-	  //echo $sl;
-      //print_r($this->environment);
-      //print_r($this->tools);echo $seclevelid;
+		if (!$this->isLevelUser(9)) return false;
+		
+		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
+		//$sl = $this->seclevid;
+		//echo $sl;
+		//print_r($this->environment);
+		//print_r($this->tools);echo $seclevelid;
 	
-      if (!empty($this->tools)) {    
-      foreach ($this->tools as $tool=>$u_ison) {
-	    $peruser_ison = explode(',',$u_ison);
-		$ison = $peruser_ison[$sl];
+		if (!empty($this->tools)) {    
+		foreach ($this->tools as $tool=>$u_ison) {
+			$peruser_ison = explode(',',$u_ison);
+			$ison = $peruser_ison[$sl];
 		
-        $text = null;
-		$mytool = strtolower($tool);
-		//echo $tool,'<br/>';		   
+			$text = null;
+			$mytool = strtolower($tool);
+			//echo $tool,'<br/>';		   
 		
-		$e1 = null;//init pre tool
+			$e1 = null;//init pre tool
 		
-		//if (($ison>0) && ($this->environment[strtoupper($tool)]>0)) {//(isset($this->environment[strtoupper($tool)]))) {//enabled
-		if ($this->environment[strtoupper($tool)]>0) { //enabled tool
-	       //echo $tool,'<br/>';	
-		   switch ($mytool) {
-		       case 'google_addwords'  : $text = "<a href='../analyr/'>Go to addwords</a>"; 
-			                             break;		   
+			//if (($ison>0) && ($this->environment[strtoupper($tool)]>0)) {//(isset($this->environment[strtoupper($tool)]))) {//enabled
+			if ($this->environment[strtoupper($tool)]>0) { //enabled tool
+				//echo $tool,'<br/>';	
+				switch ($mytool) {
+					case 'google_addwords'  : 	$text = "<a href='../analyr/'>Go to addwords</a>"; 
+												break;		   
 										 
-		       case 'google_analytics' : if (is_readable($this->prpath.'ganalytics.html')) 
-											$url = "ganalytics.html";
-										 else 
-											$url = "http://analytics.google.com";	   
-					                     $text .= "<IFRAME SRC=\"$url\" TITLE=\"analytics\" WIDTH=100% HEIGHT=400>
-										<!-- Alternate content for non-supporting browsers -->
-										<H2>Google analytics</H2>
-							   			<H3>iframe is not suported in your browser!</H3>
-										</IFRAME>";									
-			                             break;	
-               case 'add_recaptcha' :  	//$text = "<a href='cpupload.php?editmode=1&encoding=utf-8'>reCAPTCHA ON!</a>";
-			                            $text = "Recaptcha feature installed";
-                                        break;			   
-               case 'backup'        :  	//always repeat...
-			                            if ($e1 = $this->call_wizard_url('backup')) 
-											$text = "<a href='$e1'>".localize('_backup_content',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-                                        break;	
-			   //case 'uninstall_maildbqueue'   :							
-               case 'maildbqueue'   :   if ($valid = $this->is_valid_newsletter()) {
-										    $text = localize('_newsletters' ,getlocal());//"Newsletter feature installed"; 
-											$text .= ' ('.$valid.')';
-										}
-                                        else {//uninstall
-											if ($e1 = $this->call_wizard_url('uninstall_maildbqueue')) 
-												$text = "<a href='$e1'>".localize('_desendnewsletters',getlocal())."</a>"; 	
-											else
-												$text = "Unknown tool.";										
-                                        }										
-                                        break;	
-               case 'add_domainname':   $text = "Domain name ($this->url) installed. ";									
-                                        break;						
-               case 'eshop'         :         
-										$message = localize('_uninstalleshop',getlocal());
-			                            if ($valid = $this->is_valid_eshop()) {//uninstall
-											$message .= ' ('.$valid.')';
-											if ($e1 = $this->call_wizard_url('uninstalleshop')) 
-											  $text = "<a href='$e1'>".$message."</a>"; 	
-											else
- 										      $text = "Unknown tool.";
-										}
-                                        else {//install
-										    if ($e1 = $this->call_wizard_url('eshop')) 
-											  $text = "<a href='$e1'>".localize('_installeshop',getlocal())."</a>"; 	
-											else
- 										      $text = "Unknown tool.";
-                                        }										
-                                        break;
-               case 'ckfinder'      :   $text = "CKfinder installed"; break;
-               case 'ieditor'       :   $text = "IEditor installed"; break;
-			   case 'printer'       :   $text = "Printer installed"; break;
-			   case 'awstats'       :   $text = "AWStats installed"; break;	
+					case 'google_analytics' :	if (is_readable($this->prpath.'ganalytics.html')) 
+													$url = "ganalytics.html";
+												else 
+													$url = "http://analytics.google.com";	   
+												$text .= "<IFRAME SRC=\"$url\" TITLE=\"analytics\" WIDTH=100% HEIGHT=400>
+													<!-- Alternate content for non-supporting browsers -->
+													<H2>Google analytics</H2>
+													<H3>iframe is not suported in your browser!</H3>
+													</IFRAME>";									
+												break;	
+					case 'add_recaptcha' 	:  	//$text = "<a href='cpupload.php?editmode=1&encoding=utf-8'>reCAPTCHA ON!</a>";
+												$text = "Recaptcha feature installed";
+												break;			   
+					case 'backup'        	:  	//always repeat...
+												if ($e1 = $this->call_wizard_url('backup')) 
+													$text = "<a href='$e1'>".localize('_backup_content',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;	
+					//case 'uninstall_maildbqueue'   :							
+					case 'maildbqueue'   	:   if ($valid = $this->is_valid_newsletter()) {
+													$text = localize('_newsletters' ,getlocal());//"Newsletter feature installed"; 
+													$text .= ' ('.$valid.')';
+												}
+												else {//uninstall
+													if ($e1 = $this->call_wizard_url('uninstall_maildbqueue')) 
+														$text = "<a href='$e1'>".localize('_desendnewsletters',getlocal())."</a>"; 	
+													else
+														$text = "Unknown tool.";										
+												}										
+												break;	
+					case 'add_domainname'	:   $text = "Domain name ($this->url) installed. ";									
+												break;						
+					case 'eshop'         	:         
+												$message = localize('_uninstalleshop',getlocal());
+												if ($valid = $this->is_valid_eshop()) {//uninstall
+													$message .= ' ('.$valid.')';
+													if ($e1 = $this->call_wizard_url('uninstalleshop')) 
+														$text = "<a href='$e1'>".$message."</a>"; 	
+													else
+														$text = "Unknown tool.";
+												}
+												else {//install
+													if ($e1 = $this->call_wizard_url('eshop')) 
+														$text = "<a href='$e1'>".localize('_installeshop',getlocal())."</a>"; 	
+													else
+														$text = "Unknown tool.";
+												}										
+												break;
+					case 'ckfinder'      	:   $text = "CKfinder installed"; break;
+					case 'ieditor'      	:   $text = "IEditor installed"; break;
+					case 'printer'       	:   $text = "Printer installed"; break;
+					case 'awstats'       	:   $text = "AWStats installed"; break;	
 			   
-			   case 'edit_htmlfiles':   //$text = $this->edit_html_files(false, true, true);
-			                            break; 
-               case 'addkey'        :  	//always repeat...
-			                            if ($e1 = $this->call_wizard_url('addkey')) 
-											$text = "<a href='$e1'>".localize('_addkey',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-                                        break;	
-			   case 'genkey'        :  	//always repeat...
-			                            if ($e1 = $this->call_wizard_url('genkey')) 
-											$text = "<a href='$e1'>".localize('_genkey',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-                                        break;	
-               case 'validatekey'  :  	//always repeat...
-			                            if ($e1 = $this->call_wizard_url('validatekey')) 
-											$text = "<a href='$e1'>".localize('_validatekey',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-                                        break;	
-               case 'cpimages'     :  	//always repeat...
-			                            if ($e1 = $this->call_wizard_url('cpimages')) 
-											$text = "<a href='$e1'>".localize('_cpimages',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-                                        break;											
-		       default              :   //nothing
-			                            $text = null;
-		   }
-		}
-		//elseif (($ison>0) && (array_key_exists(strtoupper($tool),$this->environment))) {//($this->environment[strtoupper($tool)]==0)) {
-		elseif ((!empty($this->environment)) && (array_key_exists(strtoupper($tool),$this->environment)) && 
+					case 'edit_htmlfiles'	:   //$text = $this->edit_html_files(false, true, true);
+												break; 
+					case 'addkey'        	:  	//always repeat...
+												if ($e1 = $this->call_wizard_url('addkey')) 
+													$text = "<a href='$e1'>".localize('_addkey',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;	
+					case 'genkey'        	:  	//always repeat...
+												if ($e1 = $this->call_wizard_url('genkey')) 
+													$text = "<a href='$e1'>".localize('_genkey',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;	
+					case 'validatekey'  	:  	//always repeat...
+												if ($e1 = $this->call_wizard_url('validatekey')) 
+													$text = "<a href='$e1'>".localize('_validatekey',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;	
+					case 'cpimages'     	:  	//always repeat...
+												if ($e1 = $this->call_wizard_url('cpimages')) 
+													$text = "<a href='$e1'>".localize('_cpimages',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;											
+					default              	:   //nothing
+												$text = null;
+				}
+			}
+			//elseif (($ison>0) && (array_key_exists(strtoupper($tool),$this->environment))) {//($this->environment[strtoupper($tool)]==0)) {
+			elseif ((!empty($this->environment)) && (array_key_exists(strtoupper($tool),$this->environment)) && 
 		        ($this->environment[strtoupper($tool)]==0)) {
 					
-			//installed tool no privilege
-		}
-        elseif ($ison>0) {//disabled tool..enable it, if local privilege is on
-		   //echo $mytool.'<br/>';
-		   switch ($mytool) {
-		       case 'google_addwords'  : if ($e1 = $this->call_wizard_url('google_addwords'))
-											$text = "<a href='$e1'>Enable addwords</a>"; 
-										 else
- 										    $text = "Unknown tool."; 
-			                             break;		   
+				//installed tool no privilege
+			}
+			elseif ($ison>0) {//disabled tool..enable it, if local privilege is on
+				//echo $mytool.'<br/>';
+				switch ($mytool) {
+					case 'google_addwords'  : 	if ($e1 = $this->call_wizard_url('google_addwords'))
+													$text = "<a href='$e1'>Enable addwords</a>"; 
+												else
+													$text = "Unknown tool."; 
+												break;		   
 										 
-		       case 'google_analytics' : if ($e1 = $this->call_wizard_url('google_analytics'))
-											$text = "<a href='$e1'>Enable analytics</a>"; 
-										 else
- 										    $text = "Unknown tool.";
-			                             break;
+					case 'google_analytics' : 	if ($e1 = $this->call_wizard_url('google_analytics'))
+													$text = "<a href='$e1'>Enable analytics</a>"; 
+												else
+													$text = "Unknown tool.";
+												break;
 			   							 								
-               case 'add_recaptcha'  :	 if ($e1 = $this->call_wizard_url('add_recaptcha')) 
-											$text = "<a href='$e1'>Add recaptcha entry feature</a>"; 	
-										 else
- 										    $text = "Unknown tool.";									 
-										 break;
-               case 'backup'         :	 if ($e1 = $this->call_wizard_url('backup')) 
-											$text = "<a href='$e1'>".localize('_backup_content',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";									 
-										 break;	
-			   case 'maildbqueue'    :	if ($e1 = $this->call_wizard_url('maildbqueue')) 
-											$text = "<a href='$e1'>".localize('_sendnewsletters',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";									 
-										 break;	
-               case 'add_domainname' :	 if ($e1 = $this->call_wizard_url('add_domainname')) 
-											$text = "<a href='$e1'>Change domain name</a>"; 	
-										 else
- 										    $text = "Unknown tool.";									 
-										 break;	
-			   case 'eshop'          :	if ($e1 = $this->call_wizard_url('eshop')) 
-											$text = "<a href='$e1'>".localize('_installeshop',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";									 
-										 break;	
-               case 'ckfinder':          if ((!is_dir($this->prpath.'/ckfinder')) && 
-			                                 ($e1 = $this->call_wizard_url('ckfinder'))) 
-											$text = "<a href='$e1'>".localize('_install',getlocal())."</a>"; 	
-										 else
- 										    $text = null;									 
-										 break;	
-               case 'ieditor' :          if ((!is_dir($this->prpath.'/ieditor')) &&
-			                                ($e1 = $this->call_wizard_url('ieditor'))) 
-											$text = "<a href='$e1'>".localize('_install',getlocal())."</a>"; 	
-										 else
- 										    $text = null;									 
-										 break;	
-               case 'printer' :          if ((!is_dir($this->prpath.'/printer')) &&
-			                                ($e1 = $this->call_wizard_url('printer'))) 
-											$text = "<a href='$e1'>".localize('_installprinter',getlocal())."</a>"; 	
-										 else
- 										    $text = null;									 
-										 break;											 
-               case 'awstats' :          if ($e1 = $this->call_wizard_url('awstats')) 
-											$text = "<a href='$e1'>Enable AWStats</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-										 break;	
+					case 'add_recaptcha'  :	 	if ($e1 = $this->call_wizard_url('add_recaptcha')) 
+													$text = "<a href='$e1'>Add recaptcha entry feature</a>"; 	
+												else
+													$text = "Unknown tool.";									 
+												break;
+					case 'backup'         :		if ($e1 = $this->call_wizard_url('backup')) 
+													$text = "<a href='$e1'>".localize('_backup_content',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";									 
+												break;	
+					case 'maildbqueue'    :		if ($e1 = $this->call_wizard_url('maildbqueue')) 
+													$text = "<a href='$e1'>".localize('_sendnewsletters',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";									 
+												break;	
+					case 'add_domainname' :	 	if ($e1 = $this->call_wizard_url('add_domainname')) 
+													$text = "<a href='$e1'>Change domain name</a>"; 	
+												else
+													$text = "Unknown tool.";									 
+												break;	
+					case 'eshop'          :		if ($e1 = $this->call_wizard_url('eshop')) 
+													$text = "<a href='$e1'>".localize('_installeshop',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";									 
+												break;	
+					case 'ckfinder'		  :     if ((!is_dir($this->prpath.'/ckfinder')) && 
+												($e1 = $this->call_wizard_url('ckfinder'))) 
+													$text = "<a href='$e1'>".localize('_install',getlocal())."</a>"; 	
+												else
+													$text = null;									 
+												break;	
+					case 'ieditor' :          	if ((!is_dir($this->prpath.'/ieditor')) &&
+												($e1 = $this->call_wizard_url('ieditor'))) 
+													$text = "<a href='$e1'>".localize('_install',getlocal())."</a>"; 	
+												else
+													$text = null;									 
+												break;	
+					case 'printer' :          	if ((!is_dir($this->prpath.'/printer')) &&
+												($e1 = $this->call_wizard_url('printer'))) 
+													$text = "<a href='$e1'>".localize('_installprinter',getlocal())."</a>"; 	
+												else
+													$text = null;									 
+												break;											 
+					case 'awstats' :        	if ($e1 = $this->call_wizard_url('awstats')) 
+													$text = "<a href='$e1'>Enable AWStats</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;	
 										 
-               case 'edit_htmlfiles'   : if ($e1 = $this->call_wizard_url('edit_htmlfiles')) 
-											$text = "<a href='$e1'>Edit html files</a>"; 	
-										 else
- 										    $text = "Unknown tool.";									 
-										 break;	
-			   case 'addkey'        :  	//always repeat...
-			                            if ($e1 = $this->call_wizard_url('addkey')) 
-											$text = "<a href='$e1'>".localize('_addkey',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-                                        break;	
-			   case 'genkey'        :  	//always repeat...
-			                            if ($e1 = $this->call_wizard_url('genkey')) 
-											$text = "<a href='$e1'>".localize('_genkey',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-                                        break;	
-               case 'validatekey'  :  	//always repeat...
-			                            if ($e1 = $this->call_wizard_url('validatekey')) 
-											$text = "<a href='$e1'>".localize('_validatekey',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-                                        break;	
-               case 'cpimages'     :  	//always repeat...
-			                            if ($e1 = $this->call_wizard_url('cpimages')) 
-											$text = "<a href='$e1'>".localize('_cpimages',getlocal())."</a>"; 	
-										 else
- 										    $text = "Unknown tool.";
-                                        break;											
-		       default                 : //nothing
-			                             $text = null;
-		   }		
-        }
-        //else disabled tool...		
+					case 'edit_htmlfiles'   : 	if ($e1 = $this->call_wizard_url('edit_htmlfiles')) 
+													$text = "<a href='$e1'>Edit html files</a>"; 	
+												else
+													$text = "Unknown tool.";									 
+												break;	
+					case 'addkey'        	:  	//always repeat...
+												if ($e1 = $this->call_wizard_url('addkey')) 
+													$text = "<a href='$e1'>".localize('_addkey',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;	
+					case 'genkey'        :  	//always repeat...
+												if ($e1 = $this->call_wizard_url('genkey')) 
+													$text = "<a href='$e1'>".localize('_genkey',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;	
+					case 'validatekey'  :  		//always repeat...
+												if ($e1 = $this->call_wizard_url('validatekey')) 
+													$text = "<a href='$e1'>".localize('_validatekey',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;	
+					case 'cpimages'     :  		//always repeat...
+												if ($e1 = $this->call_wizard_url('cpimages')) 
+													$text = "<a href='$e1'>".localize('_cpimages',getlocal())."</a>"; 	
+												else
+													$text = "Unknown tool.";
+												break;											
+					default                 :	 //nothing
+												$text = null;
+				}		
+			}
+			//else disabled tool...		
 		
-		if ($text) {
-		    //echo $text,'<br/>';
-		    $tool_url = $text ? ($e1 ? $e1 : "help/$mytool/") : null;
-			$this->stats['Addons']['url'][] = $tool_url;
-			$this->stats['Addons']['href'][] = $text;
-			$_more = localize('_more',getlocal());
-		    $ao = '<div class="msg-time-chat">
+			if ($text) {
+				//echo $text,'<br/>';
+				$tool_url = $text ? ($e1 ? $e1 : "help/$mytool/") : null;
+				$this->stats['Addons']['url'][] = $tool_url;
+				$this->stats['Addons']['href'][] = $text;
+				$_more = localize('_more',getlocal());
+				$ao = '<div class="msg-time-chat">
                         <a class="message-img" href="'.$tool_url.'"><img alt="" src="images/'.$mytool.'.png" class="avatar"></a>
                         <div class="message-body msg-in">
                             <span class="arrow"></span>
@@ -879,14 +881,12 @@ $(document).ready(function(){
                             </div>
                         </div>
                    </div>';
-			$this->stats['Addons']['html'] .= $ao;
-		}		
-      }	//foreach	
-	  }//if
+				$this->stats['Addons']['html'] .= $ao;
+			}		
+		}	//foreach	
+		}//if
 	
-
-	  return true;
-
+		return true;
     }	
   
     //check if eshop exist and is valid
@@ -946,6 +946,7 @@ $(document).ready(function(){
     protected function _show_update_tools() {   
         $text = 'update';
 		$u = null;
+		
 		//check for time limited services
 		$index = 0;
 		if (($codeexpires = $this->get_code_expirations()) && (!empty($codeexpires))) {
@@ -1137,8 +1138,9 @@ $(document).ready(function(){
     }
   
     //read update ini files
-    function read_update_directory() {
-  
+    protected function read_update_directory() {
+		if (!$this->isLevelUser(9)) return false;
+		
 		$dirname = $this->prpath . $this->tool_path . 'update-app/';
   
         //echo $dirname;
@@ -1168,7 +1170,7 @@ $(document).ready(function(){
     }  
   
     //zip directory
-    function zip_directory($path=null, $name=null) {
+    protected function zip_directory($path=null, $name=null) {
         $d = date('Ymd-Hi');
 		$zpath = $path ? $path : '';
         $zname = $name ? $d.'-'.$name : $d.'-'.'backup.zip'; 
@@ -1803,6 +1805,8 @@ $(document).ready(function(){
 	
 	//return dpc array for update
 	protected function get_dpc_modules() {
+		if (!$this->isLevelUser(9)) return false;
+		
 	    //read priv dpc dir
 		//compare with root dir
 		//return array of newer
@@ -1834,6 +1838,8 @@ $(document).ready(function(){
 	
 	//return dac pages array for update
 	protected function get_dac_pages() {
+		if (!$this->isLevelUser(9)) return false;
+		
 	    //read priv dpc dir
 		//compare with root dir
 		//return array of newer
@@ -1864,6 +1870,8 @@ $(document).ready(function(){
 	}	
 	
 	protected function get_code_expirations() {
+		if (!$this->isLevelUser(9)) return false;
+		
 	    //read myconfig specific expiration codes
 		//compare dates
 		//return array of expirations

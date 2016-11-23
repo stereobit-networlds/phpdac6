@@ -77,36 +77,29 @@ $__LOCALE['RCKATEGORIES_DPC'][25]='_id;ID;ID';
 
 class rckategories extends shkategories {
   
-    var $title, $path, $catpath, $catfkey, $cext, $initfile;
+    var $title, $path;
 	var $post, $msg;
-	var $browser;
-	var $editmode;
-	var $ajaxLink, $hasgraph, $urlbase;	
-	var $cptemplate;
+	var $urlbase;	
+	//var $cptemplate;
 
-	function rckategories() {
+	public function __construct() {
 	
-      shkategories::shkategories();
-	  
-	  $this->editmode = GetReq('editmode');	  
+		shkategories::__construct();  
 	  	
-	  $this->title = localize('RCKATEGORIES_DPC',getlocal());	
-	  $this->post = false;  
-	  $this->msg = null;
-	  
-	  $this->urlbase = paramload('SHELL','urlbase').'/';	  
-	  
-	  //overrite csep...?
-      $csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
-      $this->cseparator = $csep ? $csep : '^';	
+		$this->title = localize('RCKATEGORIES_DPC',getlocal());	 
+		$this->urlbase = paramload('SHELL','urlbase').'/';	  
 	
-	  $this->ajaxLink = seturl('t=cpvstatsshow&statsid=');
-
-	  $this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);	  
-		  
+		$csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
+		$this->cseparator = $csep ? $csep : '^';	
+		
+		$this->post = false;  
+		$this->msg = null; 		
+	
+		//$this->ajaxLink = seturl('t=cpvstatsshow&statsid=');
+		//$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);	  
 	}
 	
-	function event($event=null) {
+	public function event($event=null) {
 	
 	  $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	  if ($login!='yes') return null;		
@@ -153,7 +146,7 @@ class rckategories extends shkategories {
 		                       
     }
 	
-	function action($action=null) {	
+	public function action($action=null) {	
 	
 	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
@@ -201,190 +194,172 @@ class rckategories extends shkategories {
 		return ($out);
 	}
 	
-    function set_viewable() {
-     
-	 $g = GetReq('g');
-	 
-	 $group = explode($this->cseparator,$g);
-	 $cat = $group[count($group)-1];
-	 //echo $cat.'>>>>>>>>>>>>>>>>'; 
-	 
-     $file = paramload('SHELL','prpath')."exclude_sen.txt";
+	/*not used */
+    protected function set_viewable() {
+		$g = GetReq('g');	 
+		$group = explode($this->cseparator,$g);
+		$cat = $group[count($group)-1];
+
+		$file = paramload('SHELL','prpath')."exclude_sen.txt";
 	 	  
-     if (file_exists($file)) {
+		if (@file_exists($file)) {
 	 
-         $f = fopen($file,"a");
-	     $data = fwrite($f,",".$g);
-	     fclose($f);   
-	 }	  
+			$f = fopen($file,"a");
+			$data = fwrite($f,",".$g);
+			fclose($f);   
+		}	  
     }
+	
+    /*not used */
+    protected function menu($adv=null) {
+		$g = GetReq('cat');	   
+		$out .= $this->msg; 
+
+		$cmd .= seturl("t=disablecat&cat=$g","Disable category") . "|";   
+		$cmd .= seturl("t=enablecat&cat=$g","Enable category");		   
   
-    function menu($adv=null) {
-       $g = GetReq('cat');
+		$myadd = new window('',$cmd);
+		$out .= $myadd->render("center::100%::0::group_article_selected::right::0::0::");	   
+		unset ($myadd);   
 	   
-	   $out .= $this->msg; 
-  
-       /*if ($adv) {
-	   
-         $cmd = seturl('t=addcats&cat='.GetReq('cat').'&sel='.GetReq('sel'),'Add Category') . '|';	   
-         $cmd .= seturl('t=delcats&cat='.GetReq('cat').'&sel='.GetReq('sel'),'Delete Category') . '|';		 
-	   }*/
-  
-       //$cmd .= seturl("t=gencats","Generate categories") . "|";
-       $cmd .= seturl("t=disablecat&cat=$g","Disable category") . "|";   
-       $cmd .= seturl("t=enablecat&cat=$g","Enable category");		   
-  
-	   $myadd = new window('',$cmd);
-	   $out .= $myadd->render("center::100%::0::group_article_selected::right::0::0::");	   
-	   unset ($myadd);   
-	   
-	   return ($out);
+		return ($out);
     }
   
     //export text ... bug in first sub tree (write main cat 2 times)
-    function generate_categories($keys=false,$current=null,$leaf=null,$depth=0) {
-  
+    protected function generate_categories($keys=false,$current=null,$leaf=null,$depth=0) {
   
         return ($out);
     }
   
-    function disable_category($g) {
-       $db = GetGlobal('db');	
+    protected function disable_category($g) {
+		$db = GetGlobal('db');	
 	   
-	   if (strlen(trim($g))>0) {
-	     $group = explode($this->cseparator,$g);   //print_r($group);
-	     $mg = count($group);
-	     $depth = ($mg ? $mg : 0); //echo 'DEPTH:',$depth;
-	   }
-	   else
-	     $depth = 0;	    
+		if (strlen(trim($g))>0) {
+			$group = explode($this->cseparator,$g);   //print_r($group);
+			$mg = count($group);
+			$depth = ($mg ? $mg : 0); //echo 'DEPTH:',$depth;
+		}
+		else
+			$depth = 0;	    
 	   
-	   switch ($depth) {
-	  /*     case 1 : $sSQL = "select cat3,cat2 from categories where "; break;
+		switch ($depth) {
+		/*     case 1 : $sSQL = "select cat3,cat2 from categories where "; break;
 		   case 2 : $sSQL = "select cat4,cat3,cat2 from categories where "; break;
 		   case 3 : $sSQL = "select cat5,cat4,cat3,cat2 from categories where "; break;
 		   case 4 : $sSQL = "select null from categories"; break;*/
-		   default: $sSQL = "update categories set ctgid=0 where "; 
-	   }
-	   //$sSQL .= ' where '; 
-	   switch ($depth) {
-	       case 4 : 
-	       case 3 : $sSQL .= "cat4='" . $this->replace_spchars($group[2],1) . "' and ";
-		   case 2 : $sSQL .= "cat3='" . $this->replace_spchars($group[1],1) . "' and ";
-		   case 1 : $sSQL .= "cat2='" . $this->replace_spchars($group[0],1) . "' and "; //break;
-		   default: $sSQL .= "ctgid>0";
-	   }	
-	   //echo $sSQL;   
-	   
+			default: $sSQL = "update categories set ctgid=0 where "; 
+		}
+		//$sSQL .= ' where '; 
+		switch ($depth) {
+			case 4 : 
+			case 3 : $sSQL .= "cat4='" . $this->replace_spchars($group[2],1) . "' and ";
+			case 2 : $sSQL .= "cat3='" . $this->replace_spchars($group[1],1) . "' and ";
+			case 1 : $sSQL .= "cat2='" . $this->replace_spchars($group[0],1) . "' and "; //break;
+			default: $sSQL .= "ctgid>0";
+		}	
+		//echo $sSQL;   
 	    
-	   $result = $db->Execute($sSQL,2);
-   	   if ($result) {  
-	     $this->msg = str_replace($this->cseparator,'>',$group) . 'disabled!';
-	   }
-						   		     
+		$result = $db->Execute($sSQL,2);
+		if ($result)   
+			$this->msg = str_replace($this->cseparator,'>',$group) . 'disabled!';					   		     
     }
   
     //2nd version..handle inside from rcbrowser
-    function disable($id=null) {
-       $db = GetGlobal('db');	
-	   $id = GetReq('id');//is the recid of rcbrowser call
+    public function disable($id=null) {
+		$db = GetGlobal('db');	
+		$id = GetReq('id');//is the recid of rcbrowser call
 	   
-	   //get ctgid (positive number)
-	   $sSQL = "select ctgid from categories where id=" . $id;     
-	   $result = $db->Execute($sSQL,2);	
-	   if ($result) {      
-	     while(!$result->EOF) {	      
-		   $ctgid = $result->fields[0];
-		   $result->MoveNext();			 		 
-		 }
-       }	
-	   //make ctgid negative number	
-	   $sSQL = "update categories set ctgid=-" . $ctgid . " where id=" . $id;  
-	   $result = $db->Execute($sSQL,2);
-   	   if ($result) {  
-	     $ret = ' disabled!';
-	   }
+		//get ctgid (positive number)
+		$sSQL = "select ctgid from categories where id=" . $id;     
+		$result = $db->Execute($sSQL,2);	
+		if ($result) {      
+			while(!$result->EOF) {	      
+				$ctgid = $result->fields[0];
+				$result->MoveNext();			 		 
+			}
+		}	
+		//make ctgid negative number	
+		$sSQL = "update categories set ctgid=-" . $ctgid . " where id=" . $id;  
+		$result = $db->Execute($sSQL,2);
+		if ($result)   
+			$ret = ' disabled!';
 	   
-	   return ($ret);  						   		     
+		return ($ret);  						   		     
     }  
   
     //handle inside from rcbrowser
-    function enable($id=null) {
-       $db = GetGlobal('db');	
-	   $id = GetReq('id');//is the recid of rcbrowser call
+    public function enable($id=null) {
+		$db = GetGlobal('db');	
+		$id = GetReq('id');//is the recid of rcbrowser call
 	   
-	   //get ctgid (negative number)
-	   $sSQL = "select ctgid from categories where id=" . $id;     
-	   $result = $db->Execute($sSQL,2);	
-	   if ($result) {      
-	     while(!$result->EOF) {	      
-		   $ctgid = $result->fields[0];
-		   $result->MoveNext();			 		 
-		 }
-       }	
-	   //make ctgid negative number	
-	   $sSQL = "update categories set ctgid=" . abs($ctgid) . " where id=" . $id;  
-	   $result = $db->Execute($sSQL,2);
-   	   if ($result) {  
-	     $ret = ' enabled!';
-	   }
+		//get ctgid (negative number)
+		$sSQL = "select ctgid from categories where id=" . $id;     
+		$result = $db->Execute($sSQL,2);	
+		if ($result) {      
+			while(!$result->EOF) {	      
+				$ctgid = $result->fields[0];
+				$result->MoveNext();			 		 
+			}
+		}	
+		//make ctgid negative number	
+		$sSQL = "update categories set ctgid=" . abs($ctgid) . " where id=" . $id;  
+		$result = $db->Execute($sSQL,2);
+		if ($result)  
+			$ret = ' enabled!';
 	   
-	   return ($ret);   
+		return ($ret);   
 						   		     
     }  
   
-    function toggle_category() {
-       $db = GetGlobal('db');	
-	   $id = GetReq('id');//is the recid of rcbrowser call 
+    public function toggle_category() {
+		$db = GetGlobal('db');	
+		$id = GetReq('id');//is the recid of rcbrowser call 
 	   
+		//get ctgid (positive number)
+		$sSQL = "select ctgid from categories where id=" . $id;     
+		$result = $db->Execute($sSQL,2);	
+		if ($result) {      
+			while(!$result->EOF) {	      
+				$ctgid = $result->fields[0];
+				$result->MoveNext();			 		 
+			}
+		}
 	   
-	   //get ctgid (positive number)
-	   $sSQL = "select ctgid from categories where id=" . $id;     
-	   $result = $db->Execute($sSQL,2);	
-	   if ($result) {      
-	     while(!$result->EOF) {	      
-		   $ctgid = $result->fields[0];
-		   $result->MoveNext();			 		 
-		 }
-       }
-	   
-	   if ($ctgid>0)		    
-	     $ret = $this->disable($id);
-	   else	 
-	     $ret = $this->enable($id);
+		if ($ctgid>0)		    
+			$ret = $this->disable($id);
+		else	 
+			$ret = $this->enable($id);
 		 
-	   return ($ret);  
+		return ($ret);  
     } 
   
     //import to categories table from text cats (called from rccategories)...disabled
-    function generate_from_text($cat,$ctgid) {
-    $db = GetGlobal('db');	  
+    public function generate_from_text($cat,$ctgid) {
+		$db = GetGlobal('db');	  
 
-    //echo $cat;
-	$tcat = explode($this->cseparator,str_replace('<br>','',$cat));//br came from text processing at the end of string
+		//echo $cat;
+		$tcat = explode($this->cseparator,str_replace('<br>','',$cat));//br came from text processing at the end of string
 	
-    $sSQL = "insert into categories (ctgid,cat1";
-    foreach ($tcat as $id=>$c) {
-	  $cid = $id+2;
-	  $sSQL .= ',cat'.$cid;	
-	}  
-	$sSQL.= ") values (";
-	$sSQL.= $ctgid . ",'ΚΑΤΗΓΟΡΙΕΣ ΕΙΔΩΝ'";
+		$sSQL = "insert into categories (ctgid,cat1";
+		foreach ($tcat as $id=>$c) {
+			$cid = $id+2;
+			$sSQL .= ',cat'.$cid;	
+		}  
+		$sSQL.= ") values (";
+		$sSQL.= $ctgid . ",'ΚΑΤΗΓΟΡΙΕΣ ΕΙΔΩΝ'";
 	
-	reset($tcat);
-	foreach ($tcat as $id=>$c)
-	  $sSQL .= ",'".trim($c)."'";
-	$sSQL .= ')';
+		reset($tcat);
+		foreach ($tcat as $id=>$c)
+			$sSQL .= ",'".trim($c)."'";
+		$sSQL .= ')';
 	
-	//echo $sSQL,'<br>';  
-	
-	$result = $db->Execute($sSQL,2);
-   	if (!$result) {  
-	   echo $sSQL,' failed!<br>';
-	}	
+		$result = $db->Execute($sSQL,2);
+		if (!$result)  
+			echo $sSQL,' failed!<br>';
+
     }
   
-    function add_category1($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
+    protected function add_category1($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 440;
         $rows = $rows ? $rows : 18;
         $width = $width ? $width : null; //wide
@@ -396,7 +371,7 @@ class rckategories extends shkategories {
 	    if (!defined('MYGRID_DPC')) 
 		   return ($this->add_category()); 
 		   
-        $lan = getlocal()?getlocal():0;
+        $lan = getlocal() ? getlocal() : 0;
         /*$root_name = 'ITEMS';	 
 	    $selected_cat = GetReq('cat') ? $root_name . $this->cseparator . str_replace('_',' ',GetReq('cat')) : $root_name;	
 	    if (stristr($selected_cat ,$this->cseparator))
@@ -430,7 +405,7 @@ class rckategories extends shkategories {
 	
     }
 	
-    function add_category2($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
+    protected function add_category2($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 440;
         $rows = $rows ? $rows : 18;
         $width = $width ? $width : null; //wide
@@ -502,70 +477,58 @@ class rckategories extends shkategories {
 	
     }
   	
-  
-    function add_category($category=null) {
-       $db = GetGlobal('db'); 
+    protected function add_category($category=null) {
+		$db = GetGlobal('db'); 
  	   
-       $root_name = 'ITEMS';
-       $mycat = $category ? $category : GetReq('cat');	   
-	   $selected_cat = $mycat ? $root_name . $this->cseparator . $mycat : $root_name;
+		$root_name = 'ITEMS';
+		$mycat = $category ? $category : GetReq('cat');	   
+		$selected_cat = $mycat ? $root_name . $this->cseparator . $mycat : $root_name;
 	   
-	   if (stristr($selected_cat ,$this->cseparator))
-	     $cats = explode($this->cseparator,$selected_cat);  
-	   else
-	     $cats[] = $selected_cat;	 
+		if (stristr($selected_cat ,$this->cseparator))
+			$cats = explode($this->cseparator,$selected_cat);  
+		else
+			$cats[] = $selected_cat;	 
 	 
-	   //print_r($cats);	
+		//SQL CATEGORIE WITHOUT BRANCH EXIST...
+		$sSQL = "select id from categories ";
+		$sSQL .= " WHERE ";
 
-
-       //SQL CATEGORIE WITHOUT BRANCH EXIST...
-       $sSQL = "select id from categories ";
-	   $sSQL .= " WHERE ";
-
-	   foreach ($cats as $i=>$c) {
-	     $idx = $i+1;//+2;...root_name added
-	     $where[] = "cat$idx='" . $this->replace_spchars($c,1) . "'";	
-	   }	 
-	   $sSQL .= implode(' and ',$where);
+		foreach ($cats as $i=>$c) {
+			$idx = $i+1;//+2;...root_name added
+			$where[] = "cat$idx='" . $this->replace_spchars($c,1) . "'";	
+		}	 
+		$sSQL .= implode(' and ',$where);
 	   
-	   $nextbranch = $idx+1;
-	   $sSQL .= ' and (cat' . $nextbranch . ' is NULL' . ' or cat' . $nextbranch . "='')";
+		$nextbranch = $idx+1;
+		$sSQL .= ' and (cat' . $nextbranch . ' is NULL' . ' or cat' . $nextbranch . "='')";
 	   
-	   $sSQL .= ' LIMIT 1';	 //in case of many recs...???'
-	   //echo $sSQL;
+		$sSQL .= ' LIMIT 1';	 //in case of many recs...???'
+		//echo $sSQL;
 	  
-	   $resultset = $db->Execute($sSQL,2);	
-	   //print_r($resultset->fields);
-	   $id = $resultset->fields['id']	; 	
-	   //echo $id;
-       //SQL...................	   
+		$resultset = $db->Execute($sSQL,2);	
+		$id = $resultset->fields['id']	; 	  
 	   
-	   if ($id) { //exist category with empty leaf (last catN)
-	   
-	     $out = $this->edit_category(1);
-	   }
-       else {	 
+		if ($id) { //exist category with empty leaf (last catN)
+			$out = $this->edit_category(1);
+		}
+		else {	 
 
-         //SQL CATEGORIE BRANCH EXIST SO MAKE A NEW...GETTING CTG DATA...
-         $sSQL = "select id,ctgid,ctgoutline,ctgoutlnorder,cat1,cat2,cat3,cat4,cat5,cat01,cat02,cat03,cat04,cat05,cat11,cat12,cat13,cat14,cat15 from categories ";
-	     $sSQL .= " WHERE ";
+			//SQL CATEGORIE BRANCH EXIST SO MAKE A NEW...GETTING CTG DATA...
+			$sSQL = "select id,ctgid,ctgoutline,ctgoutlnorder,cat1,cat2,cat3,cat4,cat5,cat01,cat02,cat03,cat04,cat05,cat11,cat12,cat13,cat14,cat15 from categories ";
+			$sSQL .= " WHERE ";
 
-	     foreach ($cats as $iz=>$cz) {
-	       $idy = $iz+1;
-	       $where2[] = "cat$idy='" . $this->replace_spchars($cz,1) . "'";	
-	     }	 
+			foreach ($cats as $iz=>$cz) {
+				$idy = $iz+1;
+				$where2[] = "cat$idy='" . $this->replace_spchars($cz,1) . "'";	
+			}	 
 
-	     $sSQL .= implode(' and ',$where2);   
-	     //$sSQL .= ' LIMIT 1';	 //in case of many recs...???'
+			$sSQL .= implode(' and ',$where2);   
+			//$sSQL .= ' LIMIT 1';	 //in case of many recs...???'
 
-	     $resultset = $db->Execute($sSQL,2);	
-	     //print_r($resultset->fields);
+			$resultset = $db->Execute($sSQL,2);	
+			//print_r($resultset->fields);
 		 
-		 $nextbranchid = $db->Affected_Rows() + 1;		 
-	     //echo $sSQL,'>', $nextbranchid;	
-		 //PRINT_R($resultset->fields);
-		 //echo $resultset->fields['ctgid'];
-         //SQL...................			 
+			$nextbranchid = $db->Affected_Rows() + 1;		 	 
   
 		    global $config;
 			$config['FORM']['element_bgcolor1'] = 'EEEEEE';
@@ -575,81 +538,81 @@ class rckategories extends shkategories {
 			$mytitles = localize('_ctgid',getlocal()) . ',' . localize('_ctgoutline',getlocal()) . ',' . localize('_ctgoutlnorder',getlocal()) . ',';				
 
 			if (GetReq('cat')) {//($selected_cat) { //..selected_cat has 'ITEM'..but works fine!
- 	          SetParam('ctgid', $resultset->fields['ctgid']+1);    
- 	          SetParam('ctgoutline', $resultset->fields['ctgoutline']?$resultset->fields['ctgoutline']. '.'.$nextbranchid : $nextbranchid);  
- 	          SetParam('ctgoutlnorder', $resultset->fields['ctgoutlnorder']+1);  			
+				SetParam('ctgid', $resultset->fields['ctgid']+1);    
+				SetParam('ctgoutline', $resultset->fields['ctgoutline']?$resultset->fields['ctgoutline']. '.'.$nextbranchid : $nextbranchid);  
+				SetParam('ctgoutlnorder', $resultset->fields['ctgoutlnorder']+1);  			
 			
-              // STANDART DESCR ....			
-              $fields = 'cat1,cat2,cat3,cat4,cat5';
-			  $catfields = explode(',',$fields);
-              $titles = '_LEVEL1,_LEVEL2,_LEVEL3,_LEVEL4,_LEVEL5';				
-			  $cattitles = explode(',',$titles);
+				// STANDART DESCR ....			
+				$fields = 'cat1,cat2,cat3,cat4,cat5';
+				$catfields = explode(',',$fields);
+				$titles = '_LEVEL1,_LEVEL2,_LEVEL3,_LEVEL4,_LEVEL5';				
+				$cattitles = explode(',',$titles);
 		  		
-			  foreach ($cats as $i=>$mycat) {
-				if ($catlevel = $mycat) {
-				  $_fields[] = $catfields[$i];
-				  //SetParam($catfields[$i],$catlevel); //set predef cat level
-				  SetParam($catfields[$i],$resultset->fields[$catfields[$i]]); 
-				  $localized_cattitles[] = localize($cattitles[$i],getlocal());
-			    }
-			  }
-              $_fields[] = $catfields[$i+1]; //plus 1 cat			  
-			  $localized_cattitles[] = localize('_NEWLEVEL',getlocal());	
+				foreach ($cats as $i=>$mycat) {
+					if ($catlevel = $mycat) {
+						$_fields[] = $catfields[$i];
+						//SetParam($catfields[$i],$catlevel); //set predef cat level
+						SetParam($catfields[$i],$resultset->fields[$catfields[$i]]); 
+						$localized_cattitles[] = localize($cattitles[$i],getlocal());
+					}
+				}
+				$_fields[] = $catfields[$i+1]; //plus 1 cat			  
+				$localized_cattitles[] = localize('_NEWLEVEL',getlocal());	
 			  
-              // FOREIGN DESCR ....0			  
-              $fields0 = 'cat01,cat02,cat03,cat04,cat05';
-			  $catfields0 = explode(',',$fields0);
-              $titles0 = '_FLEVEL1,_FLEVEL2,_FLEVEL3,_FLEVEL4,_FLEVEL5';				
-			  $cattitles0 = explode(',',$titles0);
+				// FOREIGN DESCR ....0			  
+				$fields0 = 'cat01,cat02,cat03,cat04,cat05';
+				$catfields0 = explode(',',$fields0);
+				$titles0 = '_FLEVEL1,_FLEVEL2,_FLEVEL3,_FLEVEL4,_FLEVEL5';				
+				$cattitles0 = explode(',',$titles0);
 			
-			  reset($cats);
-			  foreach ($cats as $i=>$mycat) {
-			    //echo $i,$mycat;
-			    if ($catlevel = $mycat) {
-				  $_fields0[] = $catfields0[$i];
-				  SetParam($catfields0[$i],$resultset->fields[$catfields0[$i]]); 
-				  $localized_cattitles0[] = localize($cattitles0[$i],getlocal());
-			    }
-			  }	
-              $_fields0[] = $catfields0[$i+1]; //plus 1 cat			  
-			  $localized_cattitles0[] = localize('_FNEWLEVEL',getlocal());	
+				reset($cats);
+				foreach ($cats as $i=>$mycat) {
+					//echo $i,$mycat;
+					if ($catlevel = $mycat) {
+						$_fields0[] = $catfields0[$i];
+						SetParam($catfields0[$i],$resultset->fields[$catfields0[$i]]); 
+						$localized_cattitles0[] = localize($cattitles0[$i],getlocal());
+					}
+				}	
+				$_fields0[] = $catfields0[$i+1]; //plus 1 cat			  
+				$localized_cattitles0[] = localize('_FNEWLEVEL',getlocal());	
 			  
-              // FOREIGN DESCR ....1			  
-              $fields1 = 'cat11,cat12,cat13,cat14,cat15';
-			  $catfields1 = explode(',',$fields1);
-              $titles1 = '_FLEVEL1,_FLEVEL2,_FLEVEL3,_FLEVEL4,_FLEVEL5';				
-			  $cattitles1 = explode(',',$titles1);
+				// FOREIGN DESCR ....1			  
+				$fields1 = 'cat11,cat12,cat13,cat14,cat15';
+				$catfields1 = explode(',',$fields1);
+				$titles1 = '_FLEVEL1,_FLEVEL2,_FLEVEL3,_FLEVEL4,_FLEVEL5';				
+				$cattitles1 = explode(',',$titles1);
 			
-			  reset($cats);
-			  foreach ($cats as $i=>$mycat) {
-			    //echo $i,$mycat;
-			    if ($catlevel = $mycat) {
-				  $_fields1[] = $catfields1[$i];
-				  SetParam($catfields1[$i],$resultset->fields[$catfields1[$i]]);
-				  $localized_cattitles1[] = localize($cattitles1[$i],getlocal());
-			    }
-			  }				  
+				reset($cats);
+				foreach ($cats as $i=>$mycat) {
+					//echo $i,$mycat;
+					if ($catlevel = $mycat) {
+						$_fields1[] = $catfields1[$i];
+						SetParam($catfields1[$i],$resultset->fields[$catfields1[$i]]);
+						$localized_cattitles1[] = localize($cattitles1[$i],getlocal());
+					}
+				}				  
 
-              $_fields1[] = $catfields1[$i+1]; //plus 1 cat			  
-			  $localized_cattitles1[] = localize('_FNEWLEVEL',getlocal());
+				$_fields1[] = $catfields1[$i+1]; //plus 1 cat			  
+				$localized_cattitles1[] = localize('_FNEWLEVEL',getlocal());
 			  
-			  $myfields .= implode(',',$_fields) . ',' . implode(',',$_fields0) . ',' . implode(',',$_fields1);
-			  $mytitles .= implode(',',$localized_cattitles) . ',' . implode(',',$localized_cattitles0) . ',' . implode(',',$localized_cattitles1);			  
+				$myfields .= implode(',',$_fields) . ',' . implode(',',$_fields0) . ',' . implode(',',$_fields1);
+				$mytitles .= implode(',',$localized_cattitles) . ',' . implode(',',$localized_cattitles0) . ',' . implode(',',$localized_cattitles1);			  
 			}
 			else {//root cat
-              //echo 'ROOT:';
- 	          SetParam('ctgid', $nextbranchid);   	 
- 	          SetParam('ctgoutline', $nextbranchid);  
- 	          SetParam('ctgoutlnorder', $nextbranchid); 
+				//echo 'ROOT:';
+				SetParam('ctgid', $nextbranchid);   	 
+				SetParam('ctgoutline', $nextbranchid);  
+				SetParam('ctgoutlnorder', $nextbranchid); 
 			  
-              $myfields .= 'cat1,cat2,cat01,cat02,cat11,cat12';
-              $mytitles .= localize('_LEVEL1',getlocal()).','.localize('_NEWLEVEL',getlocal()) .','.
+				$myfields .= 'cat1,cat2,cat01,cat02,cat11,cat12';
+				$mytitles .= localize('_LEVEL1',getlocal()).','.localize('_NEWLEVEL',getlocal()) .','.
 			               localize('_FLEVEL1',getlocal()).','.localize('_FNEWLEVEL',getlocal()).','.
 						   localize('_FLEVEL1',getlocal()).','.localize('_FNEWLEVEL',getlocal());			
 			 
-			  SetParam('cat1', $resultset->fields['cat1']?$resultset->fields['cat1']:$root_name); 
-              SetParam('cat01', $resultset->fields['cat01']?$resultset->fields['cat01']:$root_name); 
-              SetParam('cat11', $resultset->fields['cat11']?$resultset->fields['cat11']:$root_name); 			  			  
+				SetParam('cat1', $resultset->fields['cat1']?$resultset->fields['cat1']:$root_name); 
+				SetParam('cat01', $resultset->fields['cat01']?$resultset->fields['cat01']:$root_name); 
+				SetParam('cat11', $resultset->fields['cat11']?$resultset->fields['cat11']:$root_name); 			  			  
 			}
 			
 			$myfields .= ',active,view,search';
@@ -659,162 +622,144 @@ class rckategories extends shkategories {
 			SetParam('view',1);
 			SetParam('search',1);
 			//echo $myfields,'-',$mytitles;
-			
-		 
-	   
-	     $gocat = GetReq('cat'); 
-	     GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+50+100+0+0');
-	     GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+50+10+id');	  	   
-		 //GetGlobal('controller')->calldpc_method("dataforms.setformgoto use PHPDAC:rcupload.editmode_upload_files:".localize('_OK',getlocal()));
-	     //GetGlobal('controller')->calldpc_method('dataforms.setformtemplate use cpitemsadd'); //use template		   
-				 				 
-         $post = 	localize('_POST',getlocal());
-	     $clear = localize('_CLEAR',getlocal());
-	     $out .= GetGlobal('controller')->calldpc_method("dataforms.getform use insert.categories+dataformsinsert&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++dummy+dummy");	  
-		 
-	   } //id
-	   
-	   if (defined('MYGRID_DPC')) {
 		
+			$gocat = GetReq('cat'); 
+			GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+50+100+0+0');
+			GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+50+10+id');	  	   
+			//GetGlobal('controller')->calldpc_method("dataforms.setformgoto use PHPDAC:rcupload.editmode_upload_files:".localize('_OK',getlocal()));
+			//GetGlobal('controller')->calldpc_method('dataforms.setformtemplate use cpitemsadd'); //use template		   
+				 				 
+			$post = 	localize('_POST',getlocal());
+			$clear = localize('_CLEAR',getlocal());
+			$out .= GetGlobal('controller')->calldpc_method("dataforms.getform use insert.categories+dataformsinsert&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++dummy+dummy");	  
+		 
+		} //id
+	   
+		if (defined('MYGRID_DPC')) {
            $xsSQL = "select id,ctgid,ctgoutline,ctgoutlnorder,cat1,cat2,cat3,cat4,cat5,cat01,cat02,cat03,cat04,cat05,cat11,cat12,cat13,cat14,cat15 from categories ";
 		   $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+categories+$xsSQL+d++id+1+1+20+400");
-	   }		   
+		}		   
 	   
-       return ($out);  
+		return ($out);  
     }
   
-    function edit_category($addcat=null) {
-       $db = GetGlobal('db'); 
+    protected function edit_category($addcat=null) {
+		$db = GetGlobal('db'); 
 	   
-       $root_name = 'ITEMS';	   
-	   if ($root_name)	   
-	     $selected_cat = $root_name . $this->cseparator .  GetReq('cat');	   
-	   //$selected_cat = GetReq('cat');
-	   //echo $selected_cat;	   
+		$root_name = 'ITEMS';	   
+		if ($root_name)	   
+			$selected_cat = $root_name . $this->cseparator .  GetReq('cat');	   
+		//$selected_cat = GetReq('cat');
+		//echo $selected_cat;	   
 	   
-	   if (stristr($selected_cat ,$this->cseparator))
-	     $cats = explode($this->cseparator,$selected_cat);  
-	   else
-	     $cats[] = $selected_cat;	
-	   //print_r($cats);	  
+		if (stristr($selected_cat ,$this->cseparator))
+			$cats = explode($this->cseparator,$selected_cat);  
+		else
+			$cats[] = $selected_cat;		  
   
-       $sSQL = "select id from categories ";
-	   $sSQL .= " WHERE ";
+		$sSQL = "select id from categories ";
+		$sSQL .= " WHERE ";
 	   
-	   foreach ($cats as $i=>$c) {
-	     $id = $i+1;//+2;...root_name added
-	     $where[] = "cat$id='" . $this->replace_spchars($c,1) . "'";	
-	   }	 
-	   $sSQL .= implode(' and ',$where);
-	   $sSQL .= ' LIMIT 1';	 //in case of many recs...???'
-	   //echo $sSQL;
+		foreach ($cats as $i=>$c) {
+			$id = $i+1;//+2;...root_name added
+			$where[] = "cat$id='" . $this->replace_spchars($c,1) . "'";	
+		}	 
+		$sSQL .= implode(' and ',$where);
+		$sSQL .= ' LIMIT 1';	 //in case of many recs...???'
+		//echo $sSQL;
 	  
-	   $resultset = $db->Execute($sSQL,2);	
-	   //print_r($resultset->fields);
-	   $id = $resultset->fields['id']	; 	   
+		$resultset = $db->Execute($sSQL,2);	
+		//print_r($resultset->fields);
+		$id = $resultset->fields['id']	; 	   
 	   
-	   	
-		    global $config;
-			$config['FORM']['element_bgcolor1'] = 'EEEEEE';
-			$config['FORM']['element_bgcolor2'] = 'DDDDDD';	
+		global $config;
+		$config['FORM']['element_bgcolor1'] = 'EEEEEE';
+		$config['FORM']['element_bgcolor2'] = 'DDDDDD';	
 
-			$myfields = 'ctgid,ctgoutline,ctgoutlnorder,';	
-			$mytitles = localize('_ctgid',getlocal()) . ',' . localize('_ctgoutline',getlocal()) . ',' . localize('_ctgoutlnorder',getlocal()) . ',';			
+		$myfields = 'ctgid,ctgoutline,ctgoutlnorder,';	
+		$mytitles = localize('_ctgid',getlocal()) . ',' . localize('_ctgoutline',getlocal()) . ',' . localize('_ctgoutlnorder',getlocal()) . ',';			
 						
-            $fields = 'cat1,cat2,cat3,cat4,cat5';
-			$catfields = explode(',',$fields);
-            $titles = '_LEVEL1,_LEVEL2,_LEVEL3,_LEVEL4,_LEVEL5';				
-			$cattitles = explode(',',$titles);	
+        $fields = 'cat1,cat2,cat3,cat4,cat5';
+		$catfields = explode(',',$fields);
+        $titles = '_LEVEL1,_LEVEL2,_LEVEL3,_LEVEL4,_LEVEL5';				
+		$cattitles = explode(',',$titles);	
 			
-            reset($cats);
-			foreach ($cats as $i=>$mycat) {
-			  //echo $i,$mycat;
-			  if ($catlevel = $mycat) {
-				  $_fields[] = $catfields[$i];
-				  $localized_cattitles[] = localize($cattitles[$i],getlocal());
-			  }
-			}	
+        reset($cats);
+		foreach ($cats as $i=>$mycat) {
+		    //echo $i,$mycat;
+			if ($catlevel = $mycat) {
+				$_fields[] = $catfields[$i];
+				$localized_cattitles[] = localize($cattitles[$i],getlocal());
+			}
+		}	
 
-			//when add a category..comming from add_category procedure  ...modify an existing rec with empty leaf
-            if ($addcat) {
-              $_fields[] = $catfields[$i+1]; //plus 1 cat		
-			  $localized_cattitles[] = localize('_NEWLEVEL',getlocal());			  
-            } 			
+		//when add a category..comming from add_category procedure  ...modify an existing rec with empty leaf
+        if ($addcat) {
+            $_fields[] = $catfields[$i+1]; //plus 1 cat		
+			$localized_cattitles[] = localize('_NEWLEVEL',getlocal());			  
+        } 			
 			
-            $fields0 = 'cat01,cat02,cat03,cat04,cat05';
-			$catfields0 = explode(',',$fields0);
-            $titles0 = '_FLEVEL1,_FLEVEL2,_FLEVEL3,_FLEVEL4,_FLEVEL5';				
-			$cattitles0 = explode(',',$titles0);
+        $fields0 = 'cat01,cat02,cat03,cat04,cat05';
+		$catfields0 = explode(',',$fields0);
+        $titles0 = '_FLEVEL1,_FLEVEL2,_FLEVEL3,_FLEVEL4,_FLEVEL5';				
+		$cattitles0 = explode(',',$titles0);
 			
-			reset($cats);
-			foreach ($cats as $i=>$mycat) {
-			  //echo $i,$mycat;
-			  if ($catlevel = $mycat) {
-				  $_fields0[] = $catfields0[$i];
-				  $localized_cattitles0[] = localize($cattitles0[$i],getlocal());
-			  }
-			}	
+		reset($cats);
+		foreach ($cats as $i=>$mycat) {
+			//echo $i,$mycat;
+			if ($catlevel = $mycat) {
+				$_fields0[] = $catfields0[$i];
+				$localized_cattitles0[] = localize($cattitles0[$i],getlocal());
+			}
+		}	
 
-			//when add a category..comming from add_category procedure  ...modify an existing rec with empty leaf
-            if ($addcat) {
-              $_fields0[] = $catfields0[$i+1]; //plus 1 cat		
-			  $localized_cattitles0[] = localize('_FNEWLEVEL',getlocal());			  
-            } 			
+		//when add a category..comming from add_category procedure  ...modify an existing rec with empty leaf
+        if ($addcat) {
+            $_fields0[] = $catfields0[$i+1]; //plus 1 cat		
+			$localized_cattitles0[] = localize('_FNEWLEVEL',getlocal());			  
+        } 			
 
-            $fields1 = 'cat11,cat12,cat13,cat14,cat15';
-			$catfields1 = explode(',',$fields1);
-            $titles1 = '_FLEVEL1,_FLEVEL2,_FLEVEL3,_FLEVEL4,_FLEVEL5';				
-			$cattitles1 = explode(',',$titles1);
+        $fields1 = 'cat11,cat12,cat13,cat14,cat15';
+		$catfields1 = explode(',',$fields1);
+        $titles1 = '_FLEVEL1,_FLEVEL2,_FLEVEL3,_FLEVEL4,_FLEVEL5';				
+		$cattitles1 = explode(',',$titles1);
 			
-			reset($cats);
-			foreach ($cats as $i=>$mycat) {
-			  //echo $i,$mycat;
-			  if ($catlevel = $mycat) {
-				  $_fields1[] = $catfields1[$i];
-				  $localized_cattitles1[] = localize($cattitles1[$i],getlocal());
-			  }
-			}	
+		reset($cats);
+		foreach ($cats as $i=>$mycat) {
+			//echo $i,$mycat;
+			if ($catlevel = $mycat) {
+				$_fields1[] = $catfields1[$i];
+				$localized_cattitles1[] = localize($cattitles1[$i],getlocal());
+			}
+		}	
 
-			//when add a category..comming from add_category procedure  ...modify an existing rec with empty leaf
-            if ($addcat) {
-              $_fields1[] = $catfields1[$i+1]; //plus 1 cat		
-			  $localized_cattitles1[] = localize('_FNEWLEVEL',getlocal());			  
-            } 			
+		//when add a category..comming from add_category procedure  ...modify an existing rec with empty leaf
+        if ($addcat) {
+            $_fields1[] = $catfields1[$i+1]; //plus 1 cat		
+			$localized_cattitles1[] = localize('_FNEWLEVEL',getlocal());			  
+        } 			
+						  
+		$myfields .= implode(',',$_fields) . ',' . implode(',',$_fields0) . ',' . implode(',',$_fields1);
+		$mytitles .= implode(',',$localized_cattitles) . ',' . implode(',',$localized_cattitles0) . ',' . implode(',',$localized_cattitles1);
 			
-					  
-			$myfields .= implode(',',$_fields) . ',' . implode(',',$_fields0) . ',' . implode(',',$_fields1);
-			$mytitles .= implode(',',$localized_cattitles) . ',' . implode(',',$localized_cattitles0) . ',' . implode(',',$localized_cattitles1);
-			
-			$myfields .= ',active,view,search';
-			$mytitles .= ','. localize('_active',getlocal()) . ',' . localize('_view',getlocal()) . ',' . localize('_search',getlocal());	
+		$myfields .= ',active,view,search';
+		$mytitles .= ','. localize('_active',getlocal()) . ',' . localize('_view',getlocal()) . ',' . localize('_search',getlocal());	
 
-            //echo $myfields,'-',$mytitles;			
- 
+        //echo $myfields,'-',$mytitles;			
 	    
-	   $gocat = GetReq('cat');
+		$gocat = GetReq('cat');
 	   
-	   GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+50+100+0+0');
-	   GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+50+10');	  
-
-	   //GetGlobal('controller')->calldpc_method("dataforms.setformgoto use PHPDAC:rcupload.editmode_upload_files:".localize('_OK',getlocal()));  
-	   //GetGlobal('controller')->calldpc_method('dataforms.setformtemplate use cpitemsmod');	   
-	   
-       /*$fields = "code1,code2,code3,code4,code5,itmname,itmactive,itmfname,itmremark,itmdescr,itmfdescr,sysins,sysupd,uniida,uniname1,uniname2" .
-                 ",uni1uni2,uni2uni1,ypoloipo1,ypoloipo2,price0,price1,cat0,cat1,cat2,cat3,cat4,active,price2,pricepc,p1,p2,p3,p4,p5";
-				 
-	   $farr = explode(',',$fields);
-	   foreach ($farr as $t)
-	     $title[] = localize($t,getlocal());
-	   $titles = implode(',',$title);	*/ 
+		GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+50+100+0+0');
+		GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+50+10');	  
 				 	                    
-       $post = 	localize('_POST',getlocal());
-	   $clear = localize('_CLEAR',getlocal());
-	   $out .= GetGlobal('controller')->calldpc_method("dataforms.getform use update.categories+dataformsupdate&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++id=$id+dummy");	  
+		$post = 	localize('_POST',getlocal());
+		$clear = localize('_CLEAR',getlocal());
+		$out .= GetGlobal('controller')->calldpc_method("dataforms.getform use update.categories+dataformsupdate&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++id=$id+dummy");	  
 	   	
-	   return ($out);		 
+		return ($out);		 
     }
 	
-	function loadframe($ajaxdiv=null) {
+	protected function loadframe($ajaxdiv=null) {
 	    $db = GetGlobal('db');
 		$id = GetReq('id');
 		//due to str id of code2..transform from rec id
@@ -846,32 +791,31 @@ class rckategories extends shkategories {
 			return ($frame);
 	}	
 	
-	function edit_kategories() {
-	   $cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
-       //print_r($cpGet); echo '>';	  
-	   $cat = $cpGet['cat']; //stored cat for cp
-	   $id = 'id';//$this->getmapf('code');
-	   $editlink = "javascript:edit_cat({".$id."})";
+	protected function edit_kategories() {
+		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');
+		//print_r($cpGet); echo '>';	  
+		$cat = $cpGet['cat']; //stored cat for cp
+		$id = 'id';//$this->getmapf('code');
+		$editlink = "javascript:edit_cat({".$id."})";
 	   
-	   $rd = $this->add_category2(null,300,12, $editlink, 'e', true);
+		$rd = $this->add_category2(null,300,12, $editlink, 'e', true);
 
-	   if ($cat) {//preselected cat
-		 //$editurl = seturl("t=cpeditcat&editmode=1&cat=".$cat);//$id;
-		 $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&editmode=1&id=".$cat;
-		 $init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
-	   }
-	   else
-	     $init_content = null; 
+		if ($cat) {//preselected cat
+			//$editurl = seturl("t=cpeditcat&editmode=1&cat=".$cat);//$id;
+			$editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&editmode=1&id=".$cat;
+			$init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
+		}
+		else
+			$init_content = null; 
 	 
-	   //$rd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use editcat+".$init_content);	   	   
-	   $rd .= "<div id=\"editcat\">".$init_content . "</div>";	   	   
+		//$rd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use editcat+".$init_content);	   	   
+		$rd .= "<div id=\"editcat\">".$init_content . "</div>";	   	   
 	   		
-	   return ($rd);			  
-	   
+		return ($rd);			     
 	}
 	
 	/*used by fast item insert cp*/
-	function add_kategory_data($cat=null) {
+	public function add_kategory_data($cat=null) {
         if (!$cat) return;
         $db = GetGlobal('db'); 
 	    $lan = getlocal();

@@ -25,6 +25,7 @@ $__ACTIONS['JSDIALOGSTREAM_DPC'][5]='jsdtime';
 $__LOCALE['JSDIALOGSTREAM_DPC'][0]='JSDIALOGSTREAM_DPC;JS dialog stream;JS dialog stream';
 $__LOCALE['JSDIALOGSTREAM_DPC'][1]='_sText;Stream message;Stream message';
 $__LOCALE['JSDIALOGSTREAM_DPC'][2]='_sTitle;e-Enterprise;e-Enterprise';
+$__LOCALE['JSDIALOGSTREAM_DPC'][3]='_cookiesmsg;We use cookies to ensure that we give you the best experience on our website;Αυτός ο ιστότοπος χρησιμοποιεί cookies. Με τη χρήση αυτού του ιστότοπου αποδέχεστε τη χρήση τους';
 
 class jsdialogStream extends jsdialog {
 	

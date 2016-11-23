@@ -82,168 +82,134 @@ $__LOCALE['RCUSERS_DPC'][34]='_level;Level;Πρόσβαση';
 class rcusers extends shusers {
 
     var $title;
-	var $carr;
 	var $msg;
 	var $path;
 	var $post;
-
-	var $_grids;
-	
 	var $tell_activate, $tell_deactivate;
 	var $subj_activate, $subj_deactivate;
 	var $body_activate, $body_deactivate;
-	
 	var $encoding;
 	var $tmpl_path, $tmpl_name;	
 
-	function rcusers() {
+	public function __construct() {
 	
-	  shusers::shusers();
+		shusers::__construct();
 	
-	  $GRX = GetGlobal('GRX');
-	  $this->title = localize('RCUSERS_DPC',getlocal());
-	  $this->carr = null;
-	  $this->msg = null;
+		$this->title = localize('RCUSERS_DPC',getlocal());
+		$this->path = paramload('SHELL','prpath');
 
-	  $this->path = paramload('SHELL','prpath');
+		$this->delete = localize('_delete',getlocal());
+		$this->edit = localize('_edit',getlocal());
+		$this->add = localize('_add',getlocal());
+		$this->mail = localize('_mail',getlocal());
 
-      if ($GRX) {
-          $this->delete = loadTheme('ditem',localize('_delete',getlocal()));
-          $this->edit = loadTheme('eitem',localize('_edit',getlocal()));
-          $this->add = loadTheme('aitem',localize('_add',getlocal()));
-          $this->mail = loadTheme('mailitem',localize('_mail',getlocal()));
-
-		  $this->sep = "&nbsp;";//loadTheme('lsep');
-      }
-      else {
-          $this->delete = localize('_delete',getlocal());
-          $this->edit = localize('_edit',getlocal());
-          $this->add = localize('_add',getlocal());
-          $this->mail = localize('_mail',getlocal());
-
-		  $this->sep = "|";
-      }
+		$this->msg = null;
+		$this->sep = "|";
 	  
-	  $this->tell_activate = remote_paramload('RCUSERS','mail_on_activate',$this->path);
-	  $this->tell_deactivate = remote_paramload('RCUSERS','mail_on_deactivate',$this->path);	
-	  $this->subj_activate = remote_paramload('RCUSERS','subject_on_activate',$this->path);
-	  $this->subj_deactivate = remote_paramload('RCUSERS','subject_on_deactivate',$this->path);
-	  $this->body_activate = remote_paramload('RCUSERS','text_on_activate',$this->path);
-	  $this->body_deactivate = remote_paramload('RCUSERS','text_on_deactivate',$this->path);
+		$this->tell_activate = remote_paramload('RCUSERS','mail_on_activate',$this->path);
+		$this->tell_deactivate = remote_paramload('RCUSERS','mail_on_deactivate',$this->path);	
+		$this->subj_activate = remote_paramload('RCUSERS','subject_on_activate',$this->path);
+		$this->subj_deactivate = remote_paramload('RCUSERS','subject_on_deactivate',$this->path);
+		$this->body_activate = remote_paramload('RCUSERS','text_on_activate',$this->path);
+		$this->body_deactivate = remote_paramload('RCUSERS','text_on_deactivate',$this->path);
 
-      $char_set  = arrayload('SHELL','char_set');	  
-      $charset  = paramload('SHELL','charset');	  		
-	  if ($charset=='utf-8')
-	    $this->encoding = 'utf-8';
-	  else  
-	    $this->encoding = $char_set[getlocal()]; 	
+		$char_set  = arrayload('SHELL','char_set');	  
+		$charset  = paramload('SHELL','charset');	  		
+		if ($charset=='utf-8')
+			$this->encoding = 'utf-8';
+		else  
+			$this->encoding = $char_set[getlocal()]; 	
 
-	  $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	  $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	  
+		$this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
+		$this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	  
 	}
 
-    function event($event=null) {
+    public function event($event=null) {
 
-	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	   if ($login!='yes') return null;
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+		if ($login!='yes') return null;
 
-	   switch ($event) {
-	     case 'cpusractiv'    : $this->activate_deactivate();
-	                            break;
-	     case 'cpupdateadv'   :
-		                        break;
-	     case 'cpupdate'      : if (!$this->checkFields(null,$this->checkuseasterisk)) {
+		switch ($event) {
+			case 'cpusractiv'    : 	$this->activate_deactivate();
+									break;
+			case 'cpupdateadv'   :	break;
+			case 'cpupdate'      : 	if (!$this->checkFields(null,$this->checkuseasterisk)) {		 
+										//auto subscribe
+										if (defined('SHSUBSCRIBE_DPC'))  {
+											if (trim(GetParam('autosub'))=='on')
+												GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.GetParam("eml"));//.'++-1');
+											else
+												GetGlobal('controller')->calldpc_method('shsubscribe.dounsubscribe use '.GetParam("eml"));//.'+-1');
+										}
+										$this->update();
+									}	 
+									break;
 		 
-									//auto subscribe
-									if ( (defined('SHSUBSCRIBE_DPC')) /*&& (seclevel('SHSUBSCRIBE_DPC',$this->userLevelID))*/ ) {
-										if (trim(GetParam('autosub'))=='on')
-											GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.GetParam("eml"));//.'++-1');
-										else
-											GetGlobal('controller')->calldpc_method('shsubscribe.dounsubscribe use '.GetParam("eml"));//.'+-1');
-									}
-							  		 
-		                            $this->update();
-							   }	 
-							   break;
-		 
-	     case 'cpcusmsend'  : $this->send_mail();
-		                      
-		                      break;
-	     case 'cpcusmail'   :
-		                      break;
- 	     case 'regusercus'  :
-		                      break;
-	     case 'reguser' :
-		                      break;
-		 case 'insuser' :     //$this->insert();
-                              $this->insert_user_customer();  
-		                      break;
+			case 'cpcusmsend'  	: 	$this->send_mail();	                      
+									break;
+			case 'cpcusmail'   	:	break;
+			case 'regusercus'  	:   break;
+			case 'reguser' 		:   break;
+			case 'insuser' 		:   //$this->insert();
+									$this->insert_user_customer();  
+									break;
+			case 'upduser' 		:   break;
+			case 'saveupduser'  :   $this->update();
+									break;
 							  
-	     case 'upduser' :                              							
-		                      break;
-							  
-		 case 'saveupduser' : $this->update();
-		                      break;
-							  
-	     case 'deluser' :    $this->_delete(GetReq('rec'),'id');
-							  break;
-							 
-		 case 'searchtopic' : 					 
-	     case 'cpsusers'    : 		 
-	     case 'cpusers'     : 
-		 default            : 
-	   }
-
+			case 'deluser' 		:   $this->_delete(GetReq('rec'),'id');
+									break;
+			case 'searchtopic' 	: 					 
+			case 'cpsusers'    	: 		 
+			case 'cpusers'     	: 
+			default            	: 
+		}
     }
 
-    function action($action=null) {
+    public function action($action=null) {
 		
-	  $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	  if ($login!='yes') return null;	
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+		if ($login!='yes') return null;	
 
-	  switch ($action) {
-	     case 'cpupdateadv' : $out .= $this->user_form();
-		                      break;
-	     case 'cpcusmsend'  : $out .= $this->show_users();
-		                      break;
-	     case 'cpcusmail'   : $out .= $this->show_mail();
-		                      break;
-	     case 'deluser'     : $out .= $this->viewUsers();
-		                      break;
-	     case 'regusercus' :  $out .= $this->regform(null,'insuser');
-		                      break;							  
-		 case 'reguser'     : $out .= $this->regform();
-							  break; 
-		 case 'cpupdate'  :	  $out .= $this->viewUsers();	
-		                      break;		  
-	     case 'upduser' :     						  	
-							  $out .= $this->update_user_form();   
-		                      break;
-		 case 'cpsusers'    : $out .= $this->viewSuperUsers();
-							  break;
-		 case 'saveupduser' :
-         case 'insuser'     :
-	     case 'cpusers'     :
-		 case 'cpusractiv'  :
-		 case 'searchtopic' :			 
-		 default            : $out .= $this->viewUsers();	
-	 }
+		switch ($action) {
+			case 'cpupdateadv' : 	$out .= $this->user_form();
+									break;
+			case 'cpcusmsend'  : 	$out .= $this->show_users();
+									break;
+			case 'cpcusmail'   : 	$out .= $this->show_mail();
+									break;
+			case 'deluser'     : 	$out .= $this->viewUsers();
+									break;
+			case 'regusercus'  :  	$out .= $this->regform(null,'insuser');
+									break;							  
+			case 'reguser'     : 	$out .= $this->regform();
+									break; 
+			case 'cpupdate'    :	$out .= $this->viewUsers();	
+									break;		  
+			case 'upduser' 	   :    $out .= $this->update_user_form();   
+									break;
+			case 'cpsusers'    : 	$out .= $this->viewSuperUsers();
+									break;
+			case 'saveupduser' :
+			case 'insuser'     :
+			case 'cpusers'     :
+			case 'cpusractiv'  :
+			case 'searchtopic' :			 
+			default            : 	$out .= $this->viewUsers();	
+		}
 
-	 return ($out);
+		return ($out);
     }
 	
 	protected function update_user_form() {
 	
-	   //update form
-	   $out = $this->register(GetReq('rec'),'id','rec','cpupdate');
+		//update form
+		$out = $this->register(GetReq('rec'),'id','rec','cpupdate');
 	   
-	   if (defined('RCTRANSACTIONS_DPC')) {
-	   
-		$out .= GetGlobal('controller')->calldpc_method("rctransactions.show_grid use +150+1");	   
-		//$out .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use trans");	      
-	   }
+		if (defined('RCTRANSACTIONS_DPC')) 
+			$out .= GetGlobal('controller')->calldpc_method("rctransactions.show_grid use +150+1");	        
        
-       return ($out); 	   
+		return ($out); 	   
 	}
 	
 	//when post
@@ -298,80 +264,13 @@ class rcusers extends shusers {
             }
         }	
 	}
-	
-	protected function form($action=null) {
 
-     $myaction = seturl("t=reguser");
+	//not used
+    protected function get_country_from_ip() {
 
-     if ($this->post==true) {
-
-	   SetSessionParam('REGISTERED_CUSTOMER',1);
-	 }
-	 else { 
-
-       $out .= setError($sFormErr . $this->msg);
-
-	   $form = new form(localize('_ADDEVENT',getlocal()), "reguser", FORM_METHOD_POST, $myaction, true);
-
-	   $form->addGroup			("personal",			"Tell us about your self.");
-	   //$form->addGroup			("technical",			"Tell us about your technology.");
-	   $form->addGroup			("subscribe",			"Subscribe.");
-
-	   $form->addElement		("personal",			new form_element_text		(localize('_COMP',getlocal())."*",     "company",		GetParam("company"),				"forminput",	        50,				255,	0));
-	   $form->addElement		("personal",			new form_element_text		(localize('_CPER',getlocal()),     "cperson",		GetParam("cperson"),				"forminput",	        20,				255,	0));
-	   $form->addElement		("personal",			new form_element_text		(localize('_ACTV',getlocal()),     "activities",	GetParam("activities"),				"forminput",	        30,				255,	0));
-	   $form->addElement		("personal",			new form_element_text		(localize('_ADDR',getlocal()),     "address",	    GetParam("address"),				"forminput",	        30,				255,	0));
-	   $form->addElement		("personal",			new form_element_text		(localize('_TOWN',getlocal()),     "town",	        GetParam("town"),				"forminput",	        20,				255,	0));
-//	   $form->addElement		("personal",			new form_element_greekmap	(localize('_NOMOS',getlocal()),     "amail","nomos",GetParam("nomos"),"forminput",20,20,1));
-	   $form->addElement		("personal",			new form_element_text		(localize('_ZIP',getlocal()),      "zip",	        GetParam("zip"),				"forminput",	        20,				255,	0));
-	   $form->addElement		("personal",			new form_element_text		(localize('_CNTR',getlocal()),     "country",	    GetParam("country"),				"forminput",	        20,				255,	0));
-	   //$form->addElement		("personal",			new form_element_combo_file (localize('_CNTR',getlocal()),     "country",	    $this->get_country_from_ip(),				"forminput",	        1,				0,	'country'));
-	   $form->addElement		("personal",			new form_element_text		(localize('_TEL',getlocal()),      "tel",	        GetParam("tel"),				"forminput",	        20,				255,	0));
-	   $form->addElement		("personal",			new form_element_text		(localize('_FAX',getlocal()),      "fax",	        GetParam("fax"),				"forminput",	        20,				255,	0));
-	   $form->addElement		("personal",			new form_element_text		(localize('_MAIL',getlocal())."*",     "email",			GetParam("email"),				"forminput",	        30,				255,	0));
-	   $form->addElement		("personal",			new form_element_text		(localize('_WEB',getlocal()),      "web",			"http://",		"forminput",		    20,				255,	0));
-
-	   //$form->addElement		("technical",			new form_element_combo_file (localize('_PLAN',getlocal()),     "proglan",	    GetParam("proglan"),				"forminput",	        5,				0,	'proglan'));
-	   //$form->addElement		("technical",			new form_element_combo_file (localize('_OSYS',getlocal()),     "opersys",	    GetParam("opersys"),				"forminput",	        5,				0,	'opersys'));
-	   //$form->addElement		("technical",			new form_element_combo_file (localize('_USERI',getlocal()),     "userint",	    GetParam("userint"),				"forminput",	        5,				0,	'userint'));
-	   //$form->addElement		("technical",			new form_element_combo_file (localize('_DBENV',getlocal()),     "dbenv",	    GetParam("dbenv"),				"forminput",	        5,				0,	'dbenv'));
-
-	   //$form->addElement		("subscribe",			new form_element_text		(localize('_SYBSCR',getlocal()),   "subscribe",		"",				"forminput",	        20,				255,	0));
-	   $form->addElement		("subscribe",			new form_element_radio		(localize('_RCSUBSE',getlocal()),   "subscribe",      1,             "",   2, array ("0" => localize('_OXI',getlocal()), "1" => localize('_NAI',getlocal()))));
-	   //$form->addElement		("thema",			    new form_element_text		(localize('_SUBJECT',getlocal())."*",  "subject",		GetParam("subject"),				"forminput",			60,				255,	0));
-	   //$form->addElement		("thema",			    new form_element_textarea   (localize('_MESSAGE',getlocal()),  "mail_text",		GetParam("mail_text"),				"formtextarea",			60,				9));
-
-	   //$form->addElement		("warning",			    new form_element_onlytext	(localize('_WARNING',getlocal()),  localize('_FORMWARN',getlocal()),""));
-
-	   //if ($this->info_message)
-	     //$form->addElement		("info",			    new form_element_onlytext	("",  $this->info_message,""));
-
-	   // Adding a hidden field
-	   if ($action)
-	     $form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", $action));
-	   else
-	     $form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "reguser"));
-
-	   // Showing the form
-	   $fout = $form->getform ();
-
-
-	   $out .= $fout;
-
-	   //$form->checkform();
-	 }
-
-     return ($out);
-	}
-
-
-    function get_country_from_ip() {
-
-     $mycountry = GetGlobal('controller')->calldpc_method("country.find_country");
-	 //return "Greece";
-	 return ($mycountry);
+		$mycountry = GetGlobal('controller')->calldpc_method("country.find_country");
+		return ($mycountry);
     }
-	
 	
 	protected function viewUsers() {	   
         $sFormErr = GetGlobal('sFormErr');
@@ -380,8 +279,9 @@ class rcusers extends shusers {
 			
 	    if (defined('MYGRID_DPC')) {
 			
+			$edit = _m('cmsrt.isLevelUser use 9') ? 'd' : 'e';
+			
 			$where = null; //"where seclevid<5";  //order by id desc //disable search
-		
             $xsSQL = "SELECT * from (select id,timein,active,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users $where) o ";		   
 		   
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");
@@ -399,7 +299,7 @@ class rcusers extends shusers {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code2|".localize('_code',getlocal())."|20|0|");			
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");
 		   
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+d+".localize('RCUSERS_DPC',getlocal())."+id+0+1+36+600++0+1+1");
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',getlocal())."+id+0+1+36+600++0+1+1");
 		   
 		    return ($out); 	
 	    }
@@ -416,7 +316,9 @@ class rcusers extends shusers {
 			$out = $msg;	
 			
 	    if (defined('MYGRID_DPC')) {
-		
+		    
+			$edit = _m('cmsrt.isLevelUser use 9') ? 'd' : 'e';
+			
             $xsSQL = "SELECT * from (select id,timein,active,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users where $from and $to) o ";		   
 		   
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");
@@ -433,7 +335,7 @@ class rcusers extends shusers {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|20|0|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code2|".localize('_code',getlocal())."|20|0|");			
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");		   
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+d+".localize('RCUSERS_DPC',getlocal())."+id+0+1+36+600++0+1+1");
+		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',getlocal())."+id+0+1+36+600++0+1+1");
 		   
 		    return ($out); 	
 	    }
@@ -474,166 +376,154 @@ class rcusers extends shusers {
 	}
 	
 	protected function user_form() {
-	  global $config;	
-      $db = GetGlobal('db');	
-	  $id = GetReq('rec');
+		global $config;	
+		$db = GetGlobal('db');	
+		$id = GetReq('rec');
 	
-	   if (GetReq('editmode')) {//default form colors	
+		if (GetReq('editmode')) {//default form colors	
 
-	     $config['FORM']['element_bgcolor1'] = 'EEEEEE';
-	     $config['FORM']['element_bgcolor2'] = 'DDDDDD';	
+			$config['FORM']['element_bgcolor1'] = 'EEEEEE';
+			$config['FORM']['element_bgcolor2'] = 'DDDDDD';	
 		   
-         $sSQL = "select id from users ";
-	     $sSQL .= " WHERE id='" . $id . "'";	
-	     //echo $sSQL;
+			$sSQL = "select id from users ";
+			$sSQL .= " WHERE id='" . $id . "'";	
 	  
-	     $resultset = $db->Execute($sSQL,2);	
-		 //print_r($resultset->fields);
-		 $id = $resultset->fields['id']	;  
+			$resultset = $db->Execute($sSQL,2);	
+			$id = $resultset->fields['id']	;  
 		 
-	     GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+50+100+0+0');
-	     GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+50+10');
-		 GetGlobal('controller')->calldpc_method('dataforms.setformgoto use DPCLINK:cpusers:OK');
-	     GetGlobal('controller')->calldpc_method('dataforms.setformtemplate use cpupdateadvok');	   
+			GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+50+100+0+0');
+			GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+50+10');
+			GetGlobal('controller')->calldpc_method('dataforms.setformgoto use DPCLINK:cpusers:OK');
+			GetGlobal('controller')->calldpc_method('dataforms.setformtemplate use cpupdateadvok');	   
 	   
-         $fields = "code1,code2,ageid,clogon,cntryid,email,fname,genid,lanid,lastlogon,lname,notes,seclevid,sesdata" .
-                   ",startdate,subscribe,username,password,vpass,timezone";		   
+			$fields = "code1,code2,ageid,clogon,cntryid,email,fname,genid,lanid,lastlogon,lname,notes,seclevid,sesdata" .
+						",startdate,subscribe,username,password,vpass,timezone";		   
 				 
-	     $farr = explode(',',$fields);
-	     foreach ($farr as $t)
-	       $title[] = localize($t,getlocal());
-	       $titles = implode(',',$title);			 	 					
-	     }	 	
+			$farr = explode(',',$fields);
+			foreach ($farr as $t)
+				$title[] = localize($t,getlocal());
+				
+			$titles = implode(',',$title);			 	 					
+		}	 	
 		 
-	     $out .= GetGlobal('controller')->calldpc_method("dataforms.getform use update.users+dataformsupdate+Post+Clear+$fields+$titles++id=$id+dummy");	  
+		$out .= GetGlobal('controller')->calldpc_method("dataforms.getform use update.users+dataformsupdate+Post+Clear+$fields+$titles++id=$id+dummy");	  
 	   
-         return ($out);		 
+		return ($out);		 
 	}
 	
 	public function activate_user() {
-	     $db = GetGlobal('db');	
-		 $id = GetReq('rec');
+	    $db = GetGlobal('db');	
+		$id = GetReq('rec');
 		 
-		 $sSQL = "update users set active=1,notes='ACTIVE' where id = " . $id;
-		 //echo $sSQL;		 
-         $db->Execute($sSQL);
-         if($db->Affected_Rows()) {
-		   SetGlobal('sFormErr',"ok");
-		   return ($id);
-		 }  
-	     else {
-		   SetGlobal('sFormErr',localize('_MSG18',getlocal()));			 
-		   return false;
-		 }  
+		$sSQL = "update users set active=1,notes='ACTIVE' where id = " . $id;
+        $db->Execute($sSQL);
+		
+        if($db->Affected_Rows()) {
+			SetGlobal('sFormErr',"ok");
+			return ($id);
+		}  
+
+		SetGlobal('sFormErr',localize('_MSG18',getlocal()));			 
+		return false;
 	}
 	
 	public function deactivate_user() {
-	     $db = GetGlobal('db');	
-		 $id = GetReq('rec');
+	    $db = GetGlobal('db');	
+		$id = GetReq('rec');
 		 
-		 $sSQL = "update users set active=0,notes='DELETED' where id = " . $id;
-		 //echo $sSQL;		 
-         $db->Execute($sSQL);
-         if($db->Affected_Rows()) {
-		   SetGlobal('sFormErr',"ok");
-		   return ($id);
-		 }		 
-	     else {
-		   SetGlobal('sFormErr',localize('_MSG18',getlocal()));			 
-		   return false;
-		 }  
+		$sSQL = "update users set active=0,notes='DELETED' where id = " . $id;
+        $db->Execute($sSQL);
+		
+        if($db->Affected_Rows()) {
+			SetGlobal('sFormErr',"ok");
+			return ($id);
+		}		 
+
+		SetGlobal('sFormErr',localize('_MSG18',getlocal()));			 
+		return false;
 	}		
 	
 	public function is_activated_user() {
-	     $db = GetGlobal('db');	
-		 $id = GetReq('rec');
+	    $db = GetGlobal('db');	
+		$id = GetReq('rec');
 		 
-		 $sSQL = "select active,notes from users where id = " . $id;
-		 //echo $sSQL;		 
-         $result = $db->Execute($sSQL,2);
+		$sSQL = "select active,notes from users where id = " . $id;	 
+        $result = $db->Execute($sSQL,2);
 		 
-		 if ($result->fields['notes'])
+		if ($result->fields['notes'])
 			return true;
 		 
-		 return false;
-		 /*
-		 $notes = $result->fields['notes'];
-		 if (substr($notes,0,7)=='DELETED')
-		   return false;
-		 else
-		   return true;  */
-	
+		return false;
 	}
 	
 	protected function fetch_user_data($id, $fields=null) {
-	     $db = GetGlobal('db');	
-		 if ((!$id) || (!$fields)) return false;
+	    $db = GetGlobal('db');	
+		if ((!$id) || (!$fields)) return false;
 		 
-		 if (stristr($fields,'::')) {
-		   $mfa = explode('::',$fields);//array of fields
-		   $mf = str_replace('::',',',$fields);
-		 }  
-		 else {
-           $mfa = $fields; //one element		 
-		   $mf = $fields;
-		 }
+		if (stristr($fields,'::')) {
+			$mfa = explode('::',$fields);//array of fields
+			$mf = str_replace('::',',',$fields);
+		}  
+		else {
+			$mfa = $fields; //one element		 
+			$mf = $fields;
+		}
 		 
-		 $sSQL = "select $mf from users where id = " . $id;
-		 //echo $sSQL;		 
-         $result = $db->Execute($sSQL,2);
+		$sSQL = "select $mf from users where id = " . $id;
+        $result = $db->Execute($sSQL,2);
 		 
-		 if (is_array($mfa)) {
-		   foreach ($mfa as $i=>$f)
-		     $ret[$f] = $result->fields[$f];
-		 }
-		 else
-		   $ret = $result->fields[$mfa];
+		if (is_array($mfa)) {
+			foreach ($mfa as $i=>$f)
+				$ret[$f] = $result->fields[$f];
+		}
+		else
+			$ret = $result->fields[$mfa];
 		  
-		 return ($ret);  
+		return ($ret);  
 	}	
 	
 	protected function activate_deactivate() {
 	
-	   if ($this->is_activated_user()) {
+	    if ($this->is_activated_user()) {
 	   
-	     $uid = $this->deactivate_user();
+			$uid = $this->deactivate_user();
 		 
-		 if (($uid) && ($this->tell_deactivate)) {	 
-		    $user_email = $this->fetch_user_data($uid,'email');
+			if (($uid) && ($this->tell_deactivate)) {	 
+				$user_email = $this->fetch_user_data($uid,'email');
 			
-			$template= "userdeactivatetell.htm";
-	        $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		    //echo $t;
-	        if (is_readable($t)) {
-		      $mytemplate = file_get_contents($t);
-			  $tokens[] = $user_email;
-			  $mailbody = $this->combine_tokens($mytemplate,$tokens);
-			  $this->mailto($this->tell_it, $user_email,$this->subj_activate,$mailbody);
-			}
-            else			
-			  $this->send_mail($this->tell_it, $user_email,$this->subj_deactivate,$this->body_deactivate);
-		 }		 
-	   }	 
-	   else {
+				$template= "userdeactivatetell.htm";
+				$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
+				//echo $t;
+				if (is_readable($t)) {
+					$mytemplate = file_get_contents($t);
+					$tokens[] = $user_email;
+					$mailbody = $this->combine_tokens($mytemplate,$tokens);
+					$this->mailto($this->tell_it, $user_email,$this->subj_activate,$mailbody);
+				}
+				else			
+					$this->send_mail($this->tell_it, $user_email,$this->subj_deactivate,$this->body_deactivate);
+			}		 
+	    }	 
+	    else {
 	   
-	     $uid = $this->activate_user();	 
+			$uid = $this->activate_user();	 
 		 
-		 if (($uid) && ($this->tell_activate)) {
-		    $user_email = $this->fetch_user_data($uid,'email');
+			if (($uid) && ($this->tell_activate)) {
+				$user_email = $this->fetch_user_data($uid,'email');
 			
-			$template= "useractivatetell.htm";
-	        $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		    //echo $t;
-	        if (is_readable($t)) {
-		      $mytemplate = file_get_contents($t);
-			  $tokens[] = $user_email;
-			  $mailbody = $this->combine_tokens($mytemplate,$tokens);
-			  $this->mailto($this->tell_it, $user_email,$this->subj_activate,$mailbody);
+				$template= "useractivatetell.htm";
+				$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
+
+				if (is_readable($t)) {
+					$mytemplate = file_get_contents($t);
+					$tokens[] = $user_email;
+					$mailbody = $this->combine_tokens($mytemplate,$tokens);
+					$this->mailto($this->tell_it, $user_email,$this->subj_activate,$mailbody);
+				}
+				else
+				$this->send_mail($this->tell_it, $user_email,$this->subj_activate,$this->body_activate);		 
 			}
-            else
-			  $this->send_mail($this->tell_it, $user_email,$this->subj_activate,$this->body_activate);		 
-		 }
-	   }	 
+		}	 
 	}	
 	
 };

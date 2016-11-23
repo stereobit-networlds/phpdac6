@@ -1118,7 +1118,7 @@ SCROLLTOP;
 	   return ($out);	      
 	}		
 	
-	protected function list_katalog($imageclick=null,$cmd=null,$template=null,$no_additional_info=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$nolinemax=null,$originfunction=null) {
+	public function list_katalog($imageclick=null,$cmd=null,$template=null,$no_additional_info=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$nolinemax=null,$originfunction=null) {
 	    $cmd = $cmd?$cmd:'klist';
 	    $pz = $photosize?$photosize:1;		   
 	    $xdist = $this->imagex?$this->imagex:100;
@@ -1152,23 +1152,23 @@ SCROLLTOP;
 	    }
        
         if ($this->oneitemlist) {
-	     if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
-			$is_one_item = $this->read_list(); //read records
-			if ($is_one_item) { 
-				//echo $is_one_item,'>';
-				$this->read_item(null,$is_one_item);
-				$out = $this->show_item();
-				return ($out);
-			}		   
-		 }
-		 elseif (!$external_read) { //event read the list..if not called by a phpdac page call
-			if ($itemcode = $this->my_one_item) {
-				//echo $this->my_one_item,'>';
-				$this->read_item(null,$itemcode);
-				$out = $this->show_item();
-				return ($out);		   
-			}	   
-		 }		 
+			if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
+				$is_one_item = $this->read_list(); //read records
+				if ($is_one_item) { 
+					//echo $is_one_item,'>';
+					$this->read_item(null,$is_one_item);
+					$out = $this->show_item();
+					return ($out);
+				}		   
+			}
+			elseif (!$external_read) { //event read the list..if not called by a phpdac page call
+				if ($itemcode = $this->my_one_item) {
+					//echo $this->my_one_item,'>';
+					$this->read_item(null,$itemcode);
+					$out = $this->show_item();
+					return ($out);		   
+				}	   
+			}		 
         } 	      
 	   	
 	    if (!empty($this->result)) {		   
@@ -1825,9 +1825,9 @@ SCROLLTOP;
 		$ymax = $imgy?$imgy:75;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_pcat use $p,$category,$items");
+		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_lastincat use $p,$category,$items");
 		else  	
-          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_pcat use $p,$category,$items");
+          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_lastincat use $p,$category,$items");
 		  
 		return ($out);	
 	}		
@@ -1881,9 +1881,9 @@ SCROLLTOP;
 		$ymax = $imgy?$imgy:75;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_pcat use $p,$category,$items");
+		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_orderid use $p,$category,$items");
 		else  	
-          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_pcat use $p,$category,$items");
+          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_orderid use $p,$category,$items");
 		  
 		return ($out);	
 	}	
@@ -1909,9 +1909,9 @@ SCROLLTOP;
 		$ymax = $imgy?$imgy:75;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_pcat use $p,$category,$items");
+		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_orderidis use $p,$category,$items");
 		else  	
-          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_pcat use $p,$category,$items");
+          $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"shkatalogmedia.show_orderidis use $p,$category,$items");
 		  
 		return ($out);	
 	}	

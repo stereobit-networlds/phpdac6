@@ -256,7 +256,7 @@ class rcbulkmail {
 		$this->batchid = GetParam('bid') ? GetParam('bid') : 0; //as reade by post form when send submit
 		$this->maxinpvars = 2500; //ini_get('max_input_vars') - 50; //DEPEND ON SRV AND DEFINES THE BATCH OUTPUT		
 		
-		$this->userDemoIds = array(5,6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
+		$this->userDemoIds = array(5,6);//,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 		$this->crmLevel = 9;
 		
 		$ckeditorVersion = remote_paramload('RCBULKMAIL','ckeditor',$this->prpath);		
