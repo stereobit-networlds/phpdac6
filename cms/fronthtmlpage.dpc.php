@@ -204,11 +204,12 @@ class fronthtmlpage {
 		if ($is_serialized) 
 			$data = unserialize($data);
 	  
-		$pattern = "@<phpdac.*?>(.*?)</phpdac>@";
-		preg_match_all($pattern,$data,$matches);
-	  
+		$pattern = "@<phpdac.*?>(.*?)</phpdac>@s";
+		preg_match_all($pattern, $data, $matches, PREG_PATTERN_ORDER);
+
 		foreach ($matches[1] as $r=>$cmd) {
-			$ret = _m($cmd); //,1); //no error stop 					 
+			$_cmd = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", "", $cmd)));
+			$ret = _m($_cmd); //,1); //no error stop 					 
 			$data = str_replace("<phpdac>".$cmd."</phpdac>",$ret,$data);
 		}
 	  
@@ -687,6 +688,18 @@ EOF;
 		return urldecode($ret);
 	    //return $_SERVER['PHP_SELF'];
     }
+	
+	public function phpcode($evalCode=null) {
+		if (!$evalCode) return null;
+		
+		if (strstr($evalCode, '?>')) {
+			//$evalCode = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", "", $evalCode)));
+			$evalCode = '?>' . $evalCode . ((substr($evalCode, -2) == '?>') ? '<?php ' : '');
+			return eval($evalCode);
+		}
+
+		return $evalCode; //return no php code
+	}
 
 	public function nvl($param=null,$state1=null,$state2=null,$value=null) {
 	    global ${$param};
@@ -695,17 +708,19 @@ EOF;
 					(GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $_SESSION[$param]));				
 		
         if ($value) { 
-			if (strstr($value, '|')) {
+			if (strstr($value, '?>'))
+				$ret = ($this->phpcode($value)==$var) ? $this->phpcode($state1) : $this->phpcode($state2);		
+			elseif (strstr($value, '|')) {
 			    $nvalues = explode('|',$value); 
-				$ret = (in_array($var, $nvalues)) ? $state1 : $state2; 
+				$ret = (in_array($var, $nvalues)) ? $this->phpcode($state1) : $this->phpcode($state2); 
 			}
 			elseif (strstr($value, '.'))
-				$ret = (_v($value)==$var) ? $state1 : $state2; 			
+				$ret = (_v($value)==$var) ? $this->phpcode($state1) : $this->phpcode($state2);
 			else	
-				$ret = ($value==$var) ? $state1 : $state2;   		
+				$ret = ($value==$var) ? $this->phpcode($state1) : $this->phpcode($state2);  		
 		}   
         else
-           $ret = $var ? $state1 : $state2;
+			$ret = $var ? $this->phpcode($state1) : $this->phpcode($state2);
 		   
 		return ($ret);
     }
@@ -713,17 +728,19 @@ EOF;
 	public function nvltokens($token=null,$state1=null,$state2=null,$value=null) {
 	    //always string compare...
 		if ($value) {	
-			if (strstr($value, '|')) {
+			if (strstr($value, '?>'))
+				$ret = ($this->phpcode($value)==$token) ? $this->phpcode($state1) : $this->phpcode($state2);		
+			elseif (strstr($value, '|')) {
 			    $nvalues = explode('|',$value); 
-				$ret = (in_array($token, $nvalues)) ? $state1 : $state2; 
+				$ret = (in_array($token, $nvalues)) ? $this->phpcode($state1) : $this->phpcode($state2); 
 			}
 			elseif (strstr($value, '.'))
-				$ret = (_v($value)==$token) ? $state1 : $state2;  	 			
+				$ret = (_v($value)==$token) ? $this->phpcode($state1) : $this->phpcode($state2);  	 			
 			else		
-				$ret = ($token==$value) ? $state1 : $state2;  	
+				$ret = ($token==$value) ? $this->phpcode($state1) : $this->phpcode($state2);  	
 		}	
         else		
-           $ret = $token ? $state1 : $state2;
+           $ret = $token ? $this->phpcode($state1) : $this->phpcode($state2);
 		   
 		return ($ret);
 
@@ -732,20 +749,22 @@ EOF;
 	public function nvldecode($token=null,$state1=null,$state2=null,$value=null,$default=null) {
 
 		if (is_numeric($value)) { 
-            $ret = $default ? $default : (($token==$value) ? $state1 : $state2);			
+            $ret = $default ? $default : (($token==$value) ? $this->phpcode($state1) : $this->phpcode($state2));			
 		}   
 		elseif ($value) {
-			if (strstr($value, '|')) {
+			if (strstr($value, '?>'))
+				$ret = ($this->phpcode($value)==$token) ? $this->phpcode($state1) : $this->phpcode($state2);		
+			elseif (strstr($value, '|')) {
 			    $nvalues = explode('|',$value); 
-				$ret = $default ? $default : ((in_array($token, $nvalues)) ? $state1 : $state2); 
+				$ret = $default ? $default : ((in_array($token, $nvalues)) ? $this->phpcode($state1) : $this->phpcode($state2)); 
 			}
 			elseif (strstr($value, '.'))
-				$ret = $default ? $default : ((_v($value)==$var) ? $state1 : $state2);   			
+				$ret = $default ? $default : ((_v($value)==$token) ? $this->phpcode($state1) : $this->phpcode($state2));   			
 			else			
-				$ret = $default ? $default : (($token==$value) ? $state1 : $state2);  	
+				$ret = $default ? $default : (($token==$value) ? $this->phpcode($state1) : $this->phpcode($state2));  	
 		}	
         else 	
-           $ret = $token ? $state1 : $state2;
+           $ret = $token ? $this->phpcode($state1) : $this->phpcode($state2);
   
 		return ($ret);
     }		
@@ -757,7 +776,9 @@ EOF;
 						(GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $this->{$param}));		
 		
         if ($value) { 
-		    if (strstr($value, '|')) {
+			if (strstr($value, '?>'))
+				$ret = ($this->phpcode($value)==$var) ? _m(str_replace('::','+',$state1)) : _m(str_replace('::','+',$state2));		
+			elseif (strstr($value, '|')) {
 			    $nvalues = explode('|',$value); 
 				$ret = (in_array($var, $nvalues)) ? _m(str_replace('::','+',$state1)) : _m(str_replace('::','+',$state2)); 
 			}
@@ -793,7 +814,9 @@ EOF;
 		                (GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $this->{$param}));
 
         if ($value) {    
-			if (strstr($value, '|')) {
+			if (strstr($value, '?>'))
+				$ret = ($this->phpcode($value)==$var) ? $this->dacexec($states1) : $this->dacexec($states2);			
+			elseif (strstr($value, '|')) {
 			    $nvalues = explode('|',$value); 
 				$ret = (in_array($var, $nvalues)) ? $this->dacexec($states1) : $this->dacexec($states2) ; 
 			}

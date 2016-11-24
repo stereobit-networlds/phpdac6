@@ -5,16 +5,27 @@ if ((!defined("SHCART_DPC")) && (seclevel('SHCART_DPC',decode(GetSessionParam('U
 define("SHCART_DPC",true);
 
 $__DPC['SHCART_DPC'] = 'shcart';
-
-
+/*
 $d = GetGlobal('controller')->require_dpc('bshop/cart.dpc.php');
 require_once($d);
-//calldpc_init_object('storebuffer.cart','dpc');
-
 GetGlobal('controller')->get_parent('CART_DPC','SHCART_DPC');
+*/
+$d = GetGlobal('controller')->require_dpc('bshop/storebuffer.lib.php');
+require_once($d);
 
 $__LOCALE['SHCART_DPC'][99]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
 
+$__EVENTS['SHCART_DPC'][0]= localize('_CHKOUT',getlocal());
+$__EVENTS['SHCART_DPC'][1]= localize('_ORDER',getlocal());
+$__EVENTS['SHCART_DPC'][2]= localize('_RECALC',getlocal());
+$__EVENTS['SHCART_DPC'][3]= localize('_SUBMITORDER',getlocal());	
+$__EVENTS['SHCART_DPC'][4]= localize('_CANCELORDER',getlocal());
+$__EVENTS['SHCART_DPC'][5]= "addtocart"; 					 	
+$__EVENTS['SHCART_DPC'][6]= "removefromcart"; 
+$__EVENTS['SHCART_DPC'][7]= "clearcart";
+$__EVENTS['SHCART_DPC'][8]= "loadcart";
+$__EVENTS['SHCART_DPC'][9]= "printcart";
+$__EVENTS['SHCART_DPC'][10]= "transcart";
 $__EVENTS['SHCART_DPC'][11]= "fastpick";
 $__EVENTS['SHCART_DPC'][12]= "sship";
 $__EVENTS['SHCART_DPC'][13]= "calc";
@@ -23,8 +34,19 @@ $__EVENTS['SHCART_DPC'][15]= "cart-checkout";
 $__EVENTS['SHCART_DPC'][16]= "cart-order";
 $__EVENTS['SHCART_DPC'][17]= "cart-submit";
 $__EVENTS['SHCART_DPC'][18]= "cart-cancel";
-$__EVENTS['SHCART_DPC'][19]= "viewcart"; //missing event from cart.dpc
+$__EVENTS['SHCART_DPC'][19]= "viewcart"; 
 
+$__ACTIONS['SHCART_DPC'][0]= "viewcart";
+$__ACTIONS['SHCART_DPC'][1]= "clearcart";
+$__ACTIONS['SHCART_DPC'][2]= "loadcart"; 
+$__ACTIONS['SHCART_DPC'][3]= "removefromcart";
+$__ACTIONS['SHCART_DPC'][4]= "printcart";
+$__ACTIONS['SHCART_DPC'][5]= localize('_CHKOUT',getlocal());
+$__ACTIONS['SHCART_DPC'][6]= localize('_ORDER',getlocal());
+$__ACTIONS['SHCART_DPC'][7]= localize('_RECALC',getlocal());
+$__ACTIONS['SHCART_DPC'][8]= localize('_SUBMITORDER',getlocal());	
+$__ACTIONS['SHCART_DPC'][9]= localize('_CANCELORDER',getlocal());	
+$__ACTIONS['SHCART_DPC'][10]= 'transcart';
 $__ACTIONS['SHCART_DPC'][11]= "fastpick";
 $__ACTIONS['SHCART_DPC'][12]= "sship";
 $__ACTIONS['SHCART_DPC'][13]= "calc";
@@ -33,12 +55,19 @@ $__ACTIONS['SHCART_DPC'][15]= "cart-checkout";
 $__ACTIONS['SHCART_DPC'][16]= "cart-order";
 $__ACTIONS['SHCART_DPC'][17]= "cart-submit";
 $__ACTIONS['SHCART_DPC'][18]= "cart-cancel";
-$__ACTIONS['SHCART_DPC'][19]= "viewcart"; //existing event from cart.dpc
+$__ACTIONS['SHCART_DPC'][19]= "viewcart"; 
 
+$__DPCATTR['SHCART_DPC']['viewcart'] = 'viewcart,1,0,1,0,0,0,0,0,0'; 
+$__DPCATTR['SHCART_DPC']['loadcart'] = 'loadcart,1,0,1,0,0,0,0,0,0'; 
+$__DPCATTR['SHCART_DPC'][localize('_RECALC',getlocal())] = '_RECALC,1,0,1,0,0,0,0,0,0';
+$__DPCATTR['SHCART_DPC'][localize('_CANCELORDER',getlocal())] = '_CANCELORDER,1,0,1,0,0,0,0,0,0';
+$__DPCATTR['SHCART_DPC'][localize('_ORDER',getlocal())] = '_ORDER,1,0,1,0,0,0,0,0,0'; 
+$__DPCATTR['SHCART_DPC'][localize('_SUBMITORDER',getlocal())] = '_SUBMITORDER,1,0,1,0,0,0,0,0,0';
+$__DPCATTR['SHCART_DPC'][localize('_CHKOUT',getlocal())] = '_CHKOUT,1,0,1,0,0,0,0,0,0';
+$__DPCATTR['SHCART_DPC']['addtocart'] = 'addtocart,0,0,0,0,0,1,0,0,1';
+$__DPCATTR['SHCART_DPC']['removefromcart'] = 'removefromcart,0,0,0,0,0,1,0,0,1';
 $__DPCATTR['SHCART_DPC'][localize('_SUBMITORDER2',getlocal())] = '_SUBMITORDER2,1,0,1,0,0,0,0,0,0';
-//$__DPCATTR['SHCART_DPC']['cart-checkout'] = 'cart-checkout,0,0,0,0,0,1,0,0,1';
 
-//overwrite for cmd line purpose
 $__LOCALE['SHCART_DPC'][0]='SHCART_DPC;My Cart;Καλάθι Αγορών';
 $__LOCALE['SHCART_DPC'][1]='_GRANDTOTAL;Grand Total;Γενικό Σύνολο';
 $__LOCALE['SHCART_DPC'][2]='loginorregister;Login or Register for a new account;Παρακαλώ προχωρείστε στις απαιτούμενες ενέργειες!';
@@ -82,65 +111,116 @@ $__LOCALE['SHCART_DPC'][37]='Logistics;3d Party Logistic Service;Μεταφορ�
 $__LOCALE['SHCART_DPC'][38]='Courier;Courier;Courier';//used by mchoice param
 $__LOCALE['SHCART_DPC'][39]='CustomerDelivery;Self Service;Παραλαβή απο το κατάστημα μας';//used by mchoice param
 
+$__LOCALE['SHCART_DPC'][41]='_RESET;Reset;Καθαρισμός';
+$__LOCALE['SHCART_DPC'][42]='_EMPTY;Empty;Αδειο';
+$__LOCALE['SHCART_DPC'][43]='_BLN3;Clear Cart;Αδειασμα Καλαθιού';
+$__LOCALE['SHCART_DPC'][44]='_BLN2;Remove from Cart;Αφαίρεση απο το Καλάθι';
+$__LOCALE['SHCART_DPC'][45]='_BLN1;Add to Cart;Προσθήκη στο Καλάθι';
+$__LOCALE['SHCART_DPC'][46]='_MSG16;Prices does not include taxes;Οι τιμές δεν συμπεριλαμβάνουν ΦΠΑ 19%';
+$__LOCALE['SHCART_DPC'][47]='_MSG15;Your cart is full ! ! !;Το καλάθι σας είναι γεμάτο ! ! !';
+$__LOCALE['SHCART_DPC'][48]='_MSG14;Your order submited successfully! Thank you!;Η παραγγελία σας εκτελέστηκε επιτυχώς !';
+$__LOCALE['SHCART_DPC'][49]='_QTY;Qty;Τεμ.';
+$__LOCALE['SHCART_DPC'][50]='_PRICE;Price;Τιμή';
+$__LOCALE['SHCART_DPC'][51]='_DESCR;Description;Περιγραφή';
+$__LOCALE['SHCART_DPC'][52]='_STOTAL;sTotal;Σύνολο';
+$__LOCALE['SHCART_DPC'][53]='_TOTAL;Total;Σύνολο';
+$__LOCALE['SHCART_DPC'][54]='_RECALC;Recalculate;Υπολογισμός';
+$__LOCALE['SHCART_DPC'][55]='_CHKOUT;Check Out;Ταμείο';
+$__LOCALE['SHCART_DPC'][56]='_ORDER;Order;Επιβεβαίωση';
+$__LOCALE['SHCART_DPC'][57]='_CANCELORDER;Cancel;Ακύρωση';
+$__LOCALE['SHCART_DPC'][58]='_SUBMITORDER;Submit Order;Ολοκλήρωση Συναλλαγής';
+$__LOCALE['SHCART_DPC'][59]='_PRINT;Print;Εκτύπωση';
+$__LOCALE['SHCART_DPC'][60]='_CLOSE;Close;Κλείσιμο';
+$__LOCALE['SHCART_DPC'][61]="_ACCDENIED;Sorry you don't have the appropriate priviliges.;Δέν έχετε το απαραίτητο δικαίωμα.";
+$__LOCALE['SHCART_DPC'][62]='_CONTENTS;Contents;Περιεχόμενα';
+$__LOCALE['SHCART_DPC'][63]='_NOTAVAL;Not available;Μη διαθέσιμο';
+$__LOCALE['SHCART_DPC'][64]='_TAX;Tax;Φόρος';
+$__LOCALE['SHCART_DPC'][65]='_SHIPCOST;Shipping Cost;Έξοδα αποστολής';
+$__LOCALE['SHCART_DPC'][66]='_DISCOUNT;Discount;Εκπτωση';
+$__LOCALE['SHCART_DPC'][67]='_FCOST;Final cost;Πληρωτέο';
+$__LOCALE['SHCART_DPC'][68]='_BOXTYPE;Box;Συσκ.';
+$__LOCALE['SHCART_DPC'][69]='_CART;Shop Cart;Καλάθι Αγορών';
+$__LOCALE['SHCART_DPC'][70]='_RWAY;Shipping:;Τρόπος Αποστολής';
+$__LOCALE['SHCART_DPC'][71]='_RWAY1;By Car;Οδικώς';
+$__LOCALE['SHCART_DPC'][72]='_RWAY2;Courier;Courier';
+$__LOCALE['SHCART_DPC'][73]='_RWAY3;ELTA;ΕΛΤΑ';
+$__LOCALE['SHCART_DPC'][74]='_PWAY;Pay with:;Τρόπος Πληρωμής';
+$__LOCALE['SHCART_DPC'][75]='_PWAY1;Trust my account;Χρέωση του λογαριασμου μου';
+$__LOCALE['SHCART_DPC'][76]='_PWAY2;Cash on delivery;Αντικαταβολή';
+$__LOCALE['SHCART_DPC'][77]='_PWAY3;VISA;VISA';
+$__LOCALE['SHCART_DPC'][78]='_ENDOK;Thank you! Your order submited successfully with Order No :;Ευχαριστούμε ! Η παραγγελία σας εκτελέστηκε επιτυχώς με αριθμό Παραγγελίας :';
+$__LOCALE['SHCART_DPC'][79]='_SXOLIA;Comments;Σχόλια;';
+$__LOCALE['SHCART_DPC'][80]='_CARTERROR;Error during transaction;Λαθος εκτελεσης;';
+$__LOCALE['SHCART_DPC'][81]='_STOCKOUT; is out of stock!; δεν υπαρχει απόθεμα!;';
+$__LOCALE['SHCART_DPC'][82]='_INPUTERR;Invalid entry!;Λανθασμένη ποσότητα!;';
 
-class shcart extends cart {
+$__PARSECOM['SHCART_DPC']['quickview']='_VIEWCART_';
 
-	var $uniname2;
-	var $liveupdate;
-	var $allowqtyover;
-    var $rejectqty;
-	var $detailqty;
-	var $stock_msg;
-	var $overitem;
-	var $ignoreqtyzero;
-    var $qtytototal,$total;
-	var $path,$autopay;
-    var $mydiscount, $mytaxcost, $myfinalcost, $myshippingcost;
-	var $discount;
+$__DPCEXT['SHCART_DPC']='showsymbol';
+
+
+class shcart extends storebuffer {
+
+	var $uniname2, $status, $qtytotal;
+	var $liveupdate, $moneysymbol, $maxcart;
+	var $allowqtyover, $mailerror, $sxolia;
+    var $rejectqty, $checkout, $order, $submit, $cancel, $recalc;
+	var $detailqty, $stock_msg, $overitem, $ignoreqtyzero, $qtytototal,$total;
+	var $path,$autopay, $mydiscount, $mytaxcost, $myfinalcost, $myshippingcost, $discount;
 
 	var $urlpath, $inpath;
-	var $todo;
-	var $quicktax,$showtaxretail,$is_reseller;
-	var $cartlinedetails, $notallowremove;
-	var $cartloopdata, $looptotals;
-	var $shipcalcmethod;
-	var $s_enc,$t_enc;
-	var $itemclick, $imagex, $imagey;
-	var $cartprintwin;
-	var $itemscount;
-	var $supershipping, $shipzone, $shipmethods, $parcelunit, $parcelweight;
-    var $navon, $submit2, $url;
-	var $printout, $print_title;
+	var $todo, $quicktax,$showtaxretail,$is_reseller, $cartlinedetails, $notallowremove;
+	var $cartloopdata, $looptotals, $shipcalcmethod, $s_enc, $t_enc, $itemclick, $imagex, $imagey;
+	var $cartprintwin, $itemscount, $supershipping, $shipzone, $shipmethods, $parcelunit, $parcelweight;
+    var $submit2, $url, $printout, $print_title;
 	
-	static $staticpath, $myf_button_class, $myf_button_submit_class;
-	
-	var $tmpl_path, $tmpl_name;
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
-
     var $twig_invoice_template_name, $appname, $mtrackimg; 
     var $agentIsIE, $baseurl;	
 	
+	static $staticpath, $myf_button_class, $myf_button_submit_class;	
+	
     public function __construct() {
-		$UserName = GetGlobal('UserName');		
-
-		cart::cart();   
-
+		$UserName = GetGlobal('UserName');					
+		
+		storebuffer::storebuffer('cart');
+		
+		$this->title = localize('SHCART_DPC',getlocal());		
+		
 		self::$staticpath = paramload('SHELL','urlpath');
-	   
-		$bc1= remote_paramload('SHCART','buttonclass',$this->path);
-		$bc2 = remote_paramload('SHCART','buttonclass2',$this->path); /*single product view*/
-		self::$myf_button_class = (($bc2) && (GetReq('id'))) ? $bc2 : $bc1;
-	   
-		$myf_submit = remote_paramload('SHCART','buttonclasssubmit',$this->path);
-		self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';
-
 		$this->path = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');
-		$this->inpath = paramload('ID','hostinpath');
-	   
-		$this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-		$this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	   	   
+		$this->inpath = paramload('ID','hostinpath'); 
+		$this->baseurl = paramload('SHELL','urlbase');
+		
+		$murl = arrayload('SHELL','ip');
+		$this->url = $this->murl[0];			
+		
+		$senc = arrayload('SHELL','char_set'); 
+		$c = getlocal() ? getlocal() : 0; 
+		$this->s_enc = $senc[$c]; 
+		$this->t_enc = paramload('SHELL','charset');	 		
 
+		$this->minus = remote_paramload('SHCART','minusqtyclass',$this->path);
+		$this->plus = remote_paramload('SHCART','plusqtyclass',$this->path);
+		$this->removeitemclass = remote_paramload('SHCART','removeitemclass',$this->path);		
+		$this->print_title = remote_paramload('SHCART','printtitle',$this->path); 			
+		$this->cartlinedetails = remote_paramload('SHCART','cartlinedetails',$this->path);		
+		$this->quicktax = remote_paramload('SHCART','viewtaxfp',$this->path);
+		$this->showtaxretail = remote_paramload('SHCART','showtaxretail',$this->path);			
+		$this->itemscount = remote_paramload('SHCART','itemscount',$this->path);		
+		$this->supershipping = remote_paramload('SHCART','supershipping',$this->path);	
+		$this->shipzone = remote_arrayload('SHCART','shipzone',$this->path);	   	  
+		$this->shipmethods = remote_arrayload('SHCART','shipmethods',$this->path);
+		$this->parcelunit = remote_arrayload('SHCART','parcelunit',$this->path);	   	  
+		$this->parcelweight = remote_arrayload('SHCART','parcelweight',$this->path);		
+		$this->carterror_mail = remote_paramload('SHCART','carterr',$this->path);
+		$this->cartsend_mail = remote_paramload('SHCART','cartsender',$this->path);
+		$this->cartreceive_mail = remote_paramload('SHCART','cartreceiver',$this->path); 		
+		$this->itemclick = remote_paramload('SHCART','itemclick',$this->path);
+		$this->imagex = remote_paramload('SHCART','imagex',$this->path);	
+		$this->imagey = remote_paramload('SHCART','imagey',$this->path);	
+		$this->cartprintwin = remote_arrayload('SHCART','printwin',$this->path);
 		$this->uniname2 = remote_paramload('SHCART','uniname2',$this->path);
 		$this->liveupdate = remote_paramload('SHCART','liveupdate',$this->path);
 		$this->allowqtyover = remote_paramload('SHCART','allowqtyover',$this->path);
@@ -148,118 +228,83 @@ class shcart extends cart {
 		$this->detailqty = remote_paramload('SHCART','overqty2detail',$this->path);
 		$this->ignoreqtyzero = remote_paramload('SHCART','ignoreqty0',$this->path);
 		$this->maxqty = remote_paramload('SHCART','maxqty',$this->path);
-	
-		$this->title = localize('SHCART_DPC',getlocal());	
-	   
-		$this->stock_msg = null;
-		$this->overitem = null;
-		$this->todo = null;	
-		$this->cartloopdata = null;   
-		$this->looptotals = null;		
-
-		$this->autopay = (remote_paramload('SHCART','auto',$this->path)>0)?1:null;
+		$this->autopay = (remote_paramload('SHCART','auto',$this->path)>0) ? 1 : null;
 		$this->bypass_qty = (remote_paramload('SHCART','showqty',$this->path)>0) ? true : false;
-  	     	   
-		//override
-		$this->carterror_mail = remote_paramload('SHCART','carterr',$this->path);
-		$this->cartsend_mail = remote_paramload('SHCART','cartsender',$this->path);
-		$this->cartreceive_mail = remote_paramload('SHCART','cartreceiver',$this->path);
-
+		$this->readonly = remote_paramload('SHCART','qtyreadonly',$this->path);
+		
+		$rw = remote_paramload('SHCART','rewrite',$this->path);
+		$this->rewrite = $rw ? 1 : 0;		
+	   
+		$mxlen = remote_paramload('SHCART','maxlength',$this->path);
+		$this->maxlength = $mxlen ? $mxlen : 3;	 		
+		
 		$dc = remote_paramload('SHCART','decimals',$this->path);
 		$this->dec_num = $dc ? $dc : 2;
-	   
-		//main cart tax
 		$tx = remote_paramload('SHCART','taxcostpercent',$this->path);	   
 		$this->tax = $tx ? $tx : null;
 		
 		//fixed shipping cost
 		$sx = remote_paramload('SHCART','shipcost',$this->path);	   
 		$this->shippingcost = GetSessionParam('shipcost') ? GetSessionParam('shipcost') : $sx;	   
-		$this->shipcalcmethod = remote_arrayload('SHCART','shipcalcmethod',$this->path);	      
-	   
-		$this->quicktax = remote_paramload('SHCART','viewtaxfp',$this->path);
-		$this->showtaxretail = remote_paramload('SHCART','showtaxretail',$this->path);
+		$this->shipcalcmethod = remote_arrayload('SHCART','shipcalcmethod',$this->path);
 
 		//price per client else cart discount global
 		$percentoffperclient = remote_arrayload('SHCART','priceoffperclient',$this->path);
 		$this->discount  = $percentoffperclient[$this->userLevelID];
 		//$this->discount = $discount?$discount:remote_arrayload('CART','discount',$this->path);
-	   
-		$this->cartlinedetails = remote_paramload('SHCART','cartlinedetails',$this->path);
-	   
+
 		$rm = remote_paramload('SHCART','notallowremove',$this->path);
-		$this->notallowremove = $rm ? $rm : 0;
-			
-		$this->continue_button = loadTheme('continue_b',"");	
-		$this->print_button = loadTheme('print_b',"");		   
-	   
-		$senc = arrayload('SHELL','char_set'); 
-		$c = getlocal() ? getlocal() : 0; 
-		$this->s_enc = $senc[$c]; 
-		$this->t_enc = paramload('SHELL','charset');	 
-	   
-		$this->itemclick = remote_paramload('SHCART','itemclick',$this->path);
-		$this->imagex = remote_paramload('SHCART','imagex',$this->path);	
-		$this->imagey = remote_paramload('SHCART','imagey',$this->path);		   	     			  
-	   
-		$this->cartprintwin = remote_arrayload('SHCART','printwin',$this->path);	  
-	   
-		//GET SESSION DATA
+		$this->notallowremove = $rm ? $rm : 0;	
+
+		$this->twig_invoice_template_name = str_replace('.', getlocal() . '.', 'invoice.htm');
+		//echo $this->twig_invoice_template_name; 
+		
+		$this->continue_button = 1; //loadTheme('continue_b',"");	
+		//$this->print_button = loadTheme('print_b',"");	
+		
+        $this->checkout    = trim(localize('_CHKOUT',getlocal()));				 	
+        $this->order       = trim(localize('_ORDER',getlocal()));
+	    $this->submit      = trim(localize('_SUBMITORDER',getlocal()));
+		$this->submit2 	   = trim(localize('_SUBMITORDER2',getlocal()));		
+	    $this->cancel      = trim(localize('_CANCELORDER',getlocal()));
+	    $this->recalc      = trim(localize('_RECALC',getlocal()));			
+		
+		$this->is_reseller = GetSessionParam('RESELLER'); 		
+		$this->status = GetSessionParam('cartstatus');
+		$this->total = (double) 0.0;
+  	    $this->qtytotal = GetSessionParam('qty_total');    
+        $this->moneysymbol = "&" . paramload('CART','cursymbol') . ";";  
+		$this->maxcart = paramload('CART','maxcart');	
+		$this->mailerror = 0;
+		$this->sxolia = null;	
+		$this->stock_msg = null;
+		$this->overitem = null;
+		$this->todo = null;	
+		$this->cartloopdata = null;   
+		$this->looptotals = null;		
+
 		$this->total = floatval(GetSessionParam('subtotal'));
 		$this->myfinalcost = floatval(GetSessionParam('total'));
 		$this->qty_total = GetSessionParam('qty_total');	   
 		$this->myshippingcost = floatval(GetSessionParam('myshippingcost'));	   
 		$this->mytaxcost = floatval(GetSessionParam('mytaxcost'));	
 		$this->mydiscount = floatval(GetSessionParam('mydiscount'));		
-	   
-		$this->is_reseller = GetSessionParam('RESELLER'); 
-		//echo $this->is_reseller,'++';	
-	          
-		$this->itemscount = remote_paramload('SHCART','itemscount',$this->path);
-	   
-		//when return from payengines
+		$this->printout = GetSessionParam('printout') ? GetSessionParam('printout') : null;	  
 		$this->transaction_id = GetSessionParam('TransactionID') ? GetSessionParam('TransactionID') : null;
-	   
-		$this->supershipping = remote_paramload('SHCART','supershipping',$this->path);	
-		$this->shipzone = remote_arrayload('SHCART','shipzone',$this->path);	   	  
-		$this->shipmethods = remote_arrayload('SHCART','shipmethods',$this->path);
-
-		$this->parcelunit = remote_arrayload('SHCART','parcelunit',$this->path);	   	  
-		$this->parcelweight = remote_arrayload('SHCART','parcelweight',$this->path);	   
-	   
-		$this->navon = paramload('SHELL','navigator');
-		//2nd submit title
-		$this->submit2 = trim(localize('_SUBMITORDER2',getlocal()));
-	   
-		$murl = arrayload('SHELL','ip');
-		$this->url = $this->murl[0];	 
-
-		$this->print_title = remote_paramload('SHCART','printtitle',$this->path); 	   
-		$this->printout = GetSessionParam('printout') ? GetSessionParam('printout') : null;
-	   
-		$rw = remote_paramload('SHCART','rewrite',$this->path);
-		$this->rewrite = $rw ? 1 : 0;
-	   
-		$this->readonly = remote_paramload('SHCART','qtyreadonly',$this->path);
-	   
-		$mxlen = remote_paramload('SHCART','maxlength',$this->path);
-		$this->maxlength = $mxlen ? $mxlen : 3;	   
-	   
-		$this->minus = remote_paramload('SHCART','minusqtyclass',$this->path);
-		$this->plus = remote_paramload('SHCART','plusqtyclass',$this->path);
-		$this->removeitemclass = remote_paramload('SHCART','removeitemclass',$this->path);
-	   
-		$this->twig_invoice_template_name = str_replace('.', getlocal() . '.', 'invoice.htm');
-		//echo $this->twig_invoice_template_name; 
+	  
 	   
 		if ($this->maxqty<0) // || ($this->readonly)) { //free style
 			$this->javascript(); //ONLY WHEN DEFAULT VIEW EVENT ??	
 			
 		$useragent = $_SERVER["HTTP_USER_AGENT"];		
 		$this->agentIsIE = (strpos($useragent, 'Trident') !== false) ? '1' : '0';	 //ie 11 
-		//echo '>'	,$this->agentIsIE;
-
-		$this->baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility	  
+		
+		$bc1= remote_paramload('SHCART','buttonclass',$this->path);
+		$bc2 = remote_paramload('SHCART','buttonclass2',$this->path); /*single product view*/
+		self::$myf_button_class = (($bc2) && (GetReq('id'))) ? $bc2 : $bc1;
+	   
+		$myf_submit = remote_paramload('SHCART','buttonclasssubmit',$this->path);
+		self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';		  
 
 	    $this->appname = paramload('ID','instancename');	
 	    $tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
@@ -269,69 +314,88 @@ class shcart extends cart {
     public function event($event) {
 
 		switch ($event) {
+			
+			case "addtocart"     : 	$this->addtocart();
+									break;					 	
+			case "removefromcart": 	$this->remove($a); 
+									SetSessionParam('cartstatus',0); 
+									$this->status = 0; 
+									break;
+			case "clearcart"     : 	$this->clear(); 
+									SetSessionParam('cartstatus',0); 
+									$this->status = 0; 
+									break;	
+			case "loadcart"      : 	$this->loadcart(); 
+									SetSessionParam('cartstatus',0); 
+									$this->status = 0; 
+									break;			  
+								 
+			case $this->recalc   :
+			case 'calc'          : 	//for auto select and calc reason
+									SetSessionParam('cartstatus',0); 
+									$this->recalculate(); 
+									break;	  
 	  
-		  case 'calc'          : //for auto select and calc reason
-		                         SetSessionParam('cartstatus',0); 
-		                         $this->recalculate(); 
-								 break;	  
-	  
-	      case "sship"         : //echo GetReq('czone'),'>'; 
-		                         break;
+			case "sship"         :	 //echo GetReq('czone'),'>'; 
+									break;
 	   
-		  case "printcart"     : $prn = $this->printorder();
-								 SetSessionParam('ordercart',null);//COMMENT IT, NOT RE-RENDER
-								 SetSessionParam('orderdetails',null);//COMMENT IT, NOT RE-RENDER
-							  	 echo $prn; 
-							     exit;
-								 
-		  case $this->cancel   : SetSessionParam('cartstatus',0); 
-		                         $this->status = 0; 
-								 $this->cancel_order(); 
-								 
-								 if ($oncancel = remote_paramload('SHCART','cancelgoto',$this->path)) {
-									$goto = $oncancel;
-									header("Location: http://".$goto); 
+			case "printcart"     : 	$prn = $this->printorder();
+									SetSessionParam('ordercart',null);//COMMENT IT, NOT RE-RENDER
+									SetSessionParam('orderdetails',null);//COMMENT IT, NOT RE-RENDER
+									echo $prn; 
 									exit;
-								 }  
-								 break;								 
+								 
+			case $this->cancel   : 	SetSessionParam('cartstatus',0); 
+									$this->status = 0; 
+									$this->cancel_order(); 
+								 
+									if ($oncancel = remote_paramload('SHCART','cancelgoto',$this->path)) {
+										$goto = $oncancel;
+										header("Location: http://".$goto); 
+										exit;
+									}  
+									break;								 
 						
-		  case 'cart-checkout' : 
-          case $this->checkout : if (!GetGlobal('UserID')) {
-								   $this->todo = 'loginorregister';
-		                           $this->recalculate();
-								 }
-								 else {
-								   cart::event($event);
-								   $this->loopcartdata = $this->loopcart();
-								   $this->looptotals = $this->foot();
-								 }  
-								 break;
+			case 'cart-checkout' : 
+			case $this->checkout : 	if (!GetGlobal('UserID')) {
+										$this->todo = 'loginorregister';
+										$this->recalculate();
+									}
+									else {
+										//cart::event($event);
+										SetSessionParam('cartstatus',1); 
+										$this->status = 1; 
+										$this->recalculate();
+										$this->loopcartdata = $this->loopcart();
+										$this->looptotals = $this->foot();
+									}  
+									break;
           case 'cart-order'    :
-          case $this->order    : SetSessionParam('cartstatus',2); 
-		                         $this->status = 2; 
-								 $this->calculate_shipping();
-								 $this->loopcartdata = $this->loopcart();
-								 $this->looptotals = $this->foot();
-								 break;
+          case $this->order    : 	SetSessionParam('cartstatus',2); 
+									$this->status = 2; 
+									$this->calculate_shipping();
+									$this->loopcartdata = $this->loopcart();
+									$this->looptotals = $this->foot();
+									break;
 		  case 'cart-submit'   :						 
           case $this->submit2  : 
-		  case $this->submit   : SetSessionParam('cartstatus',3);
-		                         $this->status = 3; 		  
-								 $this->calculate_shipping();		  
-		                         $this->loopcartdata = $this->loopcart();
-								 $this->looptotals = $this->foot();
+		  case $this->submit   : 	SetSessionParam('cartstatus',3);
+									$this->status = 3; 		  
+									$this->calculate_shipping();		  
+									$this->loopcartdata = $this->loopcart();
+									$this->looptotals = $this->foot();
 
-								 $this->dispatch_pay_engines();									 
-								 break;
+									$this->dispatch_pay_engines();									 
+									break;
 						 
-         case "fastpick"      : if (!GetSessionParam('fastpick'))
-		                          SetSessionParam('fastpick','on');
-								else  
-								  SetSessionParam('fastpick',null);
+         case "fastpick"      : 	if (!GetSessionParam('fastpick'))
+										SetSessionParam('fastpick','on');
+									else  
+										SetSessionParam('fastpick',null);
 		 case 'viewcart'      :						  
-         default              : cart::event($event);
-		 		                $this->loopcartdata = $this->loopcart();
-				                $this->looptotals = $this->foot();
+         default              : 	//cart::event($event);
+									$this->loopcartdata = $this->loopcart();
+									$this->looptotals = $this->foot();
 
 		}     
     }
@@ -339,29 +403,22 @@ class shcart extends cart {
     public function action($act=null) {	
 
 		switch ($act) {
-			case "sship"     :  $out .= $this->show_supershipping();
-								break;
+			case "sship"     	:  $out .= $this->show_supershipping();
+									break;
 	   
-			case "transcart" :  if (is_object($this->transformer))
-									$out .= $this->transformer->transform();
-								break;
+			case "transcart" 	:  if (is_object($this->transformer))
+										$out .= $this->transformer->transform();
+									break;
 							
-			case 'searchtopic':	//handler from shkatalog
-			case 'addtocart'  :
-			case 'removefromcart': break;							
+			case 'searchtopic'	:	//handler from shkatalog
+			case 'addtocart'  	:
+			case 'removefromcart': 	break;							
 		 
-			case "fastpick" :	if (GetSessionParam('fastpick'))
-									$out = localize('_FASTPICKON',getlocal());
-								else  
-									$out = localize('_FASTPICKOFF',getlocal());
-							  
-								$out .= $this->cartview();
-								break;
-		          
-			default          :	if ($this->todo) 
-									$out .= $this->todolist();
-								else
+			case "fastpick" 	:	$out = (GetSessionParam('fastpick')) ? localize('_FASTPICKON',getlocal()) : localize('_FASTPICKOFF',getlocal());
 									$out .= $this->cartview();
+									break;
+		          
+			default          	:	$out = $this->todo ? $this->todolist() : $this->cartview();
        }
 
 	   return ($out);
@@ -373,7 +430,7 @@ class shcart extends cart {
 		if (strcmp($payway,'PAYPAL')==0) {
 
 			if (($this->status==3) && ($this->autopay>0)) {
-				$this->submit_order(null, true, $this->twig_invoice_template_name);		  		  
+				$this->submit_order(null, $this->twig_invoice_template_name);		  		  
 
 				SetSessionParam('paypalID',$this->transaction_id);
 		  
@@ -395,7 +452,7 @@ class shcart extends cart {
 
 			if (($this->status==3) && ($this->autopay>0)) {
 
-				$this->submit_order(null, true, $this->twig_invoice_template_name);		  
+				$this->submit_order(null, $this->twig_invoice_template_name);		  
 
 				SetSessionParam('piraeusID',$this->transaction_id);
 		  
@@ -417,7 +474,7 @@ class shcart extends cart {
 			
 			if (($this->status==3) && ($this->autopay>0))  {
 
-				$this->submit_order(null, true, $this->twig_invoice_template_name);		  
+				$this->submit_order(null, $this->twig_invoice_template_name);		  
 
 				SetSessionParam('eurobankID',$this->transaction_id);
 		  
@@ -438,7 +495,7 @@ class shcart extends cart {
 		}	  
 		else { //simple order
 	  
-			$this->submit_order(1, true, $this->twig_invoice_template_name); 
+			$this->submit_order(1, $this->twig_invoice_template_name); 
 	  
 			SetSessionParam('amount',null);					 								 
 			SetSessionParam('subtotal',0);
@@ -611,9 +668,18 @@ function addtocart(id,cartdetails)
  	    $this->quick_recalculate();	//re-update prices and totals	
 	}
 
+    public function isin($id) {
+
+        reset ($this->buffer); 
+        foreach ($this->buffer as $buffer_num => $buffer_data) {
+		   $param = explode(";",$buffer_data);	
+           if ($param[0] == $id) return true;                                    
+        }                       
+        return false;
+    } 	
+	
     //overwrite
-    public function submit_order($sendordermail=null, $tokenout=false, $invoice_template=null) {
-		//$orderdataprint = GetSessionParam('orderdataprint');
+    public function submit_order($sendordermail=null, $invoice_template=null) {
 		$myuser = GetGlobal('UserID');	
 		$user = decode($myuser);
 		$pways = remote_arrayload('SHCART','payways',$this->path);
@@ -657,26 +723,18 @@ function addtocart(id,cartdetails)
 				$tokens = serialize($invoice_tokens);
 				//do it inside transaction func
 				//$htmlout = _m('twigengine.render use '.$invoice_template.'++'.$tokens);
-				_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.$tokens.'+'.$invoice_template."+$customer+$fkey");			
+				_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.$tokens.'+'.$invoice_template."+$customer+$fkey");	
+				
 				//save trid as printout var for print purposes
 				$this->printout = $this->transaction_id;
 				SetSessionParam('printout',$this->printout);			
 			}
 			else {
-		 
-				if ($tokenout) {
-					$tokens[] = $this->transaction_id;
-					$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');
-					$tokens[] = GetSessionParam('orderdetails');
-					$tokens[] = GetSessionParam('ordercart');
-					_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.serialize($tokens).'+shcartprint.htm'."+$customer+$fkey");			
-				}
-				else {
-					$_data = _m('shcustomers.showcustomerdata use ++cusdetails');
-					$_data .= GetSessionParam('ordercart');
-					$_data .= GetSessionParam('orderdetails');
-					_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.serialize($_data));
-				}							 							 
+				$tokens[] = $this->transaction_id;
+				$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');
+				$tokens[] = GetSessionParam('orderdetails');
+				$tokens[] = GetSessionParam('ordercart');
+				_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.serialize($tokens).'+shcartprint.htm'."+$customer+$fkey");								 							 
 			}		 
 		}
 		else
@@ -702,6 +760,10 @@ function addtocart(id,cartdetails)
 			}
 		}
     }
+	
+	public function cancel_order() {
+
+	}	
 
     protected function setuniname($id,$uni,$uA=null,$uB=null) {
 		$uniname = $id ;
@@ -740,10 +802,6 @@ function addtocart(id,cartdetails)
 	    $headtitle = paramload('SHELL','urltitle');	
 		$this->transaction_id = $this->transaction_id?$this->transaction_id:GetReq('trid');
 				
-	    //printout template
-	    $printcart_template = $invoice_template ? $invoice_template : "shcartprint.htm";
-	    $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$printcart_template) ;
-				
 	
 		if (!$mystyle = remote_paramload('SHCART','printstyle',$this->path))
 			$mystyle = 'themes/style.css';
@@ -757,11 +815,10 @@ function addtocart(id,cartdetails)
 			$tokens[] = $this->transaction_id;
 		}  
 		
-	    //$bclose = _m('javascript.JS_function use js_closewin+'.localize('_CLOSE',getlocal()));
 	    $bprint = _m('javascript.JS_function use js_printwin+'.localize('_PRINT',getlocal()));
         $tokens[] =  $bprint;			
 
-        if (($invoice_template) && (is_readable($t))) {
+        if ($invoice_template) { // && (is_readable($t))) {
 		
 			//init-reset tokens
 			$invoice_tokens = array();
@@ -790,34 +847,34 @@ function addtocart(id,cartdetails)
 				die();
 		    }
 			else {
-				$myprintcarttemplate = @file_get_contents($t);	
+				$myprintcarttemplate = 	_m('cmsrt.select_template use shcartprint');	
 			
 				$out = $this->combine_tokens($myprintcarttemplate,$tokens,true);		
 				$out .= '<!--end of document-->';		
 			}
         }  		
-	    elseif (is_readable($t)) {
+	    else { //if (is_readable($t)) {
 
-		  $myprintcarttemplate = @file_get_contents($t);
+			$myprintcarttemplate = _m('cmsrt.select_template use shcartprint');
 		  
-		  $tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');
-		  $tokens[] = GetSessionParam('orderdetails');
-		  $tokens[] = GetSessionParam('ordercart');					  
-		  $out = $this->combine_tokens($myprintcarttemplate,$tokens,true);
+			$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');
+			$tokens[] = GetSessionParam('orderdetails');
+			$tokens[] = GetSessionParam('ordercart');					  
+			$out = $this->combine_tokens($myprintcarttemplate,$tokens,true);
 	    }
-		else {
+		/*else {
 
-		  $htmldata = _m('shcustomers.showcustomerdata');
-		  $htmldata .= GetSessionParam('ordercart');
-		  $htmldata .= GetSessionParam('orderdetails');
+			$htmldata = _m('shcustomers.showcustomerdata');
+			$htmldata .= GetSessionParam('ordercart');
+			$htmldata .= GetSessionParam('orderdetails');
 		  
-		  $mydata = $mytitle;		
-		  $mydata .= $htmldata;			  			  
+			$mydata = $mytitle;		
+			$mydata .= $htmldata;			  			  
 					
-		  $printpage = new phtml($mystyle,$mydata);
-		  $out = $printpage->render();
-		  unset($printpage);
-		}
+			$printpage = new phtml($mystyle,$mydata);
+			$out = $printpage->render();
+			unset($printpage);
+		}*/
 
 		return ($out);
 	}	
@@ -1010,9 +1067,6 @@ function addtocart(id,cartdetails)
 		$myaction = seturl("t=viewcart",0,1,null,null,$this->rewrite);
 	   
 		//template
-		//$cart_template= "shcart.htm";
-		//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
-		//$this->mycarttemplate = file_get_contents($t);
 		$this->mycarttemplate = _m('cmsrt.select_template use shcart');
 	
 		//in case of no event fist..calldpc view...   
@@ -1214,16 +1268,9 @@ function addtocart(id,cartdetails)
 			else
 				$out .= $this->combine_tokens($this->mycarttemplate,$tokens,true);
 		}	
-		else {	//empty 1 token
-			//$emptycart_template= "shcartempty.htm";
-			//$te = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$emptycart_template) ;
-			//if (($emptycart_template) && is_readable($te)) {
-				//$emptycarttemplate = @file_get_contents($te);		 
-				$emptycarttemplate = _m('cmsrt.select_template use shcartempty');
-				$out = $this->combine_tokens($emptycarttemplate,$tokens,true);
-			/*}
-			else
-				$out = $tokens[0];*/
+		else {	//empty 1 token 
+			$emptycarttemplate = _m('cmsrt.select_template use shcartempty');
+			$out = $this->combine_tokens($emptycarttemplate,$tokens,true);
 		}		
 	   
 		return ($out);
@@ -1235,17 +1282,13 @@ function addtocart(id,cartdetails)
 	      return;
 	
 		$command = $this->itemclick?$this->itemclick:GetReq('t');
-		$status = $this->status? strval($this->status) : '0';
+		$status = $this->status ? strval($this->status) : '0';
 	   	   
 		$ix = $this->imagex ? $this->imagex : 100;
 	    $iy = $this->imagey ? $this->imagey : null; 
 	    $ixw = $ix ? "width=".$ix : "width=".$ix;
 	    $iyh = $iy ? "height=".$iy :null; //empty y=free dim	   
 	   
-		//loop template (status param)
-		//$loopcart_template= "shcart".$status.".htm";
-		//$t2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loopcart_template) ;
-		//$this->myloopcarttemplate = file_get_contents($t2);
 		$this->myloopcarttemplate = _m('cmsrt.select_template use shcart'.$status);
 	   
         reset ($this->buffer);
@@ -1386,9 +1429,6 @@ function addtocart(id,cartdetails)
 	    $iyh = $iy ? "height=".$iy : null; //empty y=free dim	   		
 		
 	    //loop template (status param)
-	    //$loopcart_template = $template ? $template.'.htm' : "shcart".$status.".htm";
-	    //$t2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$loopcart_template) ;
-		//$this->myloopcarttemplate = file_get_contents($t2);	
         $loopcart_template = $template ? $template : 'shcart'.$status;
 		$this->myloopcarttemplate = _m('cmsrt.select_template use ' . $loopcart_template);
 
@@ -1443,7 +1483,6 @@ function addtocart(id,cartdetails)
 	    return ($loopout);  	 	
 	}	
 
-	//overwrite for quickview purposes
     public function viewcart($id,$title,$path,$template,$group,$page,$descr='',$photo='',$price=0,$quant=1,$uninameA=null,$uninameB=null) {
 
 		//get current product view
@@ -2034,7 +2073,6 @@ function addtocart(id,cartdetails)
 	    $aftersubmitgoto = remote_paramload('SHCART','aftersubmitgoto',$this->path);
 	
 	    $title = localize('_TRANSPRINT',getlocal());
-		//NO NEED ID FOR SECURITY REASON USE $this->printout
 		$translink = 'printcart/';
 		$ret = $this->myf_button(localize('_TRANSPRINT',getlocal()),$translink,'_TRANSPRINT');
 	    
@@ -2054,9 +2092,6 @@ function addtocart(id,cartdetails)
 		$this->update_statistics('cart-purchase', $UserName);	
 	
 	    //template
-	    //$cart_template= "shcartsuccess.htm";
-	    //$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
-		//$mycarttemplate = file_get_contents($template);
 		$mycarttemplate = _m('cmsrt.select_template use shcartsuccess');
 		
 	    $aftersubmitgoto = remote_paramload('SHCART','aftersubmitgoto',$this->path);
@@ -2097,9 +2132,6 @@ function addtocart(id,cartdetails)
 		$this->update_statistics('cart-error', $UserName);		
 		
 	    //template
-	    //$cart_template= "shcarterror.htm";
-	    //$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$cart_template) ;
-		//$mycarttemplate = file_get_contents($template);	
 		$mycarttemplate = _m('cmsrt.select_template use shcarterror');
 
 	    //in case of paypal return
@@ -2153,26 +2185,16 @@ function addtocart(id,cartdetails)
 
 	   return false;
 	}	
-    
-	/*
-	//override to stop cart header view
-	function headtitle() {
-	}
-	*/
 	
 	//override
 	public function quickview($ret_tokens=false, $template1=null, $template2=null) {		
 		 
 		if ($this->notempty()) {
 			
-			$template = $template1 ? $template1 : 'fpcartline.htm';
-			//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-			//$mytemplate = file_get_contents($t);		
+			$template = $template1 ? $template1 : 'fpcartline.htm';	
 			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
 		
 			$template2 = $template2 ? $template2 : 'fpcart.htm';
-			//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template2) ;
-			//$mytemplate2 = file_get_contents($t); 
 			$mytemplate2 = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template2));
 	  
 			$ret = '';
@@ -2261,9 +2283,7 @@ function addtocart(id,cartdetails)
 	
 	//override
 	public function foot($token=null) {
-		//$template='shcartfooter.htm';
-		//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		//$mytemplate = @file_get_contents($t);	
+
 		$mytemplate = _m('cmsrt.select_template use shcartfooter');
 	
 		$this->quick_recalculate();
@@ -2360,9 +2380,7 @@ function addtocart(id,cartdetails)
 
 
 	public function myquickcartfoot() {
-		//$template='fpcartfooter.htm';
-		//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
-		//$mytemplate = @file_get_contents($t);	
+
 		$mytemplate = _m('cmsrt.select_template use fpcartfooter');
 
 		$this->quick_recalculate();
@@ -2431,8 +2449,6 @@ function addtocart(id,cartdetails)
 
 	protected function todolist() {
 	 
-		//$t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$this->todo.'.htm') ; 
-		//$mytemplate = file_get_contents($t);
 		$mytemplate = _m('cmsrt.select_template use ' . $this->todo);
 		 
 		switch ($this->todo) {

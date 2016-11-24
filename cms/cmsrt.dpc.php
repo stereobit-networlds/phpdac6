@@ -1429,11 +1429,27 @@ EOF;
 	    $path = $iscp ? $this->prpath . $this->tpath .'/'. $this->cptemplate .'/' : 
 		                $this->prpath . $this->tpath .'/'. $this->template .'/' ; 
 	    
-		if (is_readable($path . $tfile.'.php')) {
-			//unified languange php part page
-			return @file_get_contents($path . $tfile . '.php'); 
+		//unified languange .php part page		
+		//if (is_readable($path . $tfile.'.php')) {
+		if ($data = @file_get_contents($path . $tfile . '.php')) {	
+			
+			//return $data;
+			
+			if (substr($data, -2) == '?>') {
+				$data = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", "", $data)));
+				$data = '?>' . $evalCode . ((substr($evalCode, -2) == '?>') ? '<?php ' : '');
+				return eval($data);				
+			}
+			elseif (substr($data, -8) == '/phpdac>') {
+				//return $this->process_commands($data); //may have tokens inside (later process by combine_tokens)
+				//one big cmd with other phpdac inside as raw text
+				return _m(str_replace(array('<phpdac>','</phpdac>'), array('',''), $data));
+			}
+			else
+				return ($data);
 		}
 
+		//.htm files
 		return @file_get_contents($path . str_replace('.',$this->lan.'.',$tfile.'.htm')); 
     }	
 
