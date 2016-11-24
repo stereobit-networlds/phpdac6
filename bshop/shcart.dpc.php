@@ -317,7 +317,7 @@ class shcart extends storebuffer {
 			
 			case "addtocart"     : 	$this->addtocart();
 									break;					 	
-			case "removefromcart": 	$this->remove(GetReq('a')); 
+			case "removefromcart": 	$this->remove(); 
 									SetSessionParam('cartstatus',0); 
 									$this->status = 0; 
 									break;
@@ -637,8 +637,8 @@ function addtocart(id,cartdetails)
 		 $this->quick_recalculate();//re-update prices and totals
 	}
 	
-	public function remove($id) {
-        $myid = explode(";",$id);
+	public function remove($id=null) {
+        $myid = $id ? explode(';', $id) : explode(';', GetReq('a'));
 
         reset ($this->buffer);
         //while (list ($buffer_num, $buffer_data) = each ($this->buffer)) {             
@@ -1027,9 +1027,7 @@ function addtocart(id,cartdetails)
 			$this->transaction_id = $trid;
 		$cat = GetReq('cat');
 		$UserName = decode(GetGlobal('UserName'));
-		$continue_shopping_goto_cmd = remote_paramload('SHCART','continuegoto',$this->path);
-	   
-		$tmz_today = $this->make_gmt_date();  	   
+		$continue_shopping_goto_cmd = remote_paramload('SHCART','continuegoto',$this->path);  
 	   
 		$payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
 		$roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
@@ -1044,9 +1042,6 @@ function addtocart(id,cartdetails)
 	    
 		$pview= $cmd ? $cmd : 'klist';
 		$myaction = seturl("t=viewcart",0,1,null,null,$this->rewrite);
-	   
-		//template
-		$this->mycarttemplate = _m('cmsrt.select_template use shcart');
 	
 		//in case of no event fist..calldpc view...   
 		if (empty($this->loopcartdata)) 
@@ -1054,13 +1049,10 @@ function addtocart(id,cartdetails)
 		if (empty($this->looptotals)) 
 			$this->looptotals = $this->foot();	     	   
 	   
-		//echo 'status:',$this->status;
 		switch ($this->status) {
-			case 1 : 	//$myaction = seturl("t=viewcart",0,1,null,null,$this->rewrite);	//use SSL
-						$myaction = seturl("t=cart-order",0,1,null,null,$this->rewrite);   
+			case 1 : 	$myaction = seturl("t=cart-order",0,1,null,null,$this->rewrite);   
 						break;
-			case 2 : 	//$myaction = seturl("t=viewcart",0,1);	//use SSL
-						$myaction = seturl("t=cart-submit",0,1,null,null,$this->rewrite);
+			case 2 : 	$myaction = seturl("t=cart-submit",0,1,null,null,$this->rewrite);
 						break;
 			default : 	$myaction = seturl("t=cart-checkout",0,1,null,null,$this->rewrite);  
 		}
@@ -1083,12 +1075,9 @@ function addtocart(id,cartdetails)
 					$ret = _m('shcustomers.showcustomerdata use ++cusdetails');
 
 					if ($ret) {
-		                if ($this->mycarttemplate) {
-							$mydate = $tmz_today;//date('d/m/Y h:i:s A');				 
-							$tokens[] = $mydate;
-							$tokens[] = $ret;
-						}  
-						  
+						$mydate = date('d/m/Y h:i:s A'); //$this->make_gmt_date();
+						$tokens[] = $mydate;
+						$tokens[] = $ret;
 					}
 					else {
 					    //in case of no customer data register now
@@ -1202,7 +1191,7 @@ function addtocart(id,cartdetails)
 			    $tokens[] = $this->finalize_cart_success();
 				
 				if ($ret) {
-				  $tokens[] = $this->transaction_id . "&nbsp;|&nbsp;" . $tmz_today;
+				  $tokens[] = $this->transaction_id;// . "&nbsp;|&nbsp;" . $this->make_gmt_date();
 				  $tokens[] = $ret;				
 				}
 				else {//dummy tokens
@@ -1217,7 +1206,7 @@ function addtocart(id,cartdetails)
 			    $tokens[] = $this->finalize_cart_error();
 				
 				if ($ret) {
-				  $tokens[] = $this->transaction_id . "&nbsp;|&nbsp;" . $tmz_today;
+				  $tokens[] = $this->transaction_id;// . "&nbsp;|&nbsp;" . $this->make_gmt_date();
 				  $tokens[] = $ret;				
 				}
 				else {//dummy tokens
@@ -1235,6 +1224,9 @@ function addtocart(id,cartdetails)
 	    }
 	   
 		if ($this->notempty()) {
+			
+			$mycarttemplate = _m('cmsrt.select_template use shcart');
+			
 			if ($this->status>0) { 
 				if (!$exist = _m("shcustomers.search_customer_id use code2='" .$UserName."'")) {
 					$out .= _m("shcustomers.register");
@@ -1242,10 +1234,10 @@ function addtocart(id,cartdetails)
 					SetSessionParam('cartstatus',0);
 				}	
 				else
-					$out .= $this->combine_tokens($this->mycarttemplate,$tokens,true);
+					$out .= $this->combine_tokens($mycarttemplate,$tokens,true);
 			}
 			else
-				$out .= $this->combine_tokens($this->mycarttemplate,$tokens,true);
+				$out .= $this->combine_tokens($mycarttemplate,$tokens,true);
 		}	
 		else {	//empty 1 token 
 			$emptycarttemplate = _m('cmsrt.select_template use shcartempty');
@@ -1460,37 +1452,28 @@ function addtocart(id,cartdetails)
 	    return ($loopout);  	 	
 	}	
 
+	/* not used ???*/
     public function viewcart($id,$title,$path,$template,$group,$page,$descr='',$photo='',$price=0,$quant=1,$uninameA=null,$uninameB=null) {
-
-		//get current product view
-		$pview=$cmd?$cmd:'klist';
-
-		$gr = $group;//urlencode($group);
-		$ar = $title;//urlencode($title);
-
+		$pview = $cmd ? $cmd : 'klist';
+		$cat = $group;
+		$item = $title;
 		$item = summarize(55,$title);
-		$link_summarized = seturl("t=$pview&a=$ar&cat=$gr&page=$page" ,$item);
-		$link = seturl("t=$pview&a=$ar&cat=$gr&page=$page" ,$title);
-	   
-		/*if ($this->cartlinedetails)
-			$descr = $descr;//$param[6]? '&nbsp;' . $param[6]:null;
-		else
-			$details = null;	*/	   
-
-
-		$out = $this->combine_template($this->mytemplate,
-			                                 $id,
-			                                 $link,
-			                                 $link_summarized,
-			                                 $quant,
-											 $price,
-			                                 $title,
-											 $descr,
-											 $uninameA,
-											 $uninameB,
-											 null//$this->list_photo($rec[$this->getmapf('code')],400,300)
-			                                 );
-
+		$link_summarized = seturl("t=$pview&a=$item&cat=$cat" ,$item);
+		$link = seturl("t=$pview&a=$item&cat=$cat" ,$title);
+									 
+		$tokens[] = $id;
+		$tokens[] = $link;
+		$tokens[] = $link_summarized;
+		$tokens[] = $quant;
+		$tokens[] = $price;
+		$tokens[] = $title;
+		$tokens[] = $descr;
+		$tokens[] = $uninameA;
+		$tokens[] = $uninameB;
+		$tokens[] = null; //$this->list_photo($rec[$this->getmapf('code')],400,300);
+		
+		$out = $this->combine_tokens($this->mytemplate, $tokens);
+		
 	    return ($out);
     }
 
@@ -2200,7 +2183,7 @@ function addtocart(id,cartdetails)
 			
 		}				 
 
-		$out = $this->combine_template($mytemplate2, $ret, $this->myquickcartfoot());
+		$out = $this->combine_tokens($mytemplate2, array(0=>$ret, 1=>$this->myquickcartfoot()));
 
 		return ($out);
 	}
@@ -2249,8 +2232,6 @@ function addtocart(id,cartdetails)
 	}
 
 	public function foot($token=null) {
-
-		$mytemplate = _m('cmsrt.select_template use shcartfooter');
 	
 		$this->quick_recalculate();
 	   
@@ -2340,19 +2321,17 @@ function addtocart(id,cartdetails)
 			}			   
 	    } 
 
-		$out = $this->combine_tokens2($mytemplate, $tokens, true);//recursion?
+		//$mytemplate = _m('cmsrt.select_template use shcartfooter');
+		//$out = $this->combine_tokens2($mytemplate, $tokens, true);//recursion?
+		$out = _m('cmsrt._ct use shcartfooter+' . serialize($tokens) . '+1');
 		return ($out);
 	}	
 
 	public function myquickcartfoot() {
 
-		$mytemplate = _m('cmsrt.select_template use fpcartfooter');
-
 		$this->quick_recalculate();
-	   
-		$mytotal = $this->total;
 				
-		$_ttc =  number_format(floatval($mytotal),$this->dec_num,',','.'). $this->moneysymbol;
+		$_ttc =  number_format(floatval($this->total),$this->dec_num,',','.'). $this->moneysymbol;
 		$tokens[] = $_ttc; 			
 
 		//rest sums 
@@ -2408,7 +2387,10 @@ function addtocart(id,cartdetails)
 		else
 			$tokens[] = '';		   
 	   
-		$out = $this->combine_tokens2($mytemplate, $tokens, true);
+	   	//$mytemplate = _m('cmsrt.select_template use fpcartfooter');
+		//$out = $this->combine_tokens2($mytemplate, $tokens, true);
+		$out = _m('cmsrt._ct use fpcartfooter+' . serialize($tokens) . '+1');
+		
 		return ($out);
 	}
 
@@ -2926,7 +2908,7 @@ function addtocart(id,cartdetails)
 		
 		return false;
 	}		
-	
+	/*
 	protected function make_gmt_date($date=null,$mytmzid=null,$dst=null) {
 		
 		$dst = $dst ? $dst  :1;//defualt
@@ -2961,43 +2943,19 @@ function addtocart(id,cartdetails)
 		if ($tmzid) {
 			$user_tmz = $tmzid;
 			//echo $tmzid,'#';	  
-			$mkd_user_tmz = intval($user_tmz) * 60 * 60;//user tmz - hours * min * sec
-			$user_local_time = $mkd/*_gmt*/ + $mkd_user_tmz; //return time in secs from 1970
+			$mkd_user_tmz = intval($user_tmz) * 60 * 60;//user tmz - hours x min x sec
+			$user_local_time = $mkd + $mkd_user_tmz; //return time in secs from 1970
 	  
 			$gmtdate = date('d/m/Y h:i:s A',$user_local_time + $dst_time);
 		}
 		else
-			$gmtdate = date('d/m/Y h:i:s A',$mkd + $dst_time /*_gtm*/);
+			$gmtdate = date('d/m/Y h:i:s A',$mkd + $dst_time);
 		 	
 		//echo $gmtdate,'<br>';
 	  
 		return ($gmtdate);	  	 	  	  	  
 	}		
-	
-	//template method
-	protected function combine_template($template_contents,$p0=null,$p1=null,$p2=null,$p3=null,$p4=null,$p5=null,$p6=null,$p7=null,$p8=null,$p9=null) {
-
-		$params = explode('<#>',"$p0<#>$p1<#>$p2<#>$p3<#>$p4<#>$p5<#>$p6<#>$p7<#>$p8<#>$p9");
-	    //print_r($params);
-
-		if (defined('FRONTHTMLPAGE_DPC')) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-		}
-		else
-		  $ret = $template_contents;
-
-	    foreach ($params as $p=>$pp) {
-		  if ($pp)
-	        $ret = str_replace("$".$p,$pp,$ret);
-		  else
-		    $ret = str_replace("$".$p,'',$ret);
-	    }
-
-		return ($ret);
-	}
-	
+	*/
 	//tokens method	 $x
 	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
 	
@@ -3031,7 +2989,7 @@ function addtocart(id,cartdetails)
 	}	
 	
 	//tokens method	 $x$
-	protected function combine_tokens2($template_contents,$tokens, $execafter=null) {
+	/*protected function combine_tokens2($template_contents,$tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
 		
@@ -3060,7 +3018,7 @@ function addtocart(id,cartdetails)
 		}		
 		
 		return ($ret);
-	}	
+	}*/	
 	
 	public static function myf_button($title,$link=null,$image=null) {
 
@@ -3129,7 +3087,6 @@ function addtocart(id,cartdetails)
 		
 		$trid = GetSessionParam('TransactionID') ;//$this->transaction_id		
 		
-		$template1 = _m('cmsrt.select_template use cart-js-analytics');
 		$tokens = array(0=>$trid, 
 		                1=>number_format(floatval($ordertotal),$this->dec_num), 
 		                2=>number_format(floatval($ordersubtotal),$this->dec_num), 
@@ -3137,9 +3094,12 @@ function addtocart(id,cartdetails)
 						4=>number_format(floatval($discount),$this->dec_num), 
 						5=>number_format(floatval($taxcost),$this->dec_num),
 						);	
-		$ret .= $this->combine_tokens2($template1,$tokens,true);
+						
+		//$template1 = _m('cmsrt.select_template use cart-js-analytics');						
+		//$ret .= $this->combine_tokens2($template1,$tokens,true);
+		$ret .= _m('cmsrt._ct use cart-js-analytics+' . serialize($tokens) . '+1');
 		
-		$template2 = _m('cmsrt.select_template use cart-js-item-analytics');
+		//$template2 = _m('cmsrt.select_template use cart-js-item-analytics');
 		$tokens = array();
 		foreach ($this->buffer as $prod_id => $product) {
 			if (($product) && ($product!='x')) {
@@ -3152,7 +3112,8 @@ function addtocart(id,cartdetails)
 				//extra order tokens
 				$tokens[19] = $trid; //max combine no
 				
-				$ret .= $this->combine_tokens2($template2,$tokens,true);
+				//$ret .= $this->combine_tokens2($template2,$tokens,true);
+				$ret .= _m('cmsrt._ct use cart-js-item-analytics+' . serialize($tokens) . '+1');
 				unset($tokens);
 			}	
 		}		
