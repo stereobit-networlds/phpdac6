@@ -317,7 +317,7 @@ class shcart extends storebuffer {
 			
 			case "addtocart"     : 	$this->addtocart();
 									break;					 	
-			case "removefromcart": 	$this->remove($a); 
+			case "removefromcart": 	$this->remove(GetReq('a')); 
 									SetSessionParam('cartstatus',0); 
 									$this->status = 0; 
 									break;
@@ -547,11 +547,9 @@ function addtocart(id,cartdetails)
 		}			   	   	     
 	}	
 
-	//overwrite
 	public function addtocart($item=null,$qty=null) {
 		$a = $item ? $item : GetReq('a');
 		$params = explode(";",$a);	
-	    
 	   
 		//in case of browsing pages after addtocart procedure
 		//url continues to execute addtocart (as friend cmd) without $a
@@ -639,7 +637,6 @@ function addtocart(id,cartdetails)
 		 $this->quick_recalculate();//re-update prices and totals
 	}
 	
-	//override
 	public function remove($id) {
         $myid = explode(";",$id);
 
@@ -678,7 +675,6 @@ function addtocart(id,cartdetails)
         return false;
     } 	
 	
-    //overwrite
     public function submit_order($sendordermail=null, $invoice_template=null) {
 		$myuser = GetGlobal('UserID');	
 		$user = decode($myuser);
@@ -789,7 +785,6 @@ function addtocart(id,cartdetails)
 		return ($out);
 	}
 	
-	//override to add css and save html
     public function printorder($data=null,$invoice_template=null) {
 
 	    //DO NOT RE-RENDER PRINT OUT..
@@ -862,24 +857,10 @@ function addtocart(id,cartdetails)
 			$tokens[] = GetSessionParam('ordercart');					  
 			$out = $this->combine_tokens($myprintcarttemplate,$tokens,true);
 	    }
-		/*else {
-
-			$htmldata = _m('shcustomers.showcustomerdata');
-			$htmldata .= GetSessionParam('ordercart');
-			$htmldata .= GetSessionParam('orderdetails');
-		  
-			$mydata = $mytitle;		
-			$mydata .= $htmldata;			  			  
-					
-			$printpage = new phtml($mystyle,$mydata);
-			$out = $printpage->render();
-			unset($printpage);
-		}*/
 
 		return ($out);
 	}	
 
-	//overwriten
     public function recalculate($update_from_db=null) {
 
 		$this->stock_msg = null;
@@ -974,7 +955,6 @@ function addtocart(id,cartdetails)
 		$this->calculate_shipping();	 		 
 	}
 
-	//overwrite
     public function showsymbol($id,$group,$page,$allowremove=null,$qty=null) {
 		$myqty = $qty ? $qty : 1; 
 		$param = explode(";",$id);
@@ -1038,11 +1018,10 @@ function addtocart(id,cartdetails)
 			}		
 		}	
 
-      return ($out);
+		return ($out);
 	}
 
 
-	//overwrite
 	public function cartview($trid=null,$status=null) {
 		if ($trid) //view case
 			$this->transaction_id = $trid;
@@ -1277,19 +1256,17 @@ function addtocart(id,cartdetails)
 	}
 	
 	protected function loopcart() {
-	   
-	    if (empty($this->buffer))
-	      return;
+	    if (empty($this->buffer)) return;
 	
-		$command = $this->itemclick?$this->itemclick:GetReq('t');
+		$command = $this->itemclick ? $this->itemclick : GetReq('t');
 		$status = $this->status ? strval($this->status) : '0';
-	   	   
 		$ix = $this->imagex ? $this->imagex : 100;
 	    $iy = $this->imagey ? $this->imagey : null; 
 	    $ixw = $ix ? "width=".$ix : "width=".$ix;
 	    $iyh = $iy ? "height=".$iy :null; //empty y=free dim	   
 	   
-		$this->myloopcarttemplate = _m('cmsrt.select_template use shcart'.$status);
+		//$myloopcarttemplate = _m('cmsrt.select_template use shcart'.$status);
+		$myloopcarttemplate = _m('cmsrt.select_template use shcartline'); //.php file, code inside
 	   
         reset ($this->buffer);
 	    $this->qty_total = 0;
@@ -1300,30 +1277,27 @@ function addtocart(id,cartdetails)
 		    if (($product) && ($product!='x')) {
 				$aa+=1;
 				$param = explode(";",$product); 
-				$gr = $param[4];
-				$ar = $param[1];
-				$link = seturl("t=$command&cat=$gr&id=".$param[0] , $this->unreplace_cartchars($param[1]),null,null,null,true);
+				$cat = $param[4];
+				$item = $param[1];
+				$utitle = $this->unreplace_cartchars($item);				
+				$link = _m("cmsrt.url use t=$command&cat=$cat&id=" . $param[0] ."+" . $utitle); 
 			   
 				$itemphoto = _m("shkatalogmedia.get_photo_url use ".$param[7].'+1');
-				$linkimage = seturl("t=$command&cat=$gr&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$ar\">",null,null,null,true);
-				$data[] = ($this->status==0) ? $linkimage : $aa . "&nbsp;" . $param[0];
+				$linkimage = seturl("t=$command&cat=$cat&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$item\">",null,null,null,true);
+				
+				$data[] = ($this->status==0) ? $linkimage : $aa; // . "&nbsp;" . $param[0];
 
-			   
-				if ($this->cartlinedetails)
-					$details = $param[6] ? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null;
-				else
-					$details = null;	 
-
+				$details = $this->cartlinedetails ? ($param[6] ? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null) : null;	 
+				
 				switch ($this->status) {
-					default :
-					case 0 : $data[] = $param[0] . "<br/>" . $link . "&nbsp;" . $details;  break;
-					case 1 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details; break;
-					case 2 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details; break;
-					case 3 : $data[] = $param[0] . "&nbsp;" . $this->unreplace_cartchars($param[1]) . $details; break;				   
+					case 3  :  
+					case 2  : 
+					case 1  :	 $data[] = $utitle . $details; break; //$param[0] . "&nbsp;" . 				   
+					case 0  : 
+					default :	 $data[] = $link . $details;  break; //$param[0] . "<br/>" . 					
 				}
 
-				if (!$this->status) 
-					$data[] = $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
+				$data[] = ($this->status) ? null : $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
 
 				$price = floatval(str_replace(",",".",$param[8]));
 				$sumtotal = ($param[9] * $price);
@@ -1338,8 +1312,13 @@ function addtocart(id,cartdetails)
 				$data[] = $options;
 
 				$data[] = $this->settotal("Product$aa",$price,$param[9]) . $this->moneysymbol;
+				
+				$data[] = _m("cmsrt.url use t=$command&cat=$cat&id=" . $param[0]);
+				$data[] = $utitle;
+				$data[] = $itemphoto;
+				$data[] = $param[0];
                
-			    $loopout .= $this->combine_tokens($this->myloopcarttemplate,$data,true);
+			    $loopout .= $this->combine_tokens($myloopcarttemplate,$data,true);
 				  
 	            unset ($data);
 		        unset ($param);
@@ -1349,7 +1328,6 @@ function addtocart(id,cartdetails)
 	    return ($loopout);  	 	
 	}
 	
-	//ovewrride
     public function settotal($id,$price,$qty) {	
 
 		if (!$qty) $qty = 1;
@@ -1366,7 +1344,6 @@ function addtocart(id,cartdetails)
 		//return ($result);
 	}	
 	
-	/**** add log records to stats ****/
 	protected function logcart() {
 		
 		foreach ($this->buffer as $prod_id => $product) {
@@ -1380,7 +1357,6 @@ function addtocart(id,cartdetails)
 		return true;
 	}
 	
-	//override
 	public function loadcart($transid=null) {
 	    $a = $transid?$transid:GetReq('tid');
 		
@@ -1418,8 +1394,6 @@ function addtocart(id,cartdetails)
 		return false;
 	}	
 
-	
-	//revisited
 	public function previewcart($id,$cmd=null,$template=null) {
         $pview = $cmd ? $cmd : 'kshow';
 	    $status = $this->status ? strval($this->status) : '0';
@@ -1429,8 +1403,11 @@ function addtocart(id,cartdetails)
 	    $iyh = $iy ? "height=".$iy : null; //empty y=free dim	   		
 		
 	    //loop template (status param)
-        $loopcart_template = $template ? $template : 'shcart'.$status;
-		$this->myloopcarttemplate = _m('cmsrt.select_template use ' . $loopcart_template);
+        //$loopcart_template = $template ? $template : 'shcart'.$status;
+		//$myloopcarttemplate = _m('cmsrt.select_template use ' . $loopcart_template);
+		
+        $loopcart_template = $template ? $template : 'shcartline';		
+		$myloopcarttemplate = _m('cmsrt.select_template use ' . $loopcart_template); //.php file, code inside
 
 		if (is_number($id)) {
 
@@ -1443,25 +1420,20 @@ function addtocart(id,cartdetails)
 				if (($product) && ($product!='x')) {
 					$aa+=1;
 					$param = explode(";",$product); 
-					$gr = $param[4];
-					$ar = $param[1];
+					$cat = $param[4];
+					$item = $param[1];
+					$utitle = $this->unreplace_cartchars($item);
+					
 					$addButton = $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
-
-					$link = seturl("t=$pview&cat=$gr&id=".$param[0] , $this->unreplace_cartchars($param[1]),null,null,null,true);
+					$link = _m("cmsrt.url use t=$pview&cat=$cat&id=" . $param[0] ."+" . $utitle); 
 			   
 					$itemphoto = _m("shkatalogmedia.get_photo_url use ".$param[7].'+1');
-					$linkimage = seturl("t=$pview&cat=$gr&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$ar\">",null,null,null,true);	   
+					$linkimage = seturl("t=$pview&cat=$cat&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$item\">",null,null,null,true);	   
 					$data[] = $linkimage;
 
-					if ($this->cartlinedetails)
-						$details = $param[6] ? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null;
-					else
-						$details = null;	 
-
-					$data[] = $param[0] . "<br/>" . $link . "&nbsp;" . $details; 
-					
+					$details = $this->cartlinedetails ? ($param[6] ? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null) : null;					
+					$data[] = $link . $details; //$param[0] . "<br/>" . 
 					$data[] = $addButton;
-					
                     $data[] = $param[9]; //qty
 					
 					$price = floatval(str_replace(",",".",$param[8]));
@@ -1469,9 +1441,14 @@ function addtocart(id,cartdetails)
 					
 					$ssum = floatval(str_replace(",",".",$price)) * intval($param[9]);	
 					$merikosynolo = number_format($ssum,$this->dec_num,',','.') . $this->moneysymbol;		   
-					$data[] = $merikosynolo;				
+					$data[] = $merikosynolo;
+					
+					$data[] = _m("cmsrt.url use t=$pview&cat=$cat&id=" . $param[0]);
+					$data[] = $utitle;
+					$data[] = $itemphoto;	
+					$data[] = $param[0];					
 			   		   
-					$loopout .= $this->combine_tokens($this->myloopcarttemplate,$data,true);
+					$loopout .= $this->combine_tokens($myloopcarttemplate,$data,true);
 				
 					unset ($data);
 					unset ($param);
@@ -1517,7 +1494,6 @@ function addtocart(id,cartdetails)
 	    return ($out);
     }
 
-    //called with trid from payengines when success to send the mails
 	public function goto_mailer($trid=null, $invoice_template=null, $invoice_subject=null) {
 		
 		$this->transaction_id = $trid ? $trid : $this->transaction_id;		
@@ -1602,9 +1578,7 @@ function addtocart(id,cartdetails)
 		return ($this->mailerror);
 	}	
 	
-	//override
 	public function payway() {
-
 	    $pways = remote_arrayload('SHCART','payways',$this->path);
 		if (!$pways) return null;
 		   
@@ -1648,7 +1622,6 @@ function addtocart(id,cartdetails)
 		return ($tokens);
 	}	
 
-	//overwrite
 	public function roadway() {
 	    $ways = remote_arrayload('SHCART','roadways',$this->path);
 		if (!$ways) return null;
@@ -1906,8 +1879,6 @@ function addtocart(id,cartdetails)
 	    return ($tokens);
 	}	
 	
-	
-	//override
 	public function comments() {
 	
         switch ($this->status) {
@@ -1948,7 +1919,6 @@ function addtocart(id,cartdetails)
 	//call from tmpls to del sxolia 
     public function	delRemarks() {
 		SetSessionParam('sxolia', '');
-		
 		return null;
 	}	
 	
@@ -1956,12 +1926,11 @@ function addtocart(id,cartdetails)
 
 		$mytemplate = _m('cmsrt.select_template use ' . $id);
 		$out = $this->combine_tokens($mytemplate,$params,true);
-	   
+
 		return ($out);	   	    	
 	}	
 	
 	protected function calculate_shipping() {
-	
 		$ways = remote_arrayload('SHCART','roadways',$this->path);
 		//print_r($ways);
 		//echo 'a';
@@ -2186,7 +2155,6 @@ function addtocart(id,cartdetails)
 	   return false;
 	}	
 	
-	//override
 	public function quickview($ret_tokens=false, $template1=null, $template2=null) {		
 		 
 		if ($this->notempty()) {
@@ -2280,8 +2248,6 @@ function addtocart(id,cartdetails)
 	    $this->calculate_shipping();			  
 	}
 
-	
-	//override
 	public function foot($token=null) {
 
 		$mytemplate = _m('cmsrt.select_template use shcartfooter');
@@ -2377,7 +2343,6 @@ function addtocart(id,cartdetails)
 		$out = $this->combine_tokens2($mytemplate, $tokens, true);//recursion?
 		return ($out);
 	}	
-
 
 	public function myquickcartfoot() {
 
@@ -2799,7 +2764,6 @@ function addtocart(id,cartdetails)
 		return null; 
 	}	
 	
-	//override
     public function setquantity($id,$qty=null) {
 
 		$r = $this->readonly ? 'readonly' : null;
