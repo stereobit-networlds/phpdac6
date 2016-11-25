@@ -124,13 +124,10 @@ class cmssubscribe {
 			default 		   : $stemplate= "subscribe";
 		}
 
-		//$template = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$stemplate) ; 	
-		//$mytemplate = file_get_contents($template);	
-		$mytemplate = _m('cmsrt.select_template use '.$stemplate);
 
 		$tokens = array();		
 		$tokens[] = $this->msg;		 
-		$out .= $this->combine_tokens($mytemplate,$tokens);
+		$out = _m("cmsrt._ct use $stemplate+" . serialize($tokens));
 
         return ($out);
     }
@@ -149,70 +146,55 @@ class cmssubscribe {
 
 	
 	public function dosubscribe($mail=null,$bypasscheck=null,$telltouser=null) {
-       $db = GetGlobal('db');
-	   $name = $name ? $name : 'unknown';
-	   $dlist = 'default';		
-       $mail_tell_user = isset($telltouser)?$telltouser:$this->tell_user;	
-	   $mail = $mail ? $mail : GetParam('submail');	 
-	   if (!$mail) return;	   
+		$db = GetGlobal('db');
+		$name = $name ? $name : 'unknown';
+		$dlist = 'default';		
+		$mail_tell_user = isset($telltouser) ? $telltouser : $this->tell_user;	
+		$mail = $mail ? $mail : GetParam('submail');	 
+		if (!$mail) return;	   
 	   
-       $dtime = date('Y-m-d h:i:s');	   	
+		$dtime = date('Y-m-d h:i:s');	   	
 	   
-	   if ($this->checkmail($mail))  {
+		if ($this->checkmail($mail))  {
+			
+			$tokens[] = $mail;	
+			$mailbody = _m('cmsrt._ct use subinsert+' . serialize($tokens));			
 
-		  $sSQL = "SELECT email FROM ulists where email=". $db->qstr($mail) . " and listname='$dlist'"; 
+			$sSQL = "SELECT email FROM ulists where email=". $db->qstr($mail) . " and listname='$dlist'"; 
 		  
-	      $ret = $db->Execute($sSQL,2);
-		  $mymail = $ret->fields['email'];
+			$ret = $db->Execute($sSQL,2);
+			$mymail = $ret->fields['email'];
 		  
-		  if ($mymail==$mail) {//is in db but already enabled or disabled  re-enable subscription
-			   $sSQL = "update ulists set active=1 where listname='$dlist' and email=" . $db->qstr(strtolower($mail));  
-			   $db->Execute($sSQL,1);
-			   //echo $sSQL;		
-			   if (!$bypasscheck)    
-			     $this->msg =  localize('_MSG6',getlocal());	
+			if ($mymail==$mail) {//is in db but already enabled or disabled  re-enable subscription
+				$sSQL = "update ulists set active=1 where listname='$dlist' and email=" . $db->qstr(strtolower($mail));  
+				$db->Execute($sSQL,1);
+				//echo $sSQL;		
+				if (!$bypasscheck)    
+					$this->msg =  localize('_MSG6',getlocal());			 
 				 
-               if ($this->tell_it) //tell to me
-			     $this->mailto($this->tell_from,$this->tell_it,$this->subject,$mail);
+				if ($this->tell_it) //tell to me
+					$this->mailto($this->tell_from,$this->tell_it,$this->subject,$mailbody);
 				 			     							  
-			   //tell to subscriber
-		      if ($mail_tell_user>0) {		   
-		         $tokens[] = $mail;	
-                 $tokens[] = $mail; //dummy at leats 2 elements				   	
-                 $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		         if ($mailbody = _m("fronthtmlpage.subpage use subinsert.htm+".$sd."+1")) { 
-				 				 
-			       $this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 
-			     }
-			     else			   
-			       $this->mailto($this->tell_from,$mail,$this->subject,$this->body);					 	  
-			  }	  
+				//tell to subscriber
+				if ($mail_tell_user>0) 	   
+					$this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 
 		  }		  
           else {
-	
-			   $sSQL = "insert into ulists (email,startdate,active,lid,listname,name,owner) " .
+				$sSQL = "insert into ulists (email,startdate,active,lid,listname,name,owner) " .
 						"values (" .
 						$db->qstr(strtolower($mail)) . "," . $db->qstr($dtime) . "," .
 						"1,1,'$dlist'," . $db->qstr($name) . ",". $db->qstr($this->owner). ")";   			   
-			   $db->Execute($sSQL,1);	
+				$db->Execute($sSQL,1);	
 			   
-			   if (!$bypasscheck)	    
-			     $this->msg = localize('_MSG6',getlocal());	
+				if (!$bypasscheck)	    
+					$this->msg = localize('_MSG6',getlocal());	
 				 
-			   //echo $sSQL;
-               if ($this->tell_it) //tell to me
-			     $this->mailto($this->tell_from,$this->tell_it,$this->subject,$mail);
+				//echo $sSQL;
+				if ($this->tell_it) //tell to me
+					$this->mailto($this->tell_from,$this->tell_it,$this->subject,$mailbosy);
 				 			     							  
-			   //tell to subscriber	   
-		       $tokens[] = $mail;	
-               $tokens[] = $mail; //dummy at leats 2 elements				   					 
-               $sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-		       if ($mailbody = _m("fronthtmlpage.subpage use subinsert.htm+".$sd."+1")) { 
-				 
-			     $this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 
-			   }
-			   else
-			     $this->mailto($this->tell_from,$mail,$this->subject,$this->body);	 	 
+				//tell to subscriber	   
+				$this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 	 	 
 		  }
 		  
 		  $this->update_statistics('subscribe', $mail);
@@ -224,16 +206,19 @@ class cmssubscribe {
 	}
 	
 	public function dounsubscribe($mail=null,$telltouser=null) {
-       $db = GetGlobal('db');	
-	   $mail_tell_user = isset($telltouser)?$telltouser:$this->tell_user;
-	   $ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';	    
-	   $mail = $mail ? $mail : GetReq('submail'); 
-	   if (!$mail) return;		   
+		$db = GetGlobal('db');	
+		$mail_tell_user = isset($telltouser) ? $telltouser : $this->tell_user;
+		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';	    
+		$mail = $mail ? $mail : GetReq('submail'); 
+		if (!$mail) return;		   
 	   
-	   if ($this->checkmail($mail))  {
+		if ($this->checkmail($mail))  {
+		   
+			$tokens[] = $mail;	
+			$mailbody = _m('cmsrt._ct use subdelete+' . serialize($tokens));			   
 
-          //disable from ulists
-		  //if ($this->isin_ulists($mail, $ulistname)) { //!!!!!!!!!!!!!!!! not a known list name
+			//disable from ulists
+			//if ($this->isin_ulists($mail, $ulistname)) { //!!!!!!!!!!!!!!!! not a known list name
 			$sSQL = "update ulists set active=0 where email=" . $db->qstr($mail);
 			//$sSQL .= ' and listname=' . $db->qstr($ulistname);  //from all the lists !!!!!(nwsletter have to include the list while unsub)
 			$result = $db->Execute($sSQL,1);
@@ -241,25 +226,16 @@ class cmssubscribe {
 			$this->msg = localize('_MSG8',getlocal());
 		    
 			if ($this->tell_it) //tell to me
-				$this->mailto($this->tell_from,$this->tell_it,$this->subject2,$mail);
+				$this->mailto($this->tell_from,$this->tell_it,$this->subject2,$mailbody);
 				 			     							  
 			//tell to subscriber   
-			if ($mail_tell_user>0) {	
-				$tokens[] = $mail;				
-				$tokens[] = $mail; //dummy at leats 2 elements					
-				$sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-				if ($mailbody = _m("fronthtmlpage.subpage use subdelete.htm+".$sd."+1")) { 
-				 			 
-					$this->mailto($this->tell_from,$mail,$this->subject2,$mailbody);	 
-				}
-				else			   
-					$this->mailto($this->tell_from,$mail,$this->subject2,$this->body2);			  
-			}
+			if ($mail_tell_user>0) 			 
+					$this->mailto($this->tell_from,$mail,$this->subject2,$mailbody);	 	  
 			
 			$this->update_statistics('unsubscribe', $mail);
 		  //}  
-	   }
-	   else 
+		}
+		else 
 			$this->msg = localize('_MSG5',getlocal());	  
 	}
 	
@@ -323,31 +299,7 @@ class cmssubscribe {
 		//}
 		
 	    return (false);  			 
-	}			
-	
-	//tokens method
-	protected function combine_tokens($template_contents,$tokens) {
-	
-	    if (!is_array($tokens)) return;
-		
-		if (defined('FRONTHTMLPAGE_DPC')) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
-		}		  		
-		else
-		  $ret = $template_contents;
-		  
-	    foreach ($tokens as $i=>$tok) {
-		    $ret = str_replace("$".$i,$tok,$ret);
-	    }
-		
-		//clean unused token marks
-		for ($x=$i;$x<10;$x++)
-		  $ret = str_replace("$".$x,'',$ret);
-	  
-		return ($ret);
-	} 				
+	}							
 
 };
 }

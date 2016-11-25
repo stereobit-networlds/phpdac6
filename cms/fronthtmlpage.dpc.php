@@ -592,7 +592,7 @@ EOF;
 		
 		return ($ret);
 	}
-  
+  /*
     public function is_tokens_var($var) {
   
 		if (stristr($var,'<TOKENS>'))
@@ -602,10 +602,10 @@ EOF;
     } 
   
     public function subpage($tmpl,$dpc2call,$dmarks=null,$extra_attr=null,$verbose=null) {
-         $dm = $dmarks?$dmarks:null;
-		 $verb = $this->verbose ? $this->verbose : $verbose;
+        $dm = $dmarks ? $dmarks : null;
+		$verb = $verbose ? $verbose : $this->verbose;
          
-		 if ($extra_attr) {//string of val '0' or '1'
+		if ($extra_attr) {//string of val '0' or '1'
 		   $tmpl_extra = str_replace($this->htmlext,$extra_attr.$this->htmlext,$tmpl);
 		   $tfile = str_replace('.',getlocal().'.',$tmpl_extra);		   
 		   
@@ -613,25 +613,25 @@ EOF;
 		     $t = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $tfile ;
 		   else	 
 		     $t = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $tfile ; 
-		 }  
-		 else {
+		}  
+		else {
 		   $tfile = str_replace('.',getlocal().'.',$tmpl);
 		   
 		   if ($this->MC_TEMPLATE)
 			 $t = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $tfile ;		   
 		   else	 
 		     $t = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $tfile ;		   
-		 }  
+		}  
 		   
-		 if ($verb)			
+		if ($verb)			
 		   echo $t,'<br>';
 		   
-	     if (is_readable($t)) {
+	    if (is_readable($t)) {
 		    $mytemplate = file_get_contents($t);	
 			if ($verbose)
 			  echo $t;
-	     }
-		 else {//parent root cp folder file
+	    }
+		else {//parent root cp folder file
 		  $cphtmlpath = "/../cp/$this->htmlpage/";
 		  $parentfile = $this->urlpath . $cphtmlpath . str_replace('.',getlocal().'.',$tmpl); 
 		  //echo 'z'.$parentfile;
@@ -640,29 +640,29 @@ EOF;
 			if ($verb)			
 			  echo $parentfile,'<br>';
 		  }		 
-		 }  
+		}  
 
-		 //if var is encrypted tokens 
-		 if ($this->is_tokens_var($dpc2call)) {//direct tokens val }
+		//if var is encrypted tokens 
+		if ($this->is_tokens_var($dpc2call)) {//direct tokens val }
 		   $tokens = explode('<TOKENS>',str_replace('<@>','+',$dpc2call));//(array) $this->detokenizer($dpc2call);
-		 }
-		 elseif (is_array($dpc2call)) {//direct call from calldpc_use_pointers
+		}
+		elseif (is_array($dpc2call)) {//direct call from calldpc_use_pointers
 		   $tokens = (array) $dpc2call;
-		 }
-		 else {
+		}
+		else {
 		   $precall = str_replace('->',' use ',$dpc2call);
 		   $call = str_replace('>','+',$precall);
  	       $tokens = _m($call);		 
 		 
 		   if ($verb)
 		     echo $call,'<br><hr>';
-		 }  
-		 
-		 $out = $this->combine_tokens($mytemplate,$tokens,$dm);		 
+		}  
+		
+		$out = $this->combine_tokens($mytemplate,$tokens,$dm);		 
 
-		 return ($out);
+		return ($out);
     }  
-	
+	*/
 	
 	public function included($fname=null, $uselans=null, $enable_ajax=false) {
 	
