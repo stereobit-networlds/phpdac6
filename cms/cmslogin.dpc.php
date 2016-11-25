@@ -134,10 +134,8 @@ class cmslogin {
 	var $resetPass, $isLogin, $isRegistered;
 	var $inactive_on_register, $recaptcha, $appname, $mtrackimg;	
 	var $facebook_id, $facebook_key, $facebook_userId, $facebook, $fbhash;		
-	
-	//static $staticpath;
 
-	function __construct() {
+	public function __construct() {
 	    $sFormErr = GetGlobal('sFormErr');
 	    $UserName = GetGlobal('UserName');
 	    $UserSecID = GetGlobal('UserSecID');
@@ -147,8 +145,6 @@ class cmslogin {
 	    $this->userid = decode($UserID);
         $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
 	    $this->msg = $sFormErr;
-	   
-	    //self::$staticpath = paramload('SHELL','urlpath');
 
         $this->path = paramload('SHELL','prpath');
 	    $this->urlpath = paramload('SHELL','urlpath');			
@@ -195,7 +191,7 @@ class cmslogin {
         date_default_timezone_set('Europe/Athens');		   
 	}
 
-    function event($sAction) {
+    public function event($sAction) {
 
         switch($sAction)   {
 			case 'shreg'        : 	$this->register();
@@ -242,7 +238,7 @@ class cmslogin {
         }
 	}
 
-    function action($action=null)  {
+    public function action($action=null)  {
 
         switch($action)   {
 		    case 'shreg'        : 	break;			
@@ -315,8 +311,12 @@ class cmslogin {
 	}		
 	
 	public function fblogin_javascript() {
+		$UserID = GetGlobal('UserID');	
+		if ($UserID) return null; //not a fb login when already logged in
+		
 	    if (!$this->facebook_id) return null;	
 		$localization = (getlocal()==1) ? 'el_GR' : 'en_US';
+	
 	
 		$fbjslogin = <<<FBLOGIN
 		window.fbAsyncInit = function() { 
@@ -446,8 +446,6 @@ window.setTimeout('neu()',10);
 	   
         if ($this->login_successfull) {
 			$user = decode(GetSessionParam('UserName'));
-			//$t = _m('crmsrt.select_template use welcome');	
-	        //return $t ? $this->combine_tokens($t, array(0=>$user)) : localize('_WELLCOME',getlocal()) .' '. $user;
 			$tokens = array(0=>$user);
 			return _m('cmsrt._ct use loginsuccess+' . serialize($tokens));
 	    }	 
@@ -458,14 +456,13 @@ window.setTimeout('neu()',10);
 	public function html_form() {
 	    $sFormErr = GetGlobal('sFormErr');
 	    $UserID = GetGlobal('UserID');
-        $logonurl = _m('cmsrt.seturl use t=dologin'); //seturl("t=dologin",0,1);	
+        $logonurl = _m('cmsrt.seturl use t=dologin'); 	
 		 
 		if ($UserID) {
 			
-			$tokens[] = _m('cmsrt.seturl use t=dologout'); //seturl("t=dologout"); //link
+			$tokens[] = _m('cmsrt.seturl use t=dologout'); 
 			$tokens[] = localize('_SHLOGOUT',getlocal());
-			//$tokens[] = $this->myf_button(localize('_SHLOGOUT',getlocal()), _m('cmsrt.seturl use t=dologout'););
-			
+
 			$ret = _m('cmsrt._ct use logout+' . serialize($tokens));
 	 	
 		    return ($ret);
@@ -475,18 +472,7 @@ window.setTimeout('neu()',10);
   		    $tokens[] = (stristr($sFormErr,'ok')) ? localize('_OK', getlocal()) : localize('_OKREMINDER', getlocal());
 		else
 		    $tokens[] = $sFormErr; 
-		
-		/*$tokens[] = "<form action=\"$logonurl\" method=\"POST\">";
-		$tokens[] = "<input type=\"text\" name=\"Username\" maxlenght=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">" ;	 
-	    $tokens[] = "<input type=\"password\" name=\"Password\" maxlenght=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">"; 	   
-		$tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize('CMSLOGIN_DPC',getlocal()) . "\">";   
-		$tokens[] =	"<input type=\"hidden\" name=\"FormName\" value=\"Login\">" .					   
-		            "<input type=\"hidden\" name=\"FormAction\" value=\"dologin\">" .
-		            "</form>";	
-		$tokens[] = _m('cmsrt.seturl use t=rempwd+' . localize('_HERE',getlocal())); //seturl("t=rempwd",localize("_HERE", getlocal()));
-		
-		$mytemplate = _m('crmsrt.select_template use login');		
-		return $this->combine_tokens($mytemplate,$tokens);*/		   
+				   
 		return _m('cmsrt._ct use login+' . serialize($tokens));
 	}
 
@@ -506,18 +492,6 @@ window.setTimeout('neu()',10);
             $logonurl = _m('cmsrt.seturl use t='); //seturl("",0,1);
 
 		if (!$UserID) {
-	        /*
-			$tokens[] = "<form action=\"$logonurl\" method=\"POST\">";
-			$tokens[] = "<input type=\"text\" name=\"Username\" maxlenght=\"50\" size=\"20\" class=\"myf_input_front\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";		 
-			$tokens[] = "<input type=\"password\" name=\"Password\" maxlenght=\"50\" size=\"20\" class=\"myf_input_front\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";
-			$tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize('CMSLOGIN_DPC',getlocal()) . "\">";
-			$tokens[] = "<input type=\"hidden\" name=\"FormAction\" value=\"dologin\">" .
-					 "<input type=\"hidden\" name=\"FormName\" value=\"Login\">" .
-		             "</form>";
-			
-			$mytemplate = _m('crmsrt.select_template use qlogin');			
-			$ret = $this->combine_tokens($mytemplate,$tokens);*/
-			
 			$tokens[] = $sFormErr;
 			$tpkens[] = $logonurl;
 			$tokens[] = $this->after_goto;
@@ -532,61 +506,37 @@ window.setTimeout('neu()',10);
     protected function remform() {
 
   	    if ($this->formerror!=localize("ok", getlocal())) {
-	        $url = _m('cmsrt.seturl use t=shremember');//seturl("t=shremember",0,1);
+	        $url = _m('cmsrt.seturl use t=shremember');
 			
 			if (defined('RECAPTCHA_DPC')) 
 				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   	   
          
 			$tokens[] = $this->formerror;
-			//$tokens[] = "<form action=\"$url\" method=\"POST\">";
-			//$tokens[] = "<input type=\"text\" autocomplete=\"off\" name=\"myemail\" maxlenght=\"50\" size=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";
-			$tokens[] = $recaptcha;		   
-			//$tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize("_ok",getlocal()) . "\">";
-			/*$tokens[] = "<input type=\"hidden\" name=\"FormAction\" value=\"shremember\">" .
-						"<input type=\"hidden\" name=\"FormName\" value=\"RemLogin\">" .
-						"</form>";	*/	 
+			$tokens[] = $recaptcha;		    
 		}
 		else {	
             $logonurl = _m('cmsrt.seturl use t='); //seturl("",0,1);		
 			$tokens[] = localize('_SENDCRE',getlocal());	
-			/*$tokens[] = "<form action=\"$logonurl\" method=\"POST\">".
-						"<input type=\"text\" name=\"Username\" maxlenght=\"20\">".
-			 		    "<input type=\"hidden\" name=\"FormName\" value=\"Login\">";	
-			$tokens[] = "<input type=\"password\" name=\"Password\" maxlenght=\"20\">".
-		                "<input type=\"hidden\" name=\"FormAction\" value=\"dologin\">";
-			$tokens[] = "<input type=\"submit\" value=\"" . localize('CMSLOGIN_DPC',getlocal()) . "\">".
-					    "</form>";*/				   		  	 
+			$tokens[] = null; //dummy	
 	    }
 		return ($tokens); 		
     }
 	
 	public function html_remform() {
 	
-		//$mydata = str_replace('+','<@>',implode('<TOKENS>',$this->remform()));
-		//return _m("fronthtmlpage.subpage use remlogin.htm+".$mydata);  
-		
-		//$mytemplate = _m('crmsrt.select_template use remlogin');
 		$tokens = (array) $this->remform();	
 		return _m('cmsrt._ct use remlogin+' . serialize($tokens)); //$this->combine_tokens($mytemplate,$tokens);
 	}	
 	
     protected function form_reset_pass($username=null) {
 	    $sectoken = GetReq('sectoken') ? '&sectoken='.GetReq('sectoken') : null;
-        $url = _m('cmsrt.seturl use t=chpass' . $sectoken); //seturl("t=chpass".$sectoken,0,1);
+        $url = _m('cmsrt.seturl use t=chpass' . $sectoken); 
 	   
 	    if (defined('RECAPTCHA_DPC')) 
 	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
 		
-		$tokens[] = $this->formerror;
-		//$tokens[] = "<form action=\"$url\" method=\"POST\">";
-		//$tokens[] = "<input type=\"password\" autocomplete=\"off\" name=\"Password\" maxlenght=\"50\" size=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";
-		//$tokens[] = "<input type=\"password\" autocomplete=\"off\" name=\"vPassword\" maxlenght=\"50\" size=\"20\" class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";		   
+		$tokens[] = $this->formerror;		   
 		$tokens[] = $recaptcha;		   
-		//$tokens[] = "<input type=\"submit\" class=\"myf_button\" value=\"" . localize('_RESET',getlocal()) . "\">";
-		/*$tokens[] = "<input type=\"hidden\" name=\"FormAction\" value=\"chpass\">" .
-		            "<input type=\"hidden\" name=\"username\" value=\"$username\">" .
-		            "<input type=\"hidden\" name=\"FormName\" value=\"UserChPass\">".
-					"</form>";*/
         $tokens[] = GetReq('sectoken');//use in form hidden element ajax call					   		   
 		 
 	    return ($tokens); 		 
@@ -606,7 +556,6 @@ window.setTimeout('neu()',10);
 				$this->formerror = localize('_ERRSECTOKEN',getlocal());
 				SetGlobal('sFormErr',$this->formerror);
 		    }	 
-		    //echo $timestamp,intval($toks[1]),'>',$currentuser;
 	    } 			   
 	    elseif ($UserName)	   
 			$currentuser = decode($UserName);	
@@ -614,10 +563,6 @@ window.setTimeout('neu()',10);
 			$currentuser = null;	   
 	
 	    if (($currentuser) && ($this->formerror!=localize('ok2',getlocal()))) {
-			
-			//$mydata = str_replace('+','<@>',implode('<TOKENS>',$this->form_reset_pass($currentuser)));
-			//$ret = _m("fronthtmlpage.subpage use userchpass.htm+".$mydata);
-			
 			$tokens = (array) $this->form_reset_pass($currentuser);
 			$ret = _m('cmsrt._ct use userchpass+' . serialize($tokens));
 		}	  
@@ -651,7 +596,6 @@ window.setTimeout('neu()',10);
 
 			if ((strcmp($pwd,$pwd2)==0)) {
 		 
-				//extra checks
 				if ((!is_numeric($pwd)) && (strlen($pwd)>=8)) {
 
 					$sSQL = "UPDATE users set password='" . md5(addslashes($pwd))  . "',vpass='" . md5(addslashes($pwd2))  . "',clogon=0";
@@ -683,8 +627,6 @@ window.setTimeout('neu()',10);
 
 			if ($this->domain_exists($m)) {
 				$sSQL = "SELECT username, password, notes FROM users WHERE email='" . addslashes($m) . "' and username is not null";
-
-				//echo "remember:",$sSQL;
 				$result = $db->Execute($sSQL,2);
 
 				if (($u=$result->fields['username']) && ($p=$result->fields['password'])) {
@@ -697,8 +639,6 @@ window.setTimeout('neu()',10);
 					$reset_url = seturl('t=chpass&sectoken='.$sectoken); //_m('cmsrt.seturl use t=chpass&sectoken=' . $sectoken); 
 					$tokens[] = $reset_url;			  
 				
-				    //$data = _m('crmsrt.select_template use userremind');
-					//$mailbody = $this->combine_tokens($data,$tokens,true);
 					$mailbody = _m('cmsrt._ct use userremind+' . serialize($tokens) . '+1');
 			   
 					$from = $this->accountmailfrom;
@@ -733,8 +673,7 @@ window.setTimeout('neu()',10);
 	    $UserName = GetGlobal('UserName');  
 		
 	    //recaptcha NOT FOR PASSWORDS FORM 
-        //if ($this->valid_recaptcha()) {		   
-	    //if ($db) {   		
+        //if ($this->valid_recaptcha()) {		   		
 
         if (!$user) $sUsername = GetParam("Username", adText);
 	        else $sUsername = $user; 
@@ -796,8 +735,7 @@ window.setTimeout('neu()',10);
 				SetGlobal('sFormErr',localize('_MSG1',getlocal()));
 				return false;
             }
-	    }
-	    //}//db	   
+	    }  
 	    //}//recaptcha
 	    $this->isLogin = false;
 		
@@ -979,59 +917,7 @@ window.setTimeout('neu()',10);
 
 	    session_decode(str_replace("<@>","\"",$res->fields[0]));
     }	
-   /*
-	public function combine_tokens($template_contents,$tokens) {
-	
-	    if (!is_array($tokens)) return;
-		
-		if (defined('FRONTHTMLPAGE_DPC')) {
-			$fp = new fronthtmlpage(null);
-			$ret = $fp->process_commands($template_contents);
-			unset ($fp);		  		
-		}		  		
-		else
-			$ret = $template_contents;
-		  
-	    foreach ($tokens as $i=>$tok) 
-		    $ret = str_replace("$".$i,$tok,$ret);
 
-		//clean unused token marks
-		for ($x=$i;$x<10;$x++)
-			$ret = str_replace("$".$x,'',$ret);
-
-		return ($ret);
-	}   
-
-	public static function myf_button($title,$link=null,$image=null) {
-	    $path = self::$staticpath;
-	   
-	    if (($image) && (is_readable($path."/images/".$image.".png"))) {
-			//echo 'a';
-			$imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
-	    }
-	   
-	    if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
-			//echo 'ie';
-			$_b = $imglink ? $imglink : "[$title]";
-			$ret = "&nbsp;<a href=\"$link\">$_b</a>&nbsp;";
-			return ($ret);
-	    }	
-	   
-		if ($imglink)
-	       return ($imglink);
-	
-		//else button	
-		if ($link)
-			$ret = "<a href=\"$link\">";
-			
-		$ret .= "<input type=\"button\" class=\"myf_button\" value=\"".$title."\" />";
-	   
-		if ($link)
-			$ret .= "</a>";	   
-		  
-		return ($ret);
-	}
-	*/
 	public function myf_login_logout($link=null,$glue=null) {
 	
 	    if ($UserID = GetGlobal('UserID')) {
@@ -1147,8 +1033,6 @@ window.setTimeout('neu()',10);
 			$tokens[] = $fname;	
 			$tokens[] = $lname;			  					
 
-			//$mytemplate = _m('crmsrt.select_template use userinserttell');			
-			//$mailbody = $this->combine_tokens($mytemplate,$tokens);
 			$mailbody = _m('cmsrt._ct use userinserttell+' . serialize($tokens));
 
 			$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
@@ -1170,8 +1054,6 @@ window.setTimeout('neu()',10);
 			$tokens[] = $password;
 			$tokens[] = $account_enable_link;		  
 
-			//$mytemplate = _m('crmsrt.select_template use userinsert');			
-			//$mailbody = $this->combine_tokens($mytemplate,$tokens);
 			$mailbody = _m('cmsrt._ct use userinsert+' . serialize($tokens));
 		
 			$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
@@ -1188,12 +1070,12 @@ window.setTimeout('neu()',10);
 
 	public function setMessage() {
 		if (is_array($_POST)) {
-			if (isReg()==1)
+			if ($this->isReg()==1)
 				$ret = localize('_welcome',getlocal());
-			elseif (isLogin()==1)
+			elseif ($this->isLogin()==1)
 				$ret = localize('_welcome',getlocal());
-			elseif (isResetPass()==1)
-				$ret = localize('_welcome',getlocal());			
+			//elseif ($this->isResetPass()==1)
+				//$ret = localize('_welcome',getlocal());			
 			
 			$ret = $this->formerror;
 			return $ret;	
@@ -1229,30 +1111,7 @@ window.setTimeout('neu()',10);
 	    $ret = decode($UserName);
 	  
 	    return ($ret);
-	}	
-	
-	public function is_reseller($leeid=null) {
-	    $db = GetGlobal('db');
-
-	    if ($leeid!=null)
-			$id = $leeid;
-	    else
-			$id = decode(GetSessionParam('UserID'));
-
-	    //if is in cuatomers table then....
-	    if ($id) {
-			$sSQL = "select attr1 from customers where ".$this->actcode."=" . $id;
-			$result = $db->Execute($sSQL,2);
-
-			if ($result->fields[0]==$this->reseller_attr) {//'ΧΟΝΔΡΙΚΗ') {
-				//echo 'yes';
-				SetSessionParam('RESELLER','true');
-				return true;
-			}
-	    }
-
-	    return false;
-	}	
+	}		
 	
 	protected function domain_exists($email, $record = 'MX'){
 		list($user, $domain) = explode('@', $email);
@@ -1355,7 +1214,6 @@ window.setTimeout('neu()',10);
                                             $_POST["recaptcha_challenge_field"],
                                             $_POST["recaptcha_response_field"]);
 											
-            //print_r($resp);
             if ($resp->is_valid) {
                 $error = null;//echo "You got it!";
 				$ret = true;
@@ -1364,15 +1222,15 @@ window.setTimeout('neu()',10);
                 // set the error code so that we can display it
                 $error = $resp->error;
 				$ret = false;
-		        $msg = '<br>' . "Incorrect recaptcha entry!";				
+		        $msg = "Incorrect recaptcha entry!";				
             }
 		}
 		else {
 		    $ret = false;
-		    $msg = '<br>' . "Recaptcha entry required!";			  
+		    $msg = "Recaptcha entry required!";			  
 		}
 		  
-		$this->formerror = $msg;//'recaptcha error';
+		$this->formerror = $msg;
 		SetGlobal('sFormErr',$msg);
 		  
 		return ($ret);																			 
