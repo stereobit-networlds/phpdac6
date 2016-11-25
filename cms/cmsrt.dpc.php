@@ -1431,19 +1431,16 @@ EOF;
 	    
 		//unified languange .php part page		
 		//if (is_readable($path . $tfile.'.php')) {
-		if ($data = @file_get_contents($path . $tfile . '.php')) {	
-			
-			//return $data;
+		if ($data = trim(@file_get_contents($path . $tfile . '.php'))) {	
 			
 			if (substr($data, -2) == '?>') {
-				$data = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", "", $data)));
-				$data = '?>' . $evalCode . ((substr($evalCode, -2) == '?>') ? '<?php ' : '');
+				//$data = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", "", $data)));
+				$data = '?>' . $data . ((substr($data, -2) == '?>') ? '<?php ' : '');
 				return eval($data);				
 			}
 			elseif (substr($data, -8) == '/phpdac>') {
-				//return $this->process_commands($data); //may have tokens inside (later process by combine_tokens)
 				//one big cmd with other phpdac inside as raw text
-				return _m(str_replace(array('<phpdac>','</phpdac>'), array('',''), $data));
+				return _m(substr($data,8,-9));
 			}
 			else
 				return ($data);

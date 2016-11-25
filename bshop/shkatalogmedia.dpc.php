@@ -125,7 +125,7 @@ class shkatalogmedia {
 	var $ogTags, $siteTitle, $httpurl;
 	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan, $itmplpath;
 
-	function __construct() {
+	public function __construct() {
 		$GRX = GetGlobal('GRX');		
 		$UserSecID = GetGlobal('UserSecID');	
 	  
@@ -318,12 +318,19 @@ class shkatalogmedia {
 									break;
 			//cart override
 			case 'addtocart'     : 	$cartstr = explode(';', GetReq('a')); 
-									$item = array_shift($cartstr); 
+									$item = $cartstr[0]; 
 									_m("cmsvstats.update_item_statistics use $item+cartin");
+									
+									if (_v("shcart.fastpick"))
+										$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_CART', getlocal()));									
 									break; 
+									
 			case 'removefromcart': 	$cartstr = explode(';', GetReq('a'));
-									$item = array_shift($cartstr);
-									_m("cmsvstats.update_item_statistics use $item+cartout");	                         
+									$item = $cartstr[0];
+									_m("cmsvstats.update_item_statistics use $item+cartout");
+
+									if (_v("shcart.fastpick"))
+										$this->jsDialog($this->replace_cartchars($cartstr[1], true), localize('_CART', getlocal()) . ' (-)');									
 									break;		
 		
 			case 'showimage'    : 	$this->show_photodb(GetReq('id'), GetReq('type'));
@@ -356,8 +363,10 @@ class shkatalogmedia {
 									break;		
 		
 			//cart override
-			case 'addtocart'     :
-			case 'removefromcart':
+			case 'removefromcart':  $out = _m("shcart.cartview");   
+									break;
+									
+			case 'addtocart'     :  //echo GetSessionParam('fastpick');
 									if (($this->carthandler) || (GetSessionParam('fastpick')=='on')) {
 										if (GetReq('cat')) {
 											$this->my_one_item = $this->read_list(); 							  							
@@ -461,15 +470,30 @@ SCROLLTOP;
 	
        if (iniload('JAVASCRIPT')) {
 	   
-	       $code = $this->js();
-		   $code.= $this->scrolltop_javascript_code();
+	        $code = $this->js();
+		    $code.= $this->scrolltop_javascript_code();
 		   
-		   $js = new jscript;	
+		    $js = new jscript;	
            $js->load_js($code,null,1);		
-		   unset ($js);
+		    unset ($js);
 	   }	
 	}		
 
+	protected function jsDialog($text=null, $title=null) {
+	
+       if (defined('JSDIALOGSTREAM_DPC')) {
+	   
+			if ($text)	
+				$code = _m("jsdialogstream.say use $text+$title++2000");
+			else	
+				$code = _m('jsdialogstream.streamDialog use jsdtime');
+		   
+		    $js = new jscript;	
+            $js->load_js($code,null,1);		
+		    unset ($js);
+	   }	
+	}	
+	
 	protected function orderSQL() {
 		$order = GetReq('order') ? GetReq('order') : GetSessionParam('order');	
 		$ppolicy = $this->is_reseller ? 'price0' : 'price1';
@@ -3282,15 +3306,14 @@ SCROLLTOP;
 		return ($ret);
 	}
 	
-	//override
-	public function replace_cartchars($string) {
+	public function replace_cartchars($string, $reverse=false) {
 		if (!$string) return null;
 
 		$g1 = array("'",',','"','+','/',' ','-&-');
 		$g2 = array('_','~',"*","plus",":",'-','-n-');		
 	  
-		return str_replace($g1,$g2,$string);
-	}
+		return $reverse ? str_replace($g2,$g1,$string) : str_replace($g1,$g2,$string);
+	}	
 	
 	protected function getkategoriesS($categories) {	
 		$c = $this->sep();

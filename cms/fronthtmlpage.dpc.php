@@ -940,15 +940,17 @@ EOF;
 			    $pathname = $tmpln;
 				
 			//echo 'INCLUDE_PART:'.$pathname;
-			if (is_readable($pathname)) {
-				/*if (defined('CCPP_VERSION')) {
-					$config = null;
-					$preprocessor = _v('pcntl.preprocessor'); 
-					$contents = $preprocessor->execute($pathname, 0, false, true);
-					//echo 'a>',$pathname;
+			if ($contents = trim(@file_get_contents($pathname))) {	
+					
+				if (substr($contents, -2) == '?>') {
+					$contents = '?>' . $contents . ((substr($contents, -2) == '?>') ? '<?php ' : '');
+					$contents = eval($contents);
 				}
-				else	*/			
-					$contents = @file_get_contents($pathname);
+				elseif (substr($contents, -8) == '/phpdac>') {
+					//one big cmd with other phpdac inside as raw text
+					$contents = _m(substr($contents,8,-9));
+				}
+				//else as is
 				
 				//replace content args
 				if (!empty($arguments)) {
@@ -1003,17 +1005,16 @@ EOF;
 			    $pathname = $tmpln;
 				
 			//echo 'INCLUDE_PART:'.$pathname;
-			if (is_readable($pathname)) {
-				
-				/*if (defined('CCPP_VERSION')) {
-					$config = null;
-					$preprocessor = new CCPP($config, true); //new ccpp
-					//$preprocessor = _v('pcntl.preprocessor'); 
-					$contents = $preprocessor->execute($pathname, 0, false, true);
-					//echo 'a>',$pathname;
+			if ($contents = trim(@file_get_contents($pathname))) {	
+					
+				if (substr($contents, -2) == '?>') {
+					$contents = '?>' . $contents . ((substr($contents, -2) == '?>') ? '<?php ' : '');
+					$contents = eval($contents);	
 				}
-				else*/				
-					$contents = @file_get_contents($pathname);
+				elseif (substr($contents, -8) == '/phpdac>') {
+					//one big cmd with other phpdac inside as raw text
+					$contents = _m(substr($contents,8,-9));
+				}
 				
 				//replace content args
 				if (!empty($arguments)) {

@@ -176,7 +176,7 @@ class shcart extends storebuffer {
 	
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
     var $twig_invoice_template_name, $appname, $mtrackimg; 
-    var $agentIsIE, $baseurl;	
+    var $agentIsIE, $baseurl, $fastpick;	
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
@@ -291,8 +291,8 @@ class shcart extends storebuffer {
 		$this->mydiscount = floatval(GetSessionParam('mydiscount'));		
 		$this->printout = GetSessionParam('printout') ? GetSessionParam('printout') : null;	  
 		$this->transaction_id = GetSessionParam('TransactionID') ? GetSessionParam('TransactionID') : null;
+		$this->fastpick = GetSessionParam('fastpick') ? true : false;
 	  
-	   
 		if ($this->maxqty<0) // || ($this->readonly)) { //free style
 			$this->javascript(); //ONLY WHEN DEFAULT VIEW EVENT ??	
 			
@@ -315,16 +315,22 @@ class shcart extends storebuffer {
 
 		switch ($event) {
 			
-			case "addtocart"     : 	$this->addtocart();
+			case "addtocart"     : 	$p = $this->addtocart();
+									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_CART', getlocal()));
 									break;					 	
+									
 			case "removefromcart": 	$this->remove(); 
 									SetSessionParam('cartstatus',0); 
 									$this->status = 0; 
 									break;
+									
 			case "clearcart"     : 	$this->clear(); 
 									SetSessionParam('cartstatus',0); 
-									$this->status = 0; 
+									$this->status = 0;
+
+									$this->jsDialog(localize('_BLN3', getlocal()), localize('_CART', getlocal()));	
 									break;	
+									
 			case "loadcart"      : 	$this->loadcart(); 
 									SetSessionParam('cartstatus',0); 
 									$this->status = 0; 
@@ -362,7 +368,6 @@ class shcart extends storebuffer {
 										$this->recalculate();
 									}
 									else {
-										//cart::event($event);
 										SetSessionParam('cartstatus',1); 
 										$this->status = 1; 
 										$this->recalculate();
@@ -388,13 +393,18 @@ class shcart extends storebuffer {
 									$this->dispatch_pay_engines();									 
 									break;
 						 
-         case "fastpick"      : 	if (!GetSessionParam('fastpick'))
+         case "fastpick"      : 	if ($this->fastpick==false) {
 										SetSessionParam('fastpick','on');
-									else  
+										$this->fastpick = true;
+									}	
+									else  {
 										SetSessionParam('fastpick',null);
+										$this->fastpick = false;
+									}
+									$msg = $this->fastpick ? localize('_FASTPICKON',getlocal()) : localize('_FASTPICKOFF',getlocal());
+									$this->jsDialog($msg, localize('_CART', getlocal()));									
 		 case 'viewcart'      :						  
-         default              : 	//cart::event($event);
-									$this->loopcartdata = $this->loopcart();
+         default              : 	$this->loopcartdata = $this->loopcart();
 									$this->looptotals = $this->foot();
 
 		}     
@@ -403,10 +413,10 @@ class shcart extends storebuffer {
     public function action($act=null) {	
 
 		switch ($act) {
-			case "sship"     	:  $out .= $this->show_supershipping();
+			case "sship"     	:   $out .= $this->show_supershipping();
 									break;
 	   
-			case "transcart" 	:  if (is_object($this->transformer))
+			case "transcart" 	:   if (is_object($this->transformer))
 										$out .= $this->transformer->transform();
 									break;
 							
@@ -414,7 +424,7 @@ class shcart extends storebuffer {
 			case 'addtocart'  	:
 			case 'removefromcart': 	break;							
 		 
-			case "fastpick" 	:	$out = (GetSessionParam('fastpick')) ? localize('_FASTPICKON',getlocal()) : localize('_FASTPICKOFF',getlocal());
+			case "fastpick" 	:	//$out = $this->fastpick ? localize('_FASTPICKON',getlocal()) : localize('_FASTPICKOFF',getlocal());
 									$out .= $this->cartview();
 									break;
 		          
@@ -546,6 +556,21 @@ function addtocart(id,cartdetails)
 			unset ($js);
 		}			   	   	     
 	}	
+	
+	protected function jsDialog($text=null, $title=null) {
+	
+       if (defined('JSDIALOGSTREAM_DPC')) {
+	   
+			if ($text)	
+				$code = _m("jsdialogstream.say use $text+$title++2000");
+			else
+				$code = _m('jsdialogstream.streamDialog use jsdtime');
+		   
+			$js = new jscript;	
+			$js->load_js($code,null,1);		
+			unset ($js);
+	   }	
+	}		
 
 	public function addtocart($item=null,$qty=null) {
 		$a = $item ? $item : GetReq('a');
@@ -632,16 +657,17 @@ function addtocart(id,cartdetails)
 			}
 			else
 				setInfo(localize('_MSG15',getlocal()));
-		 }//if $a
+		}//if $a
 		 
-		 $this->quick_recalculate();//re-update prices and totals
+		$this->quick_recalculate();//re-update prices and totals
+		 
+		return ($params); 
 	}
 	
 	public function remove($id=null) {
         $myid = $id ? explode(';', $id) : explode(';', GetReq('a'));
 
-        reset ($this->buffer);
-        //while (list ($buffer_num, $buffer_data) = each ($this->buffer)) {             
+        reset ($this->buffer);           
         foreach ($this->buffer as $buffer_num => $buffer_data) {		
 			
 		   $param = explode(";",$buffer_data);
@@ -663,6 +689,8 @@ function addtocart(id,cartdetails)
 			$this->update_statistics('cart-remove', $user);
 		
  	    $this->quick_recalculate();	//re-update prices and totals	
+		
+		return ($myid);
 	}
 
     public function isin($id) {
@@ -912,7 +940,7 @@ function addtocart(id,cartdetails)
 				if ((!$this->ignoreqtyzero) && ($selectedqty>$param[14]) && ($this->allowqtyover)) { //enable - disable check over qty selection
 
 					$stockout = ($param[14]-$selectedqty);
-					$stock_message = $param[0] . ",". $this->unreplace_cartchars($param[1]) . localize('_STOCKOUT',getlocal()) . "(" . $stockout . ")";
+					$stock_message = $param[0] . ",". $this->replace_cartchars($param[1], true) . localize('_STOCKOUT',getlocal()) . "(" . $stockout . ")";
 					$this->stock_msg .= $stock_message . "<br>";
 					$jcode .= "alert('$stock_message');";
 
@@ -1041,7 +1069,7 @@ function addtocart(id,cartdetails)
 		}	
 	    
 		$pview= $cmd ? $cmd : 'klist';
-		$myaction = seturl("t=viewcart",0,1,null,null,$this->rewrite);
+		$myaction = _m('cmsrt.url use t=viewcart'); //seturl("t=viewcart",0,1,null,null,$this->rewrite);
 	
 		//in case of no event fist..calldpc view...   
 		if (empty($this->loopcartdata)) 
@@ -1050,11 +1078,11 @@ function addtocart(id,cartdetails)
 			$this->looptotals = $this->foot();	     	   
 	   
 		switch ($this->status) {
-			case 1 : 	$myaction = seturl("t=cart-order",0,1,null,null,$this->rewrite);   
+			case 1 : 	$myaction = _m('cmsrt.url use t=cart-order'); //seturl("t=cart-order",0,1,null,null,$this->rewrite);   
 						break;
-			case 2 : 	$myaction = seturl("t=cart-submit",0,1,null,null,$this->rewrite);
+			case 2 : 	$myaction = _m('cmsrt.url use t=cart-submit'); //seturl("t=cart-submit",0,1,null,null,$this->rewrite);
 						break;
-			default : 	$myaction = seturl("t=cart-checkout",0,1,null,null,$this->rewrite);  
+			default : 	$myaction = _m('cmsrt.url use t=cart-checkout'); //seturl("t=cart-checkout",0,1,null,null,$this->rewrite);  
 		}
 
 		if ($this->status<3) {
@@ -1102,56 +1130,46 @@ function addtocart(id,cartdetails)
  
 				switch ($this->status) {
 			 
-					case 1 :   
-				           $ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->cancel\">&nbsp;";
-						   $ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->order\">&nbsp;";
-						   break;
+					case 1  : 	$ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->cancel\">&nbsp;";
+								$ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->order\">&nbsp;";
+								break;
 						 
-					case 2 :
-						 SetSessionParam('ordercart',$this->quickview());
-						 $details  = '<br/>'.localize('_PWAY',getlocal()) .':'. GetParam('payway');
-                         $details .= '<br/>'.localize('_RWAY',getlocal()) .':'. GetParam('roadway');
-                         $details .= '<br/>'.localize('_IWAY',getlocal()) .':'. GetParam('invway');	   
-                         $details .= '<br/>'.localize('_DELIVADDRESS',getlocal()) .':'. GetParam('addressway');	   
-                         $details .= '<br/>'.localize('_SXOLIA',getlocal()) .':'. GetParam('sxolia');		   
-                         SetSessionParam('orderdetails',$details);
+					case 2  :   SetSessionParam('ordercart',$this->quickview());
+								$details  = '<br/>'.localize('_PWAY',getlocal()) .':'. GetParam('payway');
+								$details .= '<br/>'.localize('_RWAY',getlocal()) .':'. GetParam('roadway');
+								$details .= '<br/>'.localize('_IWAY',getlocal()) .':'. GetParam('invway');	   
+								$details .= '<br/>'.localize('_DELIVADDRESS',getlocal()) .':'. GetParam('addressway');	   
+								$details .= '<br/>'.localize('_SXOLIA',getlocal()) .':'. GetParam('sxolia');		   
+								SetSessionParam('orderdetails',$details);
 				
-				         if (((GetSessionParam('payway')=='PAYPAL') || (GetParam('payway')=='PAYPAL')) ||
-				             ((GetSessionParam('payway')=='PIRAEUS') || (GetParam('payway')=='PIRAEUS')))  {
-				             $ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
-   				             $ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
-                         }
-                         else {
-				             $ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
-   				             $ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
-                         }
-					     break;
+								if (((GetSessionParam('payway')=='PAYPAL') || (GetParam('payway')=='PAYPAL')) ||
+									((GetSessionParam('payway')=='PIRAEUS') || (GetParam('payway')=='PIRAEUS')))  {
+									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
+									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
+								}
+								else {
+									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
+									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
+								}
+								break;
 						 
-					default : 
-						   
-						 if ($this->continue_button) {
-                           $continue_url = $continue_shopping_goto_cmd ? $continue_shopping_goto_cmd.'/' : 'klist'; 
-						   $continue_url .= $cat ? $cat .'/' : null;
-						   $ta .= "&nbsp;";
-						   if ($this->agentIsIE)
-						     $ta .= "<a href='".$this->baseurl.'/'.$continue_url."'>".localize('_CONTINUESHOP',getlocal())."</a>|";
-					       else  
-						     $ta .= $this->myf_button(localize('_CONTINUESHOP',getlocal()),$this->baseurl.'/'.$continue_url,'_CONTINUESHOP'); //url abs path (ie problem)
-						 }
+					default : 	if ($this->continue_button) {
+									$continue_url = $continue_shopping_goto_cmd ? $continue_shopping_goto_cmd.'/' : 'klist'; 
+									$continue_url .= $cat ? $cat .'/' : null;
+									$ta .= "&nbsp;"; 
+									$ta .= ($this->agentIsIE) ? "<a href='".$this->baseurl.'/'.$continue_url."'>".localize('_CONTINUESHOP',getlocal())."</a>|" :
+											$this->myf_button(localize('_CONTINUESHOP',getlocal()),$this->baseurl.'/'.$continue_url,'_CONTINUESHOP'); 
+								}
                    
-						 $ta .= "&nbsp;";
-						 if ($this->agentIsIE)
-						   $ta .= "<a href='".$this->baseurl.'/clearcart/'."'>".localize('_CLEARCARTITEMS',getlocal())."</a>|";
-					     else
-						   $ta .= $this->myf_button(localize('_CLEARCARTITEMS',getlocal()),$this->baseurl.'/clearcart/','_CLEARCARTITEMS'); //url abs path (ie problem)
+								$ta .= "&nbsp;";
+								$ta .= ($this->agentIsIE) ? "<a href='".$this->baseurl.'/clearcart/'."'>".localize('_CLEARCARTITEMS',getlocal())."</a>|" :
+										$this->myf_button(localize('_CLEARCARTITEMS',getlocal()),$this->baseurl.'/clearcart/','_CLEARCARTITEMS'); 
 						 
-	                     //FAST PICK
-						 $ta .= "&nbsp;";
-	                     $lnk2 = seturl('t=fastpick',null,null,null,null,$this->rewrite);//,localize('_FASTPICK',getlocal()));
-						 if ($this->agentIsIE)
-						   $ta .= "<a href='".$this->baseurl.'/'.$lnk2."'>".localize('_FASTPICK',getlocal())."</a>";
-					     else
-		                   $ta .= $this->myf_button(localize('_FASTPICK',getlocal()),$this->baseurl.'/'.$lnk2); //url abs path (ie problem)					 
+								//FAST PICK
+								$ta .= "&nbsp;";
+								$lnk2 = _m('cmsrt.url use t=fastpick'); // seturl('t=fastpick',null,null,null,null,$this->rewrite);//,localize('_FASTPICK',getlocal()));
+								$ta .= ($this->agentIsIE) ? "<a href='".$this->baseurl.'/'.$lnk2."'>".localize('_FASTPICK',getlocal())."</a>" :
+										$this->myf_button(localize('_FASTPICK',getlocal()),$this->baseurl.'/'.$lnk2); 
 						 
 						 if (is_object($this->transformer))
 						   $ta .= $this->transformer->showlink();						 				 
@@ -1271,7 +1289,7 @@ function addtocart(id,cartdetails)
 				$param = explode(";",$product); 
 				$cat = $param[4];
 				$item = $param[1];
-				$utitle = $this->unreplace_cartchars($item);				
+				$utitle = $this->replace_cartchars($item, true);				
 				$link = _m("cmsrt.url use t=$command&cat=$cat&id=" . $param[0] ."+" . $utitle); 
 			   
 				$itemphoto = _m("shkatalogmedia.get_photo_url use ".$param[7].'+1');
@@ -1279,7 +1297,7 @@ function addtocart(id,cartdetails)
 				
 				$data[] = ($this->status==0) ? $linkimage : $aa; // . "&nbsp;" . $param[0];
 
-				$details = $this->cartlinedetails ? ($param[6] ? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null) : null;	 
+				$details = $this->cartlinedetails ? ($param[6] ? '&nbsp;' . $this->replace_cartchars($param[6], true) : null) : null;	 
 				
 				switch ($this->status) {
 					case 3  :  
@@ -1324,23 +1342,19 @@ function addtocart(id,cartdetails)
 
 		if (!$qty) $qty = 1;
       
-		if ($price!=0) {
+		if ($price!=0) 
 			$result = ($price*$qty);
-		}
 		else
 			$result = "--&nbsp;";
 		 
 		$ret = number_format(floatval($result),$this->dec_num,',','.');	 
-		//echo $ret;
 		return ($ret);
-		//return ($result);
 	}	
 	
 	protected function logcart() {
 		
 		foreach ($this->buffer as $prod_id => $product) {
 			if (($product) && ($product!='x')) {
-				//log 
 				$cartstr = explode(';', $product);
 				$item = $cartstr[0];
 				_m("cmsvstats.update_item_statistics use $item+checkout");				
@@ -1350,37 +1364,33 @@ function addtocart(id,cartdetails)
 	}
 	
 	public function loadcart($transid=null) {
-	    $a = $transid?$transid:GetReq('tid');
-		
+	    $a = $transid ? $transid : GetReq('tid');
 		$transdata = array();
 		
 		if (is_number($a)) {
-         if (defined('SHTRANSACTIONS_DPC')) {
+			if (defined('SHTRANSACTIONS_DPC')) {
 
-		    $transdata = _m('shtransactions.getTransaction use '.$a);
+				$transdata = _m('shtransactions.getTransaction use '.$a);
 			
-			if ($transdata) {
-			  //unserialize data
-			  $decodetrans = unserialize($transdata);
-			  //print_r($transdata);
+				if ($transdata) {
+					//unserialize data
+					$decodetrans = unserialize($transdata);
 			  
-			  foreach ($decodetrans as $i=>$trcartrec) {
+					foreach ($decodetrans as $i=>$trcartrec) {
+						/**** add log records to stats ****/ 
+						$cartstr = explode(';', $trcartrec);
+						$item = $cartstr[0];
+						_m("cmsvstats.update_item_statistics use $item+cartin");				
 				  
-				/**** add log records to stats ****/ 
-				$cartstr = explode(';', $trcartrec);
-		        $item = $cartstr[0];
-		        _m("cmsvstats.update_item_statistics use $item+cartin");				
-				  
-			    $this->buffer[] = $trcartrec;
-			  }	
+						$this->buffer[] = $trcartrec;
+					}	
 			  
-			  $this->setStore();
+					$this->setStore();
+					$this->colideCart();
 			  
-			  $this->colideCart();
-			  
-			  return true;
+					return true;
+				}
 			}
-		  }
 		}
 		
 		return false;
@@ -1414,7 +1424,7 @@ function addtocart(id,cartdetails)
 					$param = explode(";",$product); 
 					$cat = $param[4];
 					$item = $param[1];
-					$utitle = $this->unreplace_cartchars($item);
+					$utitle = $this->replace_cartchars($item, true);
 					
 					$addButton = $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
 					$link = _m("cmsrt.url use t=$pview&cat=$cat&id=" . $param[0] ."+" . $utitle); 
@@ -1423,7 +1433,7 @@ function addtocart(id,cartdetails)
 					$linkimage = seturl("t=$pview&cat=$cat&id=".$param[0], "<img src=\"" . $itemphoto . "\" $ixw $iyh alt=\"$item\">",null,null,null,true);	   
 					$data[] = $linkimage;
 
-					$details = $this->cartlinedetails ? ($param[6] ? '&nbsp;' . $this->unreplace_cartchars($param[6]) : null) : null;					
+					$details = $this->cartlinedetails ? ($param[6] ? '&nbsp;' . $this->replace_cartchars($param[6], true) : null) : null;					
 					$data[] = $link . $details; //$param[0] . "<br/>" . 
 					$data[] = $addButton;
                     $data[] = $param[9]; //qty
@@ -1453,13 +1463,13 @@ function addtocart(id,cartdetails)
 	}	
 
 	/* not used ???*/
-    public function viewcart($id,$title,$path,$template,$group,$page,$descr='',$photo='',$price=0,$quant=1,$uninameA=null,$uninameB=null) {
+    /*public function viewcart($id,$title,$path,$template,$group,$page,$descr='',$photo='',$price=0,$quant=1,$uninameA=null,$uninameB=null) {
 		$pview = $cmd ? $cmd : 'klist';
 		$cat = $group;
 		$item = $title;
 		$item = summarize(55,$title);
-		$link_summarized = seturl("t=$pview&a=$item&cat=$cat" ,$item);
-		$link = seturl("t=$pview&a=$item&cat=$cat" ,$title);
+		$link_summarized = _m("cmsrt.url use t=$pview&a=$item&cat=$cat+" . $item); //seturl("t=$pview&a=$item&cat=$cat" ,$item);
+		$link = _m("cmsrt.url use t=$pview&a=$item&cat=$cat+" . $title); //seturl("t=$pview&a=$item&cat=$cat" ,$title);
 									 
 		$tokens[] = $id;
 		$tokens[] = $link;
@@ -1475,7 +1485,7 @@ function addtocart(id,cartdetails)
 		$out = $this->combine_tokens($this->mytemplate, $tokens);
 		
 	    return ($out);
-    }
+    }*/
 
 	public function goto_mailer($trid=null, $invoice_template=null, $invoice_subject=null) {
 		
@@ -2031,7 +2041,7 @@ function addtocart(id,cartdetails)
 	    //VIEW TRANSACTIONS
 		if ((defined('SHTRANSACTIONS_DPC'))) {
 			//$out .= _m('shtransactions.viewTransactions');
-			$lnk1 = seturl('t=transview',null,null,null,null,$this->rewrite);//,localize('_TRANSLIST',getlocal()));
+			$lnk1 = _m('cmsrt.url use t=transview'); //seturl('t=transview',null,null,null,null,$this->rewrite);//,localize('_TRANSLIST',getlocal()));
 			$trans_button = '&nbsp;'.$this->myf_button(localize('_TRANSLIST',getlocal()),$lnk1);
 		} 			
 			
@@ -2069,7 +2079,7 @@ function addtocart(id,cartdetails)
 		else
           $goto_title = localize('_HOME',getlocal());
 
-		$gobutton =  seturl("t=$goto",$goto_title);
+		$gobutton =  _m('cmsrt.url use t=' . $goto . '+' . $goto_title); //seturl("t=$goto",$goto_title);
 				
 		$tokens[] = $this->print_button();		
 		$tokens[] = $gobutton; 				 
@@ -2156,31 +2166,28 @@ function addtocart(id,cartdetails)
 					$toks = array();//reset line
 			 
 					$aa+=1;
-					$param = explode(";",$product); //echo $param[8],"<br>";
-					$cat = $param[4];//urlencode($param[4]);
-					$itemdescr = $param[1];//urlencode($param[1]);
+					$param = explode(";",$product);
+					$cat = $param[4];
+					$itemdescr = $this->replace_cartchars($param[1], true);
 					$id = $param[0];			   
-					$toks[] = $prod_id+1;//$param[4];//urlencode($param[4]);
-					$toks[] = $id;//$param[1];//urlencode($param[1]);
-					$toks[] = seturl("t=kshow&cat=$cat&id=".$id , $itemdescr,null,null,null,true);//rewrite
+					
+					$toks[] = $prod_id+1;
+					$toks[] = $id;
+					$toks[] = _m("cmsrt.url use t=kshow&cat=$cat&id=$id+" . $itemdescr); //seturl("t=kshow&cat=$cat&id=".$id , $itemdescr,null,null,null,true);//rewrite
 					$toks[] = number_format(floatval($param[8]),$this->dec_num,',','.');
 					$toks[] = $param[9];
+					
 					$sum = floatval($param[8])*floatval($param[9]);//$param[11];
 					$toks[] = number_format($sum,$this->dec_num,',','.') . $this->moneysymbol;
+					
+					$toks[] = _m("shkatalogmedia.get_photo_url use ".$id.'+1');
 			   
-					if ($ret_tokens) {//call from shcart to email invoice
-						//cart item line as array element of array
-						$rtokens[] = (array) $toks;
-					}	 
+					if ($ret_tokens) 
+						return $toks;	 
 					else	
 						$ret .= $this->combine_tokens($mytemplate,$toks,true);
 				}  
-			}
-
-			//call from shcart to email invoice 
-			if ($ret_tokens)
-				return ($rtokens);
-			
+			}			
 		}				 
 
 		$out = $this->combine_tokens($mytemplate2, array(0=>$ret, 1=>$this->myquickcartfoot()));
@@ -2543,13 +2550,13 @@ function addtocart(id,cartdetails)
 		$sSQL .=" order by weight"; //desc  when <=weight
 		//echo $sSQL;
 	  
-		$gourl1 = seturl('t=sship&cservice='.$cservice); //echo $gourl1;
+		$gourl1 = _m('cmsrt.url use t=sship&cservice='.$cservice); //seturl('t=sship&cservice='.$cservice); //echo $gourl1;
 		$countries = "<select class=\"myf_select_small\" name=\"czone\" onChange=\"location='$gourl1&czone='+this.options[this.selectedIndex].value\">".
 	               get_options_file('country',false,true,$czone).
 				   "</select>";
 		$services = implode(',',$this->shipmethods); 	
 
-		$gourl2 = seturl('t=sship&czone='.$czone); //echo $gourl1;	  
+		$gourl2 = _m('cmsrt.url use t=sship&czone='.$czone); //seturl('t=sship&czone='.$czone); //echo $gourl1;	  
 		/*$methods = "<select name=\"cservice\" onChange=\"location='$gourl2&cservice='+this.options[this.selectedIndex].value\">".
 	               get_options_file('country',false,true,$cservice).
 				   "</select>";*/
@@ -3050,14 +3057,14 @@ function addtocart(id,cartdetails)
 		return ($ret);
 	}
 	
-	protected function unreplace_cartchars($string) {
+	protected function replace_cartchars($string, $reverse=false) {
 		if (!$string) return null;
 
 		$g1 = array("'",',','"','+','/',' ','-&-');
 		$g2 = array('_','~',"*","plus",":",'-','-n-');		
 	  
-		return str_replace($g2,$g1,$string);
-	}
+		return $reverse ? str_replace($g2,$g1,$string) : str_replace($g1,$g2,$string);
+	}		
 
 	/*call from shcartsuccess tmpl for analytics*/
 	public function postSubmitScript() {
@@ -3106,7 +3113,7 @@ function addtocart(id,cartdetails)
 				
 				$toks = explode(';', $product);	
 				$tokens[0] = $toks[0]; //item code
-				$tokens[1] = addslashes($this->unreplace_cartchars($toks[1])); //item title
+				$tokens[1] = addslashes($this->replace_cartchars($toks[1]), true); //item title
 				$tokens[8] = number_format(floatval($toks[8]),$this->dec_num); //item net price 
 				$tokens[9] = $toks[9]; //qty
 				//extra order tokens
