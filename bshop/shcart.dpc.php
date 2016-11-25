@@ -5,11 +5,7 @@ if ((!defined("SHCART_DPC")) && (seclevel('SHCART_DPC',decode(GetSessionParam('U
 define("SHCART_DPC",true);
 
 $__DPC['SHCART_DPC'] = 'shcart';
-/*
-$d = GetGlobal('controller')->require_dpc('bshop/cart.dpc.php');
-require_once($d);
-GetGlobal('controller')->get_parent('CART_DPC','SHCART_DPC');
-*/
+
 $d = GetGlobal('controller')->require_dpc('bshop/storebuffer.lib.php');
 require_once($d);
 
@@ -259,8 +255,7 @@ class shcart extends storebuffer {
 		$this->twig_invoice_template_name = str_replace('.', getlocal() . '.', 'invoice.htm');
 		//echo $this->twig_invoice_template_name; 
 		
-		$this->continue_button = 1; //loadTheme('continue_b',"");	
-		//$this->print_button = loadTheme('print_b',"");	
+		$this->continue_button = 1; 	
 		
         $this->checkout    = trim(localize('_CHKOUT',getlocal()));				 	
         $this->order       = trim(localize('_ORDER',getlocal()));
@@ -316,12 +311,14 @@ class shcart extends storebuffer {
 		switch ($event) {
 			
 			case "addtocart"     : 	$p = $this->addtocart();
-									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_CART', getlocal()));
+									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN1', getlocal()));
 									break;					 	
 									
-			case "removefromcart": 	$this->remove(); 
+			case "removefromcart": 	$p = $this->remove(); 
 									SetSessionParam('cartstatus',0); 
-									$this->status = 0; 
+									$this->status = 0;
+
+									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN2', getlocal()));	
 									break;
 									
 			case "clearcart"     : 	$this->clear(); 
@@ -334,6 +331,8 @@ class shcart extends storebuffer {
 			case "loadcart"      : 	$this->loadcart(); 
 									SetSessionParam('cartstatus',0); 
 									$this->status = 0; 
+									
+									$this->jsDialog(localize('_BLN1', getlocal()), localize('_CART', getlocal()));
 									break;			  
 								 
 			case $this->recalc   :

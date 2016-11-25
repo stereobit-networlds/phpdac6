@@ -311,7 +311,7 @@ class shkatalogmedia {
 									die($xml);	//xml output
 									break;
 								 
-			case 'xmlout'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); //$this->replace_spchars(GetReq('cat'),1)."+xmlout");
+			case 'xmlout'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); 
 									$this->xmlread_list();
 									$xml = $this->xml_feed();
 									die($xml);	//xml output
@@ -322,7 +322,7 @@ class shkatalogmedia {
 									_m("cmsvstats.update_item_statistics use $item+cartin");
 									
 									if (_v("shcart.fastpick"))
-										$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_CART', getlocal()));									
+										$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_BLN1', getlocal()));									
 									break; 
 									
 			case 'removefromcart': 	$cartstr = explode(';', GetReq('a'));
@@ -330,7 +330,7 @@ class shkatalogmedia {
 									_m("cmsvstats.update_item_statistics use $item+cartout");
 
 									if (_v("shcart.fastpick"))
-										$this->jsDialog($this->replace_cartchars($cartstr[1], true), localize('_CART', getlocal()) . ' (-)');									
+										$this->jsDialog($this->replace_cartchars($cartstr[1], true), localize('_BLN2', getlocal()) . ' (-)');									
 									break;		
 		
 			case 'showimage'    : 	$this->show_photodb(GetReq('id'), GetReq('type'));

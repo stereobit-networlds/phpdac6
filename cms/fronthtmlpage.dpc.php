@@ -955,11 +955,8 @@ EOF;
 				//replace content args
 				if (!empty($arguments)) {
 					preg_match_all($pattern,$contents,$matches);
-					//print_r($matches);
 					foreach ($matches[1] as $r=>$cmd) {
-						//echo $cmd,'-',GetParam($cmd),"<br>";
 						$arg = array_shift($arguments); //form 1st to last
-						//echo $r,'->',$cmd,'->',$arg,'<br/>';
 						$contents = str_replace('<arg'.$r.'>',$arg,$contents);
 					}				
 			    }
@@ -981,10 +978,8 @@ EOF;
 	public function include_part_arg($fname=null, $args=null, $uselans=null, $tmplname=null) {
 	    $pattern = "@<(.*?)>@"; /*search for fname params*/
 	    preg_match_all($pattern,$fname,$matches);
-	    //print_r($matches);
 	  
         foreach ($matches[1] as $r=>$cmd) {
-	      //echo $cmd,'-',GetParam($cmd),"<br>";
 		  $arg = GetParam($cmd) ? GetParam($cmd) : GetGlobal($cmd);
 		  $fname_arg = str_replace('<'.$cmd.'>',$arg,$fname);
 	    }	
@@ -1019,17 +1014,13 @@ EOF;
 				//replace content args
 				if (!empty($arguments)) {
 					preg_match_all($pattern,$contents,$matches);
-					//print_r($matches);
 					foreach ($matches[1] as $r=>$cmd) {
-						//echo $cmd,'-',GetParam($cmd),"<br>";
 						$arg = array_shift($arguments); //form 1st to last
 						$contents = str_replace('<arg'.$r.'>',$arg,$contents);
 					}				
 			    }				
-			
-			    //js 
+			    //js for arg include 
 			    $this->process_javascript($contents, $pageout);
-				
 				//execute commands
 				$ret = $this->process_commands($pageout);
 			
