@@ -1404,18 +1404,14 @@ function addtocart(id,cartdetails)
 	    $ixw = $ix ? "width=".$ix : "width=".$ix;
 	    $iyh = $iy ? "height=".$iy : null; //empty y=free dim	   		
 		
-	    //loop template (status param)
-        //$loopcart_template = $template ? $template : 'shcart'.$status;
-		//$myloopcarttemplate = _m('cmsrt.select_template use ' . $loopcart_template);
-		
         $loopcart_template = $template ? $template : 'shcartline';		
 		$myloopcarttemplate = _m('cmsrt.select_template use ' . $loopcart_template); //.php file, code inside
 
 		if (is_number($id)) {
 
 			$transdata = _m('shtransactions.getTransaction use '.$id);
-			//unserialize data
 			$buffer = unserialize($transdata);	
+			
 			if (!empty($buffer)) {
 			  foreach ($buffer as $prod_id => $product) {
 
@@ -1456,36 +1452,11 @@ function addtocart(id,cartdetails)
 					unset ($param);
 				}
 			  }
-			}//empty
+			}
 		}
 	   	   
 	    return ($loopout);  	 	
 	}	
-
-	/* not used ???*/
-    /*public function viewcart($id,$title,$path,$template,$group,$page,$descr='',$photo='',$price=0,$quant=1,$uninameA=null,$uninameB=null) {
-		$pview = $cmd ? $cmd : 'klist';
-		$cat = $group;
-		$item = $title;
-		$item = summarize(55,$title);
-		$link_summarized = _m("cmsrt.url use t=$pview&a=$item&cat=$cat+" . $item); //seturl("t=$pview&a=$item&cat=$cat" ,$item);
-		$link = _m("cmsrt.url use t=$pview&a=$item&cat=$cat+" . $title); //seturl("t=$pview&a=$item&cat=$cat" ,$title);
-									 
-		$tokens[] = $id;
-		$tokens[] = $link;
-		$tokens[] = $link_summarized;
-		$tokens[] = $quant;
-		$tokens[] = $price;
-		$tokens[] = $title;
-		$tokens[] = $descr;
-		$tokens[] = $uninameA;
-		$tokens[] = $uninameB;
-		$tokens[] = null; //$this->list_photo($rec[$this->getmapf('code')],400,300);
-		
-		$out = $this->combine_tokens($this->mytemplate, $tokens);
-		
-	    return ($out);
-    }*/
 
 	public function goto_mailer($trid=null, $invoice_template=null, $invoice_subject=null) {
 		
@@ -1495,7 +1466,7 @@ function addtocart(id,cartdetails)
 			$mailout = _m('shtransactions.getTransactionHtml use '.$mytrid);
 		}
         else {		
-			//template
+
 			$template = $invoice_template ? str_replace('.htm', '', $invoice_template) : "shcartmail";
 		  	
 			$details  = '<br/>'.localize('_PWAY',getlocal()) .':'. GetSessionParam('payway');
@@ -1562,7 +1533,7 @@ function addtocart(id,cartdetails)
 		else
 		    $subject = localize('_ORDERSUBJECT',getlocal()) . $this->transaction_id;
 			
-		// MAIL THE ORDER TO HOST
+		//MAIL THE ORDER TO HOST
  		$this->mailerror = $this->cart_mailto(null,$subject,$mailout);
 		//TO CUSTOMER
 		$usermail = decode(GetGlobal('UserID'));
@@ -1741,15 +1712,10 @@ function addtocart(id,cartdetails)
 			 case 1 : if (defined('SHCUSTOMERS_DPC')) {
 					    //$combo=0;
 	                    if ($deliv = _m('shcustomers.showdeliveryaddress use addressway')) {
-							/*if ($combo) {
-								$choice = $cus;
-							}
-							else {	*/
-								$pp = new multichoice('addressway',str_replace('<COMMA>',',',$deliv),null,false);
-								$con = $pp->render();
-								unset($pp);					
-								$choice = $con;
-							//}	
+							$pp = new multichoice('addressway',str_replace('<COMMA>',',',$deliv),null,false);
+							$con = $pp->render();
+							unset($pp);					
+							$choice = $con;	
 						}
 						$addnewlink = _m('shcustomers.addnewdeliverylink use shcart>cartview');
 	                  }
@@ -1911,6 +1877,7 @@ function addtocart(id,cartdetails)
 	
 	//call from tmpls to del sxolia 
     public function	delRemarks() {
+		
 		SetSessionParam('sxolia', '');
 		return null;
 	}	
@@ -1919,7 +1886,6 @@ function addtocart(id,cartdetails)
 
 		$mytemplate = _m('cmsrt.select_template use ' . $id);
 		$out = $this->combine_tokens($mytemplate,$params,true);
-
 		return ($out);	   	    	
 	}	
 	
@@ -2041,7 +2007,7 @@ function addtocart(id,cartdetails)
 	    //VIEW TRANSACTIONS
 		if ((defined('SHTRANSACTIONS_DPC'))) {
 			//$out .= _m('shtransactions.viewTransactions');
-			$lnk1 = _m('cmsrt.url use t=transview'); //seturl('t=transview',null,null,null,null,$this->rewrite);//,localize('_TRANSLIST',getlocal()));
+			$lnk1 = _m('cmsrt.url use t=transview'); 
 			$trans_button = '&nbsp;'.$this->myf_button(localize('_TRANSLIST',getlocal()),$lnk1);
 		} 			
 			
@@ -2052,38 +2018,32 @@ function addtocart(id,cartdetails)
 		$UserName = decode(GetGlobal('UserName'));		
 	
 		$this->update_statistics('cart-purchase', $UserName);	
-	
-	    //template
-		$mycarttemplate = _m('cmsrt.select_template use shcartsuccess');
 		
 	    $aftersubmitgoto = remote_paramload('SHCART','aftersubmitgoto',$this->path);
         $goto = $aftersubmitgoto?$aftersubmitgoto:GetSessionParam('aftersubmitgoto');
+		
 	    //in case of paypal return
 	    $tr_id = $this->transaction_id ? $this->transaction_id : $transno;
 		$tokens[] = $tr_id; 	
 
-        //$orderdataprint = GetSessionParam('orderdataprint');
         $payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
         $roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
         $invway = GetParam('invway')?GetParam('invway'):GetSessionParam('invway');	   
         $addressway = GetParam('addressway')?GetParam('addressway'):GetSessionParam('addressway');	   
         $sxolia = GetParam('sxolia')?GetParam('sxolia'):GetSessionParam('sxolia');		   
 
-		//what to say in link goto when cart success (depends on ...site)
 		$myst = remote_paramload('SHCART','onsuccessgototitle',$this->path);
         $onsuccess = explode('/',$myst); 
 		$onsuccesstitle = $onsuccess[getlocal()];
-		if ($onsuccesstitle) {
-		  $goto_title = $onsuccesstitle;
-		}
-		else
-          $goto_title = localize('_HOME',getlocal());
+		$goto_title = $onsuccesstitle ? $onsuccesstitle : localize('_HOME',getlocal());
 
 		$gobutton =  _m('cmsrt.url use t=' . $goto . '+' . $goto_title); //seturl("t=$goto",$goto_title);
 				
 		$tokens[] = $this->print_button();		
-		$tokens[] = $gobutton; 				 
-		$out .= $this->combine_tokens($mycarttemplate,$tokens,true);
+		$tokens[] = $gobutton; 
+
+		$mycarttemplate = _m('cmsrt.select_template use shcartsuccess');	
+		$out = $this->combine_tokens($mycarttemplate,$tokens,true);
 
 		return ($out);
 	}
@@ -2092,18 +2052,15 @@ function addtocart(id,cartdetails)
 		$UserName = decode(GetGlobal('UserName'));		
 	
 		$this->update_statistics('cart-error', $UserName);		
-		
-	    //template
-		$mycarttemplate = _m('cmsrt.select_template use shcarterror');
 
 	    //in case of paypal return
 	    $tr_id = $this->transaction_id ? $this->transaction_id : $transno;
 
-		//get error message
 		if ($this->mailerror) {
 			//change status of transaction
             if (defined('SHTRANSACTIONS_DPC')) 
 		        _m('shtransactions.setTransactionStatus use '.$this->transaction_id."+3");
+			
 			$error = $this->mailerror;//echo $error;
 		}
 
@@ -2114,16 +2071,17 @@ function addtocart(id,cartdetails)
 
 		$tokens[] = $msg; 			
 		$tokens[] = $error;
-		$out .= $this->combine_tokens($mycarttemplate,$tokens,true);	
+		
+		$mycarttemplate = _m('cmsrt.select_template use shcarterror');
+		$out = $this->combine_tokens($mycarttemplate,$tokens,true);	
 
 		return ($out);
 	}
 	
 	protected function read_policy() {
 
-		//override
 		$this->discount = $this->get_user_price_policy($this->userid);
-		//SetInfo($this->senpercentoff."% off");
+		return ($this->discount);
 	}
 
 	protected function get_user_price_policy($leeid=null) {
@@ -2328,8 +2286,6 @@ function addtocart(id,cartdetails)
 			}			   
 	    } 
 
-		//$mytemplate = _m('cmsrt.select_template use shcartfooter');
-		//$out = $this->combine_tokens2($mytemplate, $tokens, true);//recursion?
 		$out = _m('cmsrt._ct use shcartfooter+' . serialize($tokens) . '+1');
 		return ($out);
 	}	
@@ -2394,8 +2350,7 @@ function addtocart(id,cartdetails)
 		else
 			$tokens[] = '';		   
 	   
-	   	//$mytemplate = _m('cmsrt.select_template use fpcartfooter');
-		//$out = $this->combine_tokens2($mytemplate, $tokens, true);
+
 		$out = _m('cmsrt._ct use fpcartfooter+' . serialize($tokens) . '+1');
 		
 		return ($out);
@@ -2407,8 +2362,7 @@ function addtocart(id,cartdetails)
 		 
 		switch ($this->todo) {
 
-			case 'loginorregister' :
-									if (defined('CMSLOGIN_DPC')) 
+			case 'loginorregister' :if (defined('CMSLOGIN_DPC')) 
 										$a = _m("cmslogin.quickform use +viewcart+shcart>cartview+status+1");  
 
 									if (defined('SHUSERS_DPC')) 
@@ -2426,11 +2380,9 @@ function addtocart(id,cartdetails)
 									} 
 								    else
 										$ret = $this->cartview();//default view										 
-		                          break;
-			case 'unknownlogin' :
-		                          break;
-			case 'login'        :
-		                          break;
+									break;
+			case 'unknownlogin' :	break;
+			case 'login'        :   break;
 	   }
 
 	   return ($ret);
@@ -2460,7 +2412,6 @@ function addtocart(id,cartdetails)
 		return ($ret);	
 	}
 	
-	//pick qty from cart for a certain item
 	public function getCartItemQty($id=null) {
 		$qtymeter = 0;
 		if (!$id) return;
@@ -2475,13 +2426,7 @@ function addtocart(id,cartdetails)
 	}	
 	
 	protected function colideCart() {
-	
-		if (empty($this->buffer))
-			return;
-	
-		//echo '<pre>';
-		//print_r($this->buffer);
-		//echo '</pre>';	
+		if (empty($this->buffer)) return;
 	
 		foreach ($this->buffer as $i=>$rec) {
 			if ($rec!='x') {
@@ -2490,9 +2435,7 @@ function addtocart(id,cartdetails)
 				$tempbuffer[$cs] = intval($tempbuffer[$cs])+intval($data[9]).';'.$data[8];
 			}
 		}	
-		//echo '<pre>';
-		//print_r($tempbuffer);
-		//echo '</pre>';
+
 		if (!empty($tempbuffer)) {
 			unset($this->buffer);
 			foreach ($tempbuffer as $trec=>$qtyandprice) {
@@ -2500,10 +2443,7 @@ function addtocart(id,cartdetails)
 				$params = explode(';',$qtyandprice);
 				$this->buffer[] = $trec . $params[1] .';'. $params[0] .';;;;;;;';
 			}		
-		}
-		//echo '<pre>';
-		//print_r($this->buffer);
-		//echo '</pre>';	
+		}	
 	  
 		$this->setStore();    
 	}
@@ -2775,8 +2715,7 @@ function addtocart(id,cartdetails)
 			}
 			else { //combo style
 		  
-				//in case of ie location must be the abs url..
-				$url_location = $this->url . '/calc/'; //null;
+				$url_location = $this->url . '/calc/'; 
 		  
 				$out = "<SELECT class=\"myf_select_tiny\" name=\"$qtyname\" "; //>"
 				$out .= "onChange=\"location='$url_location'+'$qtyname'+'/'+this.options[this.selectedIndex].value+'/'\">"; 
@@ -2914,157 +2853,9 @@ function addtocart(id,cartdetails)
 			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
 		
 		return false;
-	}		
-	/*
-	protected function make_gmt_date($date=null,$mytmzid=null,$dst=null) {
-		
-		$dst = $dst ? $dst  :1;//defualt
-		date_default_timezone_set('GMT'); //btpass server time	
-		$today = date('Y-m-d');	
-
-		if (defined('SHUSERS_DPC')) {
-			if (GetSessionParam('tmzid')) {
-				$tmzid = $mytmzid?$mytmzid:GetSessionParam('tmzid');	  
-			}
-			else {	  
-				$tmz_id = $mytmzid ? $mytmzid : _m('shuser.get_user_timezone');
-				$tmzid = $tmz_id?$tmz_id:'0'; //string 0 in case if GMT
-				SetSessionParam('tmzid',$tmzid);		  
-			}	
-		}
-		else
-			$tmzid = $mytmzid?$mytmzid:0;	  
-	  
-		if (!$date)
-			$mkd = time(); //mktime();
-		else {
-			$d = explode('-',$date);	
-			$mkd = mktime(0,0,0,$d[1],$d[2],$d[0],$dst);
-		}
-	  
-		if ($dst)
-			$dst_time = 60*60; //+1 hour	  	
-		//NOT WORK...
-		//$mkd_gmt = $mkd - date('Z');//auto server offset val = 0 when GMT
-	  
-		if ($tmzid) {
-			$user_tmz = $tmzid;
-			//echo $tmzid,'#';	  
-			$mkd_user_tmz = intval($user_tmz) * 60 * 60;//user tmz - hours x min x sec
-			$user_local_time = $mkd + $mkd_user_tmz; //return time in secs from 1970
-	  
-			$gmtdate = date('d/m/Y h:i:s A',$user_local_time + $dst_time);
-		}
-		else
-			$gmtdate = date('d/m/Y h:i:s A',$mkd + $dst_time);
-		 	
-		//echo $gmtdate,'<br>';
-	  
-		return ($gmtdate);	  	 	  	  	  
-	}		
-	*/
-	//tokens method	 $x
-	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
+	}			
 	
-	    if (!is_array($tokens)) return;
 		
-		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
-		}		  		
-		else
-		  $ret = $template_contents;
-		  
-	    foreach ($tokens as $i=>$tok) {
-		    $ret = str_replace("$".$i,$tok,$ret);
-	    }
-		//clean unused token marks
-		for ($x=$i;$x<20;$x++)
-		  $ret = str_replace("$".$x,'',$ret);
-		
-		//execute after replace tokens
-		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          
-		  return ($retout);
-		}		
-		
-		return ($ret);
-	}	
-	
-	//tokens method	 $x$
-	/*protected function combine_tokens2($template_contents,$tokens, $execafter=null) {
-	
-	    if (!is_array($tokens)) return;
-		
-		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
-		}		  		
-		else
-		  $ret = $template_contents;
-		  
-	    foreach ($tokens as $i=>$tok) {
-		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
-		//clean unused token marks
-		for ($x=$i;$x<20;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		
-		//execute after replace tokens
-		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          
-		  return ($retout);
-		}		
-		
-		return ($ret);
-	}*/	
-	
-	public static function myf_button($title,$link=null,$image=null) {
-
-	    $path = self::$staticpath;
-	    $bc = self::$myf_button_class;
-	   
-	    if (($image) && (is_readable($path."/images/".$image.".png"))) {
-			$imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
-		}
-	   
-		if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
-			$_b = $imglink ? $imglink : "[$title]";
-			$ret = "&nbsp;<a href=\"$link\">$_b</a>&nbsp;";
-			return ($ret);
-		}	
-	   
-		if ($imglink)
-			return ($imglink);
-	
-		//else button	
-		if ($link)
-			$ret = "<a href=\"$link\">";
-		  
-		$ret .= "<input type=\"button\" class=\"".$bc."\" value=\"".$title."\" />";
-	   
-		if ($link)
-			$ret .= "</a>";	   
-		  
-		return ($ret);
-	}
-	
-	protected function replace_cartchars($string, $reverse=false) {
-		if (!$string) return null;
-
-		$g1 = array("'",',','"','+','/',' ','-&-');
-		$g2 = array('_','~',"*","plus",":",'-','-n-');		
-	  
-		return $reverse ? str_replace($g2,$g1,$string) : str_replace($g1,$g2,$string);
-	}		
 
 	/*call from shcartsuccess tmpl for analytics*/
 	public function postSubmitScript() {
@@ -3137,6 +2928,80 @@ function addtocart(id,cartdetails)
 			$js->load_js($code,"",1);			   
 			unset ($js);
 		}			   	   	     
+	}	
+	
+	
+	
+	
+	public static function myf_button($title,$link=null,$image=null) {
+
+	    $path = self::$staticpath;
+	    $bc = self::$myf_button_class;
+	   
+	    if (($image) && (is_readable($path."/images/".$image.".png"))) {
+			$imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
+		}
+	   
+		if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
+			$_b = $imglink ? $imglink : "[$title]";
+			$ret = "&nbsp;<a href=\"$link\">$_b</a>&nbsp;";
+			return ($ret);
+		}	
+	   
+		if ($imglink)
+			return ($imglink);
+	
+		//else button	
+		if ($link)
+			$ret = "<a href=\"$link\">";
+		  
+		$ret .= "<input type=\"button\" class=\"".$bc."\" value=\"".$title."\" />";
+	   
+		if ($link)
+			$ret .= "</a>";	   
+		  
+		return ($ret);
+	}
+	
+	protected function replace_cartchars($string, $reverse=false) {
+		if (!$string) return null;
+
+		$g1 = array("'",',','"','+','/',' ','-&-');
+		$g2 = array('_','~',"*","plus",":",'-','-n-');		
+	  
+		return $reverse ? str_replace($g2,$g1,$string) : str_replace($g1,$g2,$string);
+	}	
+
+	//tokens method	 $x
+	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
+	
+	    if (!is_array($tokens)) return;
+		
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $ret = $fp->process_commands($template_contents);
+		  unset ($fp);		  		
+		}		  		
+		else
+		  $ret = $template_contents;
+		  
+	    foreach ($tokens as $i=>$tok) {
+		    $ret = str_replace("$".$i,$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<20;$x++)
+		  $ret = str_replace("$".$x,'',$ret);
+		
+		//execute after replace tokens
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+		  $fp = new fronthtmlpage(null);
+		  $retout = $fp->process_commands($ret);
+		  unset ($fp);
+          
+		  return ($retout);
+		}		
+		
+		return ($ret);
 	}	
 
 };
