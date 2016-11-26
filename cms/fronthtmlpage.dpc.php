@@ -641,6 +641,33 @@ EOF;
 		return ($ret);
     }
 	
+	/*numeric ver*/
+	public function nvlnum($param=null,$state1=null,$state2=null,$value=null) {
+	    global ${$param};
+		
+	    $var = (stristr($param,'.')) ? _v($param) :
+					(GetGlobal($param) ? GetGlobal($param) : (GetParam($param) ? GetParam($param) : $_SESSION[$param]));				
+			
+        if ($value) { 
+			if (!is_numeric($var)) $this->phpcode($state2);
+				
+			if (strstr($value, '?>'))
+				$ret = ($this->phpcode($value)==$var) ? $this->phpcode($state1) : $this->phpcode($state2);		
+			elseif (strstr($value, '|')) {
+			    $nvalues = explode('|',$value); 
+				$ret = (in_array($var, $nvalues)) ? $this->phpcode($state1) : $this->phpcode($state2); 
+			}
+			elseif (strstr($value, '.'))
+				$ret = (_v($value)==$var) ? $this->phpcode($state1) : $this->phpcode($state2);
+			else	
+				$ret = ($value==$var) ? $this->phpcode($state1) : $this->phpcode($state2);  		
+		}   
+        else
+			$ret = is_numeric($var) ? $this->phpcode($state1) : $this->phpcode($state2);
+		   
+		return ($ret);
+    }	
+	
 	public function nvltokens($token=null,$state1=null,$state2=null,$value=null) {
 	    //always string compare...
 		if ($value) {	

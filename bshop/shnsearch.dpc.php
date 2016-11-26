@@ -38,13 +38,14 @@ $__LOCALE['SHNSEARCH_DPC'][10]='_CSENSE;Case Sensitive;Κεφαλαία/Μικρ
 $__LOCALE['SHNSEARCH_DPC'][11]='_TTIME;Total time;Συνολικός Χρόνος';
 $__LOCALE['SHNSEARCH_DPC'][12]='_SEARCHR;Search Results;Αποτελέσματα Αναζήτησης';
 $__LOCALE['SHNSEARCH_DPC'][13]='_SEARCH;Search;Αναζήτηση';
+$__LOCALE['SHNSEARCH_DPC'][13]='_BRANDS;Brands;Κατασκευαστές';
 
 class shnsearch {
 
     var $title, $msg;
 	var $post, $result, $meter, $pager, $text2find;
 	var $path, $urlpath, $inpath;
-    var $imageclick, $textsearch, $searchpath, $searchfiletypes, $attachsearch;
+    var $imageclick, $attachsearch;
 
 	public function __construct() {
 
@@ -55,14 +56,8 @@ class shnsearch {
 		
 		$this->title = localize('SHNSEARCH_DPC',getlocal()); 
 	  
-		$this->imageclick = remote_paramload('SHNSEARCH','imageclick',$this->path);	
-		$this->textsearch = remote_paramload('SHNSEARCH','textsearch',$this->path);	  
-		$this->searchpath = remote_paramload('SHNSEARCH','searchpath',$this->path);	
-		$this->attachsearch = remote_paramload('SHNSEARCH','attachsearch',$this->path);		  
-		
-		$ft = remote_arrayload('SHNSEARCH','filetypes',$this->path);	
-		$fp = array('.htm','.txt');//htm includes html
-		$this->searchfiletypes = $ft ? $ft : $fp; 	
+		$this->imageclick = remote_paramload('SHNSEARCH','imageclick',$this->path);	  
+		$this->attachsearch = remote_paramload('SHNSEARCH','attachsearch',$this->path);		  	
 
 		$this->post = false;
 		$this->msg = null;		  	 
@@ -76,7 +71,7 @@ class shnsearch {
 	public function event($event=null) {
 
 		switch ($event) {
-		  
+		    //not used
 			case 'filter'         :     $this->do_filter_search($this->text2find, GetReq('cat')); //getreq input
 										break;		
 										
@@ -447,23 +442,19 @@ function get_stype()
 	protected function search_attachments($terms=null) {
 		$db = GetGlobal('db');	
 		$lan = getlocal();
-		$nullarray = array();
 	
-		if (!$this->attachsearch) return;
+		if (!$this->attachsearch) 
+			return array();
 	  
 		$sSQL = "select code from pattachments";	
-		$sSQL .= " where lan=" . $lan . " and ( type LIKE '%";
-		foreach ($this->searchfiletypes as $TEMPLATE_FILETYPE ) 
-			$tf[] = $TEMPLATE_FILETYPE;
-
-		$sSQL .= implode("%' OR type LIKE '%", $tf);
-		$sSQL .= "%') and data LIKE '%$terms%'";
+		$sSQL .= " where lan=" . $lan;
+		$sSQL .= " and data LIKE '%$terms%'";
 		//echo $sSQL;	  
 	  
 		$result = $db->Execute($sSQL,2); 
 	  
 		if (empty($result))
-			return $nullarray;
+			return array();
 		
 		foreach ($result as $n=>$rec)   
 			$ret[$rec[0]] = $rec[0];

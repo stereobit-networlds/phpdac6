@@ -20,12 +20,12 @@ $__EVENTS['SHKATALOGMEDIA_DPC'][6]='addtocart';     //continue with ..cart
 $__EVENTS['SHKATALOGMEDIA_DPC'][7]='removefromcart';//continue with ..cart
 $__EVENTS['SHKATALOGMEDIA_DPC'][8]='searchtopic';   //continue with ..browser
 $__EVENTS['SHKATALOGMEDIA_DPC'][9]='lastentries';
-$__EVENTS['SHKATALOGMEDIA_DPC'][96]='sitemap';
-$__EVENTS['SHKATALOGMEDIA_DPC'][97]='feed';
-$__EVENTS['SHKATALOGMEDIA_DPC'][98]='showimage';
-$__EVENTS['SHKATALOGMEDIA_DPC'][99]='shkatalogmedia';
-$__EVENTS['SHKATALOGMEDIA_DPC'][100]='kfilter';
-$__EVENTS['SHKATALOGMEDIA_DPC'][101]='xmlout';
+$__EVENTS['SHKATALOGMEDIA_DPC'][10]='sitemap';
+$__EVENTS['SHKATALOGMEDIA_DPC'][11]='feed';
+$__EVENTS['SHKATALOGMEDIA_DPC'][12]='showimage';
+$__EVENTS['SHKATALOGMEDIA_DPC'][13]='shkatalogmedia';
+$__EVENTS['SHKATALOGMEDIA_DPC'][14]='kfilter';
+$__EVENTS['SHKATALOGMEDIA_DPC'][15]='xmlout';
 
 $__ACTIONS['SHKATALOGMEDIA_DPC'][0]='katalog';
 $__ACTIONS['SHKATALOGMEDIA_DPC'][1]='klist';
@@ -37,12 +37,12 @@ $__ACTIONS['SHKATALOGMEDIA_DPC'][6]='addtocart';     //continue with ..from cart
 $__ACTIONS['SHKATALOGMEDIA_DPC'][7]='removefromcart';//continue with ..from cart
 $__ACTIONS['SHKATALOGMEDIA_DPC'][8]='searchtopic';   //continue with ..from browser
 $__ACTIONS['SHKATALOGMEDIA_DPC'][9]='lastentries';
-$__ACTIONS['SHKATALOGMEDIA_DPC'][96]='sitemap';
-$__ACTIONS['SHKATALOGMEDIA_DPC'][97]='feed';
-$__ACTIONS['SHKATALOGMEDIA_DPC'][98]='showimage';
-$__ACTIONS['SHKATALOGMEDIA_DPC'][99]='shkatalogmedia';
-$__ACTIONS['SHKATALOGMEDIA_DPC'][100]='kfilter';
-$__ACTIONS['SHKATALOGMEDIA_DPC'][101]='xmlout';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][10]='sitemap';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][11]='feed';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][12]='showimage';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][13]='shkatalogmedia';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][14]='kfilter';
+$__ACTIONS['SHKATALOGMEDIA_DPC'][15]='xmlout';
 
 $__LOCALE['SHKATALOGMEDIA_DPC'][0]='SHKATALOGMEDIA_DPC;Catalogue;Καταλογος';
 $__LOCALE['SHKATALOGMEDIA_DPC'][1]='pcs;pcs;τμχ';
@@ -85,7 +85,10 @@ $__LOCALE['SHKATALOGMEDIA_DPC'][37]='_nofound;Items not found;Δεν βρέθη�
 $__LOCALE['SHKATALOGMEDIA_DPC'][38]='_title;Title;Περιγραφή';
 $__LOCALE['SHKATALOGMEDIA_DPC'][39]='_norecs;Record set is empty;Οι εγγραφές δεν υπάρχουν';
 $__LOCALE['SHKATALOGMEDIA_DPC'][40]='_norec;Record not exist;Η εγγραφή δεν υπάρχει';
-$__LOCALE['SHKATALOGMEDIA_DPC'][41]='_lockrec;Title;Η εγγραφή είναι κλειδωμένη';
+$__LOCALE['SHKATALOGMEDIA_DPC'][41]='_lockrec;Locked record;Η εγγραφή είναι κλειδωμένη';
+$__LOCALE['SHKATALOGMEDIA_DPC'][42]='_brands;Brands;Κατασκευαστές';
+$__LOCALE['SHKATALOGMEDIA_DPC'][43]='_price;Price;Τιμή';
+$__LOCALE['SHKATALOGMEDIA_DPC'][44]='_filter;Filter;Φίλτρο';
 
 class shkatalogmedia {
 	
@@ -124,6 +127,7 @@ class shkatalogmedia {
 	var $isListView, $imgLargeDB, $imgMediumDB, $imgSmallDB;
 	var $ogTags, $siteTitle, $httpurl;
 	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan, $itmplpath;
+	var $max_price, $min_price;
 
 	public function __construct() {
 		$GRX = GetGlobal('GRX');		
@@ -277,6 +281,8 @@ class shkatalogmedia {
 		$this->ogTags = null;	  
 		$this->twitTags = null;
 		$this->filterajax = false; //true;
+		$this->min_price = 0;
+		$this->max_price = 0;
 	  
 		$this->itmplpath = 'templates/';	  
 	  
@@ -321,8 +327,10 @@ class shkatalogmedia {
 									$item = $cartstr[0]; 
 									_m("cmsvstats.update_item_statistics use $item+cartin");
 									
-									if (_v("shcart.fastpick"))
+									if (_v("shcart.fastpick")) {
 										$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_BLN1', getlocal()));									
+										$this->javascript(); //katalog filters
+									}	
 									break; 
 									
 			case 'removefromcart': 	$cartstr = explode(';', GetReq('a'));
@@ -339,10 +347,14 @@ class shkatalogmedia {
 									$this->my_one_item = $this->fread_list($filter); 
 									$_filter = $this->replace_spchars($filter,1);
 									_m("cmsvstats.update_category_statistics use $_filter+filter");		  
-									break;		
-			case 'klist'        :   $this->javascript();
-									$this->my_one_item = $this->read_list(); 
+									
+									$this->javascript();
+									break;	
+									
+			case 'klist'        :   $this->my_one_item = $this->read_list(); 
 									_m("cmsvstats.update_category_statistics use ".GetReq('cat'));		  
+									
+									$this->javascript();
 									break;	
 
 			case 'kshow'        :	$this->read_item(); 
@@ -377,7 +389,7 @@ class shkatalogmedia {
 									}  
 									else
 										$out = _m("shcart.cartview");   
-									break;			
+									break;								
 		
 			case 'kfilter'      :	if (in_array('beforeitemslist',$this->catbanner))//before
 										$out .= _m('shkategories.show_category_banner');									  
@@ -420,10 +432,9 @@ class shkatalogmedia {
 		return ($out);
     }
 	
-	protected function js() {
-		$cat = GetReq('cat');
-		$baseurl = paramload('SHELL','urlbase') . '/';		
-		$furl = $baseurl . _m('cmsrt.url use t=kfilter&cat=' . $this->replace_spchars($cat)); 
+	protected function jsFilter() {
+		$cat = GetReq('cat');	
+		$furl = $this->httpurl . '/' . _m('cmsrt.url use t=kfilter&cat=' . $cat); 
 		
 		$js = "
 function filter(f,div) { 
@@ -442,6 +453,38 @@ $.ajax({
 ";
 		return ($js);
 	}
+	
+	protected function jsPrice() {
+		$cat = GetReq('cat');
+		$min = round($this->min_price, 0, PHP_ROUND_HALF_DOWN); //100;
+		$max = ceil($this->max_price); //700;
+		$diff = ($max - $min);
+		$step = ($diff<=100) ? 1 : 10;//($max-$min) / 10;
+		$input = is_numeric(GetParam('input')) ? explode('.', GetParam('input')) : array('0','0');				
+		$furl = $this->httpurl . '/' . _m("cmsrt.url use t=kfilter&cat=$cat"); 
+		
+		$js = "
+$('.price-slider').on('slideStop', function(slideEvt) {
+	var p = $('.price-slider').val();
+	var value = p.replace(',', '.');
+	window.location='{$this->httpurl}/kfilter/{$cat}/'+value+'/';
+});
+$(document).ready(function () {
+	if ($('.price-slider').length > 0) {
+		var v0 = parseInt('{$input[0]}') ? {$input[0]} : {$min};
+		var v1 = parseInt('{$input[1]}') ? {$input[1]} : {$max};
+        $('.price-slider').slider({
+            min: {$min},
+            max: {$max},
+            step: {$step},
+            value: [v0, v1],
+            handle: 'square'
+        });
+    }
+});
+";
+		return ($js);
+	}	
 	
 	protected function scrolltop_javascript_code() {
 
@@ -470,11 +513,13 @@ SCROLLTOP;
 	
        if (iniload('JAVASCRIPT')) {
 	   
-	        $code = $this->js();
+	        $code = $this->jsFilter();
+			$code.= $this->jsPrice();
+			
 		    $code.= $this->scrolltop_javascript_code();
 		   
 		    $js = new jscript;	
-           $js->load_js($code,null,1);		
+            $js->load_js($code,null,1);		
 		    unset ($js);
 	   }	
 	}		
@@ -622,7 +667,17 @@ SCROLLTOP;
 		if ($text2find) {
 		
 			$sSQL = $this->selectSQL;
-			$sSQL .= " where manufacturer='" . $this->replace_spchars($text2find,1) . "'";
+			
+			if (is_numeric($text2find)) {
+				
+				$_f = $this->read_policy();
+				$_prices = explode('.', $text2find);
+				$sSQL .= " where (" . 
+						 $_f . ">=" . $this->spt($_prices[0]) . " and " .
+						 $_f . "<=" . $this->spt($_prices[1]) . ") ";
+			}
+			else			
+				$sSQL .= " where manufacturer='" . $this->replace_spchars($text2find,1) . "'";
 		  
 			if ($incategory) {	
 				$cats = explode($this->sep(),$incategory);
@@ -632,7 +687,7 @@ SCROLLTOP;
 		   							 
 			$sSQL .= " and itmactive>0 and active>0";	
 			$sSQL .= $this->orderSQL();
-		  
+
 			//LIMITED SEARCH
 			if ($this->pager) {
 				$p = $page * $this->pager;
@@ -647,20 +702,16 @@ SCROLLTOP;
 	   	}
 	}	
 	
-	//override
 	protected function get_max_result($text2find=null,$filter=null) {
         $db = GetGlobal('db');
-		$cat = GetReq('cat');	  
-		if ($cat{0}=='-') {
-		    $negative = true;
-			$cat = substr($cat,1);//drop -
-		}			
+		$cat = GetReq('cat');	  		
 		$cat_tree = explode($this->sep(), $cat);		
-		$oper = $negative?' not like ':'='; 	
 		$stype = GetParam('searchtype');
-		$scase = GetParam('searchcase');				
+		$scase = GetParam('searchcase');
+
+		$price = $this->read_policy();	
 				
-		$sSQL = "select count(id) from products where ";
+		$sSQL = "select count(id),min($price),max($price) from products where ";
 		
 		if ($text2find) {
 		
@@ -689,41 +740,55 @@ SCROLLTOP;
 			}	
 			//search in cat...				  
 			if ($cat_tree[0])
-			    $whereClause .= ' and cat0'.$oper . $db->qstr($this->replace_spchars($cat_tree[0],1));		  
+			    $whereClause .= ' and cat0=' . $db->qstr($this->replace_spchars($cat_tree[0],1));		  
 			if ($cat_tree[1])	
-		 	    $whereClause .= 'and cat1'.$oper . $db->qstr($this->replace_spchars($cat_tree[1],1));		 
+		 	    $whereClause .= 'and cat1=' . $db->qstr($this->replace_spchars($cat_tree[1],1));		 
 			if ($cat_tree[2])	
-			    $whereClause .= 'and cat2'.$oper . $db->qstr($this->replace_spchars($cat_tree[2],1));		   
+			    $whereClause .= 'and cat2=' . $db->qstr($this->replace_spchars($cat_tree[2],1));		   
 			if ($cat_tree[3])	
-			    $whereClause .= 'and cat3'.$oper . $db->qstr($this->replace_spchars($cat_tree[3],1));
+			    $whereClause .= 'and cat3=' . $db->qstr($this->replace_spchars($cat_tree[3],1));
 		   						  
 		}
 		else {//katalog page	  
 		    if ($cat_tree[0])
-			    $whereClause .= ' cat0'.$oper . $db->qstr($this->replace_spchars($cat_tree[0],1));	
+			    $whereClause .= ' cat0=' . $db->qstr($this->replace_spchars($cat_tree[0],1));	
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' cat1=\'\' ';					  
 		    if ($cat_tree[1])	
-		 	    $whereClause .= ' and cat1'.$oper . $db->qstr($this->replace_spchars($cat_tree[1],1));
+		 	    $whereClause .= ' and cat1=' . $db->qstr($this->replace_spchars($cat_tree[1],1));
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and cat1=\'\' ';						 
 		    if ($cat_tree[2])	
-			    $whereClause .= ' and cat2'.$oper . $db->qstr($this->replace_spchars($cat_tree[2],1));		
+			    $whereClause .= ' and cat2=' . $db->qstr($this->replace_spchars($cat_tree[2],1));		
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and cat2=\'\' ';				   
 		    if ($cat_tree[3])	
-			    $whereClause .= ' and cat3'.$oper . $db->qstr($this->replace_spchars($cat_tree[3],1));
+			    $whereClause .= ' and cat3=' . $db->qstr($this->replace_spchars($cat_tree[3],1));
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and cat3=\'\' ';				   		
 		}
 		    
 		$sSQL .= $whereClause;		
-		if ($filter)
-            $sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));		
+		
+		if ($filter) {
+			if (is_numeric($filter)) {
+			/*  //DISABLE TO NOT RE-FILTER	
+				$_f = $this->read_policy();
+				$_prices = explode('.', $filter);
+				$sSQL .= " and (" . 
+						 $_f . ">=" . $this->spt($_prices[0]) . " and " .
+						 $_f . "<=" . $this->spt($_prices[1]) . ") "; */ 
+			}
+			else		
+				$sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));		
+		}	
 		$sSQL .= " and itmactive>0 and active>0";
 		
-	    $resultset = $db->Execute($sSQL,2);	
- 	    $this->max_cat_items = $resultset->fields[0];//$db->Affected_Rows();			 					
+	    $resultset = $db->Execute($sSQL);	
+		
+ 	    $this->max_cat_items = $resultset->fields[0];			 					
+		$this->min_price = $resultset->fields[1];
+		$this->max_price = $resultset->fields[2];
 		
 		return ($this->max_cat_items);
 	}	
@@ -899,9 +964,7 @@ SCROLLTOP;
 	/* filter */
 	protected function fread_list($filter=null) {
         $db = GetGlobal('db');	
-		$page = GetReq('page')?GetReq('page'):0;			
-	    $f = $this->lan; 
-		$oper = '=';
+		$page = GetReq('page') ? GetReq('page') : 0;			
 		$cat = GetReq('cat');		
 		
 		if ($cat!=null) {		   
@@ -910,29 +973,36 @@ SCROLLTOP;
 			$sSQL .= " WHERE ";		   
 		      	  
 			if ($cat_tree[0])
-				$whereClause = ' cat0'.$oper . $db->qstr($this->replace_spchars($cat_tree[0],1));		
+				$whereClause = ' cat0=' . $db->qstr($this->replace_spchars($cat_tree[0],1));		
 			elseif ($this->onlyincategory)
 				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
 			if ($cat_tree[1])	
-				$whereClause .= ' and cat1'.$oper . $db->qstr($this->replace_spchars($cat_tree[1],1));	
+				$whereClause .= ' and cat1=' . $db->qstr($this->replace_spchars($cat_tree[1],1));	
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
 			if ($cat_tree[2])	
-				$whereClause .= ' and cat2'.$oper . $db->qstr($this->replace_spchars($cat_tree[2],1));	
+				$whereClause .= ' and cat2=' . $db->qstr($this->replace_spchars($cat_tree[2],1));	
 			elseif ($this->onlyincategory)
 			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
 			if ($cat_tree[3])	
-				$whereClause .= ' and cat3'.$oper . $db->qstr($this->replace_spchars($cat_tree[3],1));
+				$whereClause .= ' and cat3=' . $db->qstr($this->replace_spchars($cat_tree[3],1));
 			elseif ($this->onlyincategory)
 				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		
 			$sSQL .= $whereClause;
 		  
-			if ($filter)
-				$sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));
-		
+			if ($filter) {
+				if (is_numeric($filter)) {
+					$_f = $this->read_policy();
+					$_prices = explode('.', $filter);
+					$sSQL .= " and (" . 
+							 $_f . ">=" . $this->spt($_prices[0]) . " and " .
+							 $_f . "<=" . $this->spt($_prices[1]) . ") ";
+				}
+				else		
+					$sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));
+			}
 			$sSQL .= " and itmactive>0 and active>0";	
-
 			$sSQL .= $this->orderSQL();
 		  
 			if ($this->pager) {
@@ -1458,12 +1528,9 @@ SCROLLTOP;
 		  if ($this->pager) 
 			$ret .= $this->show_paging($cmd,$mytemplate,$nopager);					
 		
-	    }
-   	
-	    if ((count($this->result)>0) && ($no_additional_info==null))   
-			$ret .= $this->show_availabillity_table(null,1);	   
+	    }	   
    
-	   return ($ret);	
+		return ($ret);	
     } 
 	
 	protected function show_item($template=null,$no_additional_info=null,$lang=null,$lnktype=1,$pcat=null,$boff=null,$tax=null) {
@@ -3035,6 +3102,132 @@ SCROLLTOP;
         $out = ($array) ? $resultset->fields : $ret;
 		return ($out);	
 	}	
+	
+	//FILTERS
+	function filter($field=null, $template=null, $incategory=null, $cmd=null, $header=null) {	
+		if (!$field) return;
+		
+	    $db = GetGlobal('db');		
+		$baseurl = $this->httpurl . '/'; //ie compatibility		
+		$command = $cmd ? $cmd : 'search';
+		$stype = GetParam('searchtype');
+		$scase = GetParam('searchcase');
+		$cat = GetParam('cat');	
+		$input = GetReq('input');
+		
+		if (!$cat) {
+			
+			return null;
+			
+			//no filter results when no cat, select cat
+			/*$combo = _m('shkategories.getKategoryCombo use 1++++++++search+search-combo+1');
+			return '<ul class="categories-filter animate-dropdown">
+                <li class="dropdown">
+                    <a class="dropdown-toggle"  data-toggle="dropdown" href="#">'.localize('SHKATEGORIES_DPC', getlocal()).'</a>
+                    <ul class="dropdown-menu" role="menu" >'.
+					$combo.'
+					</ul>
+                </li>
+            </ul>';*/
+		}	
+	  
+		$contents = ($this->filterajax) ? $this->select_template('searchfilter-ajax') : $this->select_template('searchfilter');
+		
+		$tokens = array(); 
+		$r = array();	
+		
+	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
+        if ($incategory) {	
+		
+			$s = array();
+		    $cats = $cat ? explode($this->sep(), $cat) : null;
+			if (!empty($cats)) {
+				foreach ($cats as $c=>$mycat)
+					$s[] = 'cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
+			}  
+		}		
+		$where = (!empty($s)) ? implode(" AND ", $s) : null;		
+		
+		if ((defined("SHNSEARCH_DPC")) && ($input)) {
+			
+		   	$where .= $where ? ' AND ' : null;
+			
+			$sfields = array(0=>$this->fcode,
+							 1=>$this->itmname,
+							 2=>$this->itmdescr,
+							 3=>'itmremark',
+							 /*4=>'manufacturer',*/
+							);
+			$serialf = serialize($sfields);			
+			$where .= _m("shnsearch.findsql use $input+$serialf+$stype+$scase");		  
+        }		
+
+		$sSQL .= $where ? $where . ' AND ' : null;
+		$sSQL .= " itmactive>0 and active>0";
+		$sSQL .= " group by " . $field;
+		//echo $sSQL;	  
+	  
+		$result = $db->Execute($sSQL,2); 
+	  
+		if (!empty($result)) {
+			
+			foreach ($result as $n=>$t) {
+				if (trim($t[0])!='') {
+			        $f = $this->replace_spchars($t[0]);
+					$section = $this->replace_spchars($cat,1);
+					$url = $baseurl . _m("cmsrt.url use t=$command&cat=$cat&input=$f"); 
+					$theurl = ($this->filterajax) ? /*"filter('{$f}', '{$section}')" "ajaxcall('$section','$url')"*/ "sndReqArg('$url','$section')" : $url;
+					
+					$tokens[] = $t[0];
+					$tokens[] = $t[1];
+					$tokens[] = $theurl;
+					$tokens[] = ($t[0] == $this->replace_spchars($input,1)) ? 'checked="checked"' : null;
+					$r[] = $this->combine_tokens($contents,$tokens);	
+					unset($tokens);		
+                }				
+			}	   
+		}
+		
+		//header
+        if ($header) {		
+			$tokens[] = localize('_ALL',getlocal());
+			$tokens[] = $input ? '*' : $this->max_cat_items; //$this->max_items; //'*';
+			$tokens[] = $baseurl . _m("cmsrt.url use t=klist&cat=$cat"); 
+			$tokens[] = (!GetReq('input')) ? 'checked="checked"' : null;
+			$r[] = $this->combine_tokens($contents,$tokens);
+			unset($tokens);
+		}			
+       
+		$ret = (empty($r)) ? null : implode('',$r);	
+		return ($ret);  
+	}	
+	
+	//used by shcart to reupdate prices in login
+	public function update_prices($cartitems) {
+		$db = GetGlobal('db');
+		$p_ret = null;
+	   
+		$items = unserialize($cartitems);
+		$pfield = $this->read_policy();
+	   
+		if (is_array($items)) {
+			foreach ($items as $prod_id => $product) {
+				if (($product) && ($product!='x')) {	   
+		  
+					$param = explode(";",$product);		  
+	   
+					$sSQL = "select ".$pfield." from products ";
+					$sSQL .= " WHERE ".$this->fcode."='".$param[0]."'";	   	   
+					$result = $db->Execute($sSQL,2);	
+			
+					$p_ret[$param[0]] = $this->spt($result->fields[0]);
+				}
+			}
+			return ($p_ret);  
+		}
+
+        return null;
+	}	
 
 	//select price type..overriten error when no cart
 	public function spt($price,$tax=null) {
@@ -3051,13 +3244,18 @@ SCROLLTOP;
 		return ($p);
 	}
 	
+	public function read_policy($leeid=null) {
+		 
+		$v = $this->is_reseller ? $this->pprice[0] : $this->pprice[1]; 
+		return ($v);
+	}			
+	
 	//override multiple prices based on file array
 	public function read_array_policy($itemcode=null,$price=null,$cart_details=null,$policyqty=null) {
-	  $cat = $pcat?$pcat:GetReq('cat');
+	  $cat = $pcat ? $pcat : GetReq('cat');
 	  $cart_page = GetReq('page')?GetReq('page'):0;	  	
 	  $file = $this->path . $itemcode . '.txt'; //echo $file;
 	  $cartd = explode(';',$cart_details);
-	  //echo $file;
 	  
 	  if (is_readable($file)) {
 	
@@ -3134,7 +3332,13 @@ SCROLLTOP;
         return ($body); 		
 	}
 	
-	//override
+	//set ordersing online using <phpdac>
+	public function set_order($orderby=null,$asc=null) {
+
+		$this->myorderby = $orderby ? $orderby : null;
+		$this->myasc = $asc;  
+	}
+		
 	public function show_availability($qty=null) {
 		if (!$this->availability) 
 			return 0;
@@ -3147,11 +3351,6 @@ SCROLLTOP;
 		return 0;
 	}	
 	
-	//override
-	public function show_availabillity_table($title=null,$plaisio=null) {
-		return null; //disabled
-	}	
-	
 	public function item_has_discount($id=null) {
 		if (!$id) return false;
 		$file = $this->path . $id . '.txt';
@@ -3160,159 +3359,7 @@ SCROLLTOP;
 		    return true;
 			
 		return false;	
-	}
-	
-	/*two view methods for items */
-	protected function make_table_list($items_table=null, $items_list=null, $template_table=null, $template_list=null, $pcat=null) {
-	    $cat = $pcat ? $pcat : GetReq('cat'); 		
-		$mytemplate_table = $this->select_template($template_table, $cat);
-		$mytemplate_list = $this->select_template($template_list, $cat);
-		$mytemplate_tablelist = $this->select_template('fpkatalog-grid-list', $cat);
-		$tokens = array();
-		
-        if ($mytemplate_tablelist) { 
-		
-			$table_token[] = (!empty($items_table)) ? implode('',$items_table) : null; 
-
-			$tokens[] = $this->combine_tokens($mytemplate_table, $table_token);
-
-			$list_token[] = (!empty($items_list)) ? implode('',$items_list) : null; 
-
-			$tokens[] = $this->combine_tokens($mytemplate_list, $list_token);
-
-			$toprint = $this->combine_tokens($mytemplate_tablelist, $tokens);
-
-			unset ($tokens);
-			unset ($table_token);
-			unset ($list_token);
-		}	
-        return ($toprint); 		
-    }	
-	
-	protected function make_table($items=null, $mylinemax=null, $template=null, $pcat=null) {
-	    $cat = $pcat ? $pcat : GetReq('cat'); 	
-		$mytemplate = $template ? $this->select_template($template, $cat) : null;
-
-	    if ($items[0]) {
-	        //make table
-	        $itemscount = count($items);
-	        $timestoloop = floor($itemscount/$mylinemax)+1;
-	        $meter = 0;
-			$linetoken = null;
-			$tokens = array();
-			
-	        for ($i=0;$i<$timestoloop;$i++) {
-
-				for ($j=0;$j<$mylinemax;$j++) {
-					$linetoken .= $items[$meter];
-					$meter+=1;	 
-				}
-				$tokens[] = $linetoken; 
-                $toprint .= $this->combine_tokens($mytemplate, $tokens);					
-				$linetoken = null; 
-				$tokens = array();
-  
-	        }
-		}	
-        return ($toprint); 		
-    }		
-
-	//FILTERS
-	function filter($field=null, $template=null, $incategory=null, $cmd=null, $header=null) {	
-		if (!$field) return;
-		
-	    $db = GetGlobal('db');		
-		$baseurl = paramload('SHELL','urlbase') . '/'; //ie compatibility		
-		$command = $cmd ? $cmd : 'search';
-		$stype = GetParam('searchtype');
-		$scase = GetParam('searchcase');
-		$cat = GetParam('cat');	
-		if (!$cat) {
-			
-			return null;
-			
-			//no filter results when no cat, select cat
-			/*$combo = _m('shkategories.getKategoryCombo use 1++++++++search+search-combo+1');
-			return '<ul class="categories-filter animate-dropdown">
-                <li class="dropdown">
-                    <a class="dropdown-toggle"  data-toggle="dropdown" href="#">'.localize('SHKATEGORIES_DPC', getlocal()).'</a>
-                    <ul class="dropdown-menu" role="menu" >'.
-					$combo.'
-					</ul>
-                </li>
-            </ul>';*/
-		}	
-	  
-		$contents = ($this->filterajax) ? $this->select_template('searchfilter-ajax') : $this->select_template('searchfilter');
-		
-		$tokens = array(); 
-		$r = array();	
-		
-	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
-        if ($incategory) {	
-		
-			$s = array();
-		    $cats = $cat ? explode($this->sep(), $cat) : null;
-			if (!empty($cats)) {
-				foreach ($cats as $c=>$mycat)
-					$s[] = 'cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
-			}  
-		}		
-		$where = (!empty($s)) ? implode(" AND ", $s) : null;		
-		
-		if (($text2find = GetParam('input')) && (defined("SHNSEARCH_DPC"))) {
-			
-		   	$where .= $where ? ' AND ' : null;
-			
-			$sfields = array(0=>$this->fcode,
-							 1=>$this->itmname,
-							 2=>$this->itmdescr,
-							 3=>'itmremark',
-							 /*4=>'manufacturer',*/
-							);
-			$serialf = serialize($sfields);			
-			$where .= _m("shnsearch.findsql use $text2find+$serialf+$stype+$scase");		  
-        }		
-
-		$sSQL .= $where ? $where . ' AND ' : null;
-		$sSQL .= " itmactive>0 and active>0";
-		$sSQL .= " group by " . $field;
-		//echo $sSQL;	  
-	  
-		$result = $db->Execute($sSQL,2); 
-	  
-		if (!empty($result)) {
-			
-			foreach ($result as $n=>$t) {
-				if (trim($t[0])!='') {
-			        $f = $this->replace_spchars($t[0]);
-					$section = $this->replace_spchars($cat,1);
-					$url = $baseurl . _m("cmsrt.url use t=$command&cat=$cat&input=$f"); 
-					$theurl = ($this->filterajax) ? /*"filter('{$f}', '{$section}')" "ajaxcall('$section','$url')"*/ "sndReqArg('$url','$section')" : $url;
-					
-					$tokens[] = $t[0];
-					$tokens[] = $t[1];
-					$tokens[] = $theurl;
-					$tokens[] = ($t[0] == $this->replace_spchars(GetReq('input'),1)) ? 'checked="checked"' : null;
-					$r[] = $this->combine_tokens($contents,$tokens);	
-					unset($tokens);		
-                }				
-			}	   
-		}
-		
-		//header
-        if ($header) {		
-			$tokens[] = localize('_ALL',getlocal());
-			$tokens[] = GetReq('input') ? '*' : $this->max_cat_items; //$this->max_items; //'*';
-			$tokens[] = $baseurl . _m("cmsrt.url use t=klist&cat=$cat"); 
-			$tokens[] = (!GetReq('input')) ? 'checked="checked"' : null;
-			$r[] = $this->combine_tokens($contents,$tokens);
-			unset($tokens);
-		}			
-       
-		$ret = (empty($r)) ? null : implode('',$r);	
-		return ($ret);  
-	}
+	}	
 	
 	protected function replace_spchars($string, $reverse=false) {
 		
@@ -3485,9 +3532,6 @@ EOF;
         return $ret;
 	}
 	
-	
-	//SHKATALOG
-	
 	public function make_combo($url2go,$values,$title=null,$selection=null,$style=null) {
 	    $mystyle = $style?$style:$this->asccombostyle;
 	
@@ -3505,19 +3549,6 @@ EOF;
 		$r .= "</select>";
 				
 		return ($r);  
-	}		
-	
-	//set ordersing online using <phpdac>
-	public function set_order($orderby=null,$asc=null) {
-
-		$this->myorderby = $orderby ? $orderby : null;
-		$this->myasc = $asc;  
-	}
-
-	public function read_policy($leeid=null) {
-		 
-		$v = $this->is_reseller ? $this->pprice[0] : $this->pprice[1]; 
-		return ($v);
 	}		
 	
 	public function pricewithtax($price,$tax=null) {
@@ -3540,7 +3571,6 @@ EOF;
 	
 	public function getmapf($name) {
 		$ch = null;
-	
 		if (empty($this->map_t)) return 0;	
 	  
 		foreach ($this->map_t as $id=>$elm) {	    
@@ -3553,33 +3583,6 @@ EOF;
 		$ret = $this->map_f[$ch];
 		return ($ret);
 	}	
-
-	//used by shcart to reupdate prices in login
-	public function update_prices($cartitems) {
-		$db = GetGlobal('db');
-		$p_ret = null;
-	   
-		$items = unserialize($cartitems);
-		$pfield = $this->read_policy();
-	   
-		if (is_array($items)) {
-			foreach ($items as $prod_id => $product) {
-				if (($product) && ($product!='x')) {	   
-		  
-					$param = explode(";",$product);		  
-	   
-					$sSQL = "select ".$pfield." from products ";
-					$sSQL .= " WHERE ".$this->fcode."='".$param[0]."'";	   	   
-					$result = $db->Execute($sSQL,2);	
-			
-					$p_ret[$param[0]] = $this->spt($result->fields[0]);
-				}
-			}
-			return ($p_ret);  
-		}
-
-        return null;
-	}
 	
 	public function encode_image_id($id=null) {
 	    if (!$id) return null;
@@ -3591,6 +3594,61 @@ EOF;
 		$s = _v('cmsrt.cseparator'); //$this->cseparator;
 		return $s;
 	}
+	
+	/*two view methods for items */
+	protected function make_table_list($items_table=null, $items_list=null, $template_table=null, $template_list=null, $pcat=null) {
+	    $cat = $pcat ? $pcat : GetReq('cat'); 		
+		$mytemplate_table = $this->select_template($template_table, $cat);
+		$mytemplate_list = $this->select_template($template_list, $cat);
+		$mytemplate_tablelist = $this->select_template('fpkatalog-grid-list', $cat);
+		$tokens = array();
+		
+        if ($mytemplate_tablelist) { 
+		
+			$table_token[] = (!empty($items_table)) ? implode('',$items_table) : null; 
+
+			$tokens[] = $this->combine_tokens($mytemplate_table, $table_token);
+
+			$list_token[] = (!empty($items_list)) ? implode('',$items_list) : null; 
+
+			$tokens[] = $this->combine_tokens($mytemplate_list, $list_token);
+
+			$toprint = $this->combine_tokens($mytemplate_tablelist, $tokens);
+
+			unset ($tokens);
+			unset ($table_token);
+			unset ($list_token);
+		}	
+        return ($toprint); 		
+    }	
+	
+	protected function make_table($items=null, $mylinemax=null, $template=null, $pcat=null) {
+	    $cat = $pcat ? $pcat : GetReq('cat'); 	
+		$mytemplate = $template ? $this->select_template($template, $cat) : null;
+
+	    if ($items[0]) {
+	        //make table
+	        $itemscount = count($items);
+	        $timestoloop = floor($itemscount/$mylinemax)+1;
+	        $meter = 0;
+			$linetoken = null;
+			$tokens = array();
+			
+	        for ($i=0;$i<$timestoloop;$i++) {
+
+				for ($j=0;$j<$mylinemax;$j++) {
+					$linetoken .= $items[$meter];
+					$meter+=1;	 
+				}
+				$tokens[] = $linetoken; 
+                $toprint .= $this->combine_tokens($mytemplate, $tokens);					
+				$linetoken = null; 
+				$tokens = array();
+  
+	        }
+		}	
+        return ($toprint); 		
+    }		
 	
 	/*cat based select */
 	protected function select_template($tmpl=null,$cat=null) {
