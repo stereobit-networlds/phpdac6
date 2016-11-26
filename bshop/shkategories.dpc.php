@@ -151,10 +151,9 @@ class shkategories {
 	public function show_category_banner($template=null) {
 		$db = GetGlobal('db');	
 		$cat = GetReq('cat');
-		$lan = getlocal()?getlocal():'0';
+		$lan = getlocal() ? getlocal() : '0';
 	   
-		$mytemplate = $template ? $this->select_template($template) : 
-		                         $this->select_template('fpkatbanner');	   
+		$mytemplate = $template ? $this->select_template($template) : $this->select_template('fpkatbanner');	   
 	   
 		if ($this->showcatbannerpath) {		   
 			$catdepth = explode($this->cseparator,$cat);
@@ -369,7 +368,7 @@ class shkategories {
 					}	
 			
 					$cgroup = $ptree[$cd+1];
-					$_u = _m("cmsrt.url use t=$t&cat=$gr"); //	seturl("t=$t&cat=$gr",null,null,null,null,true)
+					$_u = _m("cmsrt.url use t=$t&cat=$gr"); 
 					$mycat = $treespaces . $this->outpoint . "<a href=\"" . $_u . "\">";
 					$mycat .= summarize(($wordlength-$sp),$line);	
 					$mycat .= "</a>";
@@ -395,7 +394,7 @@ class shkategories {
 	
 	/*using accordion template*/
 	public function show_tree2($cmd=null,$group=null,$treespaces='',$sp=0,$mode=0,$wordlength=19,$notheme=null,$stylesheet=null,$template=null) {		
-		$cat = GetReq('cat'); //$this->replace_spchars(GetReq('cat'),1);
+		$cat = GetReq('cat'); 
 		if (!$wordlength) $wordlength = 25;//for calldpc purposes
 		$mystylesheet = $stylesheet ? $stylesheet : 'group_category_title';	
 		$mystylesheet_selected = $mystylesheet . '_selected';	   
@@ -431,7 +430,7 @@ class shkategories {
 
 					$tokens[0] = $_id;
 					$tokens[1] = summarize(($wordlength-$sp),$line);//accordion cat name
-					$tokens[2] = null;//seturl("t=$t&cat=$gr",null,null,null,null,true); //url
+					$tokens[2] = null;//_m("cmsrt.url use t=$t&cat=$gr"); //url
 
 					//if ($cgroup==$line) {
 					if (mb_strstr($cgroup,$_id)) {
@@ -441,7 +440,7 @@ class shkategories {
 							$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 							$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 							$tokens[5] = $group ? 1 : 0; //check for subtree
-							$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); 
+							$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); 
 							$out .= $this->combine_tokens($template,$tokens,true);
 							unset($tokens);
 							unset($subcat_tokens);
@@ -452,13 +451,13 @@ class shkategories {
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); 
+						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); 
 						
 						if ($mode) {
 							$out .= $this->combine_tokens($template,$tokens,true);						
 						}	
 						else {				   
-						    $_u = _m("cmsrt.url use t=$t&cat=$gr+" . summarize(($wordlength-$sp),$line)); //seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line);
+						    $_u = _m("cmsrt.url use t=$t&cat=$gr+" . summarize(($wordlength-$sp),$line)); 
 							$out .= ($group) ? '<li>' . $_u . '</li>' : null;										   					
 						}	
 						
@@ -476,13 +475,13 @@ class shkategories {
 	
 	/*using accordion template version 3*/
 	public function show_tree3($cmd=null,$group=null,$treespaces='',$sp=0,$mode=0,$wordlength=19,$notheme=null,$stylesheet=null,$template=null) {		
-		$cat = GetReq('cat'); //$this->replace_spchars(GetReq('cat'),1);
-		if (!$wordlength) $wordlength = 25;//for calldpc purposes
+		$cat = GetReq('cat'); 
+		if (!$wordlength) $wordlength = 25;
 		$mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
 		$mystylesheet_selected = $mystylesheet . '_selected';
 		$t = $cmd ? $cmd : 'shkategories';	
 		
-		$mytemplate = _m('cmsrt.select_template use ' . $template);		
+		$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));		
 	   
 		static $cd = -1;
 	   
@@ -524,7 +523,7 @@ class shkategories {
 							$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 							$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 							$tokens[5] = $group ? 1 : 0; //check for subtree
-							$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); //$gr; //current cat / link
+							$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); 
 							$out .= $this->combine_tokens($mytemplate,$tokens,true);
 							unset($tokens);
 							unset($subcat_tokens);
@@ -535,13 +534,13 @@ class shkategories {
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true); //$gr; //current cat / link
+						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); 
 						
 						if ($mode) {
 							$out .= $this->combine_tokens($mytemplate,$tokens,true);						
 						}	
 						else {
-							$_u = _m("cmsrt.url use t=$t&cat=$gr+".summarize(($wordlength-$sp),$line)); //seturl("t=$t&cat=$gr",summarize(($wordlength-$sp),$line),null,null,null,true);
+							$_u = _m("cmsrt.url use t=$t&cat=$gr+".summarize(($wordlength-$sp),$line)); 
 							$out .= ($group) ? '<li>'.$_u.'</li>' : null;										   					
 						}
 						
@@ -580,7 +579,7 @@ class shkategories {
 
 			if ($outpoint)
 			    $mycat .= str_repeat('&nbsp;',$outpoint) . $this->outpoint;		  
-            $mycat .= "<a href=\"" . _m("cmsrt.url use t=$t&cat=$gr"); //seturl("t=$t&cat=$gr",null,null,null,null,true);
+            $mycat .= "<a href=\"" . _m("cmsrt.url use t=$t&cat=$gr"); 
 			  
 			if ($linkclass) 
 			    $mycat .=  "\" class=\"$linkclass\">";
@@ -590,7 +589,7 @@ class shkategories {
 			$mycat .= $line;		
 			$mycat .= "</a>";	
 		
-			$tokens[] = ($linksonly) ? _m("cmsrt.url use t=$t&cat=$gr") /*seturl("t=$t&cat=$gr",null,null,null,null,true)*/ :
+			$tokens[] = ($linksonly) ? _m("cmsrt.url use t=$t&cat=$gr")  :
 				                        ($titlesonly ? $line : ($idsonly ? $id : $mycat));
 			$tokens[] = $id;//$winbody;
 			$out .= $this->combine_tokens($mytemplate, $tokens, true);					
@@ -602,13 +601,13 @@ class shkategories {
 	
     public function show_selected_tree($cmd=null,$group=null,$showroot=null,$expand=null,$viewlevel=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$linksonly=null,$titlesonly=null,$idsonly=null) {
 		$mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
-		$myselcat = $group ? $group : GetReq('cat'); //$this->replace_spchars($group,1) : $this->replace_spchars(GetReq('cat'),1);	  
+		$myselcat = $group ? $group : GetReq('cat'); 	  
 
 		static $cd = -1;
 		$wordlength = 19;//for calldpc purposes
 		$t = $cmd ? $cmd : 'klist';
 
-		$ptree = explode($this->cseparator,$myselcat); //print_r($ptree);
+		$ptree = explode($this->cseparator,$myselcat); 
 			  
 		if ($viewlevel) {
 			$depth = count($ptree);//-1 echo 'DEPTH:',$depth;
@@ -917,14 +916,14 @@ class shkategories {
 						break;
 				case 1  ://toplevel
 				default :if ($url) 
-							$ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree)); //seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
+							$ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree)); 
 						 else 
 							$ret = array_pop(array_reverse($mycattree));	  
 			}
 		}	
 		else {//actual
 			if ($url) 
-				$ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree));//seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
+				$ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree));
 			else	  
 				$ret = array_pop($mycattree);	  	
 		}
@@ -1049,35 +1048,35 @@ class shkategories {
 								
         if (($rec['cat0']) && ($this->depthview>=1)) {
 		    if ($links)
-			    $ck[0] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'] . "+" . $_cat0); //seturl("t=$cmd&cat=".$rec['cat0'],$_cat0,null,null,null,true);
+			    $ck[0] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'] . "+" . $_cat0); 
 		    else
                 $ck[0] = $_cat0;
 		}  	
 				 	
         if (($rec['cat1']) && ($this->depthview>=2)) {
 		    if ($links)
-			    $ck[1] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'] . "+" . $_cat1); //seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'],$_cat1,null,null,null,true);
+			    $ck[1] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'] . "+" . $_cat1); 
 			else				   
                 $ck[1] = $_cat1;
 		}		
 
         if (($rec['cat2']) && ($this->depthview>=3)) {
 		    if ($links)
-			    $ck[2] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'] . "+" . $_cat2); //seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'],$_cat2,null,null,null,true);
+			    $ck[2] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'] . "+" . $_cat2); 
 			else					 
                 $ck[2] = $_cat2;
 		}		  
  
         if (($rec['cat3']) && ($this->depthview>=4)) {
 		    if ($links)
-		   	    $ck[3] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'] . "+" . $_cat3); //seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'],$_cat3,null,null,null,true);
+		   	    $ck[3] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'] . "+" . $_cat3); 
 			else				 
                 $ck[3] = $_cat3;
 		}	
 				   
         if (($rec['cat4']) && ($this->depthview>=5)) {
 		    if ($links)
-		  	    $ck[4] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'].$this->cseparator.$rec['cat4'] . "+" . $_cat4); //seturl("t=$cmd&cat=".$rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'].$this->cseparator.$rec['cat4'],$this->replace_spchars($rec['cat4']),null,null,null,true);
+		  	    $ck[4] = _m("cmsrt.url use t=$cmd&cat=" . $rec['cat0'].$this->cseparator.$rec['cat1'].$this->cseparator.$rec['cat2'].$this->cseparator.$rec['cat3'].$this->cseparator.$rec['cat4'] . "+" . $_cat4); 
 			else				 
                 $ck[4] = $this->replace_spchars($rec['cat4']);
 		}	
@@ -1221,7 +1220,7 @@ function gocatsearch(url)
 	protected function getCombo ($cid,$name,$cat=null,$style="",$size=10,$multiple="",$values=null,$selection='',$cmd=null,$tmpl=null,$noselect=null) {
 	    $t = GetReq('t');
 		$mycmd = $cmd?$cmd:'klist';
-		$goto = _m("cmsrt.seturl use t=$mycmd&cat=+++1");//seturl("t=$mycmd&cat=");
+		$goto = _m("cmsrt.seturl use t=$mycmd&cat=+++1");
 		$selected_cat = $cat?$cat:GetReq('cat');
 		$cats = explode($this->cseparator,$selected_cat);
 	    //print_r($values);
@@ -1335,7 +1334,7 @@ function gocatsearch(url)
 			$search_cmd = $issearch;	 
 	   
 		$cat = $preselcat ? $preselcat : GetReq('cat');
-		$goto = $preselcat ? _m("cmsrt.seturl use t=$cmd&cat=$preselcat+++1") : _m("cmsrt.seturl use t=$cmd&cat=+++1");//seturl("t=$cmd&cat=".$preselcat) : seturl("t=$cmd&cat=");	   
+		$goto = $preselcat ? _m("cmsrt.seturl use t=$cmd&cat=$preselcat+++1") : _m("cmsrt.seturl use t=$cmd&cat=+++1");
 	   
 		$mydata = $this->asksql('cat2');
 	   
@@ -1435,7 +1434,7 @@ function gocatsearch(url)
 	    $f = $lan ? $lan : '0';
 		
 		$fpath = $this->urlpath . '/' . $this->showcatimagepath;
-		$tdata = $this->select_template($template,null,true); //echo $tdata,'>',$template;
+		$tdata = $this->select_template($template); 
 
 		if ($rs) {
 			$rscats = explode(',',$rs);
@@ -1470,8 +1469,73 @@ function gocatsearch(url)
 		return false;
 	}	
 	
+
+	protected function make_table($items=null, $mylinemax=null, $template=null, $pcat=null) {
+	    $cat = $pcat ? $pcat : GetReq('cat'); 	
+		$mytemplate = $template ? $this->select_template($template, $cat) : null;
+
+	    if ($items[0]) {
+	        //make table
+	        $itemscount = count($items);
+	        $timestoloop = floor($itemscount/$mylinemax)+1;
+	        $meter = 0;
+			$linetoken = null;
+			$tokens = array();
+			
+	        for ($i=0;$i<$timestoloop;$i++) {
+
+				for ($j=0;$j<$mylinemax;$j++) {
+					$linetoken .= $items[$meter];
+					$meter+=1;	 
+				}
+				$tokens[] = $linetoken; 
+                $toprint .= $this->combine_tokens($mytemplate, $tokens);					
+				$linetoken = null; 
+				$tokens = array();
+  
+	        }
+		}	
+        return ($toprint); 		
+    }
+	
+	protected function replace_spchars($string, $reverse=false) {
+		
+		switch ($this->replacepolicy) {	
+			case '_' : 	$ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+			case '-' :	 $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+			default  :
+						if ($reverse) {
+							$g1 = array("'",'"','+','/',' ',' & ');
+							$g2 = array('_',"*","plus",":",'-',' n ');		  
+							$ret = str_replace($g2,$g1,$string);
+						}	 
+						else {
+							$g1 = array("'",'"','+','/',' ','-&-');
+							$g2 = array('_',"*","plus",":",'-','-n-');		  
+							$ret = str_replace($g1,$g2,$string);
+						}	
+		}
+		return ($ret);
+	}
+	
+
+	/*cat based template */
+	public function select_template($tfile=null, $cat=null) {
+		if (!$tfile) return;
+	  
+		if ($cat) {
+			$pcats = explode($this->cseparator,$cat);
+			foreach ($pcats as $c) {
+				if ($mytemplate = _m('cmsrt.select_template use ' . $c.'@'. str_replace('.htm', '', $tfile))) 
+					return ($mytemplate); 
+			}
+		} 
+		$mytemplate = _m('cmsrt.select_template use ' . $tfile);
+		return ($mytemplate);	 
+    }		
+	
 	//tokens method	
-	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
+	protected function combine_tokens(&$template_contents, $tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
 		
@@ -1502,7 +1566,7 @@ function gocatsearch(url)
 	}
 	
 	//n tokens method
-	protected function combine_n_tokens($template_contents,$tokens,$tokens2=null) {
+	protected function combine_n_tokens(&$template_contents, $tokens, $tokens2=null) {
 	    if (!is_array($tokens)) return;
 		
 		if (defined('FRONTHTMLPAGE_DPC')) {
@@ -1522,93 +1586,7 @@ function gocatsearch(url)
 		      $nret .= $n;
 	    }
 		return ($nret);
-	} 
-	
-	/*public function select_template2($tfile=null,$cat=null,$hasfileextension=null) {
-		if (!$tfile) return;
-		$ext = $hasfileextension ? null : '.htm';
-	  
-		if ($cat) {
-			$pcats = explode($this->cseparator,$cat);
-			foreach ($pcats as $c) {
-				$ctemplate = $c.'@'.$tfile.$ext;
-				$ct = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$ctemplate) ;
-				if (is_readable($ct)) {
-					$mytemplate = file_get_contents($ct);
-					return ($mytemplate);
-				}  
-			}
-	   
-		} 
-
-		$template = $tfile . $ext;	
-		$mytemplate = _m('cmsrt.select_template use ' . $tfile); 
-		return ($mytemplate);	 
-    }*/
-
-	public function select_template($tfile=null,$cat=null,$hasfileextension=null) {
-		if (!$tfile) return;
-		$ext = $hasfileextension ? null : '.htm';
-	  
-		if ($cat) {
-			$pcats = explode($this->cseparator,$cat);
-			foreach ($pcats as $c) {
-				if ($mytemplate = _m('cmsrt.select_template use ' . $c.'@'.$tfile)) 
-					return ($mytemplate); 
-			}
-		} 
-		$mytemplate = _m('cmsrt.select_template use ' . $tfile);
-		return ($mytemplate);	 
-    }
-
-	protected function make_table($items=null, $mylinemax=null, $template=null, $pcat=null) {
-	    $cat = $pcat ? $pcat : GetReq('cat'); 	
-		$mytemplate = $template ? $this->select_template($template, $cat) : null;
-
-	    if ($items[0]) {
-	        //make table
-	        $itemscount = count($items);
-	        $timestoloop = floor($itemscount/$mylinemax)+1;
-	        $meter = 0;
-			$linetoken = null;
-			$tokens = array();
-			
-	        for ($i=0;$i<$timestoloop;$i++) {
-
-				for ($j=0;$j<$mylinemax;$j++) {
-					$linetoken .= $items[$meter];
-					$meter+=1;	 
-				}
-				$tokens[] = $linetoken; 
-                $toprint .= $this->combine_tokens($mytemplate, $tokens);					
-				$linetoken = null; 
-				$tokens = array();
-  
-	        }
-		}	
-        return ($toprint); 		
-    }	
-	
-	protected function replace_spchars($string, $reverse=false) {
-		
-		switch ($this->replacepolicy) {	
-			case '_' : 	$ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
-			case '-' :	 $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
-			default  :
-						if ($reverse) {
-							$g1 = array("'",'"','+','/',' ',' & ');
-							$g2 = array('_',"*","plus",":",'-',' n ');		  
-							$ret = str_replace($g2,$g1,$string);
-						}	 
-						else {
-							$g1 = array("'",'"','+','/',' ','-&-');
-							$g2 = array('_',"*","plus",":",'-','-n-');		  
-							$ret = str_replace($g1,$g2,$string);
-						}	
-		}
-		return ($ret);
-	}
-	
+	} 	
 };
 }
 ?>

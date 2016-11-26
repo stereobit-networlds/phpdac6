@@ -374,16 +374,16 @@ class shcart extends storebuffer {
 										$this->looptotals = $this->foot();
 									}  
 									break;
-          case 'cart-order'    :
-          case $this->order    : 	SetSessionParam('cartstatus',2); 
+			case 'cart-order'    :
+			case $this->order    : 	SetSessionParam('cartstatus',2); 
 									$this->status = 2; 
 									$this->calculate_shipping();
 									$this->loopcartdata = $this->loopcart();
 									$this->looptotals = $this->foot();
 									break;
-		  case 'cart-submit'   :						 
-          case $this->submit2  : 
-		  case $this->submit   : 	SetSessionParam('cartstatus',3);
+			case 'cart-submit'   :						 
+			case $this->submit2  : 
+			case $this->submit   : 	SetSessionParam('cartstatus',3);
 									$this->status = 3; 		  
 									$this->calculate_shipping();		  
 									$this->loopcartdata = $this->loopcart();
@@ -392,7 +392,7 @@ class shcart extends storebuffer {
 									$this->dispatch_pay_engines();									 
 									break;
 						 
-         case "fastpick"      : 	if ($this->fastpick==false) {
+			case "fastpick"      : 	if ($this->fastpick==false) {
 										SetSessionParam('fastpick','on');
 										$this->fastpick = true;
 									}	
@@ -402,8 +402,8 @@ class shcart extends storebuffer {
 									}
 									$msg = $this->fastpick ? localize('_FASTPICKON',getlocal()) : localize('_FASTPICKOFF',getlocal());
 									$this->jsDialog($msg, localize('_CART', getlocal()));									
-		 case 'viewcart'      :						  
-         default              : 	$this->loopcartdata = $this->loopcart();
+			case 'viewcart'      :						  
+			default              : 	$this->loopcartdata = $this->loopcart();
 									$this->looptotals = $this->foot();
 
 		}     
@@ -2109,10 +2109,10 @@ function addtocart(id,cartdetails)
 		 
 		if ($this->notempty()) {
 			
-			$template = $template1 ? $template1 : 'fpcartline.htm';	
+			$template = $template1 ? $template1 : 'fpcartline';	
 			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
 		
-			$template2 = $template2 ? $template2 : 'fpcart.htm';
+			$template2 = $template2 ? $template2 : 'fpcart';
 			$mytemplate2 = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template2));
 	  
 			$ret = '';
@@ -2970,38 +2970,35 @@ function addtocart(id,cartdetails)
 	  
 		return $reverse ? str_replace($g2,$g1,$string) : str_replace($g1,$g2,$string);
 	}	
-
-	//tokens method	 $x
-	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
 	
+	protected function combine_tokens(&$template_contents, $tokens, $execafter=null) {
 	    if (!is_array($tokens)) return;
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template_contents);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template_contents;
+			$ret = $template_contents;
 		  
 	    foreach ($tokens as $i=>$tok) {
-		    $ret = str_replace("$".$i,$tok,$ret);
+		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
-		//clean unused token marks
-		for ($x=$i;$x<20;$x++)
-		  $ret = str_replace("$".$x,'',$ret);
+
+		for ($x=$i;$x<40;$x++)
+			$ret = str_replace("$".$x."$",'',$ret);
 		
-		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
           
-		  return ($retout);
+			return ($retout);
 		}		
 		
 		return ($ret);
-	}	
+	}		
 
 };
 }

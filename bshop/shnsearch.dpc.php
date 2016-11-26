@@ -8,7 +8,7 @@ define("SHNSEARCH_DPC",true);
 
 $__DPC['SHNSEARCH_DPC'] = 'shnsearch';
 
-$d = GetGlobal('controller')->require_dpc('shop/shsearch.dpc.php');
+$d = GetGlobal('controller')->require_dpc('bshop/shsearch.dpc.php');
 require_once($d);
 
 GetGlobal('controller')->get_parent('SHSEARCH_DPC','SHNSEARCH_DPC');
@@ -30,15 +30,12 @@ class shnsearch extends shsearch {
 
     var $_combo, $text2find;
 	var $path, $imageclick;
-	var $textsearch, $searchpath, $searchfiletypes;
-	var $attachsearch;
-	
-    var $tmpl_path, $tmpl_name;	
+	var $textsearch, $searchpath, $searchfiletypes, $attachsearch;
 	var $cseparator, $replacepolicy;
 
 	public function __construct() {
 
-		shsearch::shsearch();
+		shsearch::__construct();
 
 		$this->title = localize('SHNSEARCH_DPC',getlocal());
 		$this->path = paramload('SHELL','prpath');
@@ -51,14 +48,11 @@ class shnsearch extends shsearch {
 		$this->attachsearch = remote_paramload('SHNSEARCH','attachsearch',$this->path);		  
 		$ft = remote_arrayload('SHNSEARCH','filetypes',$this->path);	
 		$fp = array('.htm','.txt');//htm includes html
-		$this->searchfiletypes = $ft?$ft:$fp; 
+		$this->searchfiletypes = $ft ? $ft : $fp; 
 	  
 		$this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);
 		$csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
-		$this->cseparator = $csep ? $csep : '^';
-
-		$this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-		$this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path); 	  
+		$this->cseparator = $csep ? $csep : '^';	  
 	}
 
 	public function event($event=null) {
@@ -69,12 +63,11 @@ class shnsearch extends shsearch {
 		  
 			case 'filter'         :     $this->do_filter_search($this->text2find, GetReq('cat')); //getreq input
 										break;		
-
+										
 			//cart
 			case 'searchtopic'   :
 			case 'addtocart'     :
-			case 'removefromcart':		break;
-			// 	  
+			case 'removefromcart':		break;  
 	  
 			case 'search' 		 :	  
 			default 			 : 		$this->search_javascript();
@@ -110,7 +103,9 @@ class shnsearch extends shsearch {
 	protected function search_javascript() {
 		
 		if (iniload('JAVASCRIPT')) {	
-			$code2 = $this->js_make_search_url();	
+		
+			$code2 = $this->js_make_search_url();
+			
 			$js = new jscript;	
 			$js->load_js($code2,"",1);			   
 			unset ($js);
@@ -124,19 +119,19 @@ class shnsearch extends shsearch {
 	}		
 	
 	//override
-	public function do_quick_search($text2find,$comboselection=null) {
+	protected function do_quick_search($text2find,$comboselection=null) {
 	
 		_m('shkatalogmedia.do_quick_search use '.$text2find.'+'.$comboselection);
 			  
 	}
 	
-	public function do_filter_search($filter,$cat=null) {
+	protected function do_filter_search($filter,$cat=null) {
 	
 		 _m('shkatalogmedia.do_filter_search use '.$filter.'+'.$cat);
 	}	
 	
 	//override
-	public function search_categories($text2find=null,$template=null) {
+	protected function search_categories($text2find=null,$template=null) {
 		
         $ret = _m('shkategories.search_tree use ' . $text2find ."+klist+".$template);//klist or seach in cat,= +search
 			  
@@ -144,7 +139,7 @@ class shnsearch extends shsearch {
 	}		
 	
 	//override
-	public function list_catalog($imageclick=null,$cmd=null,$template=null) {
+	protected function list_catalog($imageclick=null,$cmd=null,$template=null) {
 	
 		$ret = _m('shkatalogmedia.list_katalog use '.$imageclick.'+'.$cmd.'+'.$template.'++1');
 
@@ -152,13 +147,13 @@ class shnsearch extends shsearch {
 	}		
 	
 	//override
-    public function form ($entry="",$cmd=null,$message=null)  {
+    public function form($entry="",$cmd=null,$message=null)  {
 		$entry = GetParam('input');
 		$this->scase = GetParam('searchcase') ? true : false;
 		$this->stype = GetParam('searchtype') ? GetParam('searchtype') : null;
 	  
-		$mycmd = $cmd?$cmd:'search';
-		$filename = _m("cmsrt.seturl use t=$mycmd+++1"); //seturl("t=$mycmd");//&a=$a&g=$g");  
+		$mycmd = $cmd ? $cmd : 'search';
+		$filename = _m("cmsrt.seturl use t=$mycmd+++1");  
 		$lan = getlocal()?getlocal():'0';
 	  
 		//template form
@@ -248,8 +243,8 @@ function get_stype()
 	
 	//fieldstosearchin = array of db field names..(csv)
     public function findsql($terms,$fields2searchin,$appendsql=null,$stype=null,$scase=null) {
-		$st = $stype?$stype:$this->stype;
-		$sc = $scase?$scase:$this->scase;
+		$st = $stype ? $stype : $this->stype;
+		$sc = $scase ? $scase : $this->scase;
 		$extra_sql = null;
 
 		if ($appendsql)//and /or
@@ -259,13 +254,8 @@ function get_stype()
 		 
 		if (!empty($fields)) {	
 	  
-			$extra_codes = (array) $this->search_additional_files($terms);
-			$extra2_codes = (array) $this->search_attachments($terms);
-		   
-			if ((!empty($extra_codes)) || (!empty($extra2_codes)))
-				$extra_codes = array_merge($extra_codes,$extra2_codes);   
-			//echo count($extra_codes),"<br>";		   
-		   
+			$extra_codes = (array) $this->search_attachments($terms);
+		   	   
 			if (!empty($extra_codes)) {
 				foreach ($extra_codes as $i=>$c) 
 					$codesql[] = ' code3="'.$c.'"';
@@ -368,51 +358,6 @@ function get_stype()
 		return $ret;
     }  
 	
-	
-	protected function search_additional_files($terms=null) {
-		$nullarray = array();	
-	
-		if (!$this->textsearch) return;
-	
-		if ($this->searchpath) {
-			$myspath = $this->urlpath.$this->inpath.'/cp/'.$this->searchpath;
-
-			if (is_dir($myspath)) {
-	
-				$mydir = dir($myspath);
-		
-				while ($fileread = $mydir->read ()) { 
-          
-					$first_letter = substr($fileread,0,1);
-
-					if (is_numeric($first_letter)) { // only numbers
-		   
-						foreach ($this->searchfiletypes as $TEMPLATE_FILETYPE ) {
-							if (stristr ($fileread,$TEMPLATE_FILETYPE)) {//get type of file
-			    
-								$content = file_get_contents($myspath .'/' . $fileread);
-								if (stristr ($content,$terms)) {//get type of file
-									//echo $fileread,"<br>";
-									$np = explode('.',$fileread);
-									$code = substr($np[0],0,-1); //extract language digit
-									$ret[$code] = $code; //use key the code to not allow double codes
-								} 
-							}
-						}
-					}
-				}
-				$mydir->close ();
-
-				if (empty($ret))
-					return $nullarray;
-		  
-				return ($ret);	
-			}  
-		}
-
-		return $nullarray; //no search
-	}
-	
 	protected function search_attachments($terms=null) {
 		$db = GetGlobal('db');	
 		$lan = getlocal();
@@ -458,7 +403,7 @@ function get_stype()
         if ($incategory) {	
 		    $cats = explode($this->cseparator, GetReq('cat'));
 		    foreach ($cats as $c=>$mycat)
-		      $s[] = 'cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
+				$s[] = 'cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
 		}		
 
 		$sSQL .= implode(" AND ", $s);
@@ -498,7 +443,7 @@ function get_stype()
 	}
 	
 	//override / method	 $x$
-	public function combine_tokens($template_contents,$tokens, $execafter=null) {
+	public function combine_tokens(&$template_contents,$tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
 		

@@ -50,101 +50,85 @@ class search {
 
 	var $userlevelID;
 
-	function search() {
-	  $GRX = GetGlobal('GRX');	
-	  $UserSecID = GetGlobal('UserSecID');  
+	public function __construct() {
+		$GRX = GetGlobal('GRX');	
+		$UserSecID = GetGlobal('UserSecID');  
 
-      $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	  	  
+		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	  	  
 
-      if (((GetReq('t')=='ARes') || (GetReq('t')=='BRes')) || 
-	      ((GetReq('p')) || (GetReq('a')))) {  
+		if (((GetReq('t')=='ARes') || (GetReq('t')=='BRes')) || 
+			((GetReq('p')) || (GetReq('a')))) {  
 	                        //if page exist means pages of previous search action
 	                        //or $a exist (it means sord or head selection 
 	                        //..so get stored data
-	    $this->stext = GetSessionParam('s_terms');//$s_terms; 
-	    $this->scase = GetSessionParam('s_case');//$s_case;
-        $this->stype = GetSessionParam('s_stype');//$s_stype;	 
-	    $this->scat  = GetSessionParam('s_categ');//$s_categ;
-		$this->sin   = GetSessionParam('s_sin');//$s_sin;
-	  }
-	  elseif (GetReq('text')) {  //get current url data to search
-	    $this->stext = GetReq('text'); 
-	    $this->scase = GetReq('case');//GetParam("searchcase");
-        $this->stype = GetReq('type');//GetParam("searchtype");	 
-	    $this->scat  = GetReq('g');//GetParam("category"); //NOT USED !!!!
-		$this->sin   = GetReq('in');//GetParam("searchindir");		
+			$this->stext = GetSessionParam('s_terms'); 
+			$this->scase = GetSessionParam('s_case');
+			$this->stype = GetSessionParam('s_stype');	 
+			$this->scat  = GetSessionParam('s_categ');
+			$this->sin   = GetSessionParam('s_sin');
+		}
+		elseif (GetReq('text')) {  //get current url data to search
+			$this->stext = GetReq('text'); 
+			$this->scase = GetReq('case');
+			$this->stype = GetReq('type'); 
+			$this->scat  = GetReq('g');
+			$this->sin   = GetReq('in');		
 
                   // and save them
-	    SetPreSessionParam('s_terms',$this->stext);
-	    SetPreSessionParam('s_case',$this->scase);
-	    SetPreSessionParam('s_stype',$this->stype);
-	    SetPreSessionParam('s_categ',$this->scat);
-		SetPreSessionParam('s_sin',$this->sin);		
-	  }
-	  else {      //get current form data to search
-	    $this->stext = GetParam("terms"); 
-	    $this->scase = GetParam("searchcase");
-        $this->stype = GetParam("searchtype");	 
-	    $this->scat  = GetParam("category");
-		$this->sin   = GetParam("searchindir");		
+			SetPreSessionParam('s_terms',$this->stext);
+			SetPreSessionParam('s_case',$this->scase);
+			SetPreSessionParam('s_stype',$this->stype);
+			SetPreSessionParam('s_categ',$this->scat);
+			SetPreSessionParam('s_sin',$this->sin);		
+		}
+		else {      //get current form data to search
+			$this->stext = GetParam("terms"); 
+			$this->scase = GetParam("searchcase");
+			$this->stype = GetParam("searchtype");	 
+			$this->scat  = GetParam("category");
+			$this->sin   = GetParam("searchindir");		
 
                   // and save them
-	    SetPreSessionParam('s_terms',$this->stext);
-	    SetPreSessionParam('s_case',$this->scase);
-	    SetPreSessionParam('s_stype',$this->stype);
-	    SetPreSessionParam('s_categ',$this->scat);
-		SetPreSessionParam('s_sin',$this->sin);
-	  }
+			SetPreSessionParam('s_terms',$this->stext);
+			SetPreSessionParam('s_case',$this->scase);
+			SetPreSessionParam('s_stype',$this->stype);
+			SetPreSessionParam('s_categ',$this->scat);
+			SetPreSessionParam('s_sin',$this->sin);
+		}
 
-	  $this->stime = "";
+		$this->stime = "";
  
-  	  $this->allterms = localize('_ALLTERMS',getlocal());
-	  $this->anyterms = localize('_ANYTERMS',getlocal());
-	  $this->asphrase = localize('_ASPHRASE',getlocal());
-      $this->t_searchtitle = localize('_SEARCH',getlocal());
-	  $this->t_sttype = localize('_SEARCHTYPE',getlocal());
-	  $this->t_casesence = localize('_CSENSE',getlocal());
-	  $this->t_advsearch = localize('_MSG3',getlocal());
-  	  $this->all = localize('_ALL',getlocal());
+		$this->allterms = localize('_ALLTERMS',getlocal());
+		$this->anyterms = localize('_ANYTERMS',getlocal());
+		$this->asphrase = localize('_ASPHRASE',getlocal());
+		$this->t_searchtitle = localize('_SEARCH',getlocal());
+		$this->t_sttype = localize('_SEARCHTYPE',getlocal());
+		$this->t_casesence = localize('_CSENSE',getlocal());
+		$this->t_advsearch = localize('_MSG3',getlocal());
+		$this->all = localize('_ALL',getlocal());
 
-      if ($GRX) {   	 
-        $this->search_button  = loadTheme('gosearch_b');
-        //$this->submit_button  = "<input type=\"image\" src=\" " . loadTheme('gosearch_b','search',1) . "\">";		 	 
-        $this->submit_button  = "<input type=\"image\" src=\"". loadTheme('gosearch_b','search',1) ."\" width=\"21\" height=\"21\" border=\"0\">";
-      }
-	  else {
-        $this->submit_button  = "<input type=\"submit\" name=\"Submit\" value=\"Ok\">";
-	  }
+		if ($GRX) {   	 
+			$this->search_button  = loadTheme('gosearch_b');
+			//$this->submit_button  = "<input type=\"image\" src=\" " . loadTheme('gosearch_b','search',1) . "\">";		 	 
+			$this->submit_button  = "<input type=\"image\" src=\"". loadTheme('gosearch_b','search',1) ."\" width=\"21\" height=\"21\" border=\"0\">";
+		}
+		else {
+			$this->submit_button  = "<input type=\"submit\" name=\"Submit\" value=\"Ok\">";
+		}
 	  
-      $this->moneysymbol = "&" . paramload('CART','cursymbol') . ";";	
-	  $this->deflan = paramload('SHELL','dlang');	  	    
+		$this->moneysymbol = "&" . paramload('CART','cursymbol') . ";";	
+		$this->deflan = paramload('SHELL','dlang');	  	    
 	}
 
-    function event($event=null) { 
+    public function event($event=null) { 
     }	
 	
-    function action($act=null) {
+    public function action($act=null) {
 
-	   /*if ($this->sin=="Google") $out.= $this->search_google();	   
-	                      else { */
-						         $out  = $this->title();
-							     $out .= $this->results($act);
-							 //  } 
-	   $out .= $this->form();
+		$out .= $this->results($act);
+	    $out .= $this->form();
 
-   	   return ($out);
-	}
-
-	function title() {
-
-       if ($this->stext) { //if a word has specified 
-         $out = setNavigator(localize('_SEARCHR',getlocal()) . " (" . $this->stext . ")");		
-	   }
-	   else {
-         $out = setNavigator(localize('_SEARCH',getlocal()));
-	   }  
-
-	   return ($out);
+   	    return ($out);
 	}
 	
 	function search_content($currentdir) {

@@ -113,7 +113,7 @@ class cms extends fronthtmlpage {
 				elseif (strstr($query, '=')) { //NOT & (may t=) unparsed query
 					/*parse query*/
 					parse_str($query, $parts);
-					$url =  implode('/', $parts) . '/';
+					$url =  /*$ip. '/' .*/ implode('/', $parts) . '/';
 				}
 				else  //already parsed query from this->url()
 	                $url = $query; //as is

@@ -448,17 +448,15 @@ EOF;
 	protected function self_addspace($retlink=false) {
 			
 		$ret = $retlink ? 'cp/cp.php?t=cpupgrade&wf=addspace' :
-			              "<h3><a href='cp/cp.php?t=cpupgrade&wf=addspace'>" . localize('_addspace', getlocal())."</a></h3>";				
+			              "<a href='cp/cp.php?t=cpupgrade&wf=addspace'>" . localize('_addspace', getlocal())."</a>";				
 		return ($ret);
 	}	
 	
 	protected function app_cp_wizard() {
 	    $wizfile = $this->prpath . 'cpwizard.ini';
 		
-	    if (is_readable($wizfile)) { 
-		    //$ret = @file_get_contents($wizfile);
+	    if (is_readable($wizfile)) 
 		    return true;   
-		}	
 
 		return false;
 	}
@@ -466,10 +464,8 @@ EOF;
 	protected function app_crop_wizard() {
 	    $cropfile = $this->prpath . 'crop.ini';
 		
-	    if ((is_readable($cropfile)) || (GetReq('cropwiz'))) { 
-		    //$ret = @file_get_contents($wizfile);
-		    return true;   
-		}	
+	    if ((is_readable($cropfile)) || (GetReq('cropwiz')))  
+		    return true;   	
 
 		return false;
 	}	
@@ -485,9 +481,7 @@ EOF;
 
     protected function app_is_oversized() {
   
-        $allowed_size = is_readable($this->prpath .'/maxsize.conf.php') ?
-	                    intval(@file_get_contents($this->prpath .'/maxsize.conf.php')) : 0;
-						
+        $allowed_size = intval(@file_get_contents($this->prpath .'/maxsize.conf.php'));	
 		$current_size = $this->get_app_size();				
 					   
 		if ($allowed_size < $current_size)			   
@@ -520,15 +514,11 @@ EOF;
   
     protected function cached_disk_size($path=null) {
 		$path = $path ? $path : $this->urlpath; 
-		$name = 'a';//strval(date('Ymd'));
-		$tsize = $this->prpath . $name . '-tsize.size';
+		$tsize = $this->prpath . 'a-tsize.size';
 		$size = 0;
 
-		if (is_readable($tsize)) {
-	        //echo $tsize;
-			$size = file_get_contents($tsize);
-
-		}
+		if (is_readable($tsize)) 
+			$size = @file_get_contents($tsize);
 		else {
             $size = $this->filesize_r($path);
 			@file_put_contents($tsize, $size);
@@ -542,13 +532,10 @@ EOF;
 		$size = 0;
 	
 		if ($db) {
-			$name = 'a';//strval(date('Ymd'));
-			$dsize = $this->prpath . $name . '-dsize.size';	
+			$dsize = $this->prpath . 'a-dsize.size';	
     
-			if (is_readable($dsize)) {
-				//echo $dsize;
-				$size = file_get_contents($dsize);
-			}
+			if (is_readable($dsize)) 
+				$size = @file_get_contents($dsize);
 			else {
 				$sSQL = "SHOW TABLE STATUS";
 				$res = $db->Execute($sSQL,2);		
@@ -569,7 +556,7 @@ EOF;
 	
 	/********* PUBLIC FUNCS *********/
 	
-	public function combine_tokens($template, $toks, $execafter=null) {
+	public function combine_tokens(&$template, $toks, $execafter=null) {
 	    //if (!is_array($tokens)) return ($template);		
 
 		if (!$execafter) 
@@ -592,77 +579,6 @@ EOF;
 		
 		return ($ret);
 	}
-  /*
-    public function is_tokens_var($var) {
-  
-		if (stristr($var,'<TOKENS>'))
-		return true;
-	  
-		return false;	  
-    } 
-  
-    public function subpage($tmpl,$dpc2call,$dmarks=null,$extra_attr=null,$verbose=null) {
-        $dm = $dmarks ? $dmarks : null;
-		$verb = $verbose ? $verbose : $this->verbose;
-         
-		if ($extra_attr) {//string of val '0' or '1'
-		   $tmpl_extra = str_replace($this->htmlext,$extra_attr.$this->htmlext,$tmpl);
-		   $tfile = str_replace('.',getlocal().'.',$tmpl_extra);		   
-		   
-		   if ($this->MC_TEMPLATE)
-		     $t = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $tfile ;
-		   else	 
-		     $t = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $tfile ; 
-		}  
-		else {
-		   $tfile = str_replace('.',getlocal().'.',$tmpl);
-		   
-		   if ($this->MC_TEMPLATE)
-			 $t = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $tfile ;		   
-		   else	 
-		     $t = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $tfile ;		   
-		}  
-		   
-		if ($verb)			
-		   echo $t,'<br>';
-		   
-	    if (is_readable($t)) {
-		    $mytemplate = file_get_contents($t);	
-			if ($verbose)
-			  echo $t;
-	    }
-		else {//parent root cp folder file
-		  $cphtmlpath = "/../cp/$this->htmlpage/";
-		  $parentfile = $this->urlpath . $cphtmlpath . str_replace('.',getlocal().'.',$tmpl); 
-		  //echo 'z'.$parentfile;
-		  if (is_readable($parentfile)) {
-			$mytemplate = file_get_contents($parentfile);
-			if ($verb)			
-			  echo $parentfile,'<br>';
-		  }		 
-		}  
-
-		//if var is encrypted tokens 
-		if ($this->is_tokens_var($dpc2call)) {//direct tokens val }
-		   $tokens = explode('<TOKENS>',str_replace('<@>','+',$dpc2call));//(array) $this->detokenizer($dpc2call);
-		}
-		elseif (is_array($dpc2call)) {//direct call from calldpc_use_pointers
-		   $tokens = (array) $dpc2call;
-		}
-		else {
-		   $precall = str_replace('->',' use ',$dpc2call);
-		   $call = str_replace('>','+',$precall);
- 	       $tokens = _m($call);		 
-		 
-		   if ($verb)
-		     echo $call,'<br><hr>';
-		}  
-		
-		$out = $this->combine_tokens($mytemplate,$tokens,$dm);		 
-
-		return ($out);
-    }  
-	*/
 	
 	public function included($fname=null, $uselans=null, $enable_ajax=false) {
 	
