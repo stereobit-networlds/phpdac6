@@ -1049,10 +1049,19 @@ function addtocart(id,cartdetails)
 
 
 	public function cartview($trid=null,$status=null) {
-		if ($trid) //view case
-			$this->transaction_id = $trid;
 		$cat = GetReq('cat');
 		$UserName = decode(GetGlobal('UserName')); 
+		if ($trid) //view case
+			$this->transaction_id = $trid;
+			
+		$pview = $cmd ? $cmd : 'klist';
+		$myaction = _m('cmsrt.url use t=viewcart'); 
+		switch ($this->status) {
+			case 1 : 	$myaction = _m('cmsrt.url use t=cart-order'); break;
+			case 2 : 	$myaction = _m('cmsrt.url use t=cart-submit');	break;
+			case 0 :			
+			default : 	$myaction = _m('cmsrt.url use t=cart-checkout'); 
+		}		
 	   
 		$payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
 		$roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
@@ -1064,53 +1073,39 @@ function addtocart(id,cartdetails)
 			$this->status = $status;
 			$this->recalculate(1); 
 		}	
-	    
-		$pview= $cmd ? $cmd : 'klist';
-		$myaction = _m('cmsrt.url use t=viewcart'); 
 	
 		//in case of no event fist..calldpc view...   
 		if (empty($this->loopcartdata)) 
 			$this->loopcartdata = $this->loopcart();
+		
 		if (empty($this->looptotals)) 
 			$this->looptotals = $this->foot();	     	   
-	   
-		switch ($this->status) {
-			case 1 : 	$myaction = _m('cmsrt.url use t=cart-order'); 
-						break;
-			case 2 : 	$myaction = _m('cmsrt.url use t=cart-submit'); 
-						break;
-			default : 	$myaction = _m('cmsrt.url use t=cart-checkout'); 
-		}
 
 		if ($this->status<3) {
 
 			if ($this->notempty()) {
-           
-				/*$t = $this->stock_msg;
-				$t .= "<form method=\"POST\" action=\"";
-				$t .= "$myaction";
-				$t .= "\" name=\"Cartview\">";*/		   
-				$tokens[] = $myaction;//$t;	 
+           		   
+				$tokens[] = $myaction;
 
 				if ($this->status==2) {
 
-				  //CUSTOMER SUPPORT : get customer data or register new customer
-				  if (defined('SHCUSTOMERS_DPC')) {
-					$ret = _m('shcustomers.showcustomerdata use ++cusdetails');
+					//get customer data or register new customer
+					if (defined('SHCUSTOMERS_DPC')) {
+						$ret = _m('shcustomers.showcustomerdata use ++cusdetails');
 
-					if ($ret) {
-						$mydate = date('d/m/Y h:i:s A'); //$this->make_gmt_date();
-						$tokens[] = $mydate;
-						$tokens[] = $ret;
+						if ($ret) {
+							$mydate = date('d/m/Y h:i:s A'); //$this->make_gmt_date();
+							$tokens[] = $mydate;
+							$tokens[] = $ret;
+						}
+						else {
+							//in case of no customer data register now
+							$out = _m('shcustomers.register');
+							SetSessionParam('cartstatus',0);
+							$this->status = 0;
+							return ($out); //exit now
+						}
 					}
-					else {
-					    //in case of no customer data register now
-					    $out = _m('shcustomers.register');
-                        SetSessionParam('cartstatus',0);
-	                    $this->status = 0;
- 			            return ($out); //exit now
-					}
-				  }
 				}
 				else {
 					$tokens[] = null;
@@ -1118,17 +1113,17 @@ function addtocart(id,cartdetails)
 				}
 		   
 				//loop cart
-				$tokens[] = $this->loopcartdata;	 	   
+				$tokens[] = $this->loopcartdata;
+				
 				//footer
 				$tokens[] = $this->looptotals;	   	   
-				//save totals in session
+
+				//calc
 				$this->calculate_totals();
  
 				switch ($this->status) {
 			 
-					case 1  : 	//$ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->cancel\">&nbsp;";
-								//$ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->order\">&nbsp;";
-								break;
+					case 1  : 	break;
 						 
 					case 2  :   SetSessionParam('ordercart',$this->quickview());
 					
@@ -1139,53 +1134,15 @@ function addtocart(id,cartdetails)
 								$details .= '<br/>'.localize('_SXOLIA',getlocal()) .':'. GetParam('sxolia');		   
 								SetSessionParam('orderdetails',$details);
 				
-								/*if (((GetSessionParam('payway')=='PAYPAL') || (GetParam('payway')=='PAYPAL')) ||
-									((GetSessionParam('payway')=='PIRAEUS') || (GetParam('payway')=='PIRAEUS')))  {
-									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
-									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
-								}
-								else {
-									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
-									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
-								}*/
 								break;
 						 
 					case 0  :	 
-					default : 	/*if ($this->continue_button) {
-									$continue_url = $this->continue_shopping_goto_cmd ? $this->continue_shopping_goto_cmd.'/' : 'klist'; 
-									$continue_url .= $cat ? $cat .'/' : null;
-									$ta .= "&nbsp;"; 
-									$ta .= ($this->agentIsIE) ? "<a href='".$this->baseurl.'/'.$continue_url."'>".localize('_CONTINUESHOP',getlocal())."</a>|" :
-											$this->myf_button(localize('_CONTINUESHOP',getlocal()),$this->baseurl.'/'.$continue_url,'_CONTINUESHOP'); 
-								}
-                   
-								$ta .= "&nbsp;";
-								$ta .= ($this->agentIsIE) ? "<a href='".$this->baseurl.'/clearcart/'."'>".localize('_CLEARCARTITEMS',getlocal())."</a>|" :
-										$this->myf_button(localize('_CLEARCARTITEMS',getlocal()),$this->baseurl.'/clearcart/','_CLEARCARTITEMS'); 
-						 
-								//FAST PICK
-								$ta .= "&nbsp;";
-								$lnk2 = _m('cmsrt.url use t=fastpick'); 
-								$ta .= ($this->agentIsIE) ? "<a href='".$this->baseurl.'/'.$lnk2."'>".localize('_FASTPICK',getlocal())."</a>" :
-										$this->myf_button(localize('_FASTPICK',getlocal()),$this->baseurl.'/'.$lnk2); 						 				 
-						   
-						 //submit  
-						 $ta .= "&nbsp;<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->checkout\">";
-						 */
-						 
-						 //$ta .= "&nbsp;<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"$this->checkout\">";
-						 //$ta .= "<input type=\"hidden\" name=\"FormAction\" value=\"cart-checkout\">"; /*formaction hidden*/
-						 /*as button*/
-						 //$ta .= "&nbsp;" . $this->myf_button($this->checkout,'cart-checkout/',$this->checkout);
+					default : 	
 						    
 				}
 			 
-				$tokens[] = null;//$ta;
-                /*
-				$ta = "<input type=\"hidden\" name=\"FormName\" value=\"Cartview\">";
-				$ta .= "</FORM>";
-			    */
-				$tokens[] = null;//$ta;				 
+				$tokens[] = null;
+				$tokens[] = null;				 
 			}
 			else { //empty
 				/*$tokens[] = null;//dummy token
@@ -1206,7 +1163,7 @@ function addtocart(id,cartdetails)
 			    $tokens[] = $this->finalize_cart_success();
 				
 				if ($ret) {
-				  $tokens[] = $this->transaction_id;// . "&nbsp;|&nbsp;" . $this->make_gmt_date();
+				  $tokens[] = $this->transaction_id;
 				  $tokens[] = $ret;				
 				}
 				else {//dummy tokens
@@ -1221,7 +1178,7 @@ function addtocart(id,cartdetails)
 			    $tokens[] = $this->finalize_cart_error();
 				
 				if ($ret) {
-				  $tokens[] = $this->transaction_id;// . "&nbsp;|&nbsp;" . $this->make_gmt_date();
+				  $tokens[] = $this->transaction_id;
 				  $tokens[] = $ret;				
 				}
 				else {//dummy tokens
