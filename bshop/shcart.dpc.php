@@ -159,7 +159,7 @@ class shcart extends storebuffer {
 
 	var $uniname2, $status, $qtytotal;
 	var $liveupdate, $moneysymbol, $maxcart;
-	var $allowqtyover, $mailerror, $sxolia;
+	var $allowqtyover, $mailerror, $sxolia, $continue_button;
     var $rejectqty, $checkout, $order, $submit, $cancel, $recalc;
 	var $detailqty, $stock_msg, $overitem, $ignoreqtyzero, $qtytototal,$total;
 	var $path,$autopay, $mydiscount, $mytaxcost, $myfinalcost, $myshippingcost, $discount;
@@ -172,7 +172,7 @@ class shcart extends storebuffer {
 	
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
     var $twig_invoice_template_name, $appname, $mtrackimg; 
-    var $agentIsIE, $baseurl, $fastpick;	
+    var $agentIsIE, $baseurl, $fastpick, $continue_shopping_goto_cmd;	
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
@@ -227,6 +227,7 @@ class shcart extends storebuffer {
 		$this->autopay = (remote_paramload('SHCART','auto',$this->path)>0) ? 1 : null;
 		$this->bypass_qty = (remote_paramload('SHCART','showqty',$this->path)>0) ? true : false;
 		$this->readonly = remote_paramload('SHCART','qtyreadonly',$this->path);
+		$this->continue_shopping_goto_cmd = remote_paramload('SHCART','continuegoto', $this->path); 
 		
 		$rw = remote_paramload('SHCART','rewrite',$this->path);
 		$this->rewrite = $rw ? 1 : 0;		
@@ -263,9 +264,7 @@ class shcart extends storebuffer {
 		$this->submit2 	   = trim(localize('_SUBMITORDER2',getlocal()));		
 	    $this->cancel      = trim(localize('_CANCELORDER',getlocal()));
 	    $this->recalc      = trim(localize('_RECALC',getlocal()));			
-		
-		$this->is_reseller = GetSessionParam('RESELLER'); 		
-		$this->status = GetSessionParam('cartstatus');
+					
 		$this->total = (double) 0.0;
   	    $this->qtytotal = GetSessionParam('qty_total');    
         $this->moneysymbol = "&" . paramload('CART','cursymbol') . ";";  
@@ -278,6 +277,7 @@ class shcart extends storebuffer {
 		$this->cartloopdata = null;   
 		$this->looptotals = null;		
 
+		$this->status = GetSessionParam('cartstatus') ? GetSessionParam('cartstatus') : 0;			
 		$this->total = floatval(GetSessionParam('subtotal'));
 		$this->myfinalcost = floatval(GetSessionParam('total'));
 		$this->qty_total = GetSessionParam('qty_total');	   
@@ -287,6 +287,7 @@ class shcart extends storebuffer {
 		$this->printout = GetSessionParam('printout') ? GetSessionParam('printout') : null;	  
 		$this->transaction_id = GetSessionParam('TransactionID') ? GetSessionParam('TransactionID') : null;
 		$this->fastpick = GetSessionParam('fastpick') ? true : false;
+		$this->is_reseller = GetSessionParam('RESELLER'); 		
 	  
 		if ($this->maxqty<0) // || ($this->readonly)) { //free style
 			$this->javascript(); //ONLY WHEN DEFAULT VIEW EVENT ??	
@@ -341,8 +342,8 @@ class shcart extends storebuffer {
 									$this->recalculate(); 
 									break;	  
 	  
-			case "sship"         :	 //echo GetReq('czone'),'>'; 
-									break;
+			case "sship"         :	break; //echo GetReq('czone'),'>'; 
+			case "transcart" 	 :  break;			
 	   
 			case "printcart"     : 	$prn = $this->printorder();
 									SetSessionParam('ordercart',null);//COMMENT IT, NOT RE-RENDER
@@ -415,9 +416,7 @@ class shcart extends storebuffer {
 			case "sship"     	:   $out .= $this->show_supershipping();
 									break;
 	   
-			case "transcart" 	:   if (is_object($this->transformer))
-										$out .= $this->transformer->transform();
-									break;
+			case "transcart" 	:   break;
 							
 			case 'searchtopic'	:	//handler from shkatalog
 			case 'addtocart'  	:
@@ -875,7 +874,7 @@ function addtocart(id,cartdetails)
 				$out .= '<!--end of document-->';		
 			}
         }  		
-	    else { //if (is_readable($t)) {
+	    else { 
 
 			$myprintcarttemplate = _m('cmsrt.select_template use shcartprint');
 		  
@@ -1053,8 +1052,7 @@ function addtocart(id,cartdetails)
 		if ($trid) //view case
 			$this->transaction_id = $trid;
 		$cat = GetReq('cat');
-		$UserName = decode(GetGlobal('UserName'));
-		$continue_shopping_goto_cmd = remote_paramload('SHCART','continuegoto',$this->path);  
+		$UserName = decode(GetGlobal('UserName')); 
 	   
 		$payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
 		$roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
@@ -1068,7 +1066,7 @@ function addtocart(id,cartdetails)
 		}	
 	    
 		$pview= $cmd ? $cmd : 'klist';
-		$myaction = _m('cmsrt.url use t=viewcart'); //seturl("t=viewcart",0,1,null,null,$this->rewrite);
+		$myaction = _m('cmsrt.url use t=viewcart'); 
 	
 		//in case of no event fist..calldpc view...   
 		if (empty($this->loopcartdata)) 
@@ -1077,23 +1075,22 @@ function addtocart(id,cartdetails)
 			$this->looptotals = $this->foot();	     	   
 	   
 		switch ($this->status) {
-			case 1 : 	$myaction = _m('cmsrt.url use t=cart-order'); //seturl("t=cart-order",0,1,null,null,$this->rewrite);   
+			case 1 : 	$myaction = _m('cmsrt.url use t=cart-order'); 
 						break;
-			case 2 : 	$myaction = _m('cmsrt.url use t=cart-submit'); //seturl("t=cart-submit",0,1,null,null,$this->rewrite);
+			case 2 : 	$myaction = _m('cmsrt.url use t=cart-submit'); 
 						break;
-			default : 	$myaction = _m('cmsrt.url use t=cart-checkout'); //seturl("t=cart-checkout",0,1,null,null,$this->rewrite);  
+			default : 	$myaction = _m('cmsrt.url use t=cart-checkout'); 
 		}
 
 		if ($this->status<3) {
 
 			if ($this->notempty()) {
            
-				$t = $this->stock_msg;
-
+				/*$t = $this->stock_msg;
 				$t .= "<form method=\"POST\" action=\"";
 				$t .= "$myaction";
-				$t .= "\" name=\"Cartview\">";		   
-				$tokens[] = $t;	 
+				$t .= "\" name=\"Cartview\">";*/		   
+				$tokens[] = $myaction;//$t;	 
 
 				if ($this->status==2) {
 
@@ -1129,19 +1126,20 @@ function addtocart(id,cartdetails)
  
 				switch ($this->status) {
 			 
-					case 1  : 	$ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->cancel\">&nbsp;";
-								$ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->order\">&nbsp;";
+					case 1  : 	//$ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->cancel\">&nbsp;";
+								//$ta .= "<input type=\"submit\" name=\"FormAction\" class=\"".self::$myf_button_submit_class."\" value=\"$this->order\">&nbsp;";
 								break;
 						 
 					case 2  :   SetSessionParam('ordercart',$this->quickview());
-								$details  = '<br/>'.localize('_PWAY',getlocal()) .':'. GetParam('payway');
-								$details .= '<br/>'.localize('_RWAY',getlocal()) .':'. GetParam('roadway');
-								$details .= '<br/>'.localize('_IWAY',getlocal()) .':'. GetParam('invway');	   
-								$details .= '<br/>'.localize('_DELIVADDRESS',getlocal()) .':'. GetParam('addressway');	   
+					
+								$details  = '<br/>'.localize('_PWAY',getlocal()) . ':'. GetParam('payway');
+								$details .= '<br/>'.localize('_RWAY',getlocal()) . ':'. GetParam('roadway');
+								$details .= '<br/>'.localize('_IWAY',getlocal()) . ':'. GetParam('invway');	   
+								$details .= '<br/>'.localize('_DELIVADDRESS',getlocal()) . ':'. GetParam('addressway');	   
 								$details .= '<br/>'.localize('_SXOLIA',getlocal()) .':'. GetParam('sxolia');		   
 								SetSessionParam('orderdetails',$details);
 				
-								if (((GetSessionParam('payway')=='PAYPAL') || (GetParam('payway')=='PAYPAL')) ||
+								/*if (((GetSessionParam('payway')=='PAYPAL') || (GetParam('payway')=='PAYPAL')) ||
 									((GetSessionParam('payway')=='PIRAEUS') || (GetParam('payway')=='PIRAEUS')))  {
 									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
 									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
@@ -1149,11 +1147,12 @@ function addtocart(id,cartdetails)
 								else {
 									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->cancel\">&nbsp;";
 									$ta .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->submit\">&nbsp;";							 
-								}
+								}*/
 								break;
 						 
-					default : 	if ($this->continue_button) {
-									$continue_url = $continue_shopping_goto_cmd ? $continue_shopping_goto_cmd.'/' : 'klist'; 
+					case 0  :	 
+					default : 	/*if ($this->continue_button) {
+									$continue_url = $this->continue_shopping_goto_cmd ? $this->continue_shopping_goto_cmd.'/' : 'klist'; 
 									$continue_url .= $cat ? $cat .'/' : null;
 									$ta .= "&nbsp;"; 
 									$ta .= ($this->agentIsIE) ? "<a href='".$this->baseurl.'/'.$continue_url."'>".localize('_CONTINUESHOP',getlocal())."</a>|" :
@@ -1166,15 +1165,14 @@ function addtocart(id,cartdetails)
 						 
 								//FAST PICK
 								$ta .= "&nbsp;";
-								$lnk2 = _m('cmsrt.url use t=fastpick'); // seturl('t=fastpick',null,null,null,null,$this->rewrite);//,localize('_FASTPICK',getlocal()));
+								$lnk2 = _m('cmsrt.url use t=fastpick'); 
 								$ta .= ($this->agentIsIE) ? "<a href='".$this->baseurl.'/'.$lnk2."'>".localize('_FASTPICK',getlocal())."</a>" :
-										$this->myf_button(localize('_FASTPICK',getlocal()),$this->baseurl.'/'.$lnk2); 
-						 
-						 if (is_object($this->transformer))
-						   $ta .= $this->transformer->showlink();						 				 
+										$this->myf_button(localize('_FASTPICK',getlocal()),$this->baseurl.'/'.$lnk2); 						 				 
 						   
-						 /*submit*/  
+						 //submit  
 						 $ta .= "&nbsp;<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" name=\"FormAction\" value=\"$this->checkout\">";
+						 */
+						 
 						 //$ta .= "&nbsp;<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"$this->checkout\">";
 						 //$ta .= "<input type=\"hidden\" name=\"FormAction\" value=\"cart-checkout\">"; /*formaction hidden*/
 						 /*as button*/
@@ -1182,12 +1180,12 @@ function addtocart(id,cartdetails)
 						    
 				}
 			 
-				$tokens[] = $ta;
-     
+				$tokens[] = null;//$ta;
+                /*
 				$ta = "<input type=\"hidden\" name=\"FormName\" value=\"Cartview\">";
 				$ta .= "</FORM>";
-			 
-				$tokens[] = $ta;				 
+			    */
+				$tokens[] = null;//$ta;				 
 			}
 			else { //empty
 				/*$tokens[] = null;//dummy token
@@ -2036,7 +2034,7 @@ function addtocart(id,cartdetails)
 		$onsuccesstitle = $onsuccess[getlocal()];
 		$goto_title = $onsuccesstitle ? $onsuccesstitle : localize('_HOME',getlocal());
 
-		$gobutton =  _m('cmsrt.url use t=' . $goto . '+' . $goto_title); //seturl("t=$goto",$goto_title);
+		$gobutton =  _m('cmsrt.url use t=' . $goto . '+' . $goto_title); 
 				
 		$tokens[] = $this->print_button();		
 		$tokens[] = $gobutton; 
@@ -2130,7 +2128,7 @@ function addtocart(id,cartdetails)
 					
 					$toks[] = $prod_id+1;
 					$toks[] = $id;
-					$toks[] = _m("cmsrt.url use t=kshow&cat=$cat&id=$id+" . $itemdescr); //seturl("t=kshow&cat=$cat&id=".$id , $itemdescr,null,null,null,true);//rewrite
+					$toks[] = _m("cmsrt.url use t=kshow&cat=$cat&id=$id+" . $itemdescr); 
 					$toks[] = number_format(floatval($param[8]),$this->dec_num,',','.');
 					$toks[] = $param[9];
 					
@@ -2489,13 +2487,13 @@ function addtocart(id,cartdetails)
 		$sSQL .=" order by weight"; //desc  when <=weight
 		//echo $sSQL;
 	  
-		$gourl1 = _m('cmsrt.url use t=sship&cservice='.$cservice); //seturl('t=sship&cservice='.$cservice); //echo $gourl1;
+		$gourl1 = _m('cmsrt.url use t=sship&cservice='.$cservice); 
 		$countries = "<select class=\"myf_select_small\" name=\"czone\" onChange=\"location='$gourl1&czone='+this.options[this.selectedIndex].value\">".
 	               get_options_file('country',false,true,$czone).
 				   "</select>";
 		$services = implode(',',$this->shipmethods); 	
 
-		$gourl2 = _m('cmsrt.url use t=sship&czone='.$czone); //seturl('t=sship&czone='.$czone); //echo $gourl1;	  
+		$gourl2 = _m('cmsrt.url use t=sship&czone='.$czone); 
 		/*$methods = "<select name=\"cservice\" onChange=\"location='$gourl2&cservice='+this.options[this.selectedIndex].value\">".
 	               get_options_file('country',false,true,$cservice).
 				   "</select>";*/
@@ -2892,8 +2890,7 @@ function addtocart(id,cartdetails)
 						5=>number_format(floatval($taxcost),$this->dec_num),
 						);	
 						
-		//$template1 = _m('cmsrt.select_template use cart-js-analytics');						
-		//$ret .= $this->combine_tokens2($template1,$tokens,true);
+
 		$ret .= _m('cmsrt._ct use cart-js-analytics+' . serialize($tokens) . '+1');
 		
 		//$template2 = _m('cmsrt.select_template use cart-js-item-analytics');
