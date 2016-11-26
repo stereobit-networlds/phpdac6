@@ -8,14 +8,20 @@ define("SHNSEARCH_DPC",true);
 
 $__DPC['SHNSEARCH_DPC'] = 'shnsearch';
 
-$d = GetGlobal('controller')->require_dpc('bshop/shsearch.dpc.php');
+$d = GetGlobal('controller')->require_dpc('bshop/search.dpc.php');
 require_once($d);
 
-GetGlobal('controller')->get_parent('SHSEARCH_DPC','SHNSEARCH_DPC');
-
+$__EVENTS['SHNSEARCH_DPC'][0]='search';
+$__EVENTS['SHNSEARCH_DPC'][1]='addtocart';     //continue with ..cart
+$__EVENTS['SHNSEARCH_DPC'][2]='removefromcart';//continue with ..cart
+$__EVENTS['SHNSEARCH_DPC'][3]='searchtopic';
 $__EVENTS['SHNSEARCH_DPC'][4]='shnsearch';
 $__EVENTS['SHNSEARCH_DPC'][5]='filter';
 
+$__ACTIONS['SHNSEARCH_DPC'][0]='search';
+$__ACTIONS['SHNSEARCH_DPC'][1]='addtocart';     //continue with ..from cart
+$__ACTIONS['SHNSEARCH_DPC'][2]='removefromcart';//continue with ..from cart
+$__ACTIONS['SHNSEARCH_DPC'][3]='searchtopic'; 
 $__ACTIONS['SHNSEARCH_DPC'][4]='shnsearch';
 $__ACTIONS['SHNSEARCH_DPC'][5]='filter';
 
@@ -23,36 +29,59 @@ $__LOCALE['SHNSEARCH_DPC'][0]='SHNSEARCH_DPC;Search;Αναζήτηση';
 $__LOCALE['SHNSEARCH_DPC'][1]='_SEARCHIN;Search In:;Αναζήτηση σε:';
 $__LOCALE['SHNSEARCH_DPC'][2]='_founded;items found;εγγραφές βρέθηκαν';
 $__LOCALE['SHNSEARCH_DPC'][3]='_FILTERS;Product filters;Φίλτρο αναζήτησης';
-$__LOCALE['SHNSEARCH_DPC'][4]='_BRANDS;Brands;Μάρκες';
-$__LOCALE['SHNSEARCH_DPC'][5]='_ALL;All;Όλα';
+$__LOCALE['SHNSEARCH_DPC'][4]='_ALL;All;Όλα';
+$__LOCALE['SHNSEARCH_DPC'][5]='_MSG3;Advance Search;Σύνθετη Αναζήτηση';
+$__LOCALE['SHNSEARCH_DPC'][6]='_ASPHRASE;As a Phrase;Ως Φράση';
+$__LOCALE['SHNSEARCH_DPC'][7]='_ANYTERMS;Any Terms;Κάποιο απο τα συνθετικά';
+$__LOCALE['SHNSEARCH_DPC'][8]='_ALLTERMS;All Terms;Όλα τα συνθετικά';
+$__LOCALE['SHNSEARCH_DPC'][9]='_SEARCHTYPE;Type;Τύπος';
+$__LOCALE['SHNSEARCH_DPC'][10]='_CSENSE;Case Sensitive;Κεφαλαία/Μικρά';
+$__LOCALE['SHNSEARCH_DPC'][11]='_TTIME;Total time;Συνολικός Χρόνος';
+$__LOCALE['SHNSEARCH_DPC'][12]='_SEARCHR;Search Results;Αποτελέσματα Αναζήτησης';
+$__LOCALE['SHNSEARCH_DPC'][13]='_SEARCH;Search;Αναζήτηση';
 
-class shnsearch extends shsearch {
+class shnsearch extends search {
 
-    var $_combo, $text2find;
-	var $path, $imageclick;
+    var $title, $msg;
+	var $queuelist;
+	var $post, $result, $meter, $pager, $text2find;
+	var $path, $urlpath, $inpath;
+	
+    var $_combo, $imageclick;
 	var $textsearch, $searchpath, $searchfiletypes, $attachsearch;
 	var $cseparator, $replacepolicy;
 
 	public function __construct() {
 
-		shsearch::__construct();
+		search::__construct();
 
 		$this->title = localize('SHNSEARCH_DPC',getlocal());
 		$this->path = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');
 		$this->inpath = paramload('ID','hostinpath');			  
+		
+		$this->title = localize('SHNSEARCH_DPC',getlocal()); 
+	  
 		$this->imageclick = remote_paramload('SHNSEARCH','imageclick',$this->path);	
-
 		$this->textsearch = remote_paramload('SHNSEARCH','textsearch',$this->path);	  
 		$this->searchpath = remote_paramload('SHNSEARCH','searchpath',$this->path);	
 		$this->attachsearch = remote_paramload('SHNSEARCH','attachsearch',$this->path);		  
+		
 		$ft = remote_arrayload('SHNSEARCH','filetypes',$this->path);	
 		$fp = array('.htm','.txt');//htm includes html
 		$this->searchfiletypes = $ft ? $ft : $fp; 
 	  
 		$this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);
 		$csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
-		$this->cseparator = $csep ? $csep : '^';	  
+		$this->cseparator = $csep ? $csep : '^';	
+
+		$this->post = false;
+		$this->msg = null;		  	 
+	  
+		$this->meter = 0; 
+		$this->pager = 10;
+
+		$this->text2find = GetParam('Input');			
 	}
 
 	public function event($event=null) {
@@ -84,17 +113,16 @@ class shnsearch extends shsearch {
 	
 		switch ($action) {
 		  
-			case 'filter'         : $out = $this->form_search();
-									break;			  
+			case 'filter'        : 	 	$out = $this->form_search();
+										break;			  
 	  
 			//cart
 			case 'searchtopic'   :
 			case 'addtocart'     :
-			case 'removefromcart':	break;	
-			// 	  
+			case 'removefromcart':		break;	 
 	  
-			case 'search' 		:		
-			default       		: 	$out = $this->form_search();
+			case 'search' 		 :		
+			default       		 : 		$out = $this->form_search();
 		}	
 	  
 		return ($out);
@@ -111,42 +139,29 @@ class shnsearch extends shsearch {
 			unset ($js);
 		}			   	   	     
 	}
+	
+	protected function js_make_search_url() {
+		$out = "
+function get_sinput()
+{
+  var ret = document.searchform.input.value;
+  return ret;
+}
+function get_scase()
+{
+  var ret = document.searchform.searchcase.value;
+  return ret;
+}
+function get_stype()
+{
+  var ret = document.searchform.searchtype.value;
+  return ret;
+}
+";
 
-	public function show_combo($title=null,$preselcat=null,$isleaf=null) {
-
-        $ret = _m('shkategories.show_combo_results use '.$title.'+'.$preselcat.'+'.$isleaf);
-		return ($ret);
-	}		
-	
-	//override
-	protected function do_quick_search($text2find,$comboselection=null) {
-	
-		_m('shkatalogmedia.do_quick_search use '.$text2find.'+'.$comboselection);
-			  
-	}
-	
-	protected function do_filter_search($filter,$cat=null) {
-	
-		 _m('shkatalogmedia.do_filter_search use '.$filter.'+'.$cat);
+		return ($out);	
 	}	
 	
-	//override
-	protected function search_categories($text2find=null,$template=null) {
-		
-        $ret = _m('shkategories.search_tree use ' . $text2find ."+klist+".$template);//klist or seach in cat,= +search
-			  
-		return ($ret);	  
-	}		
-	
-	//override
-	protected function list_catalog($imageclick=null,$cmd=null,$template=null) {
-	
-		$ret = _m('shkatalogmedia.list_katalog use '.$imageclick.'+'.$cmd.'+'.$template.'++1');
-
-		return ($ret);	  
-	}		
-	
-	//override
     public function form($entry="",$cmd=null,$message=null)  {
 		$entry = GetParam('input');
 		$this->scase = GetParam('searchcase') ? true : false;
@@ -186,9 +201,8 @@ class shnsearch extends shsearch {
 	      
 		$tokout = $this->combine_tokens($contents, $tokens);
 		return ($tokout);    
-    }
+    }		
 	
-	//override
 	public function form_search() {
 		$typos = trim(GetParam('typos'));	
 		$extras = trim(GetParam('extras'));
@@ -201,8 +215,8 @@ class shnsearch extends shsearch {
 		$out = $this->form(null,'search',$msg);
 	   
 		//KATEGORIES SEARCH
-		$out .= $this->search_categories($this->text2find,'searchcatres.htm');
-		$out .= $this->list_catalog($myimageclick,'search&input='.$this->text2find,'searchres.htm');
+		$out .= $this->search_categories($this->text2find,'searchcatres');
+		$out .= $this->list_katalog($myimageclick,'search&input='.$this->text2find,'searchres');
 	  
 	    $f1 = _v('shkatalogmedia.max_selection');	    
 	    $f2 = _v('shkategories.max_selection');	   	
@@ -211,27 +225,120 @@ class shnsearch extends shsearch {
 		return ($out);	
 	}	
 	
-	protected function js_make_search_url() {
-		$out = "
-function get_sinput()
-{
-  var ret = document.searchform.input.value;
-  return ret;
-}
-function get_scase()
-{
-  var ret = document.searchform.searchcase.value;
-  return ret;
-}
-function get_stype()
-{
-  var ret = document.searchform.searchtype.value;
-  return ret;
-}
-";
+	protected function do_search() {
+		$db = GetGlobal('db');	
+		$page = GetReq('page')?GetReq('page'):0;	  
+		$asc = GetReq('asc');
+		$order = GetReq('order');		
+		$lan = getlocal();
+		$mylan = $lan ? $lan : '0';
+		$itmname = $mylan ? 'itmname' : 'itmfname';
+		$itmdescr = $mylan ? 'itmdescr' : 'itmfdescr';			    
+	  
+		if (GetReq('cat')!=null)
+			$cat = GetReq('cat');	  
+	  
+		$dataerror = null;
+	 
+		if (empty($_POST)) return -1;  
+	  
+		if (isset($cat) || isset($marka) || isset($typos) || 
+			isset($color) || isset($pdate) || isset($extras) || isset($price) || isset($price2)) {
+				
+			$code = _m('shkatalogmedia.getmapf use code');
+			/*$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,uniname1,uniname2,active,code4," .// from abcproducts";// .
+					"price0,price1,cat0,cat1,cat2,cat3,cat4,itmremark,ypoloipo1,".$code." from products ";*/
+			$sSQL = _v('shkatalogmedia.selectSQL');
+		  
+			if ($id_cat>=0) {
+				$sSQL .= " WHERE ";		
+		
+				$cat_tree = explode('^',str_replace('_',' ',$cat)); 
+			
+				//$whereClause .= '( cat0=' . $db->qstr(str_replace('_',' ',$cat_tree[0]));		  
+				if ($cat_tree[0])
+					$whereClause .= ' cat1=' . $db->qstr(rawurldecode(str_replace('_',' ',$cat_tree[0])));		  
+				if ($cat_tree[1])	
+					$whereClause .= 'and cat2=' . $db->qstr(rawurldecode(str_replace('_',' ',$cat_tree[1])));		 
+				if ($cat_tree[2])	
+					$whereClause .= 'and cat3=' . $db->qstr(rawurldecode(str_replace('_',' ',$cat_tree[2])));		   
+				if ($cat_tree[3])	
+					$whereClause .= 'and cat4=' . $db->qstr(rawurldecode(str_replace('_',' ',$cat_tree[3])));
+			
+				$sSQL .= $whereClause;				  
+		  	  		  	  
+			}
+		
+			$sSQL .= " and itmactive>0 and active>0";					
+			$sSQL .= ' ORDER BY';
+		  
+			switch ($order) {
+				case 1  : $sSQL .=  ' '.$itmname.','.$itmdescr; break;
+				case 2  : $sSQL .= ' price0';break;  
+				case 3  : $sSQL .= ' '. _m('shkatalogmedia.getmapf use code'); break;//must be converted to the text equal????
+				case 4  : $sSQL .= ' cat1';break;			
+				case 5  : $sSQL .= ' cat2';break;
+				case 6  : $sSQL .= ' cat3';break;			
+				case 9  : $sSQL .= ' cat4';break;						
+				default : $sSQL .=  ' '.$itmname.','.$itmdescr;
+			}
+		  
+			switch ($asc) {
+				case 1  : $sSQL .= ' ASC'; break;
+				case 2  : $sSQL .= ' DESC';break;
+				default : $sSQL .= ' ASC';
+			}
+		  
+			if ($this->pager) {
+				$p = $page * $this->pager;
+				$sSQL .= " LIMIT $p,".$this->pager; //page element count
+			}	
+		
+			//echo $sSQL;
+			if ($dataerror==null) {
+				$resultset = $db->Execute($sSQL,2);
+				$ret = $db->fetch_array_all($resultset);	 
+	   	   
+				$this->result = $ret; 
+				$this->meter = $db->Affected_Rows();
+				$this->msg = $this->meter . ' ' . localize('_founded',getlocal());																		
+			}
+			else
+				$this->msg = $dataerror;		
+		
+		} 
+	}		
 
-		return ($out);	
+	public function show_combo($title=null,$preselcat=null,$isleaf=null) {
+
+        $ret = _m('shkategories.show_combo_results use '.$title.'+'.$preselcat.'+'.$isleaf);
+		return ($ret);
+	}		
+	
+	protected function do_quick_search($text2find,$comboselection=null) {
+	
+		_m('shkatalogmedia.do_quick_search use '.$text2find.'+'.$comboselection);
+			  
 	}
+	
+	protected function do_filter_search($filter,$cat=null) {
+	
+		 _m('shkatalogmedia.do_filter_search use '.$filter.'+'.$cat);
+	}	
+	
+	protected function search_categories($text2find=null,$template=null) {
+		
+        $ret = _m('shkategories.search_tree use ' . $text2find ."+klist+".$template);//klist or seach in cat,= +search
+			  
+		return ($ret);	  
+	}		
+	
+	protected function list_katalog($imageclick=null,$cmd=null,$template=null) {
+	
+		$ret = _m('shkatalogmedia.list_katalog use '.$imageclick.'+'.$cmd.'+'.$template.'++1');
+
+		return ($ret);	  
+	}		
 	
 	//override
 	public function searchin($staticmenu=0) {
@@ -367,10 +474,9 @@ function get_stype()
 	  
 		$sSQL = "select code from pattachments";	
 		$sSQL .= " where lan=" . $lan . " and ( type LIKE '%";
-		foreach ($this->searchfiletypes as $TEMPLATE_FILETYPE ) {
+		foreach ($this->searchfiletypes as $TEMPLATE_FILETYPE ) 
 			$tf[] = $TEMPLATE_FILETYPE;
-			//$sSQL .= " and type='" . $TEMPLATE_FILETYPE . "' ";
-		}
+
 		$sSQL .= implode("%' OR type LIKE '%", $tf);
 		$sSQL .= "%') and data LIKE '%$terms%'";
 		//echo $sSQL;	  
@@ -442,7 +548,27 @@ function get_stype()
 		return ($ret);   
 	}
 	
-	//override / method	 $x$
+	protected function replace_spchars($string, $reverse=false) {
+		
+		switch ($this->replacepolicy) {	
+	
+			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
+			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
+			default  :	
+			if ($reverse) {
+				$g1 = array("'",',','"','+','/',' ',' & ');
+				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
+				$ret = str_replace($g2,$g1,$string);
+			}	 
+			else {
+				$g1 = array("'",',','"','+','/',' ','-&-');
+				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
+				$ret = str_replace($g1,$g2,$string);
+			}	
+	    }
+		return ($ret);
+	}
+	
 	public function combine_tokens(&$template_contents,$tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
@@ -472,28 +598,7 @@ function get_stype()
 		}		
 		
 		return ($ret);
-	}	
-		
-	protected function replace_spchars($string, $reverse=false) {
-		
-		switch ($this->replacepolicy) {	
-	
-			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
-			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
-			default  :	
-			if ($reverse) {
-				$g1 = array("'",',','"','+','/',' ',' & ');
-				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
-				$ret = str_replace($g2,$g1,$string);
-			}	 
-			else {
-				$g1 = array("'",',','"','+','/',' ','-&-');
-				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
-				$ret = str_replace($g1,$g2,$string);
-			}	
-	    }
-		return ($ret);
-	}	
+	}		
 };
 }
 ?>

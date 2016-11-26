@@ -100,8 +100,6 @@ class shsearch extends search {
 		$extras = trim(GetParam('extras'));
 		$price = trim(GetParam('price'));
 		$price2 = trim(GetParam('price2'));	   
-	
-		$out =  setNavigator($this->title . "&nbsp;(" . $this->msg . ")");	
 	   
 		//KATEGORIES SEARCH
 		$out .= $this->search_categories($this->text2find);
