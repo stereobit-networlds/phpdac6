@@ -8,22 +8,21 @@ define("SHNSEARCH_DPC",true);
 
 $__DPC['SHNSEARCH_DPC'] = 'shnsearch';
 
-$d = GetGlobal('controller')->require_dpc('bshop/search.dpc.php');
-require_once($d);
-
 $__EVENTS['SHNSEARCH_DPC'][0]='search';
-$__EVENTS['SHNSEARCH_DPC'][1]='addtocart';     //continue with ..cart
-$__EVENTS['SHNSEARCH_DPC'][2]='removefromcart';//continue with ..cart
-$__EVENTS['SHNSEARCH_DPC'][3]='searchtopic';
-$__EVENTS['SHNSEARCH_DPC'][4]='shnsearch';
-$__EVENTS['SHNSEARCH_DPC'][5]='filter';
+$__EVENTS['SHNSEARCH_DPC'][1]='shsearch';
+$__EVENTS['SHNSEARCH_DPC'][2]='shnsearch';
+$__EVENTS['SHNSEARCH_DPC'][3]='addtocart';     //continue with ..cart
+$__EVENTS['SHNSEARCH_DPC'][4]='removefromcart';//continue with ..cart
+$__EVENTS['SHNSEARCH_DPC'][5]='searchtopic';
+$__EVENTS['SHNSEARCH_DPC'][6]='filter';
 
 $__ACTIONS['SHNSEARCH_DPC'][0]='search';
-$__ACTIONS['SHNSEARCH_DPC'][1]='addtocart';     //continue with ..from cart
-$__ACTIONS['SHNSEARCH_DPC'][2]='removefromcart';//continue with ..from cart
-$__ACTIONS['SHNSEARCH_DPC'][3]='searchtopic'; 
-$__ACTIONS['SHNSEARCH_DPC'][4]='shnsearch';
-$__ACTIONS['SHNSEARCH_DPC'][5]='filter';
+$__ACTIONS['SHNSEARCH_DPC'][1]='shsearch';
+$__ACTIONS['SHNSEARCH_DPC'][2]='shnsearch';
+$__ACTIONS['SHNSEARCH_DPC'][3]='addtocart';     //continue with ..from cart
+$__ACTIONS['SHNSEARCH_DPC'][4]='removefromcart';//continue with ..from cart
+$__ACTIONS['SHNSEARCH_DPC'][5]='searchtopic'; 
+$__ACTIONS['SHNSEARCH_DPC'][6]='filter';
 
 $__LOCALE['SHNSEARCH_DPC'][0]='SHNSEARCH_DPC;Search;Αναζήτηση';
 $__LOCALE['SHNSEARCH_DPC'][1]='_SEARCHIN;Search In:;Αναζήτηση σε:';
@@ -40,20 +39,14 @@ $__LOCALE['SHNSEARCH_DPC'][11]='_TTIME;Total time;Συνολικός Χρόνο�
 $__LOCALE['SHNSEARCH_DPC'][12]='_SEARCHR;Search Results;Αποτελέσματα Αναζήτησης';
 $__LOCALE['SHNSEARCH_DPC'][13]='_SEARCH;Search;Αναζήτηση';
 
-class shnsearch extends search {
+class shnsearch {
 
     var $title, $msg;
-	var $queuelist;
 	var $post, $result, $meter, $pager, $text2find;
 	var $path, $urlpath, $inpath;
-	
-    var $_combo, $imageclick;
-	var $textsearch, $searchpath, $searchfiletypes, $attachsearch;
-	var $cseparator, $replacepolicy;
+    var $imageclick, $textsearch, $searchpath, $searchfiletypes, $attachsearch;
 
 	public function __construct() {
-
-		search::__construct();
 
 		$this->title = localize('SHNSEARCH_DPC',getlocal());
 		$this->path = paramload('SHELL','prpath');
@@ -69,11 +62,7 @@ class shnsearch extends search {
 		
 		$ft = remote_arrayload('SHNSEARCH','filetypes',$this->path);	
 		$fp = array('.htm','.txt');//htm includes html
-		$this->searchfiletypes = $ft ? $ft : $fp; 
-	  
-		$this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);
-		$csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
-		$this->cseparator = $csep ? $csep : '^';	
+		$this->searchfiletypes = $ft ? $ft : $fp; 	
 
 		$this->post = false;
 		$this->msg = null;		  	 
@@ -81,12 +70,10 @@ class shnsearch extends search {
 		$this->meter = 0; 
 		$this->pager = 10;
 
-		$this->text2find = GetParam('Input');			
+		$this->text2find = GetParam('Input') ? GetParam('Input') : GetReq('input');			
 	}
 
 	public function event($event=null) {
-
-		$this->text2find = GetParam('Input') ? GetParam('Input') : GetReq('input'); 
 
 		switch ($event) {
 		  
@@ -102,7 +89,7 @@ class shnsearch extends search {
 			default 			 : 		$this->search_javascript();
 		
 										if ($this->text2find)//always here
-											$this->do_quick_search($this->text2find,GetReq('cat'));
+											$this->do_quick_search($this->text2find, GetReq('cat'));
 										else
 											$this->do_search();//not used??.....
 		} 
@@ -188,8 +175,7 @@ function get_stype()
 	    }
 	    else 
 			$tokens[] = "<SELECT name=searchtype class=\"myf_select\"> <OPTION selected>$this->anyterms<OPTION>$this->allterms<OPTION>$this->asphrase</OPTION></SELECT>";					
- 
-		   
+  
         $check = $this->scase ? "checked" : "";
         $tokens[] = "<input type=\"hidden\" name=\"searchcase\" value=\"$check \"". $check . " class=\"myf_input\"  onfocus=\"this.style.backgroundColor='#F5F5F5'\" onblur=\"this.style.backgroundColor='#FFFFFF'\" style=\"background-color: rgb(255, 255, 255); \">";		   
 		$tokens[] = "<input type=\"submit\" name=\"Submit\" class=\"myf_button\" value=\"$this->t_searchtitle\">" .
@@ -209,14 +195,13 @@ function get_stype()
 		$price = trim(GetParam('price'));
 		$price2 = trim(GetParam('price2'));	   
 		$this->msg = null;
-	   
-		$myimageclick = $this->imageclick ? $this->imageclick : null;		
-		 	   
+	      
 		$out = $this->form(null,'search',$msg);
 	   
 		//KATEGORIES SEARCH
 		$out .= $this->search_categories($this->text2find,'searchcatres');
-		$out .= $this->list_katalog($myimageclick,'search&input='.$this->text2find,'searchres');
+		
+		$out .= $this->list_katalog($this->myimageclick,'search&input='.$this->text2find,'searchres');
 	  
 	    $f1 = _v('shkatalogmedia.max_selection');	    
 	    $f2 = _v('shkategories.max_selection');	   	
@@ -246,8 +231,6 @@ function get_stype()
 			isset($color) || isset($pdate) || isset($extras) || isset($price) || isset($price2)) {
 				
 			$code = _m('shkatalogmedia.getmapf use code');
-			/*$sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,uniname1,uniname2,active,code4," .// from abcproducts";// .
-					"price0,price1,cat0,cat1,cat2,cat3,cat4,itmremark,ypoloipo1,".$code." from products ";*/
 			$sSQL = _v('shkatalogmedia.selectSQL');
 		  
 			if ($id_cat>=0) {
@@ -348,16 +331,12 @@ function get_stype()
 		return ($ret);
 	}	
 	
-	//fieldstosearchin = array of db field names..(csv)
-    public function findsql($terms,$fields2searchin,$appendsql=null,$stype=null,$scase=null) {
+    public function findsql($terms, $fields2searchin, $stype=null, $scase=null) {
 		$st = $stype ? $stype : $this->stype;
 		$sc = $scase ? $scase : $this->scase;
 		$extra_sql = null;
-
-		if ($appendsql)//and /or
-			$ret = ' ' . $appendsql . ' ';	
 		 
-		$fields = explode ("<@>", $fields2searchin); 		 
+		$fields = unserialize($fields2searchin); 		 
 		 
 		if (!empty($fields)) {	
 	  
@@ -507,9 +486,13 @@ function get_stype()
 		
 	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
         if ($incategory) {	
-		    $cats = explode($this->cseparator, GetReq('cat'));
-		    foreach ($cats as $c=>$mycat)
-				$s[] = 'cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
+		    $csep = _v('shkategories.cseparator');
+		    $cats = explode($csep, GetReq('cat'));
+			
+		    foreach ($cats as $c=>$mycat) {
+				$_c = _m('shkategories.replace_spchars use '. $mycat . '+1');
+				$s[] = 'cat'.$c ." ='" . $_c . "'";		  	  
+			}	
 		}		
 
 		$sSQL .= implode(" AND ", $s);
@@ -519,7 +502,7 @@ function get_stype()
 		$result = $db->Execute($sSQL,2); 
 	  
 		if (!empty($result)) {
-			//print_r($result);
+
 			foreach ($result as $n=>$t) {
 				if (trim($t[0])!='') {
 					$tokens[] = $t[0];
@@ -543,30 +526,8 @@ function get_stype()
 			unset($tokens);
 		}		
        
-		$x = $template ? '' : '<br/>';
-		$ret = (empty($r)) ? null : implode($x,$r);	
+		$ret = (empty($r)) ? null : implode('',$r);	
 		return ($ret);   
-	}
-	
-	protected function replace_spchars($string, $reverse=false) {
-		
-		switch ($this->replacepolicy) {	
-	
-			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
-			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;
-			default  :	
-			if ($reverse) {
-				$g1 = array("'",',','"','+','/',' ',' & ');
-				$g2 = array('_','~',"*","plus",":",'-',' n ');		  
-				$ret = str_replace($g2,$g1,$string);
-			}	 
-			else {
-				$g1 = array("'",',','"','+','/',' ','-&-');
-				$g2 = array('_','~',"*","plus",":",'-','-n-');		  
-				$ret = str_replace($g1,$g2,$string);
-			}	
-	    }
-		return ($ret);
 	}
 	
 	public function combine_tokens(&$template_contents,$tokens, $execafter=null) {

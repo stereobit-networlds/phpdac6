@@ -566,18 +566,26 @@ SCROLLTOP;
 			                break;
 				default      : //normal search
 		  
-							if (defined("SHNSEARCH_DPC")) {
-								$sSQL .= '('. _m('shnsearch.findsql use '.$text2find.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark++'.$stype.'+'.$scase);		  
-							}
-							else { 			  	
-								$sSQL .= '(' . " ( {$this->itmname} like '%" . strtolower($text2find) . "%' or  {$this->itmname} like '%" . strtoupper($text2find) . "%')";	
-								$sSQL .= " or ";		   
-								$sSQL .= " ( {$this->itmdescr} like '%" . strtolower($text2find) . "%' or  {$this->itmdescr} like '%" . strtoupper($text2find) . "%')";				 
-								$sSQL .= " or ";		   
-								$sSQL .= " ( itmremark like '%" . strtolower($text2find) . "%' or  itmremark like '%" . strtoupper($text2find) . "%')";				 					 
-								$sSQL .= " or ";		   			 
-								$sSQL .= " ( ".$this->fcode." like '%" . strtolower($text2find) . "%' or  " . $this->fcode . " like '%" . strtoupper($text2find) . "%')";						 
-							}			   
+								if (defined("SHNSEARCH_DPC")) {
+									
+									$sfields = array(0=>$this->fcode,
+													1=>$this->itmname,
+													2=>$this->itmdescr,
+													3=>'itmremark',
+													4=>'manufacturer',
+												);
+									$serialf = serialize($sfields);									
+									$sSQL .= '('. _m("shnsearch.findsql use $text2find+$serialf+$stype+$scase");		  
+								}
+								else { 			  	
+									$sSQL .= '(' . " ( {$this->itmname} like '%" . strtolower($text2find) . "%' or  {$this->itmname} like '%" . strtoupper($text2find) . "%')";	
+									$sSQL .= " or ";		   
+									$sSQL .= " ( {$this->itmdescr} like '%" . strtolower($text2find) . "%' or  {$this->itmdescr} like '%" . strtoupper($text2find) . "%')";				 
+									$sSQL .= " or ";		   
+									$sSQL .= " ( itmremark like '%" . strtolower($text2find) . "%' or  itmremark like '%" . strtoupper($text2find) . "%')";				 					 
+									$sSQL .= " or ";		   			 
+									$sSQL .= " ( ".$this->fcode." like '%" . strtolower($text2find) . "%' or  " . $this->fcode . " like '%" . strtoupper($text2find) . "%')";						 
+								}			   
 	   				 
 			}			
 			$sSQL .= ')' ;
@@ -657,8 +665,17 @@ SCROLLTOP;
 		if ($text2find) {
 		
 			if (defined("SHNSEARCH_DPC")) {
-				$mytext = $filter ? $this->replace_spchars($text2find,1) : $text2find; //search by user or filter 
-				$whereClause = _m('shnsearch.findsql use '.$mytext.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark<@>manufacturer++'.$stype.'+'.$scase);		  
+				
+				$mytext = $filter ? $this->replace_spchars($text2find,1) : $text2find; //search by user or filter
+				
+				$sfields = array(0=>$this->fcode,
+								 1=>$this->itmname,
+								 2=>$this->itmdescr,
+								 3=>'itmremark',
+								 4=>'manufacturer',
+								);
+				$serialf = serialize($sfields);
+				$whereClause = _m("shnsearch.findsql use $mytext+$serialf+$stype+$scase");						  
 			}
 			else {		
 				$mytext = $filter ? $this->replace_spchars($text2find,1) : strtolower($text2find); //search by user or filter			  
@@ -3233,6 +3250,7 @@ SCROLLTOP;
 		
 	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
         if ($incategory) {	
+		
 			$s = array();
 		    $cats = $cat ? explode($this->sep(), $cat) : null;
 			if (!empty($cats)) {
@@ -3243,8 +3261,17 @@ SCROLLTOP;
 		$where = (!empty($s)) ? implode(" AND ", $s) : null;		
 		
 		if (($text2find = GetParam('input')) && (defined("SHNSEARCH_DPC"))) {
+			
 		   	$where .= $where ? ' AND ' : null;
-            $where .= _m('shnsearch.findsql use '.$text2find.'+'.$this->fcode.'<@>'.$this->itmname.'<@>'.$this->itmdescr.'<@>itmremark++'.$stype.'+'.$scase);		  
+			
+			$sfields = array(0=>$this->fcode,
+							 1=>$this->itmname,
+							 2=>$this->itmdescr,
+							 3=>'itmremark',
+							 /*4=>'manufacturer',*/
+							);
+			$serialf = serialize($sfields);			
+			$where .= _m("shnsearch.findsql use $text2find+$serialf+$stype+$scase");		  
         }		
 
 		$sSQL .= $where ? $where . ' AND ' : null;
