@@ -140,7 +140,18 @@ class shkatalogmedia {
 		$this->path = paramload('SHELL','prpath');	//echo $this->path;
 		$this->urlpath = paramload('SHELL','urlpath');
 		$this->inpath = paramload('ID','hostinpath');		  
-		$this->result = null;	 
+		$this->result = null;
+
+		$murl = arrayload('SHELL','ip');
+		$this->url = $murl[0];
+		$this->httpurl = paramload('SHELL','urlbase');  
+
+		$char_set  = arrayload('SHELL','char_set');	  
+		$charset  = paramload('SHELL','charset');	  		
+		if (($charset=='utf-8') || ($charset=='utf8'))
+			$this->encoding = 'utf8';//must be utf8 not utf-8
+		else  
+			$this->encoding = $char_set[getlocal()]; 		
 
 		$this->imgpath = $this->inpath . '/images/uphotos/';  	  
 		$this->thubpath = $this->inpath . '/images/thub/';
@@ -210,18 +221,7 @@ class shkatalogmedia {
 		if (!empty($toggle))
 			$this->toggler = $toggle;
 		else
-			$this->toggler = $deftoggle;	  
-	  
-		$murl = arrayload('SHELL','ip');
-		$this->url = $murl[0];
-		$this->httpurl = 	paramload('SHELL','urlbase');  
-
-		$char_set  = arrayload('SHELL','char_set');	  
-		$charset  = paramload('SHELL','charset');	  		
-		if (($charset=='utf-8') || ($charset=='utf8'))
-			$this->encoding = 'utf8';//must be utf8 not utf-8
-		else  
-			$this->encoding = $char_set[getlocal()]; 	  
+			$this->toggler = $deftoggle;	  	  
 
 		$this->title = localize('SHKATALOGMEDIA_DPC',getlocal());
 		$this->restype = $rt?$rt:$this->restype;	 //parent restype when no additional files....	  
@@ -434,7 +434,7 @@ class shkatalogmedia {
 	
 	protected function jsFilter() {
 		$cat = GetReq('cat');	
-		$furl = $this->httpurl . '/' . _m('cmsrt.url use t=kfilter&cat=' . $cat); 
+		$furl = $this->httpurl . '/' . _m('cmsrt.url use t=kfilter&cat=' . $cat);	
 		
 		$js = "
 function filter(f,div) { 
@@ -455,6 +455,8 @@ $.ajax({
 	}
 	
 	protected function jsPrice() {
+		//echo $this->max_selection;
+		//if ($this->max_selection<=1) return null;			
 		$cat = GetReq('cat');
 		$min = round($this->min_price, 0, PHP_ROUND_HALF_DOWN); //100;
 		$max = ceil($this->max_price); //700;
@@ -509,7 +511,7 @@ SCROLLTOP;
     }	
 	
 	
-	protected function javascript() {
+	public function javascript() {
 	
        if (iniload('JAVASCRIPT')) {
 	   
@@ -577,9 +579,10 @@ SCROLLTOP;
 								 
 	    $this->result = $db->Execute($sSQL,2);
 		$this->max_items = $db->Affected_Rows();
-	    $this->max_selection = $this->get_max_result();								
+	    $this->get_max_result();		
+		
 		$group = null;
-		$out .= $this->show_submenu('klist',1,$group,null,1);
+		$out = $this->show_submenu('klist',1,$group,null,1);
 			
 		if (!$this->onlyincategory) 
 		    $out .= $this->list_katalog(0);
@@ -587,30 +590,26 @@ SCROLLTOP;
 		return ($out);
 	}	
 
-	public function do_quick_search($text2find,$incategory=null) {
+	public function do_quick_search($text2find) {
         $db = GetGlobal('db');	
 		$page = GetReq('page') ? GetReq('page') : 0;	
 		$stype = GetParam('searchtype'); 
 		$scase = GetParam('searchcase'); 
-		$incategory = $incategory ? $incategory : GetReq('cat');								
-		
+		$incategory = GetReq('cat');								
 		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;	
 		
-		if ($text2find) {
+		if (($text2find) && ($text2find!='*')) {
+			$ut = urldecode($text2find);
+			$parts = explode(" ",$text2find);//get special words in text like code:  			
 			
-			_m("cmsvstats.update_category_statistics use $text2find+search");				
+			_m("cmsvstats.update_category_statistics use $ut+search");				
 		
-			$parts = explode(" ",$text2find);//get special words in text like code:  
-	
-			$sSQL = $this->selectSQL;
-			$sSQL .= " where ";
-		  
 			switch ($parts[0]) {
 		  
-				case 'code:' :  $sSQL .= " ( ".$this->fcode." like '%" . $this->decodeit($parts[1]) . "%')";
-			                break;
-				default      : //normal search
-		  
+				case 'code:' :  $where = " ( ".$this->fcode." like '%" . $this->decodeit($parts[1]) . "%')";
+								break;
+								
+				default      : 	//normal search
 								if (defined("SHNSEARCH_DPC")) {
 									
 									$sfields = array(0=>$this->fcode,
@@ -620,49 +619,53 @@ SCROLLTOP;
 													4=>'manufacturer',
 												);
 									$serialf = serialize($sfields);									
-									$sSQL .= '('. _m("shnsearch.findsql use $text2find+$serialf+$stype+$scase");		  
+									$where = '('. _m("shnsearch.findsql use $text2find+$serialf+$stype+$scase") . ')';		  
 								}
 								else { 			  	
-									$sSQL .= '(' . " ( {$this->itmname} like '%" . strtolower($text2find) . "%' or  {$this->itmname} like '%" . strtoupper($text2find) . "%')";	
-									$sSQL .= " or ";		   
-									$sSQL .= " ( {$this->itmdescr} like '%" . strtolower($text2find) . "%' or  {$this->itmdescr} like '%" . strtoupper($text2find) . "%')";				 
-									$sSQL .= " or ";		   
-									$sSQL .= " ( itmremark like '%" . strtolower($text2find) . "%' or  itmremark like '%" . strtoupper($text2find) . "%')";				 					 
-									$sSQL .= " or ";		   			 
-									$sSQL .= " ( ".$this->fcode." like '%" . strtolower($text2find) . "%' or  " . $this->fcode . " like '%" . strtoupper($text2find) . "%')";						 
+									$where = '(' . " ( {$this->itmname} like '%" . strtolower($text2find) . "%' or  {$this->itmname} like '%" . strtoupper($text2find) . "%')";	
+									$where .= " or ";		   
+									$where .= " ( {$this->itmdescr} like '%" . strtolower($text2find) . "%' or  {$this->itmdescr} like '%" . strtoupper($text2find) . "%')";				 
+									$where .= " or ";		   
+									$where .= " ( itmremark like '%" . strtolower($text2find) . "%' or  itmremark like '%" . strtoupper($text2find) . "%')";				 					 
+									$where .= " or ";		   			 
+									$where .= " ( ".$this->fcode." like '%" . strtolower($text2find) . "%' or  " . $this->fcode . " like '%" . strtoupper($text2find) . "%')";						 
+									$where.= ')' ;
 								}			   
 	   				 
-			}			
-			$sSQL .= ')' ;
-		  
-			if ($incategory) {	
-				$cats = explode($this->sep(),$incategory);
-				foreach ($cats as $c=>$mycat)
-					$sSQL .= ' and cat'.$c ." ='" . $this->replace_spchars($mycat,1) . "'";		  	  
-			}
-		   							  
-			$sSQL .= " and itmactive>0 and active>0";	
-			$sSQL .= $this->orderSQL();
-		  
-			//LIMITED SEARCH
-			if ($this->pager) {
-				$p = $page * $this->pager;
-				$sSQL .= " LIMIT $p,".$this->pager; //page element count
-			}
-		  
-			$resultset = $db->Execute($sSQL,2); 
-			$this->result = $resultset; 
-			$this->meter = $db->Affected_Rows();
-			$this->max_items = $db->Affected_Rows();
-			$this->max_selection = $this->get_max_result($text2find);	
+			}				
 	   	}
+		
+		$sSQL = $this->selectSQL;
+		$sSQL.= $where ? ' where ' . $where : ' where ';
+		
+		if ($incategory) {	
+			$cats = stristr($incategory, $this->sep()) ? explode($this->sep(),$incategory) : array(0=>$incategory);
+			foreach ($cats as $c=>$mycat)
+				$s[] = 'cat'.$c ."=" . $db->qstr($this->replace_spchars($mycat,1));		  	  
+			$catSQL = implode (' and ', $s);	
+		}
+		$sSQL.= $catSQL ? ($where ? ' and ' . $catSQL . ' and ' : $catSQL . ' and ' ) : ($where ? ' and ' : null);   							  
+		$sSQL.= " itmactive>0 and active>0";	
+		$sSQL.= $this->orderSQL();
+		  
+		//LIMITED SEARCH
+		if ($this->pager) {
+			$p = $page * $this->pager;
+			$sSQL .= " LIMIT $p,".$this->pager; //page element count
+		}
+ 
+		$resultset = $db->Execute($sSQL,2); 
+		$this->result = $resultset; 
+		$this->meter = $db->Affected_Rows();
+		$this->max_items = $db->Affected_Rows();
+		$this->get_max_result($ut);		
 	}		
 	
 	
-	public function do_filter_search($text2find,$incategory=null) {
+	public function do_filter_search($text2find) {
         $db = GetGlobal('db');	
 		$page = GetReq('page') ? GetReq('page') : 0;	
-		$incategory = $incategory ? $incategory : GetReq('cat');							
+		$incategory = GetReq('cat');							
 		
 		if ($text2find) {
 		
@@ -698,7 +701,7 @@ SCROLLTOP;
 			$this->result = $resultset; 
 			$this->meter = $db->Affected_Rows();
 			$this->max_items = $db->Affected_Rows();
-			$this->max_selection = $this->get_max_result($text2find);																
+			$this->get_max_result($text2find);																
 	   	}
 	}	
 	
@@ -772,25 +775,30 @@ SCROLLTOP;
 		
 		if ($filter) {
 			if (is_numeric($filter)) {
-			/*  //DISABLE TO NOT RE-FILTER	
+				//DISABLE TO NOT RE-FILTER	
 				$_f = $this->read_policy();
 				$_prices = explode('.', $filter);
 				$sSQL .= " and (" . 
 						 $_f . ">=" . $this->spt($_prices[0]) . " and " .
-						 $_f . "<=" . $this->spt($_prices[1]) . ") "; */ 
+						 $_f . "<=" . $this->spt($_prices[1]) . ") "; 
 			}
 			else		
 				$sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));		
 		}	
 		$sSQL .= " and itmactive>0 and active>0";
-		
 	    $resultset = $db->Execute($sSQL);	
+        $this->max_selection = $resultset->fields[0] ? $resultset->fields[0] : 0;
 		
- 	    $this->max_cat_items = $resultset->fields[0];			 					
-		$this->min_price = $resultset->fields[1];
-		$this->max_price = $resultset->fields[2];
+		/*min max prices (select without price filter) NOT RE-FILTERING*/
+		$sSQL = "select count(id),min($price),max($price) from products where " . $whereClause;
+		$sSQL .= " and itmactive>0 and active>0";	
+	    $resultset = $db->Execute($sSQL);
+		$this->min_price = $resultset->fields[1] ? $resultset->fields[1] : 0;
+		$this->max_price = $resultset->fields[2] ? $resultset->fields[2] : 5000;
+		//echo $sSQL;
+		//echo $this->max_selection .',' . $this->min_price . '-' . $this->max_price;
 		
-		return ($this->max_cat_items);
+		return ($this->max_selection);
 	}	
 
 	public function show_photodb($itmcode=null, $stype=null, $type=null) {
@@ -951,11 +959,11 @@ SCROLLTOP;
 			$resultset = $db->Execute($sSQL,2);
 			$this->result = $resultset; 
 			$this->max_items = $db->Affected_Rows();//count($this->result);
+			
+	        $this->get_max_result();				
 	      
 			if ($this->max_items==1) 
-				return ($this->result->fields[$this->fcode]); //to view the item without click on dir
-
-	        $this->max_selection = $this->get_max_result();			
+				return ($this->result->fields[$this->fcode]); //to view the item without click on dir		
 		}	
 		
 		return null;
@@ -1013,11 +1021,11 @@ SCROLLTOP;
 			$resultset = $db->Execute($sSQL,2);
 			$this->result = $resultset; 
 			$this->max_items = $db->Affected_Rows();//count($this->result);
+			
+		    $this->get_max_result(null, $filter);		
 	      
 			if ($this->max_items==1) 
-				return ($this->result->fields[$this->fcode]); //to view the item without click on dir
-
-	        $this->max_selection = $this->get_max_result(null, $filter);			
+				return ($this->result->fields[$this->fcode]); //to view the item without click on dir			
 		}
 		
 		return null;
@@ -1105,8 +1113,8 @@ SCROLLTOP;
 	    $pager = GetReq('pager') ? GetReq('pager') : $this->pager;
 	    $pcmd = $pagecmd ? $pagecmd : 'klist';
 		  
-	    //echo '|paging>',$this->max_items,':',$this->max_cat_items,':',$this->max_selection;
-	    $mp = $this->max_cat_items;//$this->get_max_result(); //$this->max_selection
+	    //echo '|paging>',$this->max_items,':',$this->max_selection;
+	    $mp = $this->max_selection;
 	    $max_page = floor($mp/$this->pager);//<<<<<<<<<<<<<<<-1;	 plus ceil  
 	    //echo $max_page.">>>>".$mp.">>>>".$this->pager;
 	    $cutter = 2;//5	 
@@ -3191,9 +3199,9 @@ SCROLLTOP;
 		//header
         if ($header) {		
 			$tokens[] = localize('_ALL',getlocal());
-			$tokens[] = $input ? '*' : $this->max_cat_items; //$this->max_items; //'*';
+			$tokens[] = $input ? '*' : $this->max_selection;
 			$tokens[] = $baseurl . _m("cmsrt.url use t=klist&cat=$cat"); 
-			$tokens[] = (!GetReq('input')) ? 'checked="checked"' : null;
+			$tokens[] = (!$input) ? 'checked="checked"' : null;
 			$r[] = $this->combine_tokens($contents,$tokens);
 			unset($tokens);
 		}			

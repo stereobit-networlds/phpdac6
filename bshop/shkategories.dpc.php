@@ -24,10 +24,8 @@ $__LOCALE['SHKATEGORIES_DPC'][2]='_cfounded; categories found; κατηγορί�
 
 class shkategories {
 
-    var $title, $path, $nav_on, $urlpath, $inpath;
-	var $menu;
-	var $title2;
-	var $usetablelocales,$resourcepath,$resourcefilepath;
+    var $title, $path, $nav_on, $urlpath, $inpath, $httpurl;
+	var $menu, $title2, $usetablelocales, $resourcepath, $resourcefilepath;
 	var $depthview;
 	var $selected_category;
 	
@@ -44,7 +42,7 @@ class shkategories {
 	
 		$this->title = localize('SHKATEGORIES_DPC',getlocal());	
 		$this->title2 = localize('SHSUBKATEGORIES_',getlocal());	  
-	  
+		$this->httpurl = paramload('SHELL','urlbase'); 	  
 		$this->path = paramload('SHELL','prpath');	
 	  
 		$this->urlpath = paramload('SHELL','urlpath');
@@ -560,12 +558,8 @@ class shkategories {
 	protected function show_selected_branch($id,$line,$t=null,$myselcat=null,$expand=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$linksonly=null,$titlesonly=null,$idsonly=null) {
 	    $mystylesheet = $stylesheet ? $stylesheet : 'group_category_title';	
 	
-        if ($template) { //template
-	        $tmpl = explode('.',$template);
-	        $mytemplate = $this->select_template($tmpl[0],$cat);		
-	    }
-	    else			   
-  	        $mytemplate = $this->select_template('fpcatcolumn',$cat);			   
+	    $mytemplate = $template ? $this->select_template($template,$cat) :		   
+								  $this->select_template('fpcatcolumn',$cat);			   
 			  
 		if ($line) {	
 			if (trim($myselcat)!=null) {
@@ -720,9 +714,10 @@ class shkategories {
 		$result = $db->Execute($sSQL,2);
 			   					   
 		if ($result) {      
-			foreach ($result as $i=>$rec) 
-				if ($f = $rec[0]) $res[$f] = $rec[1]; 
-  		   	
+			foreach ($result as $i=>$rec) {
+				if ($f = $rec[0]) 
+					$res[$f] = $rec[1]; 
+			}
 			return ($this->distinct($res));
 		}
 	}	
@@ -941,7 +936,7 @@ class shkategories {
 			//print_r ($navdata);
 			if (!empty($navdata)) { // dropdown			
 			    //$mytemplate1 = _m('cmsrt.select_template use fpkatnav-element');
-				$mytemplate2 = _m('cmsrt.select_template use ' . str_replace('.htm', '', $dropdown_tmpl));
+				$mytemplate2 = _m('cmsrt.select_template use ' . $dropdown_tmpl);
 			
 				foreach ($navdata as $n=>$data) {
 					$tdata = explode('@',$data); 
@@ -974,7 +969,7 @@ class shkategories {
 			$x = count($navdata)-1;   
 			// dropdown
 			//$mytemplate1 = _m('cmsrt.select_template use fpkatnav-element');
-			$mytemplate2 = _m('cmsrt.select_template use ' . str_replace('.htm', '', $dropdown_tmpl));
+			$mytemplate2 = _m('cmsrt.select_template use ' . $dropdown_tmpl);
  
 			foreach ($navdata as $n=>$data) {
 				$tdata = explode('@',$data); 
@@ -1207,26 +1202,23 @@ class shkategories {
 	    $id_element= $id ? $id : 'input';
 		$out = "	
 function gocatsearch(url)
-{
-  //alert('url:'+url);
-  var ret = url+'&input='+document.getElementById('$id_element').value;
+{ //var ret = url+'&input='+document.getElementById('$id_element').value;
+  var inp = document.getElementById('$id_element').value;
+  var ret = inp ? url.replace('*', inp) : url.replace('*/', '*/');
   window.location.href = ret;
 }
 ";
 
       return ($out);	
-	}	
+	}		
 	
-	protected function getCombo ($cid,$name,$cat=null,$style="",$size=10,$multiple="",$values=null,$selection='',$cmd=null,$tmpl=null,$noselect=null) {
-	    $t = GetReq('t');
-		$mycmd = $cmd?$cmd:'klist';
+	protected function getComboDISABLED($cid,$name,$cat=null,$style="",$size=10,$multiple="",$values=null,$selection='',$cmd=null,$tmpl=null,$noselect=null) {
+		$mycmd = $cmd ? $cmd : 'klist';
 		$goto = _m("cmsrt.seturl use t=$mycmd&cat=+++1");
-		$selected_cat = $cat?$cat:GetReq('cat');
+		$selected_cat = $cat ? $cat : GetReq('cat');
 		$cats = explode($this->cseparator,$selected_cat);
-	    //print_r($values);
 		
 		$template = $this->select_template($tmpl);
-		//echo $tmpl,'>',$template;
 		
 		$r = "";
 		$select = "<select name=\"".$name."\" class=\"".$style."\"".( $size != 0 ? "size=\"".$size."\"" : "");		
@@ -1291,76 +1283,142 @@ function gocatsearch(url)
 		}	
 	}
 	
+	/*rewrite url ver*/
+	protected function getCombo($cid,$name,$cat=null,$style="",$size=10,$multiple="",$values=null,$selection='',$cmd=null,$tmpl=null,$noselect=null) {
+		$mycmd = $cmd ? $cmd : 'klist';
+		$goto = $this->httpurl . '/'; 
+		$selected_cat = $cat ? $cat : GetReq('cat');
+		$cats = explode($this->cseparator,$selected_cat);
+		
+		$template = $this->select_template($tmpl);
+		
+		$r = "";
+		$select = "<select name=\"".$name."\" class=\"".$style."\"".( $size != 0 ? "size=\"".$size."\"" : "");		
+		$select .= ($cmd) ? " onChange=\"location=this.options[this.selectedIndex].value+'&input='+get_sinput()+'&searchtype='+get_stype()+'&searchcase='+get_scase()\"" : 
+	                        " onChange=\"location=this.options[this.selectedIndex].value\""; 
+		$select .= ">";
+		if ($template) 
+			$tokens[] = ($noselect) ? null : $select;		
+		else
+            $r = ($noselect) ? null : $select;		
+			  
+		if (!empty($values)) {
+			//no head title when noselect		
+			if ($template) {
+				$option_tokens[] = null; 
+				$option_tokens[] = $name;
+				$option_tokens[] = 0;
+				$options[] = ($noselect) ? null : $this->combine_tokens($template, $option_tokens);
+				unset($option_tokens);		
+			}	
+			else		  
+				$r .= ($noselect) ? null : "<option value=''>---$name---</option>";
+		  
+			while (list ($value, $title) = each ($values)) {
+		  
+				if ($selected_cat) {
+					switch ($cid) {
+						case 1 : $myvalue = $goto . _m("cmsrt.url use t=$mycmd&cat=$value"); break;
+						case 2 : $myvalue = $goto . _m("cmsrt.url use t=$mycmd&cat=" . $cats[0] . $this->cseparator . $value); break;
+						case 3 : $myvalue = $goto . _m("cmsrt.url use t=$mycmd&cat=" . $cats[0] . $this->cseparator . $cats[1] . $this->cseparator . $value); break;
+						case 4 : $myvalue = $goto . _m("cmsrt.url use t=$mycmd&cat=" . $cats[0] . $this->cseparator . $cats[1] . $this->cseparator . $cats[2] . $this->cseparator .$value); break;
+						case 5 : $myvalue = $goto . _m("cmsrt.url use t=$mycmd&cat=" . $cats[0] . $this->cseparator . $cats[1] . $this->cseparator . $cats[2] . $this->cseparator . $cats[3] .$this->cseparator. $value); break;
+						default: $myvalue = $goto . _m("cmsrt.url use t=$mycmd&cat=" . $selected_cat . $this->cseparator . $value);
+					}
+				}  
+				else
+					$myvalue = $goto . _m("cmsrt.url use t=$mycmd&cat=$value");
+			  
+				$loctitle = localize($title,getlocal());
+			
+			    //rewrite url by adding $ as input  and 0 as page ( replace * in js )
+			    $rewrite_value = str_replace($mycmd.'/', $mycmd.'/*/', $myvalue) . '0/'; 
+				
+				if ($template) {
+					$option_tokens[] = ($noselect) ? "javascript:gocatsearch('$rewrite_value')" : $rewrite_value; 
+					$option_tokens[] = $loctitle;
+					$option_tokens[] = ($value == $selection ? 1 : 0);
+					$options[] = $this->combine_tokens($template, $option_tokens);
+					unset($option_tokens);		
+				}	
+				else				
+					$r .= "<option value=\"$rewrite_value\"".($value == $selection ? " selected" : "").">$loctitle</option>";
+			}	
+	    }
+
+        if ($template) {
+            $tokens[] = (!empty($options)) ? implode('',$options) : null;
+			$tokens[] = ($noselect) ? null : "</select>";
+			$ret = implode('',$tokens);
+			return ($ret);
+		}
+		else {
+			$r .= ($noselect) ? null : "</select>";
+			return $r;
+		}	
+	}	
+	
 	protected function asksql($cat,$presel=null) {
 		$db = GetGlobal('db');	
 		$selcat = GetReq('cat');
 		$lan = getlocal();
-		$mylan = $lan?$lan:'0';	   
+		$mylan = $lan ? $lan : '0';	   
   	    $f = $mylan; 		
 		$mylancat = substr($cat,0,3). $f . substr($cat,-1); //echo $mylancat;
-        $sSQL = "select $cat,$mylancat from categories where ctgid>0 and active>0 and view>0 and search>0";
- 
+        $sSQL = "select distinct $cat,$mylancat from categories where ctgid>0 and active>0 and view>0 and search>0";
+
 		if ($presel) 
 			$sSQL .= ' and ' . $presel;
-
+ 
 	    $result = $db->Execute($sSQL,2);	   	
 	    if ($result) {      
-			while(!$result->EOF) {
-		   
-				$f = $this->replace_spchars($result->fields[0]);
-				$ff = $result->fields[1];			   
-				if ($f) 
-					$data[$f] = $ff ? $ff : $f; 
 
-				$result->MoveNext();
-				$i+=1;
-			}   	
-			$mydata =  $this->distinct($data);
+			foreach($result as $i=>$rec) { 	
+
+				$f = $this->replace_spchars($rec[0]);
+				$ff = $rec[1];			   
+				if ($f) 
+					$data[$f] = isset($ff) ? $ff : $f; 
+			}  
+	
+			@asort($data); 
+			$mydata = $data; //$this->distinct($data);
 	    }	 
 	    return ($mydata);
 	}		
 	
-	public function show_combo_results($title=null,$preselcat=null,$isleaf=null,$issearch=null) {
+	public function show_combo_results($title=null,$preselcat=null,$isleaf=null,$scmd=null) {
 		$db = GetGlobal('db');	
-		$cmd = $issearch ? $search_cmd : 'klist';
+		$cmd = $scmd ? $scmd : 'klist';
 		$loctitle = localize($title,getlocal());
 		$mytitle = $loctitle ? $loctitle : $this->title;
-		$mytitle2 = ($isleaf) ? ($loctitle ? $loctitle : $this->title2) : $this->title2;		
-		$s1 = GetReq('s1');
-		$s2 = GetReq('s2');
-		$s3 = GetReq('s3');
-		$s4 = GetReq('s4');    
-		if ($issearch) 
-			$search_cmd = $issearch;	 
-	   
+		$mytitle2 = ($isleaf) ? ($loctitle ? $loctitle : $this->title2) : $this->title2;		   
 		$cat = $preselcat ? $preselcat : GetReq('cat');
-		$goto = $preselcat ? _m("cmsrt.seturl use t=$cmd&cat=$preselcat+++1") : _m("cmsrt.seturl use t=$cmd&cat=+++1");
-	   
+
 		$mydata = $this->asksql('cat2');
 	   
 	    $ret = "<form name=\"jumpy\">";
 	   
 		if ($cat) {
 			$mycat = explode($this->cseparator,$cat);
-			//print_r($mycat);
 	     
 			if (!$isleaf) //dont show main combo when leaf (last cat)
-				$ret .= $this->getCombo(1,$mytitle,$cat,'myf_select',null,null,$mydata,$mycat[0],$search_cmd).'<br>';   	   
+				$ret .= $this->getCombo(1,$mytitle,$cat,'myf_select',null,null,$mydata,$mycat[0],$cmd).'<br>';   	   
 		 
 			if ($dv = $this->depthview) {
 				//echo $dv,'a';
 				if (($mycat[0])&&($dv>=2)) {
 				$mydata2 = $this->asksql('cat3',"cat2='$mycat[0]'");
 					if (!empty($mydata2))
-						$ret .= $this->getCombo(2,$mytitle2,$cat,'myf_select',null,null,$mydata2,$mycat[1],$search_cmd).'<br>';   	   
+						$ret .= $this->getCombo(2,$mytitle2,$cat,'myf_select',null,null,$mydata2,$mycat[1],$cmd).'<br>';   	   
 						if (($mycat[1])&&($dv>=3)) {
 							$mydata3 = $this->asksql('cat4',"cat3='$mycat[1]' and cat2='$mycat[0]'");
 						if (!empty($mydata3))
-							$ret .= $this->getCombo(3,$mytitle2,$cat,'myf_select',null,null,$mydata3,$mycat[2],$search_cmd).'<br>'; 
+							$ret .= $this->getCombo(3,$mytitle2,$cat,'myf_select',null,null,$mydata3,$mycat[2],$cmd).'<br>'; 
 						if (($mycat[2])&&($dv>=4)) {
 							$mydata4 = $this->asksql('cat5',"cat4='$mycat[2]' and cat3='$mycat[1]' and cat2=$mycat[0]");
 							if (!empty($mydata4))
-								$ret .= $this->getCombo(4,$mytitle2,$cat,'myf_select',null,null,$mydata4,$mycat[3],$search_cmd); 		 		 
+								$ret .= $this->getCombo(4,$mytitle2,$cat,'myf_select',null,null,$mydata4,$mycat[3],$cmd); 		 		 
 						}
 					}
 				}		    		 
@@ -1369,22 +1427,22 @@ function gocatsearch(url)
 				if ($mycat[0]) {
 					$mydata2 = $this->asksql('cat3',"cat2='$mycat[0]'");
 					if (!empty($mydata2))
-						$ret .= $this->getCombo(2,$mytitle2,$cat,'myf_select',null,null,$mydata2,$mycat[1],$search_cmd).'<br>';   	   
+						$ret .= $this->getCombo(2,$mytitle2,$cat,'myf_select',null,null,$mydata2,$mycat[1],$cmd).'<br>';   	   
 					if ($mycat[1]) {
 						$mydata3 = $this->asksql('cat4',"cat3='$mycat[1]' and cat2='$mycat[0]'");
 						if (!empty($mydata3))
-							$ret .= $this->getCombo(3,$mytitle2,$cat,'myf_select',null,null,$mydata3,$mycat[2],$search_cmd).'<br>'; 
+							$ret .= $this->getCombo(3,$mytitle2,$cat,'myf_select',null,null,$mydata3,$mycat[2],$cmd).'<br>'; 
 						if ($mycat[2]) {
 							$mydata4 = $this->asksql('cat5',"cat4='$mycat[2]' and cat3='$mycat[1]' and cat2=$mycat[0]");
 							if (!empty($mydata4))
-								$ret .= $this->getCombo(4,$mytitle2,$cat,'myf_select',null,null,$mydata4,$mycat[3],$search_cmd); 		 		 
+								$ret .= $this->getCombo(4,$mytitle2,$cat,'myf_select',null,null,$mydata4,$mycat[3],$cmd); 		 		 
 						}
 					}
 				}
 			}//depthview
 		}
 		else {	   
-			$ret .= $this->getCombo(1,$mytitle,$cat,'myf_select',null,null,$mydata,'',$search_cmd).'<br>';   
+			$ret .= $this->getCombo(1,$mytitle,$cat,'myf_select',null,null,$mydata,'',$cmd).'<br>';   
 			/*$ret .= $this->getCombo(2,'b','',null,null,null,'').'<br>'; 
 			$ret .= $this->getCombo(3,'c','',null,null,null,'').'<br>'; 
 			$ret .= $this->getCombo(4,'d','',null,null,null,'');*/
@@ -1402,7 +1460,7 @@ function gocatsearch(url)
 	   
 		if ($root) {/*always return default main categories*/
 			$mydata = $this->asksql("cat2");
-			$ret = $this->getCombo(1,$mytitle,$cat,'myf_select',null,null,$mydata,$mycat[0],$search_cmd,$tmpl,$noselect);   	   	
+			$ret = $this->getCombo(1,$mytitle,$cat,'myf_select',null,$multiple,$mydata,$mycat[0],$search_cmd,$tmpl,$noselect);   	   	
 			return ($ret);
 		}	   
 	   
@@ -1416,11 +1474,11 @@ function gocatsearch(url)
 		}	
 	   
 		$mydata = $this->asksql("cat".(count($mycat)+2), $ps);
-		$ret = $this->getCombo(count($mycat)+1,$mytitle,$cat,'myf_select',null,null,$mydata,$mycat[0],$search_cmd,$tmpl,$noselect);   	   	
+		$ret = $this->getCombo(count($mycat)+1,$mytitle,$cat,'myf_select',null,$multiple,$mydata,$mycat[0],$search_cmd,$tmpl,$noselect);   	   	
 	   
 		if ($ret==null) {
 			$mydata = $this->asksql("cat2");
-			$ret = $this->getCombo(1,$mytitle,$cat,'myf_select',null,null,$mydata,$mycat[0],$search_cmd,$tmpl,$noselect);   	   	
+			$ret = $this->getCombo(1,$mytitle,$cat,'myf_select',null,$multiple,$mydata,$mycat[0],$search_cmd,$tmpl,$noselect);   	   	
 		}	  
 		return ($ret);
 	}
@@ -1530,7 +1588,7 @@ function gocatsearch(url)
 					return ($mytemplate); 
 			}
 		} 
-		$mytemplate = _m('cmsrt.select_template use ' . $tfile);
+		$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $tfile));
 		return ($mytemplate);	 
     }		
 	

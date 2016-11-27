@@ -72,7 +72,7 @@ class shnsearch {
 
 		switch ($event) {
 		    //not used
-			case 'filter'         :     $this->do_filter_search($this->text2find, GetReq('cat')); //getreq input
+			case 'filter'         :     $this->do_filter_search($this->text2find);
 										break;		
 										
 			//cart
@@ -82,11 +82,8 @@ class shnsearch {
 	  
 			case 'search' 		 :	  
 			default 			 : 		$this->search_javascript();
-		
-										if ($this->text2find)//always here
-											$this->do_quick_search($this->text2find, GetReq('cat'));
-										else
-											$this->do_search();//not used??.....
+										$this->do_quick_search($this->text2find);
+										//$this->do_search();//not used
 		} 
 	}
 
@@ -293,15 +290,15 @@ function get_stype()
 		return ($ret);
 	}		
 	
-	protected function do_quick_search($text2find,$comboselection=null) {
+	protected function do_quick_search($text2find) {
 	
-		_m('shkatalogmedia.do_quick_search use '.$text2find.'+'.$comboselection);
-			  
+		_m('shkatalogmedia.do_quick_search use '.$text2find);
+		_m('shkatalogmedia.javascript');		  
 	}
 	
-	protected function do_filter_search($filter,$cat=null) {
+	protected function do_filter_search($filter) {
 	
-		 _m('shkatalogmedia.do_filter_search use '.$filter.'+'.$cat);
+		 _m('shkatalogmedia.do_filter_search use '.$filter);
 	}	
 	
 	protected function search_categories($text2find=null,$template=null) {
@@ -318,10 +315,9 @@ function get_stype()
 		return ($ret);	  
 	}		
 	
-	//override
 	public function searchin($staticmenu=0) {
 	
-        $ret = _m('shkategories.show_combo_results use '.$title.'+'.$preselcat.'+'.$isleaf.'+search');
+        $ret = _m('shkategories.show_combo_results use '.$title.'+++search');
 		
 		return ($ret);
 	}	
