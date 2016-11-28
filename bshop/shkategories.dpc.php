@@ -1292,27 +1292,14 @@ function gocatsearch(url)
 		
 		$template = $this->select_template($tmpl);
 		
-		$r = "";
-		$select = "<select name=\"".$name."\" class=\"".$style."\"".( $size != 0 ? "size=\"".$size."\"" : "");		
-		$select .= ($cmd) ? " onChange=\"location=this.options[this.selectedIndex].value+'&input='+get_sinput()+'&searchtype='+get_stype()+'&searchcase='+get_scase()\"" : 
-	                        " onChange=\"location=this.options[this.selectedIndex].value\""; 
-		$select .= ">";
-		if ($template) 
-			$tokens[] = ($noselect) ? null : $select;		
-		else
-            $r = ($noselect) ? null : $select;		
+		$tokens[] = null; //dummy	
 			  
 		if (!empty($values)) {
-			//no head title when noselect		
-			if ($template) {
-				$option_tokens[] = null; 
-				$option_tokens[] = $name;
-				$option_tokens[] = 0;
-				$options[] = ($noselect) ? null : $this->combine_tokens($template, $option_tokens);
-				unset($option_tokens);		
-			}	
-			else		  
-				$r .= ($noselect) ? null : "<option value=''>---$name---</option>";
+			$option_tokens[] = null; 
+			$option_tokens[] = $name;
+			$option_tokens[] = 0;
+			$options[] = null;
+			unset($option_tokens);		
 		  
 			while (list ($value, $title) = each ($values)) {
 		  
@@ -1329,33 +1316,22 @@ function gocatsearch(url)
 				else
 					$myvalue = $goto . _m("cmsrt.url use t=$mycmd&cat=$value");
 			  
-				$loctitle = localize($title,getlocal());
+				$loctitle = localize($title, getlocal());
 			
 			    //rewrite url by adding $ as input  and 0 as page ( replace * in js )
 			    $rewrite_value = str_replace($mycmd.'/', $mycmd.'/*/', $myvalue) . '0/'; 
 				
-				if ($template) {
-					$option_tokens[] = ($noselect) ? "javascript:gocatsearch('$rewrite_value')" : $rewrite_value; 
-					$option_tokens[] = $loctitle;
-					$option_tokens[] = ($value == $selection ? 1 : 0);
-					$options[] = $this->combine_tokens($template, $option_tokens);
-					unset($option_tokens);		
-				}	
-				else				
-					$r .= "<option value=\"$rewrite_value\"".($value == $selection ? " selected" : "").">$loctitle</option>";
+				$option_tokens[] = ($noselect) ? "javascript:gocatsearch('$rewrite_value')" : $rewrite_value; 
+				$option_tokens[] = $loctitle;
+				$option_tokens[] = ($value == $selection ? 1 : 0);
+				$options[] = $this->combine_tokens($template, $option_tokens);
+				unset($option_tokens);		
 			}	
 	    }
 
-        if ($template) {
-            $tokens[] = (!empty($options)) ? implode('',$options) : null;
-			$tokens[] = ($noselect) ? null : "</select>";
-			$ret = implode('',$tokens);
-			return ($ret);
-		}
-		else {
-			$r .= ($noselect) ? null : "</select>";
-			return $r;
-		}	
+        $tokens[] = (!empty($options)) ? implode('',$options) : null;
+		$ret = implode('',$tokens);
+		return ($ret);	
 	}	
 	
 	protected function asksql($cat,$presel=null) {
@@ -1495,10 +1471,11 @@ function gocatsearch(url)
 		$tdata = $this->select_template($template); 
 
 		if ($rs) {
+			
 			$rscats = explode(',',$rs);
 			$sSQL = "select cat2,cat{$f}2,cat3,cat{$f}3,cat4,cat{$f}4,cat5,cat{$f}5 from categories where ctgid in (" . $rs . ")";
-			//echo $sSQL;
 		    $res = $db->Execute($sSQL,2);
+			
 			foreach ($res as $i=>$rec) {
 				$icat = array();
 				if ($rec['cat2']) $icat[] = $rec['cat2'];
@@ -1533,7 +1510,7 @@ function gocatsearch(url)
 		$mytemplate = $template ? $this->select_template($template, $cat) : null;
 
 	    if ($items[0]) {
-	        //make table
+
 	        $itemscount = count($items);
 	        $timestoloop = floor($itemscount/$mylinemax)+1;
 	        $meter = 0;

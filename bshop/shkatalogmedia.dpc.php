@@ -458,8 +458,8 @@ $.ajax({
 		//echo $this->max_selection;
 		//if ($this->max_selection<=1) return null;			
 		$cat = GetReq('cat');
-		$min = round($this->min_price, 0, PHP_ROUND_HALF_DOWN); //100;
-		$max = ceil($this->max_price); //700;
+		$min = $this->min_price ? round($this->min_price, 0, PHP_ROUND_HALF_DOWN) : 0; //100;
+		$max = $this->max_price ? ceil($this->max_price) : 10; //700;
 		$diff = ($max - $min);
 		$step = ($diff<=100) ? 1 : 10;//($max-$min) / 10;
 		$input = is_numeric(GetParam('input')) ? explode('.', GetParam('input')) : array('0','0');				
