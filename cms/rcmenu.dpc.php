@@ -15,6 +15,8 @@ $__EVENTS['RCMENU_DPC'][2]='cpmconfdel';
 $__EVENTS['RCMENU_DPC'][3]='cpmconfadd';
 $__EVENTS['RCMENU_DPC'][4]='cpmsavenest';
 $__EVENTS['RCMENU_DPC'][5]='cpmloadnest';
+$__EVENTS['RCMENU_DPC'][6]='cpmnewmenu';
+$__EVENTS['RCMENU_DPC'][7]='cpmselectmenu';
 
 $__ACTIONS['RCMENU_DPC'][0]='cpmconfig';
 $__ACTIONS['RCMENU_DPC'][1]='cpmconfedit';
@@ -22,13 +24,20 @@ $__ACTIONS['RCMENU_DPC'][2]='cpmconfdel';
 $__ACTIONS['RCMENU_DPC'][3]='cpmconfadd';
 $__ACTIONS['RCMENU_DPC'][4]='cpmsavenest';
 $__ACTIONS['RCMENU_DPC'][5]='cpmloadnest';
+$__ACTIONS['RCMENU_DPC'][6]='cpmnewmenu';
+$__ACTIONS['RCMENU_DPC'][7]='cpmselectmenu';
 
 $__LOCALE['RCMENU_DPC'][0]='RCMENU_DPC;Menu Configuration;Menu Configuration;';
 $__LOCALE['RCMENU_DPC'][1]='_newelement;New element;Νέο στοιχείο;';
 $__LOCALE['RCMENU_DPC'][2]='_presshere;Press here;Πατήστε εδώ για εισαγωγή;';
 $__LOCALE['RCMENU_DPC'][3]='title;Title;Τίτλος;';
 $__LOCALE['RCMENU_DPC'][4]='link;Url;Δεσμός Url;';
-
+$__LOCALE['RCMENU_DPC'][5]='_mainmenu;Main;Βασικό;';
+$__LOCALE['RCMENU_DPC'][6]='_newmenu;New;Νέο;';
+$__LOCALE['RCMENU_DPC'][7]='_menu;Menu;Μενού;';
+$__LOCALE['RCMENU_DPC'][8]='_collapse;Collapse;Συρίκνωση;';
+$__LOCALE['RCMENU_DPC'][9]='_expand;Expand;Επέκταση;';
+$__LOCALE['RCMENU_DPC'][10]='_save;Save;Αποθήκευση;';
 
 class rcmenu extends shmenu {
 
@@ -66,38 +75,40 @@ class rcmenu extends shmenu {
 		if ($login!='yes') return null;		
 	    	    		  			    
 		switch ($event) {	
+		
+		    case "cpmselectmenu"    :	break;
+			case "cpmnewmenu"       :	break;
 			
-				case "cpmloadnest"      : 	$this->t_config = $this->read_config();
-											$this->loadNestList(); die();
-											break;	
+			case "cpmloadnest"      : 	$this->t_config = $this->read_config();
+										$this->loadNestList(); die();
+										break;	
 											
-				case "cpmsavenest"      : 	$this->t_config = $this->read_config();
-											$this->saveNestList(); die();
-											break;
+			case "cpmsavenest"      : 	$this->t_config = $this->read_config();
+										$this->saveNestList(); die();
+										break;
 											
-				case "cpmconfedit"      :	
-				case "cpmconfdel"       :	
-				case "cpmconfadd"       :									 
-				case "cpmconfig"        :     
-				default                 :	$this->t_config = $this->read_config();
+			case "cpmconfedit"      :	
+			case "cpmconfdel"       :	
+			case "cpmconfadd"       :									 
+			case "cpmconfig"        :     
+			default                 :	$this->t_config = $this->read_config();
+										if (GetReq('save')==1) {
+											//echo 'save';
+											$this->write_config();  
+											$this->t_config = $this->read_config(); //re-read
+										}	 
+										elseif (GetReq('add')==1) {
+											//echo 'add';
 
-											if (GetReq('save')==1) {
-												//echo 'save';
-												$this->write_config();  
-												$this->t_config = $this->read_config(); //re-read
-											}	 
-											elseif (GetReq('add')==1) {
-												//echo 'add';
-
-												$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
-												/*for ($z=0;$z<=2;$z++) {
-													$tvar = 't_config'.$z;
-													print "<pre>"; print_r($this->{$tvar}); print "</pre>";
-												}*/	
+											$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
+											/*for ($z=0;$z<=2;$z++) {
+												$tvar = 't_config'.$z;
+												print "<pre>"; print_r($this->{$tvar}); print "</pre>";
+											}*/	
 	  
-												$this->write_config();  
-												$this->t_config = $this->read_config(); //re-read
-											}				
+											$this->write_config();  
+											$this->t_config = $this->read_config(); //re-read
+										}				
 		}	  
     }
   
@@ -107,6 +118,9 @@ class rcmenu extends shmenu {
 		if ($login!='yes') return null;			
 
 		switch ($action) {	
+		
+		    case "cpmselectmenu"    :	break;
+			case "cpmnewmenu"       :	break;		
 	   
 			case "cpmloadnest"      :	break;	 	   
 			case "cpmsavenest"      :	break;	   
@@ -542,26 +556,43 @@ class rcmenu extends shmenu {
 		return $this->selectedMenu ?  $this->selectedMenu : 'None';
 	}
 	
-	protected function readMenus() {
+	public function readSelectedMenu() {
 		
+	}
+	
+	public function readCurrentMenu() {
+		$cpGet = _v('rcpmenu.cpGet');		
+		
+		if ($id = $cpGet['id']) {
+			//current id item
+		}
+		elseif ($cat = $cpGet['cat']) {
+			//current cat, cat items
+		}	
+		else //current conf of main menu
+			return $this->nestBuild(); 
+			//return null;		
 	}
 	
 	public function menuButtonSelect() {
 		//$mode = GetReq('mode') ? GetReq('mode') : 'menu';
         
-		$turl1 = seturl('t=cpcmslandp&mode=items');		
-		$turl2 = seturl('t=cpcmslandp&mode=cats');
-		$turl3 = seturl('t=cpcmslandp&mode=rel');
-		$turl4 = seturl('t=cpcmslandp&mode=tree');
+		$turl0 = seturl('t=cpmselectmenu&menu=items');		
+		$turl1 = seturl('t=cpmselectmenu&menu=cats');
+		$turl2 = seturl('t=cpmselectmenu&menu=rel');
+		$turl3 = seturl('t=cpmselectmenu&menu=tree');
 		
-		$turl0 = seturl('t=cpmconfig&ismain=1');
-		$button = $this->createButton(localize('_mode', getlocal()), 
+		$turl99 = seturl('t=cpmconfig&ismain=1');
+		$turl98 = seturl('t=cpmnewmenu');		
+		$button = $this->createButton(localize('_menu', getlocal()), 
 										array(localize('_items', getlocal())=>$turl0,
 										      localize('_relatives', getlocal())=>$turl1,
 											  localize('_cats', getlocal())=>$turl2,											  
 											  localize('_tree', getlocal())=>$turl3,
+											  0=>'',
+											  localize('_mainmenu', getlocal())=>$turl99,											  
 											  1=>'',
-											  localize('_mainmenu', getlocal())=>$turl0,
+											  localize('_newmenu', getlocal())=>$turl98,											  
 		                                ),'info');	
 		return $button;									
 																	
@@ -583,8 +614,6 @@ class rcmenu extends shmenu {
 			case 'mini'  : $size = 'btn-mini '; break;
 			default      : $size = null;
 		}
-		
-		//$ret = "<button class=\"btn  btn-primary\" type=\"button\">Primary</button>";
 		
 		if (!empty($urls)) {
 			foreach ($urls as $n=>$url)
