@@ -6,7 +6,7 @@ define("RCMENU_DPC",true);
 
 $__DPC['RCMENU_DPC'] = 'rcmenu';
 
-$d = GetGlobal('controller')->require_dpc('cgi-bin/shop/shmenu.dpc.php', paramload('SHELL','urlpath'));
+$d = GetGlobal('controller')->require_dpc('bshop/shmenu.dpc.php');
 require_once($d);
 
 $__EVENTS['RCMENU_DPC'][0]='cpmconfig';
@@ -36,210 +36,179 @@ class rcmenu extends shmenu {
 	var $t_config, $t_config0, $t_config1, $t_config2;
 	var $edit_per_lan, $cptemplate;
 	
-
-    function __construct() {
+    public function __construct() {
 	
-	      parent::__construct();
+	    parent::__construct();
 	
-	      $this->title = localize('RCMENU_DPC',getlocal());		
+	    $this->title = localize('RCMENU_DPC',getlocal());		
 	
-	      $os =  php_uname();//'>';
-          $info = strtolower($os);// $_SERVER['HTTP_USER_AGENT'] );   
-          $this->crlf = PHP_EOL; //( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
+	    $os =  php_uname();//'>';
+        $info = strtolower($os);// $_SERVER['HTTP_USER_AGENT'] );   
+        $this->crlf = PHP_EOL; //( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
 		  
-          if ($remoteuser=GetSessionParam('REMOTELOGIN')) 
+        if ($remoteuser=GetSessionParam('REMOTELOGIN')) 
 		    $this->path = paramload('SHELL','prpath')."instances/$remoteuser/";	
-		  else 
+		else 
 		    $this->path = paramload('SHELL','prpath');		
 	
-	      $this->edit_per_lan = true; //false;
+	    $this->edit_per_lan = true; //false;
 	
-		  //get local config
-		  $this->t_config = array();
-		  $this->t_config = $this->read_config();
+		//get local config
+		$this->t_config = array();
+		$this->t_config = $this->read_config();
 		  
-		  if (GetReq('editmode')) {//default form colors	
-		    global $config;
-			$config['FORM']['element_bgcolor1'] = 'EEEEEE';
-			$config['FORM']['element_bgcolor2'] = 'DDDDDD';			
-		  }
-		  
-		  $this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate', $this->path);	
+		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate', $this->path);	
 	}
 	
-    function event($event=null) {	
+    public function event($event=null) {	
+		$sFormErr = GetGlobal('sFormErr');		
 	
-	   /////////////////////////////////////////////////////////////
-	   if (GetSessionParam('LOGIN')!='yes') {//die("Not logged in!");//	
-	     if (!GetReq('editmode'))		 
-	       die("Not logged in!");//	
-		 else
-     	   //header("Location: cp.php?editmode=1&encoding=" . GetReq('encoding'));  
-   	       die("Not logged in! <A href='../cp.php?editmode=1&encoding=".GetReq('encoding')."'>LOGIN</A>");//
-	   }	   		   
-	   /////////////////////////////////////////////////////////////		
-	
-       $sFormErr = GetGlobal('sFormErr');	    	    		  			    
+	   	$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+		if ($login!='yes') return null;		
+	    	    		  			    
   
-       if (!$sFormErr) {   
+		if (!$sFormErr) {   
   
-	   switch ($event) {	
-		case "cpmloadnest"      : //load list    
-		                         $this->loadNestList(); die();
-		                         break;	   
-		case "cpmsavenest"      : //save list    
-		                         $this->saveNestList(); die();
-		                         break;
-		case "cpmconfedit"      :     
-		                         
-		                         break;
-		case "cpmconfdel"       :     
-		                          
-		                         break;
-		case "cpmconfadd"       :     
-		                          
-		                         break;								 
-		case "cpmconfig"       :     
-		default               :
-		                          
-		                         break;								 
-       }
-      }
+			switch ($event) {	
+				case "cpmloadnest"      : 	//load list    
+											$this->loadNestList(); die();
+											break;	   
+				case "cpmsavenest"      : 	//save list    
+											$this->saveNestList(); die();
+											break;
+				case "cpmconfedit"      :	break;
+				case "cpmconfdel"       :	break;
+				case "cpmconfadd"       :	break;								 
+				case "cpmconfig"        :     
+				default                 :						 
+			}
+		}
 	  
-	  if (GetReq('save')==1) {
-	    //echo 'save';
-	    $this->write_config();  
-		$this->t_config = $this->read_config(); //re-read
-	  }	 
-	  elseif (GetReq('add')==1) {
-	    //echo 'add';
+		if (GetReq('save')==1) {
+			//echo 'save';
+			$this->write_config();  
+			$this->t_config = $this->read_config(); //re-read
+		}	 
+		elseif (GetReq('add')==1) {
+			//echo 'add';
 
-		$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
-		/*for ($z=0;$z<=2;$z++) {
+			$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
+			/*for ($z=0;$z<=2;$z++) {
 			$tvar = 't_config'.$z;
             print "<pre>"; print_r($this->{$tvar}); print "</pre>";
-		}*/	
+			}*/	
 	  
-	    $this->write_config();  
-		$this->t_config = $this->read_config(); //re-read
-	  }		  
+			$this->write_config();  
+			$this->t_config = $this->read_config(); //re-read
+		}		  
     }
   
-    function action($action=null) {
+    public function action($action=null) {
+		
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+		if ($login!='yes') return null;			
 
-	   switch ($action) {	
+		switch ($action) {	
 	   
-		case "cpmloadnest"      :break;	 	   
-		case "cpmsavenest"      :break;	   
+			case "cpmloadnest"      :	break;	 	   
+			case "cpmsavenest"      :	break;	   
 
-		case "cpmconfedit"      :     
-		                         $out .= $this->show_configuration("Save","cpmconfig&save=1",false);
-		                         break;
-		case "cpmconfdel"       :     
-		                          
-		                         break;
-		case "cpmconfadd"       :     
-		                         $out .= $this->add_configuration("Add","cpmconfig&add=1");  
-		                         break;								 						 
-		case "cpmconfig"       :     
-		default                :
-		                         $out .= $this->show_configuration("Edit","cpmconfedit",true); 
-		                         break;								 
-       }
+			case "cpmconfedit"      :   $out = $this->show_configuration("Save","cpmconfig&save=1",false);
+										break;
+			case "cpmconfdel"       :	break;
+			case "cpmconfadd"       :   $out = $this->add_configuration("Add","cpmconfig&add=1");  
+										break;								 						 
+			case "cpmconfig"        :     
+			default                 :   $out = $this->show_configuration("Edit","cpmconfedit",true); 							 
+		}
 	 
-	   return ($out);
+		return ($out);
     } 	
 	
-	function show_configuration($button_title,$action,$editable=false) {
-	   $editmode = GetReq('editmode');
-	   $myaction = seturl("t=".$action.'&editmode='.$editmode); 	
-       $form = new form(localize('RCMENU_DPC',getlocal()), "RCMENU", FORM_METHOD_POST, $myaction);	
+	protected function show_configuration($button_title,$action,$editable=false) {
+		$myaction = seturl("t=".$action); 	
+		$form = new form(localize('RCMENU_DPC',getlocal()), "RCMENU", FORM_METHOD_POST, $myaction);	
 		 
-	   //show params by language
-	   if ($this->edit_per_lan) {
-	       $lan = getlocal() ? getlocal() :'0';	   
-	       $tvar = 't_config'.$lan;
-	       $c_config = $this->$tvar;
-	   }
-       else
-           $c_config = (array)$this->t_config; 	   
+		//show params by language
+		if ($this->edit_per_lan) {
+			$lan = getlocal() ? getlocal() :'0';	   
+			$tvar = 't_config'.$lan;
+			$c_config = $this->$tvar;
+		}
+		else
+			$c_config = (array)$this->t_config; 	   
 	
-	   foreach ($c_config as $section=>$data) {
+		foreach ($c_config as $section=>$data) {
 	   
-	     if ($section) $form->addGroup($section,ucfirst(strtolower($section)));
+			if ($section) $form->addGroup($section,ucfirst(strtolower($section)));
 		  	   
-	     foreach ($data as $var=>$val) {
-		    $sectionvar = $section .'-'. $var;
-			$localize_var = localize($var,getlocal());
-            $form->addElement($section,new form_element_text($localize_var,$sectionvar,$val,"forminput",60,255,$editable));
-		 }
-		 $newelement = localize("_newelement",getlocal());
-		 $presshere = localize("_presshere",getlocal());
-		 $form->addElement($section,new form_element_onlytext($newelement,seturl("t=cpmconfadd&section=$section&editmode=".$editmode,$presshere),"forminput"));
-	   }
+			foreach ($data as $var=>$val) {
+				$sectionvar = $section .'-'. $var;
+				$localize_var = localize($var,getlocal());
+				$form->addElement($section,new form_element_text($localize_var,$sectionvar,$val,"forminput",60,255,$editable));
+			}
+			$newelement = localize("_newelement",getlocal());
+			$presshere = localize("_presshere",getlocal());
+			$form->addElement($section,new form_element_onlytext($newelement,seturl("t=cpmconfadd&section=$section&editmode=".$editmode,$presshere),"forminput"));
+		}
 	   
-	   // Adding a hidden field
-       $form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
+		// Adding a hidden field
+		$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
  
-	   // Showing the form
-	   $fout = $form->getform(0,0,$button_title);	
+		// Showing the form
+		$fout = $form->getform(0,0,$button_title);	
 	   
-	   return ($fout);	   
+		return ($fout);	   
 	}
 	
-	function add_configuration($button_title,$action) {
-	   $myaction = seturl("t=".$action.'&editmode='.GetReq('editmode')); 	
-       $form = new form(localize('RCMENU_DPC',getlocal()), "RCMENU", FORM_METHOD_POST, $myaction);	
+	protected function add_configuration($button_title,$action) {
+		$myaction = seturl("t=".$action); 	
+		$form = new form(localize('RCMENU_DPC',getlocal()), "RCMENU", FORM_METHOD_POST, $myaction);	
 		
-	   if ($section=GetReq('section')) {
-	     $form->addGroup($section,ucfirst(strtolower($section)));		
+		if ($section=GetReq('section')) {
+			$form->addGroup($section,ucfirst(strtolower($section)));		
 		 
-		 $data = $this->t_config[$section];
-	     foreach ($data as $var=>$val) {
-		 
-            $form->addElement($section,new form_element_onlytext($var,$val,"forminput",20,255,0));
-		 }
+			$data = $this->t_config[$section];
+			foreach ($data as $var=>$val) 
+				$form->addElement($section,new form_element_onlytext($var,$val,"forminput",20,255,0));
 		 	
-         $form->addElement($section,new form_element_text('variable','variable','variable',"forminput",20,255,0));		 	 
-         $form->addElement($section,new form_element_text('value','value','value',"forminput",20,255,0));			 
+			$form->addElement($section,new form_element_text('variable','variable','variable',"forminput",20,255,0));		 	 
+			$form->addElement($section,new form_element_text('value','value','value',"forminput",20,255,0));			 
 		 
-	     // Adding section as hidden field
-         $form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("section", $section));		 
+			// Adding section as hidden field
+			$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("section", $section));		 
 		 
-	     // Adding a hidden field
-         $form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
-       }	
+			// Adding a hidden field
+			$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
+		}	
 	   
-	   // Showing the form
-	   $fout = $form->getform(0,0,$button_title);	
+		// Showing the form
+		$fout = $form->getform(0,0,$button_title);	
 	   
-	   return ($fout);		   	    
+		return ($fout);		   	    
 	}
 	
-	
-	
-    function paramload($section,$param) {
-          $config = $this->t_config;//GetGlobal('config');
+    public function paramload($section,$param) {
+        $config = $this->t_config;
 
-          if (is_array($config[$section]))     
+        if (is_array($config[$section]))     
 	        return ($config[$section][$param]);
 
     }
 	
-	function paramset($section=null,$param=null,$value=null) {
-	
-	      //if param is of type foo.bar the section=foo param=bar
-		  //echo $param;
+	public function paramset($section=null,$param=null,$value=null) {
+	    //if param is of type foo.bar the section=foo param=bar
+		//echo $param;
 
-		  $parts = explode('.',$param);
-		  if ($parts[1]) {//if ok
-			  //echo '.';
-			  $param = $parts[1];
-			  $section = strtoupper($parts[0]);
-		  }	
+		$parts = explode('.',$param);
+		if ($parts[1]) {//if ok
+			//echo '.';
+			$param = $parts[1];
+			$section = strtoupper($parts[0]);
+		}	
 	
-          //set by language
-		  if ($this->edit_per_lan) {
+        //set by language
+		if ($this->edit_per_lan) {
 		  	$lan = getlocal() ? getlocal() :'0';	   
 			
 			if (strstr($value,$this->delimiter )) {
@@ -255,38 +224,37 @@ class rcmenu extends shmenu {
 	            $this->{$tvar}[$section][$param] = $value;	
 			  }	
 			}
-		  } 
-		  else
+		} 
+		else
 	        $this->t_config[$section][$param] = $value;
-		  //print_r($this->t_config);
+		
+		//print_r($this->t_config);
 	}
 
-    function arrayload($section,$array) {
-          $config = $this->t_config;//GetGlobal('config');
+    public function arrayload($section,$array) {
+        $config = $this->t_config;//GetGlobal('config');
   
-          if (is_array($config[$section]))
+        if (is_array($config[$section]))
             $data = $config[$section][$array];
 	
-	      if ($data) return(explode(",",$data));
-	      //return ($out);
+	    if ($data) 
+			return(explode(",",$data));
     }
 	
-	function arrayset($section,$array,$serialized_array=null) {
+	public function arrayset($section,$array,$serialized_array=null) {
 	
-	      $data = unserialize($serialized_array);
+	    $data = unserialize($serialized_array);
 		  
-	      if (is_array($data)) {
-		  
+	    if (is_array($data)) 
 		    $this->t_config[$section][$array] = implode(",",$data) . $this->crlf;
-		  }
-		  //else //common param
+		//else //common param
 		    //$this->paramset($section,$array,$serialized_array);
 	}
 	
-	function read_config() {
-	     $filename = $this->path . "menu.ini";
+	protected function read_config() {
+	    $filename = $this->path . "menu.ini";
 	
-		 if (file_exists($filename) && is_readable($filename)) {
+		if (file_exists($filename) && is_readable($filename)) {
 	       $ret = parse_ini_file($filename,1,INI_SCANNER_RAW);
 
 		   //select by language
@@ -315,83 +283,83 @@ class rcmenu extends shmenu {
 		   
 	       //print "<pre>"; print_r($ret); print "</pre>";
 		   return ($ret);
-		 }  
+		}  
 	}
 	
-	function write_config() {
-	     //echo '<pre>';
-	     //print_r($_POST);
-		 //echo '</pre>';
+	protected function write_config() {
+	    //echo '<pre>';
+	    //print_r($_POST);
+		//echo '</pre>';
 		 
-	     $filename = $this->path . "menu.ini";
+	    $filename = $this->path . "menu.ini";
 	
-		 if (file_exists($filename) && is_writeable($filename)) {
+		if (file_exists($filename) && is_writeable($filename)) {
 		 
-		  //write by language ..merge
-		  if ($this->edit_per_lan) {
+			//write by language ..merge
+			if ($this->edit_per_lan) {
 		  
-	        $lan = getlocal() ? getlocal() :'0';	   
-	        $tvar = 't_config'.$lan;
-	        $c_config = $this->$tvar;			
+				$lan = getlocal() ? getlocal() :'0';	   
+				$tvar = 't_config'.$lan;
+				$c_config = $this->$tvar;			
 			
-	        //echo '<pre>';
-			//$tvar2 = 't_config0';//.$lan;
-	        //print_r($this->$tvar);//print_r($retperlan);
-		    //echo '</pre>';				
+				//echo '<pre>';
+				//$tvar2 = 't_config0';//.$lan;
+				//print_r($this->$tvar);//print_r($retperlan);
+				//echo '</pre>';				
 			
-		    foreach ($c_config as $section=>$params) {
+				foreach ($c_config as $section=>$params) {
 			 
-			  $fileCONTENTS .= $this->crlf;
-			  $fileCONTENTS .= '[' . strtoupper($section) . ']' . $this->crlf;
+					$fileCONTENTS .= $this->crlf;
+					$fileCONTENTS .= '[' . strtoupper($section) . ']' . $this->crlf;
 			
-			  foreach ($params as $var=>$val) {
-			    $sectionvar = $section .'-'. $var;
+					foreach ($params as $var=>$val) {
+						$sectionvar = $section .'-'. $var;
 				
-			    if ($newval=GetParam($sectionvar)) {
-				  switch ($lan) {
-				    case 2 : $lan_new_val = $this->t_config0[$section][$var].$this->delimiter .$this->t_config1[$section][$var].$this->delimiter .$newval;
-					         break;
-					case 1 : $lan_new_val = $this->t_config0[$section][$var].$this->delimiter .$newval.$this->delimiter .$this->t_config2[$section][$var];
-					         break;
-					case 0 :
-					default: $lan_new_val = $newval.$this->delimiter .$this->t_config1[$section][$var].$this->delimiter .$this->t_config2[$section][$var];
-				  }
-				  //$fileCONTENTS .= $var . '=' . $newval . $this->crlf;
-				  $fileCONTENTS .= $var . '=' . $lan_new_val . $this->crlf;
+						if ($newval=GetParam($sectionvar)) {
+							switch ($lan) {
+								case 2 : $lan_new_val = $this->t_config0[$section][$var].$this->delimiter .$this->t_config1[$section][$var].$this->delimiter .$newval;
+										break;
+								case 1 : $lan_new_val = $this->t_config0[$section][$var].$this->delimiter .$newval.$this->delimiter .$this->t_config2[$section][$var];
+										break;
+								case 0 :
+								default: $lan_new_val = $newval.$this->delimiter .$this->t_config1[$section][$var].$this->delimiter .$this->t_config2[$section][$var];
+							}
+							//$fileCONTENTS .= $var . '=' . $newval . $this->crlf;
+							$fileCONTENTS .= $var . '=' . $lan_new_val . $this->crlf;
 
-				}  
-				else {//as is
-				  $asis = $this->t_config0[$section][$var].$this->delimiter .$this->t_config1[$section][$var].$this->delimiter .$this->t_config2[$section][$var];
-			      $fileCONTENTS .= $var . '=' . /*$val*/$asis . $this->crlf;
-				}  
-			  }
+						}  
+						else {//as is
+							$asis = $this->t_config0[$section][$var].$this->delimiter .$this->t_config1[$section][$var].$this->delimiter .$this->t_config2[$section][$var];
+							$fileCONTENTS .= $var . '=' . /*$val*/$asis . $this->crlf;
+						}  
+					}
+				}
 			}
-		  }
-		  else {   
-		    foreach ($this->t_config as $section=>$params) {
+			else {   
+				foreach ($this->t_config as $section=>$params) {
 			 
-			  $fileCONTENTS .= $this->crlf;
-			  $fileCONTENTS .= '[' . strtoupper($section) . ']' . $this->crlf;
+					$fileCONTENTS .= $this->crlf;
+					$fileCONTENTS .= '[' . strtoupper($section) . ']' . $this->crlf;
 			
-			  foreach ($params as $var=>$val) {
-			    $sectionvar = $section .'-'. $var;
+					foreach ($params as $var=>$val) {
+						$sectionvar = $section .'-'. $var;
 				
-			    if ($newval=GetParam($sectionvar))
-				  $fileCONTENTS .= $var . '=' . $newval . $this->crlf;
-				else //as is
-			      $fileCONTENTS .= $var . '=' . $val . $this->crlf;
-			  }
-			}
-		  }//else	
-		  //echo $fileCONTENTS;
+						if ($newval=GetParam($sectionvar))
+							$fileCONTENTS .= $var . '=' . $newval . $this->crlf;
+						else //as is
+							$fileCONTENTS .= $var . '=' . $val . $this->crlf;
+					}
+				}
+			}//else	
+			//echo $fileCONTENTS;
 		  
-		  //keep backup copy
-		  @copy($filename, str_replace('.ini','._ni', $filename));
+			//keep backup copy
+			@copy($filename, str_replace('.ini','._ni', $filename));
 		  
-          $hFile = fopen( $filename, "w+" );
-          fwrite( $hFile, $fileCONTENTS );
-          fclose( $hFile );		 	
-		 }//if file exists
+			$hFile = fopen( $filename, "w+" );
+			fwrite( $hFile, $fileCONTENTS );
+			fclose( $hFile );		 	
+		}//if file exists
 	}
 
 

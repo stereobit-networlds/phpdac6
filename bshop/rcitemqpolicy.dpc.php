@@ -46,7 +46,7 @@ class rcitemqpolicy {
     var $title, $path, $urlpath;
 	var $seclevid, $userDemoIds;	
 	
-	function __construct() {
+	public function __construct() {
 
 		$this->path = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');
@@ -56,7 +56,7 @@ class rcitemqpolicy {
 		$this->userDemoIds = array(5,6,7,8); 		  
 	}
 
-    function event($event=null) {
+    public function event($event=null) {
 	
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 		if ($login!='yes') return null;		 
@@ -77,7 +77,7 @@ class rcitemqpolicy {
 			
     }   
 	
-    function action($action=null) {
+    public function action($action=null) {
 		
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 		if ($login!='yes') return null;	
@@ -139,11 +139,12 @@ class rcitemqpolicy {
 		return ($ret);
 	}	
 	
-	protected function saveFormData($id, $data=null) {
+	protected function saveFormData($id) {
 		if (!$id) return null;
+		$data = trim($_POST['formdata']);
 		
-		$ret = ($data) ? file_put_contents($this->path . $id.'.txt', $data) :
-		                 unlink($this->path . $id.'.txt');
+		$ret = ($data) ? @file_put_contents($this->path . $id.'.txt', $data) : null;
+						 /*(is_array($_POST) ? unlink($this->path . $id.'.txt') : null);*/
 		
 		return ($ret);
 	}
@@ -160,10 +161,8 @@ class rcitemqpolicy {
 	public function fetchFormData() {
 		$id = GetParam('id');
 		
-		if ($id) {
-			//echo 'save';
-			$ret = $this->saveFormData($id, trim($_POST['formdata']));
-		}
+		if ($id) 
+			$ret = $this->saveFormData($id);
 		
 		$data = @file_get_contents($this->path . $id.'.txt');
 		return (trim($data));

@@ -22,13 +22,13 @@ $__LOCALE['SHMENU_DPC'][0]='SHMENU_CNF;Menu;Menu';
 	   
 class shmenu {
 
-   var $path, $urlpath, $inpath, $menufile;
-   var $delimiter, $cseparator;
+	var $path, $urlpath, $inpath, $menufile;
+	var $delimiter, $cseparator;
    
-   var $tmpl_path, $tmpl_name;
-   var $dropdown_class, $dropdown_class2;   
+	var $tmpl_path, $tmpl_name;
+	var $dropdown_class, $dropdown_class2;   
 	
-   function __construct() {
+	public function __construct() {
 	   $UserName = GetGlobal('UserName');	
 	   $UserSecID = GetGlobal('UserSecID');
 	   $UserID = GetGlobal('UserID');		
@@ -52,32 +52,30 @@ class shmenu {
 
        $this->dropdown_class = remote_paramload('SHMENU','dropdownclass',$this->path);	   
 	   $this->dropdown_class2 = remote_paramload('SHMENU','dropdownclass2',$this->path);
-   }
+	}
    
 
-   function event($event=null) {
+	public function event($event=null) {
    
        switch ($event) {
-
 		 case 'menu'          :	
 		 default              : 						
 	   }
-   }
+	}
    
 
-   function action($action=null) {
+	public function action($action=null) {
 
        switch ($action) {
-
 		 case 'menu'          :						
 		 default              : 
 	   }
 	   
 	   return ($out);
-   }   
+	}   
    			
 
-   function render($menu_template=null,$glue_tag=null,$submenu_template=null) {
+	public function render($menu_template=null,$glue_tag=null,$submenu_template=null) {
         $lan = getlocal() ? getlocal() : '0';
    
         //echo $this->menufile;
@@ -197,9 +195,9 @@ class shmenu {
 		   //echo $ret;
 		   return ($ret);
 		}
-   }
+	}
    
-   function render_submenu($smenu=null,$template=null,$glue_tag=null) {
+	private function render_submenu($smenu=null,$template=null,$glue_tag=null) {
         $lan = getlocal() ? getlocal() : '0';
         if (empty($smenu))
 		   return;
@@ -248,30 +246,26 @@ class shmenu {
 	}
    
 	//tokens method	
-	function combine_tokens($template_contents,$tokens, $execafter=null) {
+	private function combine_tokens($template_contents,$tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
 		  $fp = new fronthtmlpage(null);
 		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+		  unset ($fp);		  		
 		}		  		
 		else
 		  $ret = $template_contents;
 		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
+	    foreach ($tokens as $i=>$tok) 
 		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
+
 		//clean unused token marks
 		for ($x=$i;$x<20;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
-		
-		//execute after replace tokens
+
+
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
 		  $fp = new fronthtmlpage(null);
 		  $retout = $fp->process_commands($ret);
