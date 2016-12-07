@@ -36,6 +36,8 @@ class rcmenu extends shmenu {
 	var $t_config, $t_config0, $t_config1, $t_config2;
 	var $edit_per_lan, $cptemplate;
 	
+	var $selectedMenu;
+	
     public function __construct() {
 	
 	    parent::__construct();
@@ -52,55 +54,51 @@ class rcmenu extends shmenu {
 		    $this->path = paramload('SHELL','prpath');		
 	
 	    $this->edit_per_lan = true; //false;
-	
-		//get local config
 		$this->t_config = array();
-		$this->t_config = $this->read_config();
 		  
 		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate', $this->path);	
+		$this->selectedMenu = GetParam('smenu');		
 	}
 	
-    public function event($event=null) {	
-		$sFormErr = GetGlobal('sFormErr');		
+    public function event($event=null) {			
 	
 	   	$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 		if ($login!='yes') return null;		
 	    	    		  			    
-  
-		if (!$sFormErr) {   
-  
-			switch ($event) {	
-				case "cpmloadnest"      : 	//load list    
+		switch ($event) {	
+			
+				case "cpmloadnest"      : 	$this->t_config = $this->read_config();
 											$this->loadNestList(); die();
-											break;	   
-				case "cpmsavenest"      : 	//save list    
+											break;	
+											
+				case "cpmsavenest"      : 	$this->t_config = $this->read_config();
 											$this->saveNestList(); die();
 											break;
-				case "cpmconfedit"      :	break;
-				case "cpmconfdel"       :	break;
-				case "cpmconfadd"       :	break;								 
+											
+				case "cpmconfedit"      :	
+				case "cpmconfdel"       :	
+				case "cpmconfadd"       :									 
 				case "cpmconfig"        :     
-				default                 :						 
-			}
-		}
-	  
-		if (GetReq('save')==1) {
-			//echo 'save';
-			$this->write_config();  
-			$this->t_config = $this->read_config(); //re-read
-		}	 
-		elseif (GetReq('add')==1) {
-			//echo 'add';
+				default                 :	$this->t_config = $this->read_config();
 
-			$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
-			/*for ($z=0;$z<=2;$z++) {
-			$tvar = 't_config'.$z;
-            print "<pre>"; print_r($this->{$tvar}); print "</pre>";
-			}*/	
+											if (GetReq('save')==1) {
+												//echo 'save';
+												$this->write_config();  
+												$this->t_config = $this->read_config(); //re-read
+											}	 
+											elseif (GetReq('add')==1) {
+												//echo 'add';
+
+												$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
+												/*for ($z=0;$z<=2;$z++) {
+													$tvar = 't_config'.$z;
+													print "<pre>"; print_r($this->{$tvar}); print "</pre>";
+												}*/	
 	  
-			$this->write_config();  
-			$this->t_config = $this->read_config(); //re-read
-		}		  
+												$this->write_config();  
+												$this->t_config = $this->read_config(); //re-read
+											}				
+		}	  
     }
   
     public function action($action=null) {
@@ -119,7 +117,7 @@ class rcmenu extends shmenu {
 			case "cpmconfadd"       :   $out = $this->add_configuration("Add","cpmconfig&add=1");  
 										break;								 						 
 			case "cpmconfig"        :     
-			default                 :   $out = $this->show_configuration("Edit","cpmconfedit",true); 							 
+			default                 :   $out = (GetParam('ismain')) ? $this->show_configuration("Edit","cpmconfedit",true) : null; 							 
 		}
 	 
 		return ($out);
@@ -145,15 +143,16 @@ class rcmenu extends shmenu {
 			foreach ($data as $var=>$val) {
 				$sectionvar = $section .'-'. $var;
 				$localize_var = localize($var,getlocal());
-				$form->addElement($section,new form_element_text($localize_var,$sectionvar,$val,"forminput",60,255,$editable));
+				$form->addElement($section,new form_element_text($localize_var,$sectionvar,$val,"span6",60,255,$editable));
 			}
 			$newelement = localize("_newelement",getlocal());
 			$presshere = localize("_presshere",getlocal());
-			$form->addElement($section,new form_element_onlytext($newelement,seturl("t=cpmconfadd&section=$section&editmode=".$editmode,$presshere),"forminput"));
+			$form->addElement($section,new form_element_onlytext($newelement,seturl("t=cpmconfadd&section=$section",$presshere),"forminput"));
 		}
 	   
 		// Adding a hidden field
 		$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
+		$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("ismain", "1"));
  
 		// Showing the form
 		$fout = $form->getform(0,0,$button_title);	
@@ -170,16 +169,17 @@ class rcmenu extends shmenu {
 		 
 			$data = $this->t_config[$section];
 			foreach ($data as $var=>$val) 
-				$form->addElement($section,new form_element_onlytext($var,$val,"forminput",20,255,0));
+				$form->addElement($section,new form_element_onlytext($var,$val,"span6",60,255,0));
 		 	
-			$form->addElement($section,new form_element_text('variable','variable','variable',"forminput",20,255,0));		 	 
-			$form->addElement($section,new form_element_text('value','value','value',"forminput",20,255,0));			 
+			$form->addElement($section,new form_element_text('variable','variable','variable',"span6",60,255,0));		 	 
+			$form->addElement($section,new form_element_text('value','value','value',"span6",60,255,0));			 
 		 
 			// Adding section as hidden field
 			$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("section", $section));		 
 		 
 			// Adding a hidden field
 			$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
+			$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("ismain", "1"));
 		}	
 	   
 		// Showing the form
@@ -503,7 +503,7 @@ class rcmenu extends shmenu {
 		if (!$conf) return;
 		
 		
-		return null; ///<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+		//return null; ///<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		
 		$n = null;
 		
@@ -535,6 +535,96 @@ class rcmenu extends shmenu {
 
 		return $n;	
 	}
+	
+	
+	
+	public function currentMenuName() {
+		return $this->selectedMenu ?  $this->selectedMenu : 'None';
+	}
+	
+	protected function readMenus() {
+		
+	}
+	
+	public function menuButtonSelect() {
+		//$mode = GetReq('mode') ? GetReq('mode') : 'menu';
+        
+		$turl1 = seturl('t=cpcmslandp&mode=items');		
+		$turl2 = seturl('t=cpcmslandp&mode=cats');
+		$turl3 = seturl('t=cpcmslandp&mode=rel');
+		$turl4 = seturl('t=cpcmslandp&mode=tree');
+		
+		$turl0 = seturl('t=cpmconfig&ismain=1');
+		$button = $this->createButton(localize('_mode', getlocal()), 
+										array(localize('_items', getlocal())=>$turl0,
+										      localize('_relatives', getlocal())=>$turl1,
+											  localize('_cats', getlocal())=>$turl2,											  
+											  localize('_tree', getlocal())=>$turl3,
+											  1=>'',
+											  localize('_mainmenu', getlocal())=>$turl0,
+		                                ),'info');	
+		return $button;									
+																	
+		/*switch ($mode) {
+			
+			default         : $content = $this->landpages_grid(null,140,5,'r', true); break;	
+		}			
+					
+		$ret = $this->window(localize('RCCMSLANDP_DPC', getlocal()).': '.localize('_'.$mode, getlocal()), $button, $content);
+		
+		return ($ret);*/
+	}	
+
+	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
+		$type = $t ? $t : 'primary'; //danger /warning / info /success
+		switch ($s) {
+			case 'large' : $size = 'btn-large '; break;
+			case 'small' : $size = 'btn-small '; break;
+			case 'mini'  : $size = 'btn-mini '; break;
+			default      : $size = null;
+		}
+		
+		//$ret = "<button class=\"btn  btn-primary\" type=\"button\">Primary</button>";
+		
+		if (!empty($urls)) {
+			foreach ($urls as $n=>$url)
+				$links .= $url ? '<li><a href="'.$url.'">'.$n.'</a></li>' : '<li class="divider"></li>';
+			$lnk = '<ul class="dropdown-menu">'.$links.'</ul>';
+		} 
+		
+		$ret = '
+			<div class="btn-group">
+                <button data-toggle="dropdown" class="btn '.$size.'btn-'.$type.' dropdown-toggle">'.$name.' <span class="caret"></span></button>
+                '.$lnk.'
+            </div>'; 
+			
+		return ($ret);
+	}	
+	
+	protected function window($title, $buttons, $content) {
+		$ret = '	
+		    <div class="row-fluid">
+                <div class="span12">
+                  <div class="widget red">
+                        <div class="widget-title">
+                           <h4><i class="icon-reorder"></i> '.$title.'</h4>
+                           <span class="tools">
+                               <a href="javascript:;" class="icon-chevron-down"></a>
+                           </span>
+                        </div>
+                        <div class="widget-body">
+							<div class="btn-toolbar">
+							'. $buttons .'
+							<hr/><div id="cmsframe"></div>
+							</div>
+							'.  $content .'
+                        </div>
+                  </div>
+                </div>
+            </div>
+';
+		return ($ret);
+	}		
 
 };
 }
