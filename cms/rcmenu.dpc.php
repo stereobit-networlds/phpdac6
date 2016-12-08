@@ -35,7 +35,7 @@ $__LOCALE['RCMENU_DPC'][1]='_newelement;New element;Νέο στοιχείο;';
 $__LOCALE['RCMENU_DPC'][2]='_presshere;Press here;Πατήστε εδώ για εισαγωγή;';
 $__LOCALE['RCMENU_DPC'][3]='title;Title;Τίτλος;';
 $__LOCALE['RCMENU_DPC'][4]='link;Url;Δεσμός Url;';
-$__LOCALE['RCMENU_DPC'][5]='_mainmenu;Main;Βασικό;';
+$__LOCALE['RCMENU_DPC'][5]='_mainmenu;Main menu;Κεντρικό μενού;';
 $__LOCALE['RCMENU_DPC'][6]='_newmenu;New;Νέο;';
 $__LOCALE['RCMENU_DPC'][7]='_menu;Menu;Μενού;';
 $__LOCALE['RCMENU_DPC'][8]='_collapse;Collapse;Συρίκνωση;';
@@ -44,14 +44,19 @@ $__LOCALE['RCMENU_DPC'][10]='_save;Save;Αποθήκευση;';
 $__LOCALE['RCMENU_DPC'][11]='_currentmenu;Current;Τρέχον;';
 $__LOCALE['RCMENU_DPC'][12]='_saved;Saved;Αποθηκεύτηκε;';
 $__LOCALE['RCMENU_DPC'][13]='_notsaved;Not saved;Δεν αποθηκεύτηκε;';
+$__LOCALE['RCMENU_DPC'][14]='_edit;Edit;Επεξεργασία;';
+$__LOCALE['RCMENU_DPC'][15]='_add;Add;Προσθήκη;';
+$__LOCALE['RCMENU_DPC'][16]='_newmenu;New menu;Νέο μενού;';
+$__LOCALE['RCMENU_DPC'][17]='_menuname;Menu name;Όνομα μενού;';
+$__LOCALE['RCMENU_DPC'][18]='_ferror;File error;Πρόβλημα στο αρχείο;';
+$__LOCALE['RCMENU_DPC'][19]='_fsuccess;File created;Το αρχείο δημιουργήθηκε;';
 
 class rcmenu extends cmsmenu {
 
     var $crlf, $path, $title;
 	var $t_config, $t_config0, $t_config1, $t_config2;
 	var $edit_per_lan, $cptemplate;
-	
-	var $selectedMenu;
+	var $selectedMenu, $post;
 	
     public function __construct() {
 	
@@ -68,7 +73,8 @@ class rcmenu extends cmsmenu {
 		
 	    $this->edit_per_lan = true; //false;
 		$this->t_config = array();		
-		$this->selectedMenu = GetParam('menu');		
+		$this->selectedMenu = GetParam('menu');
+		$this->post = null;	
 	}
 	
     public function event($event=null) {			
@@ -78,7 +84,9 @@ class rcmenu extends cmsmenu {
 	    	    		  			    
 		switch ($event) {	
 		
-		    case "cpmselectmenu"    :	break;
+		    case "cpmselectmenu"    :	if ($newmenu = $_POST['menu'])
+											$this->post = $this->create_menu($newmenu);
+			                            break;
 			case "cpmnewmenu"       :	break;
 			
 			case "cpmloadnest"      : 	$this->t_config = $this->read_config();
@@ -121,20 +129,22 @@ class rcmenu extends cmsmenu {
 
 		switch ($action) {	
 		
-		    case "cpmselectmenu"    :	break;
-			case "cpmnewmenu"       :	break;		
+		    case "cpmselectmenu"    :	$out = $this->menuMessage($this->post);
+			                            break;
+			case "cpmnewmenu"       :	$out = $this->new_menu(localize('_newmenu', getlocal()),"cpmselectmenu"); 
+										break;		
 	   
 			case "cpmloadnest"      :	break;	 	   
 			case "cpmsavenest"      :	break;	   
 
-			case "cpmconfedit"      :   $out = $this->show_configuration("Save","cpmconfig&save=1",false);
+			case "cpmconfedit"      :   $out = $this->show_configuration(localize('_save', getlocal()),"cpmconfig&save=1",false);
 										break;
 			case "cpmconfdel"       :	break;
-			case "cpmconfadd"       :   $out = $this->add_configuration("Add","cpmconfig&add=1");  
+			case "cpmconfadd"       :   $out = $this->add_configuration(localize('_add', getlocal()),"cpmconfig&add=1");  
 										break;								 						 
 			case "cpmconfig"        :     
 			default                 :   $out = (GetParam('ismain')=='1') ? 
-											$this->show_configuration("Edit","cpmconfedit",true) : null; 							 
+											$this->show_configuration(localize('_edit', getlocal()),"cpmconfedit",true) : null; 							 
 		}
 	 
 		return ($out);
@@ -173,12 +183,14 @@ class rcmenu extends cmsmenu {
  
 		// Showing the form
 		$fout = $form->getform(0,0,$button_title);	
-	   
+   		$fout.= '<br/>';
+				
 		return ($fout);	   
 	}
 	
 	protected function add_configuration($button_title,$action) {
-		$myaction = seturl("t=".$action); 	
+		$myaction = seturl("t=".$action); 
+		$title = localize('_add', getlocal());	
 		$form = new form(localize('RCMENU_DPC',getlocal()), "RCMENU", FORM_METHOD_POST, $myaction);	
 		
 		if ($section=GetReq('section')) {
@@ -201,8 +213,8 @@ class rcmenu extends cmsmenu {
 	   
 		// Showing the form
 		$fout = $form->getform(0,0,$button_title);	
-	   
-		return ($fout);		   	    
+				
+		return ($this->window($title .' '. ucfirst(strtolower($section)),null,$fout));		   	    
 	}
 	
     public function paramload($section,$param) {
@@ -229,17 +241,17 @@ class rcmenu extends cmsmenu {
 		  	$lan = getlocal() ? getlocal() :'0';	   
 			
 			if (strstr($value,$this->delimiter )) {
-			  $parts = explode($this->delimiter ,$value);
-			  foreach ($parts as $lan=>$val) {
-			    $tvar = 't_config'.$lan;
-	            $this->{$tvar}[$section][$param] = $val;
-			  }
+				$parts = explode($this->delimiter ,$value);
+				foreach ($parts as $lan=>$val) {
+					$tvar = 't_config'.$lan;
+					$this->{$tvar}[$section][$param] = $val;
+				}
 			}
 			else {
-			  for ($z=0;$z<=2;$z++) {
-				$tvar = 't_config'.$z;
-	            $this->{$tvar}[$section][$param] = $value;	
-			  }	
+				for ($z=0;$z<=2;$z++) {
+					$tvar = 't_config'.$z;
+					$this->{$tvar}[$section][$param] = $value;	
+				}	
 			}
 		} 
 		else
@@ -272,34 +284,29 @@ class rcmenu extends cmsmenu {
 	    $filename = $this->path . "menu.ini";
 	
 		if (file_exists($filename) && is_readable($filename)) {
-	       $ret = parse_ini_file($filename,1,INI_SCANNER_RAW);
+			$ret = parse_ini_file($filename,1,INI_SCANNER_RAW);
 
-		   //select by language
-		   if ($this->edit_per_lan) {
+			//select by language
+			if ($this->edit_per_lan) {
 		        foreach ($ret as $section=>$param) {
-				
 					foreach ($param as $pt=>$pv) {
-		              $pparts = explode($this->delimiter ,$pv); 
-		              
-					  foreach ($pparts as $i=>$pp) {
-		                $retperlan[$i][$section][$pt] = $pp;
-					  }
+						$pparts = explode($this->delimiter ,$pv); 
+						foreach ($pparts as $i=>$pp) {
+							$retperlan[$i][$section][$pt] = $pp;
+						}
 					}
 		        }
 
                 for ($z=0;$z<=2;$z++) {
 				    $tvar = 't_config'.$z;
                     $this->$tvar = (array) $retperlan[$z];	
-				}	
-					
+				}		
 	            //echo '<pre>';
 	            //print_r($this->t_config1);//print_r($retperlan);
-		        //echo '</pre>';						
-                					
-		   }
-		   
-	       //print "<pre>"; print_r($ret); print "</pre>";
-		   return ($ret);
+		        //echo '</pre>';										
+			}
+			//print "<pre>"; print_r($ret); print "</pre>";
+			return ($ret);
 		}  
 	}
 	
@@ -468,6 +475,7 @@ class rcmenu extends cmsmenu {
 		return ($ret);	   
 	}
 	
+	//isdb=true load db menu (todo)
 	public function nestBuild($file=null, $isdb=false) {
 		$n = null;
 	    $lan = getlocal() ? getlocal() : '0';
@@ -522,6 +530,67 @@ class rcmenu extends cmsmenu {
 		return $n;	
 	}
 	
+	
+	
+	protected function new_menu($button_title,$action) {
+		$prompt = localize('_menuname', getlocal());		
+		$title = localize('_newmenu', getlocal());
+		$myaction = seturl("t=".$action); 	
+		
+		$form = new form(localize('RCMENU_DPC',getlocal()), "RCMENU", FORM_METHOD_POST, $myaction);	
+		
+		$section = 'newmenu';
+		$form->addGroup($section,$button_title);		
+		
+		//$form->addElement($section,new form_element_text('variable','variable','variable',"span6",60,255,0));		 	 
+		$form->addElement($section,new form_element_text($prompt,'menu','',"span6",60,255,0));			 
+		$form->addElement(FORM_GROUP_HIDDEN,new form_element_hidden ("FormAction", "$action"));
+	   
+		// Showing the form
+		$fout = $form->getform(0,0,$button_title);	
+		
+		return ($this->window($title,null,$fout));		   	    
+	}
+
+	protected function create_menu($name=null) {
+		if (!$name) return;
+		$lan = getlocal() ? getlocal() : '0';		
+		
+		$inifile = $this->path . 'menu-' . $name . $lan . '.ini';
+		$ret = @file_put_contents($inifile, "[NEW]\r\ntitle=New\r\nlink=\r\nspaces=0\r\n");
+		
+		$this->selectedMenu = 'menu-' . $name; //update var, add menu- prefix
+		
+		return ($ret ? 1 : -1);
+	}
+	
+	protected function menuMessage($isPost=null) {
+		$lan = getlocal() ? getlocal() : '0';
+		if ($isPost) {
+			$ret = ($isPost<0) ? localize('_ferror', $lan) : localize('_fsuccess', $lan);
+		}
+		
+		if ($this->selectedMenu) {
+			$ret .= $ret ? '<br/>' : null;
+			
+			$inifile = $this->path . $this->selectedMenu . $lan . '.ini';
+			$ret .= is_readable($inifile) ? null : localize('_ferror', $lan); 
+		}	
+		return ($ret);
+	}
+	
+	protected function readMenuFiles() {
+		$menu_array = null;
+		$lan = getlocal() ? getlocal() : '0';
+
+		foreach (glob($this->path . "menu-*$lan.ini") as $filename) {
+			//echo "$filename size " . filesize($filename) . "\n";
+			$name = str_replace(array("menu-","$lan.ini", $this->path),array('','',''), $filename);
+			$menu_array[$name] = seturl('t=cpmselectmenu&menu=' . $name);
+		}	
+		
+		return ($menu_array);						
+	}	
 	
 	
 	public function currentMenuName() {
@@ -592,33 +661,23 @@ class rcmenu extends cmsmenu {
 		return $this->nestBuild(); 	
 	}
 	
-	protected function readMenuFiles() {
-		$turl0 = seturl('t=cpmselectmenu&menu=items');		
-		$turl1 = seturl('t=cpmselectmenu&menu=cats');
-		$turl2 = seturl('t=cpmselectmenu&menu=rel');
-		$turl3 = seturl('t=cpmselectmenu&menu=tree');
-		$menu_array = array(localize('_items', getlocal())=>$turl0,
-						  localize('_relatives', getlocal())=>$turl1,
-						  localize('_cats', getlocal())=>$turl2,											  
-						  localize('_tree', getlocal())=>$turl3,);
-		return ($menu_array);					
-	}
-	
 	public function menuButtonSelect() {
 		//$mode = GetReq('mode') ? GetReq('mode') : 'menu';
 	    $lan = getlocal() ? getlocal() : '0';
-		$menufile = $this->path . 'menu' . $lan . '.ini';						  
-		$basicmenu = is_readable($menufile) ? array(localize('_menu', getlocal())=>seturl('t=cpmselectmenu&menu=menu')) : array();				  
+		$menufile = $this->path . 'menu' . $lan . '.ini';	
 		
-		$menus = array(); //$this->readMenuFiles();
+		$lmenu = localize('_menu', $lan) . ' (' . $lan . ')';	
+		$basicmenu = is_readable($menufile) ? array($lmenu=>seturl('t=cpmselectmenu&menu=menu')) : array();				  
+		
+		$menus = $this->readMenuFiles();
 		
 		$turl99 = seturl('t=cpmconfig&ismain=1');
 		$turl98 = seturl('t=cpmnewmenu');		
 		$turl97 = seturl('t=cpmconfig');
 		$stdcmd = array(localize('_newmenu', getlocal())=>$turl98,
-						0=>'',											  
-						localize('_mainmenu', getlocal())=>$turl99,
-						localize('_currentmenu', getlocal())=>$turl97,
+						0=>'',									
+						localize('_mainmenu', getlocal())=>$turl97,						
+						localize('_edit', getlocal())=>$turl99,
 						1=>'',
 		                );
 		
@@ -661,6 +720,8 @@ class rcmenu extends cmsmenu {
 	}	
 	
 	protected function window($title, $buttons, $content) {
+		$btns = $buttons ? '<div class="btn-toolbar">'. $buttons .'<hr/></div></div>' : null;
+		
 		$ret = '	
 		    <div class="row-fluid">
                 <div class="span12">
@@ -672,10 +733,6 @@ class rcmenu extends cmsmenu {
                            </span>
                         </div>
                         <div class="widget-body">
-							<div class="btn-toolbar">
-							'. $buttons .'
-							<hr/><div id="cmsframe"></div>
-							</div>
 							'.  $content .'
                         </div>
                   </div>
