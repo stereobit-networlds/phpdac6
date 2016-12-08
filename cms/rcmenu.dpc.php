@@ -87,14 +87,16 @@ class rcmenu extends cmsmenu {
 		    case "cpmselectmenu"    :	if ($newmenu = $_POST['menu'])
 											$this->post = $this->create_menu($newmenu);
 			                            break;
-			case "cpmnewmenu"       :	break;
+										
+			case "cpmnewmenu"       :	$this->t_config = $this->read_config();
+										break;
 			
 			case "cpmloadnest"      : 	$this->t_config = $this->read_config();
 										$this->loadNestList(); die();
 										break;	
 											
 			case "cpmsavenest"      : 	$this->t_config = $this->read_config();
-										$this->saveNestList(); die();
+										$this->saveNestList($this->selectedMenu); die();
 										break;
 											
 			case "cpmconfedit"      :	
@@ -389,14 +391,16 @@ class rcmenu extends cmsmenu {
 	/*2 level tree saver (language based)*/
 	protected function writenest_config($nestarray=null, $file=null) {
 		$data = $nestarray ? $nestarray : json_decode(GetParam('list'),true);//as come from ajax post		
-		$ret = null;
 		$lan = getlocal() ? getlocal() : '0';
+		$ret = null;		
 		
 		$csep = _v("cmsrt.cseparator");
 		//var_export($data);	
 
-		$f = $file ? $file : "menu$lan.ini";
-        $filename = $this->path . $f;	
+		$menufile = $file ? (($file=='menu') ? $file : 'menu-' . $file) : 'menu';
+        $filename = $this->path . $menufile . $lan . '.ini';	
+		//echo $filename;
+		
         $fileCONTENTS = null;
 		if (!empty($data)) {
 
@@ -438,13 +442,13 @@ class rcmenu extends cmsmenu {
 	protected function loadNestList() {
     }
 	
-	protected function saveNestList() {
-		//$list = GetParam('list');
-		//@file_put_contents("menu.list", $list);		
-		//$menu = json_decode($list,true);//,false,5); //stdclass, depth 
+	protected function saveNestList($filename=null) {
+		$list = GetParam('list');
+		$menu = json_decode($list,true);//,false,5); //stdclass, depth 
+		//@file_put_contents("menu.list", $list);				
 		//var_export($menu);
 		
-		$w = $this->writenest_config(); //$menu);
+		$w = $this->writenest_config($menu, $filename);
 		$ret = $w ? localize('_saved', getlocal()) : localize('_notsaved', getlocal());
 		echo $ret;
 		
@@ -452,7 +456,7 @@ class rcmenu extends cmsmenu {
 		/*$tmplist = GetParam('tmplist');
 		@file_put_contents("menutmp.list", $tmplist);
 		$tmpmenu = json_decode($tmplist,true);
-		$tmp = $this->writenest_config($tmpmenu, "menutmp.ini");		
+		$tmp = $this->writenest_config($tmpmenu, "menutmp");		
 		
 		echo $tmp ? $ret . " (1)" : $ret;
 		*/
@@ -485,12 +489,10 @@ class rcmenu extends cmsmenu {
 			$conf = @parse_ini_file($inifile, 1, INI_SCANNER_RAW);
 		}	
 		else
-			$conf = $this->t_config;//$tvar;		
-	
-		if (!$conf) return;
+			$conf = $this->t_config;//$tvar;	
 		
-		//echo '>' . $file;
-		//return null; ///<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+		//print_r($conf);
+		if (!$conf) return;
 		
 		foreach ($conf as $section=>$params) {
 
@@ -573,7 +575,8 @@ class rcmenu extends cmsmenu {
 		if ($this->selectedMenu) {
 			$ret .= $ret ? '<br/>' : null;
 			
-			$inifile = $this->path . $this->selectedMenu . $lan . '.ini';
+			$menufile = ($this->selectedMenu=='menu') ? $this->selectedMenu : 'menu-' . $this->selectedMenu;
+			$inifile = $this->path . $menufile . $lan . '.ini';
 			$ret .= is_readable($inifile) ? null : localize('_ferror', $lan); 
 		}	
 		return ($ret);
@@ -598,8 +601,10 @@ class rcmenu extends cmsmenu {
 	}
 	
 	public function readSelectedMenu() {
-		if ($this->selectedMenu) 
-			return $this->nestBuild($this->selectedMenu);
+		if ($this->selectedMenu) { 
+			$menufile = ($this->selectedMenu=='menu') ? $this->selectedMenu : 'menu-' . $this->selectedMenu;
+			return $this->nestBuild($menufile);
+		}	
 		
 		return $this->nestBuild(); 
 	}

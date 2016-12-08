@@ -109,7 +109,7 @@ class cmsmenu {
 		
 		if (!empty($menu)) {
 			$mytemplate = $menu_template ? $menu_template : 'menu.htm';
-			$subtemplate = $submenu_template ? $submenu_template : $mytemplate;
+			$subtemplate = $submenu_template ? $submenu_template : null;//$mytemplate;
 
             $tt = _m('cmsrt.select_template use ' . $mytemplate); 
 				
@@ -118,11 +118,11 @@ class cmsmenu {
 			    $tokens = array(); //reset tokens
 			    $murl = $url ? $this->make_link($url) : '#';
 					
-				if ($space_count = $sps[$name.'-spaces']) {
+				/*if ($space_count = $sps[$name.'-spaces']) {
 					$name_space = str_repeat('&nbsp;', $space_count) . $name . str_repeat('&nbsp;', $space_count);
 					//echo $name.'-spaces>',$name_space,'>',$space_count,'<br>';
 				}  
-				else  
+				else ...SPACES DISABLED...*/ 
 					$name_space = $name;  	
                     
                 if ($sub_menu = $smu[$name.'-submenu']) {
@@ -148,11 +148,23 @@ class cmsmenu {
 					}
 					   
 					//echo $ret2;
-					$menu_contents = $this->combine_tokens($tt,$tokens,true);
-					$ret .= str_replace('@SHMENU-SUBMENU@',$ret2,str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
+					//$menu_contents = $this->combine_tokens($tt,$tokens,true);
+					//$ret .= str_replace('@SHMENU-SUBMENU@',$ret2,str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
+					
+					$tokens[] = $murl;
+					$tokens[] = $name_space;
+					$tokens[] = $ret2;
+					$ret .= $this->combine_tokens($tt,$tokens,true);	
                 } 					
-				else
-					$ret .= str_replace('@SHMENU-SUBMENU@','',str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
+				else {
+					//$ret .= str_replace('@SHMENU-SUBMENU@','',str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
+					
+					$tokens[] = ''; //dummy
+					$tokens[] = $murl;
+					$tokens[] = $name_space;
+					$tokens[] = ''; 
+					$ret .= $this->combine_tokens($tt,$tokens,true);
+				}	
 			}	     
 		}
 		
@@ -160,7 +172,7 @@ class cmsmenu {
 		return ($ret);
 	}
    
-	protected function render_submenu($smenu=null,$template=null,$glue_tag=null) {
+	protected function render_submenu($smenu=null, $template=null, $glue_tag=null) {
         $lan = getlocal() ? getlocal() : '0';
         if (empty($smenu))
 		   return;
@@ -187,16 +199,23 @@ class cmsmenu {
 		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
 		$gend = $glue_tag ? '</'.$glue_tag.'>' : null;		
 		
-	    foreach ($subm_titles as $t=>$title) {
-		   $line = "<a href='$subm_links[$t]'>$title</a>";
-		   $out .= $gstart . $line . $gend;
-	    }		
-	
-		/*//if (is_readable($tfile)) 
-		   $tmpl = _m('cmsrt.select_template use ' . $mytemplate);	
-		   $ret = str_replace('@SHMENU-SUBMENU@',$out,$tmpl);
-		else*/   
-		   return ($out);
+		if ($template) {
+			$tmpl = _m('cmsrt.select_template use ' . $template);
+			foreach ($subm_titles as $t=>$title) {
+				$tokens = array();
+				$tokens[] = $subm_links[$t];
+				$tokens[] = $title;
+				$out .= $this->combine_tokens($tmpl,$tokens,true);
+			}	
+		}
+		else {
+			foreach ($subm_titles as $t=>$title) {
+				$line = "<a href='{$subm_links[$t]}'>$title</a>";
+				$out .= $gstart . $line . $gend;
+			}		
+		}
+ 
+	    return ($out);
     }
 	
 	//transform links for special chars
