@@ -1,26 +1,25 @@
 <?php
+$__DPCSEC['CMSMENU_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-$__DPCSEC['SHMENU_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+if ((!defined("CMSMENU_DPC")) && (seclevel('CMSMENU_DPC',decode(GetSessionParam('UserSecID')))) ) {
+define("CMSMENU_DPC",true);
 
-if ((!defined("SHMENU_DPC")) && (seclevel('SHMENU_DPC',decode(GetSessionParam('UserSecID')))) ) {
-define("SHMENU_DPC",true);
-
-$__DPC['SHMENU_DPC'] = 'shmenu';
-
-
-$__EVENTS['SHMENU_DPC'][1]='menu';
-$__EVENTS['SHMENU_DPC'][2]='menu1';
-$__EVENTS['SHMENU_DPC'][3]='menu2';
-
-$__ACTIONS['SHMENU_DPC'][1]='menu';
-$__ACTIONS['SHMENU_DPC'][2]='menu1';
-$__ACTIONS['SHMENU_DPC'][3]='menu2';
+$__DPC['CMSMENU_DPC'] = 'shmenu';
 
 
-$__LOCALE['SHMENU_DPC'][0]='SHMENU_CNF;Menu;Menu';	   
+$__EVENTS['CMSMENU_DPC'][1]='cmsmenu';
+$__EVENTS['CMSMENU_DPC'][2]='menu1';
+$__EVENTS['CMSMENU_DPC'][3]='menu2';
+
+$__ACTIONS['CMSMENU_DPC'][1]='cmsmenu';
+$__ACTIONS['CMSMENU_DPC'][2]='menu1';
+$__ACTIONS['CMSMENU_DPC'][3]='menu2';
+
+
+$__LOCALE['CMSMENU_DPC'][0]='CMSMENU_CNF;Menu;Menu';	   
 
 	   
-class shmenu {
+class cmsmenu {
 
 	var $path, $urlpath, $inpath, $menufile;
 	var $delimiter, $cseparator;
@@ -58,7 +57,7 @@ class shmenu {
 	public function event($event=null) {
    
        switch ($event) {
-		 case 'menu'          :	
+		 case 'cmsmenu'       :	
 		 default              : 						
 	   }
 	}
@@ -67,7 +66,7 @@ class shmenu {
 	public function action($action=null) {
 
        switch ($action) {
-		 case 'menu'          :						
+		 case 'cmsmenu'       :						
 		 default              : 
 	   }
 	   

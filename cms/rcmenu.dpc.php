@@ -38,6 +38,9 @@ $__LOCALE['RCMENU_DPC'][7]='_menu;Menu;Μενού;';
 $__LOCALE['RCMENU_DPC'][8]='_collapse;Collapse;Συρίκνωση;';
 $__LOCALE['RCMENU_DPC'][9]='_expand;Expand;Επέκταση;';
 $__LOCALE['RCMENU_DPC'][10]='_save;Save;Αποθήκευση;';
+$__LOCALE['RCMENU_DPC'][11]='_currentmenu;Current;Τρέχον;';
+$__LOCALE['RCMENU_DPC'][12]='_saved;Saved;Αποθηκεύτηκε;';
+$__LOCALE['RCMENU_DPC'][13]='_notsaved;Not saved;Δεν αποθηκεύτηκε;';
 
 class rcmenu extends shmenu {
 
@@ -56,17 +59,13 @@ class rcmenu extends shmenu {
 	    $os =  php_uname();//'>';
         $info = strtolower($os);// $_SERVER['HTTP_USER_AGENT'] );   
         $this->crlf = PHP_EOL; //( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
-		  
-        if ($remoteuser=GetSessionParam('REMOTELOGIN')) 
-		    $this->path = paramload('SHELL','prpath')."instances/$remoteuser/";	
-		else 
-		    $this->path = paramload('SHELL','prpath');		
-	
-	    $this->edit_per_lan = true; //false;
-		$this->t_config = array();
-		  
+		   
+		$this->path = paramload('SHELL','prpath');				  
 		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate', $this->path);	
-		$this->selectedMenu = GetParam('smenu');		
+		
+	    $this->edit_per_lan = true; //false;
+		$this->t_config = array();		
+		$this->selectedMenu = GetParam('menu');		
 	}
 	
     public function event($event=null) {			
@@ -131,7 +130,8 @@ class rcmenu extends shmenu {
 			case "cpmconfadd"       :   $out = $this->add_configuration("Add","cpmconfig&add=1");  
 										break;								 						 
 			case "cpmconfig"        :     
-			default                 :   $out = (GetParam('ismain')) ? $this->show_configuration("Edit","cpmconfedit",true) : null; 							 
+			default                 :   $out = (GetParam('ismain')=='1') ? 
+											$this->show_configuration("Edit","cpmconfedit",true) : null; 							 
 		}
 	 
 		return ($out);
@@ -375,130 +375,86 @@ class rcmenu extends shmenu {
 			fclose( $hFile );		 	
 		}//if file exists
 	}
-
-
+	
+	/*2 level tree saver (language based)*/
 	protected function writenest_config($nestarray=null, $file=null) {
-		$data = $nestarray ? $nestarray : json_decode(GetParam('list'),true);//as come from ajax post
-	    //$_conf = parse_ini_file($this->path."menu.ini",1,INI_SCANNER_RAW);		 
-		//var_export($this->t_config);
-		var_export($data);		
-		$fileCONTENTS = null;
-		
-		$f = $file ? $file : "menu.ini";//"menu-nest.ini"; //test name
-        $filename = $this->path . $f;
-		if ($file)
-		    $conf = @parse_ini_file($filename ,1 , INI_SCANNER_RAW);
-		else
-			$conf = (array)$this->t_config;
-		
+		$data = $nestarray ? $nestarray : json_decode(GetParam('list'),true);//as come from ajax post		
+		$ret = null;
+		$lan = getlocal() ? getlocal() : '0';
+		//var_export($data);	
+
+		$f = $file ? $file : "menu$lan.ini";
+        $filename = $this->path . $f;	
+        $fileCONTENTS = null;
 		if (!empty($data)) {
 
             foreach ($data as $i=>$id) {
 			    if ($id['id']=='recycle-bin') continue; //drop
 				
+				$fileCONTENTS .= "[" . $id['id'] . "]" . $this->crlf;
+				$fileCONTENTS .= "title=" . $id['name'] . $this->crlf; 
+				$fileCONTENTS .= "link=" . $id['value'] . $this->crlf;
+				$fileCONTENTS .= "spaces=0". $this->crlf;
+				if ($submenu = $id['submenu'])
+					$fileCONTENTS .= "submenu=" . $submenu . $this->crlf;
+				
 				$subCONTENTS = null;
-				$submenu = $id['children'];
-				
-				if (is_array($submenu)) {//sub ids of nest
-					
-					foreach ($submenu as $ci=>$child) {
-					    $si = ++$ci;
-						//print_r($child);
-						//echo '<br/>','aaaa';
-						$var = explode('>', $child['id']);
-						
-						//d'n d' needs access top both conf files to transfer params from/to
-						$_conf = $conf[$var[0]] ? $conf : $this->t_config;
-						
-						$_titles = ($var[1]=='title') ? 
-									$_conf[$var[0]]['title'] :
-									$_conf[$var[0].'-SUBMENU'][$var[1]] ;	
-						$lid = str_replace('title','link',$var[1]);
-						$_links = ($var[1]=='link') ? 
-								   $_conf[$var[0]]['link'] :
-								   $_conf[$var[0].'-SUBMENU'][str_replace('title','link',$var[1])] ;
-                    
-						//rearange title1,link1,title2,link2...					
-						$subCONTENTS .= 'title'.$si.'=' . $_titles . $this->crlf;
-						$subCONTENTS .= 'link'.$si.'=' . $_links . $this->crlf;	
-					}	
-				}
-					
-			    $section = explode('>', $id['id']);
-				//d'n d' needs access top both conf files to transfer params from/to
-				$_conf = $conf[$section[0]] ? $conf : $this->t_config;
-				
+				$submenu_items = $id['children'];
+				if (is_array($submenu_items)) {//sub ids of nest
+					$subCONTENTS = $this->crlf;
+					$subCONTENTS .= '['. $submenu . ']' . $this->crlf;
+					foreach ($submenu_items as $ci=>$child) {
+						$subCONTENTS .= "title$ci=" . $child['name'] . $this->crlf;						
+						$subCONTENTS .= "link$ci=" . $child['value'] . $this->crlf;						
+					}
+					$fileCONTENTS .= $subCONTENTS . $this->crlf;	
+				}	
 				$fileCONTENTS .= $this->crlf;
-				$fileCONTENTS .= '[' . $section[0] . ']' . $this->crlf;
-							
-				$_titles = ($section[1]=='title') ? 
-				            $_conf[$section[0]]['title'] :
-						    $_conf[$section[0].'-SUBMENU'][$section[1]] ;
-				$fileCONTENTS .= 'title=' . $_titles . $this->crlf;						
-
-				$_links = ($section[1]=='title') ? 
-				          $_conf[$section[0]]['link'] :
-						  $_conf[$section[0].'-SUBMENU'][$section[1]] ;
-                $fileCONTENTS .= 'link=' . $_links . $this->crlf;						    
-				
-				$_spaces =  ($section[1]=='title') ?
-				            $_conf[$section[0]]['spaces'] :
-							null;
-                $fileCONTENTS .= 'spaces=' . $_spaces . $this->crlf;				
-				
-				if ($subCONTENTS!=null) {
-					$_submenu = ($this->edit_per_lan) ? 
-					            $section[0] .'-SUBMENU,'.$section[0] .'-SUBMENU,'.$section[0] .'-SUBMENU' : 
-					            $section[0] .'-SUBMENU'; 
-					$fileCONTENTS .= 'submenu=' . $_submenu . $this->crlf;	
-					$fileCONTENTS .= $this->crlf;
-					$fileCONTENTS .= '[' . $section[0] .'-SUBMENU' . ']' . $this->crlf;
-					$fileCONTENTS .= $subCONTENTS . $this->crlf;				
-				}
-            }	
-
+			}
+			
 			//keep backup copy
 			@copy($filename, str_replace('.ini','._ni', $filename));
 		  
 			$hFile = fopen( $filename, "w+" );
 			$ret = fwrite( $hFile, $fileCONTENTS );
-			fclose( $hFile );			
-		}	
-		
-		return ($ret);
-	}	
-	
+			fclose( $hFile );				
+		}
+
+		return ($ret);		
+	}
 	
 	protected function loadNestList() {
     }
 	
 	protected function saveNestList() {
-		$list = GetParam('list');
-		@file_put_contents("menu.list", $list);		
-		
-		$menu = json_decode($list,true);//,false,5); //stdclass, depth 
+		//$list = GetParam('list');
+		//@file_put_contents("menu.list", $list);		
+		//$menu = json_decode($list,true);//,false,5); //stdclass, depth 
 		//var_export($menu);
-		$w = $this->writenest_config($menu);
-		$ret = $w ? "Saved" : "Not saved";
+		
+		$w = $this->writenest_config(); //$menu);
+		$ret = $w ? localize('_saved', getlocal()) : localize('_notsaved', getlocal());
+		echo $ret;
 		
 		//tmp menu
-		$tmplist = GetParam('tmplist');
+		/*$tmplist = GetParam('tmplist');
 		@file_put_contents("menutmp.list", $tmplist);
 		$tmpmenu = json_decode($tmplist,true);
 		$tmp = $this->writenest_config($tmpmenu, "menutmp.ini");		
 		
 		echo $tmp ? $ret . " (1)" : $ret;
+		*/
     }	
 	
-	protected function nestdditem($id,$name) {
-		$ret = "<li class='dd-item' data-id='$id'>
+	protected function nestdditem($id,$name,$value=null,$submenu=null) {
+		$ret = "<li class='dd-item' data-id='$id' data-name='$name' data-value='$value' data-submenu='$submenu'>
                     <div class='dd-handle'>$name</div>
                 </li>";
 		return ($ret);		
 	}
 	
-	protected function nestddgroup($id,$name,$group) {
-		$ret = "<li class='dd-item' data-id='$id'>
+	protected function nestddgroup($id,$name,$value=null,$submenu=null,$group=null) {
+		$ret = "<li class='dd-item' data-id='$id' data-name='$name' data-value='$value' data-submenu='$submenu'>
 					<div class='dd-handle'>$name</div>
 					<ol class='dd-list'>
 						$group
@@ -507,19 +463,21 @@ class rcmenu extends shmenu {
 		return ($ret);	   
 	}
 	
-	public function nestBuild($file=null) {
-	    $lan = getlocal() ? getlocal() :'0';
-	    if ($file) 
-			$conf = @parse_ini_file($this->path.$file,1,INI_SCANNER_RAW);
+	public function nestBuild($file=null, $isdb=false) {
+		$n = null;
+	    $lan = getlocal() ? getlocal() : '0';
+		
+	    if ($file) {
+			$inifile = $this->path . $file . $lan . '.ini';
+			$conf = @parse_ini_file($inifile, 1, INI_SCANNER_RAW);
+		}	
 		else
 			$conf = $this->t_config;//$tvar;		
 	
 		if (!$conf) return;
 		
-		
+		//echo '>' . $file;
 		//return null; ///<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-		
-		$n = null;
 		
 		foreach ($conf as $section=>$params) {
 
@@ -527,23 +485,32 @@ class rcmenu extends shmenu {
 			
 			$cn = null;
 			if (isset($params['submenu'])) {
-                //echo $section.'-SUBMENU';    
-				foreach ($conf[$section.'-SUBMENU'] as $group=>$child) {
+                //echo $section.'-SUBMENU'; 
+				$sb = explode(',', $params['submenu']);	
+				$submenu = isset($sb[$lan]) ? $sb[$lan] : $params['submenu'];
+				foreach ($conf[$submenu] as $group=>$child) {
 				    //echo $child,'<br/>';
 					if (substr($group,0,5)=='title') {
 						$nz = explode(',', $child);
-						$name = $nz[$lan];
-					    $cn .= $this->nestdditem($section.'>'.$group, $name);
-					}	
+						$name = isset($nz[$lan]) ? $nz[$lan] : $child;
+						
+						$tl = explode(',', $conf[$section.'-SUBMENU'][str_replace('title','link',$group)]);
+						$value = isset($tl[$lan]) ? $tl[$lan] : $conf[$section.'-SUBMENU'][str_replace('title','link',$group)]; 
+						$linkvalue = $this->make_link($value);
+						
+						$cn .= $this->nestdditem($section.'-'.$name, $name, $linkvalue);
+					}				
 				}
 			}
 
 			$nz = explode(',', $params['title']);
-			$name = $nz[$lan];
+			$name = isset($nz[$lan]) ? $nz[$lan] : $params['title'];
+			$nl = explode(',', $params['link']);
+			$value = isset($nl[$lan]) ? $nl[$lan] : $params['link'];
 			if ($cn)
-				$n .= $this->nestddgroup($section.'>title', $name, $cn);
+				$n .= $this->nestddgroup($section, $name, $value, $submenu, $cn);
 			else
-				$n .= $this->nestdditem($section.'>title', $name);
+				$n .= $this->nestdditem($section, $name, $value, md5($section.$name).'-SUBMENU');
 
 		}    
 
@@ -553,47 +520,104 @@ class rcmenu extends shmenu {
 	
 	
 	public function currentMenuName() {
-		return $this->selectedMenu ?  $this->selectedMenu : 'None';
+		return $this->selectedMenu ?  $this->selectedMenu : localize('_mainmenu', getlocal());
 	}
 	
 	public function readSelectedMenu() {
+		if ($this->selectedMenu) 
+			return $this->nestBuild($this->selectedMenu);
 		
+		return $this->nestBuild(); 
 	}
 	
 	public function readCurrentMenu() {
+		$db = GetGlobal('db');
+	    //$lan = getlocal();
+	    $itmname = _v("cmsrt.itmname"); //$lan ? 'itmname' : 'itmfname';
+	    $itmdescr = _v("cmsrt.itmdescr"); //$lan ? 'itmdescr' : 'itmfdescr';
+		$csep = _v("cmsrt.cseparator");	
+		$code = _m("cmsrt.getmapf use code");		
+		
 		$cpGet = _v('rcpmenu.cpGet');		
 		
 		if ($id = $cpGet['id']) {
 			//current id item
+			$sSQL = "select $code,$itmname,$itmdescr from products WHERE $code=" . $db->qstr($id);
+			$res = $db->Execute($sSQL);
+			
+			$cat = $cpGet['cat'];
+			$cats = explode($csep, $cat);
+			$c = array_pop($cats);
+			$_c = _m("cmsrt.replace_spchars use $c+1");
+			
+			//the cat item,link
+			$a = $this->nestdditem($cat, $_c, "klist/$cat/", md5($cat).'-SUBMENU');
+			//the item,link
+			$b = $this->nestdditem($res->fields[0], $res->fields[1], "kshow/$cat/".$res->fields[0] .'/', md5($res->fields[0]).'-SUBMENU');
+			
+			return $a . $b;
 		}
 		elseif ($cat = $cpGet['cat']) {
 			//current cat, cat items
+			$sSQL = "select $code,$itmname,$itmdescr from products WHERE ";
+			$cats = explode($csep, $cat);
+			foreach ($cats as $i=>$c) {
+				$_c[] = _m("cmsrt.replace_spchars use $c+1");
+				$_s[] = "cat" . $i . "=" . $db->qstr($_c[$i]);
+			}	
+			$sSQL .= implode(' AND ', $_s);
+			$sSQL .= " AND itmactive>0 AND active>0";	
+			$sSQL .= _m("cmsrt.orderSQL");
+			//echo $sSQL;
+			
+			$res = $db->Execute($sSQL);
+			$catitems = null;
+			foreach ($res as $i=>$item)
+				$catitems .= $this->nestdditem($item[0], $item[1], "kshow/$cat/".$item[0] .'/', md5($item[0]).'-SUBMENU');
+			
+			//the cat items tree
+			$a = $this->nestddgroup($cat, implode(' &gt; ', $_c), "klist/$cat/", md5($cat).'-SUBMENU', $catitems);			
+			//just the cat link item
+			$b = $this->nestdditem(array_pop($cats), array_pop($_c), "klist/$cat/", md5($cat).'-SUBMENU');
+			
+			return $b . $a;
 		}	
-		else //current conf of main menu
-			return $this->nestBuild(); 
-			//return null;		
+		//else //current conf of main menu
+		return $this->nestBuild(); 	
 	}
 	
-	public function menuButtonSelect() {
-		//$mode = GetReq('mode') ? GetReq('mode') : 'menu';
-        
+	protected function readMenuFiles() {
 		$turl0 = seturl('t=cpmselectmenu&menu=items');		
 		$turl1 = seturl('t=cpmselectmenu&menu=cats');
 		$turl2 = seturl('t=cpmselectmenu&menu=rel');
 		$turl3 = seturl('t=cpmselectmenu&menu=tree');
+		$menu_array = array(localize('_items', getlocal())=>$turl0,
+						  localize('_relatives', getlocal())=>$turl1,
+						  localize('_cats', getlocal())=>$turl2,											  
+						  localize('_tree', getlocal())=>$turl3,);
+		return ($menu_array);					
+	}
+	
+	public function menuButtonSelect() {
+		//$mode = GetReq('mode') ? GetReq('mode') : 'menu';
+	    $lan = getlocal() ? getlocal() : '0';
+		$menufile = $this->path . 'menu' . $lan . '.ini';						  
+		$basicmenu = is_readable($menufile) ? array(localize('_menu', getlocal())=>seturl('t=cpmselectmenu&menu=menu')) : array();				  
+		
+		$menus = $this->readMenuFiles();
 		
 		$turl99 = seturl('t=cpmconfig&ismain=1');
 		$turl98 = seturl('t=cpmnewmenu');		
-		$button = $this->createButton(localize('_menu', getlocal()), 
-										array(localize('_items', getlocal())=>$turl0,
-										      localize('_relatives', getlocal())=>$turl1,
-											  localize('_cats', getlocal())=>$turl2,											  
-											  localize('_tree', getlocal())=>$turl3,
-											  0=>'',
-											  localize('_mainmenu', getlocal())=>$turl99,											  
-											  1=>'',
-											  localize('_newmenu', getlocal())=>$turl98,											  
-		                                ),'info');	
+		$turl97 = seturl('t=cpmconfig');
+		$stdcmd = array(localize('_newmenu', getlocal())=>$turl98,
+						0=>'',											  
+						localize('_mainmenu', getlocal())=>$turl99,
+						localize('_currentmenu', getlocal())=>$turl97,
+						1=>'',
+		                );
+		
+		
+		$button = $this->createButton(localize('_menu', getlocal()), array_merge($stdcmd, $basicmenu, $menus),'info');	
 		return $button;									
 																	
 		/*switch ($mode) {

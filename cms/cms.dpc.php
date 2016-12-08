@@ -1,12 +1,20 @@
 <?php
 $__DPCSEC['CMS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
+//namespace cms;
+
 function _v($v=null,$val=null) {
 	return $v ? GetGlobal('controller')->calldpc_var($v, $val) : null;
 }
 
 function _m($m=null, $noerr=null) {
 	return $m ? GetGlobal('controller')->calldpc_method($m, $noerr) : null;
+}
+
+function _m2($m=null, $params=array()) {
+	$mf = $m ? explode('.', $m) : null;
+	return empty($mf) ? null : call_user_func_array(array($mf[0], $mf[1]), $params);
+	//call_user_func_array(array(__NAMESPACE__ . "\\" . $mf[0], $mf[1]), $params); //5.3.0 namespace
 }
 
 if ((!defined("CMS_DPC")) && (seclevel('CMS_DPC',decode(GetSessionParam('UserSecID')))) ) {

@@ -431,7 +431,7 @@ goBack();
 		return ($this->itmeter < $this->pager) ? true : false;
 	}
 	
-	protected function orderSQL() {
+	public function orderSQL() {
 		$page = GetReq('page') ? GetReq('page') : 0;
 		
 		$sSQL = " ORDER BY id desc";	
@@ -1447,7 +1447,7 @@ EOF;
 		}
 
 		//.htm files
-		return @file_get_contents($path . str_replace('.',$this->lan.'.',$tfile.'.htm')); 
+		return @file_get_contents($path . str_replace('.', $this->lan.'.', str_replace('.htm', '', $tfile) . '.htm')); 
     }	
 
 	public function createButton($name=null, $urls=null, $t=null, $s=null) {

@@ -176,11 +176,10 @@ class rcitemrel  {
         $width = $width ? $width : null; //wide	
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
-	    $lan = getlocal()?getlocal():0;  
-		$title = localize('RCITEMREL_DPC',getlocal()); //localize('_items', $lan);	
-        $active_code = 	$this->getmapf('code');
-		$name_active = $lan?'itmname':'itmfname'; 
-		//$itmdescr = $lan?'itmdescr':'itmfdescr'; 	
+		$title = localize('RCITEMREL_DPC', getlocal()); 	
+        $active_code = 	_m("cmsrt.getmapf use code");
+		$name_active = _v("cmsrt.itmname"); 
+		//$itmdescr = _v("cmsrt.itmdescr"); 
         $myfields = "id,$active_code,cat0,cat1,cat2,cat3,$name_active,itmactive,active";  		
 
 		$xsSQL = 'select * from (select '.$myfields . ' from products) as o';
@@ -240,6 +239,7 @@ class rcitemrel  {
 	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
+		
 		$title = localize('_categories', getlocal());
 		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 	    return ($out);
@@ -254,10 +254,9 @@ class rcitemrel  {
         $width = $width ? $width : null; //wide
         $mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;					
-        $lan = getlocal()?getlocal():0;
-        $active_code = 	$this->getmapf('code');
-		$name_active = $lan ? 'itmname' : 'itmfname';
-		$title = localize('_items', $lan);	
+        $active_code = 	_m("cmsrt.getmapf use code");
+		$name_active = _v("cmsrt.itmname"); 
+		$title = localize('_items', getlocal());	
 
 		$xsSQL = "select * from (select id,$active_code,cat0,cat1,cat2,cat3,$name_active,itmactive,active from products) as o";
 
@@ -317,7 +316,7 @@ class rcitemrel  {
 		$item = $_GET['item'];
 		$jcat = $_GET['jcat'];
         $db = GetGlobal('db');
-		$active_code = 	$this->getmapf('code');		
+		$active_code = 	_m("cmsrt.getmapf use code");	
 
 		//check for same entry ?..
 		
@@ -351,7 +350,7 @@ class rcitemrel  {
 		$id = $_GET['item'];
 		$jitem = $_GET['jitem'];
 		$db = GetGlobal('db');		
-		$active_code = 	$this->getmapf('code');
+		$active_code = 	_m("cmsrt.getmapf use code");
 		
 		//check for same entry ?..
 		
@@ -386,18 +385,6 @@ class rcitemrel  {
 		}//acode
 		return ($ret);
 	}	
-	
-	protected function getmapf($name) {
-	  
-	  if (empty($this->map_t)) return 0;
-	  
-	  foreach ($this->map_t as $id=>$elm)
-	    if ($elm==$name) break;
-				
-	  $ret = $this->map_f[$id];
-	  return ($ret);
-	}		
-	
 };
 }
 ?>
