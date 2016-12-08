@@ -4,15 +4,15 @@ $__DPCSEC['CMSMENU_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 if ((!defined("CMSMENU_DPC")) && (seclevel('CMSMENU_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("CMSMENU_DPC",true);
 
-$__DPC['CMSMENU_DPC'] = 'shmenu';
+$__DPC['CMSMENU_DPC'] = 'cmsmenu';
 
 $__EVENTS['CMSMENU_DPC'][1]='cmsmenu';
-$__EVENTS['CMSMENU_DPC'][2]='menu1';
-$__EVENTS['CMSMENU_DPC'][3]='menu2';
+$__EVENTS['CMSMENU_DPC'][2]='menu';
+$__EVENTS['CMSMENU_DPC'][3]='menu1';
 
 $__ACTIONS['CMSMENU_DPC'][1]='cmsmenu';
-$__ACTIONS['CMSMENU_DPC'][2]='menu1';
-$__ACTIONS['CMSMENU_DPC'][3]='menu2';
+$__ACTIONS['CMSMENU_DPC'][2]='menu';
+$__ACTIONS['CMSMENU_DPC'][3]='menu1';
 
 $__LOCALE['CMSMENU_DPC'][0]='CMSMENU_DPC;Menu;Menu';	   
 	   
@@ -25,25 +25,23 @@ class cmsmenu {
 	var $dropdown_class, $dropdown_class2;   
 	
 	public function __construct() {
-	   $UserName = GetGlobal('UserName');	
-	   $UserSecID = GetGlobal('UserSecID');
-	   $UserID = GetGlobal('UserID');		
-       $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
-	   $this->username = decode($UserName);
-	   $this->userid = decode($UserID);
+		$UserName = GetGlobal('UserName');	
+		$UserSecID = GetGlobal('UserSecID');
+		$UserID = GetGlobal('UserID');		
+		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
+		$this->username = decode($UserName);
+		$this->userid = decode($UserID);
 	   
-       $this->path = paramload('SHELL','prpath');	   
-	   $this->urlpath = paramload('SHELL','urlpath');
-	   $this->inpath = paramload('ID','hostinpath');	
+		$this->path = paramload('SHELL','prpath');	   
+		$this->urlpath = paramload('SHELL','urlpath');
+		$this->inpath = paramload('ID','hostinpath');	
 	  
-       $this->menufile = $this->path . 'menu.ini';
-	   $this->delimiter = ',';
-	   
-	   $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	   $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);  
-	   
-       $this->dropdown_class = remote_paramload('SHMENU','dropdownclass',$this->path);	   
-	   $this->dropdown_class2 = remote_paramload('SHMENU','dropdownclass2',$this->path);
+		$this->menufile = $this->path . 'menu.ini';
+		$this->delimiter = ',';
+		
+	    //SHMENU !!!
+		$this->dropdown_class = remote_paramload('SHMENU','dropdownclass',$this->path);	   
+		$this->dropdown_class2 = remote_paramload('SHMENU','dropdownclass2',$this->path);
 	}
    
 
@@ -70,124 +68,96 @@ class cmsmenu {
 	public function render($menu_template=null,$glue_tag=null,$submenu_template=null) {
         $lan = getlocal() ? getlocal() : '0';
 		$csep = _v("cmsrt.cseparator");
-   
+		$ret = null;		
+
         //echo $this->menufile;
-		if (is_readable($this->menufile))
-          $m = parse_ini_file($this->menufile,1,INI_SCANNER_RAW);
+		if (is_readable(str_replace('.ini', $lan.'.ini',$this->menufile))) //lan menu file
+			$m = @parse_ini_file(str_replace('.ini', $lan.'.ini',$this->menufile), 1, INI_SCANNER_RAW);
+		elseif (is_readable($this->menufile)) //default menu file
+			$m = @parse_ini_file($this->menufile, 1, INI_SCANNER_RAW);
 		  
 		//print_r($m);
+		if (!is_array($m)) return null;
+		
 		foreach ($m as $menu_item) {
-		
-          //menu items		
-		  if (isset($menu_item['title'])) { 		
+			//menu items		
+			if (isset($menu_item['title'])) { 		
 		  
-		    $title = explode($this->delimiter ,$menu_item['title']);
-		    $link = explode($this->delimiter ,$menu_item['link']); 		  
-		  
-		    //spaces before and after title
-		    $spaces = explode($this->delimiter ,$menu_item['spaces']); 
-		    if ($sp = $spaces[$lan]) 
-		      $sps[$title[$lan].'-spaces'] = $sp;
-		    else	
-			  $sps[$title[$lan].'-spaces'] = 0;
+				$title = strstr($menu_item['title'], $this->delimiter) ? explode($this->delimiter ,$menu_item['title']) : $menu_item['title'];
+				$_title = (is_array($title)) ? $title[$lan] : $title; 
+				
+				$link = strstr($menu_item['link'], $this->delimiter) ? explode($this->delimiter ,$menu_item['link']) : $menu_item['link']; 		  
+				$_link = (is_array($link)) ? $link[$lan] : $link; 
+				
+				//spaces before and after title
+				$spaces = strstr($menu_item['spaces'], $this->delimiter) ? explode($this->delimiter ,$menu_item['spaces']) : $menu_item['spaces']; 
+				$sps[$_title.'-spaces'] = (is_array($spaces)) ? $spaces[$lan] : ($spaces ? $spaces : 0);
 
-		    //submenu
-		    $submenu = explode($this->delimiter ,$menu_item['submenu']); 
-		    if ($smenu = $submenu[$lan]) 
-		      $smu[$title[$lan].'-submenu'] = $smenu;
-		    else	
-			  $smu[$title[$lan].'-submenu'] = null;
+				//submenu
+				$submenu = strstr($menu_item['submenu'], $this->delimiter) ? explode($this->delimiter ,$menu_item['submenu']) : $menu_item['submenu']; 
+				$smu[$_title.'-submenu'] = (is_array($submenu)) ? $submenu[$lan] : ($submenu ? $submenu : null);
 		
-		    
-			//set title / link
-		    $menu[$title[$lan]] = $link[$lan];
-		  }
+				//set title / link
+				$menu[$_title] = $_link;
+			}
 		}
 		
 		//print_r($smu);
 		//print_r($sps);
 		//print_r($menu);
+		
+		
 		if (!empty($menu)) {
-		   $ret = null;
-	       $mytemplate = $menu_template?$menu_template:'menu.htm';
-		   $subtemplate = $submenu_template ? $submenu_template : $mytemplate;
-		   //echo '>',$mytemplate;	   
-	       //$tfile = $this->urlpath .'/' . $this->inpath . '/cp/html/'. $mytemplate ;
-           $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. $mytemplate ;		   
-           //echo $tfile;
-		   
-           if (is_readable($tfile)) {
-		   
-                $tt = file_get_contents($tfile);
+			$mytemplate = $menu_template ? $menu_template : 'menu.htm';
+			$subtemplate = $submenu_template ? $submenu_template : $mytemplate;
+
+            $tt = _m('cmsrt.select_template use ' . $mytemplate); 
 				
-                foreach ($menu as $name=>$url) {
+            foreach ($menu as $name=>$url) {
 				
-				    $tokens = array(); //reset tokens
-				    $murl = $url ? $this->make_link($url) : '#';
+			    $tokens = array(); //reset tokens
+			    $murl = $url ? $this->make_link($url) : '#';
 					
-					if ($space_count = $sps[$name.'-spaces']) {
-					  $name_space = str_repeat('&nbsp;', $space_count) . $name . str_repeat('&nbsp;', $space_count);
-					  //echo $name.'-spaces>',$name_space,'>',$space_count,'<br>';
-					}  
-					else  
-					  $name_space = $name;  	
+				if ($space_count = $sps[$name.'-spaces']) {
+					$name_space = str_repeat('&nbsp;', $space_count) . $name . str_repeat('&nbsp;', $space_count);
+					//echo $name.'-spaces>',$name_space,'>',$space_count,'<br>';
+				}  
+				else  
+					$name_space = $name;  	
                     
-                    if ($sub_menu = $smu[$name.'-submenu']) {
+                if ($sub_menu = $smu[$name.'-submenu']) {
 					
-					   if (stristr($sub_menu,'shkategories.')) {//phpdac cmd
-					     if (defined('SHKATEGORIES_DPC')) {
+					if (stristr($sub_menu,'shkategories.')) {//phpdac cmd
+						if (defined('SHKATEGORIES_DPC')) {
 							$cmddac = str_replace('^', $csep, $sub_menu);
 							$ret2 = _m($cmddac); //cat sep
 							$tokens[] = $this->dropdown_class;//'dropdown'; 
-						 }
-					   }
-					   elseif (stristr($sub_menu,'.htm')) {//htm template file
-					     //echo 'a',$sub_menu;
-                         $menusubfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$sub_menu) ; 
-					     if (is_readable($menusubfile)) {
-					       //echo $menusubfile;
-		                   $mytemplate = @file_get_contents($menusubfile);
-					       $ret2 = $this->combine_tokens($mytemplate,array(0=>''),true);
-						   $tokens[] = $this->dropdown_class2;//'dropdown yamm-fw';
-					     }					   
-					   }
-					   else {
-					     //echo 'b',$sub_menu;
-					     $_smenu = (array) $m[$sub_menu];
-					     $ret2 = $this->render_submenu($_smenu, $subtemplate, $glue_tag);
-						 $tokens[] = $this->dropdown_class;//'dropdown';
-					   }
+						}
+					}
+					elseif (stristr($sub_menu,'.htm')) {//htm/php template file
+						//echo 'a',$sub_menu;
+						$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm','',$sub_menu));  
+						$ret2 = $this->combine_tokens($mytemplate, array(0=>''), true);
+						$tokens[] = $this->dropdown_class2;//'dropdown yamm-fw';
+					}
+					else {
+						//echo 'b',$sub_menu;
+						$_smenu = (array) $m[$sub_menu];
+						$ret2 = $this->render_submenu($_smenu, $subtemplate, $glue_tag);
+						$tokens[] = $this->dropdown_class;//'dropdown';
+					}
 					   
-					   //echo $ret2;
-					   $menu_contents = $this->combine_tokens($tt,$tokens,true);
-					   $ret .= str_replace('@SHMENU-SUBMENU@',$ret2,str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
-                    } 					
-					else
-					   $ret .= str_replace('@SHMENU-SUBMENU@','',str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
-				}	
-           }
-           else {
-                foreach ($menu as $name=>$url) {
-				    $murl = $url ? $this->make_link($url) : '#';
-					$ss = $name . '-spaces';
-					if ((isset($sp[$ss])) && ($space_count = $sp[$ss]))
-					  $name_space = str_repeat('&nbsp;', $space_count) . $name . str_repeat('&nbsp;', $space_count);
-					else  
-					  $name_space = $name;  	
-					  
-                    $ret .= "<a href='$murl'>$name_space</a>";
-
-                    $mm = $name . '-submenu'; 
-                    if ((isset($smu[$mm])) && ($sub_menu = $smu[$mm])) {
-					   //echo 'a',$sub_menu;
-					   $_smenu = (array) $m[$sub_menu];
-					   $ret .= $this->render_submenu($_smenu, $subtemplate, $glue_tag);
-                    }					
-				}	
-		   }	     
-		   //echo $ret;
-		   return ($ret);
+					//echo $ret2;
+					$menu_contents = $this->combine_tokens($tt,$tokens,true);
+					$ret .= str_replace('@SHMENU-SUBMENU@',$ret2,str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
+                } 					
+				else
+					$ret .= str_replace('@SHMENU-SUBMENU@','',str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
+			}	     
 		}
+		
+		//echo $ret;
+		return ($ret);
 	}
    
 	protected function render_submenu($smenu=null,$template=null,$glue_tag=null) {
@@ -196,12 +166,15 @@ class cmsmenu {
 		   return;
 		   
 		foreach ($smenu as $m=>$v) {
-		    $cv = explode($this->delimiter ,$v);
+		    $cv = strstr($v, $this->delimiter) ? explode($this->delimiter ,$v) : $v;
 		
-		    if (strstr($m,'title'))
-			   $subm_titles[] = $cv[$lan];
-			elseif (strstr($m,'link'))
-			   $subm_links[] = $this->make_link($cv[$lan]);
+		    if (strstr($m,'title')) {
+				$subm_titles[] = (is_array($cv)) ? $cv[$lan] : $cv;
+			}   
+			elseif (strstr($m,'link')) {
+				$_cv = (is_array($cv)) ? $cv[$lan] : $cv;
+				$subm_links[] = $this->make_link($_cv);
+			}   
 		}		   
 		   
 		//echo '>',$smenu;   
@@ -211,11 +184,6 @@ class cmsmenu {
 		//echo '</pre>';
 		
         $ret = null;
-	    $mytemplate = $template ? $template : 'menu.htm';
-		//echo '>',$mytemplate;	   
-	    //$tfile = $this->urlpath .'/' . $this->inpath . '/cp/html/'. $mytemplate ;				
-		$tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. $mytemplate ;
-		//echo $tfile;
 		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
 		$gend = $glue_tag ? '</'.$glue_tag.'>' : null;		
 		
@@ -224,8 +192,9 @@ class cmsmenu {
 		   $out .= $gstart . $line . $gend;
 	    }		
 	
-		/*if (is_readable($tfile)) 
-		   $ret = str_replace('@SHMENU-SUBMENU@',$out,file_get_contents($tfile));
+		/*//if (is_readable($tfile)) 
+		   $tmpl = _m('cmsrt.select_template use ' . $mytemplate);	
+		   $ret = str_replace('@SHMENU-SUBMENU@',$out,$tmpl);
 		else*/   
 		   return ($out);
     }
@@ -241,11 +210,11 @@ class cmsmenu {
    
 	//tokens method	
 	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
-	
+		
 	    if (!is_array($tokens)) return;
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
+		  $fp = new fronthtmlpage();
 		  $ret = $fp->process_commands($template_contents);
 		  unset ($fp);		  		
 		}		  		
@@ -261,7 +230,7 @@ class cmsmenu {
 
 
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
+		  $fp = new fronthtmlpage();
 		  $retout = $fp->process_commands($ret);
 		  unset ($fp);
           

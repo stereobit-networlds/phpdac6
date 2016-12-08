@@ -384,6 +384,8 @@ class rcmenu extends cmsmenu {
 		$data = $nestarray ? $nestarray : json_decode(GetParam('list'),true);//as come from ajax post		
 		$ret = null;
 		$lan = getlocal() ? getlocal() : '0';
+		
+		$csep = _v("cmsrt.cseparator");
 		//var_export($data);	
 
 		$f = $file ? $file : "menu$lan.ini";
@@ -396,7 +398,7 @@ class rcmenu extends cmsmenu {
 				
 				$fileCONTENTS .= "[" . $id['id'] . "]" . $this->crlf;
 				$fileCONTENTS .= "title=" . $id['name'] . $this->crlf; 
-				$fileCONTENTS .= "link=" . $id['value'] . $this->crlf;
+				$fileCONTENTS .= "link=" . str_replace($csep, '^', $id['value']) . $this->crlf;
 				$fileCONTENTS .= "spaces=0". $this->crlf;
 				if ($submenu = $id['submenu'])
 					$fileCONTENTS .= "submenu=" . $submenu . $this->crlf;
@@ -408,7 +410,7 @@ class rcmenu extends cmsmenu {
 					$subCONTENTS .= '['. $submenu . ']' . $this->crlf;
 					foreach ($submenu_items as $ci=>$child) {
 						$subCONTENTS .= "title$ci=" . $child['name'] . $this->crlf;						
-						$subCONTENTS .= "link$ci=" . $child['value'] . $this->crlf;						
+						$subCONTENTS .= "link$ci=" . str_replace($csep, '^', $child['value']) . $this->crlf;						
 					}
 					$fileCONTENTS .= $subCONTENTS . $this->crlf;	
 				}	
@@ -577,11 +579,12 @@ class rcmenu extends cmsmenu {
 			$catitems = null;
 			foreach ($res as $i=>$item)
 				$catitems .= $this->nestdditem($item[0], $item[1], "kshow/$cat/".$item[0] .'/', md5($item[0]).'-SUBMENU');
-			
+				
+			$title = array_pop($_c);
 			//the cat items tree
-			$a = $this->nestddgroup($cat, implode(' &gt; ', $_c), "klist/$cat/", md5($cat).'-SUBMENU', $catitems);			
+			$a = $this->nestddgroup($cat, $title, "klist/$cat/", md5($cat).'-SUBMENU', $catitems);			
 			//just the cat link item
-			$b = $this->nestdditem(array_pop($cats), array_pop($_c), "klist/$cat/", md5($cat).'-SUBMENU');
+			$b = $this->nestdditem(array_pop($cats), $title, "klist/$cat/", md5($cat).'-SUBMENU');
 			
 			return $b . $a;
 		}	
