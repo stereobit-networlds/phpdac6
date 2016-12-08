@@ -6,7 +6,6 @@ define("CMSMENU_DPC",true);
 
 $__DPC['CMSMENU_DPC'] = 'shmenu';
 
-
 $__EVENTS['CMSMENU_DPC'][1]='cmsmenu';
 $__EVENTS['CMSMENU_DPC'][2]='menu1';
 $__EVENTS['CMSMENU_DPC'][3]='menu2';
@@ -15,14 +14,12 @@ $__ACTIONS['CMSMENU_DPC'][1]='cmsmenu';
 $__ACTIONS['CMSMENU_DPC'][2]='menu1';
 $__ACTIONS['CMSMENU_DPC'][3]='menu2';
 
-
-$__LOCALE['CMSMENU_DPC'][0]='CMSMENU_CNF;Menu;Menu';	   
-
+$__LOCALE['CMSMENU_DPC'][0]='CMSMENU_DPC;Menu;Menu';	   
 	   
 class cmsmenu {
 
 	var $path, $urlpath, $inpath, $menufile;
-	var $delimiter, $cseparator;
+	var $delimiter;
    
 	var $tmpl_path, $tmpl_name;
 	var $dropdown_class, $dropdown_class2;   
@@ -36,7 +33,6 @@ class cmsmenu {
 	   $this->userid = decode($UserID);
 	   
        $this->path = paramload('SHELL','prpath');	   
-	   
 	   $this->urlpath = paramload('SHELL','urlpath');
 	   $this->inpath = paramload('ID','hostinpath');	
 	  
@@ -46,9 +42,6 @@ class cmsmenu {
 	   $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
 	   $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);  
 	   
-       $csep = remote_paramload('SHMENU','csep',$this->path); 
-       $this->cseparator = $csep ? $csep : '^';	/*for cat links */
-
        $this->dropdown_class = remote_paramload('SHMENU','dropdownclass',$this->path);	   
 	   $this->dropdown_class2 = remote_paramload('SHMENU','dropdownclass2',$this->path);
 	}
@@ -76,6 +69,7 @@ class cmsmenu {
 
 	public function render($menu_template=null,$glue_tag=null,$submenu_template=null) {
         $lan = getlocal() ? getlocal() : '0';
+		$csep = _v("cmsrt.cseparator");
    
         //echo $this->menufile;
 		if (is_readable($this->menufile))
@@ -142,8 +136,8 @@ class cmsmenu {
 					
 					   if (stristr($sub_menu,'shkategories.')) {//phpdac cmd
 					     if (defined('SHKATEGORIES_DPC')) {
-							$cmddac = str_replace('^',$this->cseparator,$sub_menu);
-							$ret2 = GetGlobal('controller')->calldpc_method($cmddac); //cat sep
+							$cmddac = str_replace('^', $csep, $sub_menu);
+							$ret2 = _m($cmddac); //cat sep
 							$tokens[] = $this->dropdown_class;//'dropdown'; 
 						 }
 					   }
@@ -152,7 +146,7 @@ class cmsmenu {
                          $menusubfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$sub_menu) ; 
 					     if (is_readable($menusubfile)) {
 					       //echo $menusubfile;
-		                   $mytemplate = file_get_contents($menusubfile);
+		                   $mytemplate = @file_get_contents($menusubfile);
 					       $ret2 = $this->combine_tokens($mytemplate,array(0=>''),true);
 						   $tokens[] = $this->dropdown_class2;//'dropdown yamm-fw';
 					     }					   
@@ -217,7 +211,7 @@ class cmsmenu {
 		//echo '</pre>';
 		
         $ret = null;
-	    $mytemplate = $template?$template:'menu.htm';
+	    $mytemplate = $template ? $template : 'menu.htm';
 		//echo '>',$mytemplate;	   
 	    //$tfile = $this->urlpath .'/' . $this->inpath . '/cp/html/'. $mytemplate ;				
 		$tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. $mytemplate ;
@@ -238,9 +232,10 @@ class cmsmenu {
 	
 	//transform links for special chars
 	protected function make_link($link=null) {
-	
-	    $ret = str_replace('@','?t=',$link);
-		$out = str_replace('^',$this->cseparator,$ret);
+		$csep = _v("cmsrt.cseparator");
+		
+	    $ret = str_replace('@', '?t=', $link);
+		$out = str_replace('^', $csep, $ret);
 		return ($out);
 	}
    

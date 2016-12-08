@@ -6,7 +6,10 @@ define("RCMENU_DPC",true);
 
 $__DPC['RCMENU_DPC'] = 'rcmenu';
 
-$d = GetGlobal('controller')->require_dpc('bshop/shmenu.dpc.php');
+$a = GetGlobal('controller')->require_dpc('gui/form.dpc.php');
+require_once($a);
+
+$d = GetGlobal('controller')->require_dpc('cms/cmsmenu.dpc.php');
 require_once($d);
 
 $__EVENTS['RCMENU_DPC'][0]='cpmconfig';
@@ -42,7 +45,7 @@ $__LOCALE['RCMENU_DPC'][11]='_currentmenu;Current;Τρέχον;';
 $__LOCALE['RCMENU_DPC'][12]='_saved;Saved;Αποθηκεύτηκε;';
 $__LOCALE['RCMENU_DPC'][13]='_notsaved;Not saved;Δεν αποθηκεύτηκε;';
 
-class rcmenu extends shmenu {
+class rcmenu extends cmsmenu {
 
     var $crlf, $path, $title;
 	var $t_config, $t_config0, $t_config1, $t_config2;
@@ -604,7 +607,7 @@ class rcmenu extends shmenu {
 		$menufile = $this->path . 'menu' . $lan . '.ini';						  
 		$basicmenu = is_readable($menufile) ? array(localize('_menu', getlocal())=>seturl('t=cpmselectmenu&menu=menu')) : array();				  
 		
-		$menus = $this->readMenuFiles();
+		$menus = array(); //$this->readMenuFiles();
 		
 		$turl99 = seturl('t=cpmconfig&ismain=1');
 		$turl98 = seturl('t=cpmnewmenu');		
