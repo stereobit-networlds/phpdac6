@@ -65,17 +65,27 @@ class cmsmenu {
 	}   
    			
 
-	public function render($menu_template=null,$glue_tag=null,$submenu_template=null) {
+	public function render($menufile=null,$menu_template=null,$glue_tag=null,$submenu_template=null) {
         $lan = getlocal() ? getlocal() : '0';
-		$csep = _v("cmsrt.cseparator");
+		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
+		$gend = $glue_tag ? '</'.$glue_tag.'>' : null;	
+		$mlang = true; //multi lan delimiter default on
 		$ret = null;		
+		
+		$csep = _v("cmsrt.cseparator");		
 
-        //echo $this->menufile;
-		if (is_readable(str_replace('.ini', $lan.'.ini',$this->menufile))) //lan menu file
-			$m = @parse_ini_file(str_replace('.ini', $lan.'.ini',$this->menufile), 1, INI_SCANNER_RAW);
-		elseif (is_readable($this->menufile)) //default menu file
-			$m = @parse_ini_file($this->menufile, 1, INI_SCANNER_RAW);
-		  
+		if ($menufile) {
+			$m = @parse_ini_file($this->path . $menufile . $lan . '.ini', 1, INI_SCANNER_RAW);
+			$mlang = false; //multi lan delimiter off
+		}
+		else {
+			if (is_readable(str_replace('.ini', $lan.'.ini',$this->menufile))) {//lan menu file
+				$m = @parse_ini_file(str_replace('.ini', $lan.'.ini',$this->menufile), 1, INI_SCANNER_RAW);
+				$mlang = false; //multi lan delimiter off
+			}	
+			else
+				$m = @parse_ini_file($this->menufile, 1, INI_SCANNER_RAW);
+		}  
 		//print_r($m);
 		if (!is_array($m)) return null;
 		
@@ -83,18 +93,22 @@ class cmsmenu {
 			//menu items		
 			if (isset($menu_item['title'])) { 		
 		  
-				$title = strstr($menu_item['title'], $this->delimiter) ? explode($this->delimiter ,$menu_item['title']) : $menu_item['title'];
+				$title = ($mlang && strstr($menu_item['title'], $this->delimiter)) ? 
+							explode($this->delimiter ,$menu_item['title']) : $menu_item['title'];
 				$_title = (is_array($title)) ? $title[$lan] : $title; 
 				
-				$link = strstr($menu_item['link'], $this->delimiter) ? explode($this->delimiter ,$menu_item['link']) : $menu_item['link']; 		  
+				$link = ($mlang && strstr($menu_item['link'], $this->delimiter)) ? 
+							explode($this->delimiter ,$menu_item['link']) : $menu_item['link']; 		  
 				$_link = (is_array($link)) ? $link[$lan] : $link; 
 				
 				//spaces before and after title
-				$spaces = strstr($menu_item['spaces'], $this->delimiter) ? explode($this->delimiter ,$menu_item['spaces']) : $menu_item['spaces']; 
+				$spaces = ($mlang && strstr($menu_item['spaces'], $this->delimiter)) ? 
+							explode($this->delimiter ,$menu_item['spaces']) : $menu_item['spaces']; 
 				$sps[$_title.'-spaces'] = (is_array($spaces)) ? $spaces[$lan] : ($spaces ? $spaces : 0);
 
 				//submenu
-				$submenu = strstr($menu_item['submenu'], $this->delimiter) ? explode($this->delimiter ,$menu_item['submenu']) : $menu_item['submenu']; 
+				$submenu = ($mlang && strstr($menu_item['submenu'], $this->delimiter)) ? 
+							explode($this->delimiter ,$menu_item['submenu']) : $menu_item['submenu']; 
 				$smu[$_title.'-submenu'] = (is_array($submenu)) ? $submenu[$lan] : ($submenu ? $submenu : null);
 		
 				//set title / link
@@ -106,25 +120,23 @@ class cmsmenu {
 		//print_r($sps);
 		//print_r($menu);
 		
-		
 		if (!empty($menu)) {
-			$mytemplate = $menu_template ? $menu_template : 'menu.htm';
-			$subtemplate = $submenu_template ? $submenu_template : null;//$mytemplate;
-
-            $tt = _m('cmsrt.select_template use ' . $mytemplate); 
+			
+            $tmpl = $menu_template ? _m('cmsrt.select_template use ' . $menu_template) : null; 
 				
             foreach ($menu as $name=>$url) {
 				
 			    $tokens = array(); //reset tokens
 			    $murl = $url ? $this->make_link($url) : '#';
 					
-				/*if ($space_count = $sps[$name.'-spaces']) {
+				/* ...SPACES DISABLED... 
+				if ($space_count = $sps[$name.'-spaces']) {
 					$name_space = str_repeat('&nbsp;', $space_count) . $name . str_repeat('&nbsp;', $space_count);
 					//echo $name.'-spaces>',$name_space,'>',$space_count,'<br>';
 				}  
-				else ...SPACES DISABLED...*/ 
+				else 
 					$name_space = $name;  	
-                    
+                */    
                 if ($sub_menu = $smu[$name.'-submenu']) {
 					
 					if (stristr($sub_menu,'shkategories.')) {//phpdac cmd
@@ -143,42 +155,47 @@ class cmsmenu {
 					else {
 						//echo 'b',$sub_menu;
 						$_smenu = (array) $m[$sub_menu];
-						$ret2 = $this->render_submenu($_smenu, $subtemplate, $glue_tag);
+						$ret2 = $this->render_submenu($_smenu, $submenu_template, $glue_tag, $mlang);
 						$tokens[] = $this->dropdown_class;//'dropdown';
 					}
 					   
-					//echo $ret2;
-					//$menu_contents = $this->combine_tokens($tt,$tokens,true);
-					//$ret .= str_replace('@SHMENU-SUBMENU@',$ret2,str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
-					
-					$tokens[] = $murl;
-					$tokens[] = $name_space;
-					$tokens[] = $ret2;
-					$ret .= $this->combine_tokens($tt,$tokens,true);	
+					if ($tmpl) {
+						$tokens[] = $murl;
+						$tokens[] = $name;
+						$tokens[] = $ret2;
+						$ret .= $this->combine_tokens($tmpl, $tokens, true);
+					}
+					else {
+						$line = "<a href='$murl'>$name</a>";
+						$ret .= $gstart . $line . $gend;						
+					}	
                 } 					
 				else {
-					//$ret .= str_replace('@SHMENU-SUBMENU@','',str_replace('@SHMENU-TITLE@',$name_space,str_replace('@SHMENU-LINK@',$murl,$menu_contents)));
-					
-					$tokens[] = ''; //dummy
-					$tokens[] = $murl;
-					$tokens[] = $name_space;
-					$tokens[] = ''; 
-					$ret .= $this->combine_tokens($tt,$tokens,true);
+					if ($tmpl) {
+						$tokens[] = ''; //dummy
+						$tokens[] = $murl;
+						$tokens[] = $name;
+						$tokens[] = ''; 
+						$ret .= $this->combine_tokens($tmpl, $tokens, true);
+					}
+					else {
+						$line = "<a href='$murl'>$name</a>";
+						$ret .= $gstart . $line . $gend;
+					}							
 				}	
 			}	     
 		}
 		
-		//echo $ret;
 		return ($ret);
 	}
    
-	protected function render_submenu($smenu=null, $template=null, $glue_tag=null) {
+	protected function render_submenu($smenu=null, $template=null, $glue_tag=null, $mlang=true) {
         $lan = getlocal() ? getlocal() : '0';
         if (empty($smenu))
 		   return;
 		   
 		foreach ($smenu as $m=>$v) {
-		    $cv = strstr($v, $this->delimiter) ? explode($this->delimiter ,$v) : $v;
+		    $cv = ($mlang && strstr($v, $this->delimiter)) ? explode($this->delimiter ,$v) : $v;
 		
 		    if (strstr($m,'title')) {
 				$subm_titles[] = (is_array($cv)) ? $cv[$lan] : $cv;

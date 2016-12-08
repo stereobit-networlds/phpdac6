@@ -561,7 +561,7 @@ class rcmenu extends cmsmenu {
 		$inifile = $this->path . 'menu-' . $name . $lan . '.ini';
 		$ret = @file_put_contents($inifile, "[NEW]\r\ntitle=New\r\nlink=\r\nspaces=0\r\n");
 		
-		$this->selectedMenu = 'menu-' . $name; //update var, add menu- prefix
+		$this->selectedMenu = $name; //update var
 		
 		return ($ret ? 1 : -1);
 	}
