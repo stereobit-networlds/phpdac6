@@ -1208,9 +1208,7 @@ EOF;
 		if (defined('TWIGENGINE_DPC')) {
 				
 			//save db form into temp file
-			$tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);
-			$tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);
-			$twigpath = $this->prpath . $tmpl_path .'/'. $tmpl_name .'/';	
+			$twigpath = $this->prpath . $this->tpath .'/'. $this->template .'/' ; 
 			$tempfile = 'crmform-cache-' . urlencode(base64_encode($template)) . '.html';
 
 			if (@file_put_contents($twigpath . $tempfile, $form)) {

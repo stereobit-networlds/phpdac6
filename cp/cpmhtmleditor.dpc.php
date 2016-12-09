@@ -45,7 +45,7 @@ class cpmhtmleditor {
 	var $htmlfile, $ckeditor4, $cke4, $ckjs;
 	var $urlpath, $urlbase, $msg;
 	var $photodb, $restype, $cseparator, $map_t, $map_f, $encodeimageid;
-	var $itmpath, $selectSQL;
+	var $itmplpath, $mcpagespath, $selectSQL;
 	
 	var $messages, $postok, $record;
 
@@ -89,6 +89,7 @@ class cpmhtmleditor {
 		$this->cseparator = $csep ? $csep : '^';
 
 		$this->itmplpath = 'templates/';
+		$this->mcpagespath = 'pages/';
 		
 		$this->activecode = $this->getmapf('code');
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
@@ -223,6 +224,9 @@ class cpmhtmleditor {
 				$active = GetParam('active') ? '101' : '0';
 				$itmactive = GetParam('itmactive') ? '1' : '0';
 				$template = GetParam('mctemplate');
+				$mcpage = GetParam('mcpage');
+				
+				$this->writeMCPage($code, $mcpage, _v('cmsrt.template'));
 				
 				if (!empty($_POST['include'])) 
 					$category = array_shift($_POST['include']); //get first from list
@@ -300,13 +304,16 @@ class cpmhtmleditor {
 
 			if ($title = GetParam('title')) {
 			
-				$code = $id; //$this->replace_spchars($title);
+				$code = $id; 
 				$tags = GetParam('tags') ;
 				$text = GetParam('htmltext');
 				$descr = GetParam('descr');// ? GetParam('descr') : substr(trim(strip_tags($text)),0,250).'...';
 				$active = GetParam('active') ? '101' : '0';
 				$itmactive = GetParam('itmactive') ? '1' : '0';
 				$template = GetParam('mctemplate');
+				$mcpage = GetParam('mcpage');
+				
+				$this->writeMCPage($code, $mcpage, _v('cmsrt.template'));
 				
 				if (!empty($_POST['include'])) 
 					$category = array_shift($_POST['include']); //get first from list
@@ -1468,7 +1475,7 @@ class cpmhtmleditor {
 		$db = GetGlobal('db');		
 		$lan = getlocal(); 
 		$one_attachment = remote_paramload('SHKATALOG','oneattach',$this->path);
-		$slan = $one_attachment ? null : ($lan?$lan:'0');		
+		$slan = $one_attachment ? null : ($lan ? $lan : '0');		
 		$type = '.html'; //default type for text attachment
 		$id = GetReq('id');
 		
@@ -1494,11 +1501,15 @@ class cpmhtmleditor {
 
 	//select templates to publish post with
 	public function templates() {
-		$path = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);
-		$tpath = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);
 		$t_current_page = GetParam('mctemplate') ? GetParam('mctemplate') : $this->getField('template'); 
+		$ppath = $this->prpath . _v('cmsrt.tpath') .'/'. _v('cmsrt.template') .'/'. $this->itmplpath ; 
 		
+		/*
+		$path = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);
+		$tpath = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);		
 		$templates = opendir($this->prpath . $path .'/'. $tpath . '/' . $this->itmplpath);
+		//echo $this->prpath . $path .'/'. $tpath . '/' . $this->itmplpath;
+		
 		while($file= readdir($templates)){
 			
 			if (($file=='.') || ($file=='..')) continue;
@@ -1509,16 +1520,75 @@ class cpmhtmleditor {
 		}
 		closedir();
 		
+		return ($ret);
+		*/
+		foreach (glob($ppath . "*.php") as $filename) {
+			
+			$tf = str_replace(array(".php", $ppath),array('',''), $filename);
+			
+			$selected = ($tf==$t_current_page) ? 'selected' : null;
+			$ret .= "<option value='$tf' $selected>$tf</option>";			
+		}
+		
 		return ($ret);	
 	}	
 	
-	//select mcpage to publish post with
-	public function frontpages() {
+	protected function readMCPage($id=null, $templatename=null) {
+		if (!$id) return false;
+		$db = GetGlobal('db');
 		
-		$mc_pages = GetGlobal('controller')->calldpc_method("fronthtmlpage.mc_read_files use pages+php++1");
+		$sSQL = "select mcname from wftmpl where mcid=" . $db->qstr($id);
+		if ($templatename)
+			$sSQL .= " and mctmpl=" . $db->qstr($templatename);
 		
-		$location = GetGlobal('controller')->calldpc_var('rcpmenu.turl'); //GetSessionParam('turldecoded') 
-		$my_current_page = GetGlobal('controller')->calldpc_method("fronthtmlpage.mc_parse_editurl use ".$location);		
+		$res = $db->Execute($sSQL);
+		
+		return ($res->fields[0]);
+	}
+	
+	protected function writeMCPage($id=null, $mcpage=null, $templatename=null) {
+		if ((!$id) || (!$mcpage)) return false;	
+		$db = GetGlobal('db');
+		
+		$currentmcpage = $this->readMCPage($id, $templatename);
+		
+		if ($currentmcpage)
+			$sSQL = "update wftmpl set mcname=" . $db->qstr($mcpage);
+		else
+			$sSQL = "insert into wftmpl set (mcid,mcname,mctmpl) values ('$id','$mcpage', '$templatename')";
+		
+		$res = $db->Execute($sSQL);
+		
+		return true;
+	}	
+	
+	//select mcpages to publish post with
+	public function mcpages() {
+		$cpGet = _v('rcpmenu.cpGet');
+		$code = GetParam('id') ? GetParam('id') : $cpGet['id'];	
+		$curMCPage = $this->readMCPage($code, _v('cmsrt.template'));
+		
+		$t_current_page = GetParam('mcpage') ? GetParam('mcpage') : $curMCPage;//$this->getMcPage(); 
+		$ppath = $this->prpath . _v('cmsrt.tpath') .'/'. _v('cmsrt.template') .'/'. $this->mcpagespath ; 
+		
+		foreach (glob($ppath . "*.php") as $filename) {
+			
+			$tf = str_replace(array(".php", $ppath),array('',''), $filename);
+			
+			$selected = ($tf==$t_current_page) ? 'selected' : null;
+			$ret .= "<option value='$tf' $selected>$tf</option>";			
+		}
+		
+		return ($ret);	
+	}	
+	
+	//select mcpage to publish post with ...!!
+	/*public function frontpages() {
+		
+		$mc_pages = _m("fronthtmlpage.mc_read_files use pages+php++1");
+		
+		$location = _v('rcpmenu.turl'); //GetSessionParam('turldecoded') 
+		$my_current_page = _m("fronthtmlpage.mc_parse_editurl use ".$location);		
 		$mc_current_page = str_replace(array('.php','../'),array('',''),$my_current_page);		
 		
 		foreach ($mc_pages as $mcpage=>$mctitle) {
@@ -1538,7 +1608,7 @@ class cpmhtmleditor {
 		
 		return ($p);
 	}	
-	
+	*/
 	public function getVar($var=null) {
 		if (!$var) return null;
 		return ($this->{$var});

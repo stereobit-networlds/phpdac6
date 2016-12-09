@@ -27,10 +27,8 @@ require_once($a);
 
 class cms extends fronthtmlpage {
 
-    var $appname, $url;
+    var $appname, $url, $tpath;
 	var $seclevid, $userDemoIds;
-	var $tpath, $template;
-	
 	var $session_use_cookie, $protocol, $secprotocol, $sslpath;
 	var $activeSSL, $encURLparam, $shellfn, $dothtml;
 		

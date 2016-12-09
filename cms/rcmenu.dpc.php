@@ -611,9 +611,8 @@ class rcmenu extends cmsmenu {
 	
 	public function readCurrentMenu() {
 		$db = GetGlobal('db');
-	    //$lan = getlocal();
-	    $itmname = _v("cmsrt.itmname"); //$lan ? 'itmname' : 'itmfname';
-	    $itmdescr = _v("cmsrt.itmdescr"); //$lan ? 'itmdescr' : 'itmfdescr';
+	    $itmname = _v("cmsrt.itmname"); 
+	    $itmdescr = _v("cmsrt.itmdescr"); 
 		$csep = _v("cmsrt.cseparator");	
 		$code = _m("cmsrt.getmapf use code");		
 		
@@ -625,12 +624,10 @@ class rcmenu extends cmsmenu {
 			$res = $db->Execute($sSQL);
 			
 			$cat = $cpGet['cat'];
-			$cats = explode($csep, $cat);
-			$c = array_pop($cats);
-			$_c = _m("cmsrt.replace_spchars use $c+1");
+			$title = array_pop($this->getCategoriesTitles($cat));
 			
 			//the cat item,link
-			$a = $this->nestdditem($cat, $_c, "klist/$cat/", md5($cat).'-SUBMENU');
+			$a = $this->nestdditem($cat, $title, "klist/$cat/", md5($cat).'-SUBMENU');
 			//the item,link
 			$b = $this->nestdditem($res->fields[0], $res->fields[1], "kshow/$cat/".$res->fields[0] .'/', md5($res->fields[0]).'-SUBMENU');
 			
@@ -640,11 +637,9 @@ class rcmenu extends cmsmenu {
 			//current cat, cat items
 			$sSQL = "select $code,$itmname,$itmdescr from products WHERE ";
 			$cats = explode($csep, $cat);
-			foreach ($cats as $i=>$c) {
-				$_c[] = _m("cmsrt.replace_spchars use $c+1");
-				$_s[] = "cat" . $i . "=" . $db->qstr($_c[$i]);
-			}	
-			$sSQL .= implode(' AND ', $_s);
+			foreach ($cats as $i=>$c) 
+				$sql[] = "cat" . $i . "=" . $db->qstr(_m("cmsrt.replace_spchars use $c+1"));	
+			$sSQL .= implode(' AND ', $sql);
 			$sSQL .= " AND itmactive>0 AND active>0";	
 			$sSQL .= _m("cmsrt.orderSQL");
 			//echo $sSQL;
@@ -654,7 +649,7 @@ class rcmenu extends cmsmenu {
 			foreach ($res as $i=>$item)
 				$catitems .= $this->nestdditem($item[0], $item[1], "kshow/$cat/".$item[0] .'/', md5($item[0]).'-SUBMENU');
 				
-			$title = array_pop($_c);
+			$title = array_pop($this->getCategoriesTitles($cat)); 
 			//the cat items tree
 			$a = $this->nestddgroup($cat, $title, "klist/$cat/", md5($cat).'-SUBMENU', $catitems);			
 			//just the cat link item
@@ -664,6 +659,28 @@ class rcmenu extends cmsmenu {
 		}	
 		//else //current conf of main menu
 		return $this->nestBuild(); 	
+	}
+	
+	protected function getCategoriesTitles($cat=null) {
+		$db = GetGlobal('db');
+		if (!$cat) return array();
+		$lan = getlocal();
+		$f = $lan ? $lan : '0'; 	   		
+		
+		$csep = _v("cmsrt.cseparator");
+		$cats = explode($csep, $cat);		
+		
+		$sSQL = "select cat{$f}2,cat{$f}3,cat{$f}4,cat{$f}5 from categories WHERE ";
+		foreach ($cats as $c=>$ct) {
+			$sql[] = 'cat' . strval($c+2) .'='. $db->qstr(_m("cmsrt.replace_spchars use $ct+1"));
+		}
+		$sSQL .= implode(' AND ', $sql);
+		
+		$res = $db->Execute($sSQL);
+		for ($i=0 ; $i<=3 ; $i++)
+			if ($ctitle = $res->fields[$i]) $retarray[] = $ctitle;
+		
+		return ($retarray);
 	}
 	
 	public function menuButtonSelect() {
