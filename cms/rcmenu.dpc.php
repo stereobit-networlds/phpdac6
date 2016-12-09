@@ -440,13 +440,17 @@ class rcmenu extends cmsmenu {
 	}
 	
 	protected function loadNestList() {
-    }
+    }	
 	
 	protected function saveNestList($filename=null) {
 		$list = GetParam('list');
 		$menu = json_decode($list,true);//,false,5); //stdclass, depth 
 		//@file_put_contents("menu.list", $list);				
 		//var_export($menu);
+		
+		//delete menu first
+		$this->deleteMenu($filename);
+		$this->saveMenu($filename, $menu);
 		
 		$w = $this->writenest_config($menu, $filename);
 		$ret = $w ? localize('_saved', getlocal()) : localize('_notsaved', getlocal());
@@ -460,7 +464,55 @@ class rcmenu extends cmsmenu {
 		
 		echo $tmp ? $ret . " (1)" : $ret;
 		*/
-    }	
+    }
+
+	protected function loadMenu($name=null) {
+		if (!$name) return null;
+	    $lan = getlocal() ? getlocal() : '0';		
+		$db = GetGlobal('db');
+		
+		$sSQL = "select type,relative,relation,locale,orderid from relatives where ";
+		$sSDL.= "type='$lan' and active=1 and ismenu=1 and notes=" . $db->qstr($name);
+	    $result = $db->Execute($sSQL);
+
+		//...	
+	}		
+	
+	/* n level db menu saver */
+	protected function saveMenu($name=null, $data=null, $isfather=1, $ischild=0, $father=null) {
+		if ((!$name)||(empty($data))) return null;
+	    $lan = getlocal() ? getlocal() : '0';			
+		$db = GetGlobal('db');		
+		$csep = _v("cmsrt.cseparator");
+		$rootfather = $father ? $father : $name;
+		
+		//insert menu
+		foreach ($data as $i=>$m) {
+			$id = $m['id'];
+			$title = $m['name'];
+			$link = str_replace($csep, '^', $m['value']);
+			$submenu = $m['submenu'];
+			$submenu_items = $m['children'];
+			if (is_array($submenu_items)) 
+				$this->saveMenu($id, $submenu_items, 0, 1, $rootfather);
+			
+			$sSQL = "insert into relatives (orderid,type,active,relative,relation,ismenu,notes,locale,isfather,ischild) values (";
+			$sSQL.= "$i,$lan,1,'$name','$id',1,'$title|$link','$rootfather',$isfather, $ischild)"; 
+			$result = $db->Execute($sSQL);	
+		}
+		
+		return true;
+	}
+
+	protected function deleteMenu($name=null) {
+		if (!$name) return false;
+		$db = GetGlobal('db');
+
+		$sSQL = "delete from relatives where ismenu=1 and locale=" . $db->qstr($name);
+		$resultset = $db->Execute($sSQL);
+
+		return true;	
+	}	
 	
 	protected function nestdditem($id,$name,$value=null,$submenu=null) {
 		$ret = "<li class='dd-item' data-id='$id' data-name='$name' data-value='$value' data-submenu='$submenu'>
@@ -501,16 +553,17 @@ class rcmenu extends cmsmenu {
 			$cn = null;
 			if (isset($params['submenu'])) {
                 //echo $section.'-SUBMENU'; 
-				$sb = explode(',', $params['submenu']);	
-				$submenu = isset($sb[$lan]) ? $sb[$lan] : $params['submenu'];
+				$sb = isset($file) ? $params['submenu'] : explode(',', $params['submenu']);	
+				$submenu = isset($file) ? $sb : $sb[$lan];
 				foreach ($conf[$submenu] as $group=>$child) {
 				    //echo $child,'<br/>';
 					if (substr($group,0,5)=='title') {
-						$nz = explode(',', $child);
-						$name = isset($nz[$lan]) ? $nz[$lan] : $child;
+						$nz = isset($file) ? $child : explode(',', $child);
+						$name = isset($file) ? $nz : $nz[$lan];
 						
-						$tl = explode(',', $conf[$section.'-SUBMENU'][str_replace('title','link',$group)]);
-						$value = isset($tl[$lan]) ? $tl[$lan] : $conf[$section.'-SUBMENU'][str_replace('title','link',$group)]; 
+						$tl = isset($file)?	$conf[$section.'-SUBMENU'][str_replace('title','link',$group)] : 
+											explode(',', $conf[$section.'-SUBMENU'][str_replace('title','link',$group)]);
+						$value = isset($file) ? $tl : $tl[$lan];
 						$linkvalue = $this->make_link($value);
 						
 						$cn .= $this->nestdditem($section.'-'.$name, $name, $linkvalue);
@@ -518,10 +571,10 @@ class rcmenu extends cmsmenu {
 				}
 			}
 
-			$nz = explode(',', $params['title']);
-			$name = isset($nz[$lan]) ? $nz[$lan] : $params['title'];
-			$nl = explode(',', $params['link']);
-			$value = isset($nl[$lan]) ? $nl[$lan] : $params['link'];
+			$nz = isset($file) ? $params['title'] : explode(',', $params['title']);
+			$name = isset($file) ? $nz : $nz[$lan];
+			$nl = isset($file) ? $params['link'] : explode(',', $params['link']);
+			$value = isset($file) ? $nl : $nl[$lan];
 			if ($cn)
 				$n .= $this->nestddgroup($section, $name, $value, $submenu, $cn);
 			else
