@@ -27,7 +27,7 @@ require_once($a);
 
 class cms extends fronthtmlpage {
 
-    var $appname, $url, $tpath;
+    var $appname, $httpurl, $tpath;
 	var $seclevid, $userDemoIds;
 	var $session_use_cookie, $protocol, $secprotocol, $sslpath;
 	var $activeSSL, $encURLparam, $shellfn, $dothtml;
@@ -41,7 +41,8 @@ class cms extends fronthtmlpage {
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
 		$this->userDemoIds = array(5,6,7,8); //8 
 		
-		$this->tpath = $this->htmlpage; //fronthtmlpage	
+		$this->tpath = $this->htmlpage; //fronthtmlpage
+		$this->httpurl = paramload('SHELL','protocol') . $this->url;	
 
 		$this->session_use_cookie = paramload('SHELL','sessionusecookie');
 		$this->protocol = paramload('SHELL','protocol');

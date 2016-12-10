@@ -1761,7 +1761,7 @@ SCROLLTOP;
 	
 	public function show_p($p,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');					
-		$pz = $photosize?$photosize:1;		
+		$pz = $photosize ? $photosize : 1;		
 	                                                                             
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
@@ -1778,8 +1778,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;		
 		
 		if ($linemax>1)
 			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_p use $p,$items");
@@ -1791,10 +1791,10 @@ SCROLLTOP;
 	
 	public function show_lastentries($items=10,$days=12,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$photosize=null,$nopager=null) {
         $db = GetGlobal('db');		
-		$mydays = $days?$days:12;
+		$mydays = $days ? $days : 12;
 	    $date2check = time() - ($mydays * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);
-		$pz = $photosize?$photosize:1;			
+		$pz = $photosize ? $photosize : 1;			
 
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
@@ -1810,8 +1810,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;//free y 75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;//free y 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$nopager);
@@ -1823,9 +1823,9 @@ SCROLLTOP;
 	
 	public function show_kategory_offers($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null) {
         $db = GetGlobal('db');			
-		$c = $category?$category:GetReq('cat');	//auto browse current cat
+		$c = $category ? $category : GetReq('cat');
 		$cat = explode($this->sep(),$c);			
-		$pz = $photosize?$photosize:1;		
+		$pz = $photosize ? $photosize : 1;		
 
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
@@ -1844,8 +1844,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;// free y 75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;// free y 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$nopager);
@@ -1858,7 +1858,7 @@ SCROLLTOP;
 	public function show_pcat($p,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');		
 		$mycat = $category ? $category : GetReq('cat');	   			
-		$pz = $photosize?$photosize:1;			
+		$pz = $photosize ? $photosize : 1;			
 	                                                                             
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
@@ -1900,8 +1900,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_pcat use $p,$category,$items");
@@ -1913,8 +1913,8 @@ SCROLLTOP;
 	
 	public function show_lastincat($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');		
-		$mycat = $category?$category:GetReq('cat');	   		
-		$pz = $photosize?$photosize:1;		
+		$mycat = $category ? $category : GetReq('cat');	   		
+		$pz = $photosize ? $photosize : 1;		
 
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
@@ -1941,8 +1941,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_lastincat use $p,$category,$items");
@@ -1954,8 +1954,8 @@ SCROLLTOP;
 
 	public function show_orderid($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');		
-		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   		
-		$pz = $photosize?$photosize:1;		
+		$mycat = $category ? $category : GetReq('cat');	   		
+		$pz = $photosize ? $photosize : 1;		
 
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
@@ -1997,8 +1997,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_orderid use $p,$category,$items");
@@ -2010,8 +2010,8 @@ SCROLLTOP;
 	
 	public function show_orderidis($orderid=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');		
-		$mycat = $category?$category:GetReq('cat');	   			
-		$pz = $photosize?$photosize:1;			
+		$mycat = $category ? $category : GetReq('cat');	   			
+		$pz = $photosize ? $photosize : 1;			
 
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";		
@@ -2025,8 +2025,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_orderidis use $p,$category,$items");
@@ -2038,7 +2038,7 @@ SCROLLTOP;
 	
 	public function show_resources($contition,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$ofield=null,$desc=null) {
         $db = GetGlobal('db');					
-		$pz = $photosize?$photosize:1;	
+		$pz = $photosize ? $photosize : 1;	
         $ordfield = $ofield ? $ofield : $this->itmname;
         $ascd = $desc ? "desc" : "asc"; 		
 
@@ -2056,8 +2056,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null; //free y 75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null; //free y 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_resources use $contition,$items");
@@ -2072,7 +2072,7 @@ SCROLLTOP;
         $db = GetGlobal('db');				
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
-		$pz = $photosize?$photosize:1;	
+		$pz = $photosize ? $photosize : 1;	
 
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
@@ -2089,8 +2089,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;//free y 75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;//free y 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_special use $contition,$items");
@@ -2105,7 +2105,7 @@ SCROLLTOP;
         $db = GetGlobal('db');			
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
-		$pz = $photosize?$photosize:1;	
+		$pz = $photosize ? $photosize : 1;	
 
         $sSQL = $this->selectSQL;				
 		$sSQL .= " WHERE ";	
@@ -2123,8 +2123,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;//free y 75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;//free y 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_special use $contition,$items");
@@ -2137,7 +2137,7 @@ SCROLLTOP;
 	public function show_special_online($field2check,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$key=null) {
         $db = GetGlobal('db');
 		$dbbuffer = GetGlobal('_sqlbuffer');		
-		$pz = $photosize?$photosize:1;						
+		$pz = $photosize ? $photosize : 1;						
 		$p = null;			
 		$table2check = 'products';
 		$fields = $this->result->fields;				
@@ -2213,8 +2213,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;//free y 75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;//free y 75;		
 		
 		if ($linemax>1)
 		  $out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,0,1,"shkatalogmedia.show_special_online use $field2check,$items,null,null,null,0,null,null,null,null,$key");
@@ -2265,9 +2265,9 @@ SCROLLTOP;
 	} 
 	
 	public function show_relative_sales($id,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
-		$myid = $id?$id:GetReq('id');
-		$db = GetGlobal('db');			
-		$pz = $photosize?$photosize:1;	  	    
+		$db = GetGlobal('db');	
+		$myid = $id ? $id : GetReq('id');		
+		$pz = $photosize ? $photosize : 1;	  	    
 	
 		if ( (defined('SHTRANSACTIONS_DPC')) && (seclevel('SHTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
 
@@ -2294,8 +2294,8 @@ SCROLLTOP;
 				$resultset = $db->Execute($sSQL,2);	
 				$this->result = $resultset;
 		
-				$xmax = $imgx?$imgx:100;
-				$ymax = $imgy?$imgy:null;//free y 75;		
+				$xmax = $imgx ? $imgx : 100;
+				$ymax = $imgy ? $imgy : null;//free y 75;		
 		
 				if ($linemax>1)
 					$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_relative_sales use $myid,$items");
@@ -2306,12 +2306,11 @@ SCROLLTOP;
 		return ($out);  
 	}
 	
-	//override
 	public function show_kategory_items($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
         $db = GetGlobal('db');			
-		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
+		$mycat = $category ? $category : GetReq('cat');		   
 		$cat = explode($this->sep(),$mycat);		
-		$pz = $photosize?$photosize:1;		
+		$pz = $photosize ? $photosize : 1;		
 				
 		//auto browse current cat
 		$fields = $this->result->fields; //prev query exclude cat
@@ -2356,8 +2355,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;//free y 75;	
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;//free y 75;	
 		
 		if ($linemax>1) 
 			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_kategory_items use $category,$items");
@@ -2367,12 +2366,152 @@ SCROLLTOP;
 		return ($out);	
 	}		
 	
+	public function show_offers($items=10,$cat=null,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
+        $db = GetGlobal('db');				
+		$pz = $photosize ? $photosize : 1;			
+
+        $sSQL = $this->selectSQL;
+		$sSQL .= " WHERE ";	
+
+		if ($cat) {
+			$c = explode($this->sep(), $this->replace_spchars($cat,1)); //print_r($cat);
+			foreach ($c as $cc=>$category)
+				$sSQL .= "cat".$cc."='" . $category . "' and ";
+	    }
+		
+		if ($selected_item = GetReq('id')) 
+		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
+		  		
+		$sSQL .= $this->getmapf('offer')."='".$this->toggler[1]."' and itmactive>0 and active>0";	
+		$sSQL .= " ORDER BY ". "{$this->orderid}";			
+		$sSQL .= $this->bypass_order_list ? null : 
+		         ($this->orderid ? ",{$this->itmname} {$this->sortdef} " : "{$this->itmname} {$this->sortdef} ");		
+		$sSQL .= $items ? " LIMIT " . $items : null;			
+	    //echo $sSQL;
+		
+	    $resultset = $db->Execute($sSQL,2);	
+		$this->result = $resultset;
+		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;// free y 75;		
+		
+		if ($linemax>1)
+			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
+		else  	
+			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);
+		  
+		return ($out);	
+	}	
+	
+	public function show_menu_items($menu=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
+        $db = GetGlobal('db');	
+		$pz = $photosize ? $photosize : 1;			
+		
+		if (defined('CMSMENU_DPC')) {
+			
+			$list = _m('cmsmenu.readMenuElements use ' . $menu);
+			if (empty($list)) return null;
+			$menulist = implode("','",$list);
+			
+			$sSQL = $this->selectSQL;
+			$sSQL .= " WHERE ";	
+			$sSQL .= $this->fcode . " in ('". $menulist ."') and itmactive>0 and active>0";
+			$sSQL .= " ORDER BY FIELD({$this->fcode}, '". $menulist ."')";
+			$sSQL .= $items ? " LIMIT " . $items : null;	
+			//echo $sSQL;
+			$resultset = $db->Execute($sSQL);	
+			$this->result = $resultset;
+		
+			$xmax = $imgx ? $imgx : 100;
+			$ymax = $imgy ? $imgy : null;// free y 75;		
+		
+			if ($linemax>1)
+				$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
+			else  	
+				$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);		
+		}
+		
+		return ($out);
+	}	
+	
+	//disabled due to big stats
+	public function show_last_viewed_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
+        $db = GetGlobal('db');
+        $UserName = GetGlobal('UserName');							
+		$c = $category ? $category : GetReq('cat');
+		
+		$cat = explode($this->sep(),$c);		
+	    $date2check = time() - ($days * 24 * 60 * 60);
+	    $entrydate = date('Y-m-d',$date2check);		
+		$pz = $photosize ? $photosize : 1;
+		$resources = 1;
+			
+        $sSQL = "select products.id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
+	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->fcode.
+				",stats.id,stats.tid from products, stats ";
+		$sSQL .= " WHERE stats.tid=products.".$this->fcode." and products.itmactive>0 and products.active>0";				
+		
+		if ($UserName)
+			$sSQL .= " and (attr2='" . decode($UserName) . "' or attr2='". session_id() . "')";
+		else  
+			$sSQL .= " and attr2='" . session_id() . "'";
+		  
+		$sSQL .= " GROUP BY stats.tid ORDER BY stats.id DESC limit " . $items;
+		
+	    $resultset = $db->Execute($sSQL,2);	
+		$this->result = $resultset;
+		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;// free y 75;		
+		
+		if ($linemax>1)
+			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
+		else  	
+			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$resources,$nopager,1);
+		  
+		return ($out);				
+	}	
+	
+	/*session mode due to big stats*/
+	public function show_last_viewed_items_session($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
+        $db = GetGlobal('db');
+        $UserName = GetGlobal('UserName');						
+		$c = $category ? $category : GetReq('cat');	
+		
+		$cat = explode($this->sep(),$c);		
+	    $date2check = time() - ($days * 24 * 60 * 60);
+	    $entrydate = date('Y-m-d',$date2check);		
+		$pz = $photosize ? $photosize : 1;
+		$resources = 1;
+
+        $lastviewed = unserialize(GetSessionParam('lastvieweditems')); 
+		if (!empty($lastviewed)) {	
+			$ilist = implode("','",array_reverse($lastviewed));
+		
+			$sSQL = $this->selectSQL;
+			$sSQL .= " WHERE " . $this->fcode." in ('". $ilist ."') and itmactive>0 and active>0";				
+
+			$resultset = $db->Execute($sSQL,2);	
+			$this->result = $resultset;
+		
+			$xmax = $imgx ? $imgx : 100;
+			$ymax = $imgy ? $imgy : null;// free y 75;		
+
+			if ($linemax>1)
+				$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
+			else  	
+				$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$resources,$nopager,1);
+		}
+		
+		return ($out);				
+	}	
+
 	//for sitemap call
 	public function show_sitemap_items($category=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
         $db = GetGlobal('db');		
-		$mycat = $category?$category:GetReq('cat');	//auto browse current cat	   
+		$mycat = $category ? $category : GetReq('cat');	   
 		$cat = explode($this->sep(),$mycat);		
-		$pz = $photosize?$photosize:1;		
+		$pz = $photosize ? $photosize : 1;		
 				
 		//auto browse current cat
 		$fields = $this->result->fields; //prev query exclude cat		
@@ -2386,8 +2525,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;//free y 75;	
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;//free y 75;	
 		
 		if ($linemax>1) 
 			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1,1,"shkatalogmedia.show_kategory_items use $category,$items");
@@ -2401,14 +2540,13 @@ SCROLLTOP;
 		$db = GetGlobal('db');
 		$start = GetReq('start');
 		$headcat = GetReq('headcat')?GetReq('headcat'):"";	   
-		$meter = $start?$start-1:0; 
+		$meter = $start ? $start-1 : 0; 
 		$sep = $this->sep();	
 	   
 		return null; //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< DISABLED
 
 		$mytemplate = $template ? $this->select_template($template) : null;	   
 	   
-	   	
 		$sSQL = "select id,itmname,itmfname,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,".$this->fcode." from products ";
 		$sSQL .= " WHERE ";
 		$sSQL .= "itmactive>0 and active>0";	
@@ -2468,11 +2606,9 @@ SCROLLTOP;
 		return ($ret);		   		   	
 	}
 	
-	public function read_item_attr($item=null,$attr=null,$islink=null) {
+	public function read_item_attr($code=null,$attr=null,$islink=null) {
         $db = GetGlobal('db');					
-		
-		if (!$item) 
-			$item = GetReq('id');	
+		$item = $code ? $code : GetReq('id');	
 		
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";
@@ -2493,8 +2629,7 @@ SCROLLTOP;
 	
 	public function read_item_weight($itemsarray=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
         $db = GetGlobal('db');						
-		$pz = $photosize?$photosize:1;	
-		
+		$pz = $photosize ? $photosize : 1;	
 		if (!$itemsarray) return;		
 
         $sSQL = $this->selectSQL;
@@ -2515,8 +2650,8 @@ SCROLLTOP;
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;//free y 75;		
+		$xmax = $imgx ? $imgx : 100;
+		$ymax = $imgy ? $imgy : null;//free y 75;		
 		
 		if ($linemax>1)
 			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,1);
@@ -2528,118 +2663,6 @@ SCROLLTOP;
 		}  
 		return ($out);	
 	}		
-	
-	//override
-	public function show_last_viewed_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
-        $db = GetGlobal('db');
-        $UserName = GetGlobal('UserName');							
-		$c = $category?$category:GetReq('cat');
-		
-		$cat = explode($this->sep(),$c);		
-	    $date2check = time() - ($days * 24 * 60 * 60);
-	    $entrydate = date('Y-m-d',$date2check);		
-		$pz = $photosize?$photosize:1;
-		$resources = 1;
-			
-		
-        $sSQL = "select products.id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,volume,".$this->fcode.
-				",stats.id,stats.tid from products, stats ";
-		$sSQL .= " WHERE stats.tid=products.".$this->fcode." and products.itmactive>0 and products.active>0";				
-		
-		if ($UserName)
-			$sSQL .= " and (attr2='" . decode($UserName) . "' or attr2='". session_id() . "')";
-		else  
-			$sSQL .= " and attr2='" . session_id() . "'";
-		  
-		$sSQL .= " GROUP BY stats.tid ORDER BY stats.id DESC limit " . $items;
-		
-	    $resultset = $db->Execute($sSQL,2);	
-		$this->result = $resultset;
-		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;// free y 75;		
-		
-		if ($linemax>1)
-			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
-		else  	
-			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$resources,$nopager,1);
-		  
-		return ($out);				
-	}	
-	
-	/*session mode due to big stats*/
-	public function show_last_viewed_items_session($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
-        $db = GetGlobal('db');
-        $UserName = GetGlobal('UserName');						
-		$c = $category?$category:GetReq('cat');	
-		
-		$cat = explode($this->sep(),$c);		
-	    $date2check = time() - ($days * 24 * 60 * 60);
-	    $entrydate = date('Y-m-d',$date2check);		
-		$pz = $photosize?$photosize:1;
-		$resources = 1;
-
-        $lastviewed = unserialize(GetSessionParam('lastvieweditems')); 
-		if (!empty($lastviewed)) {	
-			$ilist = implode("','",array_reverse($lastviewed));
-		
-			$sSQL = $this->selectSQL;
-			$sSQL .= " WHERE " . $this->fcode." in ('". $ilist ."') and itmactive>0 and active>0";				
-
-			$resultset = $db->Execute($sSQL,2);	
-			$this->result = $resultset;
-		
-			$xmax = $imgx?$imgx:100;
-			$ymax = $imgy?$imgy:null;// free y 75;		
-
-			if ($linemax>1)
-				$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
-			else  	
-				$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$resources,$nopager,1);
-		}
-		
-		return ($out);				
-	}		
-	
-	//override
-	public function show_offers($items=10,$cat=null,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
-        $db = GetGlobal('db');				
-		$pz = $photosize?$photosize:1;			
-
-        $sSQL = $this->selectSQL;
-		$sSQL .= " WHERE ";	
-
-		if ($cat) {
-			$c = explode($this->sep(), $this->replace_spchars($cat,1)); //print_r($cat);
-			foreach ($c as $cc=>$category)
-				$sSQL .= "cat".$cc."='" . $category . "' and ";
-	    }
-		
-		if ($selected_item = GetReq('id')) 
-		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
-		  		
-		$sSQL .= $this->getmapf('offer')."='".$this->toggler[1]."' and itmactive>0 and active>0";	
-		$sSQL .= " ORDER BY ". "{$this->orderid}";			
-		$sSQL .= $this->bypass_order_list ? null : 
-		         ($this->orderid ? ",{$this->itmname} {$this->sortdef} " : "{$this->itmname} {$this->sortdef} ");		
-		$sSQL .= $items ? " LIMIT " . $items : null;			
-	    //echo $sSQL;
-		
-	    $resultset = $db->Execute($sSQL,2);	
-		$this->result = $resultset;
-		
-		$xmax = $imgx?$imgx:100;
-		$ymax = $imgy?$imgy:null;// free y 75;		
-		
-		if ($linemax>1)
-			$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
-		else  	
-			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);
-		  
-		return ($out);	
-	}	
-		
 	
     public function katalog_feed($read_all=false, $off_categories=false, $off_items=false) {
 		$db = GetGlobal('db');  

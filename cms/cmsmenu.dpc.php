@@ -64,7 +64,108 @@ class cmsmenu {
 	   return ($out);
 	}   
    			
+	//db based
+	public function callMenu($name=null,$menu_template=null,$glue_tag=null,$submenu_template=null) {
+		if (!$name) return null;
+	    $lan = getlocal() ? getlocal() : '0';	
+		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
+		$gend = $glue_tag ? '</'.$glue_tag.'>' : null;			
+		$db = GetGlobal('db');
 
+		$sSQL = "select type,isfather,ischild,relative,relation,notes,locale,orderid from relatives where ";
+		$sSQL.= "type='$lan' and active=1 and ismenu=1 and ismaster=0 and locale=" . $db->qstr($name);
+		$sSQL.= " ORDER BY orderid";
+		//echo $sSQL;
+	    $result = $db->Execute($sSQL);
+
+		$menu = array();
+		$submenu = array();
+		foreach ($result as $i=>$rec) {
+			
+			$orderid = $rec['orderid'];
+			$relative = $rec['relative'];
+			$relation = $rec['relation'];
+			
+			if ($rec['ischild']) {
+				$submenu[$relative][$orderid] = $rec['notes']; 				
+			}
+			elseif ($rec['isfather']) {
+				$menu[$orderid] = $relation .'|'. $rec['notes']; 	
+			}
+		}	
+		
+		$ret = null;
+		$tmpl = $menu_template ? _m('cmsrt.select_template use ' . $menu_template) : null; 
+		
+		ksort($menu);
+		foreach ($menu as $i=>$m) {
+			$ret2 = null;
+			list ($section, $name, $value) = explode('|', $m);			
+			
+			if ($sb = (array) $submenu[$section]) {
+				ksort($sb);
+				$tmpl2 = $submenu_template ? _m('cmsrt.select_template use ' . $submenu_template) : null;
+				
+				foreach ($sb as $j=>$c) {
+					list ($cname, $cvalue) = explode('|', $c);
+					
+					if ($tmpl2) {
+						$tokens2[] = trim($cvalue) ? $this->make_link($cvalue) : '#';
+						$tokens2[] = $cname;
+						$ret2 .= $this->combine_tokens($tmpl2, $tokens, true);
+						unset($tokens2);
+					}
+					else {
+						$link = trim($cvalue) ? $this->make_link($cvalue) : '#';
+						$line = "<a href='$link'>$cname</a>";
+						$ret2 .= $gstart . $line . $gend;
+					}						
+				}	
+			}
+			
+			if ($tmpl) {
+				$tokens[] = $this->dropdown_class;
+				$tokens[] = trim($value) ? $this->make_link($value) : '#';
+				$tokens[] = $name;
+				$tokens[] = $ret2; 
+				$ret .= $this->combine_tokens($tmpl, $tokens, true);
+				unset($tokens);
+			}
+			else {
+				$link = trim($value) ? $this->make_link($value) : '#';
+				$line = "<a href='$link'>$name</a>";
+				$ret .= $gstart . $line . $gend;
+			}	
+		}	
+		
+		return ($ret);		
+	}
+
+	//used by dac pages for template loading
+	public function readMenuElements($menu, $submenu=null, $all=false) {
+		if (!$menu) return null;
+		$lan = getlocal() ? getlocal() : '0';
+		$db = GetGlobal('db');	
+
+		//db based menu items (1 level)
+		$sSQL = "select relation,locale,notes from relatives where ";
+		$sSQL.= "type='$lan' and active=1 and ismenu=1 and ";
+		if ($submenu) 
+			$sSQL.= "relative=" . $db->qstr($submenu) . " and locale=" . $db->qstr($menu);		
+		else
+			$sSQL.= $all ? "locale=" . $db->qstr($menu) : 
+						   "relative=" . $db->qstr($menu); //partial menu 1st level
+		
+		$sSQL.= " ORDER BY orderid";
+	    $result = $db->Execute($sSQL);	
+
+		foreach ($result as $r=>$rec)
+			$ret[] = $rec[0];
+			
+		return ($ret);	
+	}	
+			
+    //text based
 	public function render($menufile=null,$menu_template=null,$glue_tag=null,$submenu_template=null) {
         $lan = getlocal() ? getlocal() : '0';
 		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
@@ -143,20 +244,20 @@ class cmsmenu {
 						if (defined('SHKATEGORIES_DPC')) {
 							$cmddac = str_replace('^', $csep, $sub_menu);
 							$ret2 = _m($cmddac); //cat sep
-							$tokens[] = $this->dropdown_class;//'dropdown'; 
+							$tokens[] = $this->dropdown_class; 
 						}
 					}
 					elseif (stristr($sub_menu,'.htm')) {//htm/php template file
 						//echo 'a',$sub_menu;
 						$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm','',$sub_menu));  
 						$ret2 = $this->combine_tokens($mytemplate, array(0=>''), true);
-						$tokens[] = $this->dropdown_class2;//'dropdown yamm-fw';
+						$tokens[] = $this->dropdown_class2;
 					}
 					else {
 						//echo 'b',$sub_menu;
 						$_smenu = (array) $m[$sub_menu];
 						$ret2 = $this->render_submenu($_smenu, $submenu_template, $glue_tag, $mlang);
-						$tokens[] = $this->dropdown_class;//'dropdown';
+						$tokens[] = $this->dropdown_class;
 					}
 					   
 					if ($tmpl) {
@@ -239,9 +340,8 @@ class cmsmenu {
 	protected function make_link($link=null) {
 		$csep = _v("cmsrt.cseparator");
 		
-	    $ret = str_replace('@', '?t=', $link);
-		$out = str_replace('^', $csep, $ret);
-		return ($out);
+	    $ret = str_replace(array('@','^'), array('?t=',$csep), $link);
+		return ($ret);
 	}
    
 	//tokens method	

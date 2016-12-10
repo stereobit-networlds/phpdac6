@@ -710,9 +710,8 @@ class rcmenu extends cmsmenu {
 		return ($menu_array);						
 	}	
 	
-	
 	public function currentMenuName() {
-		return $this->selectedMenu ?  $this->selectedMenu : localize('_mainmenu', getlocal());
+		return $this->selectedMenu ? ucfirst($this->selectedMenu) : ucfirst(localize('_mainmenu', getlocal()));
 	}
 	
 	public function readSelectedMenu() {

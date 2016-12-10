@@ -90,8 +90,8 @@ class cmsrt extends cms  {
 			$phototype = $csize ? $csize : ( $pt ? $pt : 0); 		
 			switch ($phototype) {
 				case 3  : $this->image_size_path = $this->picbg; $this->sizeDB = 'LARGE'; break;
-				case 2  : $this->image_size_path = $this->picbg; $this->sizeDB = 'MEDIUM'; break;
-				case 1  : $this->image_size_path = $this->picbg; $this->sizeDB = 'SMALL'; break;
+				case 2  : $this->image_size_path = $this->picmd; $this->sizeDB = 'MEDIUM'; break;
+				case 1  : $this->image_size_path = $this->picsm; $this->sizeDB = 'SMALL'; break;
 				case 0  :
 				default : $this->image_size_path = $this->picbg; $this->sizeDB = 'LARGE';
 			}
@@ -122,10 +122,10 @@ class cmsrt extends cms  {
 		$this->itmdescr = $this->lan ? 'itmdescr' : 'itmfdescr';			
 		$this->pager = GetReq('pager') ? GetReq('pager') : (GetSessionParam('pager') ? GetSessionParam('pager') : remote_paramload('SHKATALOG','pager',$this->prpath));		
 		$this->fcode = $this->getmapf('code');
-		$this->lastprice = $this->getmapf('lastprice') ? ','.$this->getmapf('lastprice') : ',xml';		
+		$this->lastprice = $this->getmapf('lastprice') ? $this->getmapf('lastprice') : 'xml';		
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-							$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
+							$this->fcode . ',' . $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
 							"template,owner,itmactive from products ";	
 		$this->itmplpath = 'templates/';					
 
@@ -167,12 +167,12 @@ class cmsrt extends cms  {
 								  break;
 			case "setlanguage"  : //echo "Current language:",$this->lan_set[$this->selected_lan],"\n";  						
 			
-			case 'kshow'        : _m("cmsvstats.update_item_statistics use ".GetReq('id'));
+			case 'kshow'        : _m("cmsvstats.update_item_statistics use ".GetReq('id'), 1);
 			
 			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_item();
 			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->show_item(); break;
 								  
-			case 'klist'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat'));
+			case 'klist'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat'), 1);
 			
 			                      $this->isCAttach = $this->get_attachment(GetReq('cat'));
 			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_list(); 
@@ -321,8 +321,8 @@ goBack();
 				$availability = null; //$this->show_availability($rec['ypoloipo1']);	
 				$details = null;
 				$detailink = null;
-				$itemlink = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,true);
-				$itemlinkname = seturl('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],$rec[$this->itmname],null,null,null,true);		   
+				$itemlink = $this->url('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code]);
+				$itemlinkname = $this->url('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],$rec[$this->itmname]);		   
 		   		   
 		  											 
 				$tokens[] = $itemlinkname;
@@ -345,7 +345,7 @@ goBack();
 				$tokens[] = $array_cart;
 
 				$tokens[] = $this->get_photo_url($rec[$item_code],$pz);	
-				$tokens[] = $rec[$this->getmapf('lastprice')];	
+				$tokens[] = $rec[$this->lastprice];	
 				$tokens[] = $rec[$this->itmname]; 
 			  
                 $tokens[] = null;   
@@ -376,7 +376,7 @@ goBack();
 	        //$ret.= $this->show_paging($cmd,$mytemplate,$nopager);
 
 			$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
-		                                           1=>$this->getcurrentkategory(), /*_m('shkategories.getcurrentkategory')*/
+		                                           1=>$this->getcurrentkategory(), 
 												   2=>str_replace($this->sep(),' ',$this->replace_spchars($cat,1)),														
 												   3=>$this->httpurl .'/klist/'. $cat . '/',
 												   4=>$ogimage, /*$ogimage array of images (with no httpurl)!!*/
@@ -416,14 +416,14 @@ goBack();
 	public function nextpage() {
 		$cat = GetReq('cat') ? GetReq('cat') : '0'; //dummy numeric		
 		$page = ($this->itmeter < $this->pager) ? intval(GetReq('page')) : + intval(GetReq('page')) + 1;
-		$next = seturl('t=klist&cat='.$cat.'&page='.$page,null,null,null,null,true);
+		$next = $this->url('t=klist&cat='.$cat.'&page='.$page);
 		return ($next);
 	}
 	
 	public function prevpage() {
 		$cat = GetReq('cat') ? GetReq('cat') : '0'; //dummy numeric	
 		$page = (GetReq('page')>0) ? intval(GetReq('page')) - 1 : 0;
-		$prev = seturl('t=klist&cat='.$cat.'&page='.$page,null,null,null,null,true);
+		$prev = $this->url('t=klist&cat='.$cat.'&page='.$page);
 		return ($prev);
 	}	
 	
@@ -496,14 +496,14 @@ goBack();
 				
 					$units = $rec['uniname2'] ? localize($rec['uniname1'],$lan).'/'.localize($rec['uniname2'],$lan):
 												localize($rec['uniname1'],$lan); 
-					$lastprice = $this->getmapf('lastprice');											
+					$lastprice = $this->lastprice;											
 				}	
 				else*/
 					$icon_cart = null;	
 			
-				$itemlink = seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$rec[$item_code],null,null,null,null,true); 
+				$itemlink = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$rec[$item_code]); 
 				$availability = null;//$this->show_availability($rec['ypoloipo1']);	 
-				$detailink = seturl("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code],null,null,null,null,true).'#details';		   
+				$detailink = $this->url("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]).'#details';		   
 			 
 				$linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
 
@@ -583,7 +583,6 @@ goBack();
    
 	    return ($out);	
 	}
-
 
     protected function get_data_info() { 
 		$item = GetReq('id');	
@@ -723,12 +722,12 @@ goBack();
 					  
 			      $mygroup = $curl;
 			   
-			      $a = seturl("t=$t&cat=$mygroup",null,null,null,null,true);
-				  $b = "<a href=\"" . seturl("t=$t&cat=$mygroup",null,null,null,null,true) . "\">" . $locname . "</a>";
+			      $a = $this->url("t=$t&cat=$mygroup");
+				  $b = "<a href=\"" . $this->url("t=$t&cat=$mygroup") . "\">" . $locname . "</a>";
 		        }	
 	            else {
-   	              $a = seturl("t=",null,null,null,null,true);
-				  $b = "<a href=\"" . seturl("t=",null,null,null,null,true) . "\">" . $locname . "</a>";					
+   	              $a = seturl("t=");
+				  $b = "<a href=\"" . seturl("t=") . "\">" . $locname . "</a>";					
 			    }
 				
 			    $ablink = ($nolinks) ? $a : $b;						  
@@ -784,15 +783,19 @@ goBack();
 				     $ret = $dummy;	 
 		           break;
           case 1  ://toplevel
-		  default :if ($url) 
-		              $ret = seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
+		  default :if ($url) {
+			          $title = array_pop($mycattree);
+		              $ret = $this->url('t=klist&cat='. GetReq('cat'), $title);
+				   }	  
                    else 
 		              $ret = array_pop(array_reverse($mycattree));	  
 		}
 	  }	
 	  else {//actual
-	    if ($url) 
-		  $ret = seturl('t=klist&cat='. GetReq('cat'),array_pop($mycattree),null,null,null,true);
+	    if ($url) {
+		  $title = array_pop($mycattree);	
+		  $ret = $this->url('t=klist&cat='. GetReq('cat'),$title);
+		}  
         else	  
 	      $ret = array_pop($mycattree);	  	
 	  }
@@ -871,21 +874,21 @@ goBack();
             $myresource = "<img src=\"" . $photo . "\"";
 			$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";
 		  
-		    $purl = seturl("t=kshow"."&cat=".$cat."&id=".$code,null,null,null,null,true); 
-		    $plink = "<A href=\"$purl\">";
-            $ret = $plink . $myresource . "</A>";           
+		    $purl = $this->url("t=kshow"."&cat=".$cat."&id=".$code); 
+		    $plink = "<a href=\"$purl\">";
+            $ret = $plink . $myresource . "</a>";           
 		  }
 		  elseif ($imageclick==0) {//item link
 		  
 		    $myresource = "<img src=\"" . $photo . "\"";
 			$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";
-		    $ret = seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource,null,null,null,true);// . "</A>";
+		    $ret = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource);
 		  } 
 		  else {//item link
 		  
             $myresource = "<img src=\"" . $photo . "\"";
 			$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";		  
-		    $ret = seturl('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource,null,null,null,true);// . "</A>";
+		    $ret = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource);
 		  } 
 		}
 		else {
@@ -1004,7 +1007,7 @@ EOF;
 	protected function ldTags($tokens=null) {
 		if (!$tokens) return null;
 		
-		$kw = _m('shtags.get_page_info use keywords');
+		$kw = _m('shtags.get_page_info use keywords', 1);
 		$keywords = str_replace(',""','' , '"' . str_replace(',', '","', $kw) . '"');
 		
 		$ret = <<<EOF
@@ -1022,7 +1025,8 @@ EOF;
 		</script>	
 EOF;
         return $ret;
-	}	
+	}
+
 	
 	
 	public function show_lastincat($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
@@ -1051,7 +1055,7 @@ EOF;
 		$mysort = ($ascdesc=='ASC') ? 'ASC' : 'DESC'; 
 		$sSQL .= " ORDER BY datein " . $mysort;	
 		$sSQL .= $items ? " LIMIT " . $items : null;			
-		//echo $sSQL;
+
 	    $resultset = $db->Execute($sSQL,2);	
 		$this->result = $resultset;
 		
@@ -1063,17 +1067,45 @@ EOF;
 		return ($out);	
 	}		
 	
-	
+	public function show_menu_items($menu=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
+        $db = GetGlobal('db');	
+		$pz = $photosize ? $photosize : 1;	
+		
+		if (defined('CMSMENU_DPC')) {
+			
+			$list = _m('cmsmenu.readMenuElements use ' . $menu, 1);
+			if (empty($list)) return null;
+			$menulist = implode("','",$list);
+			
+			$sSQL = $this->selectSQL;
+			$sSQL .= " WHERE ";	
+			$sSQL .= $this->fcode . " in ('". $menulist ."') and itmactive>0 and active>0";
+			$sSQL .= " ORDER BY FIELD({$this->fcode}, '". $menulist ."')";
+			$sSQL .= $items ? " LIMIT " . $items : null;	
+
+			$resultset = $db->Execute($sSQL);	
+			$this->result = $resultset;
+		
+			$xmax = $imgx ? $imgx : 100;
+			$ymax = $imgy ? $imgy : null;// free y 75;		
+		
+			if ($linemax>1)
+				$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
+			else  	
+				$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);		
+		}
+		
+		return ($out);
+	}	
 	
 	
    
-	public function renderTemplate($id=null, $items=null, $fsave=null) {
+	public function renderTemplate($id=null, $items=null, $fsave=null, $fcode=null, $limit=null, $menu=null) {
 		$db = GetGlobal('db');		
 		if (!$id) return null;
 	
 		$sSQL = "select id,name,descr,data,code,script,objects from cmstemplates where ";
-		$sSQL.= is_numeric($id) ? "id=" . $id : "name=$id";
-		//echo $sSQL;
+		$sSQL.= is_numeric($id) ? "id=" . $id : "name = '$id'";
 		$res = $db->Execute($sSQL);			
 		$form = base64_decode($res->fields['data']);		
 		$code = base64_decode($res->fields['code']);
@@ -1081,22 +1113,22 @@ EOF;
 		$objects = $items ? $items : $res->fields['objects'];
 		$template = $res->fields['name'];
 		$descr = $res->fields['descr'];
-		
+
 		if (strstr($code, '>|')) { //pattern code
-			$ret = $this->renderPattern($template, $form, $code, $script, $objects, $fsave);
+			$ret = $this->renderPattern($template, $form, $code, $script, $objects, $fsave, $fcode, $limit, $menu);
 		}
 		else 
-		    $ret = $this->renderTwing($template, $form, $code, $script, $objects, $fsave);	
+		    $ret = $this->renderTwing($template, $form, $code, $script, $objects, $fsave, $fcode, $limit, $menu);	
 	
 		return ($ret);
 		
 	}
 
-	protected function renderPattern($template, $form=null, $code=null, $script=null, $items=null, $fsave=null) {
+	protected function renderPattern($template, $form=null, $code=null, $script=null, $items=null, $fsave=null, $fcode=null, $limit=null, $menu=null) {
 		$db = GetGlobal('db');	
 		if (!$template) return false;
 		
-		$this->items = $this->get_items($items);
+		$this->items = $this->get_items($items, $limit, $fcode, $menu);
 		//print_r($this->items);
 		
 		if (strstr($code, '>|')) {
@@ -1133,9 +1165,11 @@ EOF;
 				foreach ($cc as $i=>$group) {
 					foreach ($group as $j=>$child) {
 						//echo $pattern[$j] . '<br>';
+						//echo "<!--{$pattern[$j]}-->\r\n";
 						$tts[] = $this->ct($pattern[$j], serialize($child), true);
 						if ($cmd = trim($join[$j])) {
 							//echo $join[$j] . '<br>';
+							//echo "<!--{$join[$j]}-->\r\n";
 							switch ($cmd) {
 							    case '_break' : $out .= implode('', $tts); break;
 								default       : $out .= $this->ct($cmd, serialize($tts), true);		
@@ -1201,7 +1235,7 @@ EOF;
 		return $ritems; 	
 	}	
 
-	protected function renderTwing($template, $form=null, $code=null, $script=null, $items=null, $fsave=null) {
+	protected function renderTwing($template, $form=null, $code=null, $script=null, $items=null, $fsave=null, $fcode=null, $limit=null, $menu=null) {
 		$db = GetGlobal('db');	
 		if (!$template) return false;		
 		
@@ -1214,12 +1248,12 @@ EOF;
 			if (@file_put_contents($twigpath . $tempfile, $form)) {
 				
 				//csvitems var
-				$this->csvitems = $this->getcsvitems($this->get_items($items));
+				$this->csvitems = $this->getcsvitems($this->get_items($items, $limit, $fcode, $menu));
 
 				$t = array('mydate'=>date('m.d.y'));
 							
 				$tokens = serialize($t);
-				$ret = _m('twigengine.render use '.$tempfile.'++'.$tokens);
+				$ret = _m('twigengine.render use '.$tempfile.'++'.$tokens, 1);
 			}
 			else
 				$ret = 'twig cache error!';
@@ -1247,33 +1281,38 @@ EOF;
 		return ($ret);
 	}
 	
-	
-	protected function _get_items($preset=null, $limit=null) {
+	protected function _get_items($preset=null, $limit=null, $usecode=null, $usemenu=null) {
         $db = GetGlobal('db');		
-	    $itmname = $this->itmname;
-	    $itmdescr = $this->itmdescr;	
-        $codefield = $this->getmapf('code');
-		$lastprice = $this->getmapf('lastprice');
 		$tid = GetReq('id') ? GetReq('id') : $preset; //$preset ? $preset : GetReq('id');	
-		
+		$uid = 'id';
+		/*
         $sSQL = "select id,datein,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,".
 				"volume,dimensions,size,color,manufacturer,xml,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," . 
-				$this->getmapf('code') . " from products WHERE ";
-	
-		if (isset($tid)) {
+				$this->fcode . " from products WHERE ";*/
+		$sSQL = $this->selectSQL . " WHERE ";		
+ 
+		if (isset($usemenu)) {  
+			$uid = $usecode ? $usecode : $this->fcode; //usecode, by default active code
+			$tid =  implode("','", _m('cmsmenu.readMenuElements use ' . $usemenu, 1)); //override value
+			$sSQL .=  (strstr($tid, ',')) ?  " $uid in ('" . $tid . "')" : "$uid=" . $db->qstr($tid);
+			$sSQL .= " ORDER BY " . "FIELD($uid,'".  $tid ."')";  //orderid
+		}				
+		elseif (isset($tid)) {
 			if (strstr($tid, '.')) { //tree id
 				$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
 				$sSQL .=  ' id in (' . $treeSQL . ')';	
-			} 
-			else
-				$sSQL .=  (strstr($tid, ',')) ?  ' id in (' . $tid . ')' : 'id='.$tid;		
+			}	
+			else {
+				$uid = $usecode ? $usecode : 'id'; //if no tree code field is selectable
+				$sSQL .=  (strstr($tid, ',')) ?  " $uid in (" . $tid . ")" : "$uid=" . $tid;		
+			}
+			$sSQL .= " ORDER BY " . "FIELD($uid,".  $tid .")";  //orderid	
 		}	
         else
 			return null;
 		
 	    //$sSQL .= " and itmactive>0 and active>0";	
-		$sSQL .= " ORDER BY " . "FIELD(id,".  $tid .")"; //$codefield; //orderid
         $sSQL .= $limit ? " limit " . $limit : null;		
 		
 		//echo $sSQL;	
@@ -1283,7 +1322,7 @@ EOF;
 		$ix =1;
 		foreach ($resultset as $n=>$rec) {
 		
-		    $id = $rec[$codefield];
+		    $id = $rec[$this->fcode];
 			
 			$cat = $rec['cat0'] ? $this->replace_spchars($rec['cat0']) : null; 
 			$cat .= $rec['cat1'] ? $this->cseparator . $this->replace_spchars($rec['cat1']) : null;
@@ -1291,26 +1330,66 @@ EOF;
 			$cat .= $rec['cat3'] ? $this->cseparator . $this->replace_spchars($rec['cat3']) : null;
 			$cat .= $rec['cat4'] ? $this->cseparator . $this->replace_spchars($rec['cat4']) : null;
 			
-			$item_url = $this->url . '/' . seturl('t=kshow&cat='.$cat.'&id='.$id,null,null,null,null,1);
-			$item_name_url = seturl('t=kshow&cat='.$cat.'&id='.$id,$rec['itmname'],null,null,null,1);			   
-		    $item_name_url_base = "<a href='$item_url'>".$rec['itmname']."</a>";
+			$item_url = $this->httpurl . '/' . $this->url('t=kshow&cat='.$cat.'&id='.$id);
+			$item_name_url = $this->url('t=kshow&cat='.$cat.'&id='.$id, $rec[$this->itmname]);			   
+		    $item_name_url_base = "<a href='$item_url'>".$rec[$this->itmname]."</a>";
 			
 			$imgfile = $this->urlpath . $this->image_size_path . '/' . $id . $this->restype;
 
 			if (file_exists($imgfile)) 	 
-				$item_photo_url = $this->url . $this->image_size_path . '/' . $id . $this->restype;
+				$item_photo_url = $this->httpurl . $this->image_size_path . '/' . $id . $this->restype;
 			else 
-				$item_photo_url = $this->url .'/'. $this->photodb . '?id='.$id.'&stype='.$this->sizeDB;
+				$item_photo_url = $this->httpurl .'/'. $this->photodb . '?id='.$id.'&stype='.$this->sizeDB;
 
 			$item_photo_html = "<img src=\"" . $item_photo_url . "\">";
 			$item_photo_link = "<a href='$item_url'><img src=\"" . $item_photo_url . "\"></a>";			
 
 			$attachment = null;
 			$i = $ix++;
-			$ret_array[$i] = array(
+			if ($usecode) { /*shkatalogmedia tokens pattern*/
+				$itemqty    = 1;
+				$itemcode   = $rec[$this->fcode];
+				$itemtitle  = _m('shkatalogmedia.replace_cartchars use ' . $rec[$this->itmname],1);
+				$cat        = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
+				$page       = 0;
+				$itemdescr  = _m('shkatalogmedia.replace_cartchars use ' . $rec[$this->itmdescr],1);
+				$itemphoto  = $rec[$this->fcode];
+				$pp         = _m('shkatalogmedia.read_policy',1);
+				$itemprice = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmeida.zeroprice_msg');					
+				
+				$ret_array[$i] = array( 
+			                0=>$item_name_url,
+							1=>$rec[$this->itmdescr],
+							2=>$item_photo_link,
+							3=>$rec['uniname1'],
+							4=>$rec['itmremark'],
+							5=> number_format(floatval($itemprice),2,',','.'),
+							6=>_m("shcart.showsymbol use $itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;+$cat+$page",1),
+							7=>_m('shkatalogmedia.show_availability use '. $rec['ypoloipo1'],1),
+							8=>'',
+							9=>'',
+							10=>$itemcode,
+							11=>$item_url,
+							12=>_m("shcart.getCartItemQty use " . $rec[$this->fcode],1),
+							13=>_m("shkatalogmedia.read_array_policy use " . $itemcode . '+'. $itemprice . "+$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty",1),
+							14=>$item_photo_url,
+							15=>$this->lastprice,
+							16=>$itemtitle,
+							17=>null,
+							18=>_m('shkatalogmedia.item_has_discount use '. $rec[$this->fcode],1),
+							19=>"addcart/$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty/$cat/$page/",
+							20=>$rec['year'],			
+							21=>$rec['month'],
+							22=>$rec['day'],
+							23=>$rec['time'],
+							24=>localize($rec['monthname'], $this->lan),
+						); 
+			}			
+			else
+				$ret_array[$i] = array( /*default tokens pattern */
 			                0=>$id,
-			                1=>$rec[$itmname],
-							2=>$rec[$itmdescr],
+			                1=>$rec[$this->itmname],
+							2=>$rec[$this->itmdescr],
 							3=>$rec['itmremark'],
 							4=>$rec['uniname1'],
 							5=> number_format(floatval($rec['price0']),2,',','.'),
@@ -1325,8 +1404,8 @@ EOF;
 							14=>$item_photo_url,
 							15=>$item_photo_html,
 							16=>$item_photo_link,
-							17=>$rec[$codefield],
-							18=>$rec[$lastprice],
+							17=>$rec[$this->fcode],
+							18=>$rec[$this->lastprice],
 							19=>$rec['ypoloipo1'],
 							20=>$rec['resources'],
 							21=>$rec['weight'],
@@ -1340,15 +1419,15 @@ EOF;
 							29=>$rec['day'],
 							30=>$rec['time'],
 							31=>localize($rec['monthname'], $this->lan),
-							);							
+						);							
 		}
 		
 		return ($ret_array);
 	}		
 	
-	public function get_items($preset=null, $asis=false) {
-		
-		$ret = $this->_get_items($preset, $asis);
+	public function get_items($preset=null, $limit=false, $usecode=null, $usemenu=null) {
+
+		$ret = $this->_get_items($preset, $limit, $usecode, $usemenu);
 		return ($ret);
 	}		
 
@@ -1493,7 +1572,7 @@ EOF;
 		$db = GetGlobal('db');		
 		if (!$id) return null;			
 		
-		$code = $this->getmapf("code");
+		$code = $this->fcode;
 		$objSQL = "select $code from products WHERE id=" . $id;
 		
 		$oret = $db->Execute($objSQL);
