@@ -85,7 +85,7 @@ class rcmenu extends cmsmenu {
 		switch ($event) {	
 		
 		    case "cpmselectmenu"    :	if ($newmenu = $_POST['menu'])
-											$this->post = $this->create_menu($newmenu);
+											$this->post = $this->createMenu($newmenu);
 			                            break;
 										
 			case "cpmnewmenu"       :	$this->t_config = $this->read_config();
@@ -133,7 +133,7 @@ class rcmenu extends cmsmenu {
 		
 		    case "cpmselectmenu"    :	$out = $this->menuMessage($this->post);
 			                            break;
-			case "cpmnewmenu"       :	$out = $this->new_menu(localize('_newmenu', getlocal()),"cpmselectmenu"); 
+			case "cpmnewmenu"       :	$out = $this->newMenu(localize('_newmenu', getlocal()),"cpmselectmenu"); 
 										break;		
 	   
 			case "cpmloadnest"      :	break;	 	   
@@ -439,81 +439,6 @@ class rcmenu extends cmsmenu {
 		return ($ret);		
 	}
 	
-	protected function loadNestList() {
-    }	
-	
-	protected function saveNestList($filename=null) {
-		$list = GetParam('list');
-		$menu = json_decode($list,true);//,false,5); //stdclass, depth 
-		//@file_put_contents("menu.list", $list);				
-		//var_export($menu);
-		
-		//delete menu first
-		$this->deleteMenu($filename);
-		$this->saveMenu($filename, $menu);
-		
-		$w = $this->writenest_config($menu, $filename);
-		$ret = $w ? localize('_saved', getlocal()) : localize('_notsaved', getlocal());
-		echo $ret;
-		
-		//tmp menu
-		/*$tmplist = GetParam('tmplist');
-		@file_put_contents("menutmp.list", $tmplist);
-		$tmpmenu = json_decode($tmplist,true);
-		$tmp = $this->writenest_config($tmpmenu, "menutmp");		
-		
-		echo $tmp ? $ret . " (1)" : $ret;
-		*/
-    }
-
-	protected function loadMenu($name=null) {
-		if (!$name) return null;
-	    $lan = getlocal() ? getlocal() : '0';		
-		$db = GetGlobal('db');
-		
-		$sSQL = "select type,relative,relation,locale,orderid from relatives where ";
-		$sSDL.= "type='$lan' and active=1 and ismenu=1 and notes=" . $db->qstr($name);
-	    $result = $db->Execute($sSQL);
-
-		//...	
-	}		
-	
-	/* n level db menu saver */
-	protected function saveMenu($name=null, $data=null, $isfather=1, $ischild=0, $father=null) {
-		if ((!$name)||(empty($data))) return null;
-	    $lan = getlocal() ? getlocal() : '0';			
-		$db = GetGlobal('db');		
-		$csep = _v("cmsrt.cseparator");
-		$rootfather = $father ? $father : $name;
-		
-		//insert menu
-		foreach ($data as $i=>$m) {
-			$id = $m['id'];
-			$title = $m['name'];
-			$link = str_replace($csep, '^', $m['value']);
-			$submenu = $m['submenu'];
-			$submenu_items = $m['children'];
-			if (is_array($submenu_items)) 
-				$this->saveMenu($id, $submenu_items, 0, 1, $rootfather);
-			
-			$sSQL = "insert into relatives (orderid,type,active,relative,relation,ismenu,notes,locale,isfather,ischild) values (";
-			$sSQL.= "$i,$lan,1,'$name','$id',1,'$title|$link','$rootfather',$isfather, $ischild)"; 
-			$result = $db->Execute($sSQL);	
-		}
-		
-		return true;
-	}
-
-	protected function deleteMenu($name=null) {
-		if (!$name) return false;
-		$db = GetGlobal('db');
-
-		$sSQL = "delete from relatives where ismenu=1 and locale=" . $db->qstr($name);
-		$resultset = $db->Execute($sSQL);
-
-		return true;	
-	}	
-	
 	protected function nestdditem($id,$name,$value=null,$submenu=null) {
 		$ret = "<li class='dd-item' data-id='$id' data-name='$name' data-value='$value' data-submenu='$submenu'>
                     <div class='dd-handle'>$name</div>
@@ -531,8 +456,8 @@ class rcmenu extends cmsmenu {
 		return ($ret);	   
 	}
 	
-	//isdb=true load db menu (todo)
-	public function nestBuild($file=null, $isdb=false) {
+	/*2 level conf file based nest loader*/
+	public function nestBuild($file=null) {
 		$n = null;
 	    $lan = getlocal() ? getlocal() : '0';
 		
@@ -555,6 +480,7 @@ class rcmenu extends cmsmenu {
                 //echo $section.'-SUBMENU'; 
 				$sb = isset($file) ? $params['submenu'] : explode(',', $params['submenu']);	
 				$submenu = isset($file) ? $sb : $sb[$lan];
+				if (isset($conf[$submenu])) {
 				foreach ($conf[$submenu] as $group=>$child) {
 				    //echo $child,'<br/>';
 					if (substr($group,0,5)=='title') {
@@ -568,6 +494,7 @@ class rcmenu extends cmsmenu {
 						
 						$cn .= $this->nestdditem($section.'-'.$name, $name, $linkvalue);
 					}				
+				}
 				}
 			}
 
@@ -583,11 +510,144 @@ class rcmenu extends cmsmenu {
 		}    
 
 		return $n;	
+	}	
+	
+	protected function loadNestList() {
+    }	
+	
+	protected function saveNestList($filename=null) {
+		$list = GetParam('list');
+		$menu = json_decode($list,true);//,false,5); //stdclass, depth 
+		//@file_put_contents("menu.list", $list);				
+		//var_export($menu);
+		
+		//db based, delete menu first save after
+		$this->deleteMenu($filename);
+		//$this->createMenu($filename);//create master menu (use for copy from text while saving)
+		$w = $this->saveMenu($filename, $menu);
+		
+		//text based save
+		$w = $this->writenest_config($menu, $filename);
+		
+		$ret = $w ? localize('_saved', getlocal()) : localize('_notsaved', getlocal());
+		echo $ret;
+		
+		//tmp menu
+		/*$tmplist = GetParam('tmplist');
+		@file_put_contents("menutmp.list", $tmplist);
+		$tmpmenu = json_decode($tmplist,true);
+		$tmp = $this->writenest_config($tmpmenu, "menutmp");		
+		
+		echo $tmp ? $ret . " (1)" : $ret;
+		*/
+    }
+
+	/* 2 level db menu loader */
+	protected function loadMenu($name=null) {
+		if (!$name) return null;
+	    $lan = getlocal() ? getlocal() : '0';		
+		$db = GetGlobal('db');
+		
+		$sSQL = "select type,isfather,ischild,relative,relation,notes,locale,orderid from relatives where ";
+		$sSQL.= "type='$lan' and active=1 and ismenu=1 and ismaster=0 and locale=" . $db->qstr($name);
+		$sSQL.= " ORDER BY orderid";
+		//echo $sSQL;
+	    $result = $db->Execute($sSQL);
+
+		$menu = array();
+		$submenu = array();
+		foreach ($result as $i=>$rec) {
+			
+			$orderid = $rec['orderid'];
+			$relative = $rec['relative'];
+			$relation = $rec['relation'];
+			
+			if ($rec['ischild']) {
+				$submenu[$relative][$orderid] = $rec['notes']; 				
+			}
+			elseif ($rec['isfather']) {
+				$menu[$orderid] = $relation .'|'. $rec['notes']; 	
+			}
+		}	
+		
+		$ret = null;
+		ksort($menu);
+		foreach ($menu as $i=>$m) {
+			$cn = null;
+			list ($section, $name, $value) = explode('|', $m);
+			
+			if ($sb = (array) $submenu[$section]) {
+				ksort($sb);
+				foreach ($sb as $j=>$c) {
+					list ($cname, $cvalue) = explode('|', $c);
+					$cn .= $this->nestdditem(md5($section.$cname), $cname, $cvalue, md5($section.$cname).'-SUBMENU');
+				}	
+			}
+			$ret .= $this->nestddgroup($section, $name, $value, $section.'-SUBMENU', $cn);
+		}	
+		
+		return ($ret);
+	}		
+	
+	/* n level db menu saver */
+	protected function saveMenu($name=null, $data=null, $isfather=1, $ischild=0, $father=null) {
+		if ((!$name)||(empty($data))) return null;
+	    $lan = getlocal() ? getlocal() : '0';			
+		$db = GetGlobal('db');		
+		$csep = _v("cmsrt.cseparator");
+		$rootfather = $father ? $father : $name;
+		
+		//insert menu
+		foreach ($data as $i=>$m) {
+			$id = $m['id'];
+			$title = $m['name'];
+			$link = str_replace($csep, '^', $m['value']);
+			$submenu = $m['submenu'];
+			$submenu_items = $m['children'];
+			if (is_array($submenu_items)) 
+				$this->saveMenu($id, $submenu_items, 0, 1, $rootfather);
+			
+			$sSQL = "insert into relatives (orderid,type,active,relative,relation,ismenu,ismaster,notes,locale,isfather,ischild) values (";
+			$sSQL.= "$i,$lan,1,'$name','$id',1,0,'$title|$link','$rootfather',$isfather, $ischild)"; 
+			$result = $db->Execute($sSQL);	
+		}
+		
+		return true;
 	}
+
+	protected function deleteMenu($name=null, $delmaster=false) {
+		if (!$name) return false;
+		$db = GetGlobal('db');
+
+		$sSQL = "delete from relatives where ismenu=1 and ismaster=0 and locale=" . $db->qstr($name);
+		$resultset = $db->Execute($sSQL);
+		if ($delmaster) {
+			$sSQL = "delete from relatives where ismenu=1 and ismaster=1 and relative=" . $db->qstr($name);
+			$resultset = $db->Execute($sSQL);
+		}
+
+		return true;	
+	}
+
+	protected function createMenu($name=null) {
+		if (!$name) return;
+		$lan = getlocal() ? getlocal() : '0';	
+		$db = GetGlobal('db');
+		
+		$sSQL = "insert into relatives (orderid,type,active,relative,relation,ismenu,ismaster,notes,locale,isfather,ischild) values (";
+		$sSQL.= "0,$lan,1,'$name','',1,1,'','',0,0)"; 
+	    $result = $db->Execute($sSQL);		
+		
+		//create text ini
+		$inifile = $this->path . 'menu-' . $name . $lan . '.ini';
+		$ret = @file_put_contents($inifile, "[NEW]\r\ntitle=New\r\nlink=\r\nspaces=0\r\n");
+		
+		$this->selectedMenu = $name; //update var
+		
+		return ($ret ? 1 : -1);
+	}	
 	
-	
-	
-	protected function new_menu($button_title,$action) {
+	protected function newMenu($button_title,$action) {
 		$prompt = localize('_menuname', getlocal());		
 		$title = localize('_newmenu', getlocal());
 		$myaction = seturl("t=".$action); 	
@@ -605,18 +665,6 @@ class rcmenu extends cmsmenu {
 		$fout = $form->getform(0,0,$button_title);	
 		
 		return ($this->window($title,null,$fout));		   	    
-	}
-
-	protected function create_menu($name=null) {
-		if (!$name) return;
-		$lan = getlocal() ? getlocal() : '0';		
-		
-		$inifile = $this->path . 'menu-' . $name . $lan . '.ini';
-		$ret = @file_put_contents($inifile, "[NEW]\r\ntitle=New\r\nlink=\r\nspaces=0\r\n");
-		
-		$this->selectedMenu = $name; //update var
-		
-		return ($ret ? 1 : -1);
 	}
 	
 	protected function menuMessage($isPost=null) {
@@ -638,13 +686,27 @@ class rcmenu extends cmsmenu {
 	protected function readMenuFiles() {
 		$menu_array = null;
 		$lan = getlocal() ? getlocal() : '0';
+		$db = GetGlobal('db');
+		
+		//db based menu list
+		$sSQL = "select relative, locale from relatives where ";
+		$sSQL.= "type='$lan' and active=1 and ismenu=1 and ismaster=1";
+		$sSQL.= " ORDER BY relative";
+	    $result = $db->Execute($sSQL);
+		
+		foreach ($result as $r=>$rec) {
+			$name = $rec[1] ? ucfirst($rec[1]) : ucfirst($rec[0]);
+			$menu_array[$name] = seturl('t=cpmselectmenu&menu=' . $rec[0]);
+		}		
 
-		foreach (glob($this->path . "menu-*$lan.ini") as $filename) {
+		//text based menu list
+		/*foreach (glob($this->path . "menu-*$lan.ini") as $filename) {
 			//echo "$filename size " . filesize($filename) . "\n";
 			$name = str_replace(array("menu-","$lan.ini", $this->path),array('','',''), $filename);
 			$menu_array[$name] = seturl('t=cpmselectmenu&menu=' . $name);
-		}	
+		}*/	
 		
+		ksort($menu_array);		
 		return ($menu_array);						
 	}	
 	
@@ -654,7 +716,12 @@ class rcmenu extends cmsmenu {
 	}
 	
 	public function readSelectedMenu() {
-		if ($this->selectedMenu) { 
+		if ($this->selectedMenu) {
+
+			//db based
+			//return $this->loadMenu($this->selectedMenu);
+		
+		    //text based
 			$menufile = ($this->selectedMenu=='menu') ? $this->selectedMenu : 'menu-' . $this->selectedMenu;
 			return $this->nestBuild($menufile);
 		}	
@@ -677,7 +744,8 @@ class rcmenu extends cmsmenu {
 			$res = $db->Execute($sSQL);
 			
 			$cat = $cpGet['cat'];
-			$title = array_pop($this->getCategoriesTitles($cat));
+			$ctitles = $this->getCategoriesTitles($cat);
+			$title = array_pop($ctitles);
 			
 			//the cat item,link
 			$a = $this->nestdditem($cat, $title, "klist/$cat/", md5($cat).'-SUBMENU');
@@ -737,12 +805,12 @@ class rcmenu extends cmsmenu {
 	}
 	
 	public function menuButtonSelect() {
-		//$mode = GetReq('mode') ? GetReq('mode') : 'menu';
 	    $lan = getlocal() ? getlocal() : '0';
 		$menufile = $this->path . 'menu' . $lan . '.ini';	
 		
-		$lmenu = localize('_menu', $lan) . ' (' . $lan . ')';	
-		$basicmenu = is_readable($menufile) ? array($lmenu=>seturl('t=cpmselectmenu&menu=menu')) : array();				  
+		//$lmenu = localize('_menu', $lan) . ' (' . $lan . ')';	
+		//$basicmenu = is_readable($menufile) ? array($lmenu=>seturl('t=cpmselectmenu&menu=menu')) : array();				  
+		$basicmenu = array(); //DISABLED (DB MENU USED)
 		
 		$menus = $this->readMenuFiles();
 		
@@ -758,16 +826,7 @@ class rcmenu extends cmsmenu {
 		
 		
 		$button = $this->createButton(localize('_menu', getlocal()), array_merge($stdcmd, $basicmenu, $menus),'info');	
-		return $button;									
-																	
-		/*switch ($mode) {
-			
-			default         : $content = $this->landpages_grid(null,140,5,'r', true); break;	
-		}			
-					
-		$ret = $this->window(localize('RCCMSLANDP_DPC', getlocal()).': '.localize('_'.$mode, getlocal()), $button, $content);
-		
-		return ($ret);*/
+		return $button;	
 	}	
 
 	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
