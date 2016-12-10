@@ -2032,7 +2032,7 @@ function addtocart(id,cartdetails)
 		return ($out);
 	}
 	
-	protected function read_policy() {
+	public function read_policy() {
 
 		$this->discount = $this->get_user_price_policy($this->userid);
 		return ($this->discount);

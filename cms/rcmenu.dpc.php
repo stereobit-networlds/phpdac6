@@ -718,11 +718,11 @@ class rcmenu extends cmsmenu {
 		if ($this->selectedMenu) {
 
 			//db based
-			//return $this->loadMenu($this->selectedMenu);
+			return $this->loadMenu($this->selectedMenu);
 		
 		    //text based
-			$menufile = ($this->selectedMenu=='menu') ? $this->selectedMenu : 'menu-' . $this->selectedMenu;
-			return $this->nestBuild($menufile);
+			//$menufile = ($this->selectedMenu=='menu') ? $this->selectedMenu : 'menu-' . $this->selectedMenu;
+			//return $this->nestBuild($menufile);
 		}	
 		
 		return $this->nestBuild(); 

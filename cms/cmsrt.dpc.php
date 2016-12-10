@@ -288,70 +288,61 @@ goBack();
         $t = $template ? $template : 'fpkatalog';
 	    $mytemplate = $this->select_template($t);			      
 	   	
-	    if (!empty($this->result)) {		   
-			//$pp = $this->read_policy();
-			$item_code = $this->fcode;			
+	    if (!empty($this->result)) {
+			
+			$pp = _m('shkatalogmedia.read_policy',1);		
 	
 			foreach ($this->result as $n=>$rec) {
 	   
-				$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-				$ucat = $cat;
-		        /*
-				if ($rec[$pp]>0)  
-					$price = $this->spt($rec[$pp]); 
-				else*/ 	 
-					$price = 0;//$this->zeroprice_msg;		
-		 
-				/*if (defined("SHCART_DPC")) {
-					$cart_code  = $rec[$this->fcode];
-					$cart_title = $this->replace_cartchars($rec[$this->itmname]);
-					$cart_group = $cat;
-					$cart_page  = $page;
-					$cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
-					$cart_photo = $rec[$this->fcode];//$this->get_photo_url($rec[$this->fcode],$pz);
-					$cart_price = $price;
-					$cart_qty   = 1;//???				 
-					$cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
-					$array_cart = null;//$this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
-					$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]);
-				}	
-				else*/
-					$cart = null;  			 
-		   
-				$availability = null; //$this->show_availability($rec['ypoloipo1']);	
-				$details = null;
-				$detailink = null;
-				$itemlink = $this->url('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code]);
-				$itemlinkname = $this->url('t=kshow&cat='.$ucat.'&page='.$page.'&id='.$rec[$item_code],$rec[$this->itmname]);		   
-		   		   
+				$itemcode   = $rec[$this->fcode];	
+				$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
+				
+				if (defined("SHCART_DPC")) {
+					$page       = 0;
+					$itemqty    = 1;
+					$itemtitle  = $this->replace_cartchars($rec[$this->itmname]);
+					$itemdescr  = $this->replace_cartchars($rec[$this->itmdescr]);
+					$itemphoto  = $itemcode;
+					$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmeida.zeroprice_msg');					
+					$itemunit   = $rec['uniname2'] ? localize($rec['uniname1'],$this->lan) .'/'. localize($rec['uniname2'],$this->lan) :
+											         localize($rec['uniname1'],$this->lan);					
+									
+					$in_cart = _m("shcart.getCartItemQty use ".$itemcode,1); 
+					$icon_cart = _m("shcart.showsymbol use $itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;+$cat+$page",1);
+					$array_cart = _m("shkatalogmedia.read_array_policy use " . $itemcode . '+'. $itemprice . "+$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty",1);	   										
+				}			 
+		   	
+
+				$itemlink = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$itemcode);
+				$itemlinkname = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$itemcode, $rec[$this->itmname]);		   
+				$detailink = $this->url("t=kshow&cat=$cat&page=$page&id=".$itemcode) . '#details';				
+		   		$details = null;
 		  											 
 				$tokens[] = $itemlinkname;
 				$tokens[] = $rec[$this->itmdescr];
-				$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$ucat,$pz,null,$rec[$this->itmname]);
-				$units = $rec['uniname2'] ? localize($rec['uniname1'],$this->lan) .'/'. localize($rec['uniname2'],$this->lan) :
-											localize($rec['uniname1'],$this->lan);  
-				$tokens[] = $units;		  
+				$tokens[] = $this->list_photo($itemcode,$xdist,$ydist,$myimageclick,$cat,$pz,null,$rec[$this->itmname]); 
+				$tokens[] = $rec['uniname2'] ? localize($rec['uniname1'],$this->lan) .'/'. localize($rec['uniname2'],$this->lan) :
+											   localize($rec['uniname1'],$this->lan); 		  
 			  
 				$tokens[] = $rec['itmremark'];
 				$tokens[] = number_format(floatval($price),$this->decimals,',','.');
 				$tokens[] = $cart;
-				$tokens[] = $availability;
+				$tokens[] = _m('shkatalogmedia.show_availability use '. $rec['ypoloipo1'],1);
 				$tokens[] = $details;
 				$tokens[] = $detailink;
-				$tokens[] = $rec[$item_code];
+				$tokens[] = $itemcode;
 				$tokens[] = $itemlink;	
 			  
 				$tokens[] = $in_cart  ? $in_cart : '0';
 				$tokens[] = $array_cart;
 
-				$tokens[] = $this->get_photo_url($rec[$item_code],$pz);	
+				$tokens[] = $this->get_photo_url($itemcode, $pz);	
 				$tokens[] = $rec[$this->lastprice];	
 				$tokens[] = $rec[$this->itmname]; 
 			  
                 $tokens[] = null;   
-
-				$tokens[] = null;//$this->item_has_discount($rec[$item_code]);
-				$tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				  
+				$tokens[] = _m('shkatalogmedia.item_has_discount use '. $itemcode,1);
+				$tokens[] = "addcart/$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty/$cat/$page/";				  
 		      
 				/*date time */
 				$tokens[] = $rec['year'];
@@ -367,7 +358,7 @@ goBack();
                 //print_r($tokens);
 				$items[] = $this->combine_tokens($mytemplate, serialize($tokens), true);
 
-				$ogimage[] = $this->get_photo_url($rec[$item_code],2);
+				$ogimage[] = $this->get_photo_url($itemcode,2);
 				unset($tokens);			  	 				   	   	   	
 			}//foreach 
 		  
@@ -467,73 +458,55 @@ goBack();
 	   
 	    if (count($this->result->fields)>1) {	
 	   
-			//$pp = $this->read_policy();	   
-			$item_code = $this->fcode;
+			$pp = _m('shkatalogmedia.read_policy',1);	   
 	   
 			foreach ($this->result as $n=>$rec) {
 						 
+				$itemcode   = $rec[$this->fcode];		 
 				$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-				/*
-				if ($rec[$pp]>0) 
-					$price = $this->spt($rec[$pp],$tax);
-				else 	 
-					$price = $this->zeroprice_msg;	
-				*/
-				$price = 0;
-				$cart_code = $rec[$item_code];
-				$cart_title = $this->replace_cartchars($rec[$this->itmname]);
-				$cart_group = $cat;
-				$cart_page = GetReq('page') ? GetReq('page') : 0;
-				$cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
-				$cart_photo = $rec[$item_code];
-				$cart_price = $price;
-				$cart_qty = 1;
 				
-				/*if (defined("SHCART_DPC")) {
-					$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]); 
-					$icon_cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
-					$array_cart = null;//$this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
-				
-					$units = $rec['uniname2'] ? localize($rec['uniname1'],$lan).'/'.localize($rec['uniname2'],$lan):
-												localize($rec['uniname1'],$lan); 
-					$lastprice = $this->lastprice;											
+				if (defined("SHCART_DPC")) {
+					$page       = 0;
+					$itemqty    = 1;
+					$itemtitle  = $this->replace_cartchars($rec[$this->itmname]);
+					$itemdescr  = $this->replace_cartchars($rec[$this->itmdescr]);
+					$itemphoto  = $itemcode;
+					$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmeida.zeroprice_msg');					
+					$itemunit   = $rec['uniname2'] ? localize($rec['uniname1'],$this->lan) .'/'. localize($rec['uniname2'],$this->lan) :
+											         localize($rec['uniname1'],$this->lan);					
+									
+					$in_cart = _m("shcart.getCartItemQty use ".$ritemcode,1); 
+					$icon_cart = _m("shcart.showsymbol use $itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;+$cat+$page",1);
+					$array_cart = _m("shkatalogmedia.read_array_policy use " . $itemcode . '+'. $itemprice . "+$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty",1);	   										
 				}	
-				else*/
-					$icon_cart = null;	
-			
-				$itemlink = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$rec[$item_code]); 
-				$availability = null;//$this->show_availability($rec['ypoloipo1']);	 
-				$detailink = $this->url("t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]).'#details';		   
-			 
-				$linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
-
-				$ahtml = $this->get_attachment($rec[$item_code]) ;//show_aditional_html_files($rec[$item_code]);			 
-				$atext = "";				 		 		   			  
-				$afile = "";			 
-				$details = "";//$ahtml . $atext . $afile;
+				
+				$itemlink = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$itemcode); 	 	   
+				$linkphoto = $this->list_photo($itemcode,null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
+				$detailink = $this->url("t=kshow&cat=$cat&page=$page&id=".$itemcode) . '#details';							 
+				$details = null;
 		 		   
 				//// tokens method												 
 				$tokens[] = $rec[$this->itmname];
 				$tokens[] = $rec[$this->itmdescr];
 				$tokens[] = $linkphoto; 
-				$tokens[] = $units;		 
+				$tokens[] = $itemunit;		 
 				$tokens[] = $rec['itmremark'];
 				$tokens[] = number_format(floatval($price),$this->decimals,',','.');
 				$tokens[] = $icon_cart; //6
-				$tokens[] = $availability;
+				$tokens[] = _m('shkatalogmedia.show_availability use '. $rec['ypoloipo1'],1);
 				$tokens[] = $detailink;
 				$tokens[] = $details;
-				$tokens[] = $rec[$item_code];
+				$tokens[] = $itemcode;
 				$tokens[] = $in_cart ? $in_cart : '0';
 				$tokens[] = $array_cart;
-				$tokens[] = $ahtml;
-				$tokens[] = $atext;  			 
-				$tokens[] = $afile;
+				$tokens[] = $this->get_attachment($itemcode);
+				$tokens[] = '';  			 
+				$tokens[] = '';
 			 
-				$tokens[] = $rec[$lastprice];	
-				$tokens[] = $this->get_photo_url($rec[$item_code],1);
-				$tokens[] = $this->get_photo_url($rec[$item_code],2);			 
-				$tokens[] = $this->get_photo_url($rec[$item_code],3);			 
+				$tokens[] = $rec[$this->lastprice];	
+				$tokens[] = $this->get_photo_url($itemcode,1);
+				$tokens[] = $this->get_photo_url($itemcode,2);			 
+				$tokens[] = $this->get_photo_url($itemcode,3);			 
 			 
 				$tokens[] = $rec['weight'];
 				$tokens[] = $rec['volume'];
@@ -541,9 +514,9 @@ goBack();
 				$tokens[] = $rec['size'];
 				$tokens[] = $rec['color'];	
 			 
-				$tokens[] = null;//$this->get_xml_links();
-				$tokens[] = null;//$this->item_has_discount($rec[$item_code]);
-				$tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";			 
+				$tokens[] = null;
+				$tokens[] = _m('shkatalogmedia.item_has_discount use '. $itemcode,1);
+				$tokens[] = "addcart/$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty/$cat/$page/";			 
 			 
 				$tokens[] = $rec['code1'];
 				$tokens[] = $rec['code4'];
@@ -568,7 +541,7 @@ goBack();
 				else	
 					$out = $this->combine_tokens($mytemplate, serialize($tokens), true);
 			 
-				$ogimage[] = $this->get_photo_url($rec[$item_code],2);
+				$ogimage[] = $this->get_photo_url($itemcode,2);
 			 
 				$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
 														1=>$tokens[0],
@@ -687,10 +660,10 @@ goBack();
 	
     protected function view_analyzedir($cmd=null,$prefix=null,$startup=0,$nolinks=null,$isroot=false) { 	
 		$t = $cmd ? $cmd : GetReq('t');	
-		$g = $this->replace_spchars(GetReq('cat'));	   	
 		
+		$g = $this->replace_spchars(GetReq('cat'));	   	
 		if ($prefix) 
-          $mytokens[] = $prefix;
+			$mytokens[] = $prefix;
 
 		//analyze dir		
         $adirs = $this->analyzedir($g, $startup, $isroot);	
@@ -699,45 +672,44 @@ goBack();
 		
 		    //startup meters
 		    $max = count($adirs)-1; 
-		    if ($startup) $m = 1;
-		             else $m = 0;		
+		    $m = ($startup) ? 1 : 0;		
 			$m2 = 0;		 	
 		    foreach ($adirs as $id=>$cname) {	
-			  if ($isroot) $curl = null; //reset
-		      $locname = $cname;	
+				if ($isroot) $curl = null; //reset
+				$locname = $cname;	
 			  
-    		  if ($m2<=$max) { //< .......... link last element 
+				if ($m2<=$max) { //< .......... link last element 
 			  
-			    if ($m2==$max)
-			      $title = "<b>$locname</b>";
-				else  
-				  $title = "$locname";			  
+					if ($m2==$max)
+						$title = "<b>$locname</b>";
+					else  
+						$title = "$locname";			  
 			  
-                if ($cname != $this->home) {
+					if ($cname != $this->home) {
 				
-		          if (($m2>$m)&&(!$isroot)) 
-					  $curl .= $this->cseparator . $this->replace_spchars($id);
-			      else 
-					  $curl .= $this->replace_spchars($id);
+						if (($m2>$m)&&(!$isroot)) 
+							$curl .= $this->cseparator . $this->replace_spchars($id);
+						else 
+							$curl .= $this->replace_spchars($id);
 					  
-			      $mygroup = $curl;
+						$mygroup = $curl;
 			   
-			      $a = $this->url("t=$t&cat=$mygroup");
-				  $b = "<a href=\"" . $this->url("t=$t&cat=$mygroup") . "\">" . $locname . "</a>";
-		        }	
-	            else {
-   	              $a = seturl("t=");
-				  $b = "<a href=\"" . seturl("t=") . "\">" . $locname . "</a>";					
-			    }
+						$a = $this->url("t=$t&cat=$mygroup");
+						$b = "<a href=\"" . $this->url("t=$t&cat=$mygroup") . "\">" . $locname . "</a>";
+					}	
+					else {
+						$a = seturl("t=");
+						$b = "<a href=\"" . seturl("t=") . "\">" . $locname . "</a>";					
+					}
 				
-			    $ablink = ($nolinks) ? $a : $b;						  
-				$mytokens[] = ($nolinks) ? $ablink.'@'.$locname.'@'.$mygroup : $ablink;				      
+					$ablink = ($nolinks) ? $a : $b;						  
+					$mytokens[] = ($nolinks) ? $ablink.'@'.$locname.'@'.$mygroup : $ablink;				      
 	
-			  }	
-		      else 
-				$mytokens[] = $locname;				   
+				}	
+				else 
+					$mytokens[] = $locname;				   
 	  	
-			  $m2+=1;	 
+				$m2+=1;	 
 			}//foreach  
  
 		}//adirs
@@ -849,51 +821,50 @@ goBack();
 	}	
 	
 	protected function list_photo($code,$x=100,$y=null,$imageclick=1,$mycat=null,$photosize=null,$clickphotosize=null,$altname=null) {	
-	   $cat = $mycat ? $mycat : GetReq('cat');  
-	   $a_name = $altname ? $altname : $code;   
+	    $cat = $mycat ? $mycat : GetReq('cat');  
+	    $a_name = $altname ? $altname : $code;   
 	   
-	   $photo = $this->get_photo_url($code,$photosize);//define size
+	    $photo = $this->get_photo_url($code,$photosize);//define size
 	   
 	   	   
 	    if (($imageclick==null) || ((is_numeric($imageclick)) && ($imageclick>=0))) {
 	    
-	     if ($imageclick==1) {//phot url	
-	   
-            $clickphoto = $clickphotosize ? $this->get_photo_url($code,$clickphotosize):
-		                                   $this->get_photo_url($code,$photosize);
+			if ($imageclick==1) {//phot url	
+				$clickphoto = $clickphotosize ? $this->get_photo_url($code,$clickphotosize):
+												$this->get_photo_url($code,$photosize);
 		   
-            $plink = "<A href=\"$photo\">";
+				$plink = "<A href=\"$photo\">";
 
-			$lo = "<img src=\"" . $photo . "\"";
- 			$lo.= $y ? "height=\"$y\"" : null; 
-			$lo.= "border=\"0\" alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">" . "</A>"; 
-	        $ret = $plink . $lo;
-		  }
-		  elseif ($imageclick==2) {//product url
+				$lo = "<img src=\"" . $photo . "\"";
+				$lo.= $y ? "height=\"$y\"" : null; 
+				$lo.= "border=\"0\" alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">" . "</A>"; 
+				$ret = $plink . $lo;
+			}
+			elseif ($imageclick==2) {//product url
 		  
-            $myresource = "<img src=\"" . $photo . "\"";
-			$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";
+				$myresource = "<img src=\"" . $photo . "\"";
+				$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";
 		  
-		    $purl = $this->url("t=kshow"."&cat=".$cat."&id=".$code); 
-		    $plink = "<a href=\"$purl\">";
-            $ret = $plink . $myresource . "</a>";           
-		  }
-		  elseif ($imageclick==0) {//item link
+				$purl = $this->url("t=kshow"."&cat=".$cat."&id=".$code); 
+				$plink = "<a href=\"$purl\">";
+				$ret = $plink . $myresource . "</a>";           
+			}
+			elseif ($imageclick==0) {//item link
 		  
-		    $myresource = "<img src=\"" . $photo . "\"";
-			$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";
-		    $ret = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource);
-		  } 
-		  else {//item link
+				$myresource = "<img src=\"" . $photo . "\"";
+				$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";
+				$ret = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource);
+			} 
+			else {//item link
 		  
-            $myresource = "<img src=\"" . $photo . "\"";
-			$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";		  
-		    $ret = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource);
-		  } 
+				$myresource = "<img src=\"" . $photo . "\"";
+				$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";		  
+				$ret = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$code,$myresource);
+			} 
 		}
 		else {
-		  $plink = "<a href=\"$imageclick\">";
-          $ret = $plink . "<img src=\"" . $photo . "\"" . "></a>";           		
+			$plink = "<a href=\"$imageclick\">";
+			$ret = $plink . "<img src=\"" . $photo . "\"" . "></a>";           		
 	    } 	   		
 		
 	    return ($ret);
@@ -1319,10 +1290,12 @@ EOF;
 	    $resultset = $db->Execute($sSQL,2);	
 		if (empty($resultset)) return null;
 		
+		$pp = _m('shkatalogmedia.read_policy',1);		
 		$ix =1;
 		foreach ($resultset as $n=>$rec) {
 		
-		    $id = $rec[$this->fcode];
+			$itemcode   = $rec[$this->fcode];
+			$cat        = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));			
 			
 			$cat = $rec['cat0'] ? $this->replace_spchars($rec['cat0']) : null; 
 			$cat .= $rec['cat1'] ? $this->cseparator . $this->replace_spchars($rec['cat1']) : null;
@@ -1330,38 +1303,36 @@ EOF;
 			$cat .= $rec['cat3'] ? $this->cseparator . $this->replace_spchars($rec['cat3']) : null;
 			$cat .= $rec['cat4'] ? $this->cseparator . $this->replace_spchars($rec['cat4']) : null;
 			
-			$item_url = $this->httpurl . '/' . $this->url('t=kshow&cat='.$cat.'&id='.$id);
-			$item_name_url = $this->url('t=kshow&cat='.$cat.'&id='.$id, $rec[$this->itmname]);			   
+			$item_url = $this->httpurl . '/' . $this->url('t=kshow&cat='.$cat.'&id='.$itemcode);
+			$item_name_url = $this->url('t=kshow&cat='.$cat.'&id='.$itemcode, $rec[$this->itmname]);			   
 		    $item_name_url_base = "<a href='$item_url'>".$rec[$this->itmname]."</a>";
 			
-			$imgfile = $this->urlpath . $this->image_size_path . '/' . $id . $this->restype;
+			$imgfile = $this->urlpath . $this->image_size_path . '/' . $itemcode . $this->restype;
 
 			if (file_exists($imgfile)) 	 
-				$item_photo_url = $this->httpurl . $this->image_size_path . '/' . $id . $this->restype;
+				$item_photo_url = $this->httpurl . $this->image_size_path . '/' . $itemcode . $this->restype;
 			else 
-				$item_photo_url = $this->httpurl .'/'. $this->photodb . '?id='.$id.'&stype='.$this->sizeDB;
+				$item_photo_url = $this->httpurl .'/'. $this->photodb . '?id='.$itemcode.'&stype='.$this->sizeDB;
 
 			$item_photo_html = "<img src=\"" . $item_photo_url . "\">";
 			$item_photo_link = "<a href='$item_url'><img src=\"" . $item_photo_url . "\"></a>";			
 
-			$attachment = null;
 			$i = $ix++;
 			if ($usecode) { /*shkatalogmedia tokens pattern*/
-				$itemqty    = 1;
-				$itemcode   = $rec[$this->fcode];
-				$itemtitle  = _m('shkatalogmedia.replace_cartchars use ' . $rec[$this->itmname],1);
-				$cat        = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
 				$page       = 0;
-				$itemdescr  = _m('shkatalogmedia.replace_cartchars use ' . $rec[$this->itmdescr],1);
-				$itemphoto  = $rec[$this->fcode];
-				$pp         = _m('shkatalogmedia.read_policy',1);
-				$itemprice = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmeida.zeroprice_msg');					
+				$itemqty    = 1;
+				$itemtitle  = $this->replace_cartchars($rec[$this->itmname]);
+				$itemdescr  = $this->replace_cartchars($rec[$this->itmdescr]);
+				$itemphoto  = $itemcode;
+				$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmeida.zeroprice_msg');					
+				$itemunit   = $rec['uniname2'] ? localize($rec['uniname1'],$this->lan) .'/'. localize($rec['uniname2'],$this->lan) :
+											     localize($rec['uniname1'],$this->lan);
 				
 				$ret_array[$i] = array( 
 			                0=>$item_name_url,
 							1=>$rec[$this->itmdescr],
 							2=>$item_photo_link,
-							3=>$rec['uniname1'],
+							3=>$itemunit,
 							4=>$rec['itmremark'],
 							5=> number_format(floatval($itemprice),2,',','.'),
 							6=>_m("shcart.showsymbol use $itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;+$cat+$page",1),
@@ -1370,13 +1341,13 @@ EOF;
 							9=>'',
 							10=>$itemcode,
 							11=>$item_url,
-							12=>_m("shcart.getCartItemQty use " . $rec[$this->fcode],1),
+							12=>_m("shcart.getCartItemQty use " . $itemcode,1),
 							13=>_m("shkatalogmedia.read_array_policy use " . $itemcode . '+'. $itemprice . "+$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty",1),
 							14=>$item_photo_url,
-							15=>$this->lastprice,
+							15=>$rec[$this->lastprice],
 							16=>$itemtitle,
 							17=>null,
-							18=>_m('shkatalogmedia.item_has_discount use '. $rec[$this->fcode],1),
+							18=>_m('shkatalogmedia.item_has_discount use '. $itemcode,1),
 							19=>"addcart/$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty/$cat/$page/",
 							20=>$rec['year'],			
 							21=>$rec['month'],
@@ -1387,7 +1358,7 @@ EOF;
 			}			
 			else
 				$ret_array[$i] = array( /*default tokens pattern */
-			                0=>$id,
+			                0=>$itemcode,
 			                1=>$rec[$this->itmname],
 							2=>$rec[$this->itmdescr],
 							3=>$rec['itmremark'],
@@ -1404,7 +1375,7 @@ EOF;
 							14=>$item_photo_url,
 							15=>$item_photo_html,
 							16=>$item_photo_link,
-							17=>$rec[$this->fcode],
+							17=>$itemcode,
 							18=>$rec[$this->lastprice],
 							19=>$rec['ypoloipo1'],
 							20=>$rec['resources'],
