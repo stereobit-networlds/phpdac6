@@ -253,13 +253,15 @@ class rcuwizard extends rcwizard {
 	public function javascript_code()  {
 		
 	    $ajaxurl = seturl("t=");	
-		$m = count($this->updatePath());
+		$m = 100 / count($this->updatePath());
+		$c = count($this->updatePath());
 	
 		$js = <<<EOF
 
-function start(app,c)
+function start(app,m,c)
 {	
-    var cc = c ? c : parseInt('$m');
+    var mm = m ? m : parseInt('$m'); 
+    var cc = c ? c : 100;	
 	$('#message_p').html('<img src="images/loading.gif" alt="Processing">');
 
 	$.ajax({
@@ -270,7 +272,7 @@ function start(app,c)
 			$('#message_p').html(data);
 			$('.label').html(cc+'%');
 			$('.bar').css({"width": cc+"%"});
-			setTimeout(function() { start(app, cc-1);},1000);
+			setTimeout(function() { start(app, mm, cc-mm);},1000);
 		}
 		else {
 			$('.label').html('0%');

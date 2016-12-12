@@ -183,12 +183,12 @@ class rculiststats  {
 			//$this->messages[] = 'Range selection:'.$daterange;			
 		}				
 		elseif ($y = GetReq('year')) {
-			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12';}
-				
+			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12'; $m='12';}
+			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);	
 			if ($istimestamp)
-				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
 			else
-				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
 			
 			//$this->messages[] = 'Combo selection:'.$m.'-'.$y;
 		}	
@@ -198,10 +198,11 @@ class rculiststats  {
 			
 			$mstart = $mend = date('m');
 			$y = date('Y');
+			$daysofmonth = date('t');
 			if ($istimestamp)
-				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";
+				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
 			else
-				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-31'";	
+				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";	
             //echo $dateSQL;			
 		}	
 		

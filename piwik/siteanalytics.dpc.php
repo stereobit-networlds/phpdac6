@@ -1,32 +1,66 @@
 <?php
-$__DPCSEC['CRMDASHBOARD_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['SITEANALYTICS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ((!defined("CRMDASHBOARD_DPC")) && (seclevel('CRMDASHBOARD_DPC',decode(GetSessionParam('UserSecID')))) ) {
-define("CRMDASHBOARD_DPC",true);
+if ((!defined("SITEANALYTICS_DPC")) && (seclevel('SITEANALYTICS_DPC',decode(GetSessionParam('UserSecID')))) ) {
+define("SITEANALYTICS_DPC",true);
 
-$__DPC['CRMDASHBOARD_DPC'] = 'crmdashboard';
+$__DPC['SITEANALYTICS_DPC'] = 'siteanalytics';
 
-$b = GetGlobal('controller')->require_dpc('crm/crmmodule.dpc.php');
-require_once($b);
+$__EVENTS['SITEANALYTICS_DPC'][0]='cpanalytics';
 
-$__LOCALE['CRMDASHBOARD_DPC'][0]='CRMDASHBOARD_DPC;Dashboard;Συγκεντρωτικός πίνακας';
-$__LOCALE['CRMDASHBOARD_DPC'][1]='_date;Date;Ημερ.';
-$__LOCALE['CRMDASHBOARD_DPC'][2]='_time;Time;Ώρα';
-$__LOCALE['CRMDASHBOARD_DPC'][3]='_status;Status;Κατάσταση';
-$__LOCALE['CRMDASHBOARD_DPC'][4]='_user;User;Πελάτης';
-$__LOCALE['CRMDASHBOARD_DPC'][5]='_cid;cid;cid';
+$__ACTIONS['SITEANALYTICS_DPC'][0]='cpanalytics';
+
+$__LOCALE['SITEANALYTICS_DPC'][0]='SITEANALYTICS_DPC;Analytics;Analytics';
+$__LOCALE['SITEANALYTICS_DPC'][1]='_date;Date;Ημερ.';
+$__LOCALE['SITEANALYTICS_DPC'][2]='_time;Time;Ώρα';
+$__LOCALE['SITEANALYTICS_DPC'][3]='_status;Status;Κατάσταση';
+$__LOCALE['SITEANALYTICS_DPC'][4]='_user;User;Πελάτης';
+$__LOCALE['SITEANALYTICS_DPC'][5]='_cid;cid;cid';
 
 
-class crmdashboard extends crmmodule  {
+class siteanalytics   {
 	
-	var $cptemplate;
+	var $prpath, $siteID, $purl, $authtoken;
+	var $today;
 		
-	function __construct() {
+	public function __construct() {
+		
+		$this->prpath = paramload('SHELL','prpath');
+		
+		$this->piwikurl = remote_paramload('PIWIK','url',$this->prpath);		
+		$this->siteID = remote_paramload('PIWIK','id',$this->prpath);
+	    $this->authtoken = remote_paramload('PIWIK','authtoken',$this->prpath);
+
+		$this->today = date('Y-m-d');			
+	}
 	
-	    crmmodule::__construct();
-	  
-	    $tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);  
-	    $this->cptemplate = $tmpl ? $tmpl : 'metro';	  
+    public function event($event) {
+	
+		switch ($event) {	
+
+		    case 'cpanalytics'  :
+			default       		: 
+		}
+	}
+
+    public function action($action) {
+
+		switch ($action) {	
+
+		    case 'cpanalytics' :		
+			default       	   : $out = null;
+		}
+		return ($out);
+    }		
+	
+	//sub selections menu
+	public function nav() {
+		$ret = '<li class="active"><a href="#">Home</a></li>
+<li><a href="#">Link</a></li>
+<li><a href="#">Link</a></li>';
+
+		//return ($ret);
+		return null;
 	}
 
 	public function dashboard_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
@@ -38,94 +72,111 @@ class crmdashboard extends crmmodule  {
 	public function showdetails($data=null) {
 
 		return (false);		
-	}
-
-	public function javascript() {
-        $js = "
-function createRequestObject() {var ro; var browser = navigator.appName;
-    if(browser == \"Microsoft Internet Explorer\"){ro = new ActiveXObject(\"Microsoft.XMLHTTP\");
-    }else{ro = new XMLHttpRequest();} return ro;}
-var http = createRequestObject();
-function sndReqArg(url) { var params = url+'&ajax=1'; http.open('post', params, true); http.setRequestHeader(\"Content-Type\", \"text/html; charset=utf-8\");
-    http.setRequestHeader(\"encoding\", \"utf-8\");	 http.onreadystatechange = handleResponse;	http.send(null);}
-function handleResponse() {if(http.readyState == 4){
-	    var response = http.responseText;
-        var update = new Array();
-        response = response.replace( /^\s+/g, \"\" ); // strip leading 
-        response = response.replace( /\s+$/g, \"\" ); // strip trailing		
-        if(response.indexOf('|' != -1)) { /*alert(response);*/  update = response.split('|');
-            document.getElementById(update[0]).innerHTML = update[1];
-        }}}  		
-";
-
-		return $js;
-	}
+	}	
 	
-	protected function select_template($tfile=null) {
-		if (!$tfile) return;
-	  
-		$template = $tfile . '.htm';	
-		$t = $this->path . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
-		if (is_readable($t)) 
-			$mytemplate = file_get_contents($t);
+	//http://analytics.stereobit.gr/index.php?module=Widgetize&action=iframe&widget=1&moduleToWidgetize=VisitTime&actionToWidgetize=getVisitInformationPerServerTime&idSite=1&period=range&date=last7&disableLink=1&widget=1
+	//<div id="widgetIframe"><iframe width="100%" height="350" src="http://analytics.xix.gr/index.php?module=Widgetize&action=iframe&widget=1&moduleToWidgetize=VisitTime&actionToWidgetize=getByDayOfWeek&idSite=2&period=range&date=2016-12-10,2016-12-10&disableLink=1&widget=1" scrolling="no" frameborder="0" marginheight="0" marginwidth="0"></iframe></div>
+	public function widget($name, $action=null, $period=null, $daterange=null, $height=null, $width=null, $scrollyes=false, $islink=false) {
+		$w = $width ? $width : '100%';
+		$h = $height ? $height : '350';
+		if ((!$name) || (!$this->siteID) || (!$this->authtoken)) 
+			return null;
 
-		return ($mytemplate);	 
-    }	
-	
-	//tokens method	
-	protected function combine_tokens($template, $tokens, $execafter=null) {
-	    if (!is_array($tokens)) return;		
-
-		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template);
-		  unset ($fp);		  		
-		}		  		
-		else
-		  $ret = $template;
-		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
-		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
-		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
+		$purl = $this->piwikurl . "?module=Widgetize&action=iframe&widget=1";
+		$purl.= "&moduleToWidgetize=" . $name;
 		
-		//execute after replace tokens
-		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          
-		  return ($retout);
-		}		
+		if ($action) 
+			$purl.= "&actionToWidgetize=" . $action;	
+		
+		$purl.= "&idSite=" . $this->siteID;
+		
+		switch ($period) {
+			case 'Y'    : $pr = 'year'; break;
+			case 'M'    : $pr = 'month'; break;
+			case 'W'    : $pr = 'week'; break;			
+			case 'D'    : $pr = 'day'; break;
+			case 'R'	: $pr = 'range'; break;
+			default 	: $pr = 'range';//$pr = 'day';
+		}
+		$purl.= "&period=" . $pr;
+		
+		switch ($daterange) {
+			case 'P30'	: $dr = 'previous30'; break;
+			case 'P7'	: $dr = 'previous7'; break;
+			case 'L30'	: $dr = 'last30'; break;
+			case 'L7' 	: $dr = 'last7'; break;
+			case 'Y'	: $dr = 'yesterday'; break;
+			case 'T'    : $dr = 'today'; break;
+			default 	: $dr = $this->selectTimeRange();//'today'; //$this->today;
+		}
+		$purl.= "&date=" . $dr; //2016-12-10 / 2016-12-10,2016-12-10
+		
+		$purl.= "&disableLink=1&widget=1";
+		$purl.= "&token_auth=" . $this->authtoken;
+		
+		if ($islink)
+			return ($purl);
+		
+		$scroll = $scrollyes ? 'yes' : 'no';
+		
+		$ret = "<iframe width=\"$w\" height=\"$h\" src=\"$purl\"";
+		$ret.= "scrolling=\"$scroll\" frameborder=\"0\" marginheight=\"0\" marginwidth=\"0\"></iframe>";
 		
 		return ($ret);
+	}
+	
+	protected function selectTimeRange() {
+		
+		if ($rdate = GetParam('rdate')) {
+			$dr = explode('-', $rdate);
+			$dr0 = explode('/', trim($dr[0]));
+			$dr1 = explode('/', trim($dr[1]));
+			//$range = str_replace(array('-',' ','/'), array(',','','-'), $rdate);
+			$range = "{$dr0[2]}-{$dr0[0]}-{$dr0[1]},{$dr1[2]}-{$dr1[0]}-{$dr1[1]}";
+		}
+		elseif ($y = GetParam('year')) {
+			if ($m = GetParam('month')) { 
+				$mstart = $m; 
+				$mend = $m;
+			} 
+			else { 
+				$mstart = '01'; 
+				$mend = '12';
+				$m = '12';
+			}
+			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
+			$range = "$y-$mstart-01,$y-$mend-$daysofmonth";
+		}
+		else {
+			$mstart = date('m');; //'01'; 
+			$mend = date('m');; //'12';			
+			$y = date('Y');
+			$daysofmonth = date('t');
+			$range = "$y-$mstart-01,$y-$mend-$daysofmonth";
+		}	
+		
+		return ($range);
 	}	
 	
     public function select_timeline($template,$year=null, $month=null) {
-		$user = urldecode(GetReq('id'));
 		$year = GetParam('year') ? GetParam('year') : date('Y'); 
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 		$daterange = GetParam('rdate');
-		
-		$t = ($template!=null) ? $this->select_template($template) : null;		
-	    if ($t) {
+		$t = GetReq('t');
+				
+	    if ($tmpl = _m('cmsrt.select_template use '.$template.'+1')) {
 			for ($y=2015;$y<=intval(date('Y'));$y++) {
-				$yearsli .= '<li>'. seturl("t=cpcrmdashboard&id=$user&month=".$month.'&year='.$y, $y) .'</li>';
+				$yearsli .= '<li>'. seturl("t=$t&month=".$month.'&year='.$y, $y) .'</li>';
 			}
 		
 			for ($m=1;$m<=12;$m++) {
 				$mm = sprintf('%02d',$m);
-				$monthsli .= '<li>' . seturl("t=cpcrmdashboard&id=$user&month=".$mm.'&year='.$year, $mm) .'</li>';
+				$monthsli .= '<li>' . seturl("t=$t&month=".$mm.'&year='.$year, $mm) .'</li>';
 			}	  
 	  
 	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
 	  
-			$tokens[] = null;//localize('CRMDASHBOARD_DPC',getlocal()) . $posteddaterange; 
+			$tokens[] = localize('SITEANALYTICS_DPC', getlocal()) . $posteddaterange; 
 			$tokens[] = $year;
 			$tokens[] = $month;
 			$tokens[] = localize('_year',getlocal());
@@ -134,13 +185,43 @@ function handleResponse() {if(http.readyState == 4){
 			$tokens[] = $monthsli;	
             $tokens[] = $daterange;			
 		
-			$ret = $this->combine_tokens($t, $tokens); 				
+			$ret = $this->combine_tokens($tmpl, $tokens); 				
      
 			return ($ret);
 		}
 		
 		return null;	
     }	
+	
+	protected function combine_tokens($template, $tokens, $execafter=null) {
+	    if (!is_array($tokens)) return;		
+
+		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template);
+			unset ($fp);		  		
+		}		  		
+		else
+			$ret = $template;
+		  
+	    foreach ($tokens as $i=>$tok) {
+            //echo $tok,'<br>';
+		    $ret = str_replace("$".$i."$",$tok,$ret);
+	    }
+		//clean unused token marks
+		for ($x=$i;$x<30;$x++)
+			$ret = str_replace("$".$x."$",'',$ret);
+		
+		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
+          
+			return ($retout);
+		}		
+		
+		return ($ret);
+	}		
 	
 	protected function sqlDateRange($fieldname, $istimestamp=false, $and=false) {
 		$sqland = $and ? ' AND' : null;
@@ -154,7 +235,7 @@ function handleResponse() {if(http.readyState == 4){
 				$dateSQL = $sqland . " $fieldname BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";			
 		}				
 		elseif ($y = GetReq('year')) {
-			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12'; $m = '12';}
+			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12';}
 			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
 			
 			if ($istimestamp)

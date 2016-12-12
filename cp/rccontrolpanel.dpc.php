@@ -396,7 +396,7 @@ class rccontrolpanel {
 							 die();
 		                     break;
 							 
-		 case "cpaupgrade"  :					 
+		 case "cpupgrade"   :					 
 		 case "cp"          :
 		 default         	:
 		                     
@@ -1259,7 +1259,7 @@ $(document).ready(function(){
 				$dateSQL = $sqland . " $fieldname BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";		
 		}				
 		elseif ($y = GetReq('year')) {
-			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12';}
+			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12'; date('m');}
 			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
 				
 			if ($istimestamp)
