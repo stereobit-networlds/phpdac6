@@ -286,7 +286,7 @@ class rccrmoffers {
         $result = $db->Execute($sSQL);
 		if (!$result) return ;
 		
-		$t = $template ? _m('rccontrolpanel.select_template use '.$template) : null;
+		$t = $template ? _m("cmsrt.select_template use $template+1") : null;
 
 		foreach ($result as $i=>$rec) {
 			$rtokens = array();
@@ -874,7 +874,7 @@ class rccrmoffers {
 	
 	public function viewMessages($template=null) {
 		if (empty($this->messages)) return;
-	    $t = ($template!=null) ? _m('rccontrolpanel.select_template use '.$template) : null;
+	    $t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		
 		foreach ($this->messages as $m=>$message) {
 			if ($t) 	

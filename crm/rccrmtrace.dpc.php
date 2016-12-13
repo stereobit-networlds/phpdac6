@@ -723,9 +723,8 @@ class rccrmtrace  {
 		}	
 		
         if ($id = $cpGet['id']) {
-			$cat = $cpGet['cat'];
 			$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
-			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,ref,REMOTE_ADDR FROM stats where (tid='$id' OR attr1='$cat') $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
+			$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,ref,REMOTE_ADDR FROM stats where tid='$id' $timein $vSQL group by day,attr2,attr3,REMOTE_ADDR order by id desc " . $limit;
 		}
 		elseif ($cat = $cpGet['cat']) {
 			$timein = _m('rccontrolpanel.sqlDateRange use date+1+1');
@@ -739,7 +738,7 @@ class rccrmtrace  {
         $result = $db->Execute($sSQL);
 		if (!$result) return ;
 		
-		$t = $template ? _m('rccontrolpanel.select_template use '.$template) : null;
+		$t = $template ? _m("cmsrt.select_template use $template+1") : null;
 
 		foreach ($result as $i=>$rec) {
 			$rtokens = array();
@@ -835,7 +834,7 @@ class rccrmtrace  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = _m('rccontrolpanel.select_template use '.$template);			
+			$t = _m("cmsrt.select_template use $template+1");			
 			
 			foreach ($result as $i=>$rec) {
 				$tokens = array($rec['date'], $rec['memo']); //,$rec['type']
@@ -867,7 +866,7 @@ class rccrmtrace  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = _m('rccontrolpanel.select_template use '.$template);
+			$t = _m("cmsrt.select_template use $template+1");
 					
 			foreach ($result as $i=>$rec) {
 				$tokens = array($rec['attr1'], $rec['c'], '#');
@@ -895,7 +894,7 @@ class rccrmtrace  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = _m('rccontrolpanel.select_template use '.$template);
+			$t = _m("cmsrt.select_template use $template+1");
 
 			foreach ($result as $i=>$rec) {
 				$title = $rec['timeout'];
@@ -934,7 +933,7 @@ class rccrmtrace  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = _m('rccontrolpanel.select_template use '.$template);
+			$t = _m("cmsrt.select_template use $template+1");
 			
 			foreach ($result as $i=>$rec) {
 				$item = null;
@@ -982,7 +981,7 @@ class rccrmtrace  {
 			
 	    if ($template) {
 			
-			$tdata = _m('rccontrolpanel.select_template use '.$template);
+			$tdata = _m("cmsrt.select_template use $template+1");
 			
 			for ($y=2015;$y<=intval(date('Y'));$y++) {
 				$yearsli .= '<li>'. seturl('t='.$t.'&month='.$month.'&year='.$y, $y) .'</li>';
@@ -996,17 +995,17 @@ class rccrmtrace  {
 			//call cpGet from rcpmenu not this (only def action)
 			$cpGet = _v('rcpmenu.cpGet');	
 			if ($id = $cpGet['id'])
-				$section = ' &gt ' . _m('rccontrolpanel.getItemName use '.$id);
+				$section = ' &gt; ' . _m('rccontrolpanel.getItemName use '.$id);
 			elseif ($cat = $cpGet['cat']) {
-				//$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', _m("cmsrt.replace_spchars use $cat+1"));
+				//$section = ' &gt; ' . str_replace($this->cseparator, ' &gt; ', _m("cmsrt.replace_spchars use $cat+1"));
 				$ccat = explode($this->cseparator, $cat);
 				foreach ($ccat as $i=>$mycat)
-					$section .= _m("cmsrt.replace_spchars use $mycat+1") . ' &gt ';
+					$section .= _m("cmsrt.replace_spchars use $mycat+1") . ' &gt; ';
 			}	
 			else
 				$section = null;
 	  
-	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
+	        $posteddaterange = $daterange ? ' &gt; ' . $daterange : ($year ? ' &gt; ' . $month . ' ' . $year : null) ;
 	  
 			$tokens[] = localize('_crm',getlocal()) . $section . $posteddaterange; 
 			$tokens[] = $year;
@@ -1030,30 +1029,27 @@ class rccrmtrace  {
 	    if (!is_array($tokens)) return;		
 
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template);
-		  unset ($fp);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template;
+			$ret = $template;
 		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
+	    foreach ($tokens as $i=>$tok) 
 		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
+
 		//clean unused token marks
 		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
+			$ret = str_replace("$".$x."$",'',$ret);
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
           
-		  return ($retout);
+			return ($retout);
 		}		
 		
 		return ($ret);

@@ -947,35 +947,13 @@ class rccrm  {
 		return ($ret);
 	}
 	
-	
-	public function javascript() {
-        $js = "
-function createRequestObject() {var ro; var browser = navigator.appName;
-    if(browser == \"Microsoft Internet Explorer\"){ro = new ActiveXObject(\"Microsoft.XMLHTTP\");
-    }else{ro = new XMLHttpRequest();} return ro;}
-var http = createRequestObject();
-function sndReqArg(url) { var params = url+'&ajax=1'; http.open('post', params, true); http.setRequestHeader(\"Content-Type\", \"text/html; charset=utf-8\");
-    http.setRequestHeader(\"encoding\", \"utf-8\");	 http.onreadystatechange = handleResponse;	http.send(null);}
-function handleResponse() {if(http.readyState == 4){
-	    var response = http.responseText;
-        var update = new Array();
-        response = response.replace( /^\s+/g, \"\" ); // strip leading 
-        response = response.replace( /\s+$/g, \"\" ); // strip trailing		
-        if(response.indexOf('|' != -1)) { /*alert(response);*/  update = response.split('|');
-            document.getElementById(update[0]).innerHTML = update[1];
-        }}}  		
-";
-
-		return $js;
-	}	
-	
     public function select_timeline($template,$year=null, $month=null) {
 		$user = urldecode(GetReq('id'));
 		$year = GetParam('year') ? GetParam('year') : date('Y'); 
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 		$daterange = GetParam('rdate');
 		
-		$t = ($template!=null) ? _m('rccontrolpanel.select_template use '.$template) : null;		
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;		
 	    if ($t) {
 			for ($y=2015;$y<=intval(date('Y'));$y++) {
 				$yearsli .= '<li>'. seturl("t=crmstats&id=$user&month=".$month.'&year='.$y, $y) .'</li>';
@@ -986,9 +964,9 @@ function handleResponse() {if(http.readyState == 4){
 				$monthsli .= '<li>' . seturl("t=crmstats&id=$user&month=".$mm.'&year='.$year, $mm) .'</li>';
 			}	  
 	  
-	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
+	        $posteddaterange = $daterange ? ' &gt; ' . $daterange : ($year ? ' &gt; ' . $month . ' ' . $year : null) ;
 	  
-			$tokens[] = localize('RCCRM_DPC', getlocal()) . ' &gt ' . localize('_crmdashb', getlocal()) . ' ' . $posteddaterange;
+			$tokens[] = localize('RCCRM_DPC', getlocal()) . ' &gt; ' . localize('_crmdashb', getlocal()) . ' ' . $posteddaterange;
 			$tokens[] = $year;
 			$tokens[] = $month;
 			$tokens[] = localize('_year',getlocal());

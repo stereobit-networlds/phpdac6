@@ -39,38 +39,6 @@ class crmdashboard extends crmmodule  {
 
 		return (false);		
 	}
-
-	public function javascript() {
-        $js = "
-function createRequestObject() {var ro; var browser = navigator.appName;
-    if(browser == \"Microsoft Internet Explorer\"){ro = new ActiveXObject(\"Microsoft.XMLHTTP\");
-    }else{ro = new XMLHttpRequest();} return ro;}
-var http = createRequestObject();
-function sndReqArg(url) { var params = url+'&ajax=1'; http.open('post', params, true); http.setRequestHeader(\"Content-Type\", \"text/html; charset=utf-8\");
-    http.setRequestHeader(\"encoding\", \"utf-8\");	 http.onreadystatechange = handleResponse;	http.send(null);}
-function handleResponse() {if(http.readyState == 4){
-	    var response = http.responseText;
-        var update = new Array();
-        response = response.replace( /^\s+/g, \"\" ); // strip leading 
-        response = response.replace( /\s+$/g, \"\" ); // strip trailing		
-        if(response.indexOf('|' != -1)) { /*alert(response);*/  update = response.split('|');
-            document.getElementById(update[0]).innerHTML = update[1];
-        }}}  		
-";
-
-		return $js;
-	}
-	
-	protected function select_template($tfile=null) {
-		if (!$tfile) return;
-	  
-		$template = $tfile . '.htm';	
-		$t = $this->path . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
-		if (is_readable($t)) 
-			$mytemplate = file_get_contents($t);
-
-		return ($mytemplate);	 
-    }	
 	
 	//tokens method	
 	protected function combine_tokens($template, $tokens, $execafter=null) {
@@ -112,7 +80,7 @@ function handleResponse() {if(http.readyState == 4){
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 		$daterange = GetParam('rdate');
 		
-		$t = ($template!=null) ? $this->select_template($template) : null;		
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;		
 	    if ($t) {
 			for ($y=2015;$y<=intval(date('Y'));$y++) {
 				$yearsli .= '<li>'. seturl("t=cpcrmdashboard&id=$user&month=".$month.'&year='.$y, $y) .'</li>';

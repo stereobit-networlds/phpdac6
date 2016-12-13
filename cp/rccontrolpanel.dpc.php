@@ -20,7 +20,7 @@ $__EVENTS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 $__EVENTS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
 $__EVENTS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
-$__EVENTS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
+//$__EVENTS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
 $__EVENTS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
 $__EVENTS['RCCONTROLPANEL_DPC'][13]='cpinbox';
@@ -40,7 +40,7 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
 $__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
 $__ACTIONS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
-$__ACTIONS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
 $__ACTIONS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
 $__ACTIONS['RCCONTROLPANEL_DPC'][13]='cpinbox';
@@ -257,7 +257,7 @@ class rccontrolpanel {
 	var $cptemplate, $stats, $cpStats;
 	var $turl, $cpGet, $turldecoded, $messages, $tasks;
 	var $owner, $seclevid, $cseparator, $map_t, $map_f;
-	var $userDemoIds, $crmLevel;
+	var $userDemoIds, $crmLevel, $isCrm;
 	
 	var $rootapp_path, $tool_path;
 		
@@ -317,6 +317,7 @@ class rccontrolpanel {
 		
 		$this->stats = array();
 		$this->cpStats = false;
+		$this->isCrm = false;
 		
 		$this->map_t = remote_arrayload('RCITEMS','maptitle',$this->path);	
 		$this->map_f = remote_arrayload('RCITEMS','mapfields',$this->path);		
@@ -382,7 +383,7 @@ class rccontrolpanel {
 								break;	
 
          case 'cpshowMessages': break;							 
-         case 'cpsysMessages' : break;				 
+         //case 'cpsysMessages' : break;				 
          case 'cpitemVisits'  : break;							 
          case 'cpcatVisists'  : break;			 
 	   	
@@ -399,7 +400,7 @@ class rccontrolpanel {
 							 
 		 case "cpupgrade"   :					 
 		 case "cp"          :
-		 default         	:	
+		 default         	:  $this->isCrmEnabled();
 		                     
 		}  
 
@@ -430,7 +431,7 @@ class rccontrolpanel {
 		    case 'cpmessages'  : 
 		    case 'cpdelMessage': 	break;	
 			case 'cpshowMessages' : $out = $this->viewPastMessages(); break;				
-			case 'cpsysMessages'  : $out = $this->viewSystemMessages(); break;			
+			//case 'cpsysMessages'  : $out = $this->viewSystemMessages(); break;			
 			case 'cpitemVisits': 	$out = $this->viewItemVisits(); break;
 			case 'cpcatVisits' : 	$out = $this->viewCatVisits(); break;			
 		  	case "cpinfo"      : 	break;    
@@ -461,7 +462,16 @@ class rccontrolpanel {
 	
 	public function isCrmUser() {
 		return ($this->seclevid>=$this->crmLevel ? true : false);
-	}		
+	}
+
+	public function isCrmEnabled() {
+		if ((defined('CRMFORMS_DPC')) && ($this->isCrmUser())) {
+			$this->isCrm = true;
+			return true;
+		}	
+
+		return false;		
+	}	
 	
 	//save param for use by metro cp
 	protected function getTURL() {
@@ -1250,7 +1260,7 @@ $(document).ready(function(){
 				$dateSQL = $sqland . " $fieldname BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";		
 		}				
 		elseif ($y = GetReq('year')) {
-			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12'; date('m');}
+			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12'; $m = date('m');}
 			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
 				
 			if ($istimestamp)
@@ -2245,7 +2255,7 @@ $(document).ready(function(){
 		
 		return ($ret);			
 	}	
-	
+	/*
 	public function setMessage($message=null, $daysback=null) {
 		$db = GetGlobal('db');
 		if (!$message) return false;
@@ -2265,7 +2275,7 @@ $(document).ready(function(){
         if ($result->fields[0]) return false;
 		
 		//add the message if not already in session		
-		//if (array_key_exists($hash, $this->messages)) { /* in session */}
+		//if (array_key_exists($hash, $this->messages)) { }
 		//else {
 			$this->messages[$hash] = $message;
 			SetSessionParam('cpMessages', $this->messages);
@@ -2383,7 +2393,7 @@ $(document).ready(function(){
 		
 	    return ($out);	
 	}		
-	
+	*/
 	
 	
 	public function getTasksTotal() { 
@@ -2547,10 +2557,9 @@ $(document).ready(function(){
 		
 		return ($ret);			
 	}		
-	
+/*	
 	//last month check 
 	public function getInactiveUsers() {
-		if (!defined('RCCONTROLPANEL_DPC')) return false;
 		$db = GetGlobal('db');
 		$text = localize('_inactiveuser',getlocal());
 		$sSQL = "select username,timein from users where notes='DELETED' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
@@ -2566,7 +2575,6 @@ $(document).ready(function(){
 	
 	//last month check 
 	public function getActiveUsers() {
-		if (!defined('RCCONTROLPANEL_DPC')) return false;
 		$db = GetGlobal('db');
 		$text = localize('_newactiveuser',getlocal());
 		$sSQL = "select username,timein from users where notes='ACTIVE' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 10 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
@@ -2716,7 +2724,7 @@ $(document).ready(function(){
 		
 	    return ($out);	
 	}		
-	
+*/	
 	public function timeSayWhen($ptime=null) {
 		$etime = time() - $ptime;
 

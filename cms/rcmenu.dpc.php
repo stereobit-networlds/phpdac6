@@ -85,7 +85,8 @@ class rcmenu extends cmsmenu {
 	    	    		  			    
 		switch ($event) {	
 		
-		    case "cpmselectmenu"    :	if ($newmenu = $_POST['menu'])
+		    case "cpmselectmenu"    :	$this->t_config = $this->read_config();
+										if ($newmenu = $_POST['menu'])
 											$this->post = $this->createMenu($newmenu);
 			                            break;
 										
@@ -640,7 +641,8 @@ class rcmenu extends cmsmenu {
 	    $result = $db->Execute($sSQL);		
 		
 		//create text ini
-		$inifile = $this->path . 'menu-' . $name . $lan . '.ini';
+		$menufile = ($name=='menu') ? $name : 'menu-' . $name;
+		$inifile = $this->path . $menufile . $lan . '.ini';
 		$ret = @file_put_contents($inifile, "[NEW]\r\ntitle=New\r\nlink=\r\nspaces=0\r\n");
 		
 		$this->selectedMenu = $name; //update var
@@ -719,11 +721,13 @@ class rcmenu extends cmsmenu {
 		if ($this->selectedMenu) {
 
 			//db based
-			return $this->loadMenu($this->selectedMenu);
-		
+			$ret = $this->loadMenu($this->selectedMenu);
+			if ($ret)
+				return ($ret);
+		    //else
 		    //text based
-			//$menufile = ($this->selectedMenu=='menu') ? $this->selectedMenu : 'menu-' . $this->selectedMenu;
-			//return $this->nestBuild($menufile);
+			$menufile = ($this->selectedMenu=='menu') ? $this->selectedMenu : 'menu-' . $this->selectedMenu;
+			return $this->nestBuild($menufile);
 		}	
 		
 		return $this->nestBuild(); 
@@ -780,8 +784,9 @@ class rcmenu extends cmsmenu {
 		}	
 		
 		//return drop element
-		return $this->nestdditem('drop', localize('_dropelement', getlocal()), "#", md5('drop'));
-		
+		$a = $this->nestdditem('drop', localize('_dropelement', getlocal()), "#", md5('drop'));
+		$b = $this->nestBuild(); 	
+		return $a . $b;
 		//else //current conf of main menu
 		//return $this->nestBuild(); 	
 	}
@@ -816,7 +821,8 @@ class rcmenu extends cmsmenu {
 		//$basicmenu = is_readable($menufile) ? array($lmenu=>seturl('t=cpmselectmenu&menu=menu')) : array();				  
 		$basicmenu = array(); //DISABLED (DB MENU USED)
 		
-		$menus = $this->readMenuFiles();
+		$menuf = $this->readMenuFiles();
+		$menus = (empty($menuf)) ? array() : $menuf;
 		
 		$turl99 = seturl('t=cpmconfig&ismain=1');
 		$turl98 = seturl('t=cpmnewmenu');		
