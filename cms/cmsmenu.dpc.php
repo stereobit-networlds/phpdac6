@@ -65,7 +65,7 @@ class cmsmenu {
 	}   
    			
 	//db based
-	public function callMenu($name=null,$menu_template=null,$glue_tag=null,$submenu_template=null) {
+	public function callMenu($name=null,$menu_template=null,$glue_tag=null,$submenu_template=null,$wrap_submenu=null) {
 		if (!$name) return null;
 	    $lan = getlocal() ? getlocal() : '0';	
 		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
@@ -98,6 +98,7 @@ class cmsmenu {
 		$tmpl = $menu_template ? _m('cmsrt.select_template use ' . $menu_template) : null; 
 		
 		ksort($menu);
+		$mid = 1;
 		foreach ($menu as $i=>$m) {
 			$ret2 = null;
 			list ($section, $name, $value) = explode('|', $m);			
@@ -120,14 +121,21 @@ class cmsmenu {
 						$line = "<a href='$link'>$cname</a>";
 						$ret2 .= $gstart . $line . $gend;
 					}						
-				}	
+				}
+
+				if ($wrap_submenu) {
+					$wraptmpl = _m('cmsrt.select_template use ' . $wrap_submenu);
+					$sbmenu = $this->combine_tokens($wraptmpl, array(0=>$ret2, 1=>$cname, 2=>$mid++), true);
+				}
+				else
+					$sbmenu = $ret2;	
 			}
 			
 			if ($tmpl) {
 				$tokens[] = $this->dropdown_class;
 				$tokens[] = trim($value) ? $this->make_link($value) : '#';
 				$tokens[] = $name;
-				$tokens[] = $ret2; 
+				$tokens[] = $sbmenu; 
 				$ret .= $this->combine_tokens($tmpl, $tokens, true);
 				unset($tokens);
 			}

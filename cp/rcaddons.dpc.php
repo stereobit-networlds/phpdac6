@@ -34,15 +34,10 @@ class rcaddons {
 		
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];		
 
-		$this->rootapp_path = remote_paramload('RCCONTROLPANEL','rootpath',$this->prpath); //'stereobi'; //XIX !!!!
+		$this->rootapp_path = remote_paramload('RCCONTROLPANEL','rootpath',$this->prpath); 
 		
 		$toolp = remote_paramload('RCCONTROLPANEL','toolpath',$this->prpath);
-		$this->tool_path = $toolp ? $toolp : '../../cp/'; //ususaly 2 leveles back from apps (root app must set to /)
-		
-        //READ ENVIRONMENT ATTR
-		if ($_SESSION['LOGIN']=='yes') //first time logged in session is not set and constructy has executed!!!!
-			$this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);		
-		//print_r($this->environment);		
+		$this->tool_path = $toolp ? $toolp : '../../cp/'; 	
 				
 		$this->appkey = new appkey();				
 	}	
@@ -55,7 +50,8 @@ class rcaddons {
 		switch ($event) {	
 							   
 			case "cpaddons"		:
-			default             : $this->set_addons_list();
+			default             : 	$this->set_addons_list();
+									$this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);				
 		}   
     }
   

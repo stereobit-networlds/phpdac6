@@ -333,74 +333,75 @@ class rccontrolpanel {
 	 	
     public function event($sAction) {    	  
 	
-	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	   if ($login!='yes') return null;	
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+		if ($login!='yes') return null;	
 	   
-	   $this->autoupdate();	  //!!!!! 
+		$this->autoupdate();	  //!!!!! 
   
-	   switch ($sAction) {
+		switch ($sAction) {
 	   
-	     case 'cpzbackup' : break;
+	     case 'cpzbackup' 	: 	break;
 							 
-		 case 'cpchartshow': if ($report = GetReq('report')) {//ajax call
-		                       $this->hasgraph = _m("swfcharts.create_chart_data use $report");
-							   $this->goto = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
-							 }
-							 break;
+		 case 'cpchartshow'	: 	if ($report = GetReq('report')) {//ajax call
+									$this->hasgraph = _m("swfcharts.create_chart_data use $report");
+									$this->goto = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
+								}
+								break;
 
-		 case 'cpinboxno'  : //ajax call
-							 $tsk = $this->getInboxTotal();
-							 die($tsk);
-		                     break;							 
-		 case 'cpinbox'    : $tsk = $this->getInbox();
-							 die($tsk);
-							 break;								 
+		 case 'cpinboxno'   : 	//ajax call
+								$tsk = $this->getInboxTotal();
+								die($tsk);
+								break;							 
+		 case 'cpinbox'     : 	$tsk = $this->getInbox();
+								die($tsk);
+								break;								 
 
-		 case 'cptasksno'  : $this->site_stats();  
-		                     //if (defined('RCULISTSTATS')) 
-								//_m('rculiststats.percentofCamps');//task dropdown, set task
-		                     $tsk = $this->getTasksTotal();
-							 die($tsk);
-							 break;	 							 
-		 case 'cptasks'    : $this->site_stats(); 
-		                     //if (defined('RCULISTSTATS')) NOT 2nd time 
-								//_m('rculiststats.percentofCamps');//task dropdown, set task
-		                     $tsk = $this->getTasks();
-							 die($tsk);
-							 break;	   
+		 case 'cptasksno'   : 	$this->site_stats();  
+								//if (defined('RCULISTSTATS')) 
+									//_m('rculiststats.percentofCamps');//task dropdown, set task
+								$tsk = $this->getTasksTotal();
+								die($tsk);
+								break;	 							 
+		 case 'cptasks'     : 	$this->site_stats(); 
+								//if (defined('RCULISTSTATS')) NOT 2nd time 
+									//_m('rculiststats.percentofCamps');//task dropdown, set task
+								$tsk = $this->getTasks();
+								die($tsk);
+								break;	   
 							 
-		 case 'cpmessagesno':$msgs = $this->getMessagesTotal();
-							 die($msgs);
-							 break;	 							 
-		 case 'cpmessages' : $msgs = $this->getMessages();
-							 die($msgs);
-							 break;	 
+		 case 'cpmessagesno':	$msgs = $this->getMessagesTotal();
+								die($msgs);
+								break;	 							 
+		 case 'cpmessages' : 	$msgs = $this->getMessages();
+								die($msgs);
+								break;	 
 
-		 case 'cpdelMessage': //ajax call
-		                     $msgs = $this->storeMessage();
-							 die('cpmessages|'.$msgs);
-							 break;	
+		 case 'cpdelMessage': 	//ajax call
+								$msgs = $this->storeMessage();
+								die('cpmessages|'.$msgs);
+								break;	
 
-         case 'cpshowMessages' : break;							 
-         case 'cpsysMessages'  : break;				 
-         case 'cpitemVisits'   : break;							 
-         case 'cpcatVisists'   : break;			 
+         case 'cpshowMessages': break;							 
+         case 'cpsysMessages' : break;				 
+         case 'cpitemVisits'  : break;							 
+         case 'cpcatVisists'  : break;			 
 	   	
-         case "cplogout"    : $this->logout();
-		                     break;
-		 case "cplogin"     :$valid = $this->verify_login();						  
-							
-		 case "cpinfo"      ://ajax call
-							 $this->site_stats();  //run stats
-							 echo $this->cpinfo($_GET['s']);
-							 die();
-		                     break;
+         case "cplogout"    : 	$this->logout();
+								break;
+
+		 case "cplogin"     :	$valid = $this->verify_login();						  
+							    break;
+		 case "cpinfo"      :	//ajax call
+								$this->site_stats();  //run stats
+								echo $this->cpinfo($_GET['s']);
+								die();
+								break;
 							 
 		 case "cpupgrade"   :					 
 		 case "cp"          :
-		 default         	:
+		 default         	:	
 		                     
-       }  
+		}  
 
     }
   
@@ -411,15 +412,15 @@ class rccontrolpanel {
 	   
 	    switch ($sAction) {
 		    
-			case 'cpzbackup'   : $out = $this->zip_directory(GetReq('zname'),GetReq('zpath'));
-			                     break;
+			case 'cpzbackup'   : 	$out = $this->zip_directory(GetReq('zname'),GetReq('zpath'));
+									break;
 		  
-		    case 'cpchartshow' : if ($this->hasgraph)//ajax call
-		                           $out = _m("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");								  
-							     else
-							       $out = "<h3>".localize('_GNAVAL',0)."</h3>";	
-							     die(GetReq('report').'|'.$out); //ajax return
-								 break;
+		    case 'cpchartshow' : 	if ($this->hasgraph)//ajax call
+										$out = _m("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");								  
+									else
+										$out = "<h3>".localize('_GNAVAL',0)."</h3>";	
+									die(GetReq('report').'|'.$out); //ajax return
+									break;
 								 
 			case 'cpinboxno'   :					 
 			case 'cpinbox'     : 
@@ -427,24 +428,21 @@ class rccontrolpanel {
 			case 'cptasks'     : 
 			case 'cpmessagesno': 
 		    case 'cpmessages'  : 
-		    case 'cpdelMessage': break;	
+		    case 'cpdelMessage': 	break;	
 			case 'cpshowMessages' : $out = $this->viewPastMessages(); break;				
 			case 'cpsysMessages'  : $out = $this->viewSystemMessages(); break;			
-			case 'cpitemVisits': $out = $this->viewItemVisits(); break;
-			case 'cpcatVisits' : $out = $this->viewCatVisits(); break;			
-		  	case "cpinfo"      : break;    
+			case 'cpitemVisits': 	$out = $this->viewItemVisits(); break;
+			case 'cpcatVisits' : 	$out = $this->viewCatVisits(); break;			
+		  	case "cpinfo"      : 	break;    
 			
 			case "cpupgrade"   :
 			case "cp"          :	
-			default            : $this->getTURL(); //save param for use by metro cp
-			
-								 $this->site_stats();
-		 
-							     //$this->set_addons_list();
-							     //$this->load_graph_objects();
-			
-							 	 //$this->_show_update_tools();
-							 	 //$this->_show_addon_tools();
+			default            : 	$this->getTURL(); //save param for use by metro cp
+									$this->site_stats(); 
+									//$this->set_addons_list();
+									//$this->load_graph_objects();
+									//$this->_show_update_tools();
+									//$this->_show_addon_tools();
 			  
 		} 		 		  
 
@@ -1968,7 +1966,7 @@ $(document).ready(function(){
 			
 	    if ($template) {
 			
-			$tdata = $this->select_template($template);
+			$tdata = _m("cmsrt.select_template use $template+1");
 			
 			for ($y=2015;$y<=intval(date('Y'));$y++) {
 				$yearsli .= '<li>'. seturl('t='.$t.'&month='.$month.'&year='.$y, $y) .'</li>';
@@ -2116,7 +2114,6 @@ $(document).ready(function(){
 	public function getMessages($limit=null) {
 		$db = GetGlobal('db');	
 		$lim = $limit ? $limit : 10;
-		//$tdata = $this->select_template('dropdown-inbox-message');
 		
 		$sSQL = "SELECT date,tid,attr1,attr3 from stats where tid='action' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc limit " . $lim;
 		$resultset = $db->Execute($sSQL);
@@ -2125,27 +2122,42 @@ $(document).ready(function(){
 		foreach ($resultset as $n=>$rec) {		
 			
 			switch ($rec['attr1']) {
-				case 'fblogin'     : $text = localize('_fblogin',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-success'; break;
-				case 'fblogout'    : $text = localize('_logout',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break;				
-				case 'login'       : $text = localize('_login',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-success'; break; 
-				case 'logout'      : $text = localize('_logout',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-info'; break;
-				case 'login-failed': $text = localize('_logfail',getlocal()); $cmd = 'cpusers.php'; $tmpl = 'dropdown-notification-important'; break;
-				default            : $text = null;  $cmd = 'cpform.php'; $tmpl = 'dropdown-notification-warning'; 
+				case 'fblogin'     : 	$text = localize('_fblogin',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-success'; 
+										break;
+				case 'fblogout'    : 	$text = localize('_logout',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-info'; 
+										break;				
+				case 'login'       : 	$text = localize('_login',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-success'; 
+										break; 
+				case 'logout'      : 	$text = localize('_logout',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-info'; 
+										break;
+				case 'login-failed': 	$text = localize('_logfail',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-important'; 
+										break;
+				default            : 	$text = null;  $cmd = 'cpform.php'; 
+										$tmpl = 'dropdown-notification-warning'; 
 			}
-			//if (!$text) continue;
 			
 			$tokens[] = $rec['attr3'] . ' ' . $text;
 			$tokens[] = $this->timeSayWhen(strtotime($rec[0]));			
 			$tokens[] = $cmd;
 			
-			$tdata = $this->select_template($tmpl);
+			$tdata = _m("cmsrt.select_template use $tmpl+1");
 			$ret .= $this->combine_tokens($tdata, $tokens, true);
 			unset($tokens);	
 		}
 		
 		return ($ret);			
 	}		
-
+    /*
 	public function getMessages_OLD($limit=null) {
 		if (empty($this->messages)) return null;
 		//print_r($this->messages);
@@ -2176,7 +2188,7 @@ $(document).ready(function(){
 		
 		return ($ret);			
 	}	
-	
+	*/
 	/*delete msg from queue return rest-ajax*/
 	public function storeMessage($limit=null) {
 		$db = GetGlobal('db');	
@@ -2222,7 +2234,7 @@ $(document).ready(function(){
 				default          : $tmpl = 'dropdown-notification-info';
 				
 			}
-			$tdata = $this->select_template($tmpl);
+			$tdata = _m("cmsrt.select_template use $tmpl+1");
 			$ret .= $this->combine_tokens($tdata, $tokens, true);
 			unset($tokens);	
 			$i+=1;
@@ -2273,8 +2285,6 @@ $(document).ready(function(){
 		else
 			$crm = false;
 		
-		//$msgs = array_reverse($this->messages, true);
-        
 		foreach ($this->messages as $hash=>$message) {
 			//echo $message;
 			$tokens = explode('|', $message); 
@@ -2289,7 +2299,7 @@ $(document).ready(function(){
 			
 			$st = $status ? '-' . $status : null;
 			$statusTmpl = str_replace($template, $template.$st ,$template);
-			$t = ($template!=null) ? $this->select_template($statusTmpl) : null;
+			$t = ($template!=null) ? _m("cmsrt.select_template use $statusTmpl+1") : null;
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) :
 				         "<option value=\"$hash\">".$rtokens[0]."</option>";
@@ -2323,7 +2333,6 @@ $(document).ready(function(){
 	    return ($out);	
 	}	
 	
-	
 	public function viewSysMessages($template=null) {
 		$db = GetGlobal('db');
 		
@@ -2341,7 +2350,7 @@ $(document).ready(function(){
 			
 			$st = $status ? '-' . $status : null;
 			$statusTmpl = str_replace($template, $template.$st ,$template);
-			$t = ($template!=null) ? $this->select_template($statusTmpl) : null;
+			$t = ($template!=null) ? _m("cmsrt.select_template use $statusTmpl+1") : null;
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) :
 			             "<option value=\"$hash\">".$rtokens[1]."</option>"; 
@@ -2401,7 +2410,7 @@ $(document).ready(function(){
 				default          : $tmpl = 'dropdown-task-progress-info';
 				
 			}
-			$tdata = $this->select_template($tmpl);
+			$tdata = _m("cmsrt.select_template use $tmpl+1");
 			$ret .= $this->combine_tokens($tdata, $tokens, true);
 			unset($tokens);	
 			$i+=1;
@@ -2427,7 +2436,7 @@ $(document).ready(function(){
 	
 	public function viewTasks($template=null) {
 		if (empty($this->tasks)) return;
-	    $t = ($template!=null) ? $this->select_template($template) : null;
+	    $t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		//$msgs = array_reverse($this->tasks, true);
 
 		foreach ($this->tasks as $t=>$task) {
@@ -2496,7 +2505,7 @@ $(document).ready(function(){
 	public function getInbox($limit=null) {
 		$db = GetGlobal('db');	
 		$lim = $limit ? $limit : 10;
-		$tdata = $this->select_template('dropdown-inbox-message');
+		$tdata = _m('cmsrt.select_template use dropdown-inbox-message+1');
 		
 		$sSQL = "SELECT date,tid,attr1,attr3 from stats where tid='event' and attr1 REGEXP 'registration|subscribe|unsubscribe|activation|contact|cart-submit' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc limit " . $lim;
 		$resultset = $db->Execute($sSQL);
@@ -2507,15 +2516,26 @@ $(document).ready(function(){
 			$tokens[] = $rec['attr3']; 
 			
 			switch ($rec['attr1']) {
-				case 'registration': $text = localize('_reginbox',getlocal()); $cmd = 'cpusers.php'; break; 
-				case 'activation'  : $text = localize('_actinbox',getlocal()); $cmd = 'cpusers.php'; break; 
-				case 'subscribe'   : $text = localize('_subinbox',getlocal()); $cmd = 'cpsubscribers.php'; break; 
-				case 'unsubscribe' : $text = localize('_unsubinbox',getlocal()); $cmd = 'cpsubscribers.php'; break; 
-				case 'cart-submit' : $text = localize('_sale',getlocal()); $cmd = 'cptransactions.php'; break;
-				case 'contact'     : $text = localize('_formsubmit',getlocal()); $cmd = 'cpform.php'; break;
-				default            : $text = null; 
+				case 'registration': 	$text = localize('_reginbox',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										break; 
+				case 'activation'  : 	$text = localize('_actinbox',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										break; 
+				case 'subscribe'   : 	$text = localize('_subinbox',getlocal()); 
+										$cmd = 'cpsubscribers.php'; 
+										break; 
+				case 'unsubscribe' : 	$text = localize('_unsubinbox',getlocal()); 
+										$cmd = 'cpsubscribers.php'; 
+										break; 
+				case 'cart-submit' : 	$text = localize('_sale',getlocal()); 
+										$cmd = 'cptransactions.php'; 
+										break;
+				case 'contact'     : 	$text = localize('_formsubmit',getlocal()); 
+										$cmd = 'cpform.php'; 
+										break;
+				default            : 	$text = null; 
 			}
-			//if (!$text) continue;
 			
 			$tokens[] = $text;
 			$tokens[] = $this->timeSayWhen(strtotime($rec[0]));			
@@ -2571,7 +2591,7 @@ $(document).ready(function(){
 		else
 			$crm = false;		
 		
-		$t = $template ? $this->select_template($template) : null;//'alert-important';		
+		$t = $template ? _m("cmsrt.select_template use $template+1") : null;
 		
         $timein = $this->sqlDateRange('date', true, true);			
 		
@@ -2599,7 +2619,6 @@ $(document).ready(function(){
 			
 			unset($rtokens);
 		}
-		//echo $ret;
 		return ($ret);
 	}	
 	
@@ -2614,7 +2633,6 @@ $(document).ready(function(){
 		   
 			$sSQL = "select * from (SELECT id,date,tid,attr2,attr3,REMOTE_ADDR FROM stats WHERE tid='$id'";
             $sSQL.= ') as o';  
-			//echo $sSQL;	
 
 		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|0|");
 			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0');		   
@@ -2642,12 +2660,11 @@ $(document).ready(function(){
 		else
 			$crm = false;		
 		
-		$t = $template ? $this->select_template($template) : null;//'alert-important';		
+		$t = $template ? _m("cmsrt.select_template use $template+1") : null;		
 		
         $timein = $this->sqlDateRange('date', true, true);			
 		
 		$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc LIMIT 100";
-		//echo $sSQL;
         $result = $db->Execute($sSQL);
 		if (!$result) return ;
 		
@@ -2670,7 +2687,6 @@ $(document).ready(function(){
 			
 			unset($rtokens);
 		}
-		//echo $ret;
 		return ($ret);
 	}	
 	
@@ -2685,7 +2701,6 @@ $(document).ready(function(){
 		   
 			$sSQL = "select * from (SELECT id,date,attr1,attr2,attr3,REMOTE_ADDR FROM stats WHERE attr1='$cat'";
             $sSQL.= ') as o';  
-			//echo $sSQL;	
 
 		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|0|");
 			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|0');		   
@@ -2769,7 +2784,7 @@ $(document).ready(function(){
 		return ($ret);
 	}
 	
-	function select_template($tfile=null, $path=null) {
+	/*function select_template($tfile=null, $path=null) {
 		if (!$tfile) return;
 		$cppath = $path ? $path : $this->cptemplate;
 	  
@@ -2779,50 +2794,42 @@ $(document).ready(function(){
 			$mytemplate = file_get_contents($t);
 
 		return ($mytemplate);	 
-    }		
+    }*/		
   
-	//tokens method	
 	protected function combine_tokens($template, $tokens, $execafter=null) {
 	    if (!is_array($tokens)) return;		
 
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template);
-		  unset ($fp);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template;
+			$ret = $template;
 		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
+	    foreach ($tokens as $i=>$tok) 
 		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
-		//clean unused token marks
+
 		for ($x=$i;$x<30;$x++)
 		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
-		
-		//execute after replace tokens
+
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
           
-		  return ($retout);
+			return ($retout);
 		}		
 		
 		return ($ret);
 	} 
 
 	public function getmapf($name) {
-	
 		if (empty($this->map_t)) return 0;
 	  
 		foreach ($this->map_t as $id=>$elm)
 			if ($elm==$name) break;
 				
-		//$id = key($this->map_t[$name]) ;
 		$ret = $this->map_f[$id];
 		return ($ret);
 	}	
