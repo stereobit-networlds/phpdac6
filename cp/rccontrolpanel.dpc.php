@@ -293,8 +293,8 @@ class rccontrolpanel {
 		$this->goto = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
 		
         //READ ENVIRONMENT ATTR
-		if ($_SESSION['LOGIN']=='yes') //first time logged in session is not set and constructy has executed!!!!
-			$this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);		
+		//if ($_SESSION['LOGIN']=='yes') //first time logged in session is not set and constructy has executed!!!!
+			//$this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);		
 		//print_r($this->environment);
 		
 		//awstats cp window
@@ -440,11 +440,11 @@ class rccontrolpanel {
 			
 								 $this->site_stats();
 		 
-							     $this->set_addons_list();
-							     $this->load_graph_objects();
+							     //$this->set_addons_list();
+							     //$this->load_graph_objects();
 			
-							 	 $this->_show_update_tools();
-							 	 $this->_show_addon_tools();
+							 	 //$this->_show_update_tools();
+							 	 //$this->_show_addon_tools();
 			  
 		} 		 		  
 
@@ -582,7 +582,7 @@ $(document).ready(function(){
 		return $js;
 	}	  
 
-  
+  /*
     protected function _show_addons() {//$template=false) { 
       $winh = 'SHOW';
 	
@@ -611,12 +611,6 @@ $(document).ready(function(){
                                //$winh = 'SHOW';										
 			                   break;			   
 		       case 'siwapp' : $text = "<a href='../siwapp/'>Siwapp</a>"; 
-			                   /*$url = "http://".str_replace('www.','',$_ENV["HTTP_HOST"])."/siwapp/";			   
-					           $text .= "<IFRAME SRC=\"$url\" TITLE=\"siwapp\" WIDTH=100% HEIGHT=400>
-										<!-- Alternate content for non-supporting browsers -->
-										<H2>Siwapp</H2>
-										<H3>iframe is not suported in your browser!</H3>
-										</IFRAME>";	*/
 							   //$winh = 'SHOW';			
 			                   break;
 		       default       : $text = null;
@@ -648,7 +642,7 @@ $(document).ready(function(){
 
       return ($addons);	
     }
-  
+   
     protected function _show_addon_tools() {
 		if (!$this->isLevelUser(9)) return false;
 		
@@ -888,7 +882,7 @@ $(document).ready(function(){
 	
 		return true;
     }	
-  
+  */
     //check if eshop exist and is valid
     public function is_valid_eshop() {
    	  
@@ -942,7 +936,7 @@ $(document).ready(function(){
 	    return false;
     }	
   
-  
+    /*
     protected function _show_update_tools() {   
         $text = 'update';
 		$u = null;
@@ -1126,8 +1120,6 @@ $(document).ready(function(){
 		
 		if ((is_readable($target_inifile)) || ((is_readable($inifile)))){//already copied or fetch from root app
 
-            /*$url = $isupdate ? seturl('t=cpwupdate&wf='.$addon) : 
-			                   seturl('t=cpupgrade&wf='.$addon);*/
 			//in case of update url is the same...as upgrade
             $url = 'cpupgrade.php?wf='.$addon; //seturl('t=cpupgrade&wf='.$addon);			
 		}
@@ -1168,7 +1160,8 @@ $(document).ready(function(){
 
 		return ($ddir);
     }  
-  
+    */
+	
     //zip directory
     protected function zip_directory($path=null, $name=null) {
         $d = date('Ymd-Hi');
@@ -1804,7 +1797,7 @@ $(document).ready(function(){
 	}
 	
 	//return dpc array for update
-	protected function get_dpc_modules() {
+	/*protected function get_dpc_modules() {
 		if (!$this->isLevelUser(9)) return false;
 		
 	    //read priv dpc dir
@@ -1925,46 +1918,46 @@ $(document).ready(function(){
 		//$this->tools['uninstalleshop'] = '0,0,0,0,0,0,0,0,1';//priv for setup		
 			
 	}  
-  
-   //public::(called also from wizards)
-   public function parse_environment($save_session=false) {	   
-	$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
+  */
+    //public::(called also from wizards)
+    public function parse_environment($save_session=false) {	   
+		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
 	
-    if ($ret = $_SESSION['env']) {
-	    //echo 'insession';
-		//print_r($ret);
-		$GLOBALS['ADMINSecID'] = null; // for security erase the global leave the sessionid
-	    return ($ret);
-	}    
+		if ($ret = $_SESSION['env']) {
+			//echo 'insession';
+			//print_r($ret);
+			$GLOBALS['ADMINSecID'] = null; // for security erase the global leave the sessionid
+			return ($ret);
+		}    
 
-	//$myenvfile = /*$this->prpath .*/ 'cp.ini';
-	//$ini = @parse_ini_file($myenvfile ,false, INI_SCANNER_RAW);	
-    $ini = @parse_ini_file($this->prpath . "cp.ini");
-	if (!$ini) die('Environment error!');	
+		//$myenvfile = /*$this->prpath .*/ 'cp.ini';
+		//$ini = @parse_ini_file($myenvfile ,false, INI_SCANNER_RAW);	
+		$ini = @parse_ini_file($this->prpath . "cp.ini");
+		if (!$ini) die('Environment error!');	
 	
-	//print_r($ini); 
-	foreach ($ini as $env=>$val) {
-	    if (stristr($val,',')) {
-		    $uenv = explode(',',$val);
-			$ret[$env] = $uenv[$sl];  
+		//print_r($ini); 
+		foreach ($ini as $env=>$val) {
+			if (stristr($val,',')) {
+				$uenv = explode(',',$val);
+				$ret[$env] = $uenv[$sl];  
+			}
+			else
+				$ret[$env] = $val;
 		}
-		else
-		    $ret[$env] = $val;
-	}
 
-	if (($save_session) && (!$_SESSION['env'])) 
-		SetSessionParam('env', $ret); 		
+		if (($save_session) && (!$_SESSION['env'])) 
+			SetSessionParam('env', $ret); 		
 	
-	//print_r($ret);
-	return ($ret);
-   }   	
+		//print_r($ret);
+		return ($ret);
+	}   	
 
 	//read environment cp file
-	protected function read_env_file($save_session=false) {
+	/*protected function read_env_file($save_session=false) {
 
 		$ret = $this->parse_environment($save_session);	
 		return ($ret);
-    } 
+    }*/ 
 	
 	
     public function select_timeline($template=null, $year=null, $month=null) {
@@ -2014,7 +2007,7 @@ $(document).ready(function(){
 		return null;	
     }
 
-	
+	/*
 	//load graphs urls to call
 	protected function load_graph_objects() {
 		
@@ -2040,7 +2033,7 @@ $(document).ready(function(){
 
 	}	
 	
-	/* all charts together */
+	// all charts together 
     public function _show_charts() {
 
 	    if (!empty($this->objcall)) {  
@@ -2070,7 +2063,7 @@ $(document).ready(function(){
 		return ($ts);//stats);		 
     }	
 	
-	/* chart one by one */
+	// chart one by one 
     public function showChart($report=null) {
 
 	    if ($this->objcall[$report]) {  
@@ -2097,11 +2090,10 @@ $(document).ready(function(){
 		}
 		return ($ts);//stats);		 
     }	
-	
+	*/
 	public function getStats($section=null, $subsection=null) {
 		if (!$section) return 0;
-		//print_r($this->stats);//[$section]);
-		//echo $section,'>',$subsection;
+
 		$sb = $subsection ? $subsection : 'value';
 		return ($this->stats[$section][$sb]);
 	}	

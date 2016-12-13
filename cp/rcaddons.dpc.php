@@ -382,6 +382,73 @@ class rcaddons {
 	public function show_update_tools()	{
 		return $this->_show_update_tools();
 	}
+	
+	
+    protected function _show_addons() {//$template=false) { 
+      $winh = 'SHOW';
+	
+      if (!empty($this->environment)) {    
+      foreach ($this->environment as $mod=>$val) {
+	    
+		if ($val) {//enabled
+		   $module = strtolower($mod);
+		   switch ($module) {
+		       case 'dashboard' : $text=null; break; //bypass
+			   case 'ckfinder'  : $text=null; break; //bypass
+			   
+			   case 'edithtml'  : //$text = $this->edit_html_files(false);//true); //cke4
+			                      //$winh = 'HIDE';
+			                      break; 
+			   
+			   case 'menu'      : $text=null; break; //bypass
+
+		       case 'awstats'   : //$text = "<a href='cgi-bin/awstats.php'>Awstats</a>";
+							   $url = "cgi-bin/awstats.pl?config=". $this->awstats_url ."&framename=mainright#top";
+					           $text .= "<IFRAME SRC=\"$url\" TITLE=\"awstats\" WIDTH=100% HEIGHT=400>
+										<!-- Alternate content for non-supporting browsers -->
+										<H2>Awstats</H2>
+										<H3>iframe is not suported in your browser!</H3>
+										</IFRAME>";	
+                               //$winh = 'SHOW';										
+			                   break;			   
+		       case 'siwapp' : $text = "<a href='../siwapp/'>Siwapp</a>"; 
+			                   /*$url = "http://".str_replace('www.','',$_ENV["HTTP_HOST"])."/siwapp/";			   
+					           $text .= "<IFRAME SRC=\"$url\" TITLE=\"siwapp\" WIDTH=100% HEIGHT=400>
+										<!-- Alternate content for non-supporting browsers -->
+										<H2>Siwapp</H2>
+										<H3>iframe is not suported in your browser!</H3>
+										</IFRAME>";	*/
+							   //$winh = 'SHOW';			
+			                   break;
+		       default       : $text = null;
+			                   //$winh = 'SHOW';
+		   }
+		  
+		   if ($text) {
+		    //echo $text,'<br/>';
+			$mtitle = localize('_'.$module, getlocal());
+		    $tool_url = "help/$module/";
+			$this->stats['Addons']['url'][] = $tool_url;
+			$this->stats['Addons']['href'][] = $text;
+			$_more = localize('_more',getlocal());
+		    $ao = '<div class="msg-time-chat">
+                        <a class="message-img" href="'.$tool_url.'"><img alt="" src="images/'.$module.'.png" class="avatar"></a>
+                        <div class="message-body msg-in">
+                            <span class="arrow"></span>
+                            <div class="text">
+                                <p>'.$text.'</p>
+								<!--p class="attribution"><a href="/help/'.$module.'/">'.$_more.'</a> at 1:55pm, 13th April 2013</p-->
+                            </div>
+                        </div>
+                   </div>';
+			$this->stats['Addons']['html'] .= $ao;
+		   }		   
+		}  
+      }		
+	  }//if
+
+      return ($addons);	
+    }	
 	 
     protected function _show_addon_tools() {
 		if (!_m('rccontrolpanel.isLevelUser use 9')) return false;
