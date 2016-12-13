@@ -76,7 +76,7 @@ class siteanalytics   {
 	
 	//http://analytics.stereobit.gr/index.php?module=Widgetize&action=iframe&widget=1&moduleToWidgetize=VisitTime&actionToWidgetize=getVisitInformationPerServerTime&idSite=1&period=range&date=last7&disableLink=1&widget=1
 	//<div id="widgetIframe"><iframe width="100%" height="350" src="http://analytics.xix.gr/index.php?module=Widgetize&action=iframe&widget=1&moduleToWidgetize=VisitTime&actionToWidgetize=getByDayOfWeek&idSite=2&period=range&date=2016-12-10,2016-12-10&disableLink=1&widget=1" scrolling="no" frameborder="0" marginheight="0" marginwidth="0"></iframe></div>
-	public function widget($name, $action=null, $period=null, $daterange=null, $height=null, $width=null, $scrollyes=false, $islink=false) {
+	public function widget($name, $action=null, $period=null, $daterange=null, $height=null, $width=null, $scrollyes=false, $islink=false, $columns=null) {
 		$w = $width ? $width : '100%';
 		$h = $height ? $height : '350';
 		if ((!$name) || (!$this->siteID) || (!$this->authtoken)) 
@@ -87,6 +87,8 @@ class siteanalytics   {
 		
 		if ($action) 
 			$purl.= "&actionToWidgetize=" . $action;	
+		if ($columns)
+			$purl.= "&columns[]=" . $columns;	
 		
 		$purl.= "&idSite=" . $this->siteID;
 		
@@ -158,7 +160,7 @@ class siteanalytics   {
 		return ($range);
 	}	
 	
-    public function select_timeline($template,$year=null, $month=null) {
+    public function select_timeline($template, $year=null, $month=null, $subtitle=null) {
 		$year = GetParam('year') ? GetParam('year') : date('Y'); 
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 		$daterange = GetParam('rdate');
@@ -174,9 +176,10 @@ class siteanalytics   {
 				$monthsli .= '<li>' . seturl("t=$t&month=".$mm.'&year='.$year, $mm) .'</li>';
 			}	  
 	  
-	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
+			$sb = $subtitle ? ' &gt; ' . $subtitle : null;
+	        $posteddaterange = $daterange ? ' &gt; ' . $daterange : ($year ? ' &gt; ' . $month . '-' . $year : null) ;
 	  
-			$tokens[] = localize('SITEANALYTICS_DPC', getlocal()) . $posteddaterange; 
+			$tokens[] = localize('SITEANALYTICS_DPC', getlocal()) . $sb .  $posteddaterange; 
 			$tokens[] = $year;
 			$tokens[] = $month;
 			$tokens[] = localize('_year',getlocal());
@@ -222,211 +225,6 @@ class siteanalytics   {
 		
 		return ($ret);
 	}		
-	
-	protected function sqlDateRange($fieldname, $istimestamp=false, $and=false) {
-		$sqland = $and ? ' AND' : null;
-		if ($daterange = GetParam('rdate')) {//post
-			$range = explode('-',$daterange);
-			$dstart = str_replace('/','-',trim($range[0]));
-			$dend = str_replace('/','-',trim($range[1]));
-			if ($istimestamp)
-				$dateSQL = $sqland . " DATE($fieldname) BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";
-			else			
-				$dateSQL = $sqland . " $fieldname BETWEEN STR_TO_DATE('$dstart','%m-%d-%Y') AND STR_TO_DATE('$dend','%m-%d-%Y')";			
-		}				
-		elseif ($y = GetReq('year')) {
-			if ($m = GetReq('month')) { $mstart = $m; $mend = $m;} else { $mstart = '01'; $mend = '12';}
-			$daysofmonth = cal_days_in_month(CAL_GREGORIAN, $m, $y);
-			
-			if ($istimestamp)
-				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
-			else
-				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";		
-		}	
-        else {
-			//$dateSQL = null; 
-			
-			//always this year by default
-			$mstart = '01'; $mend = '12';
-			//always this month by default
-			//$mstart = date('m'); $mend = date('m');
-			$y = date('Y');
-			$daysofmonth = date('t');
-			
-			if ($istimestamp)
-				$dateSQL = $sqland . " DATE($fieldname) BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";
-			else
-				$dateSQL = $sqland . " $fieldname BETWEEN '$y-$mstart-01' AND '$y-$mend-$daysofmonth'";	
-            //echo $dateSQL;			
-		}	
-		
-		return ($dateSQL);
-	}	
-	
-	protected function nformat($n, $dec=0) {
-		return (number_format($n,$dec,',','.'));
-	}	
-
-	public function mailSent() {
-		$db = GetGlobal('db');
-		$user = urldecode(GetReq('id'));
-		
-		$sSQL = "select count(id) from mailqueue where receiver='$user'";
-		$sSQL.= " and active=0 and " . $this->sqlDateRange('timein', true); 
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);
-		$ret = $this->nformat($res->fields[0]);
-		
-		return ($ret);
-	}	
-	
-	public function mailtoSend() {
-		$db = GetGlobal('db');
-		$user = urldecode(GetReq('id'));
-		
-		$sSQL = "select count(id) from mailqueue where receiver='$user'";
-		$sSQL.= " and active=1 and " . $this->sqlDateRange('timein', true); 
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);
-		$ret = $this->nformat($res->fields[0]);
-		
-		return ($ret);
-	}	
-	
-	public function mailsFailed() {
-		$db = GetGlobal('db');
-		$user = urldecode(GetReq('id'));
-		
-		$sSQL = "select count(id) from mailqueue where receiver='$user'";
-		$sSQL.= " and active=0 and status<0 and " . $this->sqlDateRange('timein', true); 
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);
-		$ret = $this->nformat($res->fields[0]);
-		
-		return ($ret);
-	}
-
-	public function mailClickPath() {
-		$db = GetGlobal('db');
-		$user = urldecode(GetReq('id'));
-		
-		$sSQL = "select count(id) from stats where attr3='$user'";
-		$sSQL.= " and ref IS NOT NULL and " . $this->sqlDateRange('date', true); 
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);
-		$ret = $this->nformat($res->fields[0]);
-		
-		return ($ret);
-	}	
-	
-	public function transactions() {
-		$db = GetGlobal('db');
-		$user = urldecode(GetReq('id'));
-		
-		$sSQL = "select count(recid) from transactions where cid='$user'";
-		$sSQL.= " and " . $this->sqlDateRange('timein', true); 
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);
-		$ret = $this->nformat($res->fields[0]);
-		
-		return ($ret);
-	}
-
-	public function sales() {
-		$db = GetGlobal('db');
-		$user = urldecode(GetReq('id'));
-		
-		$sSQL = "select sum(costpt) from transactions where cid='$user'";
-		$sSQL.= " and " . $this->sqlDateRange('timein', true); 
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);
-		$ret = $this->nformat($res->fields[0],2);
-		
-		return ($ret);
-	}	
-	
-	public function inbox() {
-		$db = GetGlobal('db');
-		$user = urldecode(GetReq('id'));
-		
-		$sSQL = "select count(id) from cform where email='$user'";
-		$sSQL.= " and " . $this->sqlDateRange('date', true); 
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);
-		$ret = $this->nformat($res->fields[0]);
-		
-		return ($ret);
-	}	
-	
-	public function pageview() {
-		$db = GetGlobal('db');
-		$user = urldecode(GetReq('id'));
-		
-		$sSQL = "select count(id) from stats where attr2='$user' or attr3='$user'";
-		$sSQL.= " and " . $this->sqlDateRange('date', true); 
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);
-		$ret = $this->nformat($res->fields[0]);
-		
-		return ($ret);
-	}	
-	
-	
-	public function itemsPurchased() {
-       $db = GetGlobal('db');
-	   $user = urldecode(GetReq('id'));
-	   //$ret = 0;
-	   
-	   //search serialized data for id
-	   $sSQL = "select tdata from transactions " . 
-	           "where cid= " . $db->qstr($user) . $this->sqlDateRange('timein', true, true);
-       $result = $db->Execute($sSQL,2);
-	   
-	   foreach ($result as $n=>$rec) {	
-         $tdata = $rec['tdata'];
-		 
-		 if ($tdata) {
-		   $cdata = unserialize($tdata);
-		   if (is_array($cdata)) { //if (count($cdata)>1) {//if many items
-		     foreach ($cdata as $i=>$buffer_data) {
-		        $param = explode(";",$buffer_data); 
-				if (!in_array($param[0],$ret))  
-					$ret[] = $param[0];  
-		     }	 
-		   }
-		 } 
-	   }
-	   
-	   return $this->nformat(count($ret));   	   	
-	}
-
-	public function itemsPurchasedQty() {
-       $db = GetGlobal('db');
-	   $user = urldecode(GetReq('id'));
-	   $ret = 0;
-	   
-	   //search serialized data for id
-	   $sSQL = "select tdata from transactions " . 
-	           "where cid= " . $db->qstr($user) . $this->sqlDateRange('timein', true, true);
-       $result = $db->Execute($sSQL,2);
-	   
-	   foreach ($result as $n=>$rec) {	
-         $tdata = $rec['tdata'];
-		 
-		 if ($tdata) {
-		   $cdata = unserialize($tdata);
-		   if (is_array($cdata)) { //if (count($cdata)>1) {//if many items
-		     foreach ($cdata as $i=>$buffer_data) {
-		 
-		       $param = explode(";",$buffer_data);
-		       $ret += $param[9];  
-		     }	 
-		   }
-		 } 
-	   }
-	   
-	   return $this->nformat($ret);   	   	
-	}	
 	
 };
 }

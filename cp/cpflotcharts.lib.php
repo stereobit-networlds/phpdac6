@@ -370,6 +370,52 @@ class cpflotcharts {
 		
 var Script = function () {
 
+    //purchases chart
+
+    $(function () {
+        var data = [
+			{$this->callChartGroupLast($this->chartGroup)} , {$this->callChart('Transactions')} 			
+        ];
+
+        var options = {
+            series: {
+                lines: { show: true },
+                points: { show: true }
+            },
+            legend: { noColumns: 2 },
+            xaxis: { tickDecimals: 0 },
+            yaxis: { min: 0 },
+            selection: { mode: "x" }
+        };
+
+        var placeholder = $("#chart-1");
+
+        placeholder.bind("plotselected", function (event, ranges) {
+            $("#selection").text(ranges.xaxis.from.toFixed(1) + " to " + ranges.xaxis.to.toFixed(1));
+
+            var zoom = $("#zoom").attr("checked");
+            if (zoom)
+                plot = $.plot(placeholder, data,
+                    $.extend(true, {}, options, {
+                        xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
+                    }));
+        });
+
+        placeholder.bind("plotunselected", function (event) {
+            $("#selection").text("");
+        });
+
+        var plot = $.plot(placeholder, data, options);
+
+        $("#clearSelection").click(function () {
+            plot.clearSelection();
+        });
+
+        $("#setSelection").click(function () {
+            plot.setSelection({ xaxis: { from: 0, to: {$this->callChartGroupLast($this->chartGroup, 'xmax', '0')} } });
+        });
+    });
+	
    //  tracking chart
 
     var plot;
@@ -380,7 +426,7 @@ var Script = function () {
             cos.push([i, Math.cos(i)]);
         }
 
-        plot = $.plot($("#chart-1"),
+        plot = $.plot($("#chart-2"),
             [ 
 			   { data: sin, label: "sin(x) = -0.00"},
                 { data: cos, label: "cos(x) = -0.00" } ], {
@@ -391,7 +437,7 @@ var Script = function () {
                 grid: { hoverable: true, autoHighlight: false },
                 yaxis: { min: -1.2, max: 1.2 }
             });
-        var legends = $("#chart-1 .legendLabel");
+        var legends = $("#chart-2 .legendLabel");
         legends.each(function () {
             // fix the widths so they don't jump around
             $(this).css('width', $(this).width());
@@ -432,58 +478,12 @@ var Script = function () {
             }
         }
 
-        $("#chart-1").bind("plothover",  function (event, pos, item) {
+        $("#chart-2").bind("plothover",  function (event, pos, item) {
             latestPosition = pos;
             if (!updateLegendTimeout)
                 updateLegendTimeout = setTimeout(updateLegend, 50);
         });
-    });
-
-    //purchases chart
-
-    $(function () {
-        var data = [
-			{$this->callChartGroupLast($this->chartGroup)} , {$this->callChart('Transactions')} 			
-        ];
-
-        var options = {
-            series: {
-                lines: { show: true },
-                points: { show: true }
-            },
-            legend: { noColumns: 2 },
-            xaxis: { tickDecimals: 0 },
-            yaxis: { min: 0 },
-            selection: { mode: "x" }
-        };
-
-        var placeholder = $("#chart-2");
-
-        placeholder.bind("plotselected", function (event, ranges) {
-            $("#selection").text(ranges.xaxis.from.toFixed(1) + " to " + ranges.xaxis.to.toFixed(1));
-
-            var zoom = $("#zoom").attr("checked");
-            if (zoom)
-                plot = $.plot(placeholder, data,
-                    $.extend(true, {}, options, {
-                        xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
-                    }));
-        });
-
-        placeholder.bind("plotunselected", function (event) {
-            $("#selection").text("");
-        });
-
-        var plot = $.plot(placeholder, data, options);
-
-        $("#clearSelection").click(function () {
-            plot.clearSelection();
-        });
-
-        $("#setSelection").click(function () {
-            plot.setSelection({ xaxis: { from: 0, to: {$this->callChartGroupLast($this->chartGroup, 'xmax', '0')} } });
-        });
-    });
+    });	
 
 	//    live chart
 

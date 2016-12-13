@@ -331,6 +331,11 @@ class rculiststats  {
 
 					$percent = (100-intval($rec[2]*100));
 					
+					//send message to cp task indicator 
+					$mt = seturl('t=cppreviewcamp&cid='.$rec[0]);
+					_m("rccontrolpanel.setTask use danger|$rec[1]|$percent|$mt");					
+					
+					//normal render
 					if ($t) {
 						$tokens[] = $rec[0];
 						$tokens[] = $rec[1];
@@ -340,11 +345,11 @@ class rculiststats  {
 						$ret .= $this->combine_tokens($t, $tokens);
 						unset($tokens);
 					}
-					else { 
+					/*else { 
 						//send message 
 						$mt = seturl('t=cppreviewcamp&cid='.$rec[0]);
 						_m("rccontrolpanel.setTask use danger|$rec[1]|$percent|$mt");
-					}	
+					}*/	
 			}	
 		}
 

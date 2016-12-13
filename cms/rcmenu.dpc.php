@@ -50,6 +50,7 @@ $__LOCALE['RCMENU_DPC'][16]='_newmenu;New menu;Νέο μενού;';
 $__LOCALE['RCMENU_DPC'][17]='_menuname;Menu name;Όνομα μενού;';
 $__LOCALE['RCMENU_DPC'][18]='_ferror;File error;Πρόβλημα στο αρχείο;';
 $__LOCALE['RCMENU_DPC'][19]='_fsuccess;File created;Το αρχείο δημιουργήθηκε;';
+$__LOCALE['RCMENU_DPC'][20]='_dropelement;Drop elements;Στοιχείο εναπόθεσης;';
 
 class rcmenu extends cmsmenu {
 
@@ -777,8 +778,12 @@ class rcmenu extends cmsmenu {
 			
 			return $b . $a;
 		}	
+		
+		//return drop element
+		return $this->nestdditem('drop', localize('_dropelement', getlocal()), "#", md5('drop'));
+		
 		//else //current conf of main menu
-		return $this->nestBuild(); 	
+		//return $this->nestBuild(); 	
 	}
 	
 	protected function getCategoriesTitles($cat=null) {

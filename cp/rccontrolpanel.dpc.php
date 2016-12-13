@@ -357,8 +357,8 @@ class rccontrolpanel {
 							 break;								 
 
 		 case 'cptasksno'  : $this->site_stats();  
-		                     if (defined('RCULISTSTATS')) 
-								_m('rculiststats.percentofCamps');//task dropdown, set task
+		                     //if (defined('RCULISTSTATS')) 
+								//_m('rculiststats.percentofCamps');//task dropdown, set task
 		                     $tsk = $this->getTasksTotal();
 							 die($tsk);
 							 break;	 							 
@@ -890,7 +890,7 @@ $(document).ready(function(){
     }	
   
     //check if eshop exist and is valid
-    protected function is_valid_eshop() {
+    public function is_valid_eshop() {
    	  
 		$timekey = remote_paramload('SHCART','expires',$this->prpath);
 		//echo $timekey;
@@ -918,7 +918,7 @@ $(document).ready(function(){
     } 
 
     //check if newsletter feature is valid
-    protected function is_valid_newsletter() {
+    public function is_valid_newsletter() {
    	  
 		//installed mailqueue key
 		$timekey = remote_paramload('RCBULKMAIL','expires',$this->prpath);
@@ -1683,7 +1683,7 @@ $(document).ready(function(){
     }	
 	
 	//get the free space
-	protected function free_space() {
+	public function free_space() {
         $year = GetParam('year') ? GetParam('year') : date('Y'); 
 	    $month = GetParam('month') ? GetParam('month') : date('m');			
 		
@@ -2424,13 +2424,13 @@ $(document).ready(function(){
 		$id = explode('|',$task);
 		$hash = md5($id[0].$id[1]);
 		
-		//if (array_key_exists($hash, $this->tasks)) {}
-		//else {
+		if (array_key_exists($hash, $this->tasks)) {}
+		else {
 			$this->tasks[$hash] = $task;
 			SetSessionParam('cpTasks', $this->tasks);
 			return true;
-		//}
-		//return false;	
+		}
+		return false;	
 	}
 	
 	public function viewTasks($template=null) {
@@ -2458,13 +2458,13 @@ $(document).ready(function(){
 		$hash = md5($id[0].$id[1]);
 		
 		//add the message if not already in session		
-		//if (array_key_exists($hash, $this->inbox)) { /* in session */}
-		//else {
+		if (array_key_exists($hash, $this->inbox)) { /* in session */}
+		else {
 			$this->inbox[$hash] = $message;
 			SetSessionParam('cpInbox', $this->inbox);
 			return true;
-		//}
-		//return false;	
+		}
+		return false;	
 	}	
 	
 	/* cp header inbox */ 	
@@ -2477,7 +2477,7 @@ $(document).ready(function(){
 		
 		return ($ret>10) ? '10' : strval($ret);		
 	}
-
+    /*
 	public function getInbox_OLD($limit=null) {
 		if (empty($this->inbox)) return null;
 		$tokens = array(); 
@@ -2500,7 +2500,7 @@ $(document).ready(function(){
 		
 		return ($ret);			
 	}
-	
+	*/
 	public function getInbox($limit=null) {
 		$db = GetGlobal('db');	
 		$lim = $limit ? $limit : 10;
@@ -2535,43 +2535,6 @@ $(document).ready(function(){
 		
 		return ($ret);			
 	}		
-	
-
-	/*sales today as cp messages (1 days back)*/
-	/*public function getSalesToday($template=null, $limit=null) {
-		$db = GetGlobal('db');	
-		$l = $limit ? $limit : 5;
-		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
-		$t = ($template!=null) ? $this->select_template($template) : null;
-		$tokens = array();
-		$text = localize('_sale',getlocal());
-		
-		$sSQL = "SELECT timein,cid,tid FROM transactions where tstatus>=0 and timein BETWEEN DATE_SUB( NOW() , INTERVAL 1 DAY ) AND NOW() order by timein desc LIMIT " . $l;
-		$resultset = $db->Execute($sSQL,2);
-		
-		if (empty($resultset)) return null;
-		foreach ($resultset as $n=>$rec) {
-			$saytime = $this->timeSayWhen(strtotime($rec['timein']));
-			$msg = "success|" . $rec['cid'] .", ". $text .' '. $rec['tid'] . "|$saytime|cptransactions.php|".$rec['cid'];
-			$this->setMessage($msg);
-		}
-
-		return ($ret);			
-	}
-	
-	public function getFormSubmit() {
-		$db = GetGlobal('db');
-		$text = localize('_formsubmit',getlocal());
-		$sSQL = "select email,date from cform where DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 10 DAY ) ) AND DATE ( NOW() ) order by DATE(date) desc";
-		$result = $db->Execute($sSQL,2);
-		//echo $sSQL;
-		foreach ($result as $i=>$rec) {
-			$saytime = $this->timeSayWhen(strtotime($rec[1]));
-			$msg = "info|" . $text .' '. $rec[0] . "|$saytime|cpform.php|".$rec[0];
-			$this->setMessage($msg);
-		}
-		return null;
-	} 	*/
 	
 	//last month check 
 	public function getInactiveUsers() {
