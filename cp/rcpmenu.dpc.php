@@ -178,17 +178,17 @@ $__LOCALE['RCPMENU_DPC'][164]='_outoflist;out of list;εξήχθει απο';
 	   
 class rcpmenu {
 
-   var $path, $urlpath, $inpath, $menufile;
-   var $delimiter, $cseparator;
+	var $path, $urlpath, $inpath, $menufile;
+	var $delimiter, $cseparator;
    
-   var $tmpl_path, $tmpl_name;
-   var $dropdown_class, $dropdown_class2;  
+	var $tmpl_path, $tmpl_name;
+	var $dropdown_class, $dropdown_class2;  
 
-   var $environment, $seclevid, $turl, $cpGet, $turldecoded; 
-   var $location, $savelocation, $awstats;   
-   var $messages, $cptemplate;
+	var $environment, $seclevid, $turl, $cpGet, $turldecoded; 
+	var $location, $savelocation;
+   //var $messages, $cptemplate, $awstats;   
 	
-   function __construct() {
+	public function __construct() {
 	   
        $this->path = paramload('SHELL','prpath');	   
 	   
@@ -210,33 +210,32 @@ class rcpmenu {
 
        $this->getTURL();	   
 	   
-	   $this->awstats = 'cgi-bin/awstats.php';
+	   //$this->awstats = 'cgi-bin/awstats.php';
+	   //$this->messages = GetSessionParam('menuMessages') ? GetSessionParam('menuMessages') : array();
+	   //$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);
+   }
+   
+
+    public function event($event=null) {
+   
+		switch ($event) {
+
+			case 'cpmenu'        :	
+			default              : 						
+		}
+	}
+   
+
+	public function action($action=null) {
+
+		switch ($action) {
+
+			case 'cpmenu'        :						
+			default              : 
+		}
 	   
-	   $this->messages = GetSessionParam('menuMessages') ? GetSessionParam('menuMessages') : array();
-	   $this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);
-   }
-   
-
-   function event($event=null) {
-   
-       switch ($event) {
-
-		 case 'cpmenu'        :	
-		 default              : 						
-	   }
-   }
-   
-
-   function action($action=null) {
-
-       switch ($action) {
-
-		 case 'cpmenu'        :						
-		 default              : 
-	   }
-	   
-	   return ($out);
-   }
+		return ($out);
+	}
    
     protected function getTURL() {
 		$postedTURL = $_POST['turl'] ? $_POST['turl'] : $_GET['turl'];
@@ -259,56 +258,50 @@ class rcpmenu {
 	    }   
 	   
 	    return ($this->turldecoded);
-   }  
+	}  
 
-   protected function getPageName() {
+	protected function getPageName() {
 		$pn = explode('/',$this->url);
 		$pname = array_pop($pn);
 		$pnurl = stristr($pname,'?') ? explode('?',$pname) : array('0'=>$pname);
 		$pagename = $pnurl[0];
 		
 		return ($pagename);
-   }
-   
-   public function exiturl() {
-	   return ('../' . $this->getTURL());//$this->turl);
-   }
-   
-   protected function parse_environment($save_session=false) {	   
-	$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
-	$this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;
-	//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$adminsecid.':'.$this->seclevid;
-	
-    if ($ret = $_SESSION['env']) { //saved by rccontrolpanel
-	    //echo 'insession';
-		//print_r($ret);
-		$GLOBALS['ADMINSecID'] = null; // for securuty erase the global leave the sessionid
-	    return ($ret);
-	}    
-
-	//$myenvfile = /*$this->prpath .*/ 'cp.ini';
-	//$ini = @parse_ini_file($myenvfile ,false, INI_SCANNER_RAW);	
-    $ini = @parse_ini_file($this->path . "cp.ini");
-	if (!$ini) die('Environment error!');	
-	
-	//print_r($ini); 
-	foreach ($ini as $env=>$val) {
-	    if (stristr($val,',')) {
-		    $uenv = explode(',',$val);
-			$ret[$env] = $uenv[$this->seclevid];  
-		}
-		else
-		    $ret[$env] = $val;
 	}
-
-	if (($save_session) && (!$_SESSION['env'])) //rccontrolpanel also reads but save !!!!!
-		SetSessionParam('env', $ret); 		
-	
-	//print_r($ret);
-	return ($ret);
-   }   
    
-   protected function readINI() {  
+	public function exiturl() {
+	   return ('../' . $this->getTURL());//$this->turl);
+	}
+   
+	protected function parse_environment($save_session=false) {	   
+		$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
+		$this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;
+		//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$adminsecid.':'.$this->seclevid;
+	
+		if ($ret = $_SESSION['env']) { //saved by rccontrolpanel
+			$GLOBALS['ADMINSecID'] = null; // for securuty erase the global leave the sessionid
+			return ($ret);
+		}    
+	
+		$ini = @parse_ini_file($this->path . "cp.ini");
+		if (!$ini) die('Environment error!');	
+	
+		foreach ($ini as $env=>$val) {
+			if (stristr($val,',')) {
+				$uenv = explode(',',$val);
+				$ret[$env] = $uenv[$this->seclevid];  
+			}
+			else
+				$ret[$env] = $val;
+		}
+
+		if (($save_session) && (!$_SESSION['env'])) 
+			SetSessionParam('env', $ret); 		
+	
+		return ($ret);
+	}   
+   
+	protected function readINI() {  
 	   
         if (defined('CCPP_VERSION')) { //override, customized per line
 			$cat = $this->cpGet['cat'] ? array('ON'=>1,'OFF'=>null) : array('ON'=>null,'OFF'=>1);
@@ -337,15 +330,11 @@ class rcpmenu {
 		}
 		
 		return false;	
-   }
+	}
    			
 
-   public function render($menu_template=null,$glue_tag=null,$submenu_template=null) {
+	public function render($menu_template=null,$glue_tag=null,$submenu_template=null) {
         $lan = getlocal() ? getlocal() : '0';
-
-        //echo $this->menufile;
-		/*if (is_readable($this->menufile))
-          $m = parse_ini_file($this->menufile,1,INI_SCANNER_RAW);*/
 	  
 	    $m = $this->readINI();
 		if (!$m) return false;
@@ -353,119 +342,81 @@ class rcpmenu {
 		//print_r($m);
 		foreach ($m as $menu_item) {
 		
-          //menu items		
-		  if (isset($menu_item['title'])) { 		
+			//menu items		
+			if (isset($menu_item['title'])) { 		
 		  
-		    $title = explode($this->delimiter ,$menu_item['title']);
-		    $link = explode($this->delimiter ,$menu_item['link']); 		  
+				$title = explode($this->delimiter ,$menu_item['title']);
+				$link = explode($this->delimiter ,$menu_item['link']); 		  
 		  
-		    //SECURITY
-			if (stristr($menu_item['spaces'],',')) {
-				$uenv = explode(',',$menu_item['spaces']);
-				$allow = $uenv[$this->seclevid];  
+				//SECURITY
+				if (stristr($menu_item['spaces'],',')) {
+					$uenv = explode(',',$menu_item['spaces']);
+					$allow = $uenv[$this->seclevid];  
+				}
+				else
+					$allow = $menu_item['spaces'];
+
+				if ($allow) {
+					//submenu
+					$submenu = explode($this->delimiter ,$menu_item['submenu']); 
+					if ($smenu = $submenu[$lan]) 
+						$smu[$title[$lan].'-submenu'] = $smenu;
+					else	
+						$smu[$title[$lan].'-submenu'] = null;
+		
+					$t = localize($title[$lan], $lan);
+					$menu[$t] = $link[$lan];
+				}	
 			}
-			else
-				$allow = $menu_item['spaces'];
-			// spaces before and after title
-		    /*$spaces = explode($this->delimiter ,$menu_item['spaces']); 
-		    if ($sp = $spaces[$lan]) 
-		      $sps[$title[$lan].'-spaces'] = $sp;
-		    else	
-			  $sps[$title[$lan].'-spaces'] = 0;*/
-
-		    if ($allow) {
-				//submenu
-				$submenu = explode($this->delimiter ,$menu_item['submenu']); 
-				if ($smenu = $submenu[$lan]) 
-					$smu[$title[$lan].'-submenu'] = $smenu;
-				else	
-					$smu[$title[$lan].'-submenu'] = null;
-		
-				//set title / link
-				$t = localize($title[$lan], $lan);
-				$menu[$t] = $link[$lan];
-			}//allow	
-		  }
 		}
 		
-		//print_r($smu);
-		//print_r($sps);
-		//print_r($menu);
 		if (!empty($menu)) {
-		   $ret = null;
-	       $mytemplate = $menu_template?$menu_template:'menu.htm';
-		   $subtemplate = $submenu_template ? $submenu_template : $mytemplate;
-		   //echo '>',$mytemplate;	   
-	       //$tfile = $this->urlpath .'/' . $this->inpath . '/cp/html/'. $mytemplate ;
-           $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. $mytemplate ;		   
-           //echo $tfile;
-		   
-           if (is_readable($tfile)) {
-		   
-                $tt = file_get_contents($tfile);
-				
-                foreach ($menu as $name=>$url) {
-				
-				    $tokens = array(); //reset tokens
-				    $murl = $url ? $this->make_link($url) : '#';
-					
-					/*if ($space_count = $sps[$name.'-spaces']) {
-					  $name_space = str_repeat('&nbsp;', $space_count) . $name . str_repeat('&nbsp;', $space_count);
-					  //echo $name.'-spaces>',$name_space,'>',$space_count,'<br>';
-					}  
-					else  */
-					  $name_space = $name;  	
-                    
-                    if ($sub_menu = $smu[$name.'-submenu']) {
-					
-					   if (stristr($sub_menu,'.htm')) {//htm template file
-					     //echo 'a',$sub_menu;
-                         $menusubfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$sub_menu) ; 
-					     if (is_readable($menusubfile)) {
-					       //echo $menusubfile;
-		                   $mytemplate = file_get_contents($menusubfile);
-					       $ret2 = $this->combine_tokens($mytemplate,array(0=>''),true);
-						   $tokens[] = $this->dropdown_class2;//'dropdown yamm-fw';
-					     }					   
-					   }
-					   else {
-					     //echo 'b',$sub_menu;
-					     $_smenu = (array) $m[$sub_menu];
-					     $ret2 = $this->render_submenu($_smenu, $subtemplate, $glue_tag);
-						 $tokens[] = $this->dropdown_class;//'dropdown';
-					   }
-					   
-					   //echo $ret2;
-					   $menu_contents = $this->combine_tokens($tt,$tokens,true);
-					   $ret .= str_replace(array('@SHMENU-SUBMENU@','@SHMENU-TITLE@','@SHMENU-LINK@'),array($ret2,$name_space,$murl),$menu_contents);
-                    } 					
-					else
-					   $ret .= str_replace(array('@SHMENU-SUBMENU@','@SHMENU-TITLE@','@SHMENU-LINK@'),array($ret2,$name_space,$murl),$menu_contents);
-				}	
-           }
-           else {
-                foreach ($menu as $name=>$url) {
-				    $murl = $url ? $this->make_link($url) : '#';
-					/*if ($space_count = $sp[$name.'-spaces'])
-					  $name_space = str_repeat('&nbsp;', $space_count) . $name . str_repeat('&nbsp;', $space_count);
-					else  
-					  $name_space = $name; */ 	
-					  
-                    $ret .= "<a href='$murl'>$name_space</a>";
 
-                    if ($sub_menu = $smu[$name.'-submenu']) {
-					   //echo 'a',$sub_menu;
-					   $_smenu = (array) $m[$sub_menu];
-					   $ret .= $this->render_submenu($_smenu, $subtemplate, $glue_tag);
-                    }					
-				}	
-		   }	     
-		   //echo $ret;
-		   return ($ret);
+			$tmpl = $menu_template ? _m("cmsrt.select_template use $menu_template+1") : null;
+
+            foreach ($menu as $name=>$url) {
+				
+			    $tokens = array(); //reset tokens
+			    $murl = $url ? $this->make_link($url) : '#';
+				$name_space = $name;  	
+                    
+                if ($sub_menu = $smu[$name.'-submenu']) {
+					
+					//echo 'b',$sub_menu;
+					$_smenu = (array) $m[$sub_menu];
+					$ret2 = $this->render_submenu($_smenu, $submenu_template, $glue_tag);
+					$tokens[] = $this->dropdown_class;
+					   
+					if ($tmpl) {
+						$tokens[] = $murl;
+						$tokens[] = $name;
+						$tokens[] = $ret2;
+						$ret .= $this->combine_tokens($tmpl,$tokens,true);
+					}
+					else {
+						$line = "<a href='$murl'>$name</a>";
+						$ret .= $gstart . $line . $gend;							
+					}
+                } 					
+				else {
+					if ($tmpl) {
+						$tokens[] = ''; //dummy
+						$tokens[] = $murl;
+						$tokens[] = $name;
+						$tokens[] = ''; 
+						$ret .= $this->combine_tokens($tmpl, $tokens, true);
+					}
+					else {
+						$line = "<a href='$murl'>$name</a>";
+						$ret .= $gstart . $line . $gend;
+					}							
+				}   
+			}	
+		    return ($ret);
 		}
-   }
+	}
    
-   protected function render_submenu($smenu=null,$template=null,$glue_tag=null) { 
+	protected function render_submenu($smenu=null,$template=null,$glue_tag=null) { 
         $lan = getlocal() ? getlocal() : '0';
         if (empty($smenu)) return;
 		 	 
@@ -482,31 +433,27 @@ class rcpmenu {
 			elseif ((strstr($m,'link')) && ($allow))
 			   $subm_links[] = $this->make_link($cv[$lan]);
 		}		   
-		   
-		//echo '>',$smenu;   
-		//echo '<pre>';
-		//print_r($subm_titles);  
-		//print_r($subm_links);
-		//echo '</pre>';
-		
-        $ret = null;
-	    $mytemplate = $template?$template:'menu.htm';
-		//echo '>',$mytemplate;	   
-	    //$tfile = $this->urlpath .'/' . $this->inpath . '/cp/html/'. $mytemplate ;				
-		$tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. $mytemplate ;
-		//echo $tfile;
-		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
-		$gend = $glue_tag ? '</'.$glue_tag.'>' : null;		
-		
-	    foreach ($subm_titles as $t=>$title) {
-		   $line = "<a href='$subm_links[$t]'>$title</a>";
-		   $out .= $gstart . $line . $gend;
-	    }		
 	
-		/*if (is_readable($tfile)) 
-		   $ret = str_replace('@SHMENU-SUBMENU@',$out,file_get_contents($tfile));
-		else*/   
-		   return ($out);
+		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
+		$gend = $glue_tag ? '</'.$glue_tag.'>' : null;
+
+		if ($template) {
+			$tmpl = _m("cmsrt.select_template use $template+1");
+			foreach ($subm_titles as $t=>$title) {
+				$tokens = array();
+				$tokens[] = $subm_links[$t];
+				$tokens[] = $title;
+				$out .= $this->combine_tokens($tmpl,$tokens,true);
+			}	
+		}
+		else {		
+			foreach ($subm_titles as $t=>$title) {
+				$line = "<a href='$subm_links[$t]'>$title</a>";
+				$out .= $gstart . $line . $gend;
+			}
+		}		
+	 
+	    return ($out);
     }
 	
 	//transform links for special chars
@@ -530,54 +477,38 @@ class rcpmenu {
 		//$out = str_replace('^',$this->cseparator,$ret);		
 		return ($ret);// . '&editmode=1'); //editmode added for backward compatibility
 	}
-	
-	function select_template($tfile=null) {
-		if (!$tfile) return;
-	  
-		$template = $tfile . '.htm';	
-		$t = $this->path . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
-		if (is_readable($t)) 
-			$mytemplate = file_get_contents($t);
 
-		return ($mytemplate);	 
-    }	
-   
-	//tokens method	
 	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template_contents);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template_contents;
+			$ret = $template_contents;
 		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
+	    foreach ($tokens as $i=>$tok) 
 		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
+
 		//clean unused token marks
 		for ($x=$i;$x<20;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
+			$ret = str_replace("$".$x."$",'',$ret);
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
           
-		  return ($retout);
+			return ($retout);
 		}		
 		
 		return ($ret);
 	} 
-	
+	/*
 	public function getMessagesTotal() {
 		$ret = (empty($this->messages)) ? null : count($this->messages);
 		return $ret;
@@ -598,7 +529,7 @@ class rcpmenu {
 				default          : $tmpl = 'dropdown-notification-info';
 				
 			}
-			$this->select_template($tmpl);
+			$t = _m("cmsrt.select_template use $tmpl");
 			$ret .= $this->combine_tokens($tmpl, $tokens, true);
 			unset($tokens);
 			$i+=1;
@@ -621,7 +552,7 @@ class rcpmenu {
 		}
 		return false;	
 	}
-	
+	*/
 	/*stream dialog for srv called by js */ 
 	/*universal stream dialog loader, to not load dpc into every php cp page */
 	public function streamDialog() {

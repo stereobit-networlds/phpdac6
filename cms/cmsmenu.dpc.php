@@ -225,10 +225,6 @@ class cmsmenu {
 			}
 		}
 		
-		//print_r($smu);
-		//print_r($sps);
-		//print_r($menu);
-		
 		if (!empty($menu)) {
 			
             $tmpl = $menu_template ? _m('cmsrt.select_template use ' . $menu_template) : null; 
@@ -237,15 +233,7 @@ class cmsmenu {
 				
 			    $tokens = array(); //reset tokens
 			    $murl = $url ? $this->make_link($url) : '#';
-					
-				/* ...SPACES DISABLED... 
-				if ($space_count = $sps[$name.'-spaces']) {
-					$name_space = str_repeat('&nbsp;', $space_count) . $name . str_repeat('&nbsp;', $space_count);
-					//echo $name.'-spaces>',$name_space,'>',$space_count,'<br>';
-				}  
-				else 
-					$name_space = $name;  	
-                */    
+					  
                 if ($sub_menu = $smu[$name.'-submenu']) {
 					
 					if (stristr($sub_menu,'shkategories.')) {//phpdac cmd
@@ -314,12 +302,6 @@ class cmsmenu {
 				$subm_links[] = $this->make_link($_cv);
 			}   
 		}		   
-		   
-		//echo '>',$smenu;   
-		//echo '<pre>';
-		//print_r($subm_titles);  
-		//print_r($subm_links);
-		//echo '</pre>';
 		
         $ret = null;
 		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
