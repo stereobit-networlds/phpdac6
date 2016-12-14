@@ -179,14 +179,9 @@ $__LOCALE['RCPMENU_DPC'][164]='_outoflist;out of list;εξήχθει απο';
 class rcpmenu {
 
 	var $path, $urlpath, $inpath, $menufile;
-	var $delimiter, $cseparator;
-   
-	var $tmpl_path, $tmpl_name;
-	var $dropdown_class, $dropdown_class2;  
+	var $delimiter, $dropdown_class, $dropdown_class2;  
 
-	var $environment, $seclevid, $turl, $cpGet, $turldecoded; 
-	var $location, $savelocation;
-   //var $messages, $cptemplate, $awstats;   
+	var $seclevid, $turl, $cpGet, $turldecoded; 
 	
 	public function __construct() {
 	   
@@ -197,22 +192,11 @@ class rcpmenu {
 	  
        $this->menufile = $this->path . 'menucp.ini';
 	   $this->delimiter = ',';
-	   
-	   $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	   $tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);  
-	   $this->tmpl_name = $tmpl ? $tmpl : 'metro';
-	   
-       $csep = remote_paramload('RCPMENU','csep',$this->path); 
-       $this->cseparator = $csep ? $csep : '^';	/*for cat links */
 
        $this->dropdown_class = remote_paramload('RCPMENU','dropdownclass',$this->path);	   
 	   $this->dropdown_class2 = remote_paramload('RCPMENU','dropdownclass2',$this->path); 
 
        $this->getTURL();	   
-	   
-	   //$this->awstats = 'cgi-bin/awstats.php';
-	   //$this->messages = GetSessionParam('menuMessages') ? GetSessionParam('menuMessages') : array();
-	   //$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);
    }
    
 
@@ -458,9 +442,10 @@ class rcpmenu {
 	
 	//transform links for special chars
 	private function make_link($link=null) {
-		$cat = $this->cpGet['cat']; //stored cat for cp
-		$id = $this->cpGet['id']; //stored id for cp
-	    $mycurrentcat = explode($this->cseparator,$cat);
+		$cat = $this->cpGet['cat']; 
+		$id = $this->cpGet['id']; 
+		$csep = _m('cmsrt.sep');
+	    $mycurrentcat = explode($csep,$cat);
 	    $selected_cat = array_pop($mycurrentcat);		
 
 		//_SCAT ->$selected_cat (last branch) 
@@ -472,10 +457,9 @@ class rcpmenu {
 	    //www. -> http://www. (CCPP takes // as remark)
 	
 		$ret = str_replace(array('@','^','www.','|','_CAT','_ID','_SCAT'),
-		                   array('?t=',$this->cseparator,'http://www.','?',$cat, $id, $selected_cat),$link);
-						   
-		//$out = str_replace('^',$this->cseparator,$ret);		
-		return ($ret);// . '&editmode=1'); //editmode added for backward compatibility
+		                   array('?t=',$csep,'http://www.','?',$cat, $id, $selected_cat),$link);
+						   	
+		return ($ret);
 	}
 
 	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
