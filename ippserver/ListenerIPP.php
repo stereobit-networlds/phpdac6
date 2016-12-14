@@ -41,7 +41,7 @@ ignore_user_abort(true);
 	require_once($class . '.php');
 });*/            
 require_once("ServerIPP.php");
-require_once('cp/dpc2/system/pcntl.lib.php'); 
+require_once('cp/dpc/system/pcntl.lib.php'); 
 
 define("USE_DATABASE", false);
 define("SERVER_LOG", true);

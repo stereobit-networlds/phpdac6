@@ -2,7 +2,7 @@
 
 $__DPCSEC['RCCONTROLPANEL_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if (!defined("RCCONTROLPANEL_DPC")) { // && (seclevel('RCCONTROLPANEL_DPC',decode(GetSessionParam('UserSecID')))) ) {
+if (!defined("RCCONTROLPANEL_DPC")) { 
 define("RCCONTROLPANEL_DPC",true);
 
 $__DPC['RCCONTROLPANEL_DPC'] = 'rccontrolpanel';
@@ -297,14 +297,10 @@ class rccontrolpanel {
 								break;								 
 
 		 case 'cptasksno'   : 	$this->site_stats();  
-								//if (defined('RCULISTSTATS')) 
-									//_m('rculiststats.percentofCamps');//task dropdown, set task
 								$tsk = $this->getTasksTotal();
 								die($tsk);
 								break;	 							 
 		 case 'cptasks'     : 	$this->site_stats(); 
-								//if (defined('RCULISTSTATS')) NOT 2nd time 
-									//_m('rculiststats.percentofCamps');//task dropdown, set task
 								$tsk = $this->getTasks();
 								die($tsk);
 								break;	   			 
