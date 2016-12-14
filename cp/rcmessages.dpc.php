@@ -11,15 +11,17 @@ $__EVENTS['RCMESSAGES_DPC'][0]='cpmessages';
 $__EVENTS['RCMESSAGES_DPC'][1]='cpmsg';
 $__EVENTS['RCMESSAGES_DPC'][2]='cpdelmessage';
 $__EVENTS['RCMESSAGES_DPC'][3]='cpshowmessages';
-$__EVENTS['RCMESSAGES_DPC'][4]='cpitemvisits';
-$__EVENTS['RCMESSAGES_DPC'][5]='cpcatvisits';
+$__EVENTS['RCMESSAGES_DPC'][4]='cpmessagesno';
+$__EVENTS['RCMESSAGES_DPC'][5]='cpitemvisits';
+$__EVENTS['RCMESSAGES_DPC'][6]='cpcatvisits';
 
 $__ACTIONS['RCMESSAGES_DPC'][0]='cpmessages';
 $__ACTIONS['RCMESSAGES_DPC'][1]='cpmsg';
 $__ACTIONS['RCMESSAGES_DPC'][2]='cpdelmessage';
 $__ACTIONS['RCMESSAGES_DPC'][3]='cpshowmessages';
-$__ACTIONS['RCMESSAGES_DPC'][4]='cpitemvisits';
-$__ACTIONS['RCMESSAGES_DPC'][5]='cpcatvisits';
+$__ACTIONS['RCMESSAGES_DPC'][4]='cpmessagesno';
+$__ACTIONS['RCMESSAGES_DPC'][5]='cpitemvisits';
+$__ACTIONS['RCMESSAGES_DPC'][6]='cpcatvisits';
 
 $__DPCATTR['RCMESSAGES_DPC']['cpmessages'] = 'cpmessages,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -55,19 +57,26 @@ class rcmessages  {
 		if ($login!='yes') return null;
 
 		switch ($event) {
-			case 'cpitemvisits'  : break;							 
-			case 'cpcatvisists'  : break;				
+			case 'cpitemvisits' : 	break;							 
+			case 'cpcatvisists' : 	break;					 							 	
 			
-			case 'cpdelmessage': 	//ajax call
+			case 'cpdelmessage' : 	//ajax call
 									$msgs = $this->storeMessage();
 									die('cpmessages|'.$msgs);
 									break;	
 
-			case 'cpshowmessages': 	break;			
+			case 'cpshowmessages': 	break;	
+
+			case 'cpmessagesno' :	//ajax call
+			                        $msgs = $this->getMessagesTotal();
+									die($msgs);
+									break;			
 			
 			case 'cpmsg'    	:   break;  
-			case 'cpmessages'   :
-			default             :                    
+			case 'cpmessages'   :   
+			default             :   //ajax call
+			                        $msgs = $this->getMessages();
+									die($msgs);                
 		}
     }
 
@@ -83,13 +92,16 @@ class rcmessages  {
 									break;				
 			
 		    case 'cpdelmessage' : 	break;	
-			case 'cpshowmessages' : $out = $this->viewPastMessages(null,null,null,'r', true); 
+			case 'cpshowmessages':  $out = $this->viewPastMessages(null,null,null,'r', true); 
 									break;			
 			
-			case 'cpmsg'        : 	$out = $this->show_messages(null,null,null,'r', true); 
+			case 'cpmsg'        : 	$out = $this->showMessages(null,null,null,'r', true); 
 									break;
+									
+			case 'cpmessagesno' : 	$out = null; break;
+			
 			case 'cpmessages'   :
-			default             : 
+			default             :   $out = null;
 		}
 
 		return ($out);
@@ -116,38 +128,63 @@ class rcmessages  {
 		return false;		
 	}		
 
-
-	protected function show_messages($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
-	    $height = $height ? $height : 600;
-        $rows = $rows ? $rows : 25;
-        $width = $width ? $width : null; //wide	
-		$mode = $mode ? $mode : 'r';
-		$noctrl = $noctrl ? 0 : 1;	
-	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('RCMESSAGES_DPC',getlocal());		
 	
-		$ownerSQL = ($this->seclevid==9) ? null : "where owner='$this->owner'"; 		
-		   	
-		if (defined('MYGRID_DPC')) {
-		   
-			$sSQL = "select * from (SELECT id,date,type,msg FROM cpmessages where type='system' or type='cron' or type= 'analyzer' order by id desc";
-            $sSQL.= ') as o';  				
+	/* cp header messages and tasks */ 	
+	public function getMessagesTotal() {
+		$db = GetGlobal('db');	
+		
+		$sSQL = "SELECT count(id) from stats where tid='action' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() )order by date desc";
+		$result = $db->Execute($sSQL);		
+		$ret = $result->fields[0];
+		
+		return ($ret>10) ? '10' : strval($ret);		
+	}	
 
-		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
-			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
-            _m("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
-            _m("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
-
-		    $out = _m("mygrid.grid use grid9+cpmessages+$sSQL+r+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+	public function getMessages($limit=null) {
+		$db = GetGlobal('db');	
+		$lim = $limit ? $limit : 10;
+		
+		$sSQL = "SELECT date,tid,attr1,attr3 from stats where tid='action' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc limit " . $lim;
+		$resultset = $db->Execute($sSQL);
+		
+		if (empty($resultset)) return null;
+		foreach ($resultset as $n=>$rec) {		
+			
+			switch ($rec['attr1']) {
+				case 'fblogin'     : 	$text = localize('_fblogin',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-success'; 
+										break;
+				case 'fblogout'    : 	$text = localize('_logout',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-info'; 
+										break;				
+				case 'login'       : 	$text = localize('_login',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-success'; 
+										break; 
+				case 'logout'      : 	$text = localize('_logout',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-info'; 
+										break;
+				case 'login-failed': 	$text = localize('_logfail',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										$tmpl = 'dropdown-notification-important'; 
+										break;
+				default            : 	$text = null;  $cmd = 'cpform.php'; 
+										$tmpl = 'dropdown-notification-warning'; 
+			}
+			
+			$tokens[] = $rec['attr3'] . ' ' . $text;
+			$tokens[] = _m('rccontrolpanel.timeSayWhen use ' . strtotime($rec[0]));			
+			$tokens[] = $cmd;
+			
+			$tdata = _m("cmsrt.select_template use $tmpl+1");
+			$ret .= $this->combine_tokens($tdata, $tokens, true);
+			unset($tokens);	
 		}
-        else  
-			$out = null;
 		
-	    return ($out);		   
-	}
-	
-	protected function add_action() {
-		
+		return ($ret);			
 	}
 	
 	/*delete msg from queue return rest-ajax*/
@@ -172,37 +209,37 @@ class rcmessages  {
 		
 		if ($ret) {
 		
-		  //delete msg from session
-		  $nm = array();
-		  foreach ($this->messages as $hash=>$message) {
-			if ($h!=$hash) $nm[$hash] = $message;
-		  }
-		  $this->messages = (empty($nm)) ? null : $nm;
-		  SetSessionParam('cpMessages', $nm);
-		  if (empty($nm)) return null;
-		
-		  //send out rest queue
-		  $msgs = array_reverse($nm, true);
-		  $i = 0;
-		  foreach ($msgs as $n=>$m) {
-			$tokens = explode('|', $m); 
-			switch (array_shift($tokens)) {
-				case 'important' : $tmpl = 'dropdown-notification-important'; break;
-				case 'success'   : $tmpl = 'dropdown-notification-success'; break;
-				case 'warning'   : $tmpl = 'dropdown-notification-warning'; break;
-				case 'error'     : $tmpl = 'dropdown-notification-error'; break;
-				case 'info'      :
-				default          : $tmpl = 'dropdown-notification-info';
-				
+			//delete msg from session
+			$nm = array();
+			foreach ($this->messages as $hash=>$message) {
+				if ($h!=$hash) 
+					$nm[$hash] = $message;
 			}
-			$tdata = _m("cmsrt.select_template use $tmpl+1");
-			$ret .= $this->combine_tokens($tdata, $tokens, true);
-			unset($tokens);	
-			$i+=1;
-			if ($i>$lim) break;
-		  }
+			$this->messages = (empty($nm)) ? null : $nm;
+			SetSessionParam('cpMessages', $nm);
+			if (empty($nm)) return null;
 		
-		}//insert to db
+			//send out rest queue
+			$msgs = array_reverse($nm, true);
+			$i = 0;
+			foreach ($msgs as $n=>$m) {
+				$tokens = explode('|', $m); 
+				switch (array_shift($tokens)) {
+					case 'important' : $tmpl = 'dropdown-notification-important'; break;
+					case 'success'   : $tmpl = 'dropdown-notification-success'; break;
+					case 'warning'   : $tmpl = 'dropdown-notification-warning'; break;
+					case 'error'     : $tmpl = 'dropdown-notification-error'; break;
+					case 'info'      :
+					default          : $tmpl = 'dropdown-notification-info';
+				
+				}
+				$tdata = _m("cmsrt.select_template use $tmpl+1");
+				$ret .= $this->combine_tokens($tdata, $tokens, true);
+				unset($tokens);	
+				$i+=1;
+				if ($i>$lim) break;
+			}
+		}
 		
 		return ($ret);			
 	}	
@@ -233,6 +270,35 @@ class rcmessages  {
 			return true;
 		//}
 		//return false;	
+	}
+
+	protected function showMessages($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 600;
+        $rows = $rows ? $rows : 25;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'r';
+		$noctrl = $noctrl ? 0 : 1;	
+	    $lan = getlocal() ? getlocal() : 0;  
+		$title = localize('RCMESSAGES_DPC',getlocal());		
+	
+		$ownerSQL = ($this->seclevid==9) ? null : "where owner='$this->owner'"; 		
+		   	
+		if (defined('MYGRID_DPC')) {
+		   
+			$sSQL = "select * from (SELECT id,date,type,msg FROM cpmessages where type='system' or type='cron' or type= 'analyzer' order by id desc";
+            $sSQL.= ') as o';  				
+
+		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|5|1|");
+			_m("mygrid.column use grid9+date|".localize('_date',getlocal()).'|5|1');		   
+            _m("mygrid.column use grid9+type|".localize('_type',getlocal()).'|10|1');
+            _m("mygrid.column use grid9+msg|".localize('_message',getlocal()).'|20|1');			
+
+		    $out = _m("mygrid.grid use grid9+cpmessages+$sSQL+r+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		}
+        else  
+			$out = null;
+		
+	    return ($out);		   
 	}	
 	
 	protected function viewPastMessages() {

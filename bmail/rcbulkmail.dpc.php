@@ -236,10 +236,7 @@ class rcbulkmail {
 		$this->messages = array(); //reset messages any time page reload - local msg system
 
 		$this->urlRedir = remote_paramload('RCBULKMAIL','urlredir', $this->prpath);
-		$this->urlRedir2 = remote_paramload('RCBULKMAIL','urlredir2', $this->prpath);
-		
-		$tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
-	    $this->cptemplate = $tmpl ? $tmpl : 'metro';	
+		$this->urlRedir2 = remote_paramload('RCBULKMAIL','urlredir2', $this->prpath);	
 
 		$settings = remote_paramload('RCBULKMAIL','settingsdisable', $this->prpath);		
 		$this->disable_settings = $settings ? true : false; //form disable
@@ -1113,7 +1110,7 @@ EOF;
 		if (!$cid = $_GET['cid']) return false;
 		$db = GetGlobal('db');			
 		$l = $limit ? $limit : 5;
-		$t = ($template!=null) ? $this->select_template($template) : null;
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		$tokens = array();
 		
 		$sSQL = "SELECT cid,subject, AVG(active),MIN(timein),MAX(timeout) AS a FROM mailqueue where active>=0 and cid='{$this->cid}' GROUP BY subject ORDER BY a DESC LIMIT ".$l;
@@ -1502,7 +1499,7 @@ EOF;
 	
 	public function viewMessages($template=null) {
 		if (empty($this->messages)) return;
-	    $t = ($template!=null) ? $this->select_template($template) : null;
+	    $t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		
 		foreach ($this->messages as $m=>$message) {
 			if ($t) 	
@@ -2199,17 +2196,6 @@ This email and any files transmitted with it are confidential and intended solel
 ";
 		return ($ret);
 	}	
-
-	protected function select_template($tfile=null) {
-		if (!$tfile) return;
-	  
-		$template = $tfile . '.htm';	
-		$t = $this->prpath . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
-		if (is_readable($t)) 
-			$mytemplate = file_get_contents($t);
-
-		return ($mytemplate);	 
-    }	
 	
 	//tokens method	
 	protected function combine_tokens($template, $tokens, $execafter=null) {

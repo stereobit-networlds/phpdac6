@@ -40,8 +40,8 @@ class rculiststats  {
 		$this->prpath = paramload('SHELL','prpath'); 
 		$this->urlpath = paramload('SHELL','urlpath');
 
-		$tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
-	    $this->cptemplate = $tmpl ? $tmpl : 'metro';		
+		//$tmpl = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);  
+	    //$this->cptemplate = $tmpl ? $tmpl : 'metro';		
 		
 		$tmplsavepath = remote_paramload('RCBULKMAIL','tmplsavepath', $this->prpath);
 		$savepath = $tmplsavepath ? $tmplsavepath : null;//$defaultsavepath;
@@ -102,7 +102,7 @@ class rculiststats  {
 	
 	public function viewMessages($template=null) {
 		if (empty($this->messages)) return;
-	    $t = ($template!=null) ? $this->select_template($template) : null;
+	    $t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		
 		foreach ($this->messages as $m=>$message) {
 			if ($t) 	
@@ -309,7 +309,7 @@ class rculiststats  {
 	/* % of process of active camps*/
 	public function percentofCamps($template=null) {
 		$db = GetGlobal('db');			
-		$t = ($template!=null) ? $this->select_template($template) : null;
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		$tokens = array();
 		//get params also here due to fp call for rccontrol panel (login 1st)
 		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName'); //decode(GetSessionParam('UserName'));	
@@ -359,7 +359,7 @@ class rculiststats  {
 	/* % of process of last deactived camps*/
 	public function lastCamps($template=null, $limit=null) {
 		$db = GetGlobal('db');		
-		$t = ($template!=null) ? $this->select_template($template) : null;
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		$tokens = array();
 		//get params also here due to fp call for rccontrol panel (login 1st)
 		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName'); 
@@ -403,7 +403,7 @@ class rculiststats  {
 		if (!$cid = $_GET['cid']) return false;
 		$db = GetGlobal('db');			
 		$l = $limit ? $limit : 5;
-		$t = ($template!=null) ? $this->select_template($template) : null;
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		$tokens = array();
 		
 		$sSQL = "SELECT cid,subject, AVG(active),MIN(timein),MAX(timeout) AS a FROM  mailqueue where cid='$cid' GROUP BY subject ORDER BY a DESC LIMIT ".$l;
@@ -439,7 +439,7 @@ class rculiststats  {
 		else
 			$crm = false;
 		
-		$t = ($template!=null) ? $this->select_template($template) : null;
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		$tokens = array();
 		
 		$refsql = $cid ? "and cid='$cid'" : null;		
@@ -468,7 +468,7 @@ class rculiststats  {
 		$db = GetGlobal('db');	
 		$l = $limit ? $limit : 5;
 		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
-		$t = ($template!=null) ? $this->select_template($template) : null;
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		$tokens = array();
 		
 		$refsql = $cid ? "and cid='$cid'" : null;
@@ -504,7 +504,7 @@ class rculiststats  {
 		else
 			$crm = false;
 		
-		$t = ($template!=null) ? $this->select_template($template) : null;
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		$tokens = array();
 		
 		//$timein = $this->sqlDateRange('timein', true, false);
@@ -535,7 +535,7 @@ class rculiststats  {
 		$db = GetGlobal('db');	
 		$l = $limit ? $limit : 50;
 		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
-		$t = ($template!=null) ? $this->select_template($template) : null;
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		$tokens = array();
 		
 		$sSQL = "SELECT stats.id,date,attr3,title,ref FROM stats,mailcamp where stats.ref=mailcamp.cid group by ref order by date desc LIMIT " . $l;
@@ -557,7 +557,7 @@ class rculiststats  {
 		$db = GetGlobal('db');	
 		$l = $limit ? $limit : 5;
 		$cid = $_GET['cid'] ? $_GET['cid'] : null;		
-		$t = ($template!=null) ? $this->select_template($template) : null;
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;
 		$tokens = array();
 		
 		//$timein = $this->sqlDateRange('timein', true, false);
@@ -589,9 +589,9 @@ class rculiststats  {
 	    $month = GetParam('month') ? GetParam('month') : date('m');
 		$daterange = GetParam('rdate');
 		
-		$t = ($template!=null) ? $this->select_template($template) : null;		
+		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;		
 	    if ($t) {
-			for ($y=2015;$y<=intval(date('Y'));$y++) {
+			for ($y=(date('Y')-2); $y<=intval(date('Y')); $y++) {
 				$yearsli .= '<li>'. seturl('month='.$month.'&year='.$y, $y) .'</li>';
 			}
 		
@@ -623,47 +623,33 @@ class rculiststats  {
 	protected function nformat($n, $dec=0) {
 		return (number_format($n,$dec,',','.'));
 	}		
-
-	protected function select_template($tfile=null) {
-		if (!$tfile) return;
-	  
-		$template = $tfile . '.htm';	
-		$t = $this->prpath . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
-		if (is_readable($t)) 
-			$mytemplate = file_get_contents($t);
-
-		return ($mytemplate);	 
-    }	
 	
-	//tokens method	
 	protected function combine_tokens($template, $tokens, $execafter=null) {
 	    if (!is_array($tokens)) return;		
 
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template);
-		  unset ($fp);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template;
+			$ret = $template;
 		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
+	    foreach ($tokens as $i=>$tok) 
 		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
+
 		//clean unused token marks
 		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
+			$ret = str_replace("$".$x."$",'',$ret);
+
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
           
-		  return ($retout);
+			return ($retout);
 		}		
 		
 		return ($ret);

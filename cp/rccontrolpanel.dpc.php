@@ -16,16 +16,16 @@ $__EVENTS['RCCONTROLPANEL_DPC'][2]='cplogin';
 $__EVENTS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__EVENTS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
 $__EVENTS['RCCONTROLPANEL_DPC'][5]='cptasks';
-$__EVENTS['RCCONTROLPANEL_DPC'][6]='cpmessages';
+//$__EVENTS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__EVENTS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
-$__EVENTS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
-$__EVENTS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
+//$__EVENTS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
+//$__EVENTS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
 //$__EVENTS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
-$__EVENTS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
-$__EVENTS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
+//$__EVENTS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
+//$__EVENTS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
 $__EVENTS['RCCONTROLPANEL_DPC'][13]='cpinbox';
 $__EVENTS['RCCONTROLPANEL_DPC'][14]='cpinboxno';
-$__EVENTS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
+//$__EVENTS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
 $__EVENTS['RCCONTROLPANEL_DPC'][16]='cptasksno';
 $__EVENTS['RCCONTROLPANEL_DPC'][17]='lang'; //language selection by crmrt
 $__EVENTS['RCCONTROLPANEL_DPC'][18]='cpupgrade';
@@ -36,16 +36,16 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][2]='cplogin';
 $__ACTIONS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__ACTIONS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
 $__ACTIONS['RCCONTROLPANEL_DPC'][5]='cptasks';
-$__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpmessages';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpmessages';
 $__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpzbackup';
-$__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
-$__ACTIONS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpdelMessage';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][9]='cpshowMessages';
 //$__ACTIONS['RCCONTROLPANEL_DPC'][10]='cpsysMessages';
-$__ACTIONS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
-$__ACTIONS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][11]='cpitemVisits';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][12]='cpcatVisits';
 $__ACTIONS['RCCONTROLPANEL_DPC'][13]='cpinbox';
 $__ACTIONS['RCCONTROLPANEL_DPC'][14]='cpinboxno';
-$__ACTIONS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][15]='cpmessagesno';
 $__ACTIONS['RCCONTROLPANEL_DPC'][16]='cptasksno';
 $__ACTIONS['RCCONTROLPANEL_DPC'][17]='lang'; //language selection by crmrt
 $__ACTIONS['RCCONTROLPANEL_DPC'][18]='cpupgrade';
@@ -309,11 +309,11 @@ class rccontrolpanel {
 		$toolp = remote_paramload('RCCONTROLPANEL','toolpath',$this->prpath);
 		$this->tool_path = $toolp ? $toolp : '../../cp/'; //ususaly 2 leveles back from apps (root app must set to /)
 		
-		$this->messages = GetSessionParam('cpMessages') ? GetSessionParam('cpMessages') : array();
+		//$this->messages = GetSessionParam('cpMessages') ? GetSessionParam('cpMessages') : array();
 		$this->tasks = GetSessionParam('cpTasks') ? GetSessionParam('cpTasks') : array();
 		$this->inbox = GetSessionParam('cpInbox') ? GetSessionParam('cpInbox') : array();		
 		
-		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath); //metro !!!!
+		//$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath); //metro !!!!
 		
 		$this->stats = array();
 		$this->cpStats = false;
@@ -369,7 +369,7 @@ class rccontrolpanel {
 								$tsk = $this->getTasks();
 								die($tsk);
 								break;	   
-							 
+		/*					 
 		 case 'cpmessagesno':	$msgs = $this->getMessagesTotal();
 								die($msgs);
 								break;	 							 
@@ -381,11 +381,11 @@ class rccontrolpanel {
 								$msgs = $this->storeMessage();
 								die('cpmessages|'.$msgs);
 								break;	
-
-         case 'cpshowMessages': break;							 
+         */
+         //case 'cpshowMessages': break;							 
          //case 'cpsysMessages' : break;				 
-         case 'cpitemVisits'  : break;							 
-         case 'cpcatVisists'  : break;			 
+         //case 'cpitemVisits'  : break;							 
+         //case 'cpcatVisists'  : break;			 
 	   	
          case "cplogout"    : 	$this->logout();
 								break;
@@ -427,13 +427,13 @@ class rccontrolpanel {
 			case 'cpinbox'     : 
 			case 'cptasksno'   : 
 			case 'cptasks'     : 
-			case 'cpmessagesno': 
+			/*case 'cpmessagesno': 
 		    case 'cpmessages'  : 
-		    case 'cpdelMessage': 	break;	
-			case 'cpshowMessages' : $out = $this->viewPastMessages(); break;				
+		    case 'cpdelMessage': 	break;	*/
+			//case 'cpshowMessages' : $out = $this->viewPastMessages(); break;				
 			//case 'cpsysMessages'  : $out = $this->viewSystemMessages(); break;			
-			case 'cpitemVisits': 	$out = $this->viewItemVisits(); break;
-			case 'cpcatVisits' : 	$out = $this->viewCatVisits(); break;			
+			//case 'cpitemVisits': 	$out = $this->viewItemVisits(); break;
+			//case 'cpcatVisits' : 	$out = $this->viewCatVisits(); break;			
 		  	case "cpinfo"      : 	break;    
 			
 			case "cpupgrade"   :
@@ -536,13 +536,13 @@ function inbox()
 					$('#cpinbox').html(indata);
 					setTimeout(function() { 
 					  $.ajax({
-						url: 'cp.php?t=cpmessagesno',
+						url: 'cpmessages.php?t=cpmessagesno',
 						type: 'GET',
 						success:function(mdata) {
 							$('#cpmessagesno').html(mdata);
 							setTimeout(function() { 
 							  $.ajax({
-								url: 'cp.php?t=cpmessages',
+								url: 'cpmessages.php?t=cpmessages',
 								type: 'GET',
 								success:function(msdata) {
 									$('#cpmessages').html(msdata);
@@ -1978,7 +1978,7 @@ $(document).ready(function(){
 			
 			$tdata = _m("cmsrt.select_template use $template+1");
 			
-			for ($y=2015;$y<=intval(date('Y'));$y++) {
+			for ($y=$y=(date('Y')-2); $y<=intval(date('Y')); $y++) {
 				$yearsli .= '<li>'. seturl('t='.$t.'&month='.$month.'&year='.$y, $y) .'</li>';
 			}
 		
@@ -2110,7 +2110,7 @@ $(document).ready(function(){
 		return (!empty($this->stats) ? true : false);
 	}
 
-	/* cp header messages and tasks */ 	
+	/* 
 	public function getMessagesTotal() {
 		//$ret = (empty($this->messages)) ? 0 : count($this->messages);
 		$db = GetGlobal('db');	
@@ -2167,7 +2167,7 @@ $(document).ready(function(){
 		
 		return ($ret);			
 	}		
-    /*
+    
 	public function getMessages_OLD($limit=null) {
 		if (empty($this->messages)) return null;
 		//print_r($this->messages);
@@ -2198,8 +2198,7 @@ $(document).ready(function(){
 		
 		return ($ret);			
 	}	
-	*/
-	/*delete msg from queue return rest-ajax*/
+	
 	public function storeMessage($limit=null) {
 		$db = GetGlobal('db');	
 		if (empty($this->messages)) return null;
@@ -2255,7 +2254,7 @@ $(document).ready(function(){
 		
 		return ($ret);			
 	}	
-	/*
+
 	public function setMessage($message=null, $daysback=null) {
 		$db = GetGlobal('db');
 		if (!$message) return false;

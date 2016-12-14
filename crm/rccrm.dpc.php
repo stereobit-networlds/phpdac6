@@ -955,7 +955,7 @@ class rccrm  {
 		
 		$t = ($template!=null) ? _m("cmsrt.select_template use $template+1") : null;		
 	    if ($t) {
-			for ($y=2015;$y<=intval(date('Y'));$y++) {
+			for ($y=(date('Y')-2); $y<=intval(date('Y')); $y++) {
 				$yearsli .= '<li>'. seturl("t=crmstats&id=$user&month=".$month.'&year='.$y, $y) .'</li>';
 			}
 		
