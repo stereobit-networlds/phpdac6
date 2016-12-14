@@ -245,90 +245,45 @@ $__LOCALE['RCCONTROLPANEL_DPC'][187]='_logfail;Login failed;Αποτυχημέν
 
 class rccontrolpanel {
 
-	var $title,$cmd,$subpath,$path,$dbpath,$prpath;
-	var $dashboard, $cp0_tabtype, $cpn_tabtype;
-	
-	var $charts, $hasgraph, $goto, $ajaxgraph, $refresh, $objcall, $objgauge, $hasgauge;
-	var $charset;
-	var $editmode;
-	var $application_path;	
-	var $environment, $url, $murl, $urlpath;
+	var $title, $subpath, $path, $prpath;
+	var $charset, $application_path, $url, $urlpath;
 	var $appkey, $awstats_url;
-	var $cptemplate, $stats, $cpStats;
-	var $turl, $cpGet, $turldecoded, $messages, $tasks;
-	var $owner, $seclevid, $cseparator, $map_t, $map_f;
-	var $userDemoIds, $crmLevel, $isCrm;
-	
-	var $rootapp_path, $tool_path;
+	var $stats, $cpStats, $hasgraph, $gotourl;
+	var $turl, $cpGet, $turldecoded, $tasks;
+	var $owner, $seclevid, $userDemoIds, $crmLevel, $isCrm;
+	var $rootapp_path;
 		
 	public function __construct() {
 		
-	    $this->title = localize('RCCONTROLPANEL_DPC',getlocal());
-        $this->urlpath = paramload('SHELL','urlpath');		
-		$this->subpath = $this->urlpath . "/cp";
-		//$this->prpath = paramload('SHELL','urlpath') . $this->subpath;//??		
-		$this->path = paramload('SHELL','urlpath') . $this->subpath;   		
-		//echo $this->path; global $config; print_r($config);
-		$this->dbpath = paramload('SHELL','dbgpath');
+		$murl = arrayload('SHELL','ip');
+        $this->url = $murl[0]; 			
+		$this->charset = 'utf-8';			
 		
+        $this->urlpath = paramload('SHELL','urlpath');		
+		$this->subpath = $this->urlpath . "/cp";		
+		$this->path = paramload('SHELL','urlpath') . $this->subpath;   		
 		$this->prpath = paramload('SHELL','prpath');	
         $this->application_path = paramload('SHELL','urlpath');			
-		//echo $this->prpath;
 		
-		$this->murl = arrayload('SHELL','ip');
-        $this->url = $this->murl[0]; 			
-		$this->editmode = GetReq('editmode');
+		$this->rootapp_path = remote_paramload('RCCONTROLPANEL','rootpath',$this->prpath); 
+
+	    $this->title = localize('RCCONTROLPANEL_DPC',getlocal());		
 		
-        //choose encoding
-        $char_set  = arrayload('SHELL','char_set');	  
-        $charset  = paramload('SHELL','charset');	  		
-		if (($charset=='utf-8') || ($charset=='utf8'))
-		  $this->charset = 'utf-8';
-		else  
-	      $this->charset = $char_set[getlocal()]; 		
-		
-		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName');
-		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
-		
-		$this->goto = seturl('t=cp&group='.GetReq('group'));//handle graph selections with no ajax
-		
-        //READ ENVIRONMENT ATTR
-		//if ($_SESSION['LOGIN']=='yes') //first time logged in session is not set and constructy has executed!!!!
-			//$this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);		
-		//print_r($this->environment);
-		
-		//awstats cp window
-		$awurl = remote_paramload('RCAWSTATS','file',$this->prpath);
-		$this->awstats_url = $awurl ? $awurl :
-		                     ((!empty($this->murl)) ? array_pop($this->murl) : str_replace('www.','',$_ENV["HTTP_HOST"]));		
-		
-		$this->appkey = new appkey();	
-		
-		$this->rootapp_path = remote_paramload('RCCONTROLPANEL','rootpath',$this->prpath); //'stereobi'; //XIX !!!!
-		
-		$toolp = remote_paramload('RCCONTROLPANEL','toolpath',$this->prpath);
-		$this->tool_path = $toolp ? $toolp : '../../cp/'; //ususaly 2 leveles back from apps (root app must set to /)
-		
-		//$this->messages = GetSessionParam('cpMessages') ? GetSessionParam('cpMessages') : array();
 		$this->tasks = GetSessionParam('cpTasks') ? GetSessionParam('cpTasks') : array();
-		$this->inbox = GetSessionParam('cpInbox') ? GetSessionParam('cpInbox') : array();		
+		$this->inbox = GetSessionParam('cpInbox') ? GetSessionParam('cpInbox') : array();				
+		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName');
+		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];		
 		
-		//$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath); //metro !!!!
-		
+		$this->userDemoIds = array(6,7); 
+		$this->crmLevel = 9;
+		$this->gotourl = seturl('t=cp&group='.GetReq('group'));
+
 		$this->stats = array();
 		$this->cpStats = false;
-		$this->isCrm = false;
-		
-		$this->map_t = remote_arrayload('RCITEMS','maptitle',$this->path);	
-		$this->map_f = remote_arrayload('RCITEMS','mapfields',$this->path);		
-		$csep = remote_paramload('RCITEMS','csep',$this->path); 
-        $this->cseparator = $csep ? $csep : '^';		
-		
-		$this->userDemoIds = array(6,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
-		$this->crmLevel = 9;
+		$this->isCrm = false;	
+
+		$this->appkey = new appkey();		
 				
-		//ini_set('max_input_vars', '3000'); //NOT ALLOWED ADD IT TO .HTACCESS
-		
 		$this->load_javascript();	
 	}
 	 	
@@ -345,7 +300,7 @@ class rccontrolpanel {
 							 
 		 case 'cpchartshow'	: 	if ($report = GetReq('report')) {//ajax call
 									$this->hasgraph = _m("swfcharts.create_chart_data use $report");
-									$this->goto = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
+									$this->gotourl = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 								}
 								break;
 
@@ -368,24 +323,7 @@ class rccontrolpanel {
 									//_m('rculiststats.percentofCamps');//task dropdown, set task
 								$tsk = $this->getTasks();
 								die($tsk);
-								break;	   
-		/*					 
-		 case 'cpmessagesno':	$msgs = $this->getMessagesTotal();
-								die($msgs);
-								break;	 							 
-		 case 'cpmessages' : 	$msgs = $this->getMessages();
-								die($msgs);
-								break;	 
-
-		 case 'cpdelMessage': 	//ajax call
-								$msgs = $this->storeMessage();
-								die('cpmessages|'.$msgs);
-								break;	
-         */
-         //case 'cpshowMessages': break;							 
-         //case 'cpsysMessages' : break;				 
-         //case 'cpitemVisits'  : break;							 
-         //case 'cpcatVisists'  : break;			 
+								break;	   			 
 	   	
          case "cplogout"    : 	$this->logout();
 								break;
@@ -417,7 +355,7 @@ class rccontrolpanel {
 									break;
 		  
 		    case 'cpchartshow' : 	if ($this->hasgraph)//ajax call
-										$out = _m("swfcharts.show_chart use " . GetReq('report') ."+500+240+$this->goto");								  
+										$out = _m("swfcharts.show_chart use " . GetReq('report') ."+500+240+" . $this->gotourl);								  
 									else
 										$out = "<h3>".localize('_GNAVAL',0)."</h3>";	
 									die(GetReq('report').'|'.$out); //ajax return
@@ -426,24 +364,12 @@ class rccontrolpanel {
 			case 'cpinboxno'   :					 
 			case 'cpinbox'     : 
 			case 'cptasksno'   : 
-			case 'cptasks'     : 
-			/*case 'cpmessagesno': 
-		    case 'cpmessages'  : 
-		    case 'cpdelMessage': 	break;	*/
-			//case 'cpshowMessages' : $out = $this->viewPastMessages(); break;				
-			//case 'cpsysMessages'  : $out = $this->viewSystemMessages(); break;			
-			//case 'cpitemVisits': 	$out = $this->viewItemVisits(); break;
-			//case 'cpcatVisits' : 	$out = $this->viewCatVisits(); break;			
+			case 'cptasks'     : 			
 		  	case "cpinfo"      : 	break;    
-			
 			case "cpupgrade"   :
 			case "cp"          :	
-			default            : 	$this->getTURL(); //save param for use by metro cp
+			default            : 	$this->getTURL();
 									$this->site_stats(); 
-									//$this->set_addons_list();
-									//$this->load_graph_objects();
-									//$this->_show_update_tools();
-									//$this->_show_addon_tools();
 			  
 		} 		 		  
 
@@ -890,7 +816,7 @@ $(document).ready(function(){
 	
 		return true;
     }	
-  */
+  
     //check if eshop exist and is valid
     public function is_valid_eshop() {
    	  
@@ -944,7 +870,7 @@ $(document).ready(function(){
 	    return false;
     }	
   
-    /*
+    
     protected function _show_update_tools() {   
         $text = 'update';
 		$u = null;
@@ -1179,58 +1105,51 @@ $(document).ready(function(){
   
         //echo $dirname;
 	    if (is_dir($dirname)) {
-          $mydir = dir($dirname);
+			$mydir = dir($dirname);
 		  
-		  $zip = new ZipArchive();
-		  $zfilename = $this->prpath . "/uploads/" . $zname; //to save into
+			$zip = new ZipArchive();
+			$zfilename = $this->prpath . "/uploads/" . $zname; //to save into
 
-		  if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) {
-            return false;
-          }		  
+			if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) 
+				return false;	  
 		 
-          while ($fileread = $mydir->read ()) {
+			while ($fileread = $mydir->read ()) {
 	        
-		   if (($fileread!='.') && ($fileread!='..'))  {
-		   
-                 //echo "<br>",$fileread;	   
-	             //read cpwizard- files
-  	             if (!is_dir($fileread))  { 
-                      
-                    $zip->addFile($dirname."/".$fileread, $fileread);						
-				 }
-		   } 
-	      }
-	      $mydir->close ();
+				if (($fileread!='.') && ($fileread!='..'))  {
+					if (!is_dir($fileread))   
+						$zip->addFile($dirname."/".$fileread, $fileread);						
+				} 
+			}
+			$mydir->close ();
 		  
-          $ret = "numfiles: " . $zip->numFiles . "\n";
-          $ret .= "status:" . $zip->status . "\n";
-          $zip->close();		  
+			$ret = "numfiles: " . $zip->numFiles . "\n";
+			$ret .= "status:" . $zip->status . "\n";
+			$zip->close();		  
         }
 
 		return ($ret);
     }    			
   
 	public function get_user_name($nopro=0) {
-	  if ((GetSessionParam('LOGIN')) && ($user=GetSessionParam('USER')))
-	    return ($user);	
+		if ((GetSessionParam('LOGIN')) && ($user=GetSessionParam('USER')))
+			return ($user);	
 	  
-	  return false;	  
+		return false;	  
 	}
 
   
     protected function autoupdate() {
 		
-     //echo $_SERVER['PHP_SELF'];
-	 /*$rf = file_get_contents('http://www.stereobit.com/cp/cp.php');
-	 $hf = file_get_contents($this->path .'/cp.php');
-	 if (strlen($rf)!=strlen($hf)) {
-	   echo 'must update...';
-	 }*/
-    }
+		//echo $_SERVER['PHP_SELF'];
+		/*$rf = file_get_contents('http://www.stereobit.com/cp/cp.php');
+		$hf = file_get_contents($this->path .'/cp.php');
+		if (strlen($rf)!=strlen($hf)) {
+			echo 'must update...';
+		}*/
+	}
   
-	
     public function getencoding() {
-	  return ($this->charset);
+		return ($this->charset);
     }
   
     protected function logout() {
@@ -1244,9 +1163,6 @@ $(document).ready(function(){
 		SetSessionParam('turldecoded', null);
 		SetSessionParam('cpGet', null);		
     }
-  
-  
-  
   
  	public function sqlDateRange($fieldname, $istimestamp=false, $and=false) {
 		$sqland = $and ? ' AND' : null;
@@ -1336,7 +1252,7 @@ $(document).ready(function(){
             $this->stats['Visits']['wishall'] = $this->nformat($res->fields[0]);
 			
 			//ypoloipo
-			$sSQL = "select ypoloipo1 from products where ". $this->getmapf('code') ."='$id'";
+			$sSQL = "select ypoloipo1 from products where ". _v('cmsrt.fcode') ."='$id'";
 			$res = $db->Execute($sSQL,2);
             $this->stats['Item']['ypoloipo1'] = $this->nformat($res->fields[0]);
 			
@@ -1390,8 +1306,9 @@ $(document).ready(function(){
 
 
 			/**** find category's items ***/
-			$activecode = 	$this->getmapf('code');
-			$mcat = explode($this->cseparator, $cat);
+			$activecode = _v('cmsrt.fcode');
+			$csep = _m('cmsrt.sep');
+			$mcat = explode($csep, $cat);
 			foreach ($mcat as $c=>$category)
 				$catSQL .= " AND cat$c = " . $db->qstr(_m("cmsrt.replace_spchars use $category+1"));
 			
@@ -1932,18 +1849,13 @@ $(document).ready(function(){
 		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
 	
 		if ($ret = $_SESSION['env']) {
-			//echo 'insession';
-			//print_r($ret);
 			$GLOBALS['ADMINSecID'] = null; // for security erase the global leave the sessionid
 			return ($ret);
 		}    
-
-		//$myenvfile = /*$this->prpath .*/ 'cp.ini';
-		//$ini = @parse_ini_file($myenvfile ,false, INI_SCANNER_RAW);	
+	
 		$ini = @parse_ini_file($this->prpath . "cp.ini");
 		if (!$ini) die('Environment error!');	
 	
-		//print_r($ini); 
 		foreach ($ini as $env=>$val) {
 			if (stristr($val,',')) {
 				$uenv = explode(',',$val);
@@ -1989,14 +1901,15 @@ $(document).ready(function(){
 			
 			//call cpGet from rcpmenu not this (only def action)
 			$cpGet = _v('rcpmenu.cpGet');	
+			$csep = _m('cmsrt.sep');
 			if ($id = $cpGet['id'])
-				$section = ' &gt ' . $this->getItemName($id);
+				$section = ' &gt; ' . $this->getItemName($id);
 			elseif ($cat = $cpGet['cat'])
-				$section = ' &gt ' . str_replace($this->cseparator, ' &gt ', _m("cmsrt.replace_spchars use $cat+1"));
+				$section = ' &gt; ' . str_replace($csep, ' &gt; ', _m("cmsrt.replace_spchars use $cat+1"));
 			else
 				$section = null;
 	  
-	        $posteddaterange = $daterange ? ' &gt ' . $daterange : ($year ? ' &gt ' . $month . ' ' . $year : null) ;
+	        $posteddaterange = $daterange ? ' &gt; ' . $daterange : ($year ? ' &gt; ' . $month . ' ' . $year : null) ;
 	  
 			$tokens[] = localize('RCCONTROLPANEL_DPC',getlocal()) . $section . $posteddaterange; 
 			$tokens[] = $year;
@@ -2724,6 +2637,55 @@ $(document).ready(function(){
 	    return ($out);	
 	}		
 */	
+
+/*
+	public function getmapf($name) {
+		if (empty($this->map_t)) return 0;
+	  
+		foreach ($this->map_t as $id=>$elm)
+			if ($elm==$name) break;
+				
+		$ret = $this->map_f[$id];
+		return ($ret);
+	}	
+	*/
+	public function getItemName($id) {
+		if (!$id) return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+		$name = _v('cmsrt.itmname');
+		$codef = _v('cmsrt.fcode');
+		
+		$sSQL = "select $name from products where $codef=" . $db->qstr($id);
+		$res = $db->Execute($sSQL,2);
+
+        return $res->fields[0];		
+	}
+	
+	public function getItemActiveCode($id) {
+		if (!$id) return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+		$code = _v('cmsrt.fcode');
+		
+		$sSQL = "select $code from products where id=" . $id;
+		$res = $db->Execute($sSQL,2);
+        return $res->fields[0];		
+	}	
+	
+	public function getRefName($id) {
+		if (!$id) return null;
+		$db = GetGlobal('db');
+		
+		$sSQL = "select title from mailcamp where cid=" . $db->qstr($id);
+		$res = $db->Execute($sSQL,2);
+        return $res->fields[0];		
+	}	
+	
+    public function checkmail($data) {
+		return (filter_var($data, FILTER_VALIDATE_EMAIL) ? true : false);
+	}
+
 	public function timeSayWhen($ptime=null) {
 		$etime = time() - $ptime;
 
@@ -2791,7 +2753,7 @@ $(document).ready(function(){
 		return ($ret);
 	}
 	
-	/*function select_template($tfile=null, $path=null) {
+	/*public function select_template($tfile=null, $path=null) {
 		if (!$tfile) return;
 		$cppath = $path ? $path : $this->cptemplate;
 	  
@@ -2818,7 +2780,7 @@ $(document).ready(function(){
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 
 		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
+			$ret = str_replace("$".$x."$",'',$ret);
 
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
 			$fp = new fronthtmlpage(null);
@@ -2829,52 +2791,7 @@ $(document).ready(function(){
 		}		
 		
 		return ($ret);
-	} 
-
-	public function getmapf($name) {
-		if (empty($this->map_t)) return 0;
-	  
-		foreach ($this->map_t as $id=>$elm)
-			if ($elm==$name) break;
-				
-		$ret = $this->map_f[$id];
-		return ($ret);
-	}	
-	
-	public function getItemName($id) {
-		if (!$id) return null;
-		$db = GetGlobal('db');
-		$lan = getlocal();
-		$name = $lan ? 'itmname' : 'itmfname';
-		
-		$sSQL = "select $name from products where " . $this->getmapf('code') . "=" . $db->qstr($id);
-		$res = $db->Execute($sSQL,2);
-        return $res->fields[0];		
-	}
-	
-	public function getItemActiveCode($id) {
-		if (!$id) return null;
-		$db = GetGlobal('db');
-		$lan = getlocal();
-		$code = $this->getmapf('code');
-		
-		$sSQL = "select $code from products where id=" . $id;
-		$res = $db->Execute($sSQL,2);
-        return $res->fields[0];		
-	}	
-	
-	public function getRefName($id) {
-		if (!$id) return null;
-		$db = GetGlobal('db');
-		
-		$sSQL = "select title from mailcamp where cid=" . $db->qstr($id);
-		$res = $db->Execute($sSQL,2);
-        return $res->fields[0];		
-	}	
-	
-    public function checkmail($data) {
-		return (filter_var($data, FILTER_VALIDATE_EMAIL) ? true : false);
-	}	
+	} 	
 	
 };
 }

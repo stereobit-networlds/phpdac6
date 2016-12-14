@@ -126,7 +126,11 @@ class rcmessages  {
 		}	
 
 		return false;		
-	}		
+	}	
+
+    public function checkmail($data) {
+		return (filter_var($data, FILTER_VALIDATE_EMAIL) ? true : false);
+	}	
 
 	
 	/* cp header messages and tasks */ 	
@@ -379,7 +383,7 @@ class rcmessages  {
 			//$status = 'important';
 			$rtokens = array();
 			$rtokens[] = $rec[1]; //msg
-			$rtokens[] = _m('rccontrolpanel.timeSayWhen use ' .strtotime($rec[2])); //time
+			$rtokens[] = _m('rccontrolpanel.timeSayWhen use ' . strtotime($rec[2])); //time
 			$rtokens[] = $this->isLevelUser(8) ? 'cpmessages.php?t=cpmsg' :'#'; //link
 			$rtokens[] = $rec[3]; //hash
 			
@@ -475,7 +479,7 @@ class rcmessages  {
 		
 		$t = $template ? _m("cmsrt.select_template use $template+1") : null;		
 		
-        $timein = $this->sqlDateRange('date', true, true);			
+        $timein = _m('rccontrolpanel.sqlDateRange use date+1+1');			
 		
 		$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc LIMIT 100";
         $result = $db->Execute($sSQL);
@@ -488,7 +492,7 @@ class rcmessages  {
 							
 			$rtokens[] = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : 
 			                             $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")"; 
-			$rtokens[] = $this->timeSayWhen(strtotime($rec['date'])); 
+			$rtokens[] = _m('rccontrolpanel.timeSayWhen use ' . strtotime($rec['date'])); 
 			$rtokens[] = $crm ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
 			
@@ -516,7 +520,7 @@ class rcmessages  {
 		
 		$t = $template ? _m("cmsrt.select_template use $template+1") : null;
 		
-        $timein = $this->sqlDateRange('date', true, true);			
+        $timein = _m('rccontrolpanel.sqlDateRange use date+1+1');			
 		
 		$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where tid='$id' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc LIMIT 100";
         $result = $db->Execute($sSQL);
@@ -529,11 +533,11 @@ class rcmessages  {
 			
 			$rtokens[] = $rec['attr3'] ? $rec['attr3'] . " (" . $rec['REMOTE_ADDR'] . ")" : 
 			                             $rec['attr2'] . " (" . $rec['REMOTE_ADDR'] . ")"; 
-			$rtokens[] = $this->timeSayWhen(strtotime($rec['date'])); 
+			$rtokens[] = _m('rccontrolpanel.timeSayWhen use ' . strtotime($rec['date'])); 
 			$rtokens[] = $crm ? 'cpcrmtrace.php?t=cpcrmprofile&v='.$visitor : '#'; //link
 			$rtokens[] = null;//$rec[3]; //hash
 			
-			$rtokens[] = ((filter_var($visitor, FILTER_VALIDATE_EMAIL)) && $crm) ? _m("crmforms.formsMenu use ".$visitor."+crmdoc") : null;
+			$rtokens[] = ($this->checkmail($visitor) && $crm) ? _m("crmforms.formsMenu use $visitor+crmdoc") : null;
 						
 			
 			$ret .= $t ? $this->combine_tokens($t, $rtokens) : 
@@ -554,7 +558,6 @@ class rcmessages  {
 		foreach ($result as $i=>$rec) {
 			$saytime = _m('rccontrolpanel.timeSayWhen use ' . strtotime($rec[1]));
 			$msg = "warning|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];
-			//_m('rccontrolpanel.setMessage use '. $msg);
 			$this->setMessage($msg);
 		}
 		return null;
@@ -570,7 +573,6 @@ class rcmessages  {
 		foreach ($result as $i=>$rec) {
 			$saytime = _m('rccontrolpanel.timeSayWhen use ' . strtotime($rec[1]));
 			$msg = "success|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];
-			//_m('rccontrolpanel.setMessage use '. $msg);
 			$this->setMessage($msg);
 		}
 		return null;

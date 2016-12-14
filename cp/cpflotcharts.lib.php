@@ -230,11 +230,11 @@ class cpflotcharts {
         $year = GetParam('year') ? GetParam('year') : date('Y'); 
 	    $month = GetParam('month') ? GetParam('month') : date('m');	
 
-		$cpGet = GetGlobal('controller')->calldpc_var('rcpmenu.cpGet');	
+		$cpGet = _v('rcpmenu.cpGet');	
 			
         if ($id = $cpGet['id']) {
 			
-			$item = GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$id);		
+			$item = _m('rccontrolpanel.getItemName use '.$id);		
 			
 			$diff = 0;
 			$timeins = $this->sqlDateRange('date', true, true, $diff);
@@ -249,7 +249,7 @@ class cpflotcharts {
 			//echo '<br/>' . $diff;
 			
 			//stats (categories)
-			$csep = GetGlobal('controller')->calldpc_var('rccontrolpanel.cseparator');
+			$csep = _m('cmsrt.sep');
 			$categories = explode($csep, $cpGet['cat']);			
 			$csepcat = null; //loop from cat0 to cat4
 			foreach ($categories as $i=>$cat) {
@@ -282,8 +282,8 @@ class cpflotcharts {
 			$timeins = $this->sqlDateRange('date', true, true, $diff);			
 			
 			//stats (categories)
-			$csep = GetGlobal('controller')->calldpc_var('rccontrolpanel.cseparator');
-			$categories = explode($csep, $cpGet['cat']);			
+			$csep = _m('cmsrt.sep');
+			$categories = explode($csep, $cat);			
 			$csepcat = null; //loop from cat0 to cat4
 			foreach ($categories as $i=>$cat) {
 				
@@ -299,7 +299,7 @@ class cpflotcharts {
 			//return (0); //test bypass
 
 			/**** find category's items ***/
-			$activecode = GetGlobal('controller')->calldpc_method('rccontrolpanel.getmapf use code');
+			$activecode = _v('cmsrt.fcode');
 			foreach ($categories as $c=>$category)
 				$catSQL .= " AND cat$c = " . $db->qstr(_m("cmsrt.replace_spchars use $category+1"));
 			
@@ -1126,8 +1126,8 @@ FLOTCRM;
 
         if ($id = urldecode(GetReq('id'))) { //item id
 		
-		    $code = GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemActiveCode use '.$id);		
-			$item = GetGlobal('controller')->calldpc_method('rccontrolpanel.getItemName use '.$code);		
+		    $code = _m('rccontrolpanel.getItemActiveCode use '.$id);		
+			$item = _m('rccontrolpanel.getItemName use '.$code);		
 			
 			//stats
 			$diff = 0;

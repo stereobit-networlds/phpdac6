@@ -165,7 +165,7 @@ class crmtimeline extends crmmodule  {
 		$result = $db->Execute($sSQL);	
 			
 		if ($result) {
-			$t = _m('rccontrolpanel.select_template use '.$template);
+			$t = _m("rccontrolpanel.select_template use $template+1");
 				
 			$meter = 0;	
 			

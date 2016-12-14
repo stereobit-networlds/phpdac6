@@ -879,7 +879,7 @@ goBack();
 		return str_replace($g1,$g2,$string);
 	}	
 	
-	protected function getkategoriesS($categories) {	
+	public function getkategoriesS($categories) {	
 		if (empty($categories)) return null;	
 		$c = $this->sep();
 		$g1 = array("'",',','"','+','/',' ','-&-');
@@ -892,7 +892,7 @@ goBack();
 		return ($ret);
 	}	
 	
-	protected function sep() {
+	public function sep() {
 		return $this->cseparator; 
 	}	
 	
@@ -1530,13 +1530,13 @@ EOF;
 	
 	public function getmapf($name) {
 	
-	  if (empty($this->map_t)) return 0;
+		if (empty($this->map_t)) return 0;
 	  
-	  foreach ($this->map_t as $id=>$elm)
-	    if ($elm==$name) break;
+		foreach ($this->map_t as $id=>$elm)
+			if ($elm==$name) break;
 				
-	  $ret = $this->map_f[$id];
-	  return ($ret);
+		$ret = $this->map_f[$id];
+		return ($ret);
 	}	
 	
 	public function getItemCode($id=null) {

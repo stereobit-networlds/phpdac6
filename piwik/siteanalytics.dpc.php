@@ -166,8 +166,8 @@ class siteanalytics   {
 		$daterange = GetParam('rdate');
 		$t = GetReq('t');
 				
-	    if ($tmpl = _m('cmsrt.select_template use '.$template.'+1')) {
-			for ($y=2015;$y<=intval(date('Y'));$y++) {
+	    if ($tmpl = _m("cmsrt.select_template use $template+1")) {
+			for ($y=(date('Y')-2); $y<=intval(date('Y')); $y++) {
 				$yearsli .= '<li>'. seturl("t=$t&month=".$month.'&year='.$y, $y) .'</li>';
 			}
 		

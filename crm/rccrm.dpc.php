@@ -436,23 +436,7 @@ class rccrm  {
 		}
 		else
 			$uSQL = "WHERE email = ''"; //dummy null		
-		
-        /*$xsSQL = "SELECT * from (select id,timein,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users $uSQL) o ";	
-		
-		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");	
-		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");	   
-		_m("mygrid.column use grid1+notes|".localize('_active',getlocal())."|5|1|");
-		_m("mygrid.column use grid1+username|".localize('_username',getlocal())."|link|10|"."javascript:udetails(\"{username}\");".'||');						
-		_m("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|19|1|");
-		_m("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|19|1|");
-		_m("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
-		_m("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
-		_m("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");
-		_m("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
-		_m("mygrid.column use grid1+email|".localize('_email',getlocal())."|link|10|"."cpcrmtrace.php?t=cpcrmprofile&v={email}".'||');
-		_m("mygrid.column use grid1+code2|".localize('_code',getlocal())."|10|0|");			
-		_m("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");
-		*/   		
+		  		
 		
 		$xsSQL = "select * from (";
 		$xsSQL.= "SELECT id,startdate,datein,active,failed,name,email,listname FROM ulists " . $uSQL;

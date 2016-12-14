@@ -994,8 +994,10 @@ class rccrmtrace  {
 			
 			//call cpGet from rcpmenu not this (only def action)
 			$cpGet = _v('rcpmenu.cpGet');	
-			if ($id = $cpGet['id'])
-				$section = ' &gt; ' . _m('rccontrolpanel.getItemName use '.$id);
+			if ($id = $cpGet['id']) {
+				$itmname = _m('rccontrolpanel.getItemName use '.$id);
+				$section = ' &gt; ' . $itmname;
+			}	
 			elseif ($cat = $cpGet['cat']) {
 				//$section = ' &gt; ' . str_replace($this->cseparator, ' &gt; ', _m("cmsrt.replace_spchars use $cat+1"));
 				$ccat = explode($this->cseparator, $cat);

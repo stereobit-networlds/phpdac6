@@ -22,23 +22,27 @@ $__LOCALE['RCADDONS_DPC'][0]='RCADDONS_DPC;File system;File system';
 
 class rcaddons {
 
-    var $title, $prpath, $post, $msg;
-	var $rootapp_path, $tool_path, $environment, $seclevid, $tools, $appkey;
+    var $title, $prpath, $post, $msg, $url;
+	var $tool_path, $environment, $seclevid, $tools, $appkey;
 	
 	public function __construct() {
+		
+		$murl = arrayload('SHELL','ip');
+        $this->url = $murl[0]; 		
 		
 	    $this->title = localize('RCADDONS_DPC',getlocal());		
 		$this->post = false; 
 		$this->msg = null;
 		$this->prpath = paramload('SHELL','prpath');
 		
-		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];		
-
-		$this->rootapp_path = remote_paramload('RCCONTROLPANEL','rootpath',$this->prpath); 
-		
 		$toolp = remote_paramload('RCCONTROLPANEL','toolpath',$this->prpath);
-		$this->tool_path = $toolp ? $toolp : '../../cp/'; 	
-				
+		$this->tool_path = $toolp ? $toolp : '../../cp/'; 
+		
+		$awurl = remote_paramload('RCAWSTATS','file',$this->prpath);
+		$this->awstats_url = $awurl ? $awurl : ((!empty($this->murl)) ? array_pop($this->murl) : str_replace('www.','',$_ENV["HTTP_HOST"]));		
+		
+		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];		
+		
 		$this->appkey = new appkey();				
 	}	
 	 	
@@ -177,26 +181,23 @@ class rcaddons {
 		
 		$dirname = $this->prpath . $this->tool_path . 'update-app/';
   
-        //echo $dirname;
 	    if (is_dir($dirname)) {
-          $mydir = dir($dirname);
+			$mydir = dir($dirname);
 		 
-          while ($fileread = $mydir->read ()) {
+			while ($fileread = $mydir->read ()) {
 	        
-		   if (($fileread!='.') && ($fileread!='..'))  {
+				if (($fileread!='.') && ($fileread!='..'))  {
 		   
-                 //echo "<br>",$fileread;	   
-	             //read cpwizard- files
-  	             if ((stristr ($fileread,".ini")) &&
-				     ((substr($fileread,0,9))=='cpwizard-') && //not already updated  	   
-					 (!is_readable($this->prpath.'/'.str_replace('.ini','._ni',$fileread)))) { 
+					if ((stristr ($fileread,".ini")) &&
+						((substr($fileread,0,9))=='cpwizard-') && //not already updated  	   
+						(!is_readable($this->prpath.'/'.str_replace('.ini','._ni',$fileread)))) { 
                       
-					  $p = explode('-',$fileread);
-					  $update_name = str_replace('.ini','',$p[1]);
-		              $ddir[$update_name] = filectime($dirname . $fileread);						
+						$p = explode('-',$fileread);
+						$update_name = str_replace('.ini','',$p[1]);
+						$ddir[$update_name] = filectime($dirname . $fileread);						
 					}
-		   } 
-	      }
+				} 
+			}
 	      $mydir->close ();
         }
 
@@ -215,30 +216,15 @@ class rcaddons {
 				$mod = localize($module, getlocal());
 				$update_key_url = $this->call_wizard_url('addkey');//, true);	//is upgrade			
 
-					//$this->stats['Update']['value'] = ++$index;
-				    //$this->stats['Update']['url'][] = $update_key_url;
-					//$this->stats['Update']['href'][] = $exp_text;
-					$html = '<li>
-                                <span class="label label-warning"><i class="icon-bell"></i></span>
-                                    <span><a href="'.$update_key_url.'">'.$exp_text.'</a></span>
-                                    <div class="pull-right">
-                                        <span class="small italic ">'.date("F d Y H:i:s.").'</span>
-                                    </div>
-                             </li>';
-					if ($index<9) //$this->stats['Update']['html'] .= $html;	
-						$ret .= $html;
-                    /*$notify = ' <li>
-                                   <a href="#">
-                                       <div class="task-info">
-                                         <div class="desc">'.$exp_text.'</div>
-                                         <div class="percent">44%</div>
-                                       </div>
-                                       <div class="progress progress-striped active no-margin-bot">
-                                           <div class="bar" style="width: 44%;"></div>
-                                       </div>
-                                   </a>
-                               </li>'; 
-                    if ($index<5) $this->stats['Update']['notify'] .= $notify;*/							   
+				if ($index<9) 
+					$ret .= '<li>
+								<span class="label label-warning"><i class="icon-bell"></i></span>
+									<span><a href="'.$update_key_url.'">'.$exp_text.'</a></span>
+									<div class="pull-right">
+                                    <span class="small italic ">'.date("F d Y H:i:s.").'</span>
+									</div>
+								</li>';
+							   
 			}
 		}		
 		
@@ -247,18 +233,14 @@ class rcaddons {
 		    foreach ($dpc2copy as $d=>$dpc) {
 				//automated dpc update
 				$update_dpc_url = $this->call_wizard_url('dpcmod');//, true);	//is upgrade			
-				    //$this->stats['Update']['value'] = ++$index;
-					//$this->stats['Update']['url'][] = $update_dpc_url;
-					//$this->stats['Update']['href'][] = $dpc;
-					$html = '<li>
+				if ($index<9) 
+					$ret .= '<li>
                                 <span class="label label-success"><i class="icon-bullhorn"></i></span>
                                     <span><a href="'.$update_dpc_url.'">'.$dpc.'</a></span>
                                     <div class="pull-right">
                                         <span class="small italic ">'.date("F d Y H:i:s.").'</span>
                                     </div>
                              </li>';
-					if ($index<9) //$this->stats['Update']['html'] .= $html;
-						$ret .= $html;
                     /*$notify = ' <li>
                                    <a href="#">
                                        <div class="task-info">
@@ -279,18 +261,15 @@ class rcaddons {
 		    foreach ($phpdac2copy as $p=>$dac) {
 				//automated dpc update
 				$update_dac_url = $this->call_wizard_url('dacpage');//, true);	//is upgrade			
-				    //$this->stats['Update']['value'] = ++$index;
-					//$this->stats['Update']['url'][] = $update_dac_url;
-					//$this->stats['Update']['href'][] = $dac;
-					$html = '<li>
+				if ($index<9) 
+						$ret .= '<li>
                                 <span class="label label-important"><i class="icon-bullhorn"></i></span>
                                     <span><a href="'.$update_dac_url.'">'.ucfirst(strtolower($dac)).'</a></span>
                                     <div class="pull-right">
                                         <span class="small italic ">'.date("F d Y H:i:s.").'</span>
                                     </div>
                              </li>';
-					if ($index<9) //$this->stats['Update']['html'] .= $html;
-						$ret .= $html;
+
                     /*$notify = ' <li>
                                    <a href="#">
                                        <div class="task-info">
@@ -310,19 +289,15 @@ class rcaddons {
 		if (_m('rccontrolpanel.free_space') < (100*1024*1024)) { //get more in MB..100MB
 		    //automated add space
 		    $update_url = $this->call_wizard_url('addspace');//, true);	//is upgrade			
-			    //$this->stats['Update']['value'] = ++$index;
-				//$this->stats['Update']['url'][] = localize('_addspace', getlocal());
-				//$this->stats['Update']['href'][] = $update_url;
-				$html = '<li>
+			if ($index<9) 
+				$ret .= '<li>
                             <span class="label label-important"><i class=" icon-bug"></i></span>
                             <span><a href="'.$update_url.'">'.localize('_addspace', getlocal()).'</a></span>
                             <div class="pull-right">
                                 <span class="small italic ">'.date("F d Y H:i:s.").'</span>
                             </div>
                         </li>';		
-				if ($index<9) 
-					$ret .= $html;
-					//$this->stats['Update']['html'] .= $html;
+
                 /*$notify = ' <li>
                                 <a href="#">
                                     <div class="task-info">
@@ -342,22 +317,16 @@ class rcaddons {
 		    arsort($updates);
 		    foreach ($updates as $update=>$udatecreated) {
 			    //$u .= $udatecreated . '&nbsp;';
-				
                 $update_url = $this->call_wizard_url($update, true);
-				    //$this->stats['Update']['value'] = ++$index;
-					//$this->stats['Update']['url'][] = str_replace('_',' ',ucfirst($update));
-					//$this->stats['Update']['href'][] = $update_url;
-					$html = '<li>
+				if ($index<9) 
+					$ret .= '<li>
                                 <span class="label label-warning"><i class="icon-bullhorn"></i></span>
                                     <span><a href="'.$update_url.'">'.str_replace('_',' ',ucfirst($update)).'</a></span>
                                     <div class="pull-right">
                                         <span class="small italic ">'.date("F d Y H:i:s.", $udatecreated).'</span>
                                     </div>
                              </li>';
-					if ($index<9) 
-						$ret .= $html;
-						//$this->stats['Update']['html'] .= $html;
-					$notify = ' <li>
+					/*$notify = ' <li>
                                 <a href="#">
                                     <div class="task-info">
                                         <div class="desc">'.str_replace('_',' ',ucfirst($update)).'</div>
@@ -368,7 +337,7 @@ class rcaddons {
                                     </div>
                                 </a>
                             </li>'; 
-					if ($index<5) $this->stats['Update']['notify'] .= $notify;					
+					if ($index<5) $this->stats['Update']['notify'] .= $notify;*/					
 			}	
 		}
 
@@ -489,7 +458,7 @@ class rcaddons {
 													$text = "Unknown tool.";
 												break;	
 					//case 'uninstall_maildbqueue'   :							
-					case 'maildbqueue'   	:   if ($valid = _m('rccontrolpanel.is_valid_newsletter')) {
+					case 'maildbqueue'   	:   if ($valid = $this->is_valid_newsletter()) {
 													$text = localize('_newsletters' ,getlocal());//"Newsletter feature installed"; 
 													$text .= ' ('.$valid.')';
 												}
@@ -504,7 +473,7 @@ class rcaddons {
 												break;						
 					case 'eshop'         	:         
 												$message = localize('_uninstalleshop',getlocal());
-												if ($valid = _m('rccontrolpanel.is_valid_eshop')) {//uninstall
+												if ($valid = $this->is_valid_eshop()) {//uninstall
 													$message .= ' ('.$valid.')';
 													if ($e1 = $this->call_wizard_url('uninstalleshop')) 
 														$text = "<a href='$e1'>".$message."</a>"; 	
@@ -659,12 +628,9 @@ class rcaddons {
 			//else disabled tool...		
 		
 			if ($text) {
-				//echo $text,'<br/>';
 				$tool_url = $text ? ($e1 ? $e1 : "help/$mytool/") : null;
-				//$this->stats['Addons']['url'][] = $tool_url;
-				//$this->stats['Addons']['href'][] = $text;
 				$_more = localize('_more',getlocal());
-				$ao = '<div class="msg-time-chat">
+				$ret .= '<div class="msg-time-chat">
                         <a class="message-img" href="'.$tool_url.'"><img alt="" src="images/'.$mytool.'.png" class="avatar"></a>
                         <div class="message-body msg-in">
                             <span class="arrow"></span>
@@ -674,8 +640,6 @@ class rcaddons {
                             </div>
                         </div>
                    </div>';
-				//$this->stats['Addons']['html'] .= $ao;
-				$ret .= $ao;
 			}		
 		}	//foreach	
 		}//if
@@ -743,6 +707,58 @@ class rcaddons {
             $url = false; 		
 			
         return ($url);		
+    }
+
+    public function is_valid_eshop() {
+   	  
+		$timekey = remote_paramload('SHCART','expires',$this->prpath);
+		//echo $timekey;
+		if ($timekey) {
+			//$timeleft = $this->appkey->decode_key($timekey, 'SHCART', true);
+			$date = $this->appkey->decode_key($timekey, 'SHCART');
+
+			//if ($timeleft>0) {
+			if ($date) {
+				$daystosay = 30 * 24 * 60 *60; //30 days			
+			    //if ($timeleft<($daystosay))//x days or negative=expired
+			        //return true;
+					
+				$now = time();
+				$diff = strtotime($date) - $now;
+				//if ($diff<($daystosay)) {//x days or negative=expired					
+					$ret = $this->appkey->nicetime($date); 
+					//echo $ret;
+					return ($ret);//true with text
+				//}	
+			}		
+		}
+	  
+	    return false;
+    } 
+
+    //check if newsletter feature is valid
+    public function is_valid_newsletter() {
+   	  
+		//installed mailqueue key
+		$timekey = remote_paramload('RCBULKMAIL','expires',$this->prpath);
+
+		if ($timekey) {
+			$date = $this->appkey->decode_key($timekey, 'RCBULKMAIL'); 
+
+			if ($date) {
+				$daystosay = 30 * 24 * 60 *60; //30 days			
+					
+				$now = time();
+				$diff = strtotime($date) - $now;
+				//if ($diff<($daystosay)) {//x days or negative=expired					
+					$ret = $this->appkey->nicetime($date); 
+					//echo $ret;
+					return ($ret);//true with text
+				//}	
+			}		
+		}
+
+	    return false;
     }	
   
 };
