@@ -370,7 +370,7 @@ class rculiststats  {
 		$l = $limit ? $limit : 3;	
         $limitSQL = $limit ? 'LIMIT '.$l : 'LIMIT 3'; 	
 		
-		$sSQL = "SELECT cid,subject,AVG(active),MIN(timeout),MAX(timeout) AS a FROM mailqueue where active>=0 $ownerSQL $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
+		$sSQL = "SELECT cid,subject,AVG(active),MIN(timein),MAX(timeout) AS a FROM mailqueue where active>=0 $ownerSQL $dateRangeSQL GROUP BY cid,subject ORDER BY a DESC ".$limitSQL;
 		//echo $sSQL;
 		$resultset = $db->Execute($sSQL,2);
 		

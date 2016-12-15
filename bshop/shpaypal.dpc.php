@@ -70,7 +70,7 @@ class shpaypal extends paypal {
       $rp = remote_paramload('SHPAYPAL','returnpage',$this->path);       
       $page = $rp?$rp:$_SERVER['PHP_SELF'];
 	  $inpath = paramload('ID','hostinpath');
-      $this->this_script = 'http://'.$_SERVER['HTTP_HOST'].$inpath.'/'.$page;
+      $this->this_script = paramload('SHELL','urlbase') . '/'. $page;
 
       // if there is not action variable, set the default action of 'process'
       //if (empty($_GET['action'])) $_GET['action'] = 'process'; 

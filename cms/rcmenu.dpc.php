@@ -20,6 +20,8 @@ $__EVENTS['RCMENU_DPC'][4]='cpmsavenest';
 $__EVENTS['RCMENU_DPC'][5]='cpmloadnest';
 $__EVENTS['RCMENU_DPC'][6]='cpmnewmenu';
 $__EVENTS['RCMENU_DPC'][7]='cpmselectmenu';
+$__EVENTS['RCMENU_DPC'][8]='cpmnewelement';
+$__EVENTS['RCMENU_DPC'][9]='cpmaddelement';
 
 $__ACTIONS['RCMENU_DPC'][0]='cpmconfig';
 $__ACTIONS['RCMENU_DPC'][1]='cpmconfedit';
@@ -29,6 +31,8 @@ $__ACTIONS['RCMENU_DPC'][4]='cpmsavenest';
 $__ACTIONS['RCMENU_DPC'][5]='cpmloadnest';
 $__ACTIONS['RCMENU_DPC'][6]='cpmnewmenu';
 $__ACTIONS['RCMENU_DPC'][7]='cpmselectmenu';
+$__ACTIONS['RCMENU_DPC'][8]='cpmnewelement';
+$__ACTIONS['RCMENU_DPC'][9]='cpmaddelement';
 
 $__LOCALE['RCMENU_DPC'][0]='RCMENU_DPC;Menu Configuration;Menu Configuration;';
 $__LOCALE['RCMENU_DPC'][1]='_newelement;New element;Νέο στοιχείο;';
@@ -51,13 +55,16 @@ $__LOCALE['RCMENU_DPC'][17]='_menuname;Menu name;Όνομα μενού;';
 $__LOCALE['RCMENU_DPC'][18]='_ferror;File error;Πρόβλημα στο αρχείο;';
 $__LOCALE['RCMENU_DPC'][19]='_fsuccess;File created;Το αρχείο δημιουργήθηκε;';
 $__LOCALE['RCMENU_DPC'][20]='_dropelement;Drop elements;Στοιχείο εναπόθεσης;';
+$__LOCALE['RCMENU_DPC'][21]='_newelm;New element;Νέο στοιχείο;';
+$__LOCALE['RCMENU_DPC'][22]='_elmname;Element name;Όνομα στοιχείου;';
+$__LOCALE['RCMENU_DPC'][23]='_elmurl;Element url;Σύνδεσμος στοιχείου;';
 
 class rcmenu extends cmsmenu {
 
     var $crlf, $path, $title;
 	var $t_config, $t_config0, $t_config1, $t_config2;
 	var $edit_per_lan, $cptemplate;
-	var $selectedMenu, $post;
+	var $selectedMenu, $post, $element;
 	
     public function __construct() {
 	
@@ -76,6 +83,7 @@ class rcmenu extends cmsmenu {
 		$this->t_config = array();		
 		$this->selectedMenu = GetParam('menu');
 		$this->post = null;	
+		$this->element = null;	
 	}
 	
     public function event($event=null) {			
@@ -84,6 +92,14 @@ class rcmenu extends cmsmenu {
 		if ($login!='yes') return null;		
 	    	    		  			    
 		switch ($event) {	
+		
+			case "cpmaddelement"    :   $this->t_config = $this->read_config();
+										if ($elmname = $_POST['elmname'])
+											$this->element = $this->addElement();
+										break;
+										
+			case "cpmnewelement"  	:   $this->t_config = $this->read_config();
+			                            break;							
 		
 		    case "cpmselectmenu"    :	$this->t_config = $this->read_config();
 										if ($newmenu = $_POST['menu'])
@@ -133,6 +149,10 @@ class rcmenu extends cmsmenu {
 
 		switch ($action) {	
 		
+			case "cpmaddelement"    :	break;	
+			case "cpmnewelement"   	:	$out = $this->newElement(localize('_newelm', getlocal()),"cpmaddelement"); 
+										break;										
+		
 		    case "cpmselectmenu"    :	$out = $this->menuMessage($this->post);
 			                            break;
 			case "cpmnewmenu"       :	$out = $this->newMenu(localize('_newmenu', getlocal()),"cpmselectmenu"); 
@@ -146,6 +166,7 @@ class rcmenu extends cmsmenu {
 			case "cpmconfdel"       :	break;
 			case "cpmconfadd"       :   $out = $this->add_configuration(localize('_add', getlocal()),"cpmconfig&add=1");  
 										break;								 						 
+										 							
 			case "cpmconfig"        :     
 			default                 :   $out = (GetParam('ismain')=='1') ? 
 											$this->show_configuration(localize('_edit', getlocal()),"cpmconfedit",true) : null; 							 
@@ -783,12 +804,48 @@ class rcmenu extends cmsmenu {
 			return $b . $a;
 		}	
 		
+		//add new element if any
+		$ret = $this->element; 
+		
 		//return drop element
-		$a = $this->nestdditem('drop', localize('_dropelement', getlocal()), "#", md5('drop'));
-		$b = $this->nestBuild(); 	
-		return $a . $b;
-		//else //current conf of main menu
-		//return $this->nestBuild(); 	
+		$ret .= $this->nestdditem('drop', localize('_dropelement', getlocal()), "#", md5('drop'));
+		
+		//standart menu
+		$ret .= $this->nestBuild(); 
+		
+		return $ret;
+	}
+	
+	
+	protected function newElement($button_title,$action) {
+		$promptname = localize('_elmname', getlocal());
+		$prompturl = localize('_elmurl', getlocal());
+		$title = localize('_newelm', getlocal());
+		$myaction = seturl("t=".$action); 	
+		
+		$form = new form(localize('_newelm',getlocal()), "RCELM", FORM_METHOD_POST, $myaction);	
+		
+		$section = 'newelement';
+		$form->addGroup($section,$button_title);		
+		
+		$form->addElement($section,new form_element_text($promptname,'elmname','',"span6",60,255,0));		 	 
+		$form->addElement($section,new form_element_text($prompturl,'elmurl','',"span6",60,255,0));			 
+		$form->addElement(FORM_GROUP_HIDDEN,new form_element_hidden ("FormAction", "$action"));
+		//save current menu selection
+		$form->addElement(FORM_GROUP_HIDDEN,new form_element_hidden ("menu", GetReq('menu')));
+	   
+		// Showing the form
+		$fout = $form->getform(0,0,$button_title);	
+		
+		return ($this->window($title,null,$fout));		   	    
+	}	
+	
+	protected function addElement() {
+		$title = GetParam('elmname');
+		$url = GetParam('elmurl');
+		
+		//return new element 
+		return $this->nestdditem(md5($title), $title, $url, md5($title));	
 	}
 	
 	protected function getCategoriesTitles($cat=null) {
@@ -827,7 +884,9 @@ class rcmenu extends cmsmenu {
 		$turl99 = seturl('t=cpmconfig&ismain=1');
 		$turl98 = seturl('t=cpmnewmenu');		
 		$turl97 = seturl('t=cpmconfig');
+		$turl96 = seturl('t=cpmnewelement');		
 		$stdcmd = array(localize('_newmenu', getlocal())=>$turl98,
+						localize('_newelm', getlocal())=>$turl96,
 						0=>'',									
 						localize('_mainmenu', getlocal())=>$turl97,						
 						localize('_edit', getlocal())=>$turl99,

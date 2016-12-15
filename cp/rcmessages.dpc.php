@@ -12,16 +12,24 @@ $__EVENTS['RCMESSAGES_DPC'][1]='cpmsg';
 $__EVENTS['RCMESSAGES_DPC'][2]='cpdelmessage';
 $__EVENTS['RCMESSAGES_DPC'][3]='cpshowmessages';
 $__EVENTS['RCMESSAGES_DPC'][4]='cpmessagesno';
-$__EVENTS['RCMESSAGES_DPC'][5]='cpitemvisits';
-$__EVENTS['RCMESSAGES_DPC'][6]='cpcatvisits';
+$__EVENTS['RCMESSAGES_DPC'][5]='cpinbox';
+$__EVENTS['RCMESSAGES_DPC'][6]='cpinboxno';
+$__EVENTS['RCMESSAGES_DPC'][7]='cptasks';
+$__EVENTS['RCMESSAGES_DPC'][8]='cptasksno';
+$__EVENTS['RCMESSAGES_DPC'][9]='cpitemvisits';
+$__EVENTS['RCMESSAGES_DPC'][10]='cpcatvisits';
 
 $__ACTIONS['RCMESSAGES_DPC'][0]='cpmessages';
 $__ACTIONS['RCMESSAGES_DPC'][1]='cpmsg';
 $__ACTIONS['RCMESSAGES_DPC'][2]='cpdelmessage';
 $__ACTIONS['RCMESSAGES_DPC'][3]='cpshowmessages';
 $__ACTIONS['RCMESSAGES_DPC'][4]='cpmessagesno';
-$__ACTIONS['RCMESSAGES_DPC'][5]='cpitemvisits';
-$__ACTIONS['RCMESSAGES_DPC'][6]='cpcatvisits';
+$__ACTIONS['RCMESSAGES_DPC'][5]='cpinbox';
+$__ACTIONS['RCMESSAGES_DPC'][6]='cpinboxno';
+$__ACTIONS['RCMESSAGES_DPC'][7]='cptasks';
+$__ACTIONS['RCMESSAGES_DPC'][8]='cptasksno';
+$__ACTIONS['RCMESSAGES_DPC'][9]='cpitemvisits';
+$__ACTIONS['RCMESSAGES_DPC'][10]='cpcatvisits';
 
 $__DPCATTR['RCMESSAGES_DPC']['cpmessages'] = 'cpmessages,1,0,0,0,0,0,0,0,0,0,0,1';
 
@@ -58,7 +66,27 @@ class rcmessages  {
 
 		switch ($event) {
 			case 'cpitemvisits' : 	break;							 
-			case 'cpcatvisists' : 	break;					 							 	
+			case 'cpcatvisists' : 	break;
+
+			case 'cpinboxno'   	: 	//ajax call
+									$tsk = $this->getInboxTotal();
+									die($tsk);
+									break;							 
+			case 'cpinbox'     	: 	$tsk = $this->getInbox();
+									die($tsk);
+									break;								 
+
+			case 'cptasksno'   	: 	//$this->site_stats();  
+									$tsk = $this->getTasksTotal();
+									die($tsk);
+									break;	 							 
+			case 'cptasks'     	: 	//SetSessionParam('cpTasks', ''); //reset tasks
+									//$this->site_stats(); //read space task
+									if (defined('RCULISTSTATS_DPC')) //read active campaign tasks
+										_m('rculiststats.percentofCamps');
+									$tsk = $this->getTasks();
+									die($tsk);
+									break;			
 			
 			case 'cpdelmessage' : 	//ajax call
 									$msgs = $this->storeMessage();
@@ -89,7 +117,12 @@ class rcmessages  {
 			case 'cpitemvisits' : 	$out = $this->viewItemVisits(null,null,null,'r', true); 
 									break;
 			case 'cpcatvisits'  : 	$out = $this->viewCatVisits(null,null,null,'r', true); 
-									break;				
+									break;	
+
+			case 'cpinboxno'   	:					 
+			case 'cpinbox'     	: 
+			case 'cptasksno'   	: 
+			case 'cptasks'     	:   break;									
 			
 		    case 'cpdelmessage' : 	break;	
 			case 'cpshowmessages':  $out = $this->viewPastMessages(null,null,null,'r', true); 
@@ -547,8 +580,117 @@ class rcmessages  {
 		}
 		return ($ret);
 	}	
+	
+	
+	/////////////////////////////// TASK MESSAGES		
+	
+	//alias, tasks var in rccontrolpanel
+	public function setTask($task=null) {
+		return _m('rccontrolpanel.setTask use ' . $task);
+	}	
+	
+	public function getTasksTotal() { 
+		$tasks = _v('rccontrolpanel.tasks');
+		
+		$ret = (empty($tasks)) ? null : strval(count($tasks));
+		return $ret;		
+	}		
 
-	//last month check 
+	public function getTasks($limit=null) {
+		$tasks = _v('rccontrolpanel.tasks');		
+		if (empty($tasks)) return null;
+
+		$tokens = array(); 
+		$lim = $limit ? $limit : 6;
+		$msgs = array_reverse($tasks, true);
+		$i = 0;
+		foreach ($msgs as $n=>$m) {
+			$tokens = explode('|', $m); 
+			switch (array_shift($tokens)) {
+				case 'active'    : $tmpl = 'dropdown-task-progress-active'; break;
+				case 'success'   : $tmpl = 'dropdown-task-progress-success'; break;
+				case 'warning'   : $tmpl = 'dropdown-task-progress-warning'; break;
+				case 'danger'    : $tmpl = 'dropdown-task-progress-danger'; break;
+				case 'info'      :
+				default          : $tmpl = 'dropdown-task-progress-info';
+				
+			}
+			$tdata = _m("cmsrt.select_template use $tmpl+1");
+			$ret .= $this->combine_tokens($tdata, $tokens, true);
+			unset($tokens);	
+			$i+=1;
+			if ($i>$lim) break;
+		}
+		
+		return ($ret);			
+	}	
+	
+
+	/////////////////////////////// INBOX MESSAGES
+	
+	//alias, inbox var in rccontrolpanel
+	public function setInbox($message=null) {
+		return _m('rccontrolpanel.setInbox use ' . $message);
+	}		
+	
+	public function getInboxTotal() {
+		$db = GetGlobal('db');	
+		
+		$sSQL = "SELECT count(id) from stats where tid='event' and attr1 REGEXP 'registration|subscribe|unsubscribe|activation|contact|cart-submit' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc";
+		$result = $db->Execute($sSQL);		
+		$ret = $result->fields[0];
+		
+		return ($ret>10) ? '10' : strval($ret);		
+	}
+
+	public function getInbox($limit=null) {
+		$db = GetGlobal('db');	
+		$lim = $limit ? $limit : 10;
+		$tdata = _m('cmsrt.select_template use dropdown-inbox-message+1');
+		
+		$sSQL = "SELECT date,tid,attr1,attr3 from stats where tid='event' and attr1 REGEXP 'registration|subscribe|unsubscribe|activation|contact|cart-submit' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc limit " . $lim;
+		$resultset = $db->Execute($sSQL);
+		
+		if (empty($resultset)) return null;
+		foreach ($resultset as $n=>$rec) {		
+			
+			$tokens[] = $rec['attr3']; 
+			
+			switch ($rec['attr1']) {
+				case 'registration': 	$text = localize('_reginbox',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										break; 
+				case 'activation'  : 	$text = localize('_actinbox',getlocal()); 
+										$cmd = 'cpusers.php'; 
+										break; 
+				case 'subscribe'   : 	$text = localize('_subinbox',getlocal()); 
+										$cmd = 'cpsubscribers.php'; 
+										break; 
+				case 'unsubscribe' : 	$text = localize('_unsubinbox',getlocal()); 
+										$cmd = 'cpsubscribers.php'; 
+										break; 
+				case 'cart-submit' : 	$text = localize('_sale',getlocal()); 
+										$cmd = 'cptransactions.php'; 
+										break;
+				case 'contact'     : 	$text = localize('_formsubmit',getlocal()); 
+										$cmd = 'cpform.php'; 
+										break;
+				default            : 	$text = null; 
+			}
+			
+			$tokens[] = $text;
+			$tokens[] = _m('rccontrolpanel.timeSayWhen use ' . strtotime($rec[0]));			
+			$tokens[] = $cmd;
+			
+			$ret .= $this->combine_tokens($tdata, $tokens, true);
+			unset($tokens);	
+		}
+		
+		return ($ret);			
+	}			
+	
+	
+	//cp html call, last month check 
 	public function getInactiveUsers() {
 		$db = GetGlobal('db');
 		$text = localize('_inactiveuser',getlocal());
@@ -563,7 +705,7 @@ class rcmessages  {
 		return null;
 	} 
 	
-	//last month check 
+	//cp html call, last month check 
 	public function getActiveUsers() {
 		$db = GetGlobal('db');
 		$text = localize('_newactiveuser',getlocal());

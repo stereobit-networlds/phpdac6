@@ -31,10 +31,10 @@ $__LOCALE['RCWIZARD_DPC'][0]='RCWIZARD_DPC;Wizard;Wizard';
 class rcwizard {
   
     var $title, $prpath, $urlpath, $url, $encoding;
-	var $post, $msg;
+	var $post, $msg, $seclevid;
 	var $wdata, $wstep, $weditfiles, $environment, $wizardfile;
 
-	function __construct() {
+	public function __construct() {
 		$this->prpath = paramload('SHELL','prpath'); //cp path of root app
 		$this->urlpath = paramload('SHELL','urlpath'); //root path of root app
 		$this->infolder = paramload('ID','hostinpath'); //must be null	
@@ -55,21 +55,23 @@ class rcwizard {
 		$installpath = $this->isrootapp ? 'init-app/' : '../../cp/init-app/';
 		$this->install_root_path = $this->prpath . $installpath;
 		
+		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];				
+		
 		//standart wizard file ...
 		$this->wizardfile = 'cpwizard.ini';
 		
         $this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);//session or read..; 				
-        $this->wdata = $_SESSION['wdata'] ? $_SESSION['wdata'] : $this->read_wizard_file(true);//session or read..; 		
+        $this->wdata = $_SESSION['wdata'] ? $_SESSION['wdata'] : $this->read_wizard_file(true);//session or read..; 				
 	    $this->wstep = $_SESSION['wstep'] ? $_SESSION['wstep'] : 0;
 		$this->weditfiles = $_SESSION['weditfiles'] ? $_SESSION['weditfiles'] : null;//has init initialized into edit...$this->read_html_files(true);	
 		
 	}
 	
-	function event($event=null) {
+	public function event($event=null) {
 	
 	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null; 
-	
+		
 	    switch ($event) {
 		
 		  case 'cpwizreinit' : $this->reinit_wizard();
@@ -109,7 +111,7 @@ class rcwizard {
         }			
     }
 	
-	function action($action=null) {	
+	public function action($action=null) {	
 	    //echo $this->wstep;	
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
@@ -151,6 +153,33 @@ class rcwizard {
 		   unset ($js);
 	  }   
     } 	
+	
+    protected function parse_environment($save_session=false) {	   
+		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
+	
+		if ($ret = $_SESSION['env']) {
+			$GLOBALS['ADMINSecID'] = null; // for security erase the global leave the sessionid
+			return ($ret);
+		}    
+	
+		$ini = @parse_ini_file($this->prpath . "cp.ini");
+		if (!$ini) die('Environment error!');	
+	
+		foreach ($ini as $env=>$val) {
+			if (stristr($val,',')) {
+				$uenv = explode(',',$val);
+				$ret[$env] = $uenv[$sl];  
+			}
+			else
+				$ret[$env] = $val;
+		}
+
+		if (($save_session) && (!$_SESSION['env'])) 
+			SetSessionParam('env', $ret); 		
+	
+		//print_r($ret);
+		return ($ret);
+	} 	
 
     //..as in cpmdbrec.php	
 	protected function login_wizard_step() {
@@ -820,13 +849,17 @@ EOF;
 
 	//read environment cp file
 	protected function read_env_file($save_session=false) {
-
+		
+		$ret = $this->parse_environment($save_session);
+		return ($ret);
+		
+		/* construct err
 		if (defined('RCCONTROLPANEL_DPC'))
-			$ret = GetGlobal('controller')->calldpc_method("rccontrolpanel.parse_environment use ".$save_session);
+			$ret = _m("rccontrolpanel.parse_environment use ".$save_session);
 		else
 			die('RCCONTROLPANEL_DPC required');	
 		
-		return ($ret);
+		return ($ret);*/
     }	
 
 	//write environment cp file

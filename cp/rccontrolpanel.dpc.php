@@ -1,5 +1,4 @@
 <?php
-
 $__DPCSEC['RCCONTROLPANEL_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if (!defined("RCCONTROLPANEL_DPC")) { 
@@ -7,19 +6,19 @@ define("RCCONTROLPANEL_DPC",true);
 
 $__DPC['RCCONTROLPANEL_DPC'] = 'rccontrolpanel';
 
-$a = GetGlobal('controller')->require_dpc('libs/appkey.lib.php');
-require_once($a);
+//$a = GetGlobal('controller')->require_dpc('libs/appkey.lib.php');
+//require_once($a);
  
 $__EVENTS['RCCONTROLPANEL_DPC'][0]='cp';
 $__EVENTS['RCCONTROLPANEL_DPC'][1]='cplogout';
 $__EVENTS['RCCONTROLPANEL_DPC'][2]='cplogin';
 $__EVENTS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__EVENTS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
-$__EVENTS['RCCONTROLPANEL_DPC'][5]='cptasks';
+//$__EVENTS['RCCONTROLPANEL_DPC'][5]='cptasks';
 $__EVENTS['RCCONTROLPANEL_DPC'][6]='cpzbackup';
-$__EVENTS['RCCONTROLPANEL_DPC'][7]='cpinbox';
-$__EVENTS['RCCONTROLPANEL_DPC'][8]='cpinboxno';
-$__EVENTS['RCCONTROLPANEL_DPC'][9]='cptasksno';
+//$__EVENTS['RCCONTROLPANEL_DPC'][7]='cpinbox';
+//$__EVENTS['RCCONTROLPANEL_DPC'][8]='cpinboxno';
+//$__EVENTS['RCCONTROLPANEL_DPC'][9]='cptasksno';
 $__EVENTS['RCCONTROLPANEL_DPC'][11]='cpupgrade';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
@@ -27,11 +26,11 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
 $__ACTIONS['RCCONTROLPANEL_DPC'][2]='cplogin';
 $__ACTIONS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__ACTIONS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
-$__ACTIONS['RCCONTROLPANEL_DPC'][5]='cptasks';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][5]='cptasks';
 $__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpzbackup';
-$__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpinbox';
-$__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpinboxno';
-$__ACTIONS['RCCONTROLPANEL_DPC'][9]='cptasksno';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpinbox';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpinboxno';
+//$__ACTIONS['RCCONTROLPANEL_DPC'][9]='cptasksno';
 $__ACTIONS['RCCONTROLPANEL_DPC'][11]='cpupgrade';
 
 $__LOCALE['RCCONTROLPANEL_DPC'][0]='RCCONTROLPANEL_DPC;Control Panel;Control Panel';
@@ -248,25 +247,23 @@ class rccontrolpanel {
 		$this->path = paramload('SHELL','urlpath') . $this->subpath;   		
 		$this->prpath = paramload('SHELL','prpath');	
         $this->application_path = paramload('SHELL','urlpath');			
-		
 		$this->rootapp_path = remote_paramload('RCCONTROLPANEL','rootpath',$this->prpath); 
-
 	    $this->title = localize('RCCONTROLPANEL_DPC',getlocal());		
 		
-		$this->tasks = GetSessionParam('cpTasks') ? GetSessionParam('cpTasks') : array();
-		$this->inbox = GetSessionParam('cpInbox') ? GetSessionParam('cpInbox') : array();				
 		$this->owner = $_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName');
 		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];		
 		
+		$this->gotourl = seturl('t=cp&group=' . GetReq('group'));		
 		$this->userDemoIds = array(6,7); 
 		$this->crmLevel = 9;
-		$this->gotourl = seturl('t=cp&group='.GetReq('group'));
-
 		$this->stats = array();
 		$this->cpStats = false;
 		$this->isCrm = false;	
 
-		$this->appkey = new appkey();		
+		//$this->appkey = new appkey();
+
+		$this->tasks = GetSessionParam('cpTasks') ? GetSessionParam('cpTasks') : array();
+		$this->inbox = GetSessionParam('cpInbox') ? GetSessionParam('cpInbox') : array();			
 				
 		$this->load_javascript();	
 	}
@@ -288,7 +285,7 @@ class rccontrolpanel {
 								}
 								break;
 
-		 case 'cpinboxno'   : 	//ajax call
+		 /*case 'cpinboxno'   : 	//ajax call
 								$tsk = $this->getInboxTotal();
 								die($tsk);
 								break;							 
@@ -296,14 +293,18 @@ class rccontrolpanel {
 								die($tsk);
 								break;								 
 
-		 case 'cptasksno'   : 	$this->site_stats();  
+		 case 'cptasksno'   : 	//$this->site_stats();  
 								$tsk = $this->getTasksTotal();
 								die($tsk);
 								break;	 							 
-		 case 'cptasks'     : 	$this->site_stats(); 
+		 case 'cptasks'     : 	//$this->tasks = null;
+								//SetSessionParam('cpTasks', $this->tasks); //reset tasks
+		                        //$this->site_stats(); //read space task
+								if (defined('RCULISTSTATS_DPC')) //read active campaign tasks
+									_m('rculiststats.percentofCamps');
 								$tsk = $this->getTasks();
 								die($tsk);
-								break;	   			 
+								break;*/	   			 
 	   	
          case "cplogout"    : 	$this->logout();
 								break;
@@ -341,10 +342,10 @@ class rccontrolpanel {
 									die(GetReq('report').'|'.$out); //ajax return
 									break;
 								 
-			case 'cpinboxno'   :					 
+			/*case 'cpinboxno'   :					 
 			case 'cpinbox'     : 
 			case 'cptasksno'   : 
-			case 'cptasks'     : 			
+			case 'cptasks'     : */			
 		  	case "cpinfo"      : 	break;    
 			case "cpupgrade"   :
 			case "cp"          :	
@@ -419,43 +420,43 @@ class rccontrolpanel {
 
 	//called by footer html
 	public function javascript() {		
-	
-		$js = "
-		  		
+		$cbpage = 'cpmessages.php';
+		
+		$js = " 		
 function inbox()
 {
 	$.ajax({
-	  url: 'cp.php?t=cpinboxno',
+	  url: '$cbpage?t=cpinboxno',
 	  type: 'GET',
 	  success:function(data) {			
 			$('#cpinboxno').html(data);
 			setTimeout(function() { 
 			  $.ajax({
-				url: 'cp.php?t=cpinbox',
+				url: '$cbpage?t=cpinbox',
 				type: 'GET',
 				success:function(indata) {
 					$('#cpinbox').html(indata);
 					setTimeout(function() { 
 					  $.ajax({
-						url: 'cpmessages.php?t=cpmessagesno',
+						url: '$cbpage?t=cpmessagesno',
 						type: 'GET',
 						success:function(mdata) {
 							$('#cpmessagesno').html(mdata);
 							setTimeout(function() { 
 							  $.ajax({
-								url: 'cpmessages.php?t=cpmessages',
+								url: '$cbpage?t=cpmessages',
 								type: 'GET',
 								success:function(msdata) {
 									$('#cpmessages').html(msdata);
 									setTimeout(function() { 
 									  $.ajax({
-										url: 'cp.php?t=cptasksno',
+										url: '$cbpage?t=cptasksno',
 										type: 'GET',
 										success:function(tdata) {
 											$('#cptasksno').html(tdata);
 											setTimeout(function() { 
 											  $.ajax({
-												url: 'cp.php?t=cptasks',
+												url: '$cbpage?t=cptasks',
 												type: 'GET',
 												success:function(tsdata) {
 													$('#cptasks').html(tsdata);
@@ -489,75 +490,83 @@ $(document).ready(function(){
 ";
 
 		return $js;
-	}	  
+	}	 
+
+    //public::(called also from wizards)
+    public function parse_environment($save_session=false) {	   
+		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
 	
-    //zip directory
-    protected function zip_directory($path=null, $name=null) {
-        $d = date('Ymd-Hi');
-		$zpath = $path ? $path : '';
-        $zname = $name ? $d.'-'.$name : $d.'-'.'backup.zip'; 
-		$dirname = $this->prpath . '/' . $zpath;
-  
-        //echo $dirname;
-	    if (is_dir($dirname)) {
-			$mydir = dir($dirname);
-		  
-			$zip = new ZipArchive();
-			$zfilename = $this->prpath . "/uploads/" . $zname; //to save into
-
-			if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) 
-				return false;	  
-		 
-			while ($fileread = $mydir->read ()) {
-	        
-				if (($fileread!='.') && ($fileread!='..'))  {
-					if (!is_dir($fileread))   
-						$zip->addFile($dirname."/".$fileread, $fileread);						
-				} 
+		if ($ret = $_SESSION['env']) {
+			$GLOBALS['ADMINSecID'] = null; // for security erase the global leave the sessionid
+			return ($ret);
+		}    
+	
+		$ini = @parse_ini_file($this->prpath . "cp.ini");
+		if (!$ini) die('Environment error!');	
+	
+		foreach ($ini as $env=>$val) {
+			if (stristr($val,',')) {
+				$uenv = explode(',',$val);
+				$ret[$env] = $uenv[$sl];  
 			}
-			$mydir->close ();
-		  
-			$ret = "numfiles: " . $zip->numFiles . "\n";
-			$ret .= "status:" . $zip->status . "\n";
-			$zip->close();		  
-        }
+			else
+				$ret[$env] = $val;
+		}
 
+		if (($save_session) && (!$_SESSION['env'])) 
+			SetSessionParam('env', $ret); 		
+	
+		//print_r($ret);
 		return ($ret);
-    }    			
-  
-	public function get_user_name($nopro=0) {
-		if ((GetSessionParam('LOGIN')) && ($user=GetSessionParam('USER')))
-			return ($user);	
+	}   	
+	
+    public function select_timeline($template=null, $year=null, $month=null) {
+		$t = GetReq('t') ? GetReq('t') : 'cp';
+		$year = GetParam('year') ? GetParam('year') : date('Y'); 
+	    $month = GetParam('month') ? GetParam('month') : date('m');
+		$daterange = GetParam('rdate');
+			
+	    if ($template) {
+			
+			$tdata = _m("cmsrt.select_template use $template+1");
+			
+			for ($y=$y=(date('Y')-2); $y<=intval(date('Y')); $y++) {
+				$yearsli .= '<li>'. seturl('t='.$t.'&month='.$month.'&year='.$y, $y) .'</li>';
+			}
+		
+			for ($m=1;$m<=12;$m++) {
+				$mm = sprintf('%02d',$m);
+				$monthsli .= '<li>' . seturl('t='.$t.'&month='.$mm.'&year='.$year, $mm) .'</li>';
+			}	  
+			
+			//call cpGet from rcpmenu not this (only def action)
+			$cpGet = _v('rcpmenu.cpGet');	
+			$csep = _m('cmsrt.sep');
+			if ($id = $cpGet['id'])
+				$section = ' &gt; ' . $this->getItemName($id);
+			elseif ($cat = $cpGet['cat'])
+				$section = ' &gt; ' . str_replace($csep, ' &gt; ', _m("cmsrt.replace_spchars use $cat+1"));
+			else
+				$section = null;
 	  
-		return false;	  
-	}
-
-  
-    protected function autoupdate() {
+	        $posteddaterange = $daterange ? ' &gt; ' . $daterange : ($year ? ' &gt; ' . $month . ' ' . $year : null) ;
+	  
+			$tokens[] = localize('RCCONTROLPANEL_DPC',getlocal()) . $section . $posteddaterange; 
+			$tokens[] = $year;
+			$tokens[] = $month;
+			$tokens[] = localize('_year',getlocal());
+			$tokens[] = $yearsli;
+			$tokens[] = localize('_month',getlocal());			
+			$tokens[] = $monthsli;	
+            $tokens[] = $daterange;			
 		
-		//echo $_SERVER['PHP_SELF'];
-		/*$rf = file_get_contents('http://www.stereobit.com/cp/cp.php');
-		$hf = file_get_contents($this->path .'/cp.php');
-		if (strlen($rf)!=strlen($hf)) {
-			echo 'must update...';
-		}*/
-	}
-  
-    public function getencoding() {
-		return ($this->charset);
-    }
-  
-    protected function logout() {
-  
-		SetSessionParam('LOGIN',null);
-		SetSessionParam('USER',null);
-		SetSessionParam('env',null);
-		//SetSessionParam('ADMIN',null); //to not propagated!?just close navigator window
+			$ret = $this->combine_tokens($tdata, $tokens); 				
+     
+			return ($ret);
+		}
 		
-		SetSessionParam('turl', null);		
-		SetSessionParam('turldecoded', null);
-		SetSessionParam('cpGet', null);		
-    }
+		return null;	
+    }	
   
  	public function sqlDateRange($fieldname, $istimestamp=false, $and=false) {
 		$sqland = $and ? ' AND' : null;
@@ -596,6 +605,17 @@ $(document).ready(function(){
 		
 		return ($dateSQL);
 	} 
+	
+	public function getStats($section=null, $subsection=null) {
+		if (!$section) return 0;
+
+		$sb = $subsection ? $subsection : 'value';
+		return ($this->stats[$section][$sb]);
+	}	
+	
+	public function isStats() {
+		return (!empty($this->stats) ? true : false);
+	}	
   
     protected function site_stats() {
 		$db = GetGlobal('db'); 	
@@ -606,7 +626,7 @@ $(document).ready(function(){
 		$fs = $this->free_space();
 		//if $total_size<0 ...goto upgrade.....		
 		if ($fs < 0)
-			$this->setTask('danger|Upgrade your hosting plan|99');		
+			$this->setTask('danger|Upgrade your hosting plan|99');
 		
         if ($id = $this->cpGet['id']) {
 			//return (0); //test bypass
@@ -976,14 +996,10 @@ $(document).ready(function(){
 
 	  }
 	  else {
-		//$result = mysql_query( “SHOW TABLE STATUS” );
 		$sSQL = "SHOW TABLE STATUS";
 		$res = $db->Execute($sSQL,2);		
-		//print_r($res);
+
 		$size = 0;
-		/*while( $row = mysql_fetch_array( $result ) ) {  
-        $dbsize += $row[ "Data_length" ] + $row[ "Index_length" ];
-		} */
 		if (!empty($res)) { 
 			foreach ($res as $n=>$rec) {
 				$size += $rec[ "Data_length" ] + $rec[ "Index_length" ];					
@@ -1115,94 +1131,8 @@ $(document).ready(function(){
 		
 		return ($ok);
 	}
-	
-    //public::(called also from wizards)
-    public function parse_environment($save_session=false) {	   
-		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
-	
-		if ($ret = $_SESSION['env']) {
-			$GLOBALS['ADMINSecID'] = null; // for security erase the global leave the sessionid
-			return ($ret);
-		}    
-	
-		$ini = @parse_ini_file($this->prpath . "cp.ini");
-		if (!$ini) die('Environment error!');	
-	
-		foreach ($ini as $env=>$val) {
-			if (stristr($val,',')) {
-				$uenv = explode(',',$val);
-				$ret[$env] = $uenv[$sl];  
-			}
-			else
-				$ret[$env] = $val;
-		}
 
-		if (($save_session) && (!$_SESSION['env'])) 
-			SetSessionParam('env', $ret); 		
-	
-		//print_r($ret);
-		return ($ret);
-	}   	
-	
-    public function select_timeline($template=null, $year=null, $month=null) {
-		$t = GetReq('t') ? GetReq('t') : 'cp';
-		$year = GetParam('year') ? GetParam('year') : date('Y'); 
-	    $month = GetParam('month') ? GetParam('month') : date('m');
-		$daterange = GetParam('rdate');
-			
-	    if ($template) {
-			
-			$tdata = _m("cmsrt.select_template use $template+1");
-			
-			for ($y=$y=(date('Y')-2); $y<=intval(date('Y')); $y++) {
-				$yearsli .= '<li>'. seturl('t='.$t.'&month='.$month.'&year='.$y, $y) .'</li>';
-			}
-		
-			for ($m=1;$m<=12;$m++) {
-				$mm = sprintf('%02d',$m);
-				$monthsli .= '<li>' . seturl('t='.$t.'&month='.$mm.'&year='.$year, $mm) .'</li>';
-			}	  
-			
-			//call cpGet from rcpmenu not this (only def action)
-			$cpGet = _v('rcpmenu.cpGet');	
-			$csep = _m('cmsrt.sep');
-			if ($id = $cpGet['id'])
-				$section = ' &gt; ' . $this->getItemName($id);
-			elseif ($cat = $cpGet['cat'])
-				$section = ' &gt; ' . str_replace($csep, ' &gt; ', _m("cmsrt.replace_spchars use $cat+1"));
-			else
-				$section = null;
-	  
-	        $posteddaterange = $daterange ? ' &gt; ' . $daterange : ($year ? ' &gt; ' . $month . ' ' . $year : null) ;
-	  
-			$tokens[] = localize('RCCONTROLPANEL_DPC',getlocal()) . $section . $posteddaterange; 
-			$tokens[] = $year;
-			$tokens[] = $month;
-			$tokens[] = localize('_year',getlocal());
-			$tokens[] = $yearsli;
-			$tokens[] = localize('_month',getlocal());			
-			$tokens[] = $monthsli;	
-            $tokens[] = $daterange;			
-		
-			$ret = $this->combine_tokens($tdata, $tokens); 				
-     
-			return ($ret);
-		}
-		
-		return null;	
-    }
-
-	public function getStats($section=null, $subsection=null) {
-		if (!$section) return 0;
-
-		$sb = $subsection ? $subsection : 'value';
-		return ($this->stats[$section][$sb]);
-	}	
-	
-	public function isStats() {
-		return (!empty($this->stats) ? true : false);
-	}
-	
+	/*
 	public function getTasksTotal() { 
 		$ret = (empty($this->tasks)) ? null : strval(count($this->tasks));
 		return $ret;		
@@ -1235,7 +1165,9 @@ $(document).ready(function(){
 		
 		return ($ret);			
 	}	
+	*/
 	
+	//set task method
 	public function setTask($task=null) {
 		if (!$task) return false;
 		$id = explode('|',$task);
@@ -1266,6 +1198,7 @@ $(document).ready(function(){
 		return ($ret);
 	}	
 	
+	//set inbox method
 	public function setInbox($message=null) {
 		$db = GetGlobal('db');
 		if (!$message) return false;
@@ -1285,7 +1218,7 @@ $(document).ready(function(){
 	}	
 	
 	/* cp header inbox */ 	
-	public function getInboxTotal() {
+	/*public function getInboxTotal() {
 		//$ret = (empty($this->inbox)) ? 0 : count($this->inbox);
 		$db = GetGlobal('db');	
 		$sSQL = "SELECT count(id) from stats where tid='event' and attr1 REGEXP 'registration|subscribe|unsubscribe|activation|contact|cart-submit' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc";
@@ -1339,7 +1272,75 @@ $(document).ready(function(){
 		}
 		
 		return ($ret);			
-	}		
+	}	*/	
+	
+    //zip directory
+    protected function zip_directory($path=null, $name=null) {
+        $d = date('Ymd-Hi');
+		$zpath = $path ? $path : '';
+        $zname = $name ? $d.'-'.$name : $d.'-'.'backup.zip'; 
+		$dirname = $this->prpath . '/' . $zpath;
+  
+        //echo $dirname;
+	    if (is_dir($dirname)) {
+			$mydir = dir($dirname);
+		  
+			$zip = new ZipArchive();
+			$zfilename = $this->prpath . "/uploads/" . $zname; //to save into
+
+			if ($zip->open($zfilename, ZipArchive::CREATE)!==TRUE) 
+				return false;	  
+		 
+			while ($fileread = $mydir->read ()) {
+	        
+				if (($fileread!='.') && ($fileread!='..'))  {
+					if (!is_dir($fileread))   
+						$zip->addFile($dirname."/".$fileread, $fileread);						
+				} 
+			}
+			$mydir->close ();
+		  
+			$ret = "numfiles: " . $zip->numFiles . "\n";
+			$ret .= "status:" . $zip->status . "\n";
+			$zip->close();		  
+        }
+
+		return ($ret);
+    }    			
+  
+	public function get_user_name($nopro=0) {
+		if ((GetSessionParam('LOGIN')) && ($user=GetSessionParam('USER')))
+			return ($user);	
+	  
+		return false;	  
+	}
+
+  
+    protected function autoupdate() {
+		
+		//echo $_SERVER['PHP_SELF'];
+		/*$rf = file_get_contents('http://www.stereobit.com/cp/cp.php');
+		$hf = file_get_contents($this->path .'/cp.php');
+		if (strlen($rf)!=strlen($hf)) {
+			echo 'must update...';
+		}*/
+	}
+  
+    public function getencoding() {
+		return ($this->charset);
+    }
+  
+    protected function logout() {
+  
+		SetSessionParam('LOGIN',null);
+		SetSessionParam('USER',null);
+		SetSessionParam('env',null);
+		//SetSessionParam('ADMIN',null); //to not propagated!?just close navigator window
+		
+		SetSessionParam('turl', null);		
+		SetSessionParam('turldecoded', null);
+		SetSessionParam('cpGet', null);		
+    }	
 
 	public function getItemName($id) {
 		if (!$id) return null;
