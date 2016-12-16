@@ -180,4 +180,19 @@ function get_tag( $attr, $value, $xml, $tag=null ) {
   return $matches[3];
 }
 
+    function unlinkRecursive($dir) {
+		if (!$dh = @opendir($dir)) return "Warning: folder $dir couldn't be read by PHP";
+		while (false !== ($obj = readdir($dh))) {
+			if ($obj == '.' || $obj == '..') {
+				continue;
+			}
+			if (!@unlink($dir . '/' . $obj)) {
+				unlinkRecursive($dir . '/' . $obj, true);
+			}
+		}
+		closedir($dh);
+		@rmdir($dir);
+		return "Folder $dir deleted!";
+	}	
+
 ?>

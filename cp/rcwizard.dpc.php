@@ -60,10 +60,10 @@ class rcwizard {
 		//standart wizard file ...
 		$this->wizardfile = 'cpwizard.ini';
 		
-        $this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true);//session or read..; 				
-        $this->wdata = $_SESSION['wdata'] ? $_SESSION['wdata'] : $this->read_wizard_file(true);//session or read..; 				
+        $this->environment = $_SESSION['env'] ? $_SESSION['env'] : $this->read_env_file(true); 				
+        $this->wdata = $_SESSION['wdata'] ? $_SESSION['wdata'] : $this->read_wizard_file(true);				
 	    $this->wstep = $_SESSION['wstep'] ? $_SESSION['wstep'] : 0;
-		$this->weditfiles = $_SESSION['weditfiles'] ? $_SESSION['weditfiles'] : null;//has init initialized into edit...$this->read_html_files(true);	
+		$this->weditfiles = $_SESSION['weditfiles'] ? $_SESSION['weditfiles'] : null;	
 		
 	}
 	
@@ -112,30 +112,31 @@ class rcwizard {
     }
 	
 	public function action($action=null) {	
-	    //echo $this->wstep;	
+	
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;
 	
 	    switch ($action) {	
 
-		  case 'cpwizreinit' :  $out .= 'Please exit and re-enter the control panel!';
-		                        //$out .= $this->wizard_step();//..if already in session done, goto finish
-                                break;	
+		  case 'cpwizreinit':   $out .= 'Please exit and re-enter the control panel!';
+								//$out .= $this->wizard_step();//..if already in session done, goto finish
+								break;	
 		
-		  case 'cpwizlogin':   $out .= $this->wizard_step(); //current step reload... 
-		                       break;
+		  case 'cpwizlogin':   	$out .= $this->wizard_step(); //current step reload... 
+								break;
 		
-		  case 'cpwizsave' :   //if ($this->msg) //some kind of error
-		                       $out .= $this->completed_step($this->msg);
-		                       break; 
+		  case 'cpwizsave' :   	//if ($this->msg) //some kind of error
+								$out .= $this->completed_step($this->msg);
+								break; 
 		  case 'cpwiznext' :
 		  case 'cpwizprev' :
 		  case 'cpwizskip' :
 		  
 		  case 'cpwizard'  :	
           case 'cpmwiz'    :
-		  default          :   //print_r($this->wdata);//$this->read_wizard_file());
-		                       $out .= $this->wizard_step();//'wizard!';
+		  default          :   	//print_r($this->wdata);
+								//$this->read_wizard_file());
+								$out .= $this->wizard_step();
 		 						  
         }
 		
@@ -179,7 +180,22 @@ class rcwizard {
 	
 		//print_r($ret);
 		return ($ret);
-	} 	
+	} 
+
+	//read environment cp file
+	protected function read_env_file($save_session=false) {
+		
+		$ret = $this->parse_environment($save_session);
+		return ($ret);
+		
+		/* construct err
+		if (defined('RCCONTROLPANEL_DPC'))
+			$ret = _m("rccontrolpanel.parse_environment use ".$save_session);
+		else
+			die('RCCONTROLPANEL_DPC required');	
+		
+		return ($ret);*/
+    }	
 
     //..as in cpmdbrec.php	
 	protected function login_wizard_step() {
@@ -845,22 +861,7 @@ EOF;
 		
 		$ret = $fmeter ? $fmeter : null;
 		return ($ret);
-	}	
-
-	//read environment cp file
-	protected function read_env_file($save_session=false) {
-		
-		$ret = $this->parse_environment($save_session);
-		return ($ret);
-		
-		/* construct err
-		if (defined('RCCONTROLPANEL_DPC'))
-			$ret = _m("rccontrolpanel.parse_environment use ".$save_session);
-		else
-			die('RCCONTROLPANEL_DPC required');	
-		
-		return ($ret);*/
-    }	
+	}		
 
 	//write environment cp file
 	protected function write_env_file($module,$mvalue=1,$reload_env_session=false) {

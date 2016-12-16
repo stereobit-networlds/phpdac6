@@ -5,33 +5,22 @@ if (!defined("RCCONTROLPANEL_DPC")) {
 define("RCCONTROLPANEL_DPC",true);
 
 $__DPC['RCCONTROLPANEL_DPC'] = 'rccontrolpanel';
-
-//$a = GetGlobal('controller')->require_dpc('libs/appkey.lib.php');
-//require_once($a);
  
 $__EVENTS['RCCONTROLPANEL_DPC'][0]='cp';
 $__EVENTS['RCCONTROLPANEL_DPC'][1]='cplogout';
 $__EVENTS['RCCONTROLPANEL_DPC'][2]='cplogin';
 $__EVENTS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__EVENTS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
-//$__EVENTS['RCCONTROLPANEL_DPC'][5]='cptasks';
-$__EVENTS['RCCONTROLPANEL_DPC'][6]='cpzbackup';
-//$__EVENTS['RCCONTROLPANEL_DPC'][7]='cpinbox';
-//$__EVENTS['RCCONTROLPANEL_DPC'][8]='cpinboxno';
-//$__EVENTS['RCCONTROLPANEL_DPC'][9]='cptasksno';
-$__EVENTS['RCCONTROLPANEL_DPC'][11]='cpupgrade';
+$__EVENTS['RCCONTROLPANEL_DPC'][5]='cpzbackup';
+$__EVENTS['RCCONTROLPANEL_DPC'][6]='cpupgrade';
 
 $__ACTIONS['RCCONTROLPANEL_DPC'][0]='cp';
 $__ACTIONS['RCCONTROLPANEL_DPC'][1]='cplogout';
 $__ACTIONS['RCCONTROLPANEL_DPC'][2]='cplogin';
 $__ACTIONS['RCCONTROLPANEL_DPC'][3]='cpinfo';
 $__ACTIONS['RCCONTROLPANEL_DPC'][4]='cpchartshow';
-//$__ACTIONS['RCCONTROLPANEL_DPC'][5]='cptasks';
-$__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpzbackup';
-//$__ACTIONS['RCCONTROLPANEL_DPC'][7]='cpinbox';
-//$__ACTIONS['RCCONTROLPANEL_DPC'][8]='cpinboxno';
-//$__ACTIONS['RCCONTROLPANEL_DPC'][9]='cptasksno';
-$__ACTIONS['RCCONTROLPANEL_DPC'][11]='cpupgrade';
+$__ACTIONS['RCCONTROLPANEL_DPC'][5]='cpzbackup';
+$__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpupgrade';
 
 $__LOCALE['RCCONTROLPANEL_DPC'][0]='RCCONTROLPANEL_DPC;Control Panel;Control Panel';
 $__LOCALE['RCCONTROLPANEL_DPC'][1]='_BACKCP;Back;Επιστροφή';
@@ -225,6 +214,8 @@ $__LOCALE['RCCONTROLPANEL_DPC'][184]='_fblogin;Login (fb);Σύνδεση (fb)';
 $__LOCALE['RCCONTROLPANEL_DPC'][185]='_reginbox;Registration;Εγγραφή';
 $__LOCALE['RCCONTROLPANEL_DPC'][186]='_actinbox;Activation;Ενεργοποίηση';
 $__LOCALE['RCCONTROLPANEL_DPC'][187]='_logfail;Login failed;Αποτυχημένη είσοδος';
+$__LOCALE['RCCONTROLPANEL_DPC'][188]='_upgradeplan;Please upgrade your hosting plan;Παρακαλώ αυξήστε τον χώρο φιλοξενίας';
+$__LOCALE['RCCONTROLPANEL_DPC'][189]='_sizeconsumed;Size near to limit;Κατανάλωση χωρητικότητας';
 
 class rccontrolpanel {
 
@@ -260,8 +251,6 @@ class rccontrolpanel {
 		$this->cpStats = false;
 		$this->isCrm = false;	
 
-		//$this->appkey = new appkey();
-
 		$this->tasks = GetSessionParam('cpTasks') ? GetSessionParam('cpTasks') : array();
 		$this->inbox = GetSessionParam('cpInbox') ? GetSessionParam('cpInbox') : array();			
 				
@@ -283,28 +272,7 @@ class rccontrolpanel {
 									$this->hasgraph = _m("swfcharts.create_chart_data use $report");
 									$this->gotourl = seturl('t=cpchartshow&group='.GetReq('group').'&ai=1&report='.$report.'&statsid=');
 								}
-								break;
-
-		 /*case 'cpinboxno'   : 	//ajax call
-								$tsk = $this->getInboxTotal();
-								die($tsk);
-								break;							 
-		 case 'cpinbox'     : 	$tsk = $this->getInbox();
-								die($tsk);
-								break;								 
-
-		 case 'cptasksno'   : 	//$this->site_stats();  
-								$tsk = $this->getTasksTotal();
-								die($tsk);
-								break;	 							 
-		 case 'cptasks'     : 	//$this->tasks = null;
-								//SetSessionParam('cpTasks', $this->tasks); //reset tasks
-		                        //$this->site_stats(); //read space task
-								if (defined('RCULISTSTATS_DPC')) //read active campaign tasks
-									_m('rculiststats.percentofCamps');
-								$tsk = $this->getTasks();
-								die($tsk);
-								break;*/	   			 
+								break;	   			 
 	   	
          case "cplogout"    : 	$this->logout();
 								break;
@@ -341,11 +309,7 @@ class rccontrolpanel {
 										$out = "<h3>".localize('_GNAVAL',0)."</h3>";	
 									die(GetReq('report').'|'.$out); //ajax return
 									break;
-								 
-			/*case 'cpinboxno'   :					 
-			case 'cpinbox'     : 
-			case 'cptasksno'   : 
-			case 'cptasks'     : */			
+								 		
 		  	case "cpinfo"      : 	break;    
 			case "cpupgrade"   :
 			case "cp"          :	
@@ -493,7 +457,7 @@ $(document).ready(function(){
 	}	 
 
     //public::(called also from wizards)
-    public function parse_environment($save_session=false) {	   
+    /*public function parse_environment($save_session=false) {	   
 		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
 	
 		if ($ret = $_SESSION['env']) {
@@ -518,7 +482,7 @@ $(document).ready(function(){
 	
 		//print_r($ret);
 		return ($ret);
-	}   	
+	} */  	
 	
     public function select_timeline($template=null, $year=null, $month=null) {
 		$t = GetReq('t') ? GetReq('t') : 'cp';
@@ -626,7 +590,7 @@ $(document).ready(function(){
 		$fs = $this->free_space();
 		//if $total_size<0 ...goto upgrade.....		
 		if ($fs < 0)
-			$this->setTask('danger|Upgrade your hosting plan|99');
+			$this->setTask('danger|'.localize('_upgradeplan', getlocal()).'|99');
 		
         if ($id = $this->cpGet['id']) {
 			//return (0); //test bypass
@@ -1061,11 +1025,11 @@ $(document).ready(function(){
 
 		/*size % used check */
 		if ($this->stats['Diskspace']['remainsizepercent'] > 90) 
-			$this->setTask('danger|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size in use|'.$this->stats['Diskspace']['remainsizepercent'].'|#');	
+			$this->setTask('danger|'. localize('_sizeconsumed', getlocal()) .'|'.$this->stats['Diskspace']['remainsizepercent'].'|#');	
 		elseif ($this->stats['Diskspace']['remainsizepercent'] > 80) 
-			$this->setTask('warning|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size in use|'.$this->stats['Diskspace']['remainsizepercent'].'|#');	
+			$this->setTask('warning|'. localize('_sizeconsumed', getlocal()) .'|'.$this->stats['Diskspace']['remainsizepercent'].'|#');	
 		elseif ($this->stats['Diskspace']['remainsizepercent'] > 70) 
-			$this->setTask('info|'. $this->stats['Diskspace']['remainsizepercent'] .'% of size in use|'.$this->stats['Diskspace']['remainsizepercent'].'|#');			
+			$this->setTask('info|'. localize('_sizeconsumed', getlocal()) .'|'.$this->stats['Diskspace']['remainsizepercent'].'|#');			
 
 		return ($remain_size);	
 	}
@@ -1131,41 +1095,6 @@ $(document).ready(function(){
 		
 		return ($ok);
 	}
-
-	/*
-	public function getTasksTotal() { 
-		$ret = (empty($this->tasks)) ? null : strval(count($this->tasks));
-		return $ret;		
-	}		
-
-	public function getTasks($limit=null) {
-		if (empty($this->tasks)) return null;
-		//print_r($this->tasks);
-		$tokens = array(); 
-		$lim = $limit ? $limit : 6;
-		$msgs = array_reverse($this->tasks, true);
-		$i = 0;
-		foreach ($msgs as $n=>$m) {
-			$tokens = explode('|', $m); 
-			switch (array_shift($tokens)) {
-				case 'active'    : $tmpl = 'dropdown-task-progress-active'; break;
-				case 'success'   : $tmpl = 'dropdown-task-progress-success'; break;
-				case 'warning'   : $tmpl = 'dropdown-task-progress-warning'; break;
-				case 'danger'    : $tmpl = 'dropdown-task-progress-danger'; break;
-				case 'info'      :
-				default          : $tmpl = 'dropdown-task-progress-info';
-				
-			}
-			$tdata = _m("cmsrt.select_template use $tmpl+1");
-			$ret .= $this->combine_tokens($tdata, $tokens, true);
-			unset($tokens);	
-			$i+=1;
-			if ($i>$lim) break;
-		}
-		
-		return ($ret);			
-	}	
-	*/
 	
 	//set task method
 	public function setTask($task=null) {
@@ -1173,13 +1102,13 @@ $(document).ready(function(){
 		$id = explode('|',$task);
 		$hash = md5($id[0].$id[1]);
 		
-		if (array_key_exists($hash, $this->tasks)) {}
-		else {
+		//if (array_key_exists($hash, $this->tasks)) {}
+		//else {
 			$this->tasks[$hash] = $task;
 			SetSessionParam('cpTasks', $this->tasks);
 			return true;
-		}
-		return false;	
+		//}
+		//return false;	
 	}
 	
 	public function viewTasks($template=null) {
@@ -1216,63 +1145,6 @@ $(document).ready(function(){
 		}
 		return false;	
 	}	
-	
-	/* cp header inbox */ 	
-	/*public function getInboxTotal() {
-		//$ret = (empty($this->inbox)) ? 0 : count($this->inbox);
-		$db = GetGlobal('db');	
-		$sSQL = "SELECT count(id) from stats where tid='event' and attr1 REGEXP 'registration|subscribe|unsubscribe|activation|contact|cart-submit' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc";
-		$result = $db->Execute($sSQL);		
-		$ret = $result->fields[0];
-		
-		return ($ret>10) ? '10' : strval($ret);		
-	}
-
-	public function getInbox($limit=null) {
-		$db = GetGlobal('db');	
-		$lim = $limit ? $limit : 10;
-		$tdata = _m('cmsrt.select_template use dropdown-inbox-message+1');
-		
-		$sSQL = "SELECT date,tid,attr1,attr3 from stats where tid='event' and attr1 REGEXP 'registration|subscribe|unsubscribe|activation|contact|cart-submit' and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ) ) AND DATE ( NOW() ) order by date desc limit " . $lim;
-		$resultset = $db->Execute($sSQL);
-		
-		if (empty($resultset)) return null;
-		foreach ($resultset as $n=>$rec) {		
-			
-			$tokens[] = $rec['attr3']; 
-			
-			switch ($rec['attr1']) {
-				case 'registration': 	$text = localize('_reginbox',getlocal()); 
-										$cmd = 'cpusers.php'; 
-										break; 
-				case 'activation'  : 	$text = localize('_actinbox',getlocal()); 
-										$cmd = 'cpusers.php'; 
-										break; 
-				case 'subscribe'   : 	$text = localize('_subinbox',getlocal()); 
-										$cmd = 'cpsubscribers.php'; 
-										break; 
-				case 'unsubscribe' : 	$text = localize('_unsubinbox',getlocal()); 
-										$cmd = 'cpsubscribers.php'; 
-										break; 
-				case 'cart-submit' : 	$text = localize('_sale',getlocal()); 
-										$cmd = 'cptransactions.php'; 
-										break;
-				case 'contact'     : 	$text = localize('_formsubmit',getlocal()); 
-										$cmd = 'cpform.php'; 
-										break;
-				default            : 	$text = null; 
-			}
-			
-			$tokens[] = $text;
-			$tokens[] = $this->timeSayWhen(strtotime($rec[0]));			
-			$tokens[] = $cmd;
-			
-			$ret .= $this->combine_tokens($tdata, $tokens, true);
-			unset($tokens);	
-		}
-		
-		return ($ret);			
-	}	*/	
 	
     //zip directory
     protected function zip_directory($path=null, $name=null) {
@@ -1315,7 +1187,6 @@ $(document).ready(function(){
 		return false;	  
 	}
 
-  
     protected function autoupdate() {
 		
 		//echo $_SERVER['PHP_SELF'];

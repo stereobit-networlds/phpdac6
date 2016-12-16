@@ -1,18 +1,18 @@
 <?php
-$__DPCSEC['RCUPGRADE_DPC']='1;1;1;1;1;1;2;2;9;9;9';
+$__DPCSEC['RCUPGRADER_DPC']='1;1;1;1;1;1;2;2;9;9;9';
 
-if ( (!defined("RCUPGRADE_DPC")) && (seclevel('RCUPGRADE_DPC',decode(GetSessionParam('UserSecID')))) ) {
-define("RCUPGRADE_DPC",true);
+if ( (!defined("RCUPGRADER_DPC")) && (seclevel('RCUPGRADER_DPC',decode(GetSessionParam('UserSecID')))) ) {
+define("RCUPGRADER_DPC",true);
 
-$__DPC['RCUPGRADE_DPC'] = 'rcupgrade';
+$__DPC['RCUPGRADER_DPC'] = 'rcupgrader';
 
-$__EVENTS['RCUPGRADE_DPC'][0]='cpupgrade';
-$__EVENTS['RCUPGRADE_DPC'][1]='cpmupgrade';
+$__EVENTS['RCUPGRADER_DPC'][0]='cpupgrader';
+$__EVENTS['RCUPGRADER_DPC'][1]='cpmupgrader';
 
-$__ACTIONS['RCUPGRADE_DPC'][0]='cpupgrade';
-$__ACTIONS['RCUPGRADE_DPC'][1]='cpmupgrade';
+$__ACTIONS['RCUPGRADER_DPC'][0]='cpupgrader';
+$__ACTIONS['RCUPGRADER_DPC'][1]='cpmupgrader';
 
-class rcupgrade {
+class rcupgrader {
 	
 	var $urlpath, $url, $prpath, $isrootapp;	
     var $upgrade_root_path, $update_root_path;
@@ -50,11 +50,11 @@ class rcupgrade {
 	
 	    switch ($event) {
 			
-		  case 'cpmupgrade': 	echo $this->upgradeapp_ajax(); die();	
+		  case 'cpmupgrader': 	echo $this->upgradeapp_ajax(); die();	
 								break;			
 		
-          case 'cpupgrade' : 
-		  default          : 	$this->javascript();
+          case 'cpupgrader' : 
+		  default           : 	$this->javascript();
 		                     
         }			
     }
@@ -66,9 +66,9 @@ class rcupgrade {
 	
 	    switch ($action) {	
 		
-		  case 'cpmupgrade'	:   break;		
+		  case 'cpmupgrader':   break;		
 							 	
-          case 'cpupgrade' 	:
+          case 'cpupgrader' :
           default          	: 	if ($this->isremote)
 									$out = $this->remote_runscan();
 								else
@@ -449,7 +449,7 @@ Scan executed in $elapsed seconds.\r\n";
 	protected function serverRequest($file=null) {
 		$ch = curl_init();
 
-		curl_setopt($ch, CURLOPT_URL,"http://www.xix.gr/upgrade/cpupgrader.php");
+		curl_setopt($ch, CURLOPT_URL,"http://www.xix.gr/upg.php");
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, array('app'=>$this->app, 
 												   'file'=>$file,

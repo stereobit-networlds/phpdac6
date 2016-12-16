@@ -7,12 +7,16 @@ define("SHTRANSACTIONS_DPC",true);
 
 $__DPC['SHTRANSACTIONS_DPC'] = 'shtransactions';
 
-$d = GetGlobal('controller')->require_dpc('bshop/transactions.dpc.php');
-require_once($d);
+$a = GetGlobal('controller')->require_dpc('bshop/transactions.dpc.php');
+require_once($a);
 
 //in case of page cntrl pxml not exist so load
-$d = GetGlobal('controller')->require_dpc('shell/pxml.lib.php');
-require_once($d);
+$b = GetGlobal('controller')->require_dpc('libs/browser2.lib.php');
+require_once($b);
+
+//in case of page cntrl pxml not exist so load
+$c = GetGlobal('controller')->require_dpc('shell/pxml.lib.php');
+require_once($c);
 
 //this transfer all actions,commands,attr from parent to child and parent disabled(=null)
 //it is important for inherit to still procced the commands of parent
@@ -214,22 +218,15 @@ class shtransactions extends transactions {
 			//d must be serialized array of tokens when template	
 			$d = unserialize($data);		
 		
-			if ($template) {
-				//printout template
-				$printcart_template = $template;
-				$tm = $this->prpath . 'html/'. str_replace('.',getlocal().'.',$printcart_template) ;
-				//echo $tm;
-			} 		
-		
-			if (($tm) && (is_readable($tm))) {
-				//echo $tm;
-				$myprintcarttemplate = @file_get_contents($tm);
-		  
+			//if ($template) {
+
+				$myprintcarttemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
+
 				//tokens=array=d seems to not come ok..so recall
-				$tokens[] = GetGlobal('controller')->calldpc_var('shcart.transaction_id');//$this->transaction_id;
-				if (iniload('JAVASCRIPT'))
-					$tokens[] = GetGlobal('controller')->calldpc_method('javascript.JS_function use js_printwin+'.localize('_PRINT',getlocal()));
-				else
+				$tokens[] = _v('shcart.transaction_id');//$this->transaction_id;
+				/*if (iniload('JAVASCRIPT'))
+					$tokens[] = _m('javascript.JS_function use js_printwin+'.localize('_PRINT',getlocal()));
+				else*/
 					$tokens[] = '&nbsp;';//dummy
 				
 				//echo $user,'>',$fkey;
@@ -238,13 +235,13 @@ class shtransactions extends transactions {
 				$tokens[] = GetSessionParam('ordercart');
 		  
 				$dd = $this->combine_tokens($myprintcarttemplate,$tokens,true);		
-			}
+			/*}
 			else {
 				$headtitle = paramload('SHELL','urltitle');			
 				$hpage = new phtml('../themes/style.css',$d,"<B><h1>$headtitle</h1></B>");
 				$dd = $hpage->render();
 				unset($hpage);		
-			}
+			}*/
 		}//if
 		
         $fd = fopen($file, 'w');
@@ -528,7 +525,7 @@ class shtransactions extends transactions {
 		}	
 		
 		$data[] = $line;
-		
+
 		$mytemplate = _m('cmsrt.select_template use fptrans');
 		$out = $this->combine_tokens($mytemplate,$data);		
 			
@@ -562,34 +559,30 @@ class shtransactions extends transactions {
 		return null;//deactivate
 	}	
 
-	//tokens method	 $x
-	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
-	
+	protected function combine_tokens(&$template_contents, $tokens, $execafter=null) {
 	    if (!is_array($tokens)) return;
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template_contents);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template_contents;
+			$ret = $template_contents;
 		  
 	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
-		    $ret = str_replace("$".$i,$tok,$ret);
+		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
-		//clean unused token marks
-		for ($x=$i;$x<20;$x++)
-		  $ret = str_replace("$".$x,'',$ret);
+
+		for ($x=$i;$x<40;$x++)
+			$ret = str_replace("$".$x."$",'',$ret);
 		
-		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
           
-		  return ($retout);
+			return ($retout);
 		}		
 		
 		return ($ret);

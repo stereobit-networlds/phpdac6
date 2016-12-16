@@ -6,8 +6,11 @@ define("SHCART_DPC",true);
 
 $__DPC['SHCART_DPC'] = 'shcart';
 
-$d = GetGlobal('controller')->require_dpc('bshop/storebuffer.lib.php');
-require_once($d);
+$a = GetGlobal('controller')->require_dpc('bshop/storebuffer.lib.php');
+require_once($a);
+
+$b = GetGlobal('controller')->require_dpc('bshop/mchoice.dpc.php');
+require_once($b);
 
 $__LOCALE['SHCART_DPC'][99]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
 
