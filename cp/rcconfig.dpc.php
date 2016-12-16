@@ -61,10 +61,10 @@ $__LOCALE['RCCONFIG_DPC'][36]='INDEX;My configuration;Οι ρυθμίσεις μ
 $__LOCALE['RCCONFIG_DPC'][37]='ESHOP;e-shop;e-shop;';
 $__LOCALE['RCCONFIG_DPC'][38]='RCSHSUBSQUEUE;Mail queue;Αποστολές email;';
 
-/*************************************************************************
-WARNING :TO OVERWRITE CONFIG VALUES USE THIS CLASS AS SUPER IN PHP FILES
-**************************************************************************/
+$__LOCALE['RCCONFIG_DPC'][98]='_edit;Edit;Επεξεργασία;';
+$__LOCALE['RCCONFIG_DPC'][99]='_del;Del;Αφαίρεση;';
 
+//WARNING :TO OVERWRITE CONFIG VALUES USE THIS CLASS AS SUPER IN PHP FILES
 
 class rcconfig {
 
@@ -90,7 +90,6 @@ class rcconfig {
 	    //get global config
         $this->g_config = GetGlobal('config');	
 		//get local config
-		$this->t_config = array();
 		$this->t_config = $this->read_config();
 		//merge 2 configs
 		//$this->config = $this->merge_configurations($this->g_config,$this->t_config);		
@@ -110,7 +109,13 @@ class rcconfig {
                                 break;	   
 
 			case "cpconfedit": 	break;
-			case "cpconfdel" :	break;
+			case "cpconfdel" :	if ($this->backup_config()) {
+									$this->write_config(GetParam('cpart'),GetParam('cvar'));  
+									$this->t_config = $this->read_config(); //re-read
+								}
+								else 
+									echo 'backup conf failed!';	
+								break;
 			case "cpconfadd" :	break;								 							 
 			case "cpconfig"  :     
 			default          : 	break;								 
@@ -154,10 +159,10 @@ class rcconfig {
 	   
 			case "cpconfmod" :  $out = $this->edit_configuration("Edit","cpconfedit",true,$cpart); 
                                 break;	  	   
-
 			case "cpconfedit":  $out = $this->edit_configuration("Save","cpconfig&save=1",false,$cpart);
 		                        break;
-			case "cpconfdel" :  break;
+			case "cpconfdel" :  $out = $this->show_configuration("Edit","cpconfedit",true,$cpart); 
+								break;
 			case "cpconfadd" :  $out = $this->add_configuration("Add","cpconfig&add=1",$cpart);  
 								break;	
 			case "cpconfig"  :     
@@ -202,7 +207,7 @@ class rcconfig {
 		
 		$tmpl = 'tab-form-input';
         $data = _m("cmsrt.select_template use $tmpl+1");
-		$tokens[] = $name;		
+		$tokens[] = ucfirst(strtolower($name));	
 		$tokens[] = $id;
 		$tokens[] = $value;	
 		$tokens[] = $etext;
@@ -215,14 +220,27 @@ class rcconfig {
         $url = "cpconfig.php?t=cpconfedit&cpart=".$section;
 		
 		if (($section=='INDEX')&&($this->seclevid>=8))
-			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
+			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">'.localize('_edit',getlocal()).'</button><hr/>';
 		elseif ($this->seclevid==9)
-			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
+			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">'.localize('_edit',getlocal()).'</button><hr/>';
 		else
 			$ret = null;
 
 		return ($ret);	
 	}
+	
+	protected function delButton($section, $var) {
+        $url = "cpconfig.php?t=cpconfdel&cpart=". $section . "&cvar=" . $var;
+		
+		if (($section=='INDEX')&&($this->seclevid>=8))
+			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">'.localize('_del',getlocal()).'</button><hr/>';
+		elseif ($this->seclevid==9)
+			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">'.localize('_del',getlocal()).'</button><hr/>';
+		else
+			$ret = null;
+
+		return ($ret);	
+	}	
 	
 	protected function show_configuration($button_title,$action,$editable=false,$cpart=null) {
 		$myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
@@ -237,7 +255,7 @@ class rcconfig {
 			 
 					$b = $this->editButton($section);
 					foreach ($data as $var=>$val) 
-						$b .= $this->setTabInput(localize($var,$lan), ucfirst(strtolower($var)), $val, null);
+						$b .= $this->setTabInput(localize($var,$lan), $var, $val, $this->delButton($section, $var));
 
 					$b .= $this->editButton($section);
 					$ret = $this->setTabBody(strtolower($section), $b, true);			 
@@ -253,7 +271,7 @@ class rcconfig {
 				
 				$b = $this->editButton($section);
 				foreach ($data as $var=>$val) 
-					$b .= $this->setTabInput(localize($var,$lan), ucfirst(strtolower($var)), $val, null);
+					$b .= $this->setTabInput(localize($var,$lan), $var, $val, $this->delButton($section, $var));
 
 				$b .= $this->editButton($section);
 				$ret .= $this->setTabBody(strtolower($section), $b, ($i==0 ? true : false));
@@ -329,27 +347,24 @@ class rcconfig {
 	}
 	
     public function paramload($section,$param) {
-          $config = $this->t_config;//GetGlobal('config');
+        $config = $this->t_config;
 
-          if (is_array($config[$section]))     
-				return ($config[$section][$param]);
+        if (is_array($config[$section]))     
+			return ($config[$section][$param]);
     }
 	
 	public function paramset($section=null,$param=null,$value=null) {
-	
-	      //if param is of type foo.bar the section=foo param=bar
-		  //echo $param;
-		  if (!$param) return false;
+		if (!$param) return false;
 
-		  $parts = explode('.',$param);
-		  if ($parts[1]) {//if ok
-			  //echo '.';
-			  $param = $parts[1];
-			  $section = strtoupper($parts[0]);
-		  }	
+		$parts = explode('.',$param);
+		if ($parts[1]) {
+
+			$param = $parts[1];
+			$section = strtoupper($parts[0]);
+		}	
 	
-	      $this->t_config[$section][$param] = $value;
-		  //print_r($this->t_config);
+	    $this->t_config[$section][$param] = $value;
+		return true;
 	}
 
     public function arrayload($section,$array) {
@@ -377,7 +392,7 @@ class rcconfig {
 		$ret = parse_ini_string($myconf,1, INI_SCANNER_RAW);
 		//print_r($ret);
 		return ($ret);
-		/*
+		
 	    $filename = /*$this->path .*/ "myconfig.txt"; //relative and in the same dir
 		//echo $filename,'>';
 		//echo file_get_contents($filename);
@@ -390,7 +405,7 @@ class rcconfig {
 		}  
 	}
 	
-	public function write_config() {
+	public function write_config($_section=null,$_param=null) {
 		
 		$this->storeMessage();
 		
@@ -405,9 +420,13 @@ class rcconfig {
 				  
 					$myval = ($newval=='null') ? ';null' : $newval; 
 					$fileCONTENTS .= $var . '=' . $myval . $this->crlf;
-				}  
-				else //as is 
-					$fileCONTENTS .= $var . '=' . $val . $this->crlf;
+				}	
+				else {
+					if (($_section==$section) && ($_param==$var)) 
+					{} //remove variable
+					else 
+						$fileCONTENTS .= $var . '=' . $val . $this->crlf;
+				}	
 			}
 		}	
 	    $conf = "myconfig.txt.php";
