@@ -91,9 +91,8 @@ class rcconfig {
         $this->g_config = GetGlobal('config');	
 		//get local config
 		$this->t_config = $this->read_config();
-		//merge 2 configs
-		//$this->config = $this->merge_configurations($this->g_config,$this->t_config);		
-		$this->config = $this->alt_merge_configurations();
+		//merge 2 configs		
+		$this->config = $this->merge_configurations();
 		  	  
 		$this->tabheaders = array();
 	}
@@ -114,39 +113,29 @@ class rcconfig {
 									$this->t_config = $this->read_config(); //re-read
 								}
 								else 
-									echo 'backup conf failed!';	
+									echo 'Backup conf failed!';	
 								break;
 			case "cpconfadd" :	break;								 							 
 			case "cpconfig"  :     
-			default          : 	break;								 
+			default          : 	if (GetReq('save')==1) {
+									if ($this->backup_config()) {
+										$this->write_config();  
+										$this->t_config = $this->read_config(); //re-read
+									}
+									else 
+										echo 'Backup conf failed!';
+								}
+								elseif (GetReq('add')==1) {
+									$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
+									if ($this->backup_config()) {
+										$this->write_config();  
+										$this->t_config = $this->read_config(); //re-read
+									}
+									else 
+										echo 'Backup conf failed!';			
+								}								
 		}
-	  
-		if (GetReq('save')==1) {
-			if ($this->backup_config()) {
-				$this->write_config();  
-				$this->t_config = $this->read_config(); //re-read
-			}
-			else 
-				echo 'backup conf failed!';
-		}	 
-		elseif (GetReq('add')==1) {
-	    
-			$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
-			if ($this->backup_config()) {
-				$this->write_config();  
-				$this->t_config = $this->read_config(); //re-read
-			}
-			else 
-				echo 'backup conf failed!';			
-		}
-		elseif (GetReq('var'))  {
-			if ($this->backup_config()) {
-				$this->write_config();  
-				$this->t_config = $this->read_config(); //re-read	  
-			}
-			else 
-				echo 'backup conf failed!';		
-		} 	  
+	  	  
     }
   
     public function action($action=null) {
@@ -220,9 +209,9 @@ class rcconfig {
         $url = "cpconfig.php?t=cpconfedit&cpart=".$section;
 		
 		if (($section=='INDEX')&&($this->seclevid>=8))
-			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">'.localize('_edit',getlocal()).'</button><hr/>';
+			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-info">'.localize('_edit',getlocal()).'</button><hr/>';
 		elseif ($this->seclevid==9)
-			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">'.localize('_edit',getlocal()).'</button><hr/>';
+			$ret = '<button onClick="location.href=\''.$url.'\'" class="btn btn-info">'.localize('_edit',getlocal()).'</button><hr/>';
 		else
 			$ret = null;
 
@@ -311,7 +300,7 @@ class rcconfig {
 		}
 	   
 		// Adding a hidden field
-		$form->addElement(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
+		$form->addElement(FORM_GROUP_HIDDEN,new form_element_hidden ("FormAction", "$action"));
  
 		// Showing the form
 		$fout = $form->getform(0,0,$button_title);	
@@ -390,19 +379,18 @@ class rcconfig {
 	    $conf = $this->path . "myconfig.txt.php";
 		include($conf);
 		$ret = parse_ini_string($myconf,1, INI_SCANNER_RAW);
-		//print_r($ret);
+
 		return ($ret);
-		
-	    $filename = /*$this->path .*/ "myconfig.txt"; //relative and in the same dir
-		//echo $filename,'>';
-		//echo file_get_contents($filename);
+		/*
+	    $filename = "myconfig.txt"; //relative and in the same dir
 	
 		if (file_exists($filename) && is_readable($filename)) {
 			$ret = parse_ini_file($filename,1, INI_SCANNER_NORMAL);
 
 			//print "<pre>"; print_r($ret); print "</pre>";
 			return ($ret);
-		}  
+		}
+		*/	
 	}
 	
 	public function write_config($_section=null,$_param=null) {
@@ -470,36 +458,7 @@ class rcconfig {
 		}*/
 	} 
 	
-	//WARNING:NON EXISTING DATA CAN'T MERGED
-	//item of section not exists in global config .. not transfered
-	protected function merge_configurations($cnf1,$cnf2) {
-	
-	     if ((is_array($cnf1)) && (is_array($cnf2))) {
-		 
-		    //$mconfig = array_merge($cnf1,$cnf2);
-			foreach ($cnf1 as $section=>$data) {
-			  foreach ($data as $var=>$val) {
-			  
-			    if ((is_array($cnf2[$section])) && (array_key_exists($var,$cnf2[$section])))
-				  $mconfig[$section][$var] = $cnf2[$section][$var];
-				else
-				  $mconfig[$section][$var] = $val;   
-			  }
-			}  
-		 }
-		 else
-		    $mconfig = $cnf1;//default config (global)
-			
-	     SetGlobal('config',$mconfig); //set it global param
-	     print "<pre>"; print_r($mconfig); print "</pre>";		 		
-		 //echo paramload('TEST','test');
-		 return ($mconfig);
-	}
-	
-	//alternative merging/...faster
-	//item of section not exists in global config .. TRANSFERED NOW!
-	//WARNING : config array overwritten here
-	protected function alt_merge_configurations() {
+	protected function merge_configurations() {
 		if (!is_array($this->t_config)) return;		
 	    global $config;
 	
@@ -513,22 +472,24 @@ class rcconfig {
 			}
 		}
 		
-		//print "<pre>"; print_r($config); print "</pre>";	
 		return ($config);
 	} 
 
 	public function backup_config() {	
 	    $date = date('Ymd');
 	
-		$filename = "myconfig.txt";	
-		$backup_filename = $date . "myconfig.txt";
-		$ret = @copy($filename, $backup_filename);
-		 
 		$filename = "myconfig.txt.php";	
 		$backup_filename = $date . "-myconfig.txt.php";
-		$ret = @copy($filename, $backup_filename);		 
+		$ret = @copy($filename, $backup_filename);		
+		
+		return ($ret);
+		/*
+		$filename = "myconfig.txt";	
+		$backup_filename = $date . "myconfig.txt";
+		$ret = @copy($filename, $backup_filename);	 
 		 
 		return ($ret);
+		*/
 	}
 
 	//one step write... called by wizard to save data to myconfig
@@ -540,13 +501,11 @@ class rcconfig {
 	    if ($this->backup_config()) {
 
 			$this->write_config();  
-			$this->t_config = $this->read_config(); //re-read	no need ?  
+			$this->t_config = $this->read_config();   
 			return true;
-			//return ("Variable $param set with the value of $value");//
+
 		}
-		//else 
-		  //echo 'backup conf failed!';		
-		//return ("Variable $param not set with the value of $value");
+
 		return false;
     } 	
 	
@@ -587,7 +546,7 @@ class rcconfig {
 		$sSQL = "insert into cpmessages (hash, msg, type, owner) values (";
 		$sSQL.= $db->qstr(md5($date.'config')) . ",";
 		$sSQL.= $db->qstr('Configuration file modified') . ",";
-		$sSQL.= $db->qstr('configuration') . ",";
+		$sSQL.= $db->qstr('system') . ",";
 		$sSQL.= $db->qstr($this->owner);
 		$sSQL.= ")";
 		$result = $db->Execute($sSQL,1);			 	

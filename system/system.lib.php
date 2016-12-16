@@ -1013,7 +1013,7 @@ function ToURL($strValue) {
      $pr = paramload('SHELL','protocol');	 
 	 $url = $pr . $ip;	 
      $path ='/images/'; 
-	 $source = $url . $path . $src);
+	 $source = $url . $path . $src;
 
 	   if (!$nohtml) 
 	     $out = "<img src=\"". $source . "\" border=\"0\" alt=\"$comment\" $jscript>";

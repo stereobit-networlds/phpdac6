@@ -1,5 +1,4 @@
 <?php
-
 $environment = @parse_ini_file(getcwd()."/phpdac5.ini");
 $dpcpath = $environment['dpcpath'] ? $environment['dpcpath'] : 'dpc';
 
@@ -16,10 +15,7 @@ require_once(_DPCPATH_."/system/parser.lib.php");
 require_once(_DPCPATH_."/system/ktimer.lib.php");
 require_once(_DPCPATH_."/system/azdgcrypt.lib.php"); 
 require_once(_DPCPATH_."/system/system.lib.php");		    
-//require_once(_DPCPATH_."/system/client.lib.php");
 require_once(_DPCPATH_."/system/ccpp.lib.php");
-
-//require_once(_DPCPATH_."/shell/phtml.lib.php");
 
 require_once("controller.lib.php");
 
@@ -56,12 +52,11 @@ class pcntl extends controller {
 	public function __construct($code=null,$preprocess=null,$locales=null,$css=null,$page=null) { 
 
 		session_start(); 
-	  
+
 		date_default_timezone_set('Europe/Athens');
 	  
 		$this->local_security = array();
    
-		//echo ">>",$_SERVER['QUERY_STRING'];
 		$this->remoteapp = null;   
 		$this->map = null;	
 		 
@@ -93,12 +88,7 @@ class pcntl extends controller {
 			decode_url($encURL); 
 	
 		$this->inpath = paramload('ID','hostinpath');
-
-		//client preselection
-		//SetGlobal('__USERAGENT','HTML');	  
-		//$client = new client;	 
-		$this->agent = 'phpdac7';//$client->getClient();
-		//unset ($client);	
+		$this->agent = 'phpdac7';
 		SetGlobal('__USERAGENT',$this->agent);
 	  
 		//get file info (default=php_self else $page)
@@ -115,19 +105,8 @@ class pcntl extends controller {
 		$this->file_name = $p[0]; 
 		$this->file_extension = $p[1];
 	   	   		  
-		//thema pre-selection
-		//SetGlobal('GRX',paramload('SHELL','graphics')); 
-		//$this->grx = paramload('SHELL','graphics');
-	  
 		$this->sysauth = paramload('SHELL','sysauth');	  
 	  
-	    /*
-		$this->theme = (getTheme() ? getTheme() : paramload('SHELL','deftheme')); 
-		if ($this->theme) 
-			setTheme($this->theme);	  
-	    */
-		//$this->css = $this->getCSS();		  	  
-		//echo $this->theme;
 		//languange pre-selection
 		$this->languange = $locales ? $locales :(getlocal() ? getlocal() : 0);
 		if ($this->languange) //manual set
@@ -218,20 +197,11 @@ class pcntl extends controller {
 			}	
 		}
    
-		//change theme manual
-		//if (isset($theme)) 
-			//setTheme($theme);
 		//change languange
 		if (isset($lan)) 
 			setlocal($lan);
-		//change client
-		/*if (isset($cl)) {
-			$this->agent = $cl;
-			SetGlobal('__USERAGENT',$this->agent);	  
-		}*/    
 				
-		if ($this->get_attribute($this->myactive,$this->myaction,4)) {		
-		    //$this->free();//recursion error because of registration of this as dpc	   
+		if ($this->get_attribute($this->myactive,$this->myaction,4)) {			   
 		    $this->init($this->code);	
 			if ($this->debug) echo '......re-init.....';
 		}			  	
@@ -278,7 +248,6 @@ class pcntl extends controller {
         SetGlobal("__COMPILE",serialize($token)); //save the global....			
 	   
 	    try {	
-		   
 			//then...read tokens  			
 			foreach ($token as $tid=>$tcmd) {
 			  
@@ -496,26 +465,6 @@ class pcntl extends controller {
 				echo "new " , $t->value('new');	
 	    }  	    	
     }
-   
-	//overwrite
-	/*public function event($event=null, $dpc_init=null) {
-
-			controller::event($event, $dpc_init);
-	}
-   
-	//overwrite
-	public function action($action=null) {
-   
-		$ret = controller::action($action);   
-
-		switch ($action) {
-            case 'index'  :
-            case 'default':
-            default       : $ret .= null;
-		}
-
-       return ($ret);
-    }*/
    
 	//set security level at runtime
 	public function setlevel($modulename,$plafon,$colonvals) {
@@ -854,12 +803,7 @@ class pcntl extends controller {
 		return ("$srv+$cln");
 	}   
    
-	public function __destruct() {
-   
-		if (((defined('LOG_DPC')) && (seclevel('LOG_DPC',$this->userLevelID)))) {
-			//$this->create_log();
-			controller::calldpc_method('log.writelog use '. $this->create_log(),1);
-		}		  
+	public function __destruct() {		  
 	  
 		if (paramload('SHELL','debug')) 
 			echo "\nTime elapsed: ",$this->getthemicrotime() - $this->mytime, " seconds<br>"; 	  
