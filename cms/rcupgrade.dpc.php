@@ -15,7 +15,8 @@ $__ACTIONS['RCUPGRADE_DPC'][1]='cpmupgrade';
 class rcupgrade {
 	
 	var $urlpath, $url, $murl, $prpath, $isrootapp;	
-    var $upgrade_root_path, $update_root_path;	
+    var $upgrade_root_path, $update_root_path;
+	var $upgdirs;	
 	
 	public function __construct() {
 		
@@ -33,7 +34,9 @@ class rcupgrade {
 		$this->upgrade_root_path = $this->prpath . $upgpath;	
 		
 		$updpath = $this->isrootapp ? 'update-app/' : '../../cp/update-app/';
-		$this->update_root_path = $this->prpath . $updpath;			
+		$this->update_root_path = $this->prpath . $updpath;
+			
+		$this->upgdirs = null;	
 	}
 
 	public function event($event=null) {
@@ -120,10 +123,13 @@ EOF;
 	
 	/*scan root app files */
 	protected function runscan() {
+		$upaths = $this->updatePath();
+		if (empty($upaths)) return false;		
+		
 		$u = explode('/', $this->urlpath);
 		$app = array_pop($u);
 		
-		foreach ($this->updatePath() as $path) {
+		foreach ($upaths as $path) {
 			$report .= $this->scan($path, null, true);
 			$report .= '<hr/>';
 		}
@@ -133,11 +139,14 @@ EOF;
 	}
 
 	protected function upgradeapp_ajax() {
+		$upaths = $this->updatePath();
+		if (empty($upaths)) return false;
+		
 		$u = explode('/', $this->urlpath);
 		$app = array_pop($u);
 		$index = intval(@file_get_contents($this->prpath . $app. '.app'));
 		
-		foreach ($this->updatePath() as $idx=>$path) {
+		foreach ($upaths as $idx=>$path) {
 			if ($idx == $index)
 				return $this->scan($path, null, true, $index+1);
 		}
@@ -152,13 +161,17 @@ EOF;
 		
 		$path = $this->upgrade_root_path;		
 		if (is_dir($path . $app . '-ext')) { //if app dir exclusive (=appname + '-ext') see dir for updates
-			$datalines = array(0=>$path . $app.'-ext',	
-							   1=>$this->prpath . 'replication',
-							   );
+			$ret = array(0=>$path . $app.'-ext',	
+						 1=>$this->prpath . 'replication',
+						);
 		}
-		else //common dir
-			$datalines = array(0=>$path . 'homefiles',
-		                    1=>$path . 'cgi-bin',
+		else {
+			$upgdirs = is_file($path . 'dir.upg') ? file($path . 'dir.upg') : array();
+			foreach ($ipgdirs as $dir) {
+				$ret[] = $path . $dir;
+			}
+			/*$ret = array(0=>$path . 'homefiles',
+		                1=>$path . 'cgi-bin',
 							2=>$path . 'newsletters',
 							3=>$path . 'js',
 							4=>$path . 'javascripts',
@@ -175,9 +188,9 @@ EOF;
 							15=>$path . "cp/$tpath",
 							16=>$path . $app,							
 							17=>$this->prpath . 'replication',
-							);
-							
-		return ($datalines);			
+							);*/
+		}					
+		return ($ret);			
 	}	
 	
 	protected function scan($path=null, $skipdir=null, $reportout=false, $ajaxid=false) {
