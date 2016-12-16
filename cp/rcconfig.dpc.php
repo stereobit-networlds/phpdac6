@@ -6,6 +6,9 @@ define("RCCONFIG_DPC",true);
 
 $__DPC['RCCONFIG_DPC'] = 'rcconfig';
 
+$a = GetGlobal('controller')->require_dpc('gui/form.dpc.php');
+require_once($a);
+
 $__EVENTS['RCCONFIG_DPC'][0]='cpconfig';
 $__EVENTS['RCCONFIG_DPC'][1]='cpconfedit';
 $__EVENTS['RCCONFIG_DPC'][2]='cpconfdel';
@@ -58,9 +61,9 @@ $__LOCALE['RCCONFIG_DPC'][36]='INDEX;My configuration;Οι ρυθμίσεις μ
 $__LOCALE['RCCONFIG_DPC'][37]='ESHOP;e-shop;e-shop;';
 $__LOCALE['RCCONFIG_DPC'][38]='RCSHSUBSQUEUE;Mail queue;Αποστολές email;';
 
-//**************************************************************************
-//WARNING :TO OVERWRITE CONFIG VALUES USE THIS CLASS AS SUPER IN PHP FILES
-//**************************************************************************
+/*************************************************************************
+WARNING :TO OVERWRITE CONFIG VALUES USE THIS CLASS AS SUPER IN PHP FILES
+**************************************************************************/
 
 
 class rcconfig {
@@ -69,126 +72,100 @@ class rcconfig {
 	var $g_config;
 	var $t_config;
 	var $config; //merged 
+	var $tabheaders;
+	var $seclevid, $owner;
 	
-	var $cptemplate, $tabheaders;
-	var $seclevid;
+    public function __construct() {
 	
-    function __construct() {
+	    $this->title = localize('RCCONFIG_DPC',getlocal());		
 	
-	      $this->title = localize('RCCONFIG_DPC',getlocal());		
+	    $os =  php_uname();//'>';
+        $info = strtolower($os);// $_SERVER['HTTP_USER_AGENT'] );  
+        $this->crlf = ( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
+		  
+		$this->path = paramload('SHELL','prpath');		
+		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] :GetSessionParam('ADMINSecID');
+		$this->owner = GetSessionParam('LoginName');
 	
-	      $os =  php_uname();//'>';
-          $info = strtolower($os);// $_SERVER['HTTP_USER_AGENT'] );  
-          $this->crlf = ( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
-		  
-		  $this->path = paramload('SHELL','prpath');		
-		  $this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] :GetSessionParam('ADMINSecID');
-	
-	      //get global config
-          $this->g_config = GetGlobal('config');	
-		  //get local config
-		  $this->t_config = array();
-		  $this->t_config = $this->read_config();
-		  //merge 2 configs
-		  //$this->config = $this->merge_configurations($this->g_config,$this->t_config);		
-		  
-		  $this->config = $this->alt_merge_configurations();
-		  
-		  if (GetReq('editmode')) {//default form colors	
-		    global $config;
-			$config['FORM']['element_bgcolor1'] = 'EEEEEE';
-			$config['FORM']['element_bgcolor2'] = 'DDDDDD';			
-		  }
-		  
-		  //print_r($config);
-		  
-		  $this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);		  
-		  $this->tabheaders = array();
+	    //get global config
+        $this->g_config = GetGlobal('config');	
+		//get local config
+		$this->t_config = array();
+		$this->t_config = $this->read_config();
+		//merge 2 configs
+		//$this->config = $this->merge_configurations($this->g_config,$this->t_config);		
+		$this->config = $this->alt_merge_configurations();
+		  	  
+		$this->tabheaders = array();
 	}
 	
-    function event($event=null) {	
+    public function event($event=null) {	
 	
-	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	   if ($login!='yes') return null;	
+		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+		if ($login!='yes') return null;	
 	
-  
-	   switch ($event) {
+		switch ($event) {
 
-        case "cpconfmod"       : 
-		                         $this->paramset(null,GetReq('var'),GetReq('val'));
-                                 break;	   
+			case "cpconfmod" :	$this->paramset(null,GetReq('var'),GetReq('val'));
+                                break;	   
 
-		case "cpconfedit"      :     
-		                         
-		                         break;
-		case "cpconfdel"       :     
-		                          
-		                         break;
-		case "cpconfadd"       :     
-		                          
-		                         break;								 							 
-		case "cpconfig"       :     
-		default               :
-		                          
-		                         break;								 
-      }
+			case "cpconfedit": 	break;
+			case "cpconfdel" :	break;
+			case "cpconfadd" :	break;								 							 
+			case "cpconfig"  :     
+			default          : 	break;								 
+		}
 	  
-	  if (GetReq('save')==1) {
-	    if ($this->backup_config()) {
-	      $this->write_config();  
-		  $this->t_config = $this->read_config(); //re-read
-		}
-		else 
-		  echo 'backup conf failed!';
-	  }	 
-	  elseif (GetReq('add')==1) {
+		if (GetReq('save')==1) {
+			if ($this->backup_config()) {
+				$this->write_config();  
+				$this->t_config = $this->read_config(); //re-read
+			}
+			else 
+				echo 'backup conf failed!';
+		}	 
+		elseif (GetReq('add')==1) {
 	    
-		$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
-	    if ($this->backup_config()) {
-			$this->write_config();  
-			$this->t_config = $this->read_config(); //re-read
+			$this->paramset(GetParam('section'),GetParam('variable'),GetParam('value'));
+			if ($this->backup_config()) {
+				$this->write_config();  
+				$this->t_config = $this->read_config(); //re-read
+			}
+			else 
+				echo 'backup conf failed!';			
 		}
-		else 
-		  echo 'backup conf failed!';			
-	  }
-      elseif (GetReq('var'))  {//one value at cmd, silent
-	    //&& ($value=GetReq('val')) && (isset($value))
-	    if ($this->backup_config()) {
-		    //echo 'z';
-			$this->write_config();  
-			$this->t_config = $this->read_config(); //re-read	  
-		}
-		else 
-		  echo 'backup conf failed!';		
-      } 	  
+		elseif (GetReq('var'))  {
+			if ($this->backup_config()) {
+				$this->write_config();  
+				$this->t_config = $this->read_config(); //re-read	  
+			}
+			else 
+				echo 'backup conf failed!';		
+		} 	  
     }
   
-    function action($action=null) {
-	   $cpart = GetReq('cpart')?GetReq('cpart'):null;
+    public function action($action=null) {
+		$cpart = GetReq('cpart') ? GetReq('cpart') : null;
+		
 	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 	    if ($login!='yes') return null;	   
 
-	   switch ($action) {	
+		switch ($action) {	
 	   
-        case "cpconfmod"       : $out .= $this->edit_configuration("Edit","cpconfedit",true,$cpart); 
-                                 break;	  	   
+			case "cpconfmod" :  $out = $this->edit_configuration("Edit","cpconfedit",true,$cpart); 
+                                break;	  	   
 
-		case "cpconfedit"      :     
-		                         $out .= $this->edit_configuration("Save","cpconfig&save=1",false,$cpart);
-		                         break;
-		case "cpconfdel"       :     
-		                          
-		                         break;
-		case "cpconfadd"       :     
-		                         $out .= $this->add_configuration("Add","cpconfig&add=1",$cpart);  
-		                         break;	
-		case "cpconfig"       :     
-		default               :
-		                         $out .= $this->show_configuration("Edit","cpconfedit",true,$cpart); 
-		                         break;								 
-       }
+			case "cpconfedit":  $out = $this->edit_configuration("Save","cpconfig&save=1",false,$cpart);
+		                        break;
+			case "cpconfdel" :  break;
+			case "cpconfadd" :  $out = $this->add_configuration("Add","cpconfig&add=1",$cpart);  
+								break;	
+			case "cpconfig"  :     
+			default          :  $out = $this->show_configuration("Edit","cpconfedit",true,$cpart); 
+								 
+        }
 	 
-	   return ($out);
+	    return ($out);
     } 	
 	
 	
@@ -201,7 +178,7 @@ class rcconfig {
 	protected function setTabHeader($id, $title, $isactive=false) {
 		
 		$tmpl = $isactive ? 'tab-header-active' : 'tab-header';
-        $data = $this->select_template($tmpl);
+        $data = _m("cmsrt.select_template use $tmpl+1");
 		$tokens[] = $id;
 		$tokens[] = $title;
 		
@@ -213,7 +190,7 @@ class rcconfig {
 	protected function setTabBody($id, $body, $isactive=false) {
 		
 		$tmpl = $isactive ? 'tab-content-active' : 'tab-content';
-        $data = $this->select_template($tmpl);
+        $data = _m("cmsrt.select_template use $tmpl+1");
 		$tokens[] = $id;
 		$tokens[] = $body;
 		
@@ -224,7 +201,7 @@ class rcconfig {
 	protected function setTabInput($id, $name, $value=null, $etext=null) {
 		
 		$tmpl = 'tab-form-input';
-        $data = $this->select_template($tmpl);
+        $data = _m("cmsrt.select_template use $tmpl+1");
 		$tokens[] = $name;		
 		$tokens[] = $id;
 		$tokens[] = $value;	
@@ -247,128 +224,118 @@ class rcconfig {
 		return ($ret);	
 	}
 	
-	function show_configuration($button_title,$action,$editable=false,$cpart=null) {
-	   $myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
-       $lan = getlocal();
+	protected function show_configuration($button_title,$action,$editable=false,$cpart=null) {
+		$myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
+		$lan = getlocal();
 	   
-	   if ($cpart) {//partial config
-	     foreach ($this->t_config as $section=>$data) {
-	       if ($section==$cpart) { 
-		     //$url = "cpconfig.php?t=cpconfedit&cpart=".$section;
-			 $tabname = ucfirst(localize($section, $lan));
-			 $this->tabheaders[] = $this->setTabHeader(strtolower($section), $tabname, true);       
-			 //$b = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
-			 $b = $this->editButton($section);
-	         foreach ($data as $var=>$val) {
-			   $b .= $this->setTabInput(localize($var,$lan), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
-		     }		 
-		     //$b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
-			 $b .= $this->editButton($section);
-		     $ret = $this->setTabBody(strtolower($section), $b, true);			 
-		   }
-	     }		 
-	   }
-	   else {//all config
-	     $i=0; 
-	     foreach ($this->t_config as $section=>$data) {
-		   //$url = "cpconfig.php?t=cpconfedit&cpart=".$section;
-		   $tabname = ucfirst(localize($section, $lan));
-		   $this->tabheaders[] = $this->setTabHeader(strtolower($section), $tabname, ($i==0 ? true : false)); 
-		   //$b = '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button><hr/>';
-		   $b = $this->editButton($section);
-	       foreach ($data as $var=>$val) {
-			 $b .= $this->setTabInput(localize($var,$lan), ucfirst(strtolower($var)), $val, null);//ucfirst(strtolower($var)));
-		   }
-		   //$b .= '<button onClick="location.href=\''.$url.'\'" class="btn btn-danger">Edit</button>';
-		   $b .= $this->editButton($section);
-		   $ret .= $this->setTabBody(strtolower($section), $b, ($i==0 ? true : false));
-		   $i+=1;
-	     }
-	   }
+		if ($cpart) {//partial config
+			foreach ($this->t_config as $section=>$data) {
+				if ($section==$cpart) { 
+		   
+					$tabname = ucfirst(localize($section, $lan));
+					$this->tabheaders[] = $this->setTabHeader(strtolower($section), $tabname, true);       
+			 
+					$b = $this->editButton($section);
+					foreach ($data as $var=>$val) 
+						$b .= $this->setTabInput(localize($var,$lan), ucfirst(strtolower($var)), $val, null);
+
+					$b .= $this->editButton($section);
+					$ret = $this->setTabBody(strtolower($section), $b, true);			 
+				}
+			}		 
+		}
+		else {//all config
+			$i=0; 
+			foreach ($this->t_config as $section=>$data) {
+				
+				$tabname = ucfirst(localize($section, $lan));
+				$this->tabheaders[] = $this->setTabHeader(strtolower($section), $tabname, ($i==0 ? true : false)); 
+				
+				$b = $this->editButton($section);
+				foreach ($data as $var=>$val) 
+					$b .= $this->setTabInput(localize($var,$lan), ucfirst(strtolower($var)), $val, null);
+
+				$b .= $this->editButton($section);
+				$ret .= $this->setTabBody(strtolower($section), $b, ($i==0 ? true : false));
+				$i+=1;
+			}
+		}
 	   
-	   return ($ret);   
+		return ($ret);   
 	}
 
-	
-	function edit_configuration($button_title,$action,$editable=false,$cpart=null) {
-	   $lan = getlocal();
-	   $myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
-       $form = new form(localize('RCCONFIG_DPC',getlocal()), "RCCONFIG", FORM_METHOD_POST, $myaction);	
+	protected function edit_configuration($button_title,$action,$editable=false,$cpart=null) {
+		$lan = getlocal();
+		$myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
+		$form = new form(localize('RCCONFIG_DPC',getlocal()), "RCCONFIG", FORM_METHOD_POST, $myaction);	
 	   
-	   if ($cpart) {//partial config
-	     foreach ($this->t_config as $section=>$data) {
-	       if ($section==$cpart) { 
-		     $form->addGroup($section,ucfirst(localize($section, $lan)));
+		if ($cpart) {//partial config
+			foreach ($this->t_config as $section=>$data) {
+				if ($section==$cpart) { 
+					$form->addGroup($section,ucfirst(localize($section, $lan)));
 		  	   
-	         foreach ($data as $var=>$val) {
-               $form->addElement($section,new form_element_text($var,strtolower($section).$var,$val,"span11",60,255,$editable));
-		     }
-		   }
-		   $form->addElement($section,new form_element_onlytext("New element",seturl("t=cpconfadd&section=$section&cpart=$cpart&editmode=".GetReq('editmode'),'press here'),"span11"));
-	     }	   
-	   }
-	   else {//all config
-	     foreach ($this->t_config as $section=>$data) {
-	       if ($section) 
-		     $form->addGroup($section,ucfirst(localize($section, $lan)));
+					foreach ($data as $var=>$val) 
+						$form->addElement($section,new form_element_text($var,strtolower($section).$var,$val,"span11",60,255,$editable));
+				}
+				$form->addElement($section,new form_element_onlytext("New element",seturl("t=cpconfadd&section=$section&cpart=$cpart&editmode=".GetReq('editmode'),'press here'),"span11"));
+			}	   
+		}
+		else {//all config
+			foreach ($this->t_config as $section=>$data) {
+				if ($section) 
+					$form->addGroup($section,ucfirst(localize($section, $lan)));
 		  	   
-	       foreach ($data as $var=>$val) {
-             $form->addElement($section,new form_element_text($var,strtolower($section).$var,$val,"span11",60,255,$editable));
-		   }
+				foreach ($data as $var=>$val) 
+					$form->addElement($section,new form_element_text($var,strtolower($section).$var,$val,"span11",60,255,$editable));
 		 
-		   $form->addElement($section,new form_element_onlytext("New element",seturl("t=cpconfadd&section=$section&cpart=$cpart&editmode=".GetReq('editmode'),'press here'),"span11"));
-	     }
-	   }
+				$form->addElement($section,new form_element_onlytext("New element",seturl("t=cpconfadd&section=$section&cpart=$cpart&editmode=".GetReq('editmode'),'press here'),"span11"));
+			}
+		}
 	   
-	   // Adding a hidden field
-       $form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
+		// Adding a hidden field
+		$form->addElement(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
  
-	   // Showing the form
-	   $fout = $form->getform(0,0,$button_title);	
+		// Showing the form
+		$fout = $form->getform(0,0,$button_title);	
 	   
-	   return ($fout);	   
+		return ($fout);	   
 	}
 	
-	function add_configuration($button_title,$action,$cpart=null) {
-	   $myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
-       $form = new form(localize('RCCONFIG_DPC',getlocal()), "RCCONFIG", FORM_METHOD_POST, $myaction);	
-	   $lan = getlocal();	
-	   if ($section=GetReq('section')) {
-	     $form->addGroup($section,ucfirst(localize($section, $lan)));		
+	protected function add_configuration($button_title,$action,$cpart=null) {
+		$myaction = seturl("t=".$action."&cpart=".$cpart."&editmode=".GetReq('editmode')); 	
+		$form = new form(localize('RCCONFIG_DPC',getlocal()), "RCCONFIG", FORM_METHOD_POST, $myaction);	
+		$lan = getlocal();	
+		if ($section=GetReq('section')) {
+			$form->addGroup($section,ucfirst(localize($section, $lan)));		
 		 
-		 $data = $this->t_config[$section];
-	     foreach ($data as $var=>$val) {
-		 
-            $form->addElement($section,new form_element_onlytext($var,$val,"span11",20,255,0));
-		 }
+			$data = $this->t_config[$section];
+			foreach ($data as $var=>$val) 
+				$form->addElement($section,new form_element_onlytext($var,$val,"span11",20,255,0));
 		 	
-         $form->addElement($section,new form_element_text('variable','variable','variable',"span11",20,255,0));		 	 
-         $form->addElement($section,new form_element_text('value','value','value',"span11",20,255,0));			 
+			$form->addElement($section,new form_element_text('variable','variable','variable',"span11",20,255,0));		 	 
+			$form->addElement($section,new form_element_text('value','value','value',"span11",20,255,0));			 
 		 
-	     // Adding section as hidden field
-         $form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("section", $section));		 
+			// Adding section as hidden field
+			$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("section", $section));		 
 		 
-	     // Adding a hidden field
-         $form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
-       }	
+			// Adding a hidden field
+			$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", "$action"));
+		}	
 	   
-	   // Showing the form
-	   $fout = $form->getform(0,0,$button_title);	
+		// Showing the form
+		$fout = $form->getform(0,0,$button_title);	
 	   
-	   return ($fout);		   	    
+		return ($fout);		   	    
 	}
 	
-	
-	
-    function paramload($section,$param) {
+    public function paramload($section,$param) {
           $config = $this->t_config;//GetGlobal('config');
 
           if (is_array($config[$section]))     
-	        return ($config[$section][$param]);
-
+				return ($config[$section][$param]);
     }
 	
-	function paramset($section=null,$param=null,$value=null) {
+	public function paramset($section=null,$param=null,$value=null) {
 	
 	      //if param is of type foo.bar the section=foo param=bar
 		  //echo $param;
@@ -385,53 +352,79 @@ class rcconfig {
 		  //print_r($this->t_config);
 	}
 
-    function arrayload($section,$array) {
-          $config = $this->t_config;//GetGlobal('config');
+    public function arrayload($section,$array) {
+        $config = $this->t_config;
   
-          if (is_array($config[$section]))
-            $data = $config[$section][$array];
+        if (is_array($config[$section]))
+			$data = $config[$section][$array];
 	
-	      if ($data) return(explode(",",$data));
-	      //return ($out);
+	    if ($data) 
+			return(explode(",",$data));
     }
 	
-	function arrayset($section,$array,$serialized_array=null) {
+	public function arrayset($section,$array,$serialized_array=null) {
 	
-	      $data = unserialize($serialized_array);
+	    $data = unserialize($serialized_array);
 		  
-	      if (is_array($data)) {
-		  
+	    if (is_array($data)) 
 		    $this->t_config[$section][$array] = implode(",",$data) . $this->crlf;
-		  }
-		  //else //common param
-		    //$this->paramset($section,$array,$serialized_array);
 	}
 	
-	function read_config() {
+	public function read_config() {
 	
-	     $filename = /*$this->path .*/ "myconfig.txt"; //relative and in the same dir
-		 //echo $filename,'>';
-		 //echo file_get_contents($filename);
+	    $conf = $this->path . "myconfig.txt.php";
+		include($conf);
+		$ret = parse_ini_string($myconf,1, INI_SCANNER_RAW);
+		//print_r($ret);
+		return ($ret);
+		/*
+	    $filename = /*$this->path .*/ "myconfig.txt"; //relative and in the same dir
+		//echo $filename,'>';
+		//echo file_get_contents($filename);
 	
-		 if (file_exists($filename) && is_readable($filename)) {
-	       $ret = parse_ini_file($filename,1);
+		if (file_exists($filename) && is_readable($filename)) {
+			$ret = parse_ini_file($filename,1, INI_SCANNER_NORMAL);
 
-	       //print "<pre>"; print_r($ret); print "</pre>";
-		   return ($ret);
-		 }  
+			//print "<pre>"; print_r($ret); print "</pre>";
+			return ($ret);
+		}  
 	}
 	
-	function write_config() {
-	
-	     $filename = /*$this->path .*/ "myconfig.txt";
-		 //echo '<pre>';
-	     //print_r($this->t_config);
-		 //echo '</pre><pre>';
-		 //print_r($_POST);
-		 //echo '</pre>';
-		 //return null;
+	public function write_config() {
+		
+		$this->storeMessage();
+		
+		foreach ($this->t_config as $section=>$params) {
+			 
+			$fileCONTENTS .= $this->crlf;
+			$fileCONTENTS .= '[' . strtoupper($section) . ']' . $this->crlf;
+			
+			foreach ($params as $var=>$val) {
+			  
+			    if ($newval = GetParam(strtolower($section).$var)) {
+				  
+					$myval = ($newval=='null') ? ';null' : $newval; 
+					$fileCONTENTS .= $var . '=' . $myval . $this->crlf;
+				}  
+				else //as is 
+					$fileCONTENTS .= $var . '=' . $val . $this->crlf;
+			}
+		}	
+	    $conf = "myconfig.txt.php";
+		$phpize = '<?php' . $this->crlf . '$myconf=<<<EOF' . $this->crlf;
+		$phpize.= str_replace('"',"\"", $fileCONTENTS);
+		$phpize.= $this->crlf . 'EOF;' . $this->crlf . '?>';
+		return file_put_contents($conf, $phpize);	
+	/*
+	    $filename = "myconfig.txt";
+		//echo '<pre>';
+	    //print_r($this->t_config);
+		//echo '</pre><pre>';
+		//print_r($_POST);
+		//echo '</pre>';
+		//return null;
 		 
-		 if (file_exists($filename) && is_writeable($filename)) {
+		if (file_exists($filename) && is_writeable($filename)) {
 		 
 		    foreach ($this->t_config as $section=>$params) {
 			 
@@ -455,12 +448,12 @@ class rcconfig {
             $hFile = fopen( $filename, "w+" );
             fwrite( $hFile, $fileCONTENTS );
             fclose( $hFile );		 	
-		 }
+		}*/
 	} 
 	
 	//WARNING:NON EXISTING DATA CAN'T MERGED
 	//item of section not exists in global config .. not transfered
-	function merge_configurations($cnf1,$cnf2) {
+	protected function merge_configurations($cnf1,$cnf2) {
 	
 	     if ((is_array($cnf1)) && (is_array($cnf2))) {
 		 
@@ -487,35 +480,36 @@ class rcconfig {
 	//alternative merging/...faster
 	//item of section not exists in global config .. TRANSFERED NOW!
 	//WARNING : config array overwritten here
-	function alt_merge_configurations() {
+	protected function alt_merge_configurations() {
+		if (!is_array($this->t_config)) return;		
 	    global $config;
-		
-		if (!is_array($this->t_config)) return;
 	
 	    foreach ($this->t_config as $section=>$data) {
-		  foreach ($data as $var=>$val) {
+			foreach ($data as $var=>$val) {
 		  
-		    if ((is_array($config[$section])) && (array_key_exists($var,$config[$section])))
-			  $config[$section][$var] = $val; 
-			else
-			  $config[$section][$var] = $val;  
-		  }
+				if ((is_array($config[$section])) && (array_key_exists($var,$config[$section]))) 
+					$config[$section][$var] = $val; 
+				else
+					$config[$section][$var] = $val;  
+			}
 		}
 		
 		//print "<pre>"; print_r($config); print "</pre>";	
-		//echo '>',paramload('RCSREGISTER','verify');
-		//echo '>',paramload('RCVEHICLESQUEUE','mailto');
 		return ($config);
 	} 
 
 	public function backup_config() {	
-	     $date = date('Ymd');
+	    $date = date('Ymd');
 	
-		 $filename = "myconfig.txt";	
-		 $backup_filename = $date . "myconfig.txt";
-		 $ret = @copy($filename, $backup_filename);
+		$filename = "myconfig.txt";	
+		$backup_filename = $date . "myconfig.txt";
+		$ret = @copy($filename, $backup_filename);
 		 
-		 return ($ret);
+		$filename = "myconfig.txt.php";	
+		$backup_filename = $date . "-myconfig.txt.php";
+		$ret = @copy($filename, $backup_filename);		 
+		 
+		return ($ret);
 	}
 
 	//one step write... called by wizard to save data to myconfig
@@ -554,60 +548,60 @@ class rcconfig {
 	public function get_expirations($param=null) {
 	   
 	    foreach ($this->t_config as $section=>$data) {
-		  foreach ($data as $var=>$val) {
+			foreach ($data as $var=>$val) {
 	    
-			if ($var=='expires') {
-			    $exps[$section] = $val;
-				//echo $section,'=',$val;
-			}
-          }			
+				if ($var=='expires') {
+					$exps[$section] = $val;
+					//echo $section,'=',$val;
+				}
+			}			
 	    }
 		
 		return (serialize($exps));
 	}
 	
+	//insert message into db	
+	protected function storeMessage() {
+		$db = GetGlobal('db');
+	    $date = date('Ymd');		
+		
+		$sSQL = "insert into cpmessages (hash, msg, type, owner) values (";
+		$sSQL.= $db->qstr(md5($date.'config')) . ",";
+		$sSQL.= $db->qstr('Configuration file modified') . ",";
+		$sSQL.= $db->qstr('configuration') . ",";
+		$sSQL.= $db->qstr($this->owner);
+		$sSQL.= ")";
+		$result = $db->Execute($sSQL,1);			 	
+		
+		return true;
+	}
 	
-	function select_template($tfile=null) {
-		if (!$tfile) return;
-	  
-		$template = $tfile . '.htm';	
-		$t = $this->path . 'html/'. $this->cptemplate .'/'. str_replace('.',getlocal().'.',$template) ;   
-		if (is_readable($t)) 
-			$mytemplate = file_get_contents($t);
-
-		return ($mytemplate);	 
-    }		
-	
-	//tokens method	
-	protected function combine_tokens($template_contents, $tokens, $execafter=null) {
+	protected function combine_tokens(&$template_contents, $tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template_contents);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template_contents;
+			$ret = $template_contents;
 		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
+	    foreach ($tokens as $i=>$tok) 
 		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
+
 		//clean unused token marks
 		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
-		
+			$ret = str_replace("$".$x."$",'',$ret);
+
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
           
-		  return ($retout);
+			return ($retout);
 		}		
 		
 		return ($ret);
