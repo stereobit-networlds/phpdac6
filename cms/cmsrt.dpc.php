@@ -163,13 +163,15 @@ class cmsrt extends cms  {
 			case "setlanguage"  : //echo "Current language:",$this->lan_set[$this->selected_lan],"\n";  						
 			                      break; 
 								  
-			case 'kshow'        : _m("cmsvstats.update_item_statistics use ".GetReq('id'), 1);
+			case 'kshow'        : if ($this->userLevelID < 5) 
+									_m("cmsvstats.update_item_statistics use ".GetReq('id'), 1);
 			
 			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_item();
 			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->show_item(); 
 								  break;
 								  
-			case 'klist'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat'), 1);
+			case 'klist'        : if ($this->userLevelID < 5)  
+			                         _m("cmsvstats.update_category_statistics use ".GetReq('cat'), 1);
 			
 			                      $this->isCAttach = $this->get_attachment(GetReq('cat'));
 			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_list(); 

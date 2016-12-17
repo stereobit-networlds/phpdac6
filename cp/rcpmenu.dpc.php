@@ -293,10 +293,22 @@ class rcpmenu {
 			SetSessionParam('env', $ret); 		
 	
 		return ($ret);
-	}   
+	}
+
+	//for each user up to current, set security on	
+	protected function parse_userSecurity() {
+        $ret = array();
+		//for($usrsec=$this->seclevid; $usrsec<=9; $usrsec++)
+			//$ret['USER'.$usrsec] = 1;
+		
+		$ret['USER'] = $this->seclevid;
+		$ret['USER'.$this->seclevid] = 1;
+		//print_r($ret);
+		return ($ret);
+	}
    
 	protected function readINI() {  
-	   
+
         if (defined('CCPP_VERSION')) { //override, customized per line
 			$cat = $this->cpGet['cat'] ? array('ON'=>1,'OFF'=>null) : array('ON'=>null,'OFF'=>1);
 			$id = $this->cpGet['id'] ? array('ON'=>1,'OFF'=>null) : array('ON'=>null,'OFF'=>1);  		
@@ -304,7 +316,7 @@ class rcpmenu {
 							'ID'=>$id, 
 							'SEC'=>$this->parse_environment(),
 							'CNF'=>$this->parse_config(),
-							'ADMIN'=>$this->seclevid,
+							'ADMIN'=>$this->parse_userSecurity(),
 							);
 			//print_r($config);
 			

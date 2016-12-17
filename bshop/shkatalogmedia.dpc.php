@@ -129,10 +129,8 @@ class shkatalogmedia {
 	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan, $itmplpath;
 	var $max_price, $min_price;
 
-	public function __construct() {
-		$GRX = GetGlobal('GRX');		
+	public function __construct() {	
 		$UserSecID = GetGlobal('UserSecID');	
-	  
 		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	  
 	
 		$this->msg = null;
@@ -317,25 +315,28 @@ class shkatalogmedia {
 									die($xml);	//xml output
 									break;
 								 
-			case 'xmlout'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); 
+			case 'xmlout'        :  _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); 
 									$this->xmlread_list();
 									$xml = $this->xml_feed();
 									die($xml);	//xml output
 									break;
 			//cart override
-			case 'addtocart'     : 	$cartstr = explode(';', GetReq('a')); 
-									$item = $cartstr[0]; 
-									_m("cmsvstats.update_item_statistics use $item+cartin");
-									
+			case 'addtocart'     : 	if ($this->userLevelID < 5) {
+										$cartstr = explode(';', GetReq('a')); 
+										$item = $cartstr[0]; 
+										_m("cmsvstats.update_item_statistics use $item+cartin");
+									}
 									if (_v("shcart.fastpick")) {
 										$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_BLN1', getlocal()));									
 										$this->javascript(); //katalog filters
 									}	
 									break; 
 									
-			case 'removefromcart': 	$cartstr = explode(';', GetReq('a'));
-									$item = $cartstr[0];
-									_m("cmsvstats.update_item_statistics use $item+cartout");
+			case 'removefromcart': 	if ($this->userLevelID < 5) {
+										$cartstr = explode(';', GetReq('a'));
+										$item = $cartstr[0];
+										_m("cmsvstats.update_item_statistics use $item+cartout");
+									}	
 
 									if (_v("shcart.fastpick"))
 										$this->jsDialog($this->replace_cartchars($cartstr[1], true), localize('_BLN2', getlocal()) . ' (-)');									
@@ -345,23 +346,31 @@ class shkatalogmedia {
 
 			case 'kfilter'      :	$filter = GetParam('input');
 									$this->my_one_item = $this->fread_list($filter); 
-									$_filter = $this->replace_spchars($filter,1);
-									_m("cmsvstats.update_category_statistics use $_filter+filter");		  
+									
+									if ($this->userLevelID < 5) {
+										$_filter = $this->replace_spchars($filter,1);
+										_m("cmsvstats.update_category_statistics use $_filter+filter");		  
+									}
 									
 									$this->javascript();
 									break;	
 									
 			case 'klist'        :   $this->my_one_item = $this->read_list(); 
-									_m("cmsvstats.update_category_statistics use ".GetReq('cat'));		  
+									if ($this->userLevelID < 5) 
+										_m("cmsvstats.update_category_statistics use ".GetReq('cat'));		  
 									
 									$this->javascript();
 									break;	
 
 			case 'kshow'        :	$this->read_item(); 
-									_m("cmsvstats.update_item_statistics use ".GetReq('id'));
+			
+									if ($this->userLevelID < 5) 
+										_m("cmsvstats.update_item_statistics use ".GetReq('id'));
 									break;
 								
-			default             : 	//_m("rcvstats.update_item_statistics use ".GetReq('id'));
+			default             : 	/*if ($this->userLevelID < 5) 
+										_m("rcvstats.update_item_statistics use ".GetReq('id'));
+									*/
 		}			
     }	
 	

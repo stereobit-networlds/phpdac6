@@ -221,7 +221,7 @@ class rcusers extends shusers {
 				//echo 'a>';
 			    if ($this->check_existing_customer) {
 				    //echo 'b>';
-                    if ($cid = GetGlobal('controller')->calldpc_method('shcustomers.customer_exist use 1')) {
+                    if ($cid = _m('shcustomers.customer_exist use 1')) {
 		                if ($cid<>-1) {//not mapped customer	
 								     //echo 'c1>';
 								     $checkcuserr = null;
@@ -238,12 +238,12 @@ class rcusers extends shusers {
 					}
 					else  {//new customer
 					    //echo 'c>';
-					    $checkcuserr = GetGlobal('controller')->calldpc_method('shcustomers.checkFields use +'.$this->checkuseasterisk);   
+					    $checkcuserr = _m('shcustomers.checkFields use +'.$this->checkuseasterisk);   
 				 	    $this->map_customer = null; //new customer	
 				    } 
 			    }
 			    else {//new customer
-			        $checkcuserr = GetGlobal('controller')->calldpc_method('shcustomers.checkFields use +'.$this->checkuseasterisk);
+			        $checkcuserr = _m('shcustomers.checkFields use +'.$this->checkuseasterisk);
 			   	    //SetGlobal('sFormErr',$checkcuserr);
 			    }
 		    }
@@ -276,10 +276,13 @@ class rcusers extends shusers {
         $sFormErr = GetGlobal('sFormErr');
 	    if (($msg = $this->msg) || ($msg = $sFormErr)) 
 			$out = $msg;	
+		
+		$isadmin = _m('cmsrt.isLevelUser use 9');
 			
 	    if (defined('MYGRID_DPC')) {
 			
-			$edit = _m('cmsrt.isLevelUser use 9') ? 'd' : 'e';
+			$edit = $isadmin ? 'd' : 'e';
+			$editf = $isadmin ? 1 : 0;
 			
 			$where = null; //"where seclevid<5";  //order by id desc //disable search
             $xsSQL = "SELECT * from (select id,timein,active,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users $where) o ";		   
@@ -297,7 +300,7 @@ class rcusers extends shusers {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|20|0|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code2|".localize('_code',getlocal())."|20|0|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");
+			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|$editf|");
 		   
 		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',getlocal())."+id+0+1+36+600++0+1+1");
 		   
@@ -315,9 +318,12 @@ class rcusers extends shusers {
 	    if (($msg = $this->msg) || ($msg = $sFormErr)) 
 			$out = $msg;	
 			
+		$isadmin = _m('cmsrt.isLevelUser use 9');
+			
 	    if (defined('MYGRID_DPC')) {
-		    
-			$edit = _m('cmsrt.isLevelUser use 9') ? 'd' : 'e';
+			
+			$edit = $isadmin ? 'd' : 'e';
+			$editf = $isadmin ? 1 : 0;
 			
             $xsSQL = "SELECT * from (select id,timein,active,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users where $from and $to) o ";		   
 		   
@@ -325,7 +331,7 @@ class rcusers extends shusers {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|1|".seturl('t=cptransactions&cusmail={username}').'||');	   
 			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|link|5|".seturl('t=cpusractiv&rec={id}').'||');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|20|1|");						
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|20|$edif|");						
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|20|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|20|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
@@ -334,7 +340,7 @@ class rcusers extends shusers {
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|20|0|");
 		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code2|".localize('_code',getlocal())."|20|0|");			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|1|");		   
+		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|$edif|");		   
 		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',getlocal())."+id+0+1+36+600++0+1+1");
 		   
 		    return ($out); 	

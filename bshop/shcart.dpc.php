@@ -12,61 +12,70 @@ require_once($a);
 $b = GetGlobal('controller')->require_dpc('bshop/mchoice.dpc.php');
 require_once($b);
 
-$__LOCALE['SHCART_DPC'][99]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
+//$__LOCALE['SHCART_DPC'][27]='_CHKOUT;Checkout;Ταμείο';
+//echo _lc('shcart',27,2);
 
-$__EVENTS['SHCART_DPC'][0]= localize('_CHKOUT',getlocal());
-$__EVENTS['SHCART_DPC'][1]= localize('_ORDER',getlocal());
-$__EVENTS['SHCART_DPC'][2]= localize('_RECALC',getlocal());
-$__EVENTS['SHCART_DPC'][3]= localize('_SUBMITORDER',getlocal());	
-$__EVENTS['SHCART_DPC'][4]= localize('_CANCELORDER',getlocal());
-$__EVENTS['SHCART_DPC'][5]= "addtocart"; 					 	
-$__EVENTS['SHCART_DPC'][6]= "removefromcart"; 
-$__EVENTS['SHCART_DPC'][7]= "clearcart";
-$__EVENTS['SHCART_DPC'][8]= "loadcart";
-$__EVENTS['SHCART_DPC'][9]= "printcart";
+$cart_checkout = localize('_CHKOUT',getlocal());
+$cart_order = localize('_ORDER',getlocal());
+$cart_recalc = localize('_RECALC',getlocal());
+$cart_submit = localize('_SUBMITORDER',getlocal());	
+$cart_cancel = localize('_CANCELORDER',getlocal());
+$cart_submit2 = localize('_SUBMITORDER2',getlocal());
+//echo $cart_checkout . '>';
+
+$__EVENTS['SHCART_DPC'][0]= "viewcart"; 					 	 
+$__EVENTS['SHCART_DPC'][1]= "clearcart";
+$__EVENTS['SHCART_DPC'][2]= "loadcart";
+$__EVENTS['SHCART_DPC'][3]= "removefromcart";
+$__EVENTS['SHCART_DPC'][4]= "printcart";
+$__EVENTS['SHCART_DPC'][5]= $cart_checkout;
+$__EVENTS['SHCART_DPC'][6]= $cart_order;
+$__EVENTS['SHCART_DPC'][7]= $cart_recalc;
+$__EVENTS['SHCART_DPC'][8]= $cart_submit;	
+$__EVENTS['SHCART_DPC'][9]= $cart_cancel;
 $__EVENTS['SHCART_DPC'][10]= "transcart";
 $__EVENTS['SHCART_DPC'][11]= "fastpick";
 $__EVENTS['SHCART_DPC'][12]= "sship";
 $__EVENTS['SHCART_DPC'][13]= "calc";
-$__EVENTS['SHCART_DPC'][14]= localize('_SUBMITORDER2',getlocal());
+$__EVENTS['SHCART_DPC'][14]= $cart_submit2;
 $__EVENTS['SHCART_DPC'][15]= "cart-checkout";
 $__EVENTS['SHCART_DPC'][16]= "cart-order";
 $__EVENTS['SHCART_DPC'][17]= "cart-submit";
 $__EVENTS['SHCART_DPC'][18]= "cart-cancel";
-$__EVENTS['SHCART_DPC'][19]= "viewcart"; 
+$__EVENTS['SHCART_DPC'][19]= "addtocart"; 
 
 $__ACTIONS['SHCART_DPC'][0]= "viewcart";
 $__ACTIONS['SHCART_DPC'][1]= "clearcart";
 $__ACTIONS['SHCART_DPC'][2]= "loadcart"; 
 $__ACTIONS['SHCART_DPC'][3]= "removefromcart";
 $__ACTIONS['SHCART_DPC'][4]= "printcart";
-$__ACTIONS['SHCART_DPC'][5]= localize('_CHKOUT',getlocal());
-$__ACTIONS['SHCART_DPC'][6]= localize('_ORDER',getlocal());
-$__ACTIONS['SHCART_DPC'][7]= localize('_RECALC',getlocal());
-$__ACTIONS['SHCART_DPC'][8]= localize('_SUBMITORDER',getlocal());	
-$__ACTIONS['SHCART_DPC'][9]= localize('_CANCELORDER',getlocal());	
+$__ACTIONS['SHCART_DPC'][5]= $cart_checkout;
+$__ACTIONS['SHCART_DPC'][6]= $cart_order;
+$__ACTIONS['SHCART_DPC'][7]= $cart_recalc;
+$__ACTIONS['SHCART_DPC'][8]= $cart_submit;	
+$__ACTIONS['SHCART_DPC'][9]= $cart_cancel;	
 $__ACTIONS['SHCART_DPC'][10]= 'transcart';
 $__ACTIONS['SHCART_DPC'][11]= "fastpick";
 $__ACTIONS['SHCART_DPC'][12]= "sship";
 $__ACTIONS['SHCART_DPC'][13]= "calc";
-$__ACTIONS['SHCART_DPC'][14]= localize('_SUBMITORDER2',getlocal());
+$__ACTIONS['SHCART_DPC'][14]= $cart_submit2;
 $__ACTIONS['SHCART_DPC'][15]= "cart-checkout";
 $__ACTIONS['SHCART_DPC'][16]= "cart-order";
 $__ACTIONS['SHCART_DPC'][17]= "cart-submit";
 $__ACTIONS['SHCART_DPC'][18]= "cart-cancel";
-$__ACTIONS['SHCART_DPC'][19]= "viewcart"; 
-
+$__ACTIONS['SHCART_DPC'][19]= "addtocart"; 
+/*
 $__DPCATTR['SHCART_DPC']['viewcart'] = 'viewcart,1,0,1,0,0,0,0,0,0'; 
 $__DPCATTR['SHCART_DPC']['loadcart'] = 'loadcart,1,0,1,0,0,0,0,0,0'; 
-$__DPCATTR['SHCART_DPC'][localize('_RECALC',getlocal())] = '_RECALC,1,0,1,0,0,0,0,0,0';
-$__DPCATTR['SHCART_DPC'][localize('_CANCELORDER',getlocal())] = '_CANCELORDER,1,0,1,0,0,0,0,0,0';
-$__DPCATTR['SHCART_DPC'][localize('_ORDER',getlocal())] = '_ORDER,1,0,1,0,0,0,0,0,0'; 
-$__DPCATTR['SHCART_DPC'][localize('_SUBMITORDER',getlocal())] = '_SUBMITORDER,1,0,1,0,0,0,0,0,0';
-$__DPCATTR['SHCART_DPC'][localize('_CHKOUT',getlocal())] = '_CHKOUT,1,0,1,0,0,0,0,0,0';
+$__DPCATTR['SHCART_DPC'][$cart_recalc] = '_RECALC,1,0,1,0,0,0,0,0,0';
+$__DPCATTR['SHCART_DPC'][$cart_cancel] = '_CANCELORDER,1,0,1,0,0,0,0,0,0';
+$__DPCATTR['SHCART_DPC'][$cart_order] = '_ORDER,1,0,1,0,0,0,0,0,0'; 
+$__DPCATTR['SHCART_DPC'][$cart_submit] = '_SUBMITORDER,1,0,1,0,0,0,0,0,0';
+$__DPCATTR['SHCART_DPC'][$cart_checkout] = '_CHKOUT,1,0,1,0,0,0,0,0,0';
 $__DPCATTR['SHCART_DPC']['addtocart'] = 'addtocart,0,0,0,0,0,1,0,0,1';
 $__DPCATTR['SHCART_DPC']['removefromcart'] = 'removefromcart,0,0,0,0,0,1,0,0,1';
-$__DPCATTR['SHCART_DPC'][localize('_SUBMITORDER2',getlocal())] = '_SUBMITORDER2,1,0,1,0,0,0,0,0,0';
-
+$__DPCATTR['SHCART_DPC'][$cart_submit2] = '_SUBMITORDER2,1,0,1,0,0,0,0,0,0';
+*/
 $__LOCALE['SHCART_DPC'][0]='SHCART_DPC;My Cart;Καλάθι Αγορών';
 $__LOCALE['SHCART_DPC'][1]='_GRANDTOTAL;Grand Total;Γενικό Σύνολο';
 $__LOCALE['SHCART_DPC'][2]='loginorregister;Login or Register for a new account;Παρακαλώ προχωρείστε στις απαιτούμενες ενέργειες!';
@@ -153,6 +162,8 @@ $__LOCALE['SHCART_DPC'][80]='_CARTERROR;Error during transaction;Λαθος εκ
 $__LOCALE['SHCART_DPC'][81]='_STOCKOUT; is out of stock!; δεν υπαρχει απόθεμα!;';
 $__LOCALE['SHCART_DPC'][82]='_INPUTERR;Invalid entry!;Λανθασμένη ποσότητα!;';
 
+$__LOCALE['SHCART_DPC'][99]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
+
 $__PARSECOM['SHCART_DPC']['quickview']='_VIEWCART_';
 
 $__DPCEXT['SHCART_DPC']='showsymbol';
@@ -180,7 +191,9 @@ class shcart extends storebuffer {
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
     public function __construct() {
-		$UserName = GetGlobal('UserName');					
+		$UserName = GetGlobal('UserName');
+		$UserSecID = GetGlobal('UserSecID');	
+		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);		
 		
 		storebuffer::storebuffer('cart');
 		
@@ -365,6 +378,8 @@ class shcart extends storebuffer {
 									}  
 									break;								 
 						
+			case _lc('shcart',27,1):
+			case _lc('shcart',27,2):			
 			case 'cart-checkout' : 
 			case $this->checkout : 	if (!GetGlobal('UserID')) {
 										$this->todo = 'loginorregister';
@@ -2806,6 +2821,8 @@ function addtocart(id,cartdetails)
 	}	
 
 	protected function update_statistics($id, $user=null) {
+		if ($this->userLevelID >= 5) return false;
+		
         if (defined('CMSVSTATS_DPC'))	
 			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
 		

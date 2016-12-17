@@ -74,50 +74,6 @@ $__LOCALE['CMSLOGIN_DPC'][32]='SHLOGIN_DPC;Login;Εισαγωγή';
 $__LOCALE['CMSLOGIN_DPC'][33]='_FBLOGIN;Login with Facebook;Σύνδεση με Facebook';
 $__LOCALE['CMSLOGIN_DPC'][34]='_mailmxerr;Wrong e-mail;Λανθασμένο e-mail';
 
-//cpmdbrec commands
-/*$__LOCALE['CMSLOGIN_DPC'][80]='_exit;Exit;Έξοδος';
-$__LOCALE['CMSLOGIN_DPC'][81]='_dashboard;Dashboard;Πίνακας ελέγχου';
-$__LOCALE['CMSLOGIN_DPC'][82]='_logout;Logout;Αποσύνδεση';
-$__LOCALE['CMSLOGIN_DPC'][83]='_rssfeeds;RSS Feeds;RSS Feeds';
-$__LOCALE['CMSLOGIN_DPC'][84]='_edititemtext;Edit Item Text;Μεταβολή κειμένου';// (text) αντικειμένου';
-$__LOCALE['CMSLOGIN_DPC'][85]='_deleteitemattachment;Delete Item Attachment;Διαγραφή συνημμένου';// είδους';
-$__LOCALE['CMSLOGIN_DPC'][90]='_editcat;Edit Category;Μεταβολή κατηγορίας';
-$__LOCALE['CMSLOGIN_DPC'][91]='_addcat;Add Category;Νέα Κατηγορία';
-$__LOCALE['CMSLOGIN_DPC'][92]='_additem;Add Item;Νέο Είδος';
-$__LOCALE['CMSLOGIN_DPC'][93]='_webstatistics;Statistics;Στατιστικά';
-$__LOCALE['CMSLOGIN_DPC'][94]='_addcathtml;Add Category Html;Προσθήκη κειμένου';// κατηγορίας';
-$__LOCALE['CMSLOGIN_DPC'][95]='_editcathtml;Edit Category Html;Μεταβολή κειμένου';// κατηγορίας';
-$__LOCALE['CMSLOGIN_DPC'][96]='_edititem;Edit Item;Μεταβολή';// αντικειμένου';
-$__LOCALE['CMSLOGIN_DPC'][97]='_edititemphoto;Edit Photo;Μεταβολή φωτογραφίας';// αντικειμένου';
-$__LOCALE['CMSLOGIN_DPC'][98]='_edititemdbhtm;Edit Item Htm;Μεταβολή κειμένου';// (htm) αντικειμένου (db)';
-$__LOCALE['CMSLOGIN_DPC'][99]='_edititemdbhtml;Edit Item Html;Μεταβολή κειμένου';// (html) αντικειμένου (db)';
-$__LOCALE['CMSLOGIN_DPC'][100]='_edititemdbtext;Edit Item Text;Μεταβολή κειμένου';// (text) αντικειμένου (db)';
-$__LOCALE['CMSLOGIN_DPC'][101]='_senditemmail;Send Text/Html e-mail;Αποστολή e-mail';
-$__LOCALE['CMSLOGIN_DPC'][102]='_delitemattachment;Delete Text;Διαγραφή κειμένου';// (db)';
-$__LOCALE['CMSLOGIN_DPC'][103]='_edititemtext;Edit Item Text;Μεταβολή κειμένου';// (text) αντικειμένου';
-$__LOCALE['CMSLOGIN_DPC'][104]='_edititemhtm;Edit Item Htm;Μεταβολή κειμένου';// (htm) αντικειμένου';
-$__LOCALE['CMSLOGIN_DPC'][105]='_edititemhtml;Edit Item Html;Μεταβολή κειμένου';// (html) αντικειμένου';
-$__LOCALE['CMSLOGIN_DPC'][106]='_additemhtml;Add Item Html;Εισαγωγή κειμένου';// στο αντικείμενο';
-$__LOCALE['CMSLOGIN_DPC'][107]='_transactions;Transactions;Συναλλαγές';
-$__LOCALE['CMSLOGIN_DPC'][108]='_users;Users;Χρήστες';
-$__LOCALE['CMSLOGIN_DPC'][109]='_itemattachments2db;Add Item(s) to Database;Μεταφορά κειμένων στην Β.Δ.';//βάση δεδομένων';
-$__LOCALE['CMSLOGIN_DPC'][110]='_importdb;Import Database;Εισαγωγή βάσης δεδομένων';
-$__LOCALE['CMSLOGIN_DPC'][111]='_config;Configuration;Ρυθμίσεις';
-$__LOCALE['CMSLOGIN_DPC'][112]='_contactform;Contact Form;Φόρμα επικοινωνίας';
-$__LOCALE['CMSLOGIN_DPC'][113]='_subscribers;Subscribers;Συνδρομητές';
-$__LOCALE['CMSLOGIN_DPC'][114]='_sitemap;Sitemap;Χάρτης πλοήγησης';// αντικειμένων';
-$__LOCALE['CMSLOGIN_DPC'][115]='_search;Search;Φόρμα Αναζήτησης';
-$__LOCALE['CMSLOGIN_DPC'][116]='_upload;Upload files;Ανέβασμα αρχείων';
-$__LOCALE['CMSLOGIN_DPC'][117]='_uploadid;Upload item files;Ανέβασμα αρχείων';// αντικειμένου';
-$__LOCALE['CMSLOGIN_DPC'][118]='_uploadcat;Upload category files;Ανέβασμα αρχείων';// κατηγορίας';
-$__LOCALE['CMSLOGIN_DPC'][119]='_syncphoto;Sync photos;Συγχρονισμός φωτογραφιών';
-$__LOCALE['CMSLOGIN_DPC'][120]='_syncsql;Sync data;Συγχρονισμός δεδομένων';
-$__LOCALE['CMSLOGIN_DPC'][121]='_dbphoto;Image in DB;Εικόνα στην βάση δεδομένων';
-$__LOCALE['CMSLOGIN_DPC'][122]='_editctag;Category Tags;Tags κατηγορίας';
-$__LOCALE['CMSLOGIN_DPC'][123]='_edititag;Item Tags;Tags είδους';
-$__LOCALE['CMSLOGIN_DPC'][124]='_menu;Menu;Επιλογές Menu';
-$__LOCALE['CMSLOGIN_DPC'][125]='_slideshow;Slideshow;Επιλογές Slideshow';
-*/
 
 class cmslogin {
 
@@ -186,9 +142,7 @@ class cmslogin {
 		$this->appname = paramload('ID','instancename');
 		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
 		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";		
-		
-        //timezone	   
-        date_default_timezone_set('Europe/Athens');		   
+	   
 	}
 
     public function event($sAction) {
@@ -935,6 +889,8 @@ window.setTimeout('neu()',10);
 	}
 	
 	protected function update_login_statistics($id, $user=null) {
+		if ($this->userLevelID >= 5) return false;
+		
         if (defined('CMSVSTATS_DPC'))	
 			return _m('cmsvstats.update_action_statistics use '.$id.'+'.$user);			
 		
