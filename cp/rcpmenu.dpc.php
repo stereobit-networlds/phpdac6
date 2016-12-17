@@ -185,19 +185,21 @@ class rcpmenu {
 	
 	public function __construct() {
 	   
-       $this->path = paramload('SHELL','prpath');	   
+        $this->path = paramload('SHELL','prpath');	   
 	   
-	   $this->urlpath = paramload('SHELL','urlpath');
-	   $this->inpath = paramload('ID','hostinpath');	
+	    $this->urlpath = paramload('SHELL','urlpath');
+	    $this->inpath = paramload('ID','hostinpath');	
 	  
-       $this->menufile = $this->path . 'menucp.ini';
-	   $this->delimiter = ',';
+        $this->menufile = $this->path . 'menucp.ini';
+	    $this->delimiter = ',';
 
-       $this->dropdown_class = remote_paramload('RCPMENU','dropdownclass',$this->path);	   
-	   $this->dropdown_class2 = remote_paramload('RCPMENU','dropdownclass2',$this->path); 
+        $this->dropdown_class = remote_paramload('RCPMENU','dropdownclass',$this->path);	   
+	    $this->dropdown_class2 = remote_paramload('RCPMENU','dropdownclass2',$this->path); 
 
-       $this->getTURL();	   
-   }
+	    //$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];		
+			   
+        $this->getTURL();	   
+    }
    
 
     public function event($event=null) {
@@ -271,22 +273,17 @@ class rcpmenu {
 	}
    
 	protected function parse_environment($save_session=false) {	   
-		$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
-		$this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;
-		//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$adminsecid.':'.$this->seclevid;
-	/*
-		if ($ret = $_SESSION['env']) { //saved by rccontrolpanel
-			$GLOBALS['ADMINSecID'] = null; // for securuty erase the global leave the sessionid
-			return ($ret);
-		}    
-	*/
+		$this->seclevid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
+		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
+		//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$sl.':'.$this->seclevid;
+
 		$ini = @parse_ini_file($this->path . "cp.ini");
 		if (!$ini) die('Environment error!');	
 	
 		foreach ($ini as $env=>$val) {
 			if (stristr($val,',')) {
 				$uenv = explode(',',$val);
-				$ret[$env] = $uenv[$this->seclevid];  
+				$ret[$env] = $uenv[$sl];  
 			}
 			else
 				$ret[$env] = $val;
@@ -307,6 +304,7 @@ class rcpmenu {
 							'ID'=>$id, 
 							'SEC'=>$this->parse_environment(),
 							'CNF'=>$this->parse_config(),
+							'ADMIN'=>$this->seclevid,
 							);
 			//print_r($config);
 			
@@ -336,14 +334,15 @@ class rcpmenu {
 
 	public function render($menu_template=null,$glue_tag=null,$submenu_template=null) {
         $lan = getlocal() ? getlocal() : '0';
+		$this->seclevid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
+		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;		
 	  
 	    $m = $this->readINI();
 		if (!$m) return false;
 		  
 		//print_r($m);
 		foreach ($m as $menu_item) {
-		
-			//menu items		
+				
 			if (isset($menu_item['title'])) { 		
 		  
 				$title = explode($this->delimiter ,$menu_item['title']);
@@ -352,13 +351,12 @@ class rcpmenu {
 				//SECURITY
 				if (stristr($menu_item['spaces'],',')) {
 					$uenv = explode(',',$menu_item['spaces']);
-					$allow = $uenv[$this->seclevid];  
+					$allow = $uenv[$sl];  
 				}
 				else
 					$allow = $menu_item['spaces'];
 
 				if ($allow) {
-					//submenu
 					$submenu = explode($this->delimiter ,$menu_item['submenu']); 
 					if ($smenu = $submenu[$lan]) 
 						$smu[$title[$lan].'-submenu'] = $smenu;
@@ -377,13 +375,12 @@ class rcpmenu {
 
             foreach ($menu as $name=>$url) {
 				
-			    $tokens = array(); //reset tokens
+			    $tokens = array(); 
 			    $murl = $url ? $this->make_link($url) : '#';
 				$name_space = $name;  	
                     
                 if ($sub_menu = $smu[$name.'-submenu']) {
 					
-					//echo 'b',$sub_menu;
 					$_smenu = (array) $m[$sub_menu];
 					$ret2 = $this->render_submenu($_smenu, $submenu_template, $glue_tag);
 					$tokens[] = $this->dropdown_class;
@@ -401,7 +398,7 @@ class rcpmenu {
                 } 					
 				else {
 					if ($tmpl) {
-						$tokens[] = ''; //dummy
+						$tokens[] = ''; 
 						$tokens[] = $murl;
 						$tokens[] = $name;
 						$tokens[] = ''; 
@@ -419,16 +416,15 @@ class rcpmenu {
    
 	protected function render_submenu($smenu=null,$template=null,$glue_tag=null) { 
         $lan = getlocal() ? getlocal() : '0';
+		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;		
         if (empty($smenu)) return;
 		 	 
 		$allow = 1; //start				 
 		foreach ($smenu as $m=>$v) {
 		    $cv = explode($this->delimiter ,$v);
 	
-			if (strstr($m,'spaces')) {
-			   $allow = $cv[$this->seclevid];			
-			   //echo 'Allow:',$m,':',$allow,'<br/>';
-			}   
+			if (strstr($m,'spaces')) 
+			   $allow = $cv[$sl];			
 		    elseif ((strstr($m,'title')) && ($allow))
 			   $subm_titles[] = localize($cv[$lan], $lan);
 			elseif ((strstr($m,'link')) && ($allow))
@@ -509,51 +505,7 @@ class rcpmenu {
 		
 		return ($ret);
 	} 
-	/*
-	public function getMessagesTotal() {
-		$ret = (empty($this->messages)) ? null : count($this->messages);
-		return $ret;
-	}	
 
-	public function getMessages() {
-		if (empty($this->messages)) return null;		
-		$tokens = array();
-		$msgs = array_reverse($this->messages, true);
-		$i= 0;
-		foreach ($msgs as $n=>$m) {
-			$tokens = explode('|', $m);
-			switch (array_shift($tokens)) {
-				case 'important' : $tmpl = 'dropdown-notification-importatnt'; break;
-				case 'success'   : $tmpl = 'dropdown-notification-success'; break;
-				case 'warning'   : $tmpl = 'dropdown-notification-warning'; break; 
-				case 'info'      :
-				default          : $tmpl = 'dropdown-notification-info';
-				
-			}
-			$t = _m("cmsrt.select_template use $tmpl");
-			$ret .= $this->combine_tokens($tmpl, $tokens, true);
-			unset($tokens);
-			$i+=1;
-			if ($i>10) break;	
-		}
-		
-		return ($ret);			
-	}	
-	
-	public function setMessage($message=null) {
-		if (!$message) return false;
-		$id = explode('|',$message);
-		$hash = md5($id[0].$id[1]);
-		
-		if (array_key_exists($hash, $this->messages)) {}
-		else {
-			$this->messages[$hash] = $message;
-			SetSessionParam('cpMessages', $this->messages);
-			return true;
-		}
-		return false;	
-	}
-	*/
 	/*stream dialog for srv called by js */ 
 	/*universal stream dialog loader, to not load dpc into every php cp page */
 	public function streamDialog() {

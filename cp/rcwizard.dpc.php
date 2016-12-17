@@ -155,13 +155,9 @@ class rcwizard {
 	  }   
     } 	
 	
-    protected function parse_environment($save_session=false) {	   
-		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
-	
-		if ($ret = $_SESSION['env']) {
-			$GLOBALS['ADMINSecID'] = null; // for security erase the global leave the sessionid
-			return ($ret);
-		}    
+    protected function parse_environment($save_session=false) {
+		$this->seclevid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];		
+		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;    
 	
 		$ini = @parse_ini_file($this->prpath . "cp.ini");
 		if (!$ini) die('Environment error!');	
@@ -178,7 +174,6 @@ class rcwizard {
 		if (($save_session) && (!$_SESSION['env'])) 
 			SetSessionParam('env', $ret); 		
 	
-		//print_r($ret);
 		return ($ret);
 	} 
 
@@ -187,24 +182,12 @@ class rcwizard {
 		
 		$ret = $this->parse_environment($save_session);
 		return ($ret);
-		
-		/* construct err
-		if (defined('RCCONTROLPANEL_DPC'))
-			$ret = _m("rccontrolpanel.parse_environment use ".$save_session);
-		else
-			die('RCCONTROLPANEL_DPC required');	
-		
-		return ($ret);*/
     }	
 
-    //..as in cpmdbrec.php	
 	protected function login_wizard_step() {
 
 	     if (($user = $_POST['cpuser']) && ($pass = $_POST['cppass'])) {
 	
-			/*if (defined('RCCONTROLPANEL_DPC'))
-				$login = GetGlobal('controller')->calldpc_method("rccontrolpanel.verify_login");
-			else*/
 			if (defined('SHLOGIN_DPC'))
 				$login = GetGlobal('controller')->calldpc_method("shlogin.do_login use ".$user.'+'.$pass.'+1');	
 			else
