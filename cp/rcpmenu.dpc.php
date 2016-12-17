@@ -256,17 +256,30 @@ class rcpmenu {
 	public function exiturl() {
 	   return ('../' . $this->getTURL());//$this->turl);
 	}
+	
+	protected function parse_config() {
+	    $conf = $this->path . "myconfig.txt.php";
+		include($conf);
+		$cnf = parse_ini_string($myconf,1, INI_SCANNER_RAW);
+		
+		foreach ($cnf as $s=>$section) {
+			foreach ($section as $var=>$val)
+				$ret[$s.'-'.$var] = $val;
+		}
+
+		return ($ret);		
+	}
    
 	protected function parse_environment($save_session=false) {	   
 		$adminsecid = $_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] : $GLOBALS['ADMINSecID'];
 		$this->seclevid = ($adminsecid>1) ? intval($adminsecid)-1 : 1;
 		//echo 'ADMINSecID:'.$GLOBALS['ADMINSecID'].':'.$adminsecid.':'.$this->seclevid;
-	
+	/*
 		if ($ret = $_SESSION['env']) { //saved by rccontrolpanel
 			$GLOBALS['ADMINSecID'] = null; // for securuty erase the global leave the sessionid
 			return ($ret);
 		}    
-	
+	*/
 		$ini = @parse_ini_file($this->path . "cp.ini");
 		if (!$ini) die('Environment error!');	
 	
@@ -290,7 +303,11 @@ class rcpmenu {
         if (defined('CCPP_VERSION')) { //override, customized per line
 			$cat = $this->cpGet['cat'] ? array('ON'=>1,'OFF'=>null) : array('ON'=>null,'OFF'=>1);
 			$id = $this->cpGet['id'] ? array('ON'=>1,'OFF'=>null) : array('ON'=>null,'OFF'=>1);  		
-			$config = array('CAT'=>$cat, 'ID'=>$id, 'SEC'=>$this->parse_environment());
+			$config = array('CAT'=>$cat, 
+							'ID'=>$id, 
+							'SEC'=>$this->parse_environment(),
+							'CNF'=>$this->parse_config(),
+							);
 			//print_r($config);
 			
 			if (is_readable($this->menufile)) {

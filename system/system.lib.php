@@ -1,47 +1,160 @@
 <?php
 
-//global functions
-//require_once("globals.lib.php");
-
-function GetGlobal($param) {
-  
-  //support session vars
-  $ret = $_SESSION[$param];
-  
-  if ($ret) 
-    return ($ret);
-  //else...
-  
-  return ($GLOBALS[$param]);
-}
-
-function SetGlobal($param,$val=null) {
-  
-  $GLOBALS[$param] = $val;
-}
-  
-function redirect($url) {
+	function seclevel($modulename,$levelofsec) {
+		$sec = GetGlobal('__DPCSEC');
 	 
-   echo 'REDIRECT:' . $url;
-   header("Location: http://".$url); 
-   exit;   
-}
-   
-function getthemicrotime() {
-   
-   list($usec,$sec) = explode(" ",microtime());
-   return ((float)$usec + (float)$sec);
-} 
+		if (isset($sec[$modulename])) { 
+			$parts = explode(";",$sec[$modulename]);
+		
+			if ($parts[$levelofsec+1] >= $parts[0])
+				return 1;
+		}
+		return 0;
+	}
 
-function get_filesize($dsize) { 
+	function localize($codename,$lang=null,$enc=null,$encto=null,$debug=null) {
+		$loc = GetGlobal('__DPCLOCALE');		
+		if (!isset($lang)) 
+			$lang = getlocal();
+   
+		$encodingsperlan = arrayload('SHELL','char_set'); 
+		$enc = $enc ? $enc : $encodingsperlan[$lang];
+   
+		if (isset($loc[$codename])) { 
+			$parts = explode(";",$loc[$codename]);
+			if ($parts[$lang]) 
+				return ($parts[$lang]);
+		}  	
+   
+		return ($codename); //as input
+	}
 
-	if (strlen($dsize)>=10)
-		return number_format($dsize/1073741824,1)." Gb";
-	elseif (strlen($dsize)<=9 and strlen($dsize)>=7)
-		return number_format($dsize/1048576,1)." Mb";
-	else
-		return number_format($dsize/1024,1)." Kb";
-} 
+	function getlans() {
+		$mylans = arrayload('SHELL','languages'); //titles of lans
+		if (count($mylans)>0) 
+			return ($mylans); //get the info from config  
+
+		return null;
+	}
+
+	function settheCookie($name,$val) {
+		if (!$cookie = $_COOKIE[$name]) 
+			setcookie ($name, $val); 
+		else 
+			setcookie ($name, "" , time() - 3600); //delete cookie
+
+		return true;
+	}
+
+	function gettheCookie($cname) {
+
+		return $_COOKIE[$cname];   
+	}
+
+	function SetSessionParam($ParamName, $ParamValue) {	 
+  
+		$_SESSION[$ParamName] = $ParamValue;
+	}
+
+	function SetPreSessionParam($ParamName, $ParamValue) {	 
+
+		$_SESSION[$ParamName]= $ParamValue; 
+		FreeSessionParam($ParamName);
+	}
+
+	function GetSessionParam($ParamName) {
+
+		if ((!isset($_POST[$ParamName]) && !isset($_GET[$ParamName])))
+			return $_SESSION[$ParamName];
+
+		return null; 
+	}
+
+	function GetPreSessionParam($ParamName) {	 
+
+		return $_SESSION['SESARRAY'][$ParamName]; 
+	}
+
+	function FreeSessionParam($param) {
+		$sesp = (array)GetSessionParam('SESARRAY');
+  
+		if (!in_array($param,$sesp)) 
+			$sesp[] = $param;
+  
+		SetSessionParam('SESARRAY',$sesp);
+		return true;
+	}
+
+	//unregister now
+	function DeleteSessionParam($param) {
+  
+		$_SESSION[$param] = null;
+		return true;
+	}
+
+	//unregister all pre session array params (usually at shell destruction or logout)
+	function ResetSessionParams() {
+		$sesp = (array)GetSessionParam('SESARRAY');
+ 
+		foreach ($sesp as $sid=>$sparam)
+			$_SESSION[$sparam] = null;
+	   
+		$_SESSION["SESARRAY"] = null;
+		unset($sesp);
+		
+		return true;
+	}
+
+	function getlocal() {
+		$deflang = paramload('SHELL','dlang');
+		$curlang = GetSessionParam("locale");
+
+		if ($curlang) 
+			return ($curlang-1);
+		
+        return ($deflang ? $deflang : 0);
+	}
+
+	function setlocal($local) {
+		SetSessionParam("locale",($local+1));
+		return true;
+	}
+
+	function GetGlobal($param) {
+		if ($ret = $_SESSION[$param]) 
+			return ($ret);
+  
+		return ($GLOBALS[$param]);
+	}
+
+	function SetGlobal($param,$val=null) {
+  
+		$GLOBALS[$param] = $val;
+		return true;
+	}
+  
+	function redirect($url) {
+	 
+		echo 'REDIRECT:' . $url;
+		header("Location: http://".$url); 
+		exit;   
+	}
+   
+	function getthemicrotime() {
+   
+		list($usec,$sec) = explode(" ",microtime());
+		return ((float)$usec + (float)$sec);
+	} 
+
+	function get_filesize($dsize) { 
+
+		if (strlen($dsize)>=10)
+			return number_format($dsize/1073741824,1)." Gb";
+		elseif (strlen($dsize)<=9 and strlen($dsize)>=7)
+			return number_format($dsize/1048576,1)." Mb";
+		else
+			return number_format($dsize/1024,1)." Kb";
+	} 
 
 function copyr($source, $dest) { 
         // Simple copy for a file 
@@ -183,8 +296,7 @@ function remote_arrayload($section,$array,$remoteapppath,$usepath=null) {
 	   $pp = $altpicpath;	 
 	 else  
 	   $pp = paramload('SHELL','picpath');	 
-	 
-	 //$source = paramload('SHELL','urlbase') . paramload('SHELL','picpath') . $img; 
+ 
 	 $source = $pr . $ip . $pp . $img;	 
      
 	 $out = "<img src=\"$source\" border=\"0\" alt=\"$alt\">";

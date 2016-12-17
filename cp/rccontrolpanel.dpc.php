@@ -454,35 +454,7 @@ $(document).ready(function(){
 ";
 
 		return $js;
-	}	 
-
-    //public::(called also from wizards)
-    /*public function parse_environment($save_session=false) {	   
-		$sl = ($this->seclevid>1) ? intval($this->seclevid)-1 : 1;
-	
-		if ($ret = $_SESSION['env']) {
-			$GLOBALS['ADMINSecID'] = null; // for security erase the global leave the sessionid
-			return ($ret);
-		}    
-	
-		$ini = @parse_ini_file($this->prpath . "cp.ini");
-		if (!$ini) die('Environment error!');	
-	
-		foreach ($ini as $env=>$val) {
-			if (stristr($val,',')) {
-				$uenv = explode(',',$val);
-				$ret[$env] = $uenv[$sl];  
-			}
-			else
-				$ret[$env] = $val;
-		}
-
-		if (($save_session) && (!$_SESSION['env'])) 
-			SetSessionParam('env', $ret); 		
-	
-		//print_r($ret);
-		return ($ret);
-	} */  	
+	}	   	
 	
     public function select_timeline($template=null, $year=null, $month=null) {
 		$t = GetReq('t') ? GetReq('t') : 'cp';
@@ -1189,12 +1161,6 @@ $(document).ready(function(){
 
     protected function autoupdate() {
 		
-		//echo $_SERVER['PHP_SELF'];
-		/*$rf = file_get_contents('http://www.stereobit.com/cp/cp.php');
-		$hf = file_get_contents($this->path .'/cp.php');
-		if (strlen($rf)!=strlen($hf)) {
-			echo 'must update...';
-		}*/
 	}
   
     public function getencoding() {
@@ -1206,7 +1172,7 @@ $(document).ready(function(){
 		SetSessionParam('LOGIN',null);
 		SetSessionParam('USER',null);
 		SetSessionParam('env',null);
-		//SetSessionParam('ADMIN',null); //to not propagated!?just close navigator window
+		//SetSessionParam('ADMIN',null); 
 		
 		SetSessionParam('turl', null);		
 		SetSessionParam('turldecoded', null);

@@ -1,5 +1,5 @@
 <?php
-$environment = @parse_ini_file(getcwd()."/phpdac5.ini");
+$environment = @parse_ini_file("phpdac5.ini");
 $dpcpath = $environment['dpcpath'] ? $environment['dpcpath'] : 'dpc';
 
 define(_APPNAME_,$environment['appname']);
@@ -9,14 +9,11 @@ define(_PRJPATH_,$environment['prjpath']);
 define(_DPCPATH_,$dpcpath);
 define(_ISAPP_,$environment['app']); 
 
-require_once(_DPCPATH_."/system/sysdb.lib.php");
-require_once(_DPCPATH_."/system/session.lib.php");
-require_once(_DPCPATH_."/system/parser.lib.php");
-require_once(_DPCPATH_."/system/ktimer.lib.php");
-require_once(_DPCPATH_."/system/azdgcrypt.lib.php"); 
-require_once(_DPCPATH_."/system/system.lib.php");		    
-require_once(_DPCPATH_."/system/ccpp.lib.php");
-
+require_once("system.lib.php");
+require_once("parser.lib.php");
+require_once("ktimer.lib.php");
+require_once("azdgcrypt.lib.php"); 		    
+require_once("ccpp.lib.php");
 require_once("controller.lib.php");
 
 define("PCNTL_DPC",true);
@@ -783,25 +780,7 @@ class pcntl extends controller {
 		
 		return $ret;	
 	} 	
-   
-	protected function create_log() {
-
-	    $srv = $this->agent . "|" . 
-		         $_SERVER['REQUEST_METHOD'] . "|" . 
-				 $_SERVER['HTTP_HOST'] . "|" . 
-				 /*$this->t_shell->value('shell') .*/ "|" . 
-				 $this->myaction . "|";
-				 
-		$cln = $this->agent . "|" . 
-		         $_SERVER['REMOTE_ADDR'] . "|" . 
-				 $_SERVER['REMOTE_HOST'] . "|" . 
-				 $_SERVER['HTTP_USER_AGENT'] . "|" . 
-				 $this->userLevelID . "|" . 
-				 /*$this->t_shell->value('shell') .*/ "|" . 
-				 $this->myaction . "|";
-				 
-		return ("$srv+$cln");
-	}   
+    
    
 	public function __destruct() {		  
 	  

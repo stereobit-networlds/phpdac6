@@ -9,21 +9,19 @@ $__DPC['CMSRT_DPC'] = 'cmsrt';
 $__EVENTS['CMSRT_DPC'][0]='shlangs';
 $__EVENTS['CMSRT_DPC'][1]='lang';
 $__EVENTS['CMSRT_DPC'][2]='setlanguage';
-//$__EVENTS['CMSRT_DPC'][3]='index';
 //$__EVENTS['CMSRT_DPC'][3]='katalog';
 //$__EVENTS['CMSRT_DPC'][4]='klist';
 //$__EVENTS['CMSRT_DPC'][5]='kshow';
-$__EVENTS['CMSRT_DPC'][6] = 'included_0';
-$__EVENTS['CMSRT_DPC'][7] = 'included_1';
-$__EVENTS['CMSRT_DPC'][8] = 'included_2';
-$__EVENTS['CMSRT_DPC'][9] = 'included_3';
-$__EVENTS['CMSRT_DPC'][10] = 'included_4';
-$__EVENTS['CMSRT_DPC'][11] = 'frontpage';
+$__EVENTS['CMSRT_DPC'][3] = 'included_0';
+$__EVENTS['CMSRT_DPC'][4] = 'included_1';
+$__EVENTS['CMSRT_DPC'][5] = 'included_2';
+$__EVENTS['CMSRT_DPC'][6] = 'included_3';
+$__EVENTS['CMSRT_DPC'][7] = 'included_4';
+$__EVENTS['CMSRT_DPC'][8] = 'frontpage';
 
 $__ACTIONS['CMSRT_DPC'][0]='shlangs';
 $__ACTIONS['CMSRT_DPC'][1]='lang';
 $__ACTIONS['CMSRT_DPC'][2]='setlanguage';
-//$__ACTIONS['CMSRT_DPC'][3]='index';
 $__ACTIONS['CMSRT_DPC'][3]='katalog';
 $__ACTIONS['CMSRT_DPC'][4]='klist';
 $__ACTIONS['CMSRT_DPC'][5]='kshow';
@@ -33,6 +31,7 @@ $__DPCATTR['CMSRT_DPC']['lang'] = 'lang,0,0,0,0,0,0,0,0,0,0,1';
 $__DPCATTR['CMSRT_DPC']['setlanguage'] = 'setlanguage,0,0,0,0,0,0,0,0,0,0,0';
 
 $__LOCALE['CMSRT_DPC'][0]='SHLANGS_DPC;Languanges;Γλώσσα';
+$__LOCALE['CMSRT_DPC'][1]='_HOME;Home;Αρχική';
 
 $a = GetGlobal('controller')->require_dpc('cms/cms.dpc.php');
 require_once($a);
@@ -140,8 +139,6 @@ class cmsrt extends cms  {
 
 		$this->refresh_page_js();
 		
-		//$this->get_data_info(); //???? tags read
-		
 		switch ($event) {
 			case 'frontpage'    : die($this->frontpage()); break;
 			case 'included_4'   :
@@ -153,8 +150,6 @@ class cmsrt extends cms  {
 			case "lang"  		: $this->selected_lan = GetParam("langsel"); break;
 			case "setlanguage"  : $this->selected_lan = $param1; break;
 			
-			//case 'kshow'        : if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_item(); break;
-			//case 'klist'        : if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_list(); break;
 			case "index"        : 
 			default 			: //$this->read_list();
 		}
@@ -166,17 +161,20 @@ class cmsrt extends cms  {
 		                          $out = $this->lan_set[$this->selected_lan]; 
 								  break;
 			case "setlanguage"  : //echo "Current language:",$this->lan_set[$this->selected_lan],"\n";  						
-			
+			                      break; 
+								  
 			case 'kshow'        : _m("cmsvstats.update_item_statistics use ".GetReq('id'), 1);
 			
 			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_item();
-			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->show_item(); break;
+			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->show_item(); 
+								  break;
 								  
 			case 'klist'        : _m("cmsvstats.update_category_statistics use ".GetReq('cat'), 1);
 			
 			                      $this->isCAttach = $this->get_attachment(GetReq('cat'));
 			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_list(); 
-			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->list_katalog(); break;			
+			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->list_katalog(); 
+								  break;			
 			case "index"        : 			
 			default 		 	: //$out .= $this->list_katalog(); //call by home page (frontpage func)
 		}
