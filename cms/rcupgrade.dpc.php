@@ -12,11 +12,14 @@ $__EVENTS['RCUPGRADE_DPC'][1]='cpmupgrade';
 $__ACTIONS['RCUPGRADE_DPC'][0]='cpupgrade';
 $__ACTIONS['RCUPGRADE_DPC'][1]='cpmupgrade';
 
+$__LOCALE['RCUPGRADE_DPC'][0] = 'RCUPGRADE_DPC;Upgrade;Αναβάθμιση;';
+$__LOCALE['RCUPGRADE_DPC'][1] = '_noresponse;Server not respond;Αποτυχία λήψης;';
+
 class rcupgrade {
 	
 	var $urlpath, $url, $prpath, $isrootapp;	
     var $upgrade_root_path, $update_root_path;
-	var $upgdirs, $isremote;	
+	var $upgdirs, $isremote, $remoteurl;	
 	
 	public function __construct() {
 		
@@ -41,6 +44,7 @@ class rcupgrade {
 		
 		$this->upgdirs = null;
 		$this->isremote = strstr($this->prpath, 'public_html/'.$this->app) ? false : true;//false;	
+		$this->remoteurl = "http://www.xix.gr/upgrade/cpupgrader.php";
 	}
 
 	public function event($event=null) {
@@ -50,7 +54,11 @@ class rcupgrade {
 	
 	    switch ($event) {
 			
-		  case 'cpmupgrade': 	echo $this->upgradeapp_ajax(); die();	
+		  case 'cpmupgrade': 	if ($this->isremote)
+									echo $this->remote_upgradeapp_ajax();
+								else	
+									echo $this->upgradeapp_ajax(); 
+								die();	
 								break;			
 		
           case 'cpupgrade' : 
@@ -93,11 +101,62 @@ class rcupgrade {
 	//call from page
 	public function javascript_code()  {
 		
-	    $ajaxurl = seturl("t=");	
-		$m = 100 / count($this->updatePath());
-		$c = count($this->updatePath());
+		$ajaxurl = seturl("t=");
+		
+		if ($this->isremote) {
+			
+			$arr = $this->serverRequest();
+			if (!$arr)	
+				return "$('#message_p').html('" . localize('_noresponse', getlocal()) . "')";	
+			
+			$c = count($arr);			
+			$m = 100 / $c;
+			
+			//create js list
+			foreach ($arr as $n1=>$r1) {
+				foreach ($r1 as $n2=>$r2)
+					if (strstr($r2, '/')) $jr[] = $r2;
+					
+			}
+			//add empty string at start as 0 element
+			$jarr = '["","' . implode('","', $jr) . '"]';;		
 	
-		$js = <<<EOF
+			$js = <<<EOFR
+
+function remotestart(app,m,c,i)
+{	
+	var nf = $jarr;	
+    var ii = (i>=0) ? i : parseInt('$c');
+    var mm = m ? m : parseInt('$m'); 
+    var cc = c ? c : 100;	
+	$('#message_p').html('<img src="images/loading.gif" alt="Processing">');
+
+	$.ajax({
+	  url: '{$ajaxurl}cpmupgrade&id='+app+'&m='+ii+'&f='+nf[ii],
+	  type: 'GET',
+	  success:function(data) {		
+	    if (data) {	
+			$('#message_p').html(data);
+			$('.label').html(cc+'%');
+			$('.bar').css({"width": cc+"%"});
+			setTimeout(function() { remotestart(app, mm, cc-mm, ii-1);},1000);
+		}
+		else {
+			$('.label').html('0%');
+			$('.bar').css({"width": "0%"});			
+			$('#message_p').html('');
+		}		
+	  }
+	}); 
+}		
+EOFR;
+		}		
+		else {
+				
+			$c = count($this->updatePath());			
+			$m = 100 / $c;
+	
+			$js = <<<EOF
 
 function start(app,m,c)
 {	
@@ -124,6 +183,7 @@ function start(app,m,c)
 	}); 
 }		
 EOF;
+		}
 		return ($js);	
     }		
 			
@@ -147,21 +207,18 @@ EOF;
 		
 		$response = $this->serverRequest();
 		if (!$response)	
-			return ('Server not respond');
+			return (localize('_noresponse', getlocal()));
 		
-		print_r($response);
-		return;
-		
-		$upaths = $response['dir-upg'];//$this->updatePath();
-		if (empty($upaths)) return false;		
-		
-		foreach ($upaths as $path) {
-			$report .= $this->scan($path, null, true);
-			$report .= '<hr/>';
+		//print_r($response);
+		foreach ($response as $r=>$el) {
+			foreach ($el as $e) 
+				$ret .= $e;	
+			$ret .= '<br/>';	
 		}
-		$report .= "<button onClick='start(\"{$this->app}\")' class='btn btn-danger'>Start</button><br/>" ;		
+		if ($ret)	
+			$ret .= "<button onClick='remotestart(\"{$this->app}\")' class='btn btn-danger'>Start</button><br/>" ;		
 		
-		return ($report);
+		return $ret;
 	}	
 
 	protected function upgradeapp_ajax() {
@@ -176,7 +233,26 @@ EOF;
 		}
 		@unlink($this->prpath . $this->app . '.app'); //reset	
 		return false;
-	}	
+	}
+
+	protected function remote_upgradeapp_ajax() {
+		$app = GetReq('id');
+		$fid = GetReq('m');
+		$file = GetReq('f');
+
+		if (($fid>0) && ($file)) {
+			//do copy and update
+			$response = $this->serverRequest($file);
+			if (!$response)	
+				return (localize('_noresponse', getlocal()));			
+			
+			foreach ($response as $r)
+				$ret .= $r;
+			return 'file ' . $fid . '->' . $file . '->' . $ret;	
+		}	
+			
+		return false;	
+	}
 	
 	protected function updatePath() {
 
@@ -438,7 +514,9 @@ Scan executed in $elapsed seconds.\r\n";
 	//pseudo-dir replacement
 	protected function replace_pseudo_dir($d) {
 			
-		if (strstr($d,'/homefiles'))
+		if (strstr($d,'/home'))
+			return str_replace('/home', '', $d);			
+		elseif (strstr($d,'/homefiles'))
 			return str_replace('/homefiles', '', $d);
 		elseif (strstr($d,'/cpfiles'))
 			return str_replace('/cpfiles', '', $d);
@@ -449,10 +527,10 @@ Scan executed in $elapsed seconds.\r\n";
 	protected function serverRequest($file=null) {
 		$ch = curl_init();
 
-		curl_setopt($ch, CURLOPT_URL,"http://www.xix.gr/upgrade/cpupgrader.php");
+		curl_setopt($ch, CURLOPT_URL, $this->remoteurl);
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, array('app'=>$this->app, 
-												   'file'=>$file,
+												   'element'=>$file,
 												   'tmpl'=>$this->templatePath,	
 												  ));
             //"postvar1=value1&postvar2=value2&postvar3=value3");

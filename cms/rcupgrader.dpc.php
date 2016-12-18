@@ -16,7 +16,7 @@ class rcupgrader {
 	
 	var $urlpath, $url, $prpath, $isrootapp;	
     var $upgrade_root_path, $update_root_path;
-	var $upgdirs, $isremote;	
+	var $upgdirs;	
 	
 	public function __construct() {
 		
@@ -30,8 +30,8 @@ class rcupgrader {
 		$this->isrootapp = remote_paramload('RCCONTROLPANEL', 'isrootapp', $this->prpath) ? true : false;
 		$this->templatePath = remote_paramload('FRONTHTMLPAGE', 'path', $this->prpath);		
 		
-		$upgpath = $this->isrootapp ? 'upgrade-app/' : '../../cp/upgrade-app/';
-		$this->upgrade_root_path = $this->prpath . $upgpath;	
+		$upgpath = '/upg'; //$this->isrootapp ? 'upgrade-app/' : '../../cp/upgrade-app/';
+		$this->upgrade_root_path = getcwd() . $upgpath;	
 		
 		$updpath = $this->isrootapp ? 'update-app/' : '../../cp/update-app/';
 		$this->update_root_path = $this->prpath . $updpath;
@@ -39,8 +39,7 @@ class rcupgrader {
 		$u = explode('/', $this->urlpath);
 		$this->app = array_pop($u);
 		
-		$this->upgdirs = null;
-		$this->isremote = strstr($this->prpath, 'public_html/'.$this->app) ? false : true;//false;	
+		$this->upgdirs = null;	
 	}
 
 	public function event($event=null) {
@@ -50,11 +49,10 @@ class rcupgrader {
 	
 	    switch ($event) {
 			
-		  case 'cpmupgrader': 	echo $this->upgradeapp_ajax(); die();	
-								break;			
+		  case 'cpmupgrader': 	break;			
 		
           case 'cpupgrader' : 
-		  default           : 	$this->javascript();
+		  default           : 	
 		                     
         }			
     }
@@ -69,118 +67,43 @@ class rcupgrader {
 		  case 'cpmupgrader':   break;		
 							 	
           case 'cpupgrader' :
-          default          	: 	if ($this->isremote)
-									$out = $this->remote_runscan();
-								else
-									$out = $this->runscan();
+          default          	: 	$out = $this->runscan();
 								
         }
 		
         return ($out);
 
-    }
-	
-	protected function javascript() {	
-
-        if (iniload('JAVASCRIPT')) {   
-	        $code = $this->javascript_code();	   	
-		    $js = new jscript;
-            $js->load_js($code,null,1);   			   
-		    unset ($js);
-	    }	
-	}		
-	
-	//call from page
-	public function javascript_code()  {
-		
-	    $ajaxurl = seturl("t=");	
-		$m = 100 / count($this->updatePath());
-		$c = count($this->updatePath());
-	
-		$js = <<<EOF
-
-function start(app,m,c)
-{	
-    var mm = m ? m : parseInt('$m'); 
-    var cc = c ? c : 100;	
-	$('#message_p').html('<img src="images/loading.gif" alt="Processing">');
-
-	$.ajax({
-	  url: '{$ajaxurl}cpmupgrade&id='+app,
-	  type: 'GET',
-	  success:function(data) {		
-	    if (data) {	
-			$('#message_p').html(data);
-			$('.label').html(cc+'%');
-			$('.bar').css({"width": cc+"%"});
-			setTimeout(function() { start(app, mm, cc-mm);},1000);
-		}
-		else {
-			$('.label').html('0%');
-			$('.bar').css({"width": "0%"});			
-			$('#message_p').html('');
-		}		
-	  }
-	}); 
-}		
-EOF;
-		return ($js);	
-    }		
+    }	
 			
 	
-	/*scan root app files */
-	protected function runscan() {
+	public function fetchfile($version=null, $file=null) {
+		if (!$file) return false;
 		
-		$upaths = $this->updatePath();
-		if (empty($upaths)) return false;		
-		
-		foreach ($upaths as $path) {
-			$report .= $this->scan($path, null, true);
-			$report .= '<hr/>';
-		}
-		$report .= "<button onClick='start(\"{$this->app}\")' class='btn btn-danger'>Start</button><br/>" ;		
-		
-		return ($report);
-	}
+		return json_encode(array(0=>'yes'));
+	}	
 	
-	protected function remote_runscan() {
+	public function runscan($version=null, $repout=false) {
 		
-		$response = $this->serverRequest();
-		if (!$response)	
-			return ('Server not respond');
-		
-		print_r($response);
-		return;
-		
-		$upaths = $response['dir-upg'];//$this->updatePath();
+		$upaths = $this->updatePath($version);
 		if (empty($upaths)) return false;		
 		
-		foreach ($upaths as $path) {
-			$report .= $this->scan($path, null, true);
-			$report .= '<hr/>';
+		foreach ($upaths as $dr=>$path) {
+			$report .= $this->scan($path, null, $repout, $dr);
+			//$report .= '<hr/>';
 		}
-		$report .= "<button onClick='start(\"{$this->app}\")' class='btn btn-danger'>Start</button><br/>" ;		
+		//$report .= "<button onClick='start(\"{$this->app}\")' class='btn btn-danger'>Start</button><br/>" ;		
 		
 		return ($report);
 	}	
-
-	protected function upgradeapp_ajax() {
-		$upaths = $this->updatePath();
-		if (empty($upaths)) return false;
-		
-		$index = intval(@file_get_contents($this->prpath . $this->app. '.app'));
-		
-		foreach ($upaths as $idx=>$path) {
-			if ($idx == $index)
-				return $this->scan($path, null, true, $index+1);
-		}
-		@unlink($this->prpath . $this->app . '.app'); //reset	
-		return false;
-	}	
 	
-	protected function updatePath() {
+	protected function updatePath($version=null) {
 
-		$path = $this->upgrade_root_path;	
+		$path = $this->upgrade_root_path;
+		$ret['upg'] = $path .'/';	
+
+		return ($ret);
+		
+		//////////////////////////////
 		
 		if (is_dir($path . $this->app . '-ext')) { //if app dir exclusive (=appname + '-ext') see dir for updates
 			$ret = array(0=>$path . $this->app . '-ext',	
@@ -193,44 +116,25 @@ EOF;
 				if ($l = trim($dirline))
 					$ret[] = $path . $l;
 			}
-			/*$ret = array(0=>$path . 'homefiles',
-		                1=>$path . 'cgi-bin',
-							2=>$path . 'newsletters',
-							3=>$path . 'js',
-							4=>$path . 'javascripts',
-							5=>$path . 'cp/images',
-							6=>$path . 'cp/assets',
-							7=>$path . 'cp/font',
-							8=>$path . 'cp/dpc',
-							9=>$path . 'cp/css',
-							10=>$path . 'cp/img',
-							11=>$path . 'cp/js',
-							12=>$path . 'cp/sql',
-							13=>$path . 'cp/lang',
-							14=>$path . 'cp/cpfiles',
-							15=>$path . "cp/$this->templatePath",
-							16=>$path . $this->app,							
-							17=>$this->prpath . 'replication',
-							);*/
 		}					
 		return ($ret);			
 	}	
 	
-	protected function scan($path=null, $skipdir=null, $reportout=false, $ajaxid=false) {
+	protected function scan($path=null, $skipdir=null, $reportout=false, $dirname=false) {
 	
-		$repout = $reportout ? true : false;
+		$repout = $reportout ? $reportout : (GetReq('report') ? true : false);
 	
-		$_p = explode('/',$path);
-        $saypath = array_pop($_p);
+		//$_p = explode('/',$path);
+        //$saypath = array_pop($_p);
 
-		$dpath = GetReq('upgpath') ? base64_decode(GetReq('upgpath')) :  false;	
-		$exec = (($dpath==$path) || ($ajaxid)) ? true : false;	
+		//$dpath = GetReq('upgpath') ? base64_decode(GetReq('upgpath')) :  false;	
+		//$exec = (($dpath==$path) || ($ajaxid)) ? true : false;	
 
 		//save step file for ajax or reset
-		$aj = ($ajaxid>0) ? @file_put_contents($this->prpath . $this->app . '.app', strval($ajaxid), LOCK_EX) : @unlink($this->prpath . $this->app . '.app');		
+		//$aj = ($ajaxid>0) ? @file_put_contents($this->prpath . $this->app . '.app', strval($ajaxid), LOCK_EX) : @unlink($this->prpath . $this->app . '.app');		
 		
 		if (!is_dir($path)) 
-			return (nl2br("Invalid path ($saypath)\r\n"));
+			return (nl2br("Invalid path ($dirname)\r\n"));
 		
 		$scan_path_length = strlen($path);
 
@@ -245,7 +149,7 @@ EOF;
 		$skip = is_array($skipdir) ? $skipdir : array();	
 
 		//	Clear and title the report variable before starting
-		$report = "Scan File Check for $acct ($saypath)\r\n";	
+		$report = "Scan File Check for $acct ($dirname)\r\n";	
 		$current = array();
 		$added = array();
 
@@ -283,12 +187,12 @@ EOF;
 					$current[$file_path] = array('file_hash' => hash_file("sha1", $file_path), 'file_last_mod' => date("Y-m-d H:i:s", filemtime($file_path)));
 
 					//	IF file_path is newer file was ADDED
-					$updateFile = str_replace($this->upgrade_root_path, $this->urlpath . '/', $file_path);
+					$updateFile = str_replace($this->upgrade_root_path, '', $file_path);
 					$_updFile = $this->replace_pseudo_dir($updateFile);
-					if ((is_readable($_updFile)) && (filemtime($_updFile) < filemtime($file_path))) {	
+					//if ((is_readable($_updFile)) && (filemtime($_updFile) < filemtime($file_path))) {	
 					    //update
-						$added[$file_path] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);
-					}
+						$added[] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);
+					/*}
 					elseif (!is_readable($_updFile)) {
 						if (strstr($_updFile, '.conf')) {
 							$conf = $this->prpath . 'myconfig.txt';
@@ -303,7 +207,7 @@ EOF;
 						else //new	
 							$added[$file_path] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);					
 					}
-					else {} //do nothing
+					else {} //do nothing*/
 				}	
 			}	// End of handling $current record entry
 			$iter->next();
@@ -325,21 +229,17 @@ EOF;
         else { 
 			$count_added = count($added);
 			$report .= "$count_added files ADDED to baseline.\r\n";
-			foreach($added as $filename => $value) { 	
-				//$report .= substr($filename,$scan_path_length);
+			/*foreach($added as $filename => $value) { 	
 				if ($exec) {
 					$report .= $this->_update($filename, $value['update'], true);
-					//$report .= $r."[+]\r\n";
 				}	
-				//else
-					//$report .= "\r\n";
-			}	
+			}*/	
         }
 
 		if ($count_added) {
 			$url = seturl("t=cpupgrade&upgpath=".base64_encode($path));
 			$button = "<a href=\"$url\" class=\"btn btn-danger\">Upgrade</a>";
-			$cmd = $exec ? null : $button;//seturl('t=cpupgrade&upgpath='.base64_encode($path), '[Upgrade]');
+			$cmd = null;//$exec ? null : $button;//seturl('t=cpupgrade&upgpath='.base64_encode($path), '[Upgrade]');
 			
 			$report .= "\r\nSummary:
 Current Baseline: $count_current
@@ -348,16 +248,16 @@ Scan executed in $elapsed seconds.\r\n";
 		}
 
 		//	Destroy tables (release to memory)
-		$baseline = $current = $added = array();
-		
+		//$baseline = $current = $added = array();
+
 		//log
-		if ($ajaxid>0)
-			$log = @file_put_contents($this->prpath . $this->app . '.log', $report, LOCK_EX | FILE_APPEND);		
+		//if ($ajaxid>0)
+			//$log = @file_put_contents($this->prpath . $this->app . '.log', $report, LOCK_EX | FILE_APPEND);		
 		
 		if ($repout) 
 			return(nl2br($report));
 		
-		return (true);	
+		return (json_encode($added));//(true);	
 	}
 
 	protected function _update($source, $dest, $mkdir=false) {
@@ -438,8 +338,10 @@ Scan executed in $elapsed seconds.\r\n";
 	//pseudo-dir replacement
 	protected function replace_pseudo_dir($d) {
 			
-		if (strstr($d,'/homefiles'))
-			return str_replace('/homefiles', '', $d);
+		if (strstr($d,'/home'))
+			return str_replace('/home', '', $d);
+		elseif (strstr($d,'/homefiles'))
+			return str_replace('/homefiles', '', $d);		
 		elseif (strstr($d,'/cpfiles'))
 			return str_replace('/cpfiles', '', $d);
 			
