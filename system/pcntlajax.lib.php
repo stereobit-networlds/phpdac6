@@ -8,9 +8,9 @@ class pcntlajax extends pcntl {
 
 	var $ajax_var; 
 
-	public function __construct($code=null,$preprocess=null,$locales=null,$css=null,$page=null) { 
+	public function __construct($code=null,$preprocess=null,$locales=null) { 
 
-		parent::__construct($code,$preprocess,$locales,$css,$page);
+		parent::__construct($code,$preprocess,$locales);
 	}
    
 	public function __destruct() {		  

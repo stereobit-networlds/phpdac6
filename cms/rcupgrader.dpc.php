@@ -14,8 +14,8 @@ $__ACTIONS['RCUPGRADER_DPC'][1]='cpmupgrader';
 
 class rcupgrader {
 	
-	var $urlpath, $url, $prpath, $isrootapp;	
-    var $upgrade_root_path, $update_root_path;
+	var $urlpath, $url, $prpath;	
+    var $upgrade_root_path;
 	var $upgdirs;	
 	
 	public function __construct() {
@@ -24,24 +24,14 @@ class rcupgrader {
 		$this->urlpath = paramload('SHELL','urlpath'); 
 		$this->url = paramload('SHELL','urlbase'); 	
 		
-		$murl = arrayload('SHELL','ip');
-        $this->url = $murl[0];
-		
-		$this->isrootapp = remote_paramload('RCCONTROLPANEL', 'isrootapp', $this->prpath) ? true : false;
-		$this->templatePath = remote_paramload('FRONTHTMLPAGE', 'path', $this->prpath);		
-		
-		$upgpath = '/upg'; //$this->isrootapp ? 'upgrade-app/' : '../../cp/upgrade-app/';
-		$this->upgrade_root_path = getcwd() . $upgpath;	
-		
-		$updpath = $this->isrootapp ? 'update-app/' : '../../cp/update-app/';
-		$this->update_root_path = $this->prpath . $updpath;
+		$this->upgrade_root_path = getcwd() . '/upg';	
 		
 		$u = explode('/', $this->urlpath);
 		$this->app = array_pop($u);
 		
 		$this->upgdirs = null;	
 	}
-
+	
 	public function event($event=null) {
 	
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
@@ -75,64 +65,45 @@ class rcupgrader {
 
     }	
 			
-	
 	public function fetchfile($version=null, $file=null) {
 		if (!$file) return false;
 		
-		return json_encode(array(0=>'yes'));
+		$f = $this->upgrade_root_path . $file;
+		$fdata = @file_get_contents($f);
+		
+		return json_encode(array(0=>base64_encode($fdata)));
 	}	
 	
-	public function runscan($version=null, $repout=false) {
+	public function runscan($version=null, $appname=null, $repout=false) {
 		
-		$upaths = $this->updatePath($version);
+		$upaths = $this->updatePath($version, $appname);
 		if (empty($upaths)) return false;		
 		
 		foreach ($upaths as $dr=>$path) {
 			$report .= $this->scan($path, null, $repout, $dr);
-			//$report .= '<hr/>';
 		}
-		//$report .= "<button onClick='start(\"{$this->app}\")' class='btn btn-danger'>Start</button><br/>" ;		
-		
+
 		return ($report);
 	}	
 	
-	protected function updatePath($version=null) {
+	protected function updatePath($version=null, $appname=null) {
+		$path = $this->upgrade_root_path;		
 
-		$path = $this->upgrade_root_path;
+		if ($appname) {
+			$apppath = $path . '/' . $appname . '-ext/';
+			if (is_dir($apppath)) {
+				$ret['upg'] = $path . '/' . $appname . '-ext/';
+				return ($ret);
+			}	
+		}	
+		
 		$ret['upg'] = $path .'/';	
-
-		return ($ret);
-		
-		//////////////////////////////
-		
-		if (is_dir($path . $this->app . '-ext')) { //if app dir exclusive (=appname + '-ext') see dir for updates
-			$ret = array(0=>$path . $this->app . '-ext',	
-						 1=>$this->prpath . 'replication',
-						);
-		}
-		else {
-			$upgdirs = is_file($path . 'dir.upg') ? file($path . 'dir.upg') : array();
-			foreach ($upgdirs as $dirline) {
-				if ($l = trim($dirline))
-					$ret[] = $path . $l;
-			}
-		}					
-		return ($ret);			
+		return ($ret);		
 	}	
 	
-	protected function scan($path=null, $skipdir=null, $reportout=false, $dirname=false) {
+	protected function scan($path=null, $skipdir=null, $repout=false, $dirname=false) {
+		$error = 0;
 	
-		$repout = $reportout ? $reportout : (GetReq('report') ? true : false);
-	
-		//$_p = explode('/',$path);
-        //$saypath = array_pop($_p);
-
-		//$dpath = GetReq('upgpath') ? base64_decode(GetReq('upgpath')) :  false;	
-		//$exec = (($dpath==$path) || ($ajaxid)) ? true : false;	
-
-		//save step file for ajax or reset
-		//$aj = ($ajaxid>0) ? @file_put_contents($this->prpath . $this->app . '.app', strval($ajaxid), LOCK_EX) : @unlink($this->prpath . $this->app . '.app');		
-		
 		if (!is_dir($path)) 
 			return (nl2br("Invalid path ($dirname)\r\n"));
 		
@@ -187,27 +158,16 @@ class rcupgrader {
 					$current[$file_path] = array('file_hash' => hash_file("sha1", $file_path), 'file_last_mod' => date("Y-m-d H:i:s", filemtime($file_path)));
 
 					//	IF file_path is newer file was ADDED
-					$updateFile = str_replace($this->upgrade_root_path, '', $file_path);
-					$_updFile = $this->replace_pseudo_dir($updateFile);
-					//if ((is_readable($_updFile)) && (filemtime($_updFile) < filemtime($file_path))) {	
-					    //update
+					if (is_readable($file_path)) {
+						
+						$updateFile = str_replace($this->upgrade_root_path, '', $file_path);
+						$_updFile = $this->replace_pseudo_dir($updateFile);
+						
+					    //update list
 						$added[] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);
-					/*}
-					elseif (!is_readable($_updFile)) {
-						if (strstr($_updFile, '.conf')) {
-							$conf = $this->prpath . 'myconfig.txt';
-							if (filemtime($conf) < filemtime($file_path))
-								$added[$file_path] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);					
-						}
-						elseif (strstr($_updFile, '.sql')) {
-							$dbupd = $this->prpath. 'sqlupgrade.txt';
-							if (filemtime($dbupd) < filemtime($file_path))
-								$added[$file_path] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);							
-						}
-						else //new	
-							$added[$file_path] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);					
 					}
-					else {} //do nothing*/
+					else
+						$error+=1;
 				}	
 			}	// End of handling $current record entry
 			$iter->next();
@@ -229,111 +189,23 @@ class rcupgrader {
         else { 
 			$count_added = count($added);
 			$report .= "$count_added files ADDED to baseline.\r\n";
-			/*foreach($added as $filename => $value) { 	
-				if ($exec) {
-					$report .= $this->_update($filename, $value['update'], true);
-				}	
-			}*/	
         }
 
 		if ($count_added) {
-			$url = seturl("t=cpupgrade&upgpath=".base64_encode($path));
-			$button = "<a href=\"$url\" class=\"btn btn-danger\">Upgrade</a>";
-			$cmd = null;//$exec ? null : $button;//seturl('t=cpupgrade&upgpath='.base64_encode($path), '[Upgrade]');
-			
+
 			$report .= "\r\nSummary:
 Current Baseline: $count_current
-Added: $count_added $cmd
+Added: $count_added
+Errors: $error
 Scan executed in $elapsed seconds.\r\n";
 		}
 
-		//	Destroy tables (release to memory)
-		//$baseline = $current = $added = array();
-
-		//log
-		//if ($ajaxid>0)
-			//$log = @file_put_contents($this->prpath . $this->app . '.log', $report, LOCK_EX | FILE_APPEND);		
-		
 		if ($repout) 
 			return(nl2br($report));
 		
-		return (json_encode($added));//(true);	
-	}
-
-	protected function _update($source, $dest, $mkdir=false) {
-		
-		if (strstr($source,'replication')) {//prpath replication dir
-		    if (strstr($source,'.sql')) //must be admindb
-				$ret = $this->_execsql($source);	
-			else
-				$ret = $this->_copy($source, $dest, $mkdir);
-			
-			@unlink($source);	
-		}			
-		elseif (strstr($source,'.sql')) //common update, must be admindb
-			$ret = $this->_execsql($source);
-		elseif (strstr($source,'.conf')) //update ini
-			$ret = $this->_execini($source);			
-		else //common update copy 
-			$ret = $this->_copy($source, $dest, $mkdir);
-		
-		return ($ret);
-	}
-	
-	protected function _copy($source, $dest, $mkdir=false) {
-		if ($mkdir) @mkdir(dirname($dest), 0777, true);
-		//echo $source,'-',$dest,'<br/>';
-		$ret = copy($source, $dest);		
-		return ($ret ? '*' : false);
-	}
-	
-	protected function _execsql($sqlfile) {
-		$db = GetGlobal('db');
-		
-		$sql = @file_get_contents($sqlfile);		
-		if ($sql) {
-			//db->Execute($sql);
-			//return $sql;
-			
-			$sql_parts = explode(';',$sql);
-			$queries = 0; 
-			foreach ($sql_parts as $i=>$sSQL) {
-				$ret = $db->Execute($sSQL,1);			  
-				$queries+=1;
-			}	
-			$ret = file_put_contents($this->prpath . 'sqlupgrade.txt', $sql);
-			return $queries . ' queries executed.';			
-		}
-		return false;
-	}
-	
-	protected function _execini($inifile) {
-		$inif = $this->prpath . 'myconfig.txt';
-		@copy($inif, str_replace('.txt', '._xt', $inif)); //backup
-		
-		$inidata = @file_get_contents($inifile);
-		$fp = new fronthtmlpage(null);
-		$pini = $fp->process_commands($inidata);
-		unset ($fp);
-		
-		$inif_local = $this->prpath . 'ini.local';		
-		@file_put_contents($inif_local, $pini); //copy local		
-		
-		$ini_array = parse_ini_file($inif_local, true, INI_SCANNER_RAW);
-		
-		if (!empty($ini_array)) {
-		    $i = 0;
-		    foreach ($ini_array as $s=>$section) {
-				foreach ($section as $var=>$val) {
-					$variable = strtolower($s) . '.' . strtolower($var); 
-					$a = _m("rcconfig.setconf use $variable+".$val);		
-					$i+=1;	
-				}
-			}
-			return $i;
-		}
-		return false;
-	}		
+		return ($error>0) ? json_encode(array(0=>"There is $error error(s) in upgrade list.")) : 
+							json_encode($added);	
+	}	
 	
 	//pseudo-dir replacement
 	protected function replace_pseudo_dir($d) {
@@ -355,9 +227,8 @@ Scan executed in $elapsed seconds.\r\n";
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, array('app'=>$this->app, 
 												   'file'=>$file,
-												   'tmpl'=>$this->templatePath,	
+												   'tmpl'=>null,	
 												  ));
-            //"postvar1=value1&postvar2=value2&postvar3=value3");
 
 		// receive server response ...
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

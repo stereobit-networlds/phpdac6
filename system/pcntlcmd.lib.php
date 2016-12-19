@@ -22,125 +22,75 @@ $__DPC['PCNTL_DPC'] = 'pcntl';
 $__ACTIONS['PCNTL_DPC'][1]='index';
 $__ACTIONS['PCNTL_DPC'][2]='default';
 
+$__DPCSEC['_PCNTLADMIN']='9;1;1;1;1;1;1;9;9;9;9';
+
 class pcntl extends controller {
 
 	var $mytime;
-	var $myaction,$my_excluded_action;
-	var $grx;
-	var $css,$languange,$theme;
-	var $js;
-	var $agent;
+	var $myaction;
+	var $languange;
 	var $code;
 	var $myactive;
 	var $file_name,$file_path,$file_extension;
 	var $data,$fpdata;
-	var $root_page; //root controller
+	var $root_page; 
 	var $debug;
-	var $remoteapp;
 	var $fp,$lan,$cl;
-	var $inpath;
-	var $map;
 	var $sysauth;
 	var $local_security;
-	var $preprocessor, $preprocess;  
+	var $preprocessor, $preprocess;   
 
-	public function __construct($code=null,$preprocess=null,$locales=null,$css=null,$page=null) { 
+	public function __construct($code=null,$preprocess=null,$locales=null) { 
 
-		session_start(); 
-
+		//session_start(); 
+		$this->mytime = $this->getthemicrotime();    
+		$xtime = $this->getthemicrotime(); 		
 		date_default_timezone_set('Europe/Athens');
-	  
-		$this->local_security = array();
-   
-		$this->remoteapp = null;   
-		$this->map = null;	
+		
+		$this->root_page = paramload('SHELL','filename');		
+		$this->debug = paramload('SHELL','debug');			
 		 
 		$this->_loadinifiles(); 
-	 
-		if (paramload('SHELL','rewrite')) 
-			$this->rewrite();
-   
-		$this->mytime = $this->getthemicrotime();    
-		$xtime = $this->getthemicrotime(); 
 	  
 		controller::__construct('ON');//yes dac,no dacpost...
 	  
-		$this->root_page = paramload('SHELL','filename');
-	  
-		$this->debug = paramload('SHELL','debug');	
-	  
-		//register self as global controller and dispatcher
-		SetGlobal('controller',$this);
-		SetGlobal('dispatcher',$this);
 		//register this
 		$__DPCMEM = GetGlobal('__DPCMEM');		    	 
 		$__DPCMEM['PCNTL_DPC'] =  &$this; 
 		SetGlobal('__DPCMEM',$__DPCMEM);
 	  		  
-		//check if encoded url query
-		$encURL = paramload('SHELL','encodeurl');
-		if (isset($encURL)) 
-			decode_url($encURL); 
+		$this->file_path = pathinfo($_SERVER['PHP_SELF'],PATHINFO_DIRNAME); 
+		if ($this->file_path=="\\") 
+			$this->file_path = null;   
+		$this->file_info = pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);
 	
-		$this->inpath = paramload('ID','hostinpath');
-		$this->agent = 'phpdac7';
-		SetGlobal('__USERAGENT',$this->agent);
-	  
-		//get file info (default=php_self else $page)
-		if ($page) {
-			$this->file_info = $page;
-		}
-		else {
-			$this->file_path = pathinfo($_SERVER['PHP_SELF'],PATHINFO_DIRNAME); 
-			if ($this->file_path=="\\") 
-				$this->file_path = null;   
-			$this->file_info = pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);
-		}	
 		$p = explode (".",$this->file_info);		  
 		$this->file_name = $p[0]; 
-		$this->file_extension = $p[1];
-	   	   		  
-		$this->sysauth = paramload('SHELL','sysauth');	  
+		$this->file_extension = $p[1];	  
 	  
-		//languange pre-selection
-		$this->languange = $locales ? $locales :(getlocal() ? getlocal() : 0);
-		if ($this->languange) //manual set
-			setlocal($this->languange);	 
+		$lan = $locales ? $locales :(getlocal() ? getlocal() : 0);
+		setlocal($lan);	 
 	        
-		if ($this->debug) 
-			echo "\nconstruct elapsed: ",$this->getthemicrotime() - $xtime, " seconds<br>"; 	   	  
-	  
 		//CCPP preprocessor
 		$this->preprocess = $preprocess;   	  
 	 
-		$this->_loadapp($code);
-	}
-
-   
-	protected function _loadapp($code) {
-		if (!isset($code)) return null;
-		
+		$this->local_security = array();
 		$this->code = $code;		  
 		$this->myaction = null;
-		$this->my_excluded_action = null;	
-
-		$this->init($this->code);  
-	  
-		//pre-defined in page locales
-		if (isset($locales)) $this->localize($locales);	  
-
-		$etime = $this->getthemicrotime();
-		if ($this->my_excluded_action)
-			$this->event($this->my_excluded_action);	 
-		else
-			$this->event($this->myaction);
+		$this->my_excluded_action = null;
+		
+		//register self as global controller and dispatcher
+		SetGlobal('controller',$this);
+		SetGlobal('dispatcher',$this);		
+		
+		$this->_loadapp();
 		
 		if ($this->debug) 
-			echo "\nevent elapsed: ",$this->getthemicrotime() - $etime, " seconds"; 		 	  
-    }
-  
-    protected function _loadinifiles() {
-   
+			echo "<!-- construct elapsed: " . $this->getthemicrotime() - $xtime . " sec -->"; 	   	  		
+	}
+
+	protected function _loadinifiles() {
+	  
 		if (is_readable("config.ini.php")) {//in root	  
 			include("config.ini.php");
 			$config = @parse_ini_string($conf, 1, INI_SCANNER_NORMAL); 
@@ -162,57 +112,103 @@ class pcntl extends controller {
 		
 		SetGlobal('config',$config);   
 	  
-		$this->preprocessor = new CCPP($config);	  
+		$this->preprocessor = new CCPP($config);
+	}  	
+   
+	protected function _loadapp() {
+		if (!isset($this->code)) return null;
+	
+		$this->init();  
+	  
+		//pre-defined in page locales
+		if (isset($locales)) $this->localize($locales);	  
+
+		$etime = $this->getthemicrotime();
+		if ($this->my_excluded_action)
+			$this->event($this->my_excluded_action);	 
+		else
+			$this->event($this->myaction);
+		
+		if ($this->debug) 
+			echo "<!-- event elapsed: " . $this->getthemicrotime() - $etime . " sec -->"; 		 	  
     }
 	
-    public function render($theme=null,$lan=null,$cl=null,$fp=null) {      
+	//overwrite
+	public function init($c=null) {      
    
-		$atime = $this->getthemicrotime();  
-	  	  
-		$this->pre_render($theme,$lan,$cl,$fp);
+		$t = new ktimer;
 	  
-	    $hfp = new fronthtmlpage($fp,null,$appi);  
-	    $ret = $hfp->render($this->data);
-	    unset($hfp);
-
+		$t->start('compile',1);		  
+		$modules = $this->compile(); 
+		$t->stop('compile');
 		if ($this->debug) 
-			echo "\naction elapsed: ",$this->getthemicrotime() - $atime, " seconds<br>"; 	    
+			echo "<!-- compile " . $t->value('compile') . ' sec -->';	  	  
+	
+		//NO NEED POST CODE...
+		/*$t->start('postcode',1);	  
+		$this->read_post_code(); //get batch readed post code as array to call after...
+		$t->stop('postcode');	  
+		echo "postcode " , $t->value('postcode');	  */
 	  
-		return ($ret); 	   
-	}
-   
-	protected function pre_render($theme=null,$lan=null,$cl=null,$fp=null) {
-      
-		if ($this->sysauth) {
-			if (($realm = GetParam('AUTHENTICATE')) || ($realm = GetReq('auth')) ||
-				($this->get_attribute($this->myactive,$this->myaction,13))) {  
-		  
-				if (!$realm) 
-					$realm = "Generic authendication";  
-				$this->authenticate($realm,$this->myaction);
-			}	
+		//INCLUDE FIRST
+		$t->start('include');	
+		if (!empty($modules)) {   	  
+		foreach  ($modules as $id=>$dpc) {
+	  
+			if ( (!defined($dpc)) && ($this->seclevel($dpc)) ) {
+				define($dpc,true);
+				$modules_to_start[] = $dpc;
+
+				//post construct code
+				if (is_array(GetGlobal('__POSTCODE'))) {		 
+					$construct_function = create_function("$dpc",$this->get_code_of('construct',$dpc));
+					$construct_function($dpc);		    
+				}
+			}   
 		}
+		}//empty
+		$t->stop('include');
+		if ($this->debug) 
+			echo "<!-- include " . $t->value('include') . ' sec -->'; 	   	 
    
-		//change languange
-		if (isset($lan)) 
-			setlocal($lan);
-				
-		if ($this->get_attribute($this->myactive,$this->myaction,4)) {			   
-		    $this->init($this->code);	
-			if ($this->debug) echo '......re-init.....';
-		}			  	
-	  
-		//get action
-		$this->data = $this->action($this->myaction);     
-    }
-   
-   
+		//INSTANCE PROJECT CASE
+		/*$is_instance = paramload('ID','isinstance');
+		if ($is_instance) //must be include the clientdpc module
+			$cdpc = new clientdpc;	*/	  
+
+		//dispacth or redirect...
+		//$this->myaction = $this->_getqueue(); 	
+
+		if (is_array($modules_to_start)) {
+			$t->start('new');			  
+			foreach  ($modules_to_start as $id=>$dpc) {
+
+				/*if (is_object($cdpc)) {
+		   
+					if ($cdpc->is_client_dpc($dpc))
+						$this->_new($dpc,'dpc');   
+					else {
+						session_start();
+						session_unset();
+						session_destroy();//kill the session
+						die("$dpc not supported or expired!");
+					}  
+				}
+				else*/
+					$this->_new($dpc,'dpc');     
+			}	 	 
+			$t->stop('new');
+			if ($this->debug) 
+				echo "<!-- initialize (new) " . $t->value('new') . ' sec -->';	
+	    }  	    	
+    }	
+	
     //overwrite..
     private function compile($code='', $preprocess=0) {   
 
-        if ($preprocess==true) {
+        if ($this->preprocess==true) {
 
-			$code = $this->preprocessor->execute($code, 0, true);
+			$code = $this->preprocessor->execute($this->code, 0, true);
 			//echo $code;
 			/*eval('?><?php;'.$mcode.'?><?php ');// . '----<br/>';	*/
 			//echo 'CCPP';
@@ -223,7 +219,7 @@ class pcntl extends controller {
 			}			
 	    }
 	    else
-			$file = explode(PHP_EOL,$code);
+			$file = explode(PHP_EOL,$this->code);
   
     
 		//clean code by nulls and commends and hold it as array
@@ -361,115 +357,69 @@ class pcntl extends controller {
 
 		$ret = eval($code);
 		return ($ret);
-    }  
+    }   
    
-	//overwrite
-	public function init($code) {      
-   
-		$t = new ktimer;
-	  
-		$t->start('compile',1);		  
-		$modules = $this->compile($code, $this->preprocess); //include and load project file's dpc lib,ext,dpc'  
-		$t->stop('compile');
-		if ($this->debug) 
-			echo "compile " , $t->value('compile');	  	  
-	
-		//NO NEED POST CODE...
-		/*$t->start('postcode',1);	  
-		$this->read_post_code(); //get batch readed post code as array to call after...
-		$t->stop('postcode');	  
-		echo "postcode " , $t->value('postcode');	  */
-	  
-		//INCLUDE FIRST
-		$t->start('include');	
-		if (!empty($modules)) {   	  
-		foreach  ($modules as $id=>$dpc) {
-	  
-			if ( (!defined($dpc)) && ($this->seclevel($dpc)) ) {
-				define($dpc,true);
-				$modules_to_start[] = $dpc;
-	  	  
-				//echo $dpc."<br>";
-				//$this->set_include($dpc,'dpc');//MOVED TO SWItch of compile 
-		 
-				//post construct code
-				if (is_array(GetGlobal('__POSTCODE'))) {		 
-					$construct_function = create_function('$dpc',$this->get_code_of('construct',$dpc));
-					$construct_function($dpc);		    
-				}
-			}   
-		}
-		}//empty
-		$t->stop('include');
-		if ($this->debug) 
-			echo "include " , $t->value('include');	 	   	 
-   
-		//ACCELERATE attributes reading...NO REASON.....
-		/*
-		$t->start('attr');	  
-		$this->load_attributes(); //overwrite build in attributes with db attr or file attr	   	 
-		$t->stop('attr');
-		echo "attr " , $t->value('attr');	  
-		*/
-
-		//INSTANCE PROJECT CASE
-		$is_instance = paramload('ID','isinstance');
-		if ($is_instance) //must be include the clientdpc module
-			$cdpc = new clientdpc;		  
-
-		//dispacth or redirect...after include!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//$this->myaction = $this->_getqueue(); 	
-
-		/*NO REASON...
-		//SOME DPCS MUST EXECUTE THEIR COMMANDS BEFORE OTHER DPCS CONSTRUCTION
-		//(update vals at construct of these)
-		//so give a priorty to a dpc to be newed and execute their event(?) before new of others 	  
-		$action = $this->myaction;//GetGlobal('dispatcher')->get_command(1);//unofficial
-		//echo ">>>>>",$action;	  
-		foreach ($modules as $id=>$dpc) {
-
-			if ($this->get_attribute($dpc,$action,11)) {
-				//new it
-				$this->_new($dpc,'dpc');
-				$this->event($action,$dpc);
-				$norenewdpc = $dpc;//used to overpass this dpc
-				//echo '()()))())(';
-			}
-			//echo '.';
-		}
-		*/	 
-		if (is_array($modules_to_start)) {
-			$t->start('new');			  
-			foreach  ($modules_to_start as $id=>$dpc) {
-
-				if (is_object($cdpc)) {
-		   
-					if ($cdpc->is_client_dpc($dpc))
-						$this->_new($dpc,'dpc');   
-					else {
-						session_start();
-						session_unset();
-						session_destroy();//kill the session
-						die("$dpc not supported or expired!");
-					}  
-				}
-				else
-					$this->_new($dpc,'dpc');     
-			}	 	 
-			$t->stop('new');
-			if ($this->debug) 
-				echo "new " , $t->value('new');	
-	    }  	    	
+    protected function _getqueue() {
+       //DISABLED IN THIS
     }
+   
+	//public alias: used by dpcs (like frontpage!)
+	public function getqueue() {
+   
+        return ($this->myaction);
+	}
+      
+	
+    public function render($theme=null,$lan=null,$cl=null,$fp=null) {      
+   
+		$atime = $this->getthemicrotime();  
+	  	  
+		$this->pre_render($theme,$lan,$cl,$fp);
+	  
+	    $hfp = new fronthtmlpage($fp,null,$appi);  
+	    $ret = $hfp->render($this->data);
+	    unset($hfp);
+
+		if ($this->debug) 
+			echo "<!-- action elapsed: " . $this->getthemicrotime() - $atime .  " sec -->";  	    
+	  
+		return ($ret); 	   
+	}
+   
+	protected function pre_render($theme=null,$lan=null,$cl=null,$fp=null) {
+      
+		if ($this->sysauth) {
+			if (($realm = GetParam('AUTHENTICATE')) || ($realm = GetReq('auth')) ||
+				($this->get_attribute($this->myactive,$this->myaction,13))) {  
+		  
+				if (!$realm) 
+					$realm = "Generic authendication";  
+				$this->authenticate($realm,$this->myaction);
+			}	
+		}
+   
+		//change languange
+		if (isset($lan)) 
+			setlocal($lan);
+				
+		if ($this->get_attribute($this->myactive,$this->myaction,4)) {			   
+		    $this->init();	
+			if ($this->debug) 
+				echo '<!-- ......re-init..... -->';
+		}			  	
+	  
+		//get action
+		$this->data = $this->action($this->myaction);     
+    }
+   
    
    
 	//set security level at runtime
 	public function setlevel($modulename,$plafon,$colonvals) {
-   
 		$sec2 = GetGlobal('__DPCSEC2'); //alternative array
 		$sec2[$modulename] = $plafon . ";" . $colonvals;
+		
 		SetGlobal('__DPCSEC2',$sec2);
-		//print_r($sec2);
 	 
 		$this->local_security[$modulename] = $plafon . ";" . $colonvals;
 	}
@@ -494,7 +444,6 @@ class pcntl extends controller {
 	} 	   
    
 	public function locale($alias,$val) {
-      
 		$__DPCLOCALE = GetGlobal('__DPCLOCALE');
 	  
 		if (isset($__DPCLOCALE[$alias])) {
@@ -512,7 +461,6 @@ class pcntl extends controller {
 	protected function localize($array) {
       
 		if (is_array($array)) {
-   
 			$__DPCLOCALE = GetGlobal('__DPCLOCALE');
 	  
 			foreach ($array as $id=>$val)
@@ -520,102 +468,6 @@ class pcntl extends controller {
 		
 			SetGlobal('__DPCLOCALE',$__DPCLOCALE);
 		}		
-	}
-   
-	//page controller :: DISPATCHER
-	//if event/action not in executed dpc search other page controller
-	//named as event/action or go to parent controller = shell
-	//private (called by init after include dpcs)
-	protected function _getqueue() {		   
-		 
-	    if ((is_array($_SESSION['dacpost'])) && 
-		    (array_key_exists('FormAction',$_SESSION['dacpost']))) {//POST:formaction by other page redirection
-			$ret = $_SESSION['dacpost']['FormAction'];
-			//in next post if dacpost->Formaction not exist go to real post above..
-			unset($_SESSION['dacpost']['FormAction']);		 
-			//update post 
-			$_POST = array_merge($_POST,$_SESSION['dacpost']);
-			//update request
-			$_REQUEST = array_merge($_REQUEST,$_SESSION['dacpost']);
-			//free session post
-			unset($_SESSION['dacpost']);	  
-		}	   
-	    elseif (array_key_exists('FormAction',$_POST)) {//POST:formaction
-			//if post has & query cut it from post
-			$postq = explode('&',$_POST['FormAction']);
-			$ret = $postq[0];// $_POST['FormAction'];
-		}  
-		elseif (array_key_exists('t',$_GET)) {//GET:t
-			//$ret = $cmd;
-			$t = $_GET['t']; //echo $t,'>';
-		  
-			if ($t!=null) {//get t
-				$ret = $_GET['t'];
-			}	
-			else {//redirect to root controller-page	  
-				$current_page = pathinfo($_SERVER['PHP_SELF']);
-				//echo $current_page['dirname'],">>>>",$this->file_path;
-				//if is not the root-page-controller
-				if ($this->root_page!=$current_page['basename']) {
-
-					$page = str_replace($this->file_path."/".$current_page['basename'],
-			                      "/".$this->root_page,
-								  $this->get_server_url());
-					//echo $page;					  
-					//extract '?t=' due to re-queue recursive error 					  
-					$mypage = substr($page,0,strlen($this->root_page)+1);//echo $mypage; die();
-					unset($_GET['t']);			
-			  	  
-					$this->redirect($_SERVER['HTTP_HOST'] . $this->inpath . $mypage);				  
-				}
-				else 
-					$ret = 'index';
-			}	
-		}  
-		else //self name is the standart action 
-			$ret = $this->file_name;
-
-		if ($ret) {
-			//if action NOT in executed dpc redirect
-			//if is an excluded cmd return basic cmd = page name
-			//cmd is the execuded from some dpc not the default
-			if ($this->get_attribute($this->active($ret),$ret,6)){//exclude cmd
-				//echo "EXCLUDE.....<br>";
-				$this->my_excluded_action = $ret;//backup cmd
-				$ret = $this->file_name;//default dpc cmd (never exclude main file cmd)
-				return ($ret);
-			}
-		  
-			//get the active dpc = this name default
-			$this->myactive = $this->active($this->file_name);	  		  
-			//if can't handled by standart=filename dpc 
-			//print_r($this->get_dpcactions_array($this->myactive));
-			if (!@in_array($ret,$this->get_dpcactions_array($this->myactive))) {
-		      
-				//check if ret can't handled also by ret dpc
-				if (!@in_array($ret,$this->get_actions_array($ret))) {
-					
-					$this->myactive = $this->active($ret);//update myactive dpc			  
-					$page = str_replace($this->file_name.".".$this->file_extension,
-										$ret.".".$this->file_extension,
-										$this->get_server_url());
-					$this->redirect($_SERVER['HTTP_HOST'] . $page);
-				}
-			}	
-			//echo $this->myactive,'>>>>';		  
-        }
-		else { //goto root page
-			$page = str_replace($this->file_info,$this->root_page,$this->get_server_url());
-			$this->redirect($_SERVER['HTTP_HOST'] . $this->inpath . $page);		  
-		} 
-		
-		return ($ret); //final return ret
-    }
-   	
-	//public alias: used by dpcs (like frontpage!)
-	public function getqueue() {
-   
-        return ($this->myaction);
 	}
    
 	protected function getthemicrotime() {
@@ -626,26 +478,18 @@ class pcntl extends controller {
   
 	protected function redirect($url) {
    
-		//save virtual post (if any)
-		$_SESSION['dacpost'] = $_POST;
-	 
-		/************** DISABLED (headers send error)***********/
-		//echo 'REDIRECT:' . $url; die();
-		//header("Location: http://".$url); 
-		//exit;  // seems to affect redirection to inpath directive!!!!!!!
 	}
-   
-	//in case of apache webserver _SERVER attr changes 
-	//so...to setup the url for redirect call this func
+	
 	protected function get_server_url() {
    
-		if (!ereg("Microsoft", $_SERVER["SERVER_SOFTWARE"])) //APACHE
-			$url = $_SERVER['REQUEST_URI'];//seems to be common with IIS ?????	      
-		else //IIS
+	    if (!ereg("Microsoft", $_SERVER["SERVER_SOFTWARE"])) {//APACHE
+			$url = $_SERVER['REQUEST_URI'];//seems to be common with IIS ?????	   
+	    }     
+	    else //IIS
 			$url = $_SERVER['URL'];
 		 
-	   return ($url);	 
-	}
+	    return ($url);	 
+    }	
      
 	protected function authenticate($realm,$action=null) {
 	 
@@ -698,35 +542,6 @@ class pcntl extends controller {
 			$this->redirect($_SERVER['HTTP_HOST'].'/'.$goto);
 	   
 		return;   
-	}
-   
-	//read rewrited get parameters
-	protected function rewrite() {
-   
-		$fpathinfo = $_SERVER['ORIG_PATH_INFO'];
-		echo '>',$fpathinfo;
-	 
-		$pi = explode(".php",$fpathinfo);
-		$pathinfo = $pi[1];
-		echo '>',$pathinfo,"<br>";
-	 
-		if (isset($pathinfo)) {
-	 
-			$vardata = explode('/',$pathinfo);
-			$num_param = count($vardata);
-	   
-			if ($num_param % 2 == 0) {
-				$vardata[] = '';
-				$num_param++;
-			} 
-	   
-			for ($i=1;$i<$num_param;$i+=2) {
-	   
-				$$vardata[$i] = $vardata[$i+1];
-				echo $vardata[$i] ,"=", $vardata[$i+1],"<br>";
-				$_GET[$vardata[$i]] = $vardata[$i+1];
-			}
-		}
 	}
    
 	//override to load dpc from priv dirs
@@ -784,8 +599,8 @@ class pcntl extends controller {
    
 	public function __destruct() {		  
 	  
-		if (paramload('SHELL','debug')) 
-			echo "\nTime elapsed: ",$this->getthemicrotime() - $this->mytime, " seconds<br>"; 	  
+		if ($this->debug) 
+			echo "<!-- Time elapsed: " . $this->getthemicrotime() - $this->mytime . " sec -->"; 	  
 		
 		controller::__destruct();   
 	}

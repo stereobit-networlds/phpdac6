@@ -8,9 +8,11 @@ $__DPC['RCUPGRADE_DPC'] = 'rcupgrade';
 
 $__EVENTS['RCUPGRADE_DPC'][0]='cpupgrade';
 $__EVENTS['RCUPGRADE_DPC'][1]='cpmupgrade';
+$__EVENTS['RCUPGRADE_DPC'][2]='cpmcheckcrc';
 
 $__ACTIONS['RCUPGRADE_DPC'][0]='cpupgrade';
 $__ACTIONS['RCUPGRADE_DPC'][1]='cpmupgrade';
+$__ACTIONS['RCUPGRADE_DPC'][2]='cpmcheckcrc';
 
 $__LOCALE['RCUPGRADE_DPC'][0] = 'RCUPGRADE_DPC;Upgrade;Αναβάθμιση;';
 $__LOCALE['RCUPGRADE_DPC'][1] = '_noresponse;Server not respond;Αποτυχία λήψης;';
@@ -26,9 +28,6 @@ class rcupgrade {
 		$this->prpath = paramload('SHELL','prpath'); 
 		$this->urlpath = paramload('SHELL','urlpath'); 
 		$this->url = paramload('SHELL','urlbase'); 	
-		
-		$murl = arrayload('SHELL','ip');
-        $this->url = $murl[0];
 		
 		$this->isrootapp = remote_paramload('RCCONTROLPANEL', 'isrootapp', $this->prpath) ? true : false;
 		$this->templatePath = remote_paramload('FRONTHTMLPAGE', 'path', $this->prpath);		
@@ -54,15 +53,19 @@ class rcupgrade {
 	
 	    switch ($event) {
 			
-		  case 'cpmupgrade': 	if ($this->isremote)
+			case 'cpmcheckcrc': //if ($this->isremote)
+								echo $this->checkCRC();	die();	
+								break;			
+			
+			case 'cpmupgrade': 	if ($this->isremote)
 									echo $this->remote_upgradeapp_ajax();
 								else	
 									echo $this->upgradeapp_ajax(); 
 								die();	
 								break;			
 		
-          case 'cpupgrade' : 
-		  default          : 	$this->javascript();
+			case 'cpupgrade' : 
+			default          : 	$this->javascript();
 		                     
         }			
     }
@@ -73,13 +76,13 @@ class rcupgrade {
 	    if ($login!='yes') return null;
 	
 	    switch ($action) {	
-		
-		  case 'cpmupgrade'	:   break;		
+			case 'cpmcheckcrc'	:   break;
+			case 'cpmupgrade'	:   break;		
 							 	
-          case 'cpupgrade' 	:
-          default          	: 	if ($this->isremote)
+			case 'cpupgrade' 	:
+			default          	: 	if ($this->isremote)
 									$out = $this->remote_runscan();
-								else
+										else
 									$out = $this->runscan();
 								
         }
@@ -145,6 +148,12 @@ function remotestart(app,m,c,i)
 			$('.label').html('0%');
 			$('.bar').css({"width": "0%"});			
 			$('#message_p').html('');
+			$.ajax({
+				url: '{$ajaxurl}cpmcheckcrc&id='+app,
+				type: 'GET',
+				success:function(data) {
+					$('#message_p').html(data);
+				}});		
 		}		
 	  }
 	}); 
@@ -241,14 +250,22 @@ EOF;
 		$file = GetReq('f');
 
 		if (($fid>0) && ($file)) {
-			//do copy and update
+
 			$response = $this->serverRequest($file);
 			if (!$response)	
 				return (localize('_noresponse', getlocal()));			
 			
-			foreach ($response as $r)
-				$ret .= $r;
-			return 'file ' . $fid . '->' . $file . '->' . $ret;	
+			foreach ($response as $r) {
+				//$ret .= $r;
+				//one elm array with base64 encoded data
+				$contents.= $r; 
+			}	
+			$ret = @file_put_contents($this->savetmpfile($file) , base64_decode($contents));
+			
+			//return 'file ' . $fid . '->' . $file . '->' . $ret;	
+			
+			$kbytes = _m("rccontrolpanel.bytesToSize1024 use $ret");
+			return $kbytes . ' downloaded';
 		}	
 			
 		return false;	
@@ -269,25 +286,6 @@ EOF;
 				if ($l = trim($dirline))
 					$ret[] = $path . $l;
 			}
-			/*$ret = array(0=>$path . 'homefiles',
-		                1=>$path . 'cgi-bin',
-							2=>$path . 'newsletters',
-							3=>$path . 'js',
-							4=>$path . 'javascripts',
-							5=>$path . 'cp/images',
-							6=>$path . 'cp/assets',
-							7=>$path . 'cp/font',
-							8=>$path . 'cp/dpc',
-							9=>$path . 'cp/css',
-							10=>$path . 'cp/img',
-							11=>$path . 'cp/js',
-							12=>$path . 'cp/sql',
-							13=>$path . 'cp/lang',
-							14=>$path . 'cp/cpfiles',
-							15=>$path . "cp/$this->templatePath",
-							16=>$path . $this->app,							
-							17=>$this->prpath . 'replication',
-							);*/
 		}					
 		return ($ret);			
 	}	
@@ -367,7 +365,7 @@ EOF;
 					}
 					elseif (!is_readable($_updFile)) {
 						if (strstr($_updFile, '.conf')) {
-							$conf = $this->prpath . 'myconfig.txt';
+							$conf = $this->prpath . 'myconfig.txt.php';
 							if (filemtime($conf) < filemtime($file_path))
 								$added[$file_path] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);					
 						}
@@ -457,7 +455,11 @@ Scan executed in $elapsed seconds.\r\n";
 	}
 	
 	protected function _copy($source, $dest, $mkdir=false) {
-		if ($mkdir) @mkdir(dirname($dest), 0777, true);
+		if ($mkdir) 
+			//create dir if not exist
+			$this->mkdir(pathinfo($dest, PATHINFO_DIRNAME));
+			//@mkdir(dirname($dest), 0777, true);
+			
 		//echo $source,'-',$dest,'<br/>';
 		$ret = copy($source, $dest);		
 		return ($ret ? '*' : false);
@@ -484,18 +486,22 @@ Scan executed in $elapsed seconds.\r\n";
 	}
 	
 	protected function _execini($inifile) {
-		$inif = $this->prpath . 'myconfig.txt';
+		$inif = $this->prpath . 'myconfig.txt.php';
 		@copy($inif, str_replace('.txt', '._xt', $inif)); //backup
 		
-		$inidata = @file_get_contents($inifile);
+		//$inidata = @file_get_contents($inifile);
+		include($inifile); //new conf .php type
+		
 		$fp = new fronthtmlpage(null);
-		$pini = $fp->process_commands($inidata);
+		$pini = $fp->process_commands($myconf); //$inidata);
 		unset ($fp);
 		
 		$inif_local = $this->prpath . 'ini.local';		
 		@file_put_contents($inif_local, $pini); //copy local		
 		
 		$ini_array = parse_ini_file($inif_local, true, INI_SCANNER_RAW);
+		//alternative after check 
+		//$ini_array = parse_ini_string($pini, true, INI_SCANNER_RAW);
 		
 		if (!empty($ini_array)) {
 		    $i = 0;
@@ -509,7 +515,18 @@ Scan executed in $elapsed seconds.\r\n";
 			return $i;
 		}
 		return false;
-	}		
+	}	
+
+	protected function savetmpfile($file=null) {
+		if (!$file) $file = 'file.tmp';
+		$tmp = '/cp/tmp'; 
+		$d = $this->urlpath . $tmp . $file;
+		
+		//create dir if not exist
+		$this->mkdir(pathinfo($d, PATHINFO_DIRNAME));
+		
+		return ($d);
+	}	
 	
 	//pseudo-dir replacement
 	protected function replace_pseudo_dir($d) {
@@ -533,7 +550,6 @@ Scan executed in $elapsed seconds.\r\n";
 												   'element'=>$file,
 												   'tmpl'=>$this->templatePath,	
 												  ));
-            //"postvar1=value1&postvar2=value2&postvar3=value3");
 
 		// receive server response ...
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -544,7 +560,114 @@ Scan executed in $elapsed seconds.\r\n";
 
 		$rdec = $response ? json_decode($response) : null;
 		return (!empty($rdec)) ? $rdec : false;	
+	}
+
+	protected function checkCRC() {
+		$errors = 0;
+		
+		//call again server for hash list
+		$response = $this->serverRequest();
+		if (!$response)	
+			return localize('_noresponse', getlocal());	
+		
+		foreach ($response as $r=>$el) {
+			$i=0;
+			foreach ($el as $e) { 
+				if ($i==0) {
+					//$ret .= $e;	
+					$crc = $e;
+					$ret .= $e;
+				}	
+				elseif ($i==1) {
+					$date = $e;
+					$ret .= '&gt;' . $e;
+				}
+				elseif ($i==2) {
+					$tmp = '/cp/tmp'; //test
+					$file_path = $this->urlpath . $tmp . $e;
+					$thiscrc = hash_file("sha1", $file_path);
+					if ($crc == $thiscrc)
+						$ret .= '&gt;' . basename($file_path) . ': ok'; 
+					else {
+						$ret .= '&gt;' . $thiscrc . '&gt;' . basename($file_path) . ': failed'; 
+						$errors += 1;
+					}	
+				}
+				$i+=1;
+			}	
+			$ret .= '<br/>';	
+		}
+		
+		if ($errors>0) {
+			$ret .= 'Please repeat the upgrade procedure.';
+		}
+		else {
+			//do the copy 
+		}
+
+		return ($ret);	
 	}	
+	
+	
+	//piwik core
+    public static function mkdir($path) 
+	{
+        if (!is_dir($path)) {
+            // the mode in mkdir is modified by the current umask
+            @mkdir($path, self::getChmodForPath($path), $recursive = true);
+        }
+
+        // try to overcome restrictive umask (mis-)configuration
+        if (!is_writable($path)) {
+            @chmod($path, 0755);
+            /*if (!is_writable($path)) {
+                @chmod($path, 0775);
+                // enough! we're not going to make the directory world-writeable
+            }*/
+        }
+        //self::createIndexFilesToPreventDirectoryListing($path);
+    }	
+	
+    private static function getChmodForPath($path)
+    {
+        /*if (self::isPathWithinTmpFolder($path)) {
+            // cp/tmp/* folder
+            return 0750;
+        }*/
+        // /* and all others
+        return 0755;
+    }
+
+    private static function isPathWithinTmpFolder($path)
+    {
+        $pathIsTmp = 'cp/tmp';
+        $isPathWithinTmpFolder = strpos($path, $pathIsTmp);// === 0;
+        return $isPathWithinTmpFolder;
+    }
+
+    public static function getFileSize($pathToFile, $unit = 'B')
+    {
+        $unit  = strtoupper($unit);
+        $units = array('TB' => pow(1024, 4),
+                       'GB' => pow(1024, 3),
+                       'MB' => pow(1024, 2),
+                       'KB' => 1024,
+                       'B' => 1);
+
+        if (!array_key_exists($unit, $units)) {
+            throw new Exception('Invalid unit given');
+        }
+
+        if (!file_exists($pathToFile)) {
+            return;
+        }
+
+        $filesize  = filesize($pathToFile);
+        $factor    = $units[$unit];
+        $converted = $filesize / $factor;
+
+        return $converted;
+    }	
 
 };
 }

@@ -844,11 +844,11 @@ $(document).ready(function(){
         return (1);     	
     }
 	
-	protected function nformat($n, $dec=0) {
+	public function nformat($n, $dec=0) {
 		return (number_format($n,$dec,',','.'));
 	}
 	
-    protected function bytesToSize1024($bytes, $precision = 2) {
+    public function bytesToSize1024($bytes, $precision = 2) {
         $unit = array('B','KB','MB','GB');
         return @round($bytes / pow(1024, ($i = floor(log($bytes, 1024)))), $precision).' '.$unit[$i];
     }  

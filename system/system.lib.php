@@ -11,6 +11,14 @@
 		}
 		return 0;
 	}
+	
+	function _lc($element, $id=0, $lan=null) {
+		global $__LOCALE;
+		$l = isset($lan) ? $lan : getlocal()+1;
+	
+		$p = explode(';', $__LOCALE[strtoupper($element) . '_DPC'][$id]);
+		return $p[$l];
+	}	
 
 	function localize($codename,$lang=null,$enc=null,$encto=null,$debug=null) {
 		$loc = GetGlobal('__DPCLOCALE');		
@@ -25,6 +33,39 @@
 			if ($parts[$lang]) 
 				return ($parts[$lang]);
 		}  	
+   
+    //CART EMPTY VIEW WHEN IN 2nd LANGUAGE (MUST EXIST THE TRANS)
+   if ((!paramload('SHELL','langdb')) || (!$db)) { //text file
+	 
+	 if ($seslocales = GetSessionParam('locales')) {
+	   //in memory
+	   $locale_file = unserialize($seslocales);
+	 }
+	 else {
+       if (is_readable("locale.csv")) //in root	  
+	     $locale_file = file("locale.csv");
+	   elseif (is_readable("cp/locale.csv")) //in cp
+         $locale_file = file("cp/locale.csv");  	
+	   else
+         echo "Configuration warning, locale.csv not exist!";	
+		
+       SetSessionParam('locales',serialize($locale_file));		
+	 }  
+	    
+	 if (!empty($locale_file)) {	 
+	   foreach ($locale_file as $line_num => $line) {	 
+		   $split = explode (";", $line);
+           //echo $line,'<br>';  
+		   if ($split[0] == $codename) {
+	         if ($encto)
+	           return iconv($enc,$encto,trim($split[$lang+1]));
+	         else	
+			   return (trim($split[$lang+1]));
+           }
+       }
+	 }
+   }   
+   
    
 		return ($codename); //as input
 	}
@@ -156,7 +197,7 @@
 			return number_format($dsize/1024,1)." Kb";
 	} 
 
-function copyr($source, $dest) { 
+	function copyr($source, $dest) { 
         // Simple copy for a file 
         if (is_file($source)) { 
           return copy($source, $dest); 
