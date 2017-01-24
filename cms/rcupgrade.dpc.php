@@ -21,7 +21,7 @@ class rcupgrade {
 	
 	var $urlpath, $url, $prpath, $isrootapp;	
     var $upgrade_root_path, $update_root_path;
-	var $upgdirs, $isremote, $remoteurl;	
+	var $upgdirs, $isremote, $remoteurl, $app;	
 	
 	public function __construct() {
 		
@@ -42,7 +42,7 @@ class rcupgrade {
 		$this->app = array_pop($u);
 		
 		$this->upgdirs = null;
-		$this->isremote = strstr($this->prpath, 'public_html/'.$this->app) ? false : true;//false;	
+		$this->isremote = true; //strstr($this->prpath, 'public_html/'.$this->app) ? false : true;//false;	
 		$this->remoteurl = "http://www.xix.gr/upgrade/cpupgrader.php";
 	}
 
@@ -133,7 +133,9 @@ function remotestart(app,m,c,i)
     var mm = m ? m : parseInt('$m'); 
     var cc = c ? c : 100;	
 	$('#message_p').html('<img src="images/loading.gif" alt="Processing">');
-
+	$('.label').html(cc+'%');
+	$('.bar').css({"width": cc+"%"});
+	
 	$.ajax({
 	  url: '{$ajaxurl}cpmupgrade&id='+app+'&m='+ii+'&f='+nf[ii],
 	  type: 'GET',
@@ -172,7 +174,9 @@ function start(app,m,c)
     var mm = m ? m : parseInt('$m'); 
     var cc = c ? c : 100;	
 	$('#message_p').html('<img src="images/loading.gif" alt="Processing">');
-
+	$('.label').html(cc+'%');
+	$('.bar').css({"width": cc+"%"});
+	
 	$.ajax({
 	  url: '{$ajaxurl}cpmupgrade&id='+app,
 	  type: 'GET',
@@ -260,7 +264,7 @@ EOF;
 				//one elm array with base64 encoded data
 				$contents.= $r; 
 			}	
-			$ret = @file_put_contents($this->savetmpfile($file) , base64_decode($contents));
+			$ret = @file_put_contents($this->savetmpfile($file) , base64_decode($contents), LOCK_EX);
 			
 			//return 'file ' . $fid . '->' . $file . '->' . $ret;	
 			
@@ -301,7 +305,8 @@ EOF;
 		$exec = (($dpath==$path) || ($ajaxid)) ? true : false;	
 
 		//save step file for ajax or reset
-		$aj = ($ajaxid>0) ? @file_put_contents($this->prpath . $this->app . '.app', strval($ajaxid), LOCK_EX) : @unlink($this->prpath . $this->app . '.app');		
+		$aj = ($ajaxid>0) ? @file_put_contents($this->prpath . $this->app . '.app', strval($ajaxid), LOCK_EX) : 
+							@unlink($this->prpath . $this->app . '.app');		
 		
 		if (!is_dir($path)) 
 			return (nl2br("Invalid path ($saypath)\r\n"));
@@ -479,7 +484,7 @@ Scan executed in $elapsed seconds.\r\n";
 				$ret = $db->Execute($sSQL,1);			  
 				$queries+=1;
 			}	
-			$ret = file_put_contents($this->prpath . 'sqlupgrade.txt', $sql);
+			$ret = file_put_contents($this->prpath . 'sqlupgrade.txt', $sql, LOCK_EX);
 			return $queries . ' queries executed.';			
 		}
 		return false;
@@ -497,7 +502,7 @@ Scan executed in $elapsed seconds.\r\n";
 		unset ($fp);
 		
 		$inif_local = $this->prpath . 'ini.local';		
-		@file_put_contents($inif_local, $pini); //copy local		
+		@file_put_contents($inif_local, $pini, LOCK_EX); //copy local		
 		
 		$ini_array = parse_ini_file($inif_local, true, INI_SCANNER_RAW);
 		//alternative after check 
@@ -528,6 +533,21 @@ Scan executed in $elapsed seconds.\r\n";
 		return ($d);
 	}	
 	
+	protected function getVersion() {
+		$vfile = $this->prpath . '.ver';
+		
+		$ret = is_readable($vfile) ? @file_get_contents($vfile) : null;
+		return (trim($ret));
+	}
+	
+	protected function setVersion($ver=null) {
+		if (!$ver) return false;
+		$vfile = $this->prpath . '.ver';
+		
+		$ret = @file_put_contents($vfile, $ver, LOCK_EX);
+		return ($ret);
+	}	
+	
 	//pseudo-dir replacement
 	protected function replace_pseudo_dir($d) {
 			
@@ -548,6 +568,7 @@ Scan executed in $elapsed seconds.\r\n";
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, array('app'=>$this->app, 
 												   'element'=>$file,
+												   'version'=>$this->getVersion(),
 												   'tmpl'=>$this->templatePath,	
 												  ));
 
@@ -563,7 +584,11 @@ Scan executed in $elapsed seconds.\r\n";
 	}
 
 	protected function checkCRC() {
+		$version = $this->getVersion(); //current version
 		$errors = 0;
+		$backdir = '/lastknowconf';
+		$tmp = '/cp/tmp'; 
+		$localdir = $this->urlpath . $tmp;		
 		
 		//call again server for hash list
 		$response = $this->serverRequest();
@@ -583,16 +608,20 @@ Scan executed in $elapsed seconds.\r\n";
 					$ret .= '&gt;' . $e;
 				}
 				elseif ($i==2) {
-					$tmp = '/cp/tmp'; //test
-					$file_path = $this->urlpath . $tmp . $e;
+					$file_path = $localdir . $e;
 					$thiscrc = hash_file("sha1", $file_path);
 					if ($crc == $thiscrc)
 						$ret .= '&gt;' . basename($file_path) . ': ok'; 
 					else {
 						$ret .= '&gt;' . $thiscrc . '&gt;' . basename($file_path) . ': failed'; 
 						$errors += 1;
-					}	
+					}
+
+					$updatefiles[] = $file_path;		
 				}
+				elseif ($i==3) 
+					$version = $e;
+					
 				$i+=1;
 			}	
 			$ret .= '<br/>';	
@@ -602,14 +631,54 @@ Scan executed in $elapsed seconds.\r\n";
 			$ret .= 'Please repeat the upgrade procedure.';
 		}
 		else {
-			//do the copy 
+			//backup original files (last known conf)
+			$ret .= 'Created last know configuration<br/>';			
+			$this->mkdir($localdir . $backdir);
+			foreach ($updatefiles as $i=>$f) {
+				
+				$backfile = str_replace($tmp, $tmp . $backdir, $f);
+				$this->mkdir(pathinfo($backfile, PATHINFO_DIRNAME));
+				//may the source file not exist	
+				@copy(str_replace($tmp, '', $f), $backfile);
+				//$ret .= str_replace($tmp, '', $f) . '->' . $backfile . '<br/>';
+			}
+			
+			//do the copy replacing original files
+			$ret .= 'Updating...<br/>';
+			reset($updatefiles);
+			foreach ($updatefiles as $u=>$tmpfile) {				
+				$updfile = str_replace($tmp, '', $tmpfile);
+				//may the dir not exist
+				$this->mkdir(pathinfo($updfile, PATHINFO_DIRNAME));
+				if (@copy($tmpfile, $updfile))
+					@unlink($tmpfile);
+				//$ret .= $tmpfile . '->' . $updfile . '<br/>';
+				
+				//save dirs to erase order by depth
+				/*$tmpdirname = pathinfo($tmpfile, PATHINFO_DIRNAME);
+				$ms = explode('/', $tmpdirname);
+				$depth = count($ms);
+				$id = array_pop($ms);
+				$tmpdir[$depth . $id] = $tmpdirname;	
+				//$ret .= $depth . $id . '->' . $tmpdirname . '<br/>';		*/
+			}	
+			
+			//clean dirs
+			/*rsort($tmpdir);
+			foreach ($tmpdir as $d=>$dir) {
+				if (is_dir($dir))
+					rmdir($dir);
+				$ret .= $d .'->' . $dir . '<br/>';
+			}*/			
+			
+			//save current version
+			$this->setVersion($version);
+			$ret .= 'Finished successfully<br/>';
 		}
 
 		return ($ret);	
 	}	
 	
-	
-	//piwik core
     public static function mkdir($path) 
 	{
         if (!is_dir($path)) {
@@ -630,44 +699,8 @@ Scan executed in $elapsed seconds.\r\n";
 	
     private static function getChmodForPath($path)
     {
-        /*if (self::isPathWithinTmpFolder($path)) {
-            // cp/tmp/* folder
-            return 0750;
-        }*/
-        // /* and all others
         return 0755;
     }
-
-    private static function isPathWithinTmpFolder($path)
-    {
-        $pathIsTmp = 'cp/tmp';
-        $isPathWithinTmpFolder = strpos($path, $pathIsTmp);// === 0;
-        return $isPathWithinTmpFolder;
-    }
-
-    public static function getFileSize($pathToFile, $unit = 'B')
-    {
-        $unit  = strtoupper($unit);
-        $units = array('TB' => pow(1024, 4),
-                       'GB' => pow(1024, 3),
-                       'MB' => pow(1024, 2),
-                       'KB' => 1024,
-                       'B' => 1);
-
-        if (!array_key_exists($unit, $units)) {
-            throw new Exception('Invalid unit given');
-        }
-
-        if (!file_exists($pathToFile)) {
-            return;
-        }
-
-        $filesize  = filesize($pathToFile);
-        $factor    = $units[$unit];
-        $converted = $filesize / $factor;
-
-        return $converted;
-    }	
 
 };
 }

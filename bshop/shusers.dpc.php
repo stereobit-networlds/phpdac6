@@ -589,13 +589,13 @@ class shusers  {
 			$myaction = GetGlobal('dispatcher')->getqueue(); //echo $myaction,"<><><><";
 			switch ($myaction) {
 
-				case "insert":  $out .= setError(localize('_SUCCESSREG',getlocal()));
+				case "insert":  //$out .= setError(localize('_SUCCESSREG',getlocal()));
 								$out .= $this->after_registration_goto();
 								break;
-				case "update":  $out = setError(localize('_MSG10',getlocal()));
+				case "update":  //$out = setError(localize('_MSG10',getlocal()));
 								$out .= $this->after_update_goto();
 								break;
-				case "delete":  $out = setError(localize('_MSG10',getlocal()));
+				case "delete":  //$out = setError(localize('_MSG10',getlocal()));
 								$out .= $this->after_delete_goto();
 								break;
 			}
@@ -630,11 +630,12 @@ class shusers  {
 	    $sFormErr = GetGlobal('sFormErr');	
 	
         if ($this->predef_customer) {//repdefined customer
-		    $content = $this->predef_customer . "<H4>".$this->atok."</H4>";
+		    /*$content = $this->predef_customer . "<h4>".$this->atok."</h4>";
 		    $mx = "100%";
 			$win = new window(localize('_MSG10',getlocal()),$content);
 			$out .= $win->render("center::$mx::0::group_win_body::left::0::0::");
-			unset($win);									 
+			unset($win);*/
+			$out .= $this->predef_customer . "<h4>".$this->atok."</h4>";	
 	    }
 	    elseif ($this->includecusform) {//customer has submited with user form
 			if ( (defined('SHCART_DPC')) && (seclevel('SHCART_DPC',$this->userLevelID)) ) {

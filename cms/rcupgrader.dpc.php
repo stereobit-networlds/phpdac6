@@ -25,10 +25,6 @@ class rcupgrader {
 		$this->url = paramload('SHELL','urlbase'); 	
 		
 		$this->upgrade_root_path = getcwd() . '/upg';	
-		
-		$u = explode('/', $this->urlpath);
-		$this->app = array_pop($u);
-		
 		$this->upgdirs = null;	
 	}
 	
@@ -64,6 +60,27 @@ class rcupgrader {
         return ($out);
 
     }	
+	
+	protected function getNextVersion($clientversion=null) {
+		//if (!$clientversion) return null;
+		//ver-1.2,1.3.2. as float
+		$version = floatval(str_replace('ver-','',$clientversion)); 
+		$serverversions = glob($this->upgrade_root_path . '/ver-*', GLOB_ONLYDIR);
+		
+		if (!empty($serverversions)) {
+			//sort($serverversions, SORT_NUMERIC)
+			natsort($serverversions);
+			foreach ($serverversion as $ver) {
+				//if (floatval($ver) > floatval($clientversion))
+				if (version_compare($ver, $clientversion, '>'))
+					return ($ver);
+			}
+		
+			return ($serverversions[0]);
+		}
+		
+		return $clientversion;
+	}
 			
 	public function fetchfile($version=null, $file=null) {
 		if (!$file) return false;
@@ -75,37 +92,42 @@ class rcupgrader {
 	}	
 	
 	public function runscan($version=null, $appname=null, $repout=false) {
+		$nextversion = $this->getNextVersion($version);
+		//concurrent version
+		if (($version) && ($nextversion==$version)) 
+			return json_encode(array(0=>'Updated'));		
 		
 		$upaths = $this->updatePath($version, $appname);
 		if (empty($upaths)) return false;		
 		
 		foreach ($upaths as $dr=>$path) {
-			$report .= $this->scan($path, null, $repout, $dr);
+			$report .= $this->scan($path, null, $repout, $nextversion);
 		}
 
 		return ($report);
 	}	
 	
-	protected function updatePath($version=null, $appname=null) {
-		$path = $this->upgrade_root_path;		
-
+	protected function updatePath($nextversion=null, $appname=null) {
+		$path = $this->upgrade_root_path;
+		$ver = $nextversion ? $nextversion . '/' : null;
+		
 		if ($appname) {
-			$apppath = $path . '/' . $appname . '-ext/';
+			$apppath = $path . '/' . $appname . '-ext/' . $ver;
 			if (is_dir($apppath)) {
-				$ret['upg'] = $path . '/' . $appname . '-ext/';
+				$ret['upg'] = $path . '/' . $appname . '-ext/' . $ver;
 				return ($ret);
 			}	
 		}	
 		
-		$ret['upg'] = $path .'/';	
+		$ret['upg'] = $path .'/' . $ver;	
 		return ($ret);		
 	}	
 	
-	protected function scan($path=null, $skipdir=null, $repout=false, $dirname=false) {
+	protected function scan($path=null, $skipdir=null, $repout=false, $version=false) {
 		$error = 0;
 	
 		if (!is_dir($path)) 
-			return (nl2br("Invalid path ($dirname)\r\n"));
+			return (nl2br("Invalid path for version $version\r\n"));
 		
 		$scan_path_length = strlen($path);
 
@@ -120,7 +142,7 @@ class rcupgrader {
 		$skip = is_array($skipdir) ? $skipdir : array();	
 
 		//	Clear and title the report variable before starting
-		$report = "Scan File Check for $acct ($dirname)\r\n";	
+		$report = "Scan File Check for version $version\r\n";	
 		$current = array();
 		$added = array();
 
@@ -158,16 +180,20 @@ class rcupgrader {
 					$current[$file_path] = array('file_hash' => hash_file("sha1", $file_path), 'file_last_mod' => date("Y-m-d H:i:s", filemtime($file_path)));
 
 					//	IF file_path is newer file was ADDED
-					if (is_readable($file_path)) {
+					//if (is_readable($file_path)) {
 						
 						$updateFile = str_replace($this->upgrade_root_path, '', $file_path);
-						$_updFile = $this->replace_pseudo_dir($updateFile);
+						//$_updFile = $this->replace_pseudo_dir($updateFile);
 						
 					    //update list
-						$added[] = array('file_hash' => $current[$file_path]['file_hash'], 'file_last_mod' => $current[$file_path]['file_last_mod'], 'update' => $_updFile);
-					}
-					else
-						$error+=1;
+						$added[] = array('file_hash' => $current[$file_path]['file_hash'], 
+										 'file_last_mod' => $current[$file_path]['file_last_mod'], 
+										 'update' => $updateFile,
+										 'version'=> $version,
+										 );
+					//}
+					//else
+						//$error+=1;
 				}	
 			}	// End of handling $current record entry
 			$iter->next();
@@ -225,7 +251,7 @@ Scan executed in $elapsed seconds.\r\n";
 
 		curl_setopt($ch, CURLOPT_URL,"http://www.xix.gr/upg.php");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array('app'=>$this->app, 
+		curl_setopt($ch, CURLOPT_POSTFIELDS, array('app'=>null, 
 												   'file'=>$file,
 												   'tmpl'=>null,	
 												  ));

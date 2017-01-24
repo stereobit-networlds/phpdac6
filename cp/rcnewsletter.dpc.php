@@ -1,6 +1,6 @@
 <?php
 
-$__DPCSEC['RCNEWSLETTER_DPC']='1;1;1;1;1;1;2;2;9';
+$__DPCSEC['RCNEWSLETTER_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 if ( (!defined("RCNEWSLETTER_DPC")) && (seclevel('RCNEWSLETTER_DPC',decode(GetSessionParam('UserSecID')))) ) {
 define("RCNEWSLETTER_DPC",true);
@@ -23,36 +23,44 @@ class rcnewsletter {
 	var $title, $prpath, $urlpath, $url;
 	var $nspath, $ok;
 	var $hashtag, $mc, $cid, $url2store;
-	var $redir;
+	var $redir, $http_referer;	
 
-    function __construct() {
+    public function __construct() {
 		
-	  $this->prpath = paramload('SHELL','prpath');
-      $this->urlpath = paramload('SHELL','urlpath');	
-	  $this->url = paramload('SHELL','urlbase');
-	  $this->title = localize('RCNEWSLETTER_DPC',getlocal());
+		$this->prpath = paramload('SHELL','prpath');
+		$this->urlpath = paramload('SHELL','urlpath');	
+		$this->url = paramload('SHELL','urlbase');
+		$this->title = localize('RCNEWSLETTER_DPC',getlocal());
 
-      $this->nspath = $this->prpath . remote_paramload('FRONTHTMLPAGE','path', $this->prpath);
-	  $pr = remote_paramload('RCNEWSLETTER','path', $this->prpath);
-	  $this->redir = $pr ? $pr : '/subscribe/';
-	  $this->url2store = $_SERVER['REQUEST_URI'];//.$_SERVER['QUERY_STRING']; //basename($_SERVER['REQUEST_URI']);
-	  //echo $u	  
+		$this->nspath = $this->prpath . remote_paramload('FRONTHTMLPAGE','path', $this->prpath);
+		$pr = remote_paramload('RCNEWSLETTER','path', $this->prpath);
+		$this->redir = $pr ? $pr : '/subscribe/';
+		$this->url2store = $_SERVER['REQUEST_URI'];//.$_SERVER['QUERY_STRING']; //basename($_SERVER['REQUEST_URI']);
+		//echo $u	  
 	  
-	  $this->ok = false;
+		$this->ok = false;
 	  
-	  //get or cookie
-	  $this->hashtag = $_GET['ht'] ? $_GET['ht'] : $_COOKIE['hashtag']; //fetch generic hashtag if any
-      $this->cid = $_GET['cid'] ? $_GET['cid'] : $_COOKIE['cid'];
-      $this->mc = $_GET['r'] ? $_GET['r'] : $_COOKIE['mc']; //base64 encoded	  
+		//get or cookie
+		$this->hashtag = $_GET['ht'] ? $_GET['ht'] : $_COOKIE['hashtag']; //fetch generic hashtag if any
+		$this->cid = $_GET['cid'] ? $_GET['cid'] : $_COOKIE['cid'];
+		$this->mc = $_GET['r'] ? $_GET['r'] : $_COOKIE['mc']; //base64 encoded	  
 	  
-	  $this->javascript(); //check for hash and save cookies	
+		//save reference at start
+		if (!$this->http_referer = $_SESSION['http_referer']) { 
+			$this->http_referer = $_SERVER['HTTP_REFERER'];
+			$_SESSION['http_referer'] = $_SERVER['HTTP_REFERER'];	
+		}	
+		//alternative for long sessions
+		/*if (!isset($_COOKIE['origin_ref'])) {
+			setcookie('http_referer', $_SERVER['HTTP_REFERER']);		
+		}*/  
+	  
+		$this->javascript(); //check for hash and save cookies	
 	}
 	
-    function event($event=null) {		
+    public function event($event=null) {		
 
-       if (!$this->msg) {
-  
-	     switch ($event) {
+	    switch ($event) {
 		 
 		    case 'cpnewscont'     : echo $this->callback_update_html();
 							        die();// $this->mc.','.$this->cid.','.$this->hashtag);
@@ -61,11 +69,11 @@ class rcnewsletter {
 			case 'ns'             :
 			default               :	//$this->ok = $this->reformNs();
                                     $this->update_url_statistics();	//after ajax callback		
-         }
-      }
+
+        }
     }	
 
-    function action($action=null)  { 
+    public function action($action=null)  { 
 
 	     switch ($action) {
 		   case 'cpnewscont'     : break;	 
@@ -76,27 +84,17 @@ class rcnewsletter {
 	     return ($out);
 	}	
 	
-	function javascript() {
+	protected function javascript() {
         if (iniload('JAVASCRIPT')) {
-		
-		    //became universal
-           	$code = $this->createcookie_js();				
-			
-		    //return no js when tags already loaded 
-			//if (isset($this->hashtag) || (isset($this->cid) && isset($this->mc))) {}
-			//else {	
-				$code.= $this->javascript_ajax();			
-				$code.= $this->reference_js();		
-			//}	
 			
 		    $js = new jscript;
-            $js->load_js($code,"",1);			   
+            $js->load_js($this->javascript_redir(), "", 1);			   
 		    unset ($js);		
      	}	  
 	}
 	
-	/*not to use with rcvstats */
-	protected function createcookie_js() {
+	//not to use with rcvstats 
+	/*protected function createcookie_js() {
 		
 		$ret = '
 function cc(name,value,days) {
@@ -117,48 +115,37 @@ if (window.location.hash) {
 	var value = hash.split("|");
 	if (value[1]!=null) { cc("cid",value[0],"1"); cc("mc",value[1],"1");} else cc("hashtag",hash,"1");
 	//alert(value[0]);
-	sndUrl("ns.php?t=cpnewscont&cid="+value[0]+"&r="+value[1]);
+	redir("ns.php?t=cpnewscont&cid="+value[0]+"&r="+value[1]);
 }
 else { }		
 ';
-//	window.location = "'.$this->redir.'"; 
 		return ($code);
-	}
+	}*/
 
-    protected function javascript_ajax()  {
+    protected function javascript_redir()  {
    
       $jscript = <<<EOF
-function createRequestObject() {var ro; var browser = navigator.appName;
-    if(browser == "Microsoft Internet Explorer"){ro = new ActiveXObject("Microsoft.XMLHTTP");} else{
-        ro = new XMLHttpRequest();}
-    return ro;}
-var http = createRequestObject();
-function sndUrl(url) {
+function redir(url) {
     http.open('get', url+'&ajax=1');
-    http.onreadystatechange = handleResponse;
+    http.onreadystatechange = handleRedir;
     http.send(null);
 }
-function sndReqArg(url) {var params = url+'&ajax=1';
-    http.open('post', params, true);
-    http.setRequestHeader("Content-Type", "text/html; charset=utf-8");
-    http.setRequestHeader("encoding", "utf-8");	
-    http.onreadystatechange = handleResponse;	
-    http.send(null);
-}
-function handleResponse() {if(http.readyState == 4){
+function handleRedir() {if(http.readyState == 4){
     var response = http.responseText;
     var update = new Array();
-    response = response.replace( /^\s+/g, "" ); // strip leading 
-    response = response.replace( /\s+$/g, "" ); // strip trailing		
+    response = response.replace( /^\s+/g, "" );  
+    response = response.replace( /\s+$/g, "" ); 		
     if(response.indexOf('|' != -1)) {
-        //alert(response); 	
         update = response.split('|');
-        //document.getElementById(update[0]).innerHTML = update[1];
-		//alert(update[1]);
-		window.location = update[1];
-    }	
-  }
+		window.location = update[1];}}}
+if (window.location.hash) {
+	var hash = window.location.hash.substring(1);
+	var value = hash.split("|");
+	if (value[1]!=null) { cc("cid",value[0],"1"); cc("mc",value[1],"1");} else cc("hashtag",hash,"1");
+	//alert(value[0]);
+	redir("ns.php?t=cpnewscont&cid="+value[0]+"&r="+value[1]);
 }
+else { }	
 
 EOF;
 
@@ -224,7 +211,7 @@ EOF;
 		$ref = $this->cid ? $this->cid : '';
 		$cmail = $this->mc ? base64_decode($this->mc) : ($this->hashtag ? $this->hashtag : '');
 
-		$sSQL = "insert into stats (date,day,month,year,attr1,attr2,attr3, ref) values (";
+		$sSQL = "insert into stats (date,day,month,year,attr1,attr2,attr3,ref,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT,REFERER) values (";
 		$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
@@ -232,7 +219,11 @@ EOF;
 		$sSQL.= $db->qstr($this->url2store) . ",";		
 		$sSQL.= $db->qstr($name) . ","; 
 		$sSQL.= $db->qstr($cmail) . ",";
-		$sSQL.= $db->qstr($ref) . ")";
+		$sSQL.= $db->qstr($ref) . ",";
+		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
+		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ","; 
+		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ",";
+		$sSQL.= $db->qstr($this->http_referer). ")";			
 		//echo $sSQL;		
 		$db->Execute($sSQL,1);	 		
 

@@ -131,7 +131,7 @@ class shkategories {
 		if (iniload('JAVASCRIPT')) {
 
 			$id = remote_paramload('SHKATEGORIES','idsearch',$this->path);	  
-	  
+			
 			$code2 = $this->js_make_search_url($id);	
 			$js = new jscript;	
 			$js->load_js($code2,"",1);			   
@@ -1202,8 +1202,7 @@ class shkategories {
 	    $id_element= $id ? $id : 'input';
 		$out = "	
 function gocatsearch(url)
-{ //var ret = url+'&input='+document.getElementById('$id_element').value;
-  var inp = document.getElementById('$id_element').value;
+{ var inp = document.getElementById('$id_element').value;
   var ret = inp ? url.replace('*', inp) : url.replace('*/', '*/');
   window.location.href = ret;
 }

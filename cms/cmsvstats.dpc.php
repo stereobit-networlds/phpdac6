@@ -21,47 +21,58 @@ class cmsvstats  {
 
     var $title;
 	var $mc, $cid, $hashtag;
+	var $http_referer;
 		
-	function __construct() {
+	public function __construct() {
 
-	  $this->title = localize('CMSVSTATS_DPC',getlocal());			
+		$this->title = localize('CMSVSTATS_DPC',getlocal());			
 	  
-	  $this->hashtag = $_COOKIE['hashtag']; //fetch generic hashtag if any
-	  $this->cid = $_COOKIE['cid']; //fetch mail campaign id	  
-	  $this->mc = $_COOKIE['mc'];	//fetch client mail base64encoded
+		$this->hashtag = $_COOKIE['hashtag']; //fetch generic hashtag if any
+		$this->cid = $_COOKIE['cid']; //fetch mail campaign id	  
+		$this->mc = $_COOKIE['mc'];	//fetch client mail base64encoded
 	  
-	  $this->javascript(); //check for hash and save cookies	  
+		//save reference at start
+		if (!$this->http_referer = $_SESSION['http_referer']) { 
+			$this->http_referer = $_SERVER['HTTP_REFERER'];
+			$_SESSION['http_referer'] = $_SERVER['HTTP_REFERER'];	
+		}	
+		//alternative for long sessions
+		/*if (!isset($_COOKIE['origin_ref'])) {
+			setcookie('http_referer', $_SERVER['HTTP_REFERER']);		
+		}*/
+	  
+		$this->javascript(); //check for hash and save cookies	  
 	}
 	
 
-    function event($event=null) {		 
+    public function event($event=null) {		 
 
-	   switch ($event) {
+		switch ($event) {
 		   
-		 case 'cmsvmcstart'  : $this->callback_update_first_referece_record();
-							  die();// $this->mc.','.$this->cid.','.$this->hashtag);
-							  break; 
+			case 'cmsvmcstart'  : $this->callback_update_first_referece_record();
+								die();// $this->mc.','.$this->cid.','.$this->hashtag);
+								break; 
 
-	     case 'cmsvstats'   :
-		 default            : 
-	   }
+			case 'cmsvstats'   :
+			default            : 
+		}
 		
     }   
 
-    function action($action=null) {
+    public function action($action=null) {
 
-	  switch ($action) {
+		switch ($action) {
 		  
-		 case 'cmsvmcstart' : break;  
-	     case 'cmsvstats'   :
-		 default            : $out .= $this->show_statistics();
+			case 'cmsvmcstart' : break;  
+			case 'cmsvstats'   :
+			default            : $out .= $this->show_statistics();
 
-	  }	 
-	  return ($out);
+		}	 
+		return ($out);
     }
 
 	
-	function javascript() {
+	protected function javascript() {
         if (iniload('JAVASCRIPT')) {
 		
 		    //became universal
@@ -70,8 +81,8 @@ class cmsvstats  {
 		    //return no js when tags already loaded 
 			if (isset($this->hashtag) || (isset($this->cid) && isset($this->mc))) {}
 			else {	
-				//$code.= $this->javascript_ajax();	//fronthtmlpage universal
-				$code.= $this->reference_js();			
+				$code.= $this->javascript_redir();	
+				//$code.= $this->reference_js();			
 		
 				$js = new jscript;
 				$js->load_js($code,"",1);			   
@@ -79,7 +90,7 @@ class cmsvstats  {
 			}	
      	}	  
 	}
-	
+	/*
 	protected function createcookie_js() {
 		
 		$ret = '
@@ -106,29 +117,37 @@ if (window.location.hash) {
 else { }		
 ';
 		return ($code);
-	}
+	}*/
 	
-    protected function javascript_ajax()  {
+    protected function javascript_redir()  {
    
-      $jscript = <<<EOF
-function createRequestObject() {var ro; var browser = navigator.appName;
-    if(browser == "Microsoft Internet Explorer"){ro = new ActiveXObject("Microsoft.XMLHTTP");} 
-	else{ro = new XMLHttpRequest();} return ro;}
-var http = createRequestObject();
-function sndUrl(url) {http.open('get', url); http.send(null);}
-function sndReqArg(url) {var params = url; http.open('post', params, true); http.setRequestHeader("Content-Type", "text/html; charset=utf-8");
-    http.setRequestHeader("encoding", "utf-8");	http.onreadystatechange = handleResponse; http.send(null);}
-function handleResponse() {if(http.readyState == 4){
+		$jscript = <<<EOF
+function redir(url) {
+    http.open('get', url+'&ajax=1');
+    //http.onreadystatechange = handleRedir;
+    http.send(null);
+}
+function handleRedir() {if(http.readyState == 4){
     var response = http.responseText;
     var update = new Array();
-    response = response.replace( /^\s+/g, "" ); 
-    response = response.replace( /\s+$/g, "" );		
-    if(response.indexOf('|' != -1)) { /*alert(response); */ update = response.split('|');
-        document.getElementById(update[0]).innerHTML = update[1];}}}
+    response = response.replace( /^\s+/g, "" );  
+    response = response.replace( /\s+$/g, "" ); 		
+    if(response.indexOf('|' != -1)) { update = response.split('|');
+        document.getElementById(update[0]).innerHTML = update[1];
+	}}}
+
+if (window.location.hash) {
+	var hash = window.location.hash.substring(1);
+	var value = hash.split("|");
+	if (value[1]!=null) { cc("cid",value[0],"1"); cc("mc",value[1],"1");} else cc("hashtag",hash,"1");
+	sndUrl("katalog.php?t=cmsvmcstart");
+}
+else { }
+	  
 EOF;
 
-      return ($jscript);
-   }		
+		return ($jscript);
+	}		
 	
 	
 	
@@ -173,7 +192,7 @@ EOF;
 		$cmail = $this->mc ? base64_decode($this->mc) : '';		
 						
 		//$sSQL = "insert into stats (date,day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
-		$sSQL = "insert into stats (day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT) values (";
+		$sSQL = "insert into stats (day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT,REFERER) values (";
 		//$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
@@ -185,7 +204,8 @@ EOF;
 		$sSQL.= $db->qstr($attr1) . ",";
 		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
 		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ","; 
-		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ")";			
+		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ",";
+		$sSQL.= $db->qstr($this->http_referer). ")";			
 		//echo $sSQL;
 		$db->Execute($sSQL,1);	 		
 		if ($db->Affected_Rows()) 
@@ -211,7 +231,7 @@ EOF;
 		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : ($iref ? $iref : ''));
 		$cmail = $this->mc ? base64_decode($this->mc) : '';
 
-		$sSQL = "insert into stats (day,month,year,attr1,attr2,attr3,ref,tid,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT) values (";
+		$sSQL = "insert into stats (day,month,year,attr1,attr2,attr3,ref,tid,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT,REFERER) values (";
 		//$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
@@ -223,7 +243,8 @@ EOF;
 		$sSQL.= $db->qstr($tid) . ",";
 		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
 		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ","; 
-		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ")";	
+		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ",";
+		$sSQL.= $db->qstr($this->http_referer). ")";	
 		//echo $sSQL;		
 		$db->Execute($sSQL,1);	 		
 
@@ -250,7 +271,7 @@ EOF;
 		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : ($iref ? $iref : ''));
 		$cmail = $this->mc ? base64_decode($this->mc) : '';		
 						
-		$sSQL = "insert into stats (day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT) values (";
+		$sSQL = "insert into stats (day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT,REFERER) values (";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
 		$sSQL.= $myyear . ",";						
@@ -261,7 +282,8 @@ EOF;
 		$sSQL.= $db->qstr($attr1) . ",";
 		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
 		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ","; 
-		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ")";			
+		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ",";
+		$sSQL.= $db->qstr($this->http_referer). ")";				
 		//echo $sSQL;
 		$db->Execute($sSQL,1);	 		
 		if ($db->Affected_Rows()) 
@@ -281,7 +303,7 @@ EOF;
 	    $mymonth= date('m',$currentdate);	
 	    $myyear = date('Y',$currentdate);
 						
-		$sSQL = "insert into stats (day,month,year,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT) values (";
+		$sSQL = "insert into stats (day,month,year,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT,REFERER) values (";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
 		$sSQL.= $myyear . ",";						
@@ -290,7 +312,8 @@ EOF;
 		$sSQL.= $db->qstr($user) . ',';
 		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
 		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ","; 
-		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ")";				
+		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ",";
+		$sSQL.= $db->qstr($this->http_referer). ")";					
 
 		$db->Execute($sSQL,1);	 
 		
@@ -311,7 +334,7 @@ EOF;
 	    $mymonth= date('m',$currentdate);	
 	    $myyear = date('Y',$currentdate);
 						
-		$sSQL = "insert into stats (day,month,year,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT) values (";
+		$sSQL = "insert into stats (day,month,year,tid,attr1,attr3,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT,REFERER) values (";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
 		$sSQL.= $myyear . ",";						
@@ -320,7 +343,8 @@ EOF;
 		$sSQL.= $db->qstr($user) . ',';
 		$sSQL.= $db->qstr($_SERVER['REMOTE_ADDR']) . ",";
 		$sSQL.= $db->qstr($_SERVER['HTTP_X_FORWARDED_FOR']) . ","; 
-		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ")";				
+		$sSQL.= $db->qstr($_SERVER['HTTP_USER_AGENT']). ",";
+		$sSQL.= $db->qstr($this->http_referer). ")";					
 
 		$db->Execute($sSQL,1);	 
 		

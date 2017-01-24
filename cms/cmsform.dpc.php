@@ -114,9 +114,9 @@ class cmsform {
 						    if (!$err = $this->checkFields()) {		
 							
 							    $cperson = GetParam($this->cntform[0]);
-								$email = GetParam($this->cntform[1]); //GetParam("email");
-								$subject = $cperson ? $cperson .'-'. GetParam($this->cntform[2]) : GetParam($this->cntform[2]); //GetParam("subject");
-								$message = GetParam($this->cntform[3]); //GetParam("mail_text");
+								$email = GetParam($this->cntform[1]); 
+								$subject = $cperson ? $cperson . ' - ' . GetParam($this->cntform[2]) : GetParam($this->cntform[2]); 
+								$message = GetParam($this->cntform[3]); 
 								$body = $message; 										
 								
 								$sSQL = "insert into cform (email,subject,postform) values (" . 
@@ -126,7 +126,8 @@ class cmsform {
                                 //echo $sSQL;
                                 $ret = $db->Execute($sSQL);	 
 								
-								$this->mailto($this->sendaddress,$this->sendaddress,$subject,$message,1);							  
+								$mailinsubject = $subject . ' (' . $email . ')';
+								$this->mailto($this->sendaddress,$this->sendaddress,$mailinsubject,$message,1);							  
 							  
 								$this->post = true;
 								$this->update_statistics('contact', $email);

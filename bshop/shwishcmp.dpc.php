@@ -33,12 +33,12 @@ $__LOCALE['SHWISHCMP_DPC'][3]='_ADDTOWISHLIST;add to wishlist;προσθήκη �
 $__LOCALE['SHWISHCMP_DPC'][4]='_ADDTOCOMPARE;add to compare;προσθήκη για σύγκριση';
 $__LOCALE['SHWISHCMP_DPC'][5]='SHWISHLIST_CNF;Wish List;Wish List';
  
-class shwishcmp /*extends shkatalogmedia*/ {
+class shwishcmp extends shkatalogmedia {
 
 
     function __construct() {
    
-       //shkatalogmedia::shkatalogmedia();	
+       shkatalogmedia::__construct();	
 
     }
    
@@ -122,14 +122,13 @@ class shwishcmp /*extends shkatalogmedia*/ {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
 	    $name = $UserName?decode($UserName):null; 
+		$codename = $this->getmapf('code');
 
         $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products, wishlist";
+				$codename .	$lastprice . " from products, wishlist";
 		$sSQL .= " WHERE ";					
-		$sSQL .= $this->getmapf('code'). "= wishlist.tid and cid=" . $db->qstr($name);
+		$sSQL .= $codename . "= wishlist.tid and cid=" . $db->qstr($name);
 		$sSQL .= "and listname='wishlist' order by wishlist.recid DESC";	
 		//echo $sSQL;
 		$this->result = $db->Execute($sSQL,2);
@@ -137,76 +136,7 @@ class shwishcmp /*extends shkatalogmedia*/ {
 		
 		$out = $this->list_katalog(null,null,'fpkatalog-wishlist.htm',null,1,null,1);		
 		//$out = 'test';
-		return ($out);
-		
-		/*NOT USED*/
-	    $lan = getlocal()?getlocal():'0';	  
-	    $template_file='wishlist.htm';	   
-	    $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',$lan.'.',$template_file) ; 	
-	    $template_file2='wishlist-line.htm';		
-		$tfile2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',$lan.'.',$template_file2) ; 	
-	    //echo $tfile;
-        if (is_readable($tfile)) {
-		  $contents = file_get_contents($tfile);	   
-		  $contents2 = file_get_contents($tfile2); //echo $contents2;
-	      $template = 1;	     
-	    }
-
-	    $sSQL = "select tid from wishlist where cid=" . $db->qstr($name) . 
-		        "and listname='wishlist' order by recid DESC";	
-	    $res = $db->Execute($sSQL,2);		
-		//echo $sSQL;
-		$i=0;
-	    if (!empty($res)) { 
-		
-	        foreach ($res as $n=>$rec) {
-				$i+=1;		
-				//echo $tfile2,'<br/>';
-				$code = $rec['tid'];
-				$item = $this->item_var(null,$code,1,1);
-				if ($template) {
-				    $tokens = null;
-				    $tokens[] = $item[27]; 
-					$tokens[] = $item[6];
-				    $tokens[] = $item[11];
-					$tokens[] = $item[12];
-					$tokens[] = $item[18];
-					$tokens[] = $item[20];
-					//print_r($tokens);
-					$transtbl[] = $this->combine_tokens($contents2,$tokens);
-				}
-				else
-				    $transtbl[] = $rec[5] . ";" .$rec[0] . ";" .$rec[4] . ";" .$rec[1] . ";" .$rec[3];   
-		    }
-		   
-            //browse
-		    if ($template) {
-			    //print_r($transtbl);
-			    $maintoken[] = (!empty($transtbl)) ? implode('',$transtbl) : null;
-		    }
-		    else {
-				//print_r($transtbl); 
-				$ppager = GetReq('pl')?GetReq('pl'):10;
-				$browser = new browse($transtbl,null,$this->getpage($transtbl,$this->searchtext));
-				$out .= $browser->render("wishview",$ppager,$this,1,0,0,0);
-				unset ($browser);	
-		    }  
-	    }
-		else {
-		    if ($template) {
-			    $out = null;
-			}
-			else {//empty message
-				$w = new window(null,localize('_EMPTY',getlocal()));
-				$out .= $w->render("center::40%::0::group_win_body::left::0::0::");//" ::100%::0::group_form_headtitle::center;100%;::");
-				unset($w);
-            } 
-		}
-		
-		if ($template) 
-			$out = $this->combine_tokens($contents,$maintoken);	  
-			
-		return ($out);		
+		return ($out);	
 	} 	
 
 	function viewWishList() {
@@ -216,13 +146,13 @@ class shwishcmp /*extends shkatalogmedia*/ {
 	   
 	   if (!$UserName) {
 	     if (defined('CMSLOGIN_DPC')) { 
-		   GetGlobal('controller')->calldpc_method("cmslogin.login_javascript"); 
-		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +wsview+wishlist>viewWishList");		   
+		   _m("cmslogin.login_javascript"); 
+		   $out = _m("cmslogin.quickform use +wsview+wishlist>viewWishList");		   
 		 }  
 	     elseif (defined('SHLOGIN_DPC')) 
-		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +wsview+wishlist>viewWishList");
+		   $out = _m("shlogin.quickform use +wsview+wishlist>viewWishList");
 	     else
-	       $out = ("You must be logged in to view this page.");
+	       $out = "You must be logged in to view this page.";
 		   
 		 return ($out);  
 	   }	 
@@ -288,14 +218,13 @@ class shwishcmp /*extends shkatalogmedia*/ {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
 	    $name = $UserName?decode($UserName):null;
+		$codename = $this->getmapf('code');
 		
         $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
-				$this->getmapf('code').
-				$lastprice .
-				" from products, wishlist";
+				$codename .	$lastprice . " from products, wishlist";
 		$sSQL .= " WHERE ";					
-		$sSQL .= $this->getmapf('code'). "= wishlist.tid and cid=" . $db->qstr($name);
+		$sSQL .= $codename . "= wishlist.tid and cid=" . $db->qstr($name);
 		$sSQL .= "and listname='compare' order by wishlist.recid DESC";	
 		//echo $sSQL;
 		$this->result = $db->Execute($sSQL,2);
@@ -303,77 +232,6 @@ class shwishcmp /*extends shkatalogmedia*/ {
 		
 		$out = $this->list_katalog(null,null,'fpkatalog-compare.htm',null,1,null,1);		
 		//$out = 'test';
-		return ($out);
-	   
-	    /*NOT USED TABLE VIEW ?*/
-	    $lan = getlocal()?getlocal():'0';	  
-	    $template_file='compare.htm';	   
-	    $tfile = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',$lan.'.',$template_file) ; 	
-	    $template_file2='compare-line.htm';		
-		$tfile2 = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',$lan.'.',$template_file2) ; 	
-	    //echo $tfile;
-        if (is_readable($tfile)) {
-		  $contents = file_get_contents($tfile);	   
-		  $contents2 = file_get_contents($tfile2); //echo $contents2;
-	      $template = 1;	     
-	    }	 
-	   
-	    $sSQL = "select tid from wishlist where cid=" . $db->qstr($name) . 
-		        "and listname='compare' order by recid DESC";				 
-		//echo $sSQL;
-	    $res = $db->Execute($sSQL,2);
-		
-	    //print_r ($res->fields[5]);
-		$i=0;
-	    if (!empty($res)) { 
-		
-	        foreach ($res as $n=>$rec) {
-				$i+=1;		
-				//echo $tfile2,'<br/>';
-				$code = $rec['tid'];
-				$item = GetGlobal('controller')->calldpc_method("shkatalogmedia.item_var use +$code+1+1");
-				if ($template) {
-				    $tokens = null;
-				    $tokens[] = $item[27]; 
-					$tokens[] = $item[6];
-				    $tokens[] = $item[11];
-					$tokens[] = $item[12];
-					$tokens[] = $item[18];
-					$tokens[] = $item[20];
-					//print_r($tokens);
-					$transtbl[] = $this->combine_tokens($contents2,$tokens);
-				}
-				else
-				    $transtbl[] = $rec[5] . ";" .$rec[0] . ";" .$rec[4] . ";" .$rec[1] . ";" .$rec[3];   
-		    }
-		   
-            //browse
-		    if ($template) {
-			    //print_r($transtbl);
-			    $maintoken[] = (!empty($transtbl)) ? implode('',$transtbl) : null;
-		    }
-		    else {
-				//print_r($transtbl); 
-				$ppager = GetReq('pl')?GetReq('pl'):10;
-				$browser = new browse($transtbl,null,$this->getpage($transtbl,$this->searchtext));
-				$out .= $browser->render("wishview",$ppager,$this,1,0,0,0);
-				unset ($browser);	
-		    }  
-	    }
-		else {
-		    if ($template) {
-			    $out = null;
-			}
-			else {//empty message
-				$w = new window(null,localize('_EMPTY',getlocal()));
-				$out .= $w->render("center::40%::0::group_win_body::left::0::0::");//" ::100%::0::group_form_headtitle::center;100%;::");
-				unset($w);
-            } 
-		}
-		
-		if ($template) 
-			$out = $this->combine_tokens($contents,$maintoken);	  
-			
 		return ($out);		
 	} 	
 	
@@ -384,13 +242,13 @@ class shwishcmp /*extends shkatalogmedia*/ {
 	   
 	   if (!$UserName) {
 		 if (defined('CMSLOGIN_DPC')) { 
-		   GetGlobal('controller')->calldpc_method("cmslogin.login_javascript");  
-		   $out = GetGlobal('controller')->calldpc_method("cmslogin.quickform use +wsview+wishlist>viewWishList");  
+		   _m("cmslogin.login_javascript");  
+		   $out = _m("cmslogin.quickform use +wsview+wishlist>viewWishList");  
 		 }  
 	     elseif (defined('SHLOGIN_DPC')) 
-		   $out = GetGlobal('controller')->calldpc_method("shlogin.quickform use +wsview+wishlist>viewWishList");
+		   $out = _m("shlogin.quickform use +wsview+wishlist>viewWishList");
 	     else
-	       $out = ("You must be logged in to view this page.");
+	       $out = "You must be logged in to view this page.";
 		   
 		 return ($out);  
 	   }	 
@@ -424,42 +282,6 @@ class shwishcmp /*extends shkatalogmedia*/ {
 	
     function view_ws($id,$did,$ddate,$dtime,$status) {
     }	
-
-	//tokens method	
-	function combine_tokens($template_contents,$tokens, $execafter=null) {
-	
-	    if (!is_array($tokens)) return;
-		
-		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
-		}		  		
-		else
-		  $ret = $template_contents;
-		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
-		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
-		//clean unused token marks
-		for ($x=$i;$x<30;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
-		
-		//execute after replace tokens
-		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
-          
-		  return ($retout);
-		}		
-		
-		return ($ret);
-	}	
 };
 }
 }
