@@ -53,6 +53,8 @@ class cms extends fronthtmlpage {
 		$this->shellfn = paramload('SHELL','filename');
 
 		$this->dothtml = false; //true; //paramload('SHELL','rewritedothtml');		
+		
+		$this->loadVariables();
 	}
 	
 	public function isDemoUser() {
@@ -172,6 +174,65 @@ class cms extends fronthtmlpage {
 		}
 		
 		return $this->seturl($query, $title, $jscript);
+	}
+	
+	protected function loadVariables() {
+		$db = GetGlobal('db');
+		$lan = getlocal();
+		$currlang = $lan ? $lan : '0';
+		$vars = null;
+		
+		global $__DPCLOCALE;
+		
+		if (!$variablesloaded = GetSessionParam('cmsvars')) {
+
+			$sSQL = "select name,value,value0,value1,value2,translate,cookie,session,section,varname,usevarname from cmsvariables WHERE active=1";
+			$res = $db->Execute($sSQL);
+			
+			foreach ($res as $i=>$rec) {
+				//echo $rec['name'].':'.$rec['value'];
+				$s = $rec['section'] ? $rec['section'] : 'VAR';
+				$n = $rec['usevarname'] ? $rec['varname'] : $rec['name'];					
+				$v = $rec['value'];				
+				
+				if ($rec['translate']==1) {
+					//set translation variable
+					$__DPCLOCALE[$n] = $rec['value0'] . ';' . $rec['value1'] . ';' . $rec['value2'];
+				}
+				elseif ($rec['cookie']==1) {
+					//save as cookie
+					//settheCookie($n, $v); //always DO NOT
+				}
+				elseif ($rec['session']==1) {
+					//save in session
+					//SetSessionParam($n, $v); //always DO NOT
+				}
+				else {
+					//save as global var, config style global var
+				    $vars[$s][$n] = $v;
+				}
+			}
+			
+			//extra variable conf
+			if (!empty($vars)) {
+				$config = array_merge(GetGlobal('config'), $vars); 			
+				SetGlobal('config',$config); 
+				//echo 'conf';
+			}	
+
+			//SetSessionParam('cmsvars', 1); //save loaded state DO NOT
+			return true;
+		}
+
+		return false; //already loaded	
+	}
+	
+	public function callVar($name=null, $section=null) {
+		if (!$name) return null;
+		$sec = $section ? $section : 'VAR';
+		$varvalue = paramload($sec, $name);
+		//echo $varvalue;
+		return _m($varvalue);
 	}
 };
 }
