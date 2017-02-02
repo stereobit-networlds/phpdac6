@@ -161,6 +161,14 @@ $__LOCALE['SHCART_DPC'][79]='_SXOLIA;Comments;Σχόλια;';
 $__LOCALE['SHCART_DPC'][80]='_CARTERROR;Error during transaction;Λαθος εκτελεσης;';
 $__LOCALE['SHCART_DPC'][81]='_STOCKOUT; is out of stock!; δεν υπαρχει απόθεμα!;';
 $__LOCALE['SHCART_DPC'][82]='_INPUTERR;Invalid entry!;Λανθασμένη ποσότητα!;';
+$__LOCALE['SHCART_DPC'][83]='_couponvalid;Valid coupon;Ενεργοποίηση κουπονιού;';
+$__LOCALE['SHCART_DPC'][84]='_couponinvalid;Invalid coupon;Το κουπόνι δεν είναι έγκυρο;';
+$__LOCALE['SHCART_DPC'][85]='_pointsused;Use loyalty points;Χρήση πόντων επιβράβευσης;';
+$__LOCALE['SHCART_DPC'][86]='_discount;Discount;Έκπτωση;';
+$__LOCALE['SHCART_DPC'][87]='_coupon;Coupon;Κουπόνι;';
+$__LOCALE['SHCART_DPC'][88]='_usedpointsdiscount;Used points discount;Έκπτωση χρήσης πόντων;';
+$__LOCALE['SHCART_DPC'][89]='_totalcartdiscount;Cart total discount;Έκπτωση συνολικής αξίας;';
+$__LOCALE['SHCART_DPC'][90]='_pointstoset;Loyalty points;Πόντοι επιβράβευσης;';
 
 $__LOCALE['SHCART_DPC'][99]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
 
@@ -187,7 +195,7 @@ class shcart extends storebuffer {
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
     var $twig_invoice_template_name, $appname, $mtrackimg; 
     var $agentIsIE, $baseurl, $fastpick, $continue_shopping_goto_cmd;
-	var $loyalty;	
+	var $loyalty, $ppolicynotes;	
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
@@ -292,7 +300,8 @@ class shcart extends storebuffer {
 		$this->overitem = null;
 		$this->todo = null;	
 		$this->cartloopdata = null;   
-		$this->looptotals = null;		
+		$this->looptotals = null;	
+		$this->ppolicynotes = null;	
 
 		$this->status = GetSessionParam('cartstatus') ? GetSessionParam('cartstatus') : 0;			
 		$this->total = floatval(GetSessionParam('subtotal'));
@@ -757,7 +766,7 @@ function addtocart(id,cartdetails)
 				$date = date('d.m.y');			
 				//$invoice_tokens['invoice'] = $invway .' '.$this->transaction_id;
 				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',getlocal()).' '.$this->transaction_id;
-				$invoice_tokens['mynotes'] = $sxolia;
+				$invoice_tokens['mynotes'] = $sxolia . "<br/>" . $this->ppolicynotes;
 				$invoice_tokens['mydate'] = $date;	
 				$invoice_tokens['payway'] = localize(GetSessionParam('payway'), getlocal()); 			
 				$invoice_tokens['roadway'] = localize(GetSessionParam('roadway'), getlocal());
@@ -2063,7 +2072,7 @@ function addtocart(id,cartdetails)
 							
 		//echo $this->discount ,'-';					
 		//echo GetSessionParam('cdiscount'),':', GetSessionParam('pdiscount'),'-';
-		//echo GetSessionParam('coupon'),':',GetSessionParam('points');
+		//echo $_SESSION['coupon'],':',$_SESSION['points'];
 		return ($this->discount);
 	}
 
@@ -2072,36 +2081,33 @@ function addtocart(id,cartdetails)
 		$db = GetGlobal('db');		
 		//if (!$this->loyalty) return 0;	
 	    $reseller = GetSessionParam('RESELLER');
-
-		/*if ($this->leeid!=null)
-			$id = $this->userid;
-		else*/
-			$id = decode(GetSessionParam('UserID'));		
-		
-		/*set used coupon or posted coupon*/
-		$coupon = GetParam('coupon'); 
-		//echo $coupon;
+		$id = decode(GetSessionParam('UserID'));
+		$lan = getlocal();		
 
 		if ($id) { 
 		
-			if ($coupon) { //one record coupon price policy
+			if ($coupon = GetParam('coupon')) { //one record named coupon price policy
 				$sSQL = "select discount as disc from ppolicy where active=1 and code1=" .  $db->qstr($coupon);
-				//$sSQL.= " and name=" .  $db->qstr($id) ; //extra check (named coupon)
+				//$sSQL.= " and name=" .  $db->qstr($id) ; // (named coupon)
 				//echo $sSQL;
 				$result = $db->Execute($sSQL);
+				
 				//save used coupon (and disable after order submit)		
 				if ($cdiscount = $result->fields[0]) {
 					
 					SetSessionParam('coupon', $coupon);
 					SetSessionParam('cdiscount', $cdiscount);
 					
-					$this->jsDialog(localize('_couponexist', getlocal()), 'Discount ' . $cdiscount . '%');	
-					return $cdiscount;
+					$this->jsDialog(localize('_couponvalid', $lan), 
+									localize('_discount', $lan) . ': '. $cdiscount . '%');	
+					$ret = $cdiscount;
 				}
 				else
-					$this->jsDialog(localize('_couponnotexist', getlocal()),'Coupon ' . $coupon);	
+					$this->jsDialog(localize('_couponinvalid', $lan),
+									localize('_coupon', $lan) . ': '. $coupon);	
 			}
-		    else { //multiple price policy rows 
+		    else { 
+			    //user defined multiple price policy rows 
 				$sSQL = "select sum(discount) as disc, sum(points) as pnt from ppolicy where code1=" .  $db->qstr($id) ;
 				$sSQL.= " and active=1 group by code1";
 				//echo $sSQL;
@@ -2110,23 +2116,42 @@ function addtocart(id,cartdetails)
 					
 					SetSessionParam('points', $result->fields[1]);
 					//SetSessionParam('pdiscount', $pdiscount);	//do not save (default ppolicy)
+					/*
+					$this->jsDialog(localize('_pointsused', $lan),
+									localize('_discount', $lan) . ': '. $pdiscount . '%');
+					*/					
+					$dline[] = localize('_usedpointsdiscount', $lan) . ': '. $pdiscount . '%';
+					$ret = $pdiscount;
+				}
+
+				//cart total price policy (valid only when not a coupon)
+				$sSQL = "select discount,points from ppolicy where active=1 and code1 is NULL and code2 is NULL";
+				$sSQL.= " and price <= " . $this->total;
+				$sSQL.= " order by price desc LIMIT 1";
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);		
+				if ($cartdiscount = $result->fields[0]) {
+					//echo 'cart discount';
+					/*$this->jsDialog(localize('_pointstoset', $lan),
+									localize('_points', $lan) . ': '. $result->fields[1]);			
+					*/		
+					$dline[] = localize('_totalcartdiscount', $lan) . ': '. $cartdiscount . '%';
+					$dline[] = localize('_pointstoset', $lan) . ': '. $result->fields[1];
 					
-					$this->jsDialog(localize('_pointsused', getlocal()),'Discount ' . $pdiscount . '%');
-					return $pdiscount;
+					$ret += $cartdiscount;	//plus !!!!
+				}
+				
+				//dlines total messages dialog
+				if (!empty($dline)) {
+					$this->ppolicynotes = implode('<br/>',$dline);
+					$this->jsDialog($this->ppolicynotes , localize('_discount', $lan));				
+					//SetSessionParam('ppolicytext', $dtext); //used by html dacpages
 				}	
-			}
-			/*
-			return ($result->fields[0] ? $result->fields[0] : 0);
-			
-			if ($percent = $result->fields[0]) 
-				return ($percent);
-			else 
-				return ($reseller=='true') ? $this->discount : 0;
-			*/			
+			}			
 	    }
 	    else { //anonymous coupon
 		
-			if ($coupon) { //one record coupon price policy
+			if ($coupon = GetParam('coupon')) { //one record coupon price policy
 				$sSQL = "select discount as disc from ppolicy where active=1 and code1=" .  $db->qstr($coupon);
 				//echo $sSQL;
 				$result = $db->Execute($sSQL);
@@ -2136,14 +2161,17 @@ function addtocart(id,cartdetails)
 					SetSessionParam('coupon', $coupon);
 					SetSessionParam('cdiscount', $cdiscount);
 					
-					$this->jsDialog(localize('_couponexist', getlocal()), 'Discount ' . $cdiscount . '%');	
-					return $cdiscount;
+					$this->jsDialog(localize('_couponexist', $lan), 
+									localize('_discount', $lan) . ': '. $cdiscount . '%');	
+					$ret = $cdiscount;
 				}
 				else
-					$this->jsDialog(localize('_couponnotexist', getlocal()),'Coupon ' . $coupon);	
+					$this->jsDialog(localize('_couponnotexist', $lan),
+									localize('_coupon', $lan) . ': '. $coupon);	
 			}		   
 	    }
-	    return 0;
+		
+	    return ($ret ? $ret : 0);
 	}	
 	
 	protected function savePoints($user, $trid) {
