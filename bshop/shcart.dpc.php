@@ -2056,39 +2056,94 @@ function addtocart(id,cartdetails)
 	}
 	
 	public function read_policy() {
-
-		$this->discount = $this->get_user_price_policy($this->userid);
-		//echo $this->discount;
 		
+        /*posted coupon discount or points policy discount*/
+		$this->discount = GetSessionParam('cdiscount') ? 
+							GetSessionParam('cdiscount') : $this->get_user_price_policy();
+							
+		//echo $this->discount ,'-';					
+		//echo GetSessionParam('cdiscount'),':', GetSessionParam('pdiscount'),'-';
+		//echo GetSessionParam('coupon'),':',GetSessionParam('points');
 		return ($this->discount);
 	}
 
 	/*...*/
-	protected function get_user_price_policy($leeid=null) {
-		$db = GetGlobal('db');
-		//$reseller = GetSessionParam('RESELLER');
-		//if (!$this->loyalty) return 0;
-		
-		/*if ($this->leeid!=null)
-			$id = $leeid;
-		else*/
-			$id = decode(GetSessionParam('UserID'));
+	protected function get_user_price_policy() {
+		$db = GetGlobal('db');		
+		//if (!$this->loyalty) return 0;	
+	    $reseller = GetSessionParam('RESELLER');
 
-		if ($id) { //multiple rows ?
-			$sSQL = "select sum(discount) as disc from ppolicy where active=1 and code1=" .  $db->qstr($id) ;
-			$sSQL.= " group by code1";
-			$result = $db->Execute($sSQL);
-			//echo $sSQL;
-			return ($result->fields[0] ? $result->fields[0] : 0);
+		/*if ($this->leeid!=null)
+			$id = $this->userid;
+		else*/
+			$id = decode(GetSessionParam('UserID'));		
+		
+		/*set used coupon or posted coupon*/
+		$coupon = GetParam('coupon'); 
+		//echo $coupon;
+
+		if ($id) { 
+		
+			if ($coupon) { //one record coupon price policy
+				$sSQL = "select discount as disc from ppolicy where active=1 and code1=" .  $db->qstr($coupon);
+				//$sSQL.= " and name=" .  $db->qstr($id) ; //extra check (named coupon)
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);
+				//save used coupon (and disable after order submit)		
+				if ($cdiscount = $result->fields[0]) {
+					
+					SetSessionParam('coupon', $coupon);
+					SetSessionParam('cdiscount', $cdiscount);
+					
+					$this->jsDialog(localize('_couponexist', getlocal()), 'Discount ' . $cdiscount . '%');	
+					return $cdiscount;
+				}
+				else
+					$this->jsDialog(localize('_couponnotexist', getlocal()),'Coupon ' . $coupon);	
+			}
+		    else { //multiple price policy rows 
+				$sSQL = "select sum(discount) as disc, sum(points) as pnt from ppolicy where code1=" .  $db->qstr($id) ;
+				$sSQL.= " and active=1 group by code1";
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);
+				if ($pdiscount = $result->fields[0]) {
+					
+					SetSessionParam('points', $result->fields[1]);
+					//SetSessionParam('pdiscount', $pdiscount);	//do not save (default ppolicy)
+					
+					$this->jsDialog(localize('_pointsused', getlocal()),'Discount ' . $pdiscount . '%');
+					return $pdiscount;
+				}	
+			}
 			/*
+			return ($result->fields[0] ? $result->fields[0] : 0);
+			
 			if ($percent = $result->fields[0]) 
 				return ($percent);
 			else 
 				return ($reseller=='true') ? $this->discount : 0;
-			*/
-	   }
-
-	   return false;
+			*/			
+	    }
+	    else { //anonymous coupon
+		
+			if ($coupon) { //one record coupon price policy
+				$sSQL = "select discount as disc from ppolicy where active=1 and code1=" .  $db->qstr($coupon);
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);
+				//save used coupon (and disable after order submit)		
+				if ($cdiscount = $result->fields[0]) {
+					
+					SetSessionParam('coupon', $coupon);
+					SetSessionParam('cdiscount', $cdiscount);
+					
+					$this->jsDialog(localize('_couponexist', getlocal()), 'Discount ' . $cdiscount . '%');	
+					return $cdiscount;
+				}
+				else
+					$this->jsDialog(localize('_couponnotexist', getlocal()),'Coupon ' . $coupon);	
+			}		   
+	    }
+	    return 0;
 	}	
 	
 	protected function savePoints($user, $trid) {
@@ -2123,7 +2178,10 @@ function addtocart(id,cartdetails)
 			if ($sumofpoints>0) {
 				$sSQL = "insert into ppolicy (active,code1,code2,name,descr,points) values (1,'$user','$user','$trid','$trid',$sumofpoints)";
 				$res = $db->Execute($sSQL);	
-			}	
+			}
+
+            //disable point records or used coupon
+			//...		
 		}				 
 
 		return ($sumofpoints);		
@@ -2272,11 +2330,11 @@ function addtocart(id,cartdetails)
 
 	public function foot($token=null) {
 	
-		$this->quick_recalculate();
+		$this->quick_recalculate();	
 	   
 		$_ttc =  number_format(floatval($this->total),$this->dec_num,',','.'). $this->moneysymbol;
 		$tokens[] = $_ttc; 
-
+		
 		if (!$this->status) {	
 	     
 			SetSessionParam('subtotal',$this->total);   
@@ -2304,7 +2362,14 @@ function addtocart(id,cartdetails)
 	    else {
 		 
 			if ($this->discount) {
-				$_tdisc = number_format(floatval($this->discount),$this->dec_num,',','.') . '%';//$this->moneysymbol;		   
+				
+				$this->mydiscount = ($this->discount) ? 
+									($this->total * $this->discount)/100 : 0;
+				
+				//percent (discount) or value (mydiscount)
+				$_tdisc = ($this->status>1) ? 
+				           '-'. number_format(floatval($this->mydiscount),$this->dec_num,',','.') . $this->moneysymbol :
+						   	    number_format(floatval($this->discount),$this->dec_num,',','.') . '%';
 				$tokens[] = $_tdisc;
 			} 
 			else 
@@ -2362,8 +2427,11 @@ function addtocart(id,cartdetails)
 				foreach ($this->comments() as $t=>$tt)
 					$tokens[] = $tt;
 			}			   
-	    } 
-
+	    }
+		
+		//echo $this->total,':',$this->mydiscount;	
+		//if ($coupon = GetParam('coupon')) echo $coupon;
+		
 		$out = _m('cmsrt._ct use shcartfooter+' . serialize($tokens) . '+1');
 		return ($out);
 	}	
@@ -2377,7 +2445,14 @@ function addtocart(id,cartdetails)
 
 		//rest sums 
 		if ($this->discount) {
-            $_tdisc = number_format(floatval($this->discount),$this->dec_num,',','.'). $this->moneysymbol;		   
+			$this->mydiscount = ($this->discount) ? 
+								($this->total * $this->discount)/100 : 0;
+				
+			//percent (discount) or value (mydiscount)
+			$_tdisc = ($this->status>1) ? 
+			           '-'. number_format(floatval($this->mydiscount),$this->dec_num,',','.') . $this->moneysymbol :
+					   	    number_format(floatval($this->discount),$this->dec_num,',','.') . '%';			
+					   
 		    $tokens[] = $_tdisc;
 		} 
 		else
@@ -2428,9 +2503,10 @@ function addtocart(id,cartdetails)
 		else
 			$tokens[] = '';		   
 	   
-
+		//echo $this->total,':',$this->mydiscount;	
+		//if ($coupon = GetParam('coupon')) echo $coupon;	   
+	   
 		$out = _m('cmsrt._ct use fpcartfooter+' . serialize($tokens) . '+1');
-		
 		return ($out);
 	}
 
@@ -2976,7 +3052,6 @@ function addtocart(id,cartdetails)
 
 		$ret .= _m('cmsrt._ct use cart-js-analytics+' . serialize($tokens) . '+1');
 		
-		//$template2 = _m('cmsrt.select_template use cart-js-item-analytics');
 		$tokens = array();
 		foreach ($this->buffer as $prod_id => $product) {
 			if (($product) && ($product!='x')) {
@@ -2989,7 +3064,6 @@ function addtocart(id,cartdetails)
 				//extra order tokens
 				$tokens[19] = $trid; //max combine no
 				
-				//$ret .= $this->combine_tokens2($template2,$tokens,true);
 				$ret .= _m('cmsrt._ct use cart-js-item-analytics+' . serialize($tokens) . '+1');
 				unset($tokens);
 			}	
