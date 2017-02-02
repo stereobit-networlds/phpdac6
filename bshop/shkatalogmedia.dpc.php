@@ -127,7 +127,7 @@ class shkatalogmedia {
 	var $isListView, $imgLargeDB, $imgMediumDB, $imgSmallDB;
 	var $ogTags, $siteTitle, $httpurl;
 	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan, $itmplpath;
-	var $max_price, $min_price;
+	var $max_price, $min_price, $loyalty;
 
 	public function __construct() {	
 		$UserSecID = GetGlobal('UserSecID');	
@@ -281,13 +281,14 @@ class shkatalogmedia {
 		$this->filterajax = false; //true;
 		$this->min_price = 0;
 		$this->max_price = 0;
+		$this->loyalty = _m('cms.paramload use ESHOP+loyalty');
 	  
 		$this->itmplpath = 'templates/';	  
 	  
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 							$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
-							"template,owner,itmactive from products ";					
+							"template,owner,itmactive,p1,p2,p3,p4,p5 from products ";					
     }
 	
 	public function event($event=null) {
@@ -831,10 +832,10 @@ SCROLLTOP;
 			echo base64_decode($result->fields['data']);
 		else {//additional photo or standart nopic
 			switch ($stype) {
-				case 'LARGE' : echo file_get_contents(getcwd().'/images/photo_bg/nopic.jpg'); break;
-				case 'MEDIUM': echo file_get_contents(getcwd().'/images/photo_md/nopic.jpg'); break;
-				case 'SMALL' : echo file_get_contents(getcwd().'/images/photo_sm/nopic.jpg'); break;
-				default      : echo file_get_contents(getcwd().'/images/photo_sm/nopic.jpg'); 
+				case 'LARGE' : echo @file_get_contents(getcwd().'/images/photo_bg/nopic.jpg'); break;
+				case 'MEDIUM': echo @file_get_contents(getcwd().'/images/photo_md/nopic.jpg'); break;
+				case 'SMALL' : echo @file_get_contents(getcwd().'/images/photo_sm/nopic.jpg'); break;
+				default      : echo @file_get_contents(getcwd().'/images/photo_sm/nopic.jpg'); 
 			}
 		}  
 	  
@@ -1327,7 +1328,7 @@ SCROLLTOP;
 				$cart_price = $price;
 				$cart_qty   = 1;//???				 
 				$cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
-				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
+				$array_cart = $this->read_qty_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]);
 			}	
 			else
@@ -1353,7 +1354,7 @@ SCROLLTOP;
 			$tokens[] = $availability;
 			$tokens[] = $details;
 			$tokens[] = $detailink;
-			$tokens[] = $rec[$item_code];
+			$tokens[] = $rec[$item_code]; //10
 			$tokens[] = $itemlink;	
 			  
 			$tokens[] = $in_cart?$in_cart:'0';
@@ -1372,15 +1373,23 @@ SCROLLTOP;
             $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				  
 		      
 			/*date time */
-			$tokens[] = $rec['year'];
+			$tokens[] = $rec['year'];  //20
 			$tokens[] = $rec['month'];
 			$tokens[] = $rec['day'];
 			$tokens[] = $rec['time'];
-			$tokens[] = $rec['monthname'];
+			$tokens[] = $rec['monthname']; 
 			  
 			$tokens[] = $rec['template'];
 			$tokens[] = $rec['owner'];			  
 			$tokens[] = $rec['itmactive'];
+			
+			$tokens[] = $this->item_has_points($rec[$item_code]);
+			
+			$tokens[] = $rec['p1']; 
+			$tokens[] = $rec['p2']; //30
+			$tokens[] = $rec['p3'];
+			$tokens[] = $rec['p4'];
+			$tokens[] = $rec['p5'];
 			  
 			if (!$custom_template) {
                 $items_grid[] = $this->combine_tokens($mytemplate, $tokens, true);//<<exec after tokens replace
@@ -1473,7 +1482,7 @@ SCROLLTOP;
 				$cart_photo = $rec[$item_code];//$this->get_photo_url($rec[$this->fcode],$pz);
 				$cart_price = $price;				 
 				$icon_cart  = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
-				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
+				$array_cart = $this->read_qty_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]);
 			}	
 			else	
@@ -1519,7 +1528,7 @@ SCROLLTOP;
             $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				 
 			 			
 			/*date time */
-			$tokens[] = $rec['year'];
+			$tokens[] = $rec['year']; //20
 			$tokens[] = $rec['month'];
 			$tokens[] = $rec['day'];
 			$tokens[] = $rec['time'];
@@ -1527,7 +1536,15 @@ SCROLLTOP;
 			 
 			$tokens[] = $rec['template'];
 		    $tokens[] = $rec['owner'];	
-            $tokens[] = $rec['itmactive'];			 
+            $tokens[] = $rec['itmactive'];	
+
+			$tokens[] = $this->item_has_points($rec[$item_code]);
+
+			$tokens[] = $rec['p1']; 
+			$tokens[] = $rec['p2']; //30
+			$tokens[] = $rec['p3'];
+			$tokens[] = $rec['p4'];
+			$tokens[] = $rec['p5'];			
 						
 			$items[] = $this->combine_tokens($mytemplate, $tokens, true);	
 			unset($tokens);													 
@@ -1583,7 +1600,7 @@ SCROLLTOP;
 			if (defined("SHCART_DPC")) {
 				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]); 
 				$icon_cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
-				$array_cart = $this->read_array_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
+				$array_cart = $this->read_qty_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				
 			    $units = $rec['uniname2'] ? localize($rec['uniname1'],$lan).'/'.localize($rec['uniname2'],$lan):
 				   						    localize($rec['uniname1'],$lan); 
@@ -1654,7 +1671,15 @@ SCROLLTOP;
 
 			$tokens[] = $rec['template'];
 			$tokens[] = $rec['owner'];	
-            $tokens[] = $rec['itmactive'];			 
+            $tokens[] = $rec['itmactive'];	//40
+
+			$tokens[] = $this->item_has_points($rec[$item_code]);
+
+			$tokens[] = $rec['p1']; 
+			$tokens[] = $rec['p2']; 
+			$tokens[] = $rec['p3'];
+			$tokens[] = $rec['p4'];
+			$tokens[] = $rec['p5'];			
 			 
 			//print_r($tokens);
 		 	if ($itmpl = $rec['template'])
@@ -3290,57 +3315,56 @@ SCROLLTOP;
 		return ($v);
 	}			
 	
-	//override multiple prices based on file array
 	public function read_array_policy($itemcode=null,$price=null,$cart_details=null,$policyqty=null) {
-	  $cat = $pcat ? $pcat : GetReq('cat');
-	  $cart_page = GetReq('page')?GetReq('page'):0;	  	
-	  $file = $this->path . $itemcode . '.txt'; //echo $file;
-	  $cartd = explode(';',$cart_details);
+		$cat = $pcat ? $pcat : GetReq('cat');
+		$cart_page = GetReq('page')?GetReq('page'):0;	  	
+		$cartd = explode(';',$cart_details);
+		$file = $this->path . $itemcode . '.txt'; //echo $file;	  
 	  
-	  if (is_readable($file)) {
+		if (is_readable($file)) {
 	
-	    $data_array = parse_ini_file($file,1);
-	    //print_r($data_array);
-		if ($policyqty) {
-			if (is_array($data_array['QTY'])) {
-				foreach ($data_array['QTY'] as $ix=>$ax) {
-					if ($policyqty>=$ax) {
-						$pc = intval($data_array['PRICE'][$ix]);
-						$retprice = $price?$price+($price*$pc/100):$pc;
+			$data_array = @parse_ini_file($file,1, INI_SCANNER_RAW);
+			//print_r($data_array);
+			if ($policyqty) {
+				if (is_array($data_array['QTY'])) {
+					foreach ($data_array['QTY'] as $ix=>$ax) {
+						if ($policyqty>=$ax) {
+							$pc = intval($data_array['PRICE'][$ix]);
+							$retprice = $price?$price+($price*$pc/100):$pc;
+						}
 					}
+					return ($retprice);
 				}
-				return ($retprice);
 			}
-		}
-		else {
-			$style = $data_array['style'];
-			$titlesON = $data_array['titles'];
-			$elements = $titlesON?1:0;	
-			$template = $data_array['template'] ? $data_array['template'] : 'fpitempolicy';
+			else {
+				$style = $data_array['style'];
+				$titlesON = $data_array['titles'];
+				$elements = $titlesON?1:0;	
+				$template = $data_array['template'] ? $data_array['template'] : 'fpitempolicy';
 		  
-			$mylooptemplate = $this->select_template($template);
+				$mylooptemplate = $this->select_template($template);
 			
-			foreach ($data_array['PRICE'] as $ix=>$ax) {
-				$data[] = $data_array['QTY'][$ix];
-				$cartd[8] = $price ? $price+($price*$ax/100) : $ax;
-				$cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
-				$data[] =	number_format($cartd[8],$this->decimals,',','.');		  
-				$cartout = implode(';',$cartd);
-				$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
-				$data[] = $itemcode;
-				$data[] = "addcart/$cartout/$cat/0/";
-				$body .= $this->combine_tokens($mylooptemplate,$data,true);	
-				unset($data);			  
-			}		
-        }
-		//echo $body;
-		return ($body);  
-	  }	
+				foreach ($data_array['PRICE'] as $ix=>$ax) {
+					$data[] = $data_array['QTY'][$ix];
+					$cartd[8] = $price ? $price+($price*$ax/100) : $ax;
+					$cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
+					$data[] =	number_format($cartd[8],$this->decimals,',','.');		  
+					$cartout = implode(';',$cartd);
+					$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+					$data[] = $itemcode;
+					$data[] = "addcart/$cartout/$cat/0/";
+					$body .= $this->combine_tokens($mylooptemplate,$data,true);	
+					unset($data);			  
+				}		
+			}
+			//echo $body;
+			return ($body);  
+		}	
 	}
 
-	//read policy from item record or lookup
+	//read policy from item record or lookup (!!!!! not used)
     protected function read_array_policy2($itemcode=null,$price=null,$cart_details=null,$qtyscale=null,$prcscale=null) {	
-		$cat = $pcat?$pcat:GetReq('cat');
+		$cat = $pcat ? $pcat : GetReq('cat');
 		$cart_page = GetReq('page')?GetReq('page'):0;	  	
 		$cartd = explode(';',$cart_details);
 		$body = null;
@@ -3372,6 +3396,96 @@ SCROLLTOP;
         return ($body); 		
 	}
 	
+	//db based, read_array_policy
+	public function read_qty_policy($itemcode=null,$price=null,$cart_details=null,$policyqty=null) {
+		$cat = $pcat ? $pcat : GetReq('cat');
+		$cart_page = GetReq('page') ? GetReq('page') : 0;	  	
+		$cartd = explode(';',$cart_details);		
+		$db = GetGlobal('db');
+
+		$sSQL = "select data from ppolicyres where ispoints=0 and code=" . $db->qstr($itemcode);
+		$res = $db->Execute($sSQL);
+	
+		if ($res->fields[0]) {	  
+	
+			$data_array = @parse_ini_string(base64_decode($res->fields[0]), 1, INI_SCANNER_RAW);
+			//print_r($data_array);
+			if ($policyqty) {
+				if (is_array($data_array['QTY'])) {
+					foreach ($data_array['QTY'] as $ix=>$ax) {
+						if ($policyqty>=$ax) {
+							$pc = intval($data_array['PRICE'][$ix]);
+							$retprice = $price?$price+($price*$pc/100):$pc;
+						}
+					}
+					return ($retprice);
+				}
+			}
+			else {
+				$style = $data_array['style'];
+				$titlesON = $data_array['titles'];
+				$elements = $titlesON?1:0;	
+				$template = $data_array['template'] ? $data_array['template'] : 'fpitempolicy';
+		  
+				$mylooptemplate = $this->select_template($template);
+			
+				foreach ($data_array['PRICE'] as $ix=>$ax) {
+					$data[] = $data_array['QTY'][$ix];
+					$cartd[8] = $price ? $price+($price*$ax/100) : $ax;
+					$cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
+					$data[] =	number_format($cartd[8],$this->decimals,',','.');		  
+					$cartout = implode(';',$cartd);
+					$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+					$data[] = $itemcode;
+					$data[] = "addcart/$cartout/$cat/0/";
+					$body .= $this->combine_tokens($mylooptemplate,$data,true);	
+				unset($data);			  
+				}		
+			}
+			//echo $body;
+			return ($body);  
+		}	
+	}	
+	
+	public function read_point_policy($id=null) {
+		if (!$id) return 0;		
+		$db = GetGlobal('db');
+
+		$sSQL = "select data from ppolicyres where ispoints=1 and code=" . $db->qstr($id);
+		$res = $db->Execute($sSQL);
+
+		if ($data = base64_decode($res->fields[0])) {
+			return _m('cms.phpcode use ' . $data);
+		}
+			
+		return 0;		
+	}			
+	
+	public function item_has_points($id=null) {
+		if ((!$this->loyalty) || (!$id)) return null;	
+
+		return $this->read_point_policy($id);	
+	}	
+	
+	public function item_has_discount($id=null) {
+		if (!$id) return false;
+		$db = GetGlobal('db');
+
+		$sSQL = "select data from ppolicyres where ispoints=0 and code=" . $db->qstr($id);
+		$res = $db->Execute($sSQL);
+
+		if ($data = base64_decode($res->fields[0])) {	
+			return true;
+		}
+
+		/*$file = $this->path . $id . '.txt';
+		
+		if (is_readable($file)) 
+		    return true;*/
+			
+		return false;	
+	}	
+	
 	//set ordersing online using <phpdac>
 	public function set_order($orderby=null,$asc=null) {
 
@@ -3389,17 +3503,7 @@ SCROLLTOP;
 			if (floatval($qty)>=floatval($s)) return ($i+1);
 
 		return 0;
-	}	
-	
-	public function item_has_discount($id=null) {
-		if (!$id) return false;
-		$file = $this->path . $id . '.txt';
-		
-		if (is_readable($file)) 
-		    return true;
-			
-		return false;	
-	}	
+	}		
 	
 	protected function replace_spchars($string, $reverse=false) {
 		

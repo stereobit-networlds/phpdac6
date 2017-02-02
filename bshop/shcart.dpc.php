@@ -186,7 +186,8 @@ class shcart extends storebuffer {
 	
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
     var $twig_invoice_template_name, $appname, $mtrackimg; 
-    var $agentIsIE, $baseurl, $fastpick, $continue_shopping_goto_cmd;	
+    var $agentIsIE, $baseurl, $fastpick, $continue_shopping_goto_cmd;
+	var $loyalty;	
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
@@ -303,7 +304,9 @@ class shcart extends storebuffer {
 		$this->printout = GetSessionParam('printout') ? GetSessionParam('printout') : null;	  
 		$this->transaction_id = GetSessionParam('TransactionID') ? GetSessionParam('TransactionID') : null;
 		$this->fastpick = GetSessionParam('fastpick') ? true : false;
-		$this->is_reseller = GetSessionParam('RESELLER'); 		
+		$this->is_reseller = GetSessionParam('RESELLER');
+
+		$this->loyalty = _m('cms.paramload use ESHOP+loyalty'); 		
 	  
 		if ($this->maxqty<0) // || ($this->readonly)) { //free style
 			$this->javascript(); //ONLY WHEN DEFAULT VIEW EVENT ??	
@@ -790,6 +793,7 @@ function addtocart(id,cartdetails)
 			
 			    $this->analytics();
 				$this->logcart();
+				$this->savePoints($user ,$this->transaction_id);
 				$this->clear();
 
 				$this->update_statistics('cart-submit', $user);
@@ -940,7 +944,7 @@ function addtocart(id,cartdetails)
 				//new prices when updated from db (live)
 				if (is_array($p_returned) && isset($p_returned[$param[0]])) {
 					
-					$ap_price = _m("shkatalogmedia.read_array_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   			 
+					$ap_price = _m("shkatalogmedia.read_qty_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   			 
 					$param[8] = $ap_price?$ap_price:$p_returned[$param[0]];		 
 				}
 				$p = floatval(str_replace(',','.',$param[8]));
@@ -1947,22 +1951,23 @@ function addtocart(id,cartdetails)
 
         $data[] = number_format(floatval($this->total),$this->dec_num,',','.');
 
-	    if ($this->discount) 
-			$this->mydiscount = ($this->total*$this->discount)/100;
-		else 
-			$this->mydiscount = 0;
+	    $this->mydiscount = ($this->discount) ? 
+							($this->total*$this->discount)/100 : 0; 
 		 
-		if ($this->shippingcost) 
-			$this->myshippingcost = $this->shippingcost;		 
+		$this->myshippingcost = ($this->shippingcost) ?
+								 $this->shippingcost : 0;		 
 	   
 		if (($this->tax) && ($this->status)) {
 			//($this->is_reseller)) {//is or not reseller calculate tax except if status <3
-			$this->mytaxcost = (($this->total-$this->mydiscount)*$this->tax)/100;//+$this->myshippingcost
+			$this->mytaxcost = (($this->total - $this->mydiscount) * 
+								$this->tax)/100; //+$this->myshippingcost
 		}
 		else
 			$this->mytaxcost = 0;
 
-		$this->myfinalcost = ($this->total+$this->mytaxcost+$this->myshippingcost)-$this->mydiscount;
+		$this->myfinalcost =  ($this->total - $this->mydiscount) + 
+							   $this->mytaxcost + 
+							   $this->myshippingcost;
 	   	   
 		$ret = number_format(floatval($this->myfinalcost),$this->dec_num,',','.');						
 
@@ -2053,30 +2058,127 @@ function addtocart(id,cartdetails)
 	public function read_policy() {
 
 		$this->discount = $this->get_user_price_policy($this->userid);
+		//echo $this->discount;
+		
 		return ($this->discount);
 	}
 
+	/*...*/
 	protected function get_user_price_policy($leeid=null) {
 		$db = GetGlobal('db');
-		$reseller = GetSessionParam('RESELLER');
-
-		if ($this->leeid!=null)
+		//$reseller = GetSessionParam('RESELLER');
+		//if (!$this->loyalty) return 0;
+		
+		/*if ($this->leeid!=null)
 			$id = $leeid;
-		else
+		else*/
 			$id = decode(GetSessionParam('UserID'));
 
-		if ($id) {
-			$sSQL = "select EKPTOSH from PPOLICY where CODE2=" . $id ;
+		if ($id) { //multiple rows ?
+			$sSQL = "select sum(discount) as disc from ppolicy where active=1 and code1=" .  $db->qstr($id) ;
+			$sSQL.= " group by code1";
 			$result = $db->Execute($sSQL);
-
+			//echo $sSQL;
+			return ($result->fields[0] ? $result->fields[0] : 0);
+			/*
 			if ($percent = $result->fields[0]) 
 				return ($percent);
 			else 
 				return ($reseller=='true') ? $this->discount : 0;
+			*/
 	   }
 
 	   return false;
 	}	
+	
+	protected function savePoints($user, $trid) {
+		$db = GetGlobal('db');		
+		if (!$this->loyalty) return null;
+		$sumofpoints = 0;
+		
+		if ($this->notempty()) {
+			foreach ($this->buffer as $prod_id => $product) {
+				if (($product) && ($product!='x')) {
+					
+					$toks = array();//reset line
+			 
+					$aa+=1;
+					$param = explode(";",$product);
+					$cat = $param[4];
+					$itemdescr = $this->replace_cartchars($param[1], true);
+					$id = $param[0];
+
+					$points = _m("shkatalogmedia.read_point_policy use ". $id); 
+		            if (!$points) continue;					
+					
+					$sSQL = "insert into custpoints (active,ccode,item,source,notes,points) values (1,'$user','$id','$trid','$itemdescr',$points)";					
+					$res = $db->Execute($sSQL);
+					
+					$sum = ($points * $param[9]);
+					$sumofpoints += $sum;
+				}  
+			}
+
+			//sum of points !!!??? 
+			if ($sumofpoints>0) {
+				$sSQL = "insert into ppolicy (active,code1,code2,name,descr,points) values (1,'$user','$user','$trid','$trid',$sumofpoints)";
+				$res = $db->Execute($sSQL);	
+			}	
+		}				 
+
+		return ($sumofpoints);		
+	}	
+	
+	public function pointsview($ret_tokens=false, $template1=null, $template2=null) {
+		if (!$this->loyalty) return null;
+		
+		if ($this->notempty()) {
+			
+			$template = $template1 ? $template1 : 'fpcartpoints';	
+			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
+		
+			$template2 = $template2 ? $template2 : 'fpcartpoints-alt';
+			$mytemplate2 = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template2));
+	  
+			$ret = '';
+			foreach ($this->buffer as $prod_id => $product) {
+
+				if (($product) && ($product!='x')) {
+					
+					$toks = array();//reset line
+			 
+					$aa+=1;
+					$param = explode(";",$product);
+					$cat = $param[4];
+					$itemdescr = $this->replace_cartchars($param[1], true);
+					$id = $param[0];
+
+					$points = _m("shkatalogmedia.read_point_policy use ". $id); 
+		            if (!$points) continue;					
+					
+					$toks[] = $prod_id+1;
+					$toks[] = $id;
+					$toks[] = _m("cmsrt.url use t=kshow&cat=$cat&id=$id+" . $itemdescr); 
+					$toks[] = $points;
+					$toks[] = $param[9];
+					
+					$sum = ($points * $param[9]);
+					$toks[] = $sum;
+					
+					$toks[] = _m("shkatalogmedia.get_photo_url use ".$id.'+1');
+			   
+					if ($ret_tokens) 
+						return $toks;	 
+					else	
+						$ret .= $this->combine_tokens($mytemplate,$toks,true);
+				}  
+			}			
+		}				 
+
+		$out = $this->combine_tokens($mytemplate2, array(0=>$ret, 1=>$this->myquickcartfoot()));
+
+		return ($out);		
+	}		
 	
 	public function quickview($ret_tokens=false, $template1=null, $template2=null) {		
 		 
@@ -2150,7 +2252,7 @@ function addtocart(id,cartdetails)
 				//new prices when updated from db (live)
 				if (is_array($p_returned) && isset($p_returned[$param[0]])) {
 
-					$ap_price = _m("shkatalogmedia.read_array_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   			 			 		   
+					$ap_price = _m("shkatalogmedia.read_qty_policy use ". $param[0].'+'.$p_returned[$param[0]]."++".$selectedqty);			 		   			 			 		   
 					$param[8] = $ap_price ? $ap_price : $p_returned[$param[0]];
 				}		   
 		   
@@ -2183,7 +2285,8 @@ function addtocart(id,cartdetails)
 			if ((($this->tax) && ($this->is_reseller)) ||
 				(($this->tax) && (!$this->showtaxretail))) {
 			 
-				$this->mytaxcost = (($this->total-$this->mydiscount)*$this->tax)/100;//($this->total*$this->tax)/100;//+$this->shippingcost
+			    //calc here
+				$this->mytaxcost = (($this->total - $this->mydiscount) * $this->tax)/100;
 		   
 				$_tdisc = null;
 				$tokens[] = $_tdisc;//dummy token discount
@@ -2201,7 +2304,7 @@ function addtocart(id,cartdetails)
 	    else {
 		 
 			if ($this->discount) {
-				$_tdisc = number_format(floatval($this->discountt),$this->dec_num,',','.'). $this->moneysymbol;		   
+				$_tdisc = number_format(floatval($this->discount),$this->dec_num,',','.') . '%';//$this->moneysymbol;		   
 				$tokens[] = $_tdisc;
 			} 
 			else 
@@ -2210,7 +2313,8 @@ function addtocart(id,cartdetails)
 			if ((($this->tax) && ($this->is_reseller)) ||
 				(($this->tax) && (!$this->showtaxretail))) {
 			
-				$this->mytaxcost = (($this->total-$this->mydiscount)*$this->tax)/100;//($this->total*$this->tax)/100;//+$this->shippingcost
+			    //calc here
+				$this->mytaxcost = (($this->total-$this->mydiscount) * $this->tax)/100;
 			
 				$_txxcost = number_format(floatval($this->mytaxcost),$this->dec_num,',','.'). $this->moneysymbol;		   
 				$tokens[] = $_txxcost;		   
@@ -2228,7 +2332,9 @@ function addtocart(id,cartdetails)
 			//final cost
 			if (($this->discount) || ($this->shippingcost) || ($this->tax)) {
 		 
-				$finalcost = ($this->total+$this->mytaxcost+$this->shippingcost)-$this->mydiscount;
+				$finalcost = ($this->total-$this->mydiscount) +
+				              $this->mytaxcost + 
+							  $this->shippingcost;
 		 
 				$_ffcost = number_format(floatval($finalcost),$this->dec_num,',','.'). $this->moneysymbol;		   
 				$tokens[] = $_ffcost;
@@ -2271,7 +2377,7 @@ function addtocart(id,cartdetails)
 
 		//rest sums 
 		if ($this->discount) {
-            $_tdisc = number_format(floatval($this->discountt),$this->dec_num,',','.'). $this->moneysymbol;		   
+            $_tdisc = number_format(floatval($this->discount),$this->dec_num,',','.'). $this->moneysymbol;		   
 		    $tokens[] = $_tdisc;
 		} 
 		else
