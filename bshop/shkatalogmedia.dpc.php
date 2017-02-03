@@ -1285,21 +1285,21 @@ SCROLLTOP;
 	}		
 	
 	public function list_katalog($imageclick=null,$cmd=null,$template=null,$no_additional_info=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$nolinemax=null,$originfunction=null) {
-	    $cmd = $cmd?$cmd:'klist';
-	    $pz = $photosize?$photosize:1;		   
-	    $xdist = $this->imagex ? $this->imagex : 100;
-	    $ydist = $this->imagey ? $this->imagey : null;//free y 75;	
+	    $cmd = $cmd ? $cmd : 'klist';
+	    $pz = $photosize ? $photosize : 1;		   
+	    //$xdist = $this->imagex ? $this->imagex : 100;
+	    //$ydist = $this->imagey ? $this->imagey : null;//free y 75;	
         $cat = GetReq('cat');   
-	    $custom_template=false;
-	    $page = GetReq('page') ? GetReq('page') : 0;
+	    $custom_template = false;
+	    //$page = GetReq('page') ? GetReq('page') : 0;
 	    $ogImage = array();
 
 	    $mylinemax = ($nolinemax) ? null : $this->linemax;   
-	    $myimageclick = ($this->imageclick>0) ? 1 : $imageclick;
+	    //$myimageclick = ($this->imageclick>0) ? 1 : $imageclick;
   
         if (($template) && (!stristr($template,'searchres'))) { /*custom template list*/
 			//echo $template;
-			$custom_template=true;
+			$custom_template = true;
 			$tmpl = explode('.',$template);
 			$mytemplate = $this->select_template($tmpl[0],$cat);		
 	    }
@@ -1337,127 +1337,41 @@ SCROLLTOP;
 	   	
 	    if (!empty($this->result)) {		   
 
-		 $pp = $this->read_policy(); 
-         $item_code = $this->fcode;			
-	
-	     foreach ($this->result as $n=>$rec) {
+			$pp = $this->read_policy(); 
+
+			foreach ($this->result as $n=>$rec) {
 		
-			$mem = memory_get_peak_usage(true);//memory_get_usage();
-	   
-			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
-		    $price = ($rec[$pp]>0) ? $this->spt($rec[$pp]) : $this->zeroprice_msg;	
-		 
-			if (defined("SHCART_DPC")) {
-				$cart_code  = $rec[$this->fcode];
-				$cart_title = $this->replace_cartchars($rec[$this->itmname]);
-				$cart_group = $cat;
-				$cart_page  = $page;
-				$cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
-				$cart_photo = $rec[$this->fcode];//$this->get_photo_url($rec[$this->fcode],$pz);
-				$cart_price = $price;
-				$cart_qty   = 1;//???				 
-				$cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
-				$array_cart = $this->read_qty_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
-				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]);
-			}	
-			else
-                $cart = null;  			 
-		   
-		    $availability = $this->show_availability($rec['ypoloipo1']);	
-		    $details = null;
-            $detailink = null;
-		    $itemlink = $this->httpurl .'/' . _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]); 
-		    $itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 		   
-		   		   
-		  											 
-		    $tokens[] = $itemlinkname;
-			$tokens[] = $rec[$this->itmdescr];
-			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$cat,$pz,null,$rec[$this->itmname]);
-			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()) .'/'. localize($rec['uniname2'],getlocal()):
-										localize($rec['uniname1'],getlocal());  
-			$tokens[] = $units;		  
+				$mem = memory_get_peak_usage(true);//memory_get_usage();
+				$tokens = $this->tokenizeRecord($rec, $pp, true, false, $pz);
 			  
-			$tokens[] = $rec['itmremark'];
-			$tokens[] = number_format(floatval($price),$this->decimals,',','.');
-			$tokens[] = $cart;
-			$tokens[] = $availability;
-			$tokens[] = $details;
-			$tokens[] = $detailink;
-			$tokens[] = $rec[$item_code]; //10
-			$tokens[] = $itemlink;	
-			  
-			$tokens[] = $in_cart?$in_cart:'0';
-			$tokens[] = $array_cart;
-
-            $tokens[] = $this->get_photo_url($rec[$item_code],$pz);	
-            $tokens[] = $rec[$this->getmapf('lastprice')];	
-            $tokens[] = $rec[$this->itmname]; 
-            $tokens[] = $cat;   
-
-            $tokens[] = $this->item_has_discount($rec[$item_code]);
-            $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				  
-		      
-			/*date time */
-			$tokens[] = $rec['year'];  //20
-			$tokens[] = $rec['month'];
-			$tokens[] = $rec['day'];
-			$tokens[] = $rec['time'];
-			$tokens[] = $rec['monthname']; 
-			  
-			$tokens[] = $rec['template'];
-			$tokens[] = $rec['owner'];			  
-			$tokens[] = $rec['itmactive'];
+				if (!$custom_template) {
+					$items_grid[] = $this->combine_tokens($mytemplate, $tokens, true);
+					$items_list[] = $this->combine_tokens($mytemplate_alt, $tokens, true);		  
+				}
+				else
+					$items_custom[] = $this->combine_tokens($mytemplate, $tokens, true);
 			
-			$tokens[] = $this->item_has_points($rec[$item_code]);
-			
-			$tokens[] = $rec['p1']; 
-			$tokens[] = $rec['p2']; //30
-			$tokens[] = $rec['p3'];
-			$tokens[] = $rec['p4'];
-			$tokens[] = $rec['p5'];
-			
-			$tokens[] = $rec['weight'];
-			$tokens[] = $rec['volume'];
-			$tokens[] = $rec['dimensions'];
-			$tokens[] = $rec['size'];
-			$tokens[] = $rec['color'];				
-			$tokens[] = $rec['manufacturer'];
-
-			$tokens[] = $rec['code1']; //40
-			$tokens[] = $rec['code2'];				
-			$tokens[] = $rec['code3'];			
-			$tokens[] = $rec['code4'];	
-			$tokens[] = $rec['resources']; 
-			$tokens[] = $rec['ypoloipo1'];			
-			  
-			if (!$custom_template) {
-                $items_grid[] = $this->combine_tokens($mytemplate, $tokens, true);
-                $items_list[] = $this->combine_tokens($mytemplate_alt, $tokens, true);		  
-			}
-			else
-			    $items_custom[] = $this->combine_tokens($mytemplate, $tokens, true);
-			
-			$ogimage[] = $this->get_photo_url($rec[$item_code],2);
-			unset($tokens);			  	 				   	   	   	
-		 }//foreach 
+				$ogimage[] = $this->get_photo_url($rec[$this->fcode],2);
+				unset($tokens);			  	 				   	   	   	
+			}//foreach 
 		  
-		 if (!$custom_template) { 
-            if (($mytemplate) && ($mytemplate_alt)) 	
-				$toprint .= $this->make_table_list($items_grid, $items_list, 'fpkatalogtable', 'fpkataloglist', $cat);			
-	        else
-				$toprint .= $this->make_table($items, $mylinemax, 'fpkatalogtable', $cat);	  
+			if (!$custom_template) { 
+				if (($mytemplate) && ($mytemplate_alt)) 	
+					$toprint .= $this->make_table_list($items_grid, $items_list, 'fpkatalogtable', 'fpkataloglist', $cat);			
+				else
+					$toprint .= $this->make_table($items, $mylinemax, 'fpkatalogtable', $cat);	  
 			  
-	        $toprint .= $this->show_paging($cmd,$mytemplate,$nopager);
+				$toprint .= $this->show_paging($cmd,$mytemplate,$nopager);
 
-			$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
-		                                           1=>_m('shkategories.getcurrentkategory'),
-												   2=>str_replace($this->sep(),' ',$this->replace_spchars($cat,1)),														
-												   3=>$this->httpurl .'/klist/'. $cat . '/',
-												   4=>$ogimage, /*$ogimage array of images (with no httpurl)!!*/
-												  ));			
-		 }	
-         else //custom template
-		    $toprint .= (!empty($items_custom)) ? implode('',$items_custom) : null;
+				$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
+														1=>_m('shkategories.getcurrentkategory'),
+														2=>str_replace($this->sep(),' ',$this->replace_spchars($cat,1)),														
+														3=>$this->httpurl .'/klist/'. $cat . '/',
+														4=>$ogimage, /*$ogimage array of images (with no httpurl)!!*/
+													));			
+			}	
+			else //custom template
+				$toprint .= (!empty($items_custom)) ? implode('',$items_custom) : null;
              		  
 	    }//empty result
 
@@ -1468,12 +1382,12 @@ SCROLLTOP;
 	
     protected function list_katalog_table($linemax=2,$imgx=null,$imgy=null,$imageclick=0,$showasc=0,$cmd=null,$template=null,$no_additional_info=null,$lang=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$originfunction=null,$notable=null) {
 		$cmd = $cmd ? $cmd : 'klist';
-		$page = GetReq('page') ? GetReq('page') : 0;	   
+		//$page = GetReq('page') ? GetReq('page') : 0;	   
 		$pz = $photosize ? $photosize : 1;
-		$xdist = ($imgx?$imgx:160);
-		$ydist = ($imgy?$imgy:120);
+		//$xdist = ($imgx?$imgx:160);
+		//$ydist = ($imgy?$imgy:120);
 		$cat = GetReq('cat');
-		$myimageclick = ($this->imageclick>0) ? 1 : $imageclick;	   
+		//$myimageclick = ($this->imageclick>0) ? 1 : $imageclick;	   
 	   
 		$mytemplate = $this->select_template($template,$cat);
 	   
@@ -1497,116 +1411,27 @@ SCROLLTOP;
 
 		if (!empty($this->result)) {
 	   
-          $pp = $this->read_policy();
-		  $item_code = $this->fcode;		  
+			$pp = $this->read_policy();
 	
-	      foreach ($this->result as $n=>$rec) {
+			foreach ($this->result as $n=>$rec) {
 		
-			$mem = memory_get_peak_usage(true);//memory_get_usage();
-
-			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
-		    $price = ($rec[$pp]>0) ? $this->spt($rec[$pp]) : $this->zeroprice_msg;
-		   		   
-			if (defined("SHCART_DPC")) {
-				$cart_qty   = 1;
-				$cart_code  = $rec[$item_code];
-				$cart_title = $this->replace_cartchars($rec[$this->itmname]);
-				$cart_group = $cat;
-				$cart_page  = $page;
-				$cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
-				$cart_photo = $rec[$item_code];//$this->get_photo_url($rec[$this->fcode],$pz);
-				$cart_price = $price;				 
-				$icon_cart  = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
-				$array_cart = $this->read_qty_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
-				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]);
-			}	
-			else	
-			    $icon_cart = null;
+				$mem = memory_get_peak_usage(true);//memory_get_usage();
+				$tokens = $this->tokenizeRecord($rec, $pp, true, false, $pz);				
+				$items[] = $this->combine_tokens($mytemplate, $tokens, true);	
+				unset($tokens);													 
 		   
-			$availability = $this->show_availability($rec['ypoloipo1']);		
-			$details = null;
-			$detailink = null;		   
-			$itemlink = $this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]); 
-			$itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 			   
-		   
-		   
-            //// tokens method												 
-		    $tokens[] = $itemlinkname;
-			$tokens[] = $rec[$this->itmdescr];
-			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$cat,$pz,null,$rec[$this->itmname]);
-			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()).'/'.localize($rec['uniname2'],getlocal()) :
-										localize($rec['uniname1'],getlocal());  
-			$tokens[] = $units;// . $incart;			 
-			 
-			$tokens[] = $rec['itmremark']; 
-			$tokens[] = number_format(floatval($price),$this->decimals,',','.');
-			$tokens[] = $icon_cart;
-			$tokens[] = $availability;
-			$tokens[] = $details;
-			$tokens[] = $detailink;
-			$tokens[] = $rec[$item_code];
-			$tokens[] = $itemlink;			
-			 
-			$tokens[] = $in_cart ? $in_cart : '0';
-			$tokens[] = $array_cart;
-			 
-			$tokens[] = $this->get_photo_url($rec[$item_code],$pz);
-			$tokens[] = $rec[$this->getmapf('lastprice')];
-			$tokens[] = $rec[$this->itmname]; 
-            $tokens[] = $cat; 	
-
-            $tokens[] = $this->item_has_discount($rec[$item_code]);
-            $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				 
-			 			
-			/*date time */
-			$tokens[] = $rec['year']; //20
-			$tokens[] = $rec['month'];
-			$tokens[] = $rec['day'];
-			$tokens[] = $rec['time'];
-			$tokens[] = $rec['monthname'];
-			 
-			$tokens[] = $rec['template'];
-		    $tokens[] = $rec['owner'];	
-            $tokens[] = $rec['itmactive'];	
-
-			$tokens[] = $this->item_has_points($rec[$item_code]);
-
-			$tokens[] = $rec['p1']; 
-			$tokens[] = $rec['p2']; //30
-			$tokens[] = $rec['p3'];
-			$tokens[] = $rec['p4'];
-			$tokens[] = $rec['p5'];	
-
-			$tokens[] = $rec['weight'];
-			$tokens[] = $rec['volume'];
-			$tokens[] = $rec['dimensions'];
-			$tokens[] = $rec['size'];
-			$tokens[] = $rec['color'];				
-			$tokens[] = $rec['manufacturer'];	
-			
-			$tokens[] = $rec['code1']; //40
-			$tokens[] = $rec['code2'];				
-			$tokens[] = $rec['code3'];			
-			$tokens[] = $rec['code4'];	
-			$tokens[] = $rec['resources']; 
-			$tokens[] = $rec['ypoloipo1'];			
-						
-			$items[] = $this->combine_tokens($mytemplate, $tokens, true);	
-			unset($tokens);													 
-		   
-		  }//foreach	
+			}//foreach	
 	   
-		  if ($notable) {/*single product view called by phpdac funcs*/
-				$nt = (!empty($items)) ? implode('',$items) : null;
+			if ($notable) {/*single product view called by phpdac funcs*/
+				$nt = (!empty($items)) ? implode('', $items) : null;
 				return ($nt);
-		  }	
-		  //else	
-	      //make table			
-		  $ret .= $this->make_table($items, $linemax, 'fpkatalogtable', $cat);  	  
+			}	
+			//else	
+			//make table			
+			$ret .= $this->make_table($items, $linemax, 'fpkatalogtable', $cat);  	  
 	      				
-		  if ($this->pager) 
-			$ret .= $this->show_paging($cmd,$mytemplate,$nopager);					
-		
+			if ($this->pager) 
+				$ret .= $this->show_paging($cmd,$mytemplate,$nopager);					
 	    }	   
    
 		return ($ret);	
@@ -3157,9 +2982,9 @@ SCROLLTOP;
 	    	
 		foreach ($this->result as $n=>$rec) {	
 			
-			$tokens = $this->tokenizeRecord($rec, $pp, 0, false, false, 2, $imgxmlPath);
-			
+			$tokens = $this->tokenizeRecord($rec, $pp, null, false, 2, $imgxmlPath);
 			//if ($n==0) print_r($tokens);
+			
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					
 		}
 		
@@ -3171,7 +2996,7 @@ SCROLLTOP;
 		return ($ret);		
 	}
 
-	protected function tokenizeRecord($rec, $priceID=null, $cartQty=null, $qtyPolicy=false, $urlf=false, $imgsize=1, $otherimgpath=null) {
+	protected function tokenizeRecord($rec, $priceID=null, $cart=null, $urlf=false, $imgsize=1, $otherimgpath=null) {
 			if (!$rec) return null;
 			$tokens = array(); 
 			$pp = $priceID ? $priceID : 'price1';
@@ -3188,14 +3013,34 @@ SCROLLTOP;
 			//tokens
 		    $tokens[] = $itemlinkname;
 			$tokens[] = $rec[$this->itmdescr];
-			$tokens[] = $this->list_photo($rec[$this->fcode],$xdist,$ydist,$myimageclick,$cat,$imgsize,null,$rec[$this->itmname]);
-			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()) .'/'. localize($rec['uniname2'],getlocal()):
-										localize($rec['uniname1'],getlocal());  
+			$tokens[] = $this->list_photo($rec[$this->fcode],null,null,1,$cat,$imgsize,null,$rec[$this->itmname]);
+			$units = $rec['uniname2'] ? localize($rec['uniname1'], getlocal()) .' / '. localize($rec['uniname2'], getlocal()):
+										localize($rec['uniname1'], getlocal());  
 			$tokens[] = $units;		  
 			  
 			$tokens[] = $rec['itmremark'];
 			$tokens[] = number_format(floatval($price),$this->decimals,',','.');
-			$tokens[] = $cart;
+			
+			if (($cart==true) && (defined("SHCART_DPC"))) {
+				$cart_code  = $rec[$this->fcode];
+				$cart_title = $this->replace_cartchars($rec[$this->itmname]);
+				$cart_group = $cat;
+				$cart_page  = GetReq('page') ? GetReq('page') : 0;
+				$cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
+				$cart_photo = $rec[$this->fcode];
+				$cart_price = $price; 
+				$cart_qty   = 1;	
+				
+				//$tokens[] = = _m("shcart.showsymbol use $cart_code;$cart_title;;;$cat;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);
+				$tokens[] = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
+				
+				//$array_cart = $this->read_qty_policy($rec[$this->fcode],$price,"$cart_code;$cart_title;;;$cat;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
+				//$in_cart = _m("shcart.getCartItemQty use ".$rec[$this->fcode]);
+			}	
+			else
+                $tokens[] = null;			
+			//$tokens[] = $cart;
+			
 			$tokens[] = $availability;
 			$tokens[] = $details;
 			$tokens[] = $detailink;
@@ -3203,8 +3048,10 @@ SCROLLTOP;
 			
 			$tokens[] = ($urlf) ? $this->httpurl ."/$cat/$id2" . $urlf : $itemlink;	
 			  
-			$tokens[] = $cartQty ? $cartQty : '0';
-			$tokens[] = ($qtyPolicy) ? $this->read_qty_policy($rec[$this->fcode],$price,null,1) : null;
+			$tokens[] = (($cart==true) && (defined("SHCART_DPC"))) ?
+							_m("shcart.getCartItemQty use ".$rec[$this->fcode]) : '0';
+			$tokens[] = (($cart==true) && (defined("SHCART_DPC"))) ? 
+							$this->read_qty_policy($rec[$this->fcode],$price,"$cart_code;$cart_title;;;$cat;$cart_page;;$cart_photo;$cart_price;$cart_qty",1) : null;
 
             $tokens[] = ($otherimgpath) ?
 			            $this->httpurl . '/' . $otherimgpath . $rec[$this->fcode] . $this->restype :
@@ -3478,7 +3325,7 @@ SCROLLTOP;
 	
 	public function read_array_policy($itemcode=null,$price=null,$cart_details=null,$policyqty=null) {
 		$cat = $pcat ? $pcat : GetReq('cat');
-		$cart_page = GetReq('page')?GetReq('page'):0;	  	
+		$cart_page = GetReq('page') ? GetReq('page') : 0;	  	
 		$cartd = explode(';',$cart_details);
 		$file = $this->path . $itemcode . '.txt'; //echo $file;	  
 	  
@@ -3526,7 +3373,7 @@ SCROLLTOP;
 	//read policy from item record or lookup (!!!!! not used)
     protected function read_array_policy2($itemcode=null,$price=null,$cart_details=null,$qtyscale=null,$prcscale=null) {	
 		$cat = $pcat ? $pcat : GetReq('cat');
-		$cart_page = GetReq('page')?GetReq('page'):0;	  	
+		$cart_page = GetReq('page') ? GetReq('page') : 0;	  	
 		$cartd = explode(';',$cart_details);
 		$body = null;
 
