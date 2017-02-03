@@ -18,7 +18,7 @@ $__LOCALE['CMSMENU_DPC'][0]='CMSMENU_DPC;Menu;Menu';
 	   
 class cmsmenu {
 
-	var $path, $urlpath, $inpath, $menufile;
+	var $path, $urlpath, $inpath, $menufile, $sliderfile;
 	var $delimiter;
    
 	var $tmpl_path, $tmpl_name;
@@ -37,6 +37,7 @@ class cmsmenu {
 		$this->inpath = paramload('ID','hostinpath');	
 	  
 		$this->menufile = $this->path . 'menu.ini';
+		$this->sliderfile = $this->path . 'slideshow.ini';
 		$this->delimiter = ',';
 		
 	    //SHMENU !!!
@@ -62,7 +63,48 @@ class cmsmenu {
 	   }
 	   
 	   return ($out);
-	}   
+	} 
+
+	//text conf sliders (slideshow.ini and sld files)
+	public function callSlider($name=null,$slider_template=null,$glue_tag=null,$subslider_template=null) {
+	    $lan = getlocal() ? getlocal() : '0';	
+		$gstart = $glue_tag ? '<'.$glue_tag.'>' : null;
+		$gend = $glue_tag ? '</'.$glue_tag.'>' : null;	
+		
+		$ret = null;
+		$tmpl = _m('cmsrt.select_template use ' . $slider_template);		
+
+		if ($name) {//sld file
+			$slidername = ($name=='slider') ? $name : 'slider-' . $name;
+			$slfile = $this->path . str_replace('.sld','',$slidername) . $lan . '.sld';
+			$conf = @parse_ini_file($slfile, 1, INI_SCANNER_RAW);
+		}	
+		else //slideshow.ini	
+			$conf = @parse_ini_file($this->sliderfile, 1, INI_SCANNER_RAW);
+
+		//print_r($conf);	
+		foreach ($conf as $section=>$params) {
+			
+			$tokens = array();
+			foreach ($params as $p=>$v) {
+				$nl = $name ? $v : explode(',', $v);
+				$tokens[] = $name ? $nl : (strstr($p, 'link') ? $this->make_link($nl[$lan]) : $nl[$lan]);
+			}			
+			//print_r($tokens);
+			$slide[] = $this->combine_tokens($tmpl, $tokens, true);
+		}
+		
+		$slides = $gstart . implode(''. $gend . $gstart , $slide) . $gend;
+
+		if ($subslider_template) {
+			$subtmpl = _m('cmsrt.select_template use ' . $subslider_template);
+			$ret = $this->combine_tokens($subtmpl, array(0=>$slides), true);
+		}
+		else
+			$ret = $slides;		
+
+		return ($ret);	
+	}	
    			
 	//db based
 	public function callMenu($name=null,$menu_template=null,$glue_tag=null,$submenu_template=null,$wrap_submenu=null) {

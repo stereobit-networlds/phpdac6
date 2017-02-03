@@ -85,7 +85,7 @@ class rccron  {
 	  switch ($action) {
 			
 		 case 'cpjobcodesave' : 										  
-		 case 'cpjobsshow'    : $out = $this->cronjobs_grid(null,140,14,'r', true);
+		 case 'cpjobsshow'    : $out = $this->cronjobs_grid(null,140,5,'r', true);
 								//$out .= "<div id='jobcode'></div>"; //2nd div inside this save	 
 								$out .= $this->codeform();
 							    break; 
@@ -94,7 +94,7 @@ class rccron  {
 	     case 'cpcron'      :
 
 		 default            : $out .= "<div id='cronjobs'></div>";
-		                      $out .= $this->crontab_grid(null,140,14,'d', true);	
+		                      $out .= $this->crontab_grid(null,140,5,'d', true);	
 							  
 	  }	 
 

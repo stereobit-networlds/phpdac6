@@ -65,6 +65,19 @@ class cms extends fronthtmlpage {
 		return ($this->seclevid>=$level ? true : false);
 	}
 
+    public function paramload($section,$param) {
+		$config = GetGlobal('config');
+		//echo $param;
+		if ($ret = $config[$section][$param]) 
+			return ($ret); 
+    }
+
+    public function arrayload($section,$array) {
+		$config = GetGlobal('config');
+  
+		if ($data = $config[$section][$array]) 
+			return(explode(",",$data));
+    }	
 	
 	//page cntrl logic url creator
 	protected function getpurl($query=null, $title=null) {
@@ -229,10 +242,77 @@ class cms extends fronthtmlpage {
 	
 	public function callVar($name=null, $section=null) {
 		if (!$name) return null;
-		$sec = $section ? $section : 'VAR';
-		$varvalue = paramload($sec, $name);
+		$sec = $section ? $section : 'VAR';		
+		
+		//time based vars TTL //STR_TO_DATE('$dstart','%m-%d-%Y')
+		$db = GetGlobal('db');
+		$sSQL = "select value,start,stop,inodd,ineven,inday,inmonth,inyear,isvar,islocale,";
+		$sSQL.= " DAY(NOW()) as day, MONTH(NOW()) as month, YEAR(NOW()) as year, NOW() as now from cmsvartimes";
+		$sSQL.= " WHERE active=1 and name=" . $db->qstr($name);
+		$sSQL.= " and NOW() BETWEEN start AND stop";
+		$sSQL.= " order by datein DESC LIMIT 1"; //newest record
+		$res = $db->Execute($sSQL);
+		//echo $res->fields['day'];
+		
+		if ($value = $res->fields[0]) {
+			$oddday = ($res->fields['day'] % 2 == 0) ? false : true;
+			$oddmonth = ($res->fields['month'] % 2 == 0) ? false : true;	
+			$oddyear = ($res->fields['year'] % 2 == 0) ? false : true;
+			//echo $oddday,$sSQL;
+			
+			$varvalue = $res->fields['isvar'] ? $this->paramload($sec, $value) : $value;
+			
+			if (($res->fields['inday']) && ($res->fields['inodd']) && ($oddday==true)) {
+				//echo 'odd day',$varvalue;
+				return _m($varvalue);
+			}
+			elseif (($res->fields['inday']) && ($res->fields['ineven']) && ($oddday==false)) {
+				//echo 'even day';
+				return _m($varvalue);
+			}
+			elseif (($res->fields['inmonth']) && ($res->fields['inodd']) && ($oddmonth==true)) {
+				//echo 'odd month';
+				return _m($varvalue);
+			}
+			elseif (($res->fields['inmonth']) && ($res->fields['ineven']) && ($oddmonth==false)) {
+				//echo 'even month';
+				return _m($varvalue);
+			}
+			elseif (($res->fields['inyear']) && ($res->fields['inodd']) && ($oddyear==true)) {
+				//echo 'odd year';
+				return _m($varvalue);
+			}
+			elseif (($res->fields['inyear']) && ($res->fields['ineven']) && ($oddyear==false)) {
+				//echo 'even year';
+				return _m($varvalue);
+			}
+			else { //if odd and even is off
+				//echo 'a';
+				if ((!$res->fields['inodd']) && (!$res->fields['ineven']))
+					return _m($varvalue); //always
+			}	
+			
+			/*
+			if ($res->fields['isvar']) {
+				$varvalue = $this->paramload($sec, $value);
+				return _m($varvalue);
+			}	
+			elseif ($res->fields['islocale']) {
+				$varvalue = localize($value, getlocal());
+				return ($varvalue);
+			}	
+			else
+				$varvalue = $value; */
+		}	
+		//else 
+		//standart vars, conf or locale values
+		$varvalue = $this->paramload($sec, $name);
+		
 		//echo $varvalue;
-		return _m($varvalue);
+		if ($varvalue) 
+			return (strstr($varvalue, '.')) ? _m($varvalue) : localize($varvalue, getlocal());
+
+		return null;	
 	}
 };
 }

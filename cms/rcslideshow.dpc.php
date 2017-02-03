@@ -9,7 +9,7 @@ $__DPC['RCSLIDESHOW_DPC'] = 'rcslideshow';
 $a = GetGlobal('controller')->require_dpc('gui/form.dpc.php');
 require_once($a);
 
-$d = GetGlobal('controller')->require_dpc('cms/shslideshow.dpc.php');
+$d = GetGlobal('controller')->require_dpc('cms/cmsmenu.dpc.php');
 require_once($d);
 
 $__EVENTS['RCSLIDESHOW_DPC'][0]='cpsconfig';
@@ -60,12 +60,11 @@ $__LOCALE['RCSLIDESHOW_DPC'][22]='_elmname;Element name;Όνομα στοιχε�
 $__LOCALE['RCSLIDESHOW_DPC'][23]='_elmurl;Element url;Σύνδεσμος στοιχείου;';
 
 
-class rcslideshow extends shslideshow {
+class rcslideshow extends cmsmenu {
 
     var $crlf, $path, $title, $urlpath, $url;
 	var $t_config, $t_config0, $t_config1, $t_config2;
-	var $edit_per_lan, $cptemplate, $tabheaders;
-	var $selectedSlider, $post, $element, $slidervars;	
+	var $edit_per_lan, $selectedSlider, $post, $element, $slidervars;	
 
     public function __construct() {
 	
@@ -73,22 +72,20 @@ class rcslideshow extends shslideshow {
 	
 	    $this->title = localize('RCSLIDESHOW_DPC',getlocal());		
 	
-	    $os =  php_uname();//'>';
-        $info = strtolower($os);// $_SERVER['HTTP_USER_AGENT'] );   
-        $this->crlf = ( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
+	    $os =  php_uname();
+        $info = strtolower($os);   
+        $this->crlf = PHP_EOL; //( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
 		  
 		$this->path = paramload('SHELL','prpath');			
-		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->path);		
-	
 	    $this->edit_per_lan = true; //false;
 		$this->t_config = array();		  
-		$this->selectedSlider = GetParam('slider');
 		$this->post = null;	
 		$this->element = null;	
+		$this->selectedSlider = GetParam('slider');		
 
-		//load the var elements used in slideshow.ini
-		//$this->slidervars = remote_arrayload('SHSLIDESHOW', 'slidervars', $this->path);	
-		$this->slidervars = array('title', 'subtitle', 'button', 'url', 'image');
+		//load the var elements used in slideshow.ini 
+		//$this->slidervars = array('title', 'subtitle', 'button', 'url', 'image');		
+		$this->slidervars = arrayload('CMSMENU', 'slidervars');	
 	}
 	
     public function event($event=null) {	
@@ -161,17 +158,17 @@ class rcslideshow extends shslideshow {
 			case "cpssavenest"      :	break;		   
 
 			case "cpsconfedit"      :     
-										$out .= $this->show_configuration("Save","cpsconfig&save=1", false, GetReq('cpart'));
+										$out .= $this->show_configuration(localize('_save', getlocal()),"cpsconfig&save=1", false, GetReq('cpart'));
 										break;
 			case "cpsconfdel"       :     
 		                          
 										break;
 			case "cpsconfadd"       :     
-										$out .= $this->add_configuration("Add","cpsconfig&add=1");  
+										$out .= $this->add_configuration(localize('_add', getlocal()),"cpsconfig&add=1");  
 										break;								 
 			case "cpsconfig"        :     
-			default                 :	$out = (GetParam('ismain')=='1') ? 
-											$this->show_configuration("Edit","cpsconfedit", true, GetReq('cpart')) : null; 
+			default                 :	$out = ((GetParam('ismain')=='1') || ($this->selectedSlider)) ? 
+											$this->show_configuration(localize('_save', getlocal()),"cpsconfedit&save=1", false, GetReq('cpart')) : null; 
 								 
        }
 	 
@@ -199,7 +196,10 @@ class rcslideshow extends shslideshow {
 			foreach ($data as $var=>$val) {
 				$sectionvar = $section .'-'. $var;
 				$localize_var = localize($var,getlocal());
-				$form->addElement($section,new form_element_text($localize_var,$sectionvar,$val,"span11",60,255,$editable));
+				if (strstr($var, 'image'))
+					$form->addElement($section,new form_element_ckfinder($localize_var,$sectionvar,$val,"span11",60,255,$editable));
+				else
+					$form->addElement($section,new form_element_text($localize_var,$sectionvar,$val,"span11",60,255,$editable));
 			}
 			$newelement = localize("_newelement",getlocal());
 			$presshere = localize("_presshere",getlocal());
@@ -207,13 +207,17 @@ class rcslideshow extends shslideshow {
 	    }
 
 		// Adding a hidden field
-		$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("FormAction", $action));
-		$form->addElement		(FORM_GROUP_HIDDEN,		new form_element_hidden ("ismain", "1"));       
+		$form->addElement(FORM_GROUP_HIDDEN,new form_element_hidden ("FormAction", $action));
+		if ($this->selectedSlider)
+			$form->addElement(FORM_GROUP_HIDDEN,new form_element_hidden ("slider", $this->selectedSlider));     
+	    else	
+			$form->addElement(FORM_GROUP_HIDDEN,new form_element_hidden ("ismain", "1"));       
+		
 		// Showing the form
 		$fout = $form->getform(0,0,$button_title);
-   		$fout.= '<br/>';		
+   		//$fout.= '<br/>';		
 	   
-		return ($fout);	   
+		return ($this->window($this->title,null,$fout));	   
 	}
 	
 	protected function add_configuration($button_title,$action) {
@@ -309,13 +313,20 @@ class rcslideshow extends shslideshow {
 	}
 	
 	protected function read_config() {
-	     $filename = $this->path . "slideshow.ini";
+		$lan = getlocal() ? getlocal() : '0';
+		if ($this->selectedSlider)	{
+			$sliderfile = ($this->selectedSlider=='slider') ? $this->selectedSlider : 'slider-' . $this->selectedSlider;
+			$filename = $this->path . $sliderfile . $lan . '.sld';
+			$this->edit_per_lan = false;
+		}
+		else
+			$filename = $this->path . "slideshow.ini";
 	
-		 if (file_exists($filename) && is_readable($filename)) {
-	       $ret = parse_ini_file($filename,1);
+		if (file_exists($filename) && is_readable($filename)) {
+			$ret = parse_ini_file($filename,1,INI_SCANNER_RAW);
 
-		   //select by language
-		   if ($this->edit_per_lan) {
+			//select by language
+			if ($this->edit_per_lan) {
 		        foreach ($ret as $section=>$param) {
 		            
 					foreach ($param as $pt=>$pv) {
@@ -330,25 +341,30 @@ class rcslideshow extends shslideshow {
                 for ($z=0;$z<=2;$z++) {
 				    $tvar = 't_config'.$z;
                     $this->$tvar = (array) $retperlan[$z];	
-				}	
-					
-	            //echo '<pre>';
-	            //print_r($this->t_config0);//print_r($retperlan);
-		        //echo '</pre>';						
-                					
-		   }
+				}							    					
+			}
+			else
+				$this->t_config = $ret;
 		   
-	       //print "<pre>"; print_r($ret); print "</pre>";
-		   return ($ret);
-		 }  
+			return ($ret);
+		}  
 	}
 	
 	protected function write_config() {
-	    //echo '<pre>';
-	    //print_r($_POST);
-		//echo '</pre>';
-		 
-	    $filename = $this->path . "slideshow.ini";
+		$lan = getlocal() ? getlocal() : '0';
+		if ($this->selectedSlider)	{
+			$sliderfile = ($this->selectedSlider=='slider') ? $this->selectedSlider : 'slider-' . $this->selectedSlider;
+			$filename = $this->path . $sliderfile . $lan . '.sld';
+			$this->edit_per_lan = false;
+			
+		    //keep backup copy
+		    @copy($filename, str_replace('.sld','._ld', $filename));			
+		}
+		else {		 
+			$filename = $this->path . "slideshow.ini";
+			//keep backup copy
+		    @copy($filename, str_replace('.ini','._ni', $filename));
+		}	
 	
 		if (file_exists($filename) && is_writeable($filename)) {
 		 
@@ -405,9 +421,6 @@ class rcslideshow extends shslideshow {
 		  }//else	
 		  //echo $fileCONTENTS;
 		  
-		  //keep backup copy
-		  @copy($filename, str_replace('.ini','._ni', $filename));
-		  
           $hFile = fopen( $filename, "w+" );
           fwrite( $hFile, $fileCONTENTS );
           fclose( $hFile );		 	
@@ -435,23 +448,6 @@ class rcslideshow extends shslideshow {
 			    if ($id['id']=='recycle-bin') continue; //drop
 				
 				$fileCONTENTS .= "[" . $id['id'] . "]" . $this->crlf;
-				/*$fileCONTENTS .= "title=" . $id['name'] . $this->crlf; 
-				$fileCONTENTS .= "link=" . str_replace($csep, '^', $id['value']) . $this->crlf;
-				$fileCONTENTS .= "spaces=0". $this->crlf;
-				if ($submenu = $id['submenu'])
-					$fileCONTENTS .= "submenu=" . $submenu . $this->crlf;
-				
-				$subCONTENTS = null;
-				$submenu_items = $id['children'];
-				if (is_array($submenu_items)) {//sub ids of nest
-					$subCONTENTS = $this->crlf;
-					$subCONTENTS .= '['. $submenu . ']' . $this->crlf;
-					foreach ($submenu_items as $ci=>$child) {
-						$subCONTENTS .= "title$ci=" . $child['name'] . $this->crlf;						
-						$subCONTENTS .= "link$ci=" . str_replace($csep, '^', $child['value']) . $this->crlf;						
-					}
-					$fileCONTENTS .= $subCONTENTS . $this->crlf;	
-				}*/	
 				
 				$data = unserialize(base64_decode($id['value']));
 				foreach ($data as $nam=>$val) {
@@ -488,7 +484,7 @@ class rcslideshow extends shslideshow {
 		return ($ret);	   
 	}
 	
-	/*2 level conf file based nest loader*/
+	/*1 level conf file based nest loader*/
 	public function nestBuild($file=null) {
 		$n = null;
 	    $lan = getlocal() ? getlocal() : '0';
@@ -504,41 +500,6 @@ class rcslideshow extends shslideshow {
 		if (!$conf) return;
 		
 		foreach ($conf as $section=>$params) {
-			/*
-            if (substr($section,-8)=='-SUBMENU') continue; //bypass subs		
-			
-			$cn = null;
-			if (isset($params['submenu'])) {
-                //echo $section.'-SUBMENU'; 
-				$sb = isset($file) ? $params['submenu'] : explode(',', $params['submenu']);	
-				$submenu = isset($file) ? $sb : $sb[$lan];
-				if (isset($conf[$submenu])) {
-				foreach ($conf[$submenu] as $group=>$child) {
-				    //echo $child,'<br/>';
-					if (substr($group,0,5)=='title') {
-						$nz = isset($file) ? $child : explode(',', $child);
-						$name = isset($file) ? $nz : $nz[$lan];
-						
-						$tl = isset($file)?	$conf[$section.'-SUBMENU'][str_replace('title','link',$group)] : 
-											explode(',', $conf[$section.'-SUBMENU'][str_replace('title','link',$group)]);
-						$value = isset($file) ? $tl : $tl[$lan];
-						$linkvalue = $this->make_link($value);
-						
-						$cn .= $this->nestdditem($section.'-'.$name, $name, $linkvalue);
-					}				
-				}
-				}
-			}
-            
-			$nz = isset($file) ? $params['title'] : explode(',', $params['title']);
-			$name = isset($file) ? $nz : $nz[$lan];
-			$nl = isset($file) ? $params['link'] : explode(',', $params['link']);
-			$value = isset($file) ? $nl : $nl[$lan];
-			if ($cn)
-				$n .= $this->nestddgroup($section, $name, $value, $submenu, $cn);
-			else 
-				$n .= $this->nestdditem($section, $name, $value, md5($section.$name).'-SUBMENU');
-			*/
 			
 			$title = $this->slidervars[0];
 			$nz = isset($file) ? $params[$title] : explode(',', $params[$title]);
@@ -678,11 +639,11 @@ class rcslideshow extends shslideshow {
 		if (!$name) return;
 		$lan = getlocal() ? getlocal() : '0';	
 		$db = GetGlobal('db');
-		
+		/*
 		$sSQL = "insert into relatives (orderid,type,active,relative,relation,ismenu,ismaster,notes,locale,isfather,ischild) values (";
 		$sSQL.= "0,$lan,1,'$name','',1,1,'','',0,0)"; 
 	    $result = $db->Execute($sSQL);		
-		
+		*/
 		//create text ini(=sld)
 		$sliderfile = ($name=='slider') ? $name : 'slider-' . $name;
 		$inifile = $this->path . $sliderfile . $lan . '.sld';
@@ -789,24 +750,25 @@ class rcslideshow extends shslideshow {
 		$cpGet = _v('rcpmenu.cpGet');		
 		
 		if ($id = $cpGet['id']) {
+			$cat = $cpGet['cat'];
+			$ctitles = $this->getCategoriesTitles($cat);
+			$title = array_pop($ctitles);			
+			
 			//current id item
 			$sSQL = "select $code,$itmname,$itmdescr from products WHERE $code=" . $db->qstr($id);
 			$res = $db->Execute($sSQL);
-			
+
 			$link = "kshow/$cat/".$res->fields[0] . '/';
 			$image = "images/photo_bg/". $res->fields[0] . '.jpg';
 				
-			//map elements (!!!)
-			$elm[$this->slidervars[0]] = $item[1];
-			$elm[$this->slidervars[1]] = $item[2];
-			$elm[$this->slidervars[2]] = $item[0];
+			//map elements ----------------------------(!!!)
+			$elm[$this->slidervars[0]] = $res->fields[1];
+			$elm[$this->slidervars[1]] = $res->fields[2];
+			$elm[$this->slidervars[2]] = $res->fields[0];
 			$elm[$this->slidervars[3]] = $link;
 			$elm[$this->slidervars[4]] = $image;
+			//print_r($elm);
 			$elmdata = base64_encode(serialize($elm));				
-			
-			$cat = $cpGet['cat'];
-			$ctitles = $this->getCategoriesTitles($cat);
-			$title = array_pop($ctitles);
 			
 			//add new element if any
 			$new = $this->element; 			
@@ -834,7 +796,7 @@ class rcslideshow extends shslideshow {
 				$link = "kshow/$cat/".$item[0] . '/';
 				$image = "images/photo_bg/". $item[0] . '.jpg';
 				
-				//map elements (!!!)
+				//map elements --------------------------------(!!!)
 				$elm[$this->slidervars[0]] = $item[1];
 				$elm[$this->slidervars[1]] = $item[2];
 				$elm[$this->slidervars[2]] = $item[0];
@@ -881,8 +843,12 @@ class rcslideshow extends shslideshow {
 		$section = 'newelement';
 		$form->addGroup($section,$button_title);		
 
-		foreach ($this->slidervars as $inputname)
-			$form->addElement($section,new form_element_text(ucfirst($inputname),$inputname,'',"span6",60,255,0));		
+		foreach ($this->slidervars as $inputname) {
+			if (strstr($inputname, 'image'))
+				$form->addElement($section,new form_element_ckfinder(ucfirst($inputname),$inputname,'',"span6",60,255,0));		
+			else
+				$form->addElement($section,new form_element_text(ucfirst($inputname),$inputname,'',"span6",60,255,0));		
+		}	
 			
 		$form->addElement(FORM_GROUP_HIDDEN,new form_element_hidden ("FormAction", $action));
 		//save current menu selection
@@ -929,17 +895,12 @@ class rcslideshow extends shslideshow {
 	}	
 	
 	public function sliderButtonSelect() {
-	    $lan = getlocal() ? getlocal() : '0';
-		$menufile = $this->path . 'slider' . $lan . '.sld';	
+
+		$slds = $this->readSliderFiles();
+		$slidelist = (empty($slds)) ? array() : $slds;
 		
-		//$lmenu = localize('_slider', $lan) . ' (' . $lan . ')';	
-		//$basicmenu = is_readable($menufile) ? array($lmenu=>seturl('t=cpsselectslider&slider=slider')) : array();				  
-		$basicmenu = array(); //DISABLED (DB MENU USED)
-		
-		$menuf = $this->readSliderFiles();
-		$menus = (empty($menuf)) ? array() : $menuf;
-		
-		$turl99 = seturl('t=cpsconfig&ismain=1');
+		$turl99 = $this->selectedSlider ? seturl('t=cpsconfig&slider='.$this->selectedSlider) : 
+		          seturl('t=cpsconfig&ismain=1');
 		$turl98 = seturl('t=cpsnewslider');		
 		$turl97 = seturl('t=cpsconfig');
 		$turl96 = seturl('t=cpsnewelement&slider=' . $this->selectedSlider);
@@ -947,13 +908,13 @@ class rcslideshow extends shslideshow {
 		$stdcmd = array(localize('_newslider', getlocal())=>$turl98,
 						localize('_newelm', getlocal())=>$turl96,
 						0=>'',									
-						localize('_mainslider', getlocal())=>$turl97,						
+						/*localize('_mainslider', getlocal())=>$turl97,	*/	
 						localize('_edit', getlocal())=>$turl99,
 						1=>'',
 		                );
 		
 		
-		$button = $this->createButton(localize('_slider', getlocal()), array_merge($stdcmd, $basicmenu, $menus),'info');	
+		$button = $this->createButton(localize('_slider', getlocal()), array_merge($stdcmd, $slidelist),'info');	
 		return $button;	
 	}	
 

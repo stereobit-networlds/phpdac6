@@ -63,8 +63,7 @@ class rcmenu extends cmsmenu {
 
     var $crlf, $path, $title;
 	var $t_config, $t_config0, $t_config1, $t_config2;
-	var $edit_per_lan, $cptemplate;
-	var $selectedMenu, $post, $element;
+	var $edit_per_lan, $selectedMenu, $post, $element;
 	
     public function __construct() {
 	
@@ -72,13 +71,11 @@ class rcmenu extends cmsmenu {
 	
 	    $this->title = localize('RCMENU_DPC',getlocal());		
 	
-	    $os =  php_uname();//'>';
-        $info = strtolower($os);// $_SERVER['HTTP_USER_AGENT'] );   
+	    $os =  php_uname();
+        $info = strtolower($os);  
         $this->crlf = PHP_EOL; //( strpos( $info, "windows" ) === false ) ? "\n" : "\r\n" ;	
 		   
 		$this->path = paramload('SHELL','prpath');				  
-		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate', $this->path);	
-		
 	    $this->edit_per_lan = true; //false;
 		$this->t_config = array();		
 		$this->selectedMenu = GetParam('menu');
@@ -169,7 +166,7 @@ class rcmenu extends cmsmenu {
 										 							
 			case "cpmconfig"        :     
 			default                 :   $out = (GetParam('ismain')=='1') ? 
-											$this->show_configuration(localize('_edit', getlocal()),"cpmconfedit",true) : null; 							 
+											$this->show_configuration(localize('_save', getlocal()),"cpmconfedit&save=1",false) : null; 							 
 		}
 	 
 		return ($out);
@@ -208,9 +205,9 @@ class rcmenu extends cmsmenu {
  
 		// Showing the form
 		$fout = $form->getform(0,0,$button_title);	
-   		$fout.= '<br/>';
+   		//$fout.= '<br/>';
 				
-		return ($fout);	   
+		return ($this->window($this->title,null,$fout));	   
 	}
 	
 	protected function add_configuration($button_title,$action) {
@@ -772,12 +769,14 @@ class rcmenu extends cmsmenu {
 			$ctitles = $this->getCategoriesTitles($cat);
 			$title = array_pop($ctitles);
 			
+			//add new element if any
+			$new = $this->element; 			
 			//the cat item,link
 			$a = $this->nestdditem($cat, $title, "klist/$cat/", md5($cat).'-SUBMENU');
 			//the item,link
 			$b = $this->nestdditem($res->fields[0], $res->fields[1], "kshow/$cat/".$res->fields[0] .'/', md5($res->fields[0]).'-SUBMENU');
 			
-			return $a . $b;
+			return $new . $a . $b;
 		}
 		elseif ($cat = $cpGet['cat']) {
 			//current cat, cat items
@@ -795,13 +794,16 @@ class rcmenu extends cmsmenu {
 			foreach ($res as $i=>$item)
 				$catitems .= $this->nestdditem($item[0], $item[1], "kshow/$cat/".$item[0] .'/', md5($item[0]).'-SUBMENU');
 				
-			$title = array_pop($this->getCategoriesTitles($cat)); 
+			$title = array_pop($this->getCategoriesTitles($cat));
+
+			//add new element if any
+			$new = $this->element; 	
 			//the cat items tree
 			$a = $this->nestddgroup($cat, $title, "klist/$cat/", md5($cat).'-SUBMENU', $catitems);			
 			//just the cat link item
 			$b = $this->nestdditem(array_pop($cats), $title, "klist/$cat/", md5($cat).'-SUBMENU');
 			
-			return $b . $a;
+			return $new . $b . $a;
 		}	
 		
 		//add new element if any
@@ -884,11 +886,12 @@ class rcmenu extends cmsmenu {
 		$turl99 = seturl('t=cpmconfig&ismain=1');
 		$turl98 = seturl('t=cpmnewmenu');		
 		$turl97 = seturl('t=cpmconfig');
-		$turl96 = seturl('t=cpmnewelement');		
+		$turl96 = seturl('t=cpmnewelement&menu=' . $this->selectedMenu);
+		
 		$stdcmd = array(localize('_newmenu', getlocal())=>$turl98,
 						localize('_newelm', getlocal())=>$turl96,
 						0=>'',									
-						localize('_mainmenu', getlocal())=>$turl97,						
+						/*localize('_mainmenu', getlocal())=>$turl97,	*/
 						localize('_edit', getlocal())=>$turl99,
 						1=>'',
 		                );

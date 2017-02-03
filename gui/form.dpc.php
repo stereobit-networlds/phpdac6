@@ -79,7 +79,7 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 		
 		function getTag ()
 		{
-			return "<input type=\"text\" name=\"".$this->name."\" value=\"".$this->value."\" class=\"".$this->style."\" size=\"".$this->size."\" maxlength=\"".$this->maxlength."\" ".($this->isreadonly ? " readonly" : "")."><BR>";
+			return "<input type=\"text\" name=\"".$this->name."\" value=\"".$this->value."\" class=\"".$this->style."\" size=\"".$this->size."\" maxlength=\"".$this->maxlength."\" ".($this->isreadonly ? " readonly" : "")."><br/>";
 		}
 	}
 	
@@ -96,9 +96,9 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 		
 		function getTag ()
 		{
-			return "<span class=\"".$this->style."\">".$this->value."</span><br>";
+			return "<span class=\"".$this->style."\">".$this->value."</span><br/>";
 		}
-	}
+	}	
 	
 	class form_element_password extends form_element
 	{
@@ -119,7 +119,7 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 		
 		function getTag ()
 		{
-			return "<input type=\"password\" name=\"".$this->name."\" value=\"".$this->value."\" class=\"".$this->style."\" size=\"".$this->size."\" maxlength=\"".$this->maxlength."\"><BR>";
+			return "<input type=\"password\" name=\"".$this->name."\" value=\"".$this->value."\" class=\"".$this->style."\" size=\"".$this->size."\" maxlength=\"".$this->maxlength."\"><br/>";
 		}
 	}
 	
@@ -175,7 +175,7 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 			$r = "";
 			$r .= "<span class=\"".$this->style."\">";
 			while (list ($value, $title) = each ($this->values))
-				$r .= "<input class=\"".$this->style."\" type=radio name=\"".$this->name."\" value=\"$value\"".($value == $this->value ? " checked" : "").">$title<br>\n";
+				$r .= "<input class=\"".$this->style."\" type=radio name=\"".$this->name."\" value=\"$value\"".($value == $this->value ? " checked" : "").">$title<br/>\n";
 			return $r;
 		}
 	}
@@ -201,7 +201,7 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 		{
 			$r = "";
 			$r .= "<span class=\"".$this->style."\">";
-			$r .= "<input type=checkbox name=\"".$this->name."\" value=\"1\"".($this->value ? " checked" : "").">$title<br>\n";
+			$r .= "<input type=checkbox name=\"".$this->name."\" value=\"1\"".($this->value ? " checked" : "").">$title<br/>\n";
 			return $r;
 		}
 	}
@@ -225,11 +225,8 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 		
 		function getTag ()
 		{
-			return "<textarea cols=".$this->cols." rows=".$this->rows." name=\"".$this->name."\" class=\"".$this->style."\">".$this->value."</textarea><BR>";
+			return "<textarea cols=".$this->cols." rows=".$this->rows." name=\"".$this->name."\" class=\"".$this->style."\">".$this->value."</textarea><br/>";
 		}
-		/*
-			<textarea cols="1" rows="2" name="name"></textarea>
-		*/
 	}
 	
 	class form_element_hidden extends form_element
@@ -279,7 +276,7 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 		
 		var         $tokens;
 		
-		function form ($title, $name, $method, $action,$resetbutton=false,$enctype=null)
+		function form ($title, $name, $method, $action, $resetbutton=false, $enctype=null)
 		{
             $this->width	        = paramload('FORM','width');		
 		    $this->title_bgcolor    = paramload('FORM','title_bgcolor');
@@ -341,15 +338,15 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 				
 				if ($group->name != FORM_GROUP_MAIN && $group->name != FORM_GROUP_HIDDEN)
 				{
-				    if ((defined('WINDOW2_DPC')) && ($group->showhide)) {//show hide groups
+				    /*if ((defined('WINDOW2_DPC')) && ($group->showhide)) {//show hide groups
 	                  $win = new window2($group->name,$group->title,null,1,null,$group->status,1);
 	                  $r .= $win->render();
 	                  unset ($win);						
 					}
-					else {//plain table
+					else {//plain table*/
 					  $r .= "<tr>\n\t<td colspan=3 height=2></td>\n</tr>\n";
 					  $r .= "<tr>\n\t<td colspan=3 bgcolor=".$this->group_bgcolor."><span class=\"".$this->group_style."\">".$group->title."</td>\n</tr>\n";
-					}  
+					//}  
 				}
 				
 				$color = 0;
@@ -443,6 +440,127 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 	
 	//////////////////////////////////////////////////////////////////////////////////////
 	//added
+	
+	class form_element_ckfinder extends form_element
+	{
+		var			$style = "formText";
+		var			$size;
+		var			$maxlength;
+		var			$isreadonly = false;
+        var         $ckfinder_button ;		
+		
+		function form_element_ckfinder ($title, $name, $value, $style, $size, $maxlength, $isreadonly)
+		{
+					
+			$this->form_element		($title, $name, $value);
+			
+			if ($style != "") $this->style = $style;
+			else $this->style = paramload('FORM','text_style');
+			
+			$this->size				= $size;
+			$this->maxlength		= $maxlength;
+			$this->isreadonly		= $isreadonly;
+			
+			$this->ckfinder_button  = "<a onClick='openCKPopup(\"ckfinder-{$this->name}\")'>Select</a>";			
+			//$this->ckfinder_button  = "<a onClick='BrowseServer(\"ckfinder-{$this->name}\");'>Select</a>";						
+						
+			//$this->ckfinder_button  = "<button id='ckfinder-button-{$this->name}'>Open</button>";			
+			//$this->ckfinder_button  = "<a id='ckfinder-button-{$this->name}'>Open</a>";			
+			
+            if (iniload('JAVASCRIPT')) {	
+	   
+				$code = "
+/* must be included in page		
+		CKFinder.popup({
+         height: 600
+		});  
+
+		function openPopup( uid ) {
+             CKFinder.popup( {
+                 chooseFiles: true,
+                 onInit: function( finder ) {
+                     finder.on( 'files:choose', function( evt ) {
+                         var file = evt.data.files.first();
+                         document.getElementById( uid ).value = file.getUrl();
+                     } );
+                     finder.on( 'file:choose:resizedImage', function( evt ) {
+                         document.getElementById( uid ).value = evt.data.resizedUrl;
+                     } );
+                 }
+             } );
+        }
+*/	
+function selectFileWithCKFinder( elementId ) {
+
+	CKFinder.popup( {
+		chooseFiles: true,
+		width: 800,
+		height: 600,
+		onInit: function( finder ) {
+			finder.on( 'files:choose', function( evt ) {
+				var file = evt.data.files.first();
+				var output = document.getElementById( elementId );
+				output.value = file.getUrl();
+			} );
+
+			finder.on( 'file:choose:resizedImage', function( evt ) {
+				var output = document.getElementById( elementId );
+				output.value = evt.data.resizedUrl;
+			} );
+		}
+	} );
+}	
+	
+//ver 3				
+	window.CKFinder = {
+        _popupOptions: {
+            'popup-config': { // Config ID for first popup
+                chooseFiles: true,
+                onInit: function( finder ) {
+                    finder.on( 'files:choose', function( evt ) {
+                        var file = evt.data.files.first();
+                        document.getElementById('ckfinder-{$this->name}').value = file.getUrl();
+                        output.innerHTML = 'Selected in popup 1: ' + file.get( 'name' ) + '<br>URL: ' + file.getUrl();
+						//output.value = file.getUrl();
+                    } );					
+                }
+            }
+        }
+    };
+
+    var popupWindowOptions = [
+        'location=no',
+        'menubar=no',
+        'toolbar=no',
+        'dependent=yes',
+        'minimizable=no',
+        'modal=yes',
+        'alwaysRaised=yes',
+        'resizable=yes',
+        'scrollbars=yes',
+        'width=800',
+        'height=600'
+    ].join( ',' );	
+				
+	document.getElementById( 'ckfinder-button-{$this->name}' ).onclick = function() {
+        // Note that config ID is passed in configId parameter
+        window.open( '/cp/ckfinder/ckfinder.html?popup=1&configId=popup-config', 'CKFinderPopup1', popupWindowOptions );
+    };				
+";
+		   
+				//$js = new jscript;	
+				//$js->load_js($code, null, 1); 
+				//unset ($js);
+	        }				
+		}
+		
+		function getTag ()
+		{
+			return "<input id=\"ckfinder-{$this->name}\" type=\"text\" name=\"".$this->name."\" value=\"".$this->value."\" class=\"".$this->style."\" size=\"".$this->size."\" maxlength=\"".$this->maxlength."\" ".($this->isreadonly ? " readonly" : "").">" .
+				   "&nbsp;" . $this->ckfinder_button . "<br/><div id='output'></div>";	
+		}
+	}	
+	
 	class form_element_date extends form_element
 	{
 	
@@ -455,26 +573,17 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 		var			$isreadonly = false;
 		
 		function form_element_date ($title, $formname, $name, $value, $style, $size, $maxlength, $isreadonly)
-		{
-		
-	        $GRX = GetGlobal('GRX');	
+		{	
 	
             if (iniload('JAVASCRIPT')) {	
 	   
-		     //$js = new jscript;
-             //$js->load_js('ts_picker.js');	 
-		     //unset ($js);
+				//$js = new jscript;
+				//$js->load_js('ts_picker.js');	 
+				//unset ($js);
 	        }		
 		
-            if ($GRX) {   	 
-              $this->datepick_button  = loadTheme('godate_b',localize('_GETDATE',getlocal()));
-            }
-	        else {
-              $this->datepick_button  = "[D]";
-	        }
-			
-			$this->formname = $formname;
-					
+            $this->datepick_button  = "[D]";
+			$this->formname = $formname;	
 			$this->form_element		($title, $name, $value);
 			
 			if ($style != "") $this->style = $style;
@@ -489,7 +598,7 @@ $__LOCALE['FORM_DPC'][1]='_RESET;Reset;Καθαρισμός';
 		{
 			return "<input type=\"text\" name=\"".$this->name."\" value=\"".$this->value."\" class=\"".$this->style."\" size=\"".$this->size."\" maxlength=\"".$this->maxlength."\" ".($this->isreadonly ? " readonly" : "").">".
 			       "<a href=\"javascript:show_calendar('document.$this->formname.$this->name', document.$this->formname.$this->name.value);\">" .
-		           $this->datepick_button . "</a><BR>";
+		           $this->datepick_button . "</a><br/>";
 			
 		}
 	}
@@ -548,9 +657,7 @@ if ($_POST["recaptcha_response_field"]) {
 		var         $path;
 		
 		function form_element_greekmap ($title, $formname, $name, $value, $style, $size, $maxlength, $isreadonly)
-		{
-		
-	        $GRX = GetGlobal('GRX');	
+		{	
 			
             $ip = paramload('SHELL','ip');//$_SERVER['HTTP_HOST'];
             $pr = paramload('SHELL','protocol');		   
@@ -563,15 +670,8 @@ if ($_POST["recaptcha_response_field"]) {
 		      unset ($js);
 	        }		
 		
-            if ($GRX) {   	 
-              $this->map_button  = loadTheme('gomap_b',localize('_GREEKMAP',getlocal()));
-            }
-	        else {
-              $this->map_button  = "[M]";
-	        }
-			
-			$this->formname = $formname;
-					
+            $this->map_button  = "[M]";
+			$this->formname = $formname;	
 			$this->form_element		($title, $name, $value);
 			
 			if ($style != "") $this->style = $style;

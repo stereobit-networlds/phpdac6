@@ -173,8 +173,8 @@ class rctransactions extends shtransactions {
 	
 	protected function show_grids() {
 		
-		$ret = $this->show_grid();		   
-		$ret .= "<div id='trans'></div>";
+		$ret = "<div id='trans'></div>";		
+		$ret .= $this->show_grid();		   
 		return ($ret);	
 	}	
 	

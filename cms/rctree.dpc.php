@@ -75,8 +75,9 @@ class rctree  {
 		 case 'cptreerel'   : 
 							  break;					  
 	     case 'cptree'      :
-		 default            : $out = $this->tree_grid(null,140,14,'r', true);	
-							  $out .= "<div id='treerel'></div>";
+		 default            : //$out = "<div id='treerel'></div>";
+		                      $out .= $this->tree_grid(null,140,14,'r', true);	
+							  
 	  }	 
 
 	  return ($out);

@@ -307,13 +307,22 @@ class rculists  {
 		$db = GetGlobal('db'); 	
 		$_id = GetReq('id'); //as came from crmoubox ...
 
-		if (is_numeric($_id)) {
-			$sSQL = 'select body from mailqueue where id='. $_id;
+		if (is_numeric($_id)) {		//if id is numeric 
+			$sSQL = 'select body from mailqueue where id=' . $_id;
 			$result = $db->Execute($sSQL,2);
 			$htmlbody = $result->fields[0]; 				
 			//echo $sSQL;
 		}
-		else {
+		elseif (strstr($_id, '@')) {//is cid=trackid@app, fetch maiqueue body
+			$cid = $_id;
+			if (!$cid) die("CID error");
+			
+			$sSQL = 'select body from mailqueue where cid='. $db->qstr($cid);
+			$result = $db->Execute($sSQL,2);
+			$htmlbody = $result->fields[0]; 				
+			//echo $sSQL;		
+		}
+		else { //is campaign md5 id, fetch campaign body (not the mailqueue body)
 			$cid = $_id;
 			if (!$cid) die("CID error");
 		

@@ -39,6 +39,7 @@ $__LOCALE['RCITEMQPOLICY_DPC'][17]='_uniname1;Unit;Μον.μετρ.';
 $__LOCALE['RCITEMQPOLICY_DPC'][18]='_ypoloipo1;Qty;Υπόλοιπο';
 $__LOCALE['RCITEMQPOLICY_DPC'][19]='_price0;Price 1;Αξία 1';
 $__LOCALE['RCITEMQPOLICY_DPC'][20]='_price1;Price 2;Αξία 2';
+$__LOCALE['RCITEMQPOLICY_DPC'][21]='_save;Save;Αποθήκευση';
 
 
 class rcitemqpolicy {
@@ -140,12 +141,32 @@ class rcitemqpolicy {
 	}	
 	
 	protected function saveFormData($id) {
-		if (!$id) return null;
+		//if (!$id) return null;
+		if ((!$id) || (!$_POST)) return null;
+		$db = GetGlobal('db');
+				
 		$data = trim($_POST['formdata']);
 		
 		$ret = ($data) ? @file_put_contents($this->path . $id.'.txt', $data) : null;
 						 /*(is_array($_POST) ? unlink($this->path . $id.'.txt') : null);*/
 		
+		$encdata = base64_encode(trim($_POST['formdata']));	
+		$sSQL = "select code from ppolicyres where ispoints=0 and code=" . $db->qstr($id);
+		$res = $db->Execute($sSQL);	
+		
+		if ($res->fields[0])
+			$sSQL1 = ($data) ? 
+						"update ppolicyres set data="  . $db->qstr($encdata) . " where ispoints=0 and code=" . $db->qstr($id) :
+						"delete from ppolicyres where ispoints=0 and code=" . $db->qstr($id); 
+		else
+			$sSQL1 = ($data) ? 
+						"insert into ppolicyres (active,code,data,ispoints) values (1,'$id','$encdata',0)" :
+						null;
+		
+		if ($sSQL1)
+			$db->Execute($sSQL1);
+		
+		//return true;		
 		return ($ret);
 	}
 
@@ -160,12 +181,17 @@ class rcitemqpolicy {
 	
 	public function fetchFormData() {
 		$id = GetParam('id');
+		$db = GetGlobal('db');		
 		
 		if ($id) 
 			$ret = $this->saveFormData($id);
 		
-		$data = @file_get_contents($this->path . $id.'.txt');
-		return (trim($data));
+		$sSQL = "select data from ppolicyres where ispoints=0 and code=" . $db->qstr($id);
+		$res = $db->Execute($sSQL);	
+		return (base64_decode($res->fields[0]));		
+		
+		//$data = @file_get_contents($this->path . $id.'.txt');
+		//return (trim($data));
 	}
 	
 	protected function items_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
@@ -180,22 +206,22 @@ class rcitemqpolicy {
         $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,itmname,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
 		//code3,cat0,cat1,cat2,cat3,cat4,resources
 		   							
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|link|10|"."javascript:editform(\"{code5}\");".'||');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+price1|".localize('_price1',getlocal())."|5|1|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:deleteform(\"{code5}\");".'||');
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
+		_m("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
+		_m("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
+		_m("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|link|10|"."javascript:editform(\"{code5}\");".'||');	
+		_m("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		
+		_m("mygrid.column use grid1+price1|".localize('_price1',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
+		_m("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|0|");
+		_m("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
+		_m("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:deleteform(\"{code5}\");".'||');
 
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	

@@ -180,8 +180,8 @@ class shkategories {
 					$nn = str_replace('/','-',$mycurrentsubcat); //replace title / with -	 
 					$catname = '/' . $nn . $lan . '.htm';
 
-					if (is_readable($alsoseedir.$catname)) {
-						$htmlret = file_get_contents($alsoseedir.$catname);
+					if (@is_file($alsoseedir.$catname)) {
+						$htmlret = @file_get_contents($alsoseedir.$catname);
 						if ($mytemplate) {
 							$tok[] = $htmlret;
 							$out .= $this->combine_tokens($mytemplate, $tok);
@@ -200,12 +200,12 @@ class shkategories {
 	public function show_category_image() {
 		$cat = GetReq('cat');
 		$t = GetReq('t');
-	   
-		if ($this->showcatimagepath) {	
-			if ($cat) {
-				$catdepth = explode($this->cseparator,$cat);
-				$alsoseedir = $this->urlpath . $this->inpath . '/' . $this->showcatimagepath;
 
+		if ($this->showcatimagepath) {	
+			$catdepth = explode($this->cseparator,$cat);
+			$alsoseedir = $this->urlpath . $this->inpath . '/' . $this->showcatimagepath;
+		
+			if ($cat) { 
 				//from inside to outer cat ...  
 				while ($mycurrentsubcat = $this->replace_spchars(array_pop($catdepth))) {
 	   
@@ -215,7 +215,7 @@ class shkategories {
 					$catname.= $this->encode_image_id($nn);
 					$catname.= $this->restype;   
 
-					if (is_readable($alsoseedir.$catname)) {
+					if (@is_file($alsoseedir.$catname)) {
 						$image = $this->showcatimagepath.$catname;
 						$htmlret = "<img src='$image' alt='' />";//file_get_contents($alsoseedir.$catname);
 						$ret = $htmlret;
@@ -229,7 +229,7 @@ class shkategories {
 				$tname.= $this->encode_image_id($tid);
 				$tname.= $this->restype; 
 	  
-				if (is_readable($alsoseedir.$tname)) {
+				if (@is_file($alsoseedir.$tname)) {
 					$image = $this->showcatimagepath.$tname;
 					$htmlret = "<img src='$image' alt='' />";//file_get_contents($alsoseedir.$catname);
 					$ret = $htmlret;

@@ -582,16 +582,16 @@ goBack();
 		}
         else { //front page
 			$this->item = null;
-			$this->descr = remote_paramload('INDEX','meta-description', $this->prpath);
+			$this->descr = $this->paramload('INDEX','meta-description');
 			$this->price = null;
-			$this->keywords = remote_paramload('INDEX','meta-keywords', $this->prpath);			
+			$this->keywords = $this->paramload('INDEX','meta-keywords');			
         }		
    }	
 	
     public function get_page_info($key=null,$defkey=null) {
-		$meta_title = ($defkey=='NULL') ? null : ($defkey ? $defkey : remote_paramload('INDEX','title', $this->prpath));
-		$meta_descr = ($defkey=='NULL') ? null : ($defkey ? $defkey : remote_paramload('INDEX','meta-description', $this->prpath));
-		$meta_keywords = ($defkey=='NULL') ? null : ($defkey ? $defkey : remote_paramload('INDEX','meta-keywords', $this->prpath));			
+		$meta_title = ($defkey=='NULL') ? null : ($defkey ? $defkey : $this->paramload('INDEX','title'));
+		$meta_descr = ($defkey=='NULL') ? null : ($defkey ? $defkey : $this->paramload('INDEX','meta-description'));
+		$meta_keywords = ($defkey=='NULL') ? null : ($defkey ? $defkey : $this->paramload('INDEX','meta-keywords'));			
    	   
 		if ($key=='item') 
 			return ($this->item ? $this->item :$meta_title);	 
@@ -1256,11 +1256,7 @@ EOF;
         $db = GetGlobal('db');		
 		$tid = GetReq('id') ? GetReq('id') : $preset; //$preset ? $preset : GetReq('id');	
 		$uid = 'id';
-		/*
-        $sSQL = "select id,datein,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4,".
-	            "price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,weight,".
-				"volume,dimensions,size,color,manufacturer,xml,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," . 
-				$this->fcode . " from products WHERE ";*/
+		
 		$sSQL = $this->selectSQL . " WHERE ";		
  
 		if (isset($usemenu)) {  

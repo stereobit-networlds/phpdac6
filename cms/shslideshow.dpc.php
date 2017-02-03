@@ -22,13 +22,13 @@ $__LOCALE['SHSLIDESHOW_DPC'][0]='SHSLIDESHOW_CNF;Slideshow;Slideshow';
 	   
 class shslideshow {
 
-   var $path, $urlpath, $inpath, $menufile;
-   var $delimiter, $cseparator;
-   var $control_buttons, $navi_invisible, $introtext_invisible;
+    var $path, $urlpath, $inpath, $menufile;
+    var $delimiter, $cseparator;
+    var $control_buttons, $navi_invisible, $introtext_invisible;
    
-   var $tmpl_path, $tmpl_name;   
+    var $tmpl_path, $tmpl_name;   
 	
-   function __construct() {
+    public function __construct() {
 	   $UserName = GetGlobal('UserName');	
 	   $UserSecID = GetGlobal('UserSecID');
 	   $UserID = GetGlobal('UserID');		
@@ -58,32 +58,37 @@ class shslideshow {
 	   
 	   //javascript call
        $this->javascript();	   
-   }
+    }
    
-
-   function event($event=null) {
+    public function event($event=null) {
    
-       switch ($event) {
+        switch ($event) {
 
-		 case 'slideshow'     :	
-		 default              :  						
-	   }
-   }
+			case 'slideshow'     :	
+			default              :  						
+	    }
+    }
    
+    public function action($action=null) {
 
-   function action($action=null) {
+        switch ($action) {
 
-       switch ($action) {
-
-		 case 'slideshow'     :						
-		 default              : 
-	   }
+			case 'slideshow'     :						
+			default              : 
+	    }
 	   
-	   return ($out);
-   }   
-   			
+	    return ($out);
+    }   
+   	
+	//transform links for special chars
+	protected function make_link($link=null) {
+		$csep = _v("cmsrt.cseparator");
+		
+	    $ret = str_replace(array('@','^'), array('?t=',$csep), $link);
+		return ($ret);
+	}	
 
-   function render($menu_template=null,$glue_tag=null) {
+    function render($menu_template=null,$glue_tag=null) {
         $lan = getlocal() ? getlocal() : '0';
    
         //echo $this->menufile;
@@ -231,9 +236,9 @@ class shslideshow {
 		   //echo $ret;
 		   return ($ret);
 		}
-   }
+    }
    
-   function javascript() {
+    protected function javascript() {
    
         $jsapi = "http://www.google.com/jsapi";
    
@@ -299,8 +304,7 @@ class shslideshow {
 */
 
         return ($jsret);
-   }
-   
+    }
    
 };
 }
