@@ -2770,7 +2770,7 @@ SCROLLTOP;
 			       $cat = GetReq('cat');
 				   $c = $cat ? $cat . $sep . $g : $g;
 				   $_u = _m("cmsrt.url use t=klist&cat=$c");
-				   $cat_url = 'http://' . $this->url . '/' . $_u; 
+				   $cat_url = $this->httpurl . '/' . $_u; 
 			
 		           $p[] = $g;
 			       $p[] = $lan_g;
@@ -2805,11 +2805,11 @@ SCROLLTOP;
 					//echo $price,'>';
 				      		
                     $_u = _m("cmsrt.url use t=kshow&cat=$cat&id=". $rec[$code]);							
-				    $item_url = 'http://' . $this->url . '/' . $_u; 
+				    $item_url = $this->httpurl . '/' . $_u; 
                     if ($this->photodb)
-						$item_photo_url = 'http://' . $this->url . '/showphoto.php?id='.$rec[$code].'&type=LARGE';
+						$item_photo_url = $this->httpurl . '/showphoto.php?id='.$rec[$code].'&type=LARGE';
 				    else
-						$item_photo_url = 'http://' . $this->url . '/' . $this->img_large . '/' . $rec[$code] . $this->restype;
+						$item_photo_url = $this->httpurl . '/' . $this->img_large . '/' . $rec[$code] . $this->restype;
 				   
 					$p[] = $rec[$code];
 					$p[] = $rec[$this->itmname];
@@ -2863,7 +2863,7 @@ SCROLLTOP;
 			foreach ($resultset as $n=>$rec) {      			      		   
 				$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
 				$_u = _m("cmsrt.url use t=kshow&cat=$cat&id=". $rec[$code]);
-				$item_url = 'http://' . $this->url . '/' . $_u; 
+				$item_url = $this->httpurl . '/' . $_u; 
 
 				$p[] = $item_url;
 				//in case of 0000-00-00..is null
@@ -2899,7 +2899,7 @@ SCROLLTOP;
 			                    $xml->addtag('urlset',null,null,"xmlns=http://www.sitemaps.org/schemas/sitemap/0.9");							
                                 break; 			   
 				case 'skroutz' : $enc ='utf8';
-			                    $xml->addtag('skroutzstore',null,null,"url=$this->url|name=$xml->urltitle|encoding=$enc");							
+			                    $xml->addtag('skroutzstore',null,null,"url={$this->httpurl}|name=$xml->urltitle|encoding=$enc");							
 	                            $xml->addtag('products','skroutzstore',null,null);
 								break;
 				case 'rss1'    : echo 'rss1';
@@ -2908,7 +2908,7 @@ SCROLLTOP;
 			                    $xml->addtag('rss',null,null,"version=2.0");							
 	                            $xml->addtag('channel','rss',$xml->urltitle,null);
 	                            $xml->addtag('title','channel',$xml->urltitle.', '.$cat_title,null);								
-	                            $xml->addtag('link','channel','http://' . $this->url,null);									
+	                            $xml->addtag('link','channel',$this->httpurl,null);									
 	                            $xml->addtag('description','channel',$xml->urltitle.', '.$cat_title,null);									
 	                            $xml->addtag('language','channel',$lan_descr,null);									
 	                            $xml->addtag('pubDate','channel',$date,null);									
@@ -2923,15 +2923,15 @@ SCROLLTOP;
 			                    $xml->addtag('feed',null,null,"xmlns=http//www.w3.org/2005/Atom");							
 	                            $xml->addtag('title','feed',$xml->urltitle,null);
 	                            $xml->addtag('subtitle','feed',null,null);								
-	                            $xml->addtag('link','feed','/',"href=http://".$this->url."/atom/|rel=self");									
-	                            $xml->addtag('link','feed','/',"href=http://".$this->url);									
+	                            $xml->addtag('link','feed','/',"href=" . $this->httpurl . "/atom/|rel=self");									
+	                            $xml->addtag('link','feed','/',"href=" . $this->httpurl);									
 	                            $xml->addtag('id','feed',null,null);									
 	                            $xml->addtag('updated','feed',null,null);									
 	                            $xml->addtag('author','feed',$xml->urltitle,null);	
 	                            $xml->addtag('name','author',$xml->urltitle,null);																	
 	                            $xml->addtag('email','author',null,null);									
 	   					        break; 								
-				default        : $xml->addtag('default-xml',null,null,"url=$this->url|name=$xml->urltitle|encoding=$enc");							
+				default        : $xml->addtag('default-xml',null,null,"url={$this->httpurl}|name=$xml->urltitle|encoding=$enc");							
 	                            $xml->addtag('products','default-xml',null,null);
 												
 		    }		  
@@ -3128,8 +3128,8 @@ SCROLLTOP;
 			
 			$_cat = _m('cmsrt.replace_spchars use '.$cat);
 	
-			$tokens[] = 'http://' . $this->url . '/' . _m("cmsrt.url use t=kshow&cat=$_cat&id=$id"); 
-			$tokens[] = 'http://' . $this->url . '/' . $imgxmlPath . $id . $this->restype;
+			$tokens[] = $this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$_cat&id=$id"); 
+			$tokens[] = $this->httpurl . '/' . $imgxmlPath . $id . $this->restype;
 			$tokens[] = $cat;
 			//if ($n==0) print_r($tokens);
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					
@@ -3232,11 +3232,11 @@ SCROLLTOP;
 			
 				
 		    $id2 = $rec['p5'] ? $rec['p5'] : $rec[$item_code]; //url friendly		
-			$tokens[61] = ($xmlf) ? 'http://' . $this->url . '/' . $cat . '/' . $id2 . '.html' :
-								    'http://' . $this->url . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=$id2"); 
-			$tokens[62] = 'http://' . $this->url . '/' . $imgxmlPath . $rec[$item_code] . $this->restype;
+			$tokens[61] = ($xmlf) ? $this->httpurl . '/' . $cat . '/' . $id2 . '.html' :
+								    $this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=$id2"); 
+			$tokens[62] = $this->httpurl . '/' . $imgxmlPath . $rec[$item_code] . $this->restype;
 
-			if ($n==0) print_r($tokens);
+			//if ($n==0) print_r($tokens);
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					
 		}
 		
