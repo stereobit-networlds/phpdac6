@@ -2942,15 +2942,15 @@ function addtocart(id,cartdetails)
 	public function pricewithtax($price,$tax=null) {
 	
 		if ($tax) {
-			$mytax = (($price*$tax)/100);	
-			$value = ($price+$mytax);		  
+			$mytax = ((floatval($price) * $tax)/100);	
+			$value = (floatval($price) + $mytax);		  
 		}
 		elseif ($tax = $this->tax) {
-			$mytax = (($price*$tax)/100);	
-			$value = ($price+$mytax);		  
+			$mytax = ((floatval($price) * $tax)/100);	
+			$value = (floatval($price) + $mytax);		  
 		}		
 		else
-			$value = $price;
+			$value = floatval($price);
 	
 		return ($value);
 	}		

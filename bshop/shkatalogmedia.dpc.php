@@ -212,21 +212,18 @@ class shkatalogmedia {
 		$this->set_order(); //reset ..init 
 
 		$dec_num = remote_paramload('SHKATALOG','decimals',$this->path);
-		$this->decimals = $dec_num?$dec_num:2;   
+		$this->decimals = $dec_num ? $dec_num : 2;   
 	   
 		$toggle = remote_arrayload('SHKATALOG','toggler',$this->path);  
 		$deftoggle = array(0=>'no',1=>'yes');
-		if (!empty($toggle))
-			$this->toggler = $toggle;
-		else
-			$this->toggler = $deftoggle;	  	  
+		$this->toggler = (!empty($toggle)) ? $toggle : $deftoggle;	  	  
 
 		$this->title = localize('SHKATALOGMEDIA_DPC',getlocal());
-		$this->restype = $rt?$rt:$this->restype;	 //parent restype when no additional files....	  
+		$this->restype = $rt ? $rt : $this->restype;	 //parent restype when no additional files....	  
 	  
 		$rt = remote_arrayload('SHKATALOGMEDIA','restype',$this->path);
 		$rd = array('.jpg','.png');
-		$this->advrestype = $rt?$rt:$rd;	 //advanced retypes to support multiple files as .png .swf ....
+		$this->advrestype = $rt ? $rt : $rd;	 //advanced retypes to support multiple files as .png .swf ....
 	  
 		$this->onlyincategory = remote_paramload('SHKATALOGMEDIA','onlyincategory',$this->path);	
 		$this->oneitemlist = remote_paramload('SHKATALOGMEDIA','oneitemlist',$this->path);
@@ -1042,12 +1039,11 @@ SCROLLTOP;
 	}
 
 	/* xml read */
-	protected function xmlread_list() {
+	/*protected function xmlread_list() {
         $db = GetGlobal('db');	 	
 		$cat = GetReq('cat');				
 		$xmlitems = GetReq('xml');		
 		
-	    /*$sSQL = $this->selectSQL;*/
 		if (!defined('RCXMLFEEDS_DPC')) return 'RCXMLFEEDS DPC not loaded'; //dpc cmds needed
 		$sf = _v('rcxmlfeeds.select_fields'); //remote_arrayload('RCXMLFEEDS','selectfields',$this->path);			
 		$myfields = implode(',', $sf);	
@@ -1082,10 +1078,10 @@ SCROLLTOP;
 		$sSQL .= " ORDER BY ".$this->itmname .' '. $this->sortdef; //$this->orderid;
 
 	    $this->result = $db->Execute($sSQL,2);
-	}	
+	}*/	
 
 	/* xml read 2*/
-	protected function xmlread_list2() {
+	protected function xmlread_list() {
         $db = GetGlobal('db');	 	
 		$cat = GetReq('cat');				
 		$xmlitems = GetReq('xml');		
@@ -1370,11 +1366,11 @@ SCROLLTOP;
 		    $availability = $this->show_availability($rec['ypoloipo1']);	
 		    $details = null;
             $detailink = null;
-		    $itemlink = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]); 
-		    $itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 		   
+		    $itemlink = $this->httpurl .'/' . _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]); 
+		    $itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 		   
 		   		   
 		  											 
-		    $tokens[] = $itemlinkname;//$rec[$this->itmname];
+		    $tokens[] = $itemlinkname;
 			$tokens[] = $rec[$this->itmdescr];
 			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$cat,$pz,null,$rec[$this->itmname]);
 			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()) .'/'. localize($rec['uniname2'],getlocal()):
@@ -1425,7 +1421,7 @@ SCROLLTOP;
 			$tokens[] = $rec['dimensions'];
 			$tokens[] = $rec['size'];
 			$tokens[] = $rec['color'];				
-			$tokens[] = $rec['manufacurer'];
+			$tokens[] = $rec['manufacturer'];
 
 			$tokens[] = $rec['code1']; //40
 			$tokens[] = $rec['code2'];				
@@ -1530,12 +1526,12 @@ SCROLLTOP;
 			$availability = $this->show_availability($rec['ypoloipo1']);		
 			$details = null;
 			$detailink = null;		   
-			$itemlink = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]); 
-			$itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 			   
+			$itemlink = $this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]); 
+			$itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 			   
 		   
 		   
             //// tokens method												 
-		    $tokens[] = $itemlinkname;//$rec[$this->itmname];
+		    $tokens[] = $itemlinkname;
 			$tokens[] = $rec[$this->itmdescr];
 			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$cat,$pz,null,$rec[$this->itmname]);
 			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()).'/'.localize($rec['uniname2'],getlocal()) :
@@ -1586,7 +1582,7 @@ SCROLLTOP;
 			$tokens[] = $rec['dimensions'];
 			$tokens[] = $rec['size'];
 			$tokens[] = $rec['color'];				
-			$tokens[] = $rec['manufacurer'];	
+			$tokens[] = $rec['manufacturer'];	
 			
 			$tokens[] = $rec['code1']; //40
 			$tokens[] = $rec['code2'];				
@@ -1654,9 +1650,9 @@ SCROLLTOP;
 			else
                 $icon_cart = null;	
 			
-			$_u = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]);
-			$itemlink =  $_u; 
-		    $detailink = $_u . '#details'; 	   
+			$_u = _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]);
+			$itemlink =  $this->httpurl . '/' . $_u; 
+		    $detailink = $this->httpurl . '/' . $_u . '#details'; 	   
 			$availability = $this->show_availability($rec['ypoloipo1']);	
 			 
 	        $linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
@@ -3093,7 +3089,7 @@ SCROLLTOP;
 	}
 	
 	/* rcxml feed */
-	protected function xml_feed() {
+	/*protected function xml_feed() {
 		$db = GetGlobal('db');	  
 		$format = GetReq('format') ? GetReq('format') : 'sitemap';		
 		$code = $this->fcode;
@@ -3141,33 +3137,37 @@ SCROLLTOP;
 		$ret = $this->combine_tokens($xmltemplate, $tt, true);
 		unset($tt);
 		return ($ret);		
-	}	
+	}	*/
 	
 	/* rcxml feed 2 */
-	protected function xml_feed2() {
+	protected function xml_feed() {
 		$db = GetGlobal('db');	  
 		$format = GetReq('format') ? GetReq('format') : 'sitemap';		
 		$item_code = $this->fcode;
 		$sep = $this->sep();
-		$xmlf = 1;//_m('cms.paramload use xmlf');	
+		$xmlf = _m('cms.paramload use URL+friendly'); //.html	
 
 		$xmltemplate = $this->select_template($format);
 		$xmltemplate_products = $this->select_template($format . '-items');
-		$imgxmlPath = 'images/pics/';//_m('cms.paramload use xmlpics'); //else use img token	
+		$imgxmlPath = 'images/pics/';//_m('cms.paramload use XML+xmlpics'); //else use img token	
 		 
 		$tokens = array();
 		$items = array();
+		
+		$pp = $this->read_policy(); 
 	    	
 		foreach ($this->result as $n=>$rec) {	
 		    $tokens = array(); //reset
+			
+		    $id2 = $rec['p5'] ? $rec['p5'] : $rec[$item_code]; //url friendly			
 			
 			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
 			$price = ($rec[$pp]>0) ? $this->spt($rec[$pp]) : $this->zeroprice_msg;
 			$availability = $this->show_availability($rec['ypoloipo1']);	
 		    $details = null;
             $detailink = null;
-		    $itemlink = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]); 
-		    $itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]);
+		    $itemlink = $this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]); 
+		    $itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&id=" . $rec[$item_code] . "+". $rec[$this->itmname]);
 			
 			//tokens
 		    $tokens[] = $itemlinkname;
@@ -3184,15 +3184,20 @@ SCROLLTOP;
 			$tokens[] = $details;
 			$tokens[] = $detailink;
 			$tokens[] = $rec[$item_code]; //10
-			$tokens[] = $itemlink;	
+			
+			$tokens[] = ($xmlf) ? $this->httpurl .'/'. $cat .'/'. $id2 . $xmlf :
+								  $itemlink;	
 			  
 			$tokens[] = $in_cart?$in_cart:'0';
 			$tokens[] = $array_cart;
 
-            $tokens[] = $this->get_photo_url($rec[$item_code],$pz);	
+            $tokens[] = ($imgxmlPath) ?
+			            $this->httpurl . '/' . $imgxmlPath . $rec[$item_code] . $this->restype :
+			            $this->get_photo_url($rec[$item_code],$pz);	
+						
             $tokens[] = $rec[$this->getmapf('lastprice')];	
             $tokens[] = $rec[$this->itmname]; 
-            $tokens[] = $cat;   
+            $tokens[] = _m("cmsrt.replace_spchars use $cat+1");  
 
             $tokens[] = $this->item_has_discount($rec[$item_code]);
             $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				  
@@ -3221,21 +3226,24 @@ SCROLLTOP;
 			$tokens[] = $rec['dimensions'];
 			$tokens[] = $rec['size'];
 			$tokens[] = $rec['color'];				
-			$tokens[] = $rec['manufacurer'];
+			$tokens[] = $rec['manufacturer'];
 
 			$tokens[] = $rec['code1']; //40
 			$tokens[] = $rec['code2'];				
 			$tokens[] = $rec['code3'];			
 			$tokens[] = $rec['code4'];	
 			$tokens[] = $rec['resources']; 
-			$tokens[] = $rec['ypoloipo1'];				
+			$tokens[] = $rec['ypoloipo1'] ;
+			$tokens[] = $rec['ypoloipo1'] ? '1' : '0';				
 			
-				
-		    $id2 = $rec['p5'] ? $rec['p5'] : $rec[$item_code]; //url friendly		
-			$tokens[61] = ($xmlf) ? $this->httpurl . '/' . $cat . '/' . $id2 . '.html' :
+			$pwt = $this->pricewithtax($price, _v('shcart.tax'));
+			$tokens[] = number_format($pwt, $this->decimals,',','.'); //(floatval($price)*24/100)+floatval($price)
+			
+			/*			
+			$tokens[61] = ($xmlf) ? $this->httpurl . '/' . $cat . '/' . $id2 . $xmlf :
 								    $this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=$id2"); 
 			$tokens[62] = $this->httpurl . '/' . $imgxmlPath . $rec[$item_code] . $this->restype;
-
+			*/
 			//if ($n==0) print_r($tokens);
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					
 		}
@@ -3448,11 +3456,11 @@ SCROLLTOP;
 	public function spt($price,$tax=null) {
 
 		if ($tax) 
-			$p = $this->pricewithtax($price,$tax);	  
+			$p = $this->pricewithtax($price, $tax);	  
 		elseif ($this->is_reseller) 
 			$p = $price;
 		elseif ((defined('SHCART_DPC')) && (_v('shcart.showtaxretail'))) 
-			$p = $this->pricewithtax($price,$tax);
+			$p = $this->pricewithtax($price, _v('shcart.tax'));
 		else
 			$p = $price;		
 
@@ -3843,23 +3851,30 @@ EOF;
 		$r .= "</select>";
 				
 		return ($r);  
-	}		
+	}
+
+	public function fnum($n, $dec_digits, $dp=null, $tp=null) {
+	  $dec = $dp ? $dp : $this->decimals;
+      $ret = number_format(floatval($n),$dec_digits,$dec,$tp);
+      return ($ret);	  
+	}	
 	
 	public function pricewithtax($price,$tax=null) {
 	
-		if (defined('SHCART_DPC')) {
-			$tax = _v('shcart.tax'); 
-			$mytax = (($price*$tax)/100);	
-			$value = ($price+$mytax);		  
+		if ($tax) {
+			$mytax = ((floatval($price) * $tax)/100);	
+			$value = (floatval($price) + $mytax);		  
 		}
-		elseif ($tax) {
-			$mytax = (($price*$tax)/100);	
-			$value = ($price+$mytax);		  
-		}
-		else
-			$value = $price;
+		else {
+			if (defined('SHCART_DPC')) {
+				$tax = _v('shcart.tax'); 
+				$mytax = ((floatval($price) * $tax)/100);	
+				$value = (floatval($price) + $mytax);		  
+			}
+			else		
+				$value = floatval($price);
+		}	
 	
-	  
 		return ($value);
 	}	
 	
