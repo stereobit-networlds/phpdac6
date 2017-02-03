@@ -325,7 +325,8 @@ class shkatalogmedia {
 										_m("cmsvstats.update_item_statistics use $item+cartin");
 									}
 									if (_v("shcart.fastpick")) {
-										$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_BLN1', getlocal()));									
+										//double empty msg
+										//$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_BLN1', getlocal()));									
 										$this->javascript(); //katalog filters
 									}	
 									break; 
@@ -335,9 +336,10 @@ class shkatalogmedia {
 										$item = $cartstr[0];
 										_m("cmsvstats.update_item_statistics use $item+cartout");
 									}	
-
-									if (_v("shcart.fastpick"))
-										$this->jsDialog($this->replace_cartchars($cartstr[1], true), localize('_BLN2', getlocal()) . ' (-)');									
+									
+									//double empty msg
+									//if (_v("shcart.fastpick"))
+										//$this->jsDialog($this->replace_cartchars($cartstr[1], true), localize('_BLN2', getlocal()) . ' (-)');									
 									break;		
 		
 			case 'showimage'    : 	$this->show_photodb(GetReq('id'), GetReq('type'));
@@ -1039,48 +1041,6 @@ SCROLLTOP;
 	}
 
 	/* xml read */
-	/*protected function xmlread_list() {
-        $db = GetGlobal('db');	 	
-		$cat = GetReq('cat');				
-		$xmlitems = GetReq('xml');		
-		
-		if (!defined('RCXMLFEEDS_DPC')) return 'RCXMLFEEDS DPC not loaded'; //dpc cmds needed
-		$sf = _v('rcxmlfeeds.select_fields'); //remote_arrayload('RCXMLFEEDS','selectfields',$this->path);			
-		$myfields = implode(',', $sf);	
-		$sSQL = "select id," . $myfields . " from products";		
-		$sSQL .= " WHERE ";	
-
-		if ($cat!=null) {		   
-		  
-			$cat_tree = explode($this->sep(), $cat); 		  
-		      	  
-			if ($cat_tree[0])
-				$whereClause .= ' cat0='.$db->qstr($this->replace_spchars($cat_tree[0],1));		
-			elseif ($this->onlyincategory)
-				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
-			if ($cat_tree[1])	
-				$whereClause .= ' and cat1='.$db->qstr($this->replace_spchars($cat_tree[1],1));	
-			elseif ($this->onlyincategory)
-				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
-			if ($cat_tree[2])	
-				$whereClause .= ' and cat2='.$db->qstr($this->replace_spchars($cat_tree[2],1));	
-			elseif ($this->onlyincategory)
-			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
-			if ($cat_tree[3])	
-				$whereClause .= ' and cat3='.$db->qstr($this->replace_spchars($cat_tree[3],1));
-			elseif ($this->onlyincategory)
-				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
-		   		
-		}   
-		$sSQL .= $whereClause ? $whereClause . " AND " : null;
-		  
-		$sSQL .= $xmlitems ? "xml=1 and itmactive>0 and active>0" : "itmactive>0 and active>0";		  		   
-		$sSQL .= " ORDER BY ".$this->itmname .' '. $this->sortdef; //$this->orderid;
-
-	    $this->result = $db->Execute($sSQL,2);
-	}*/	
-
-	/* xml read 2*/
 	protected function xmlread_list() {
         $db = GetGlobal('db');	 	
 		$cat = GetReq('cat');				
@@ -1465,7 +1425,8 @@ SCROLLTOP;
 			$cart_qty = 1;//???
 			if (defined("SHCART_DPC")) {
 				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]); 
-				$icon_cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
+				//$icon_cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);
+				$icon_cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;",1);
 				$array_cart = $this->read_qty_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				
 			    $units = $rec['uniname2'] ? localize($rec['uniname1'],$lan).'/'.localize($rec['uniname2'],$lan):
@@ -2914,67 +2875,13 @@ SCROLLTOP;
 	}
 	
 	/* rcxml feed */
-	/*protected function xml_feed() {
-		$db = GetGlobal('db');	  
-		$format = GetReq('format') ? GetReq('format') : 'sitemap';		
-		$code = $this->fcode;
-		$sep = $this->sep();	
-
-		if (!defined('RCXMLFEEDS_DPC')) return 'RCXMLFEEDS DPC not loaded'; //dpc cmds needed
-		$sf = _v('rcxmlfeeds.select_fields'); //remote_arrayload('RCXMLFEEDS','selectfields',$this->path); 
-		$sp = _v('rcxmlfeeds.savepath'); //$this->urlpath . remote_paramload('RCXMLFEEDS','savepath',$this->path);
-	    if (($format) && (is_readable($sp .'/'. $format.'.xht'))) {
-	        $xmltemplate = @file_get_contents($sp .'/'. $format.'.xht');
-			$xmltemplate_products = @file_get_contents($sp .'/'. $format.'.xhm');
-			//echo '>SEE:',$xmltemplate_products;
-		}
-        else
-            return false;		
-		
-		$imgxmlPath = _v('rcxmlfeeds.imgpath'); 
-		$tokens = array();
-		$items = array();		
-		foreach ($this->result as $n=>$rec) {	
-		    $tokens = array(); //reset 
-			foreach ($sf as $i=>$f) {
-				//$recarray[$f] = $rec[$f];
-				$tokens[] = $rec[$f];
-			} 
-		    $id = $rec[$code];	
-			$cat = $rec['cat0'] ? $rec['cat0'] : null;
-			$cat .= $rec['cat1'] ? $sep . $rec['cat1'] : null;
-			$cat .= $rec['cat2'] ? $sep . $rec['cat2'] : null;
-			$cat .= $rec['cat3'] ? $sep . $rec['cat3'] : null;
-			$cat .= $rec['cat4'] ? $sep . $rec['cat4'] : null;
-			
-			$_cat = _m('cmsrt.replace_spchars use '.$cat);
-	
-			$tokens[] = $this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$_cat&id=$id"); 
-			$tokens[] = $this->httpurl . '/' . $imgxmlPath . $id . $this->restype;
-			$tokens[] = $cat;
-			//if ($n==0) print_r($tokens);
-			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					
-		}
-		
-		$tt = array();
-		$tt[] = date('Y-m-d h:m'); 
-		$tt[] = implode("", $items);
-		$ret = $this->combine_tokens($xmltemplate, $tt, true);
-		unset($tt);
-		return ($ret);		
-	}	*/
-	
-	/* rcxml feed 2 */
-	protected function xml_feed() {
-		$db = GetGlobal('db');	  
-		$format = GetReq('format') ? GetReq('format') : 'sitemap';		
-		$item_code = $this->fcode;
-		//$sep = $this->sep();
-		$xmlf = _m('cms.paramload use URL+friendly'); //.html	
+	protected function xml_feed() {  
+		$format = GetReq('format') ? GetReq('format') : 'sitemap';			
 
 		$xmltemplate = $this->select_template($format);
 		$xmltemplate_products = $this->select_template($format . '-items');
-		$imgxmlPath = 'images/pics/';//_m('cms.paramload use XML+xmlpics'); //else use img token	
+		$imgxmlPath = _m('cms.paramload use CMS+xmlpics'); //else use img token	
+		$canonical = _m('cms.paramload use CMS+canonical'); //.html		
 		 
 		$items = array();
 		
@@ -2982,7 +2889,7 @@ SCROLLTOP;
 	    	
 		foreach ($this->result as $n=>$rec) {	
 			
-			$tokens = $this->tokenizeRecord($rec, $pp, null, false, 2, $imgxmlPath);
+			$tokens = $this->tokenizeRecord($rec, $pp, null, $canonical, 2, $imgxmlPath);
 			//if ($n==0) print_r($tokens);
 			
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					
@@ -3022,20 +2929,24 @@ SCROLLTOP;
 			$tokens[] = number_format(floatval($price),$this->decimals,',','.');
 			
 			if (($cart==true) && (defined("SHCART_DPC"))) {
+				$page = $_GET['page'] ? $_GET['page'] : 0;
+				/*
 				$cart_code  = $rec[$this->fcode];
 				$cart_title = $this->replace_cartchars($rec[$this->itmname]);
 				$cart_group = $cat;
-				$cart_page  = GetReq('page') ? GetReq('page') : 0;
+				$cart_page  = $page;
 				$cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
 				$cart_photo = $rec[$this->fcode];
 				$cart_price = $price; 
 				$cart_qty   = 1;	
 				
 				//$tokens[] = = _m("shcart.showsymbol use $cart_code;$cart_title;;;$cat;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);
-				$tokens[] = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);//'cart';
-				
-				//$array_cart = $this->read_qty_policy($rec[$this->fcode],$price,"$cart_code;$cart_title;;;$cat;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
-				//$in_cart = _m("shcart.getCartItemQty use ".$rec[$this->fcode]);
+				$tokens[] = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);
+				*/
+				$cartstr = $rec[$this->fcode].';'.
+							$this->replace_cartchars($rec[$this->itmname]).';;;'.
+							$cat.';'.$page.';;'.$rec[$this->fcode].';'.$price.';1;';				
+				$tokens[] = _m("shcart.showsymbol use $cartstr",1);			
 			}	
 			else
                 $tokens[] = null;			
@@ -3323,7 +3234,7 @@ SCROLLTOP;
 		return ($v);
 	}			
 	
-	public function read_array_policy($itemcode=null,$price=null,$cart_details=null,$policyqty=null) {
+	/*public function read_array_policy($itemcode=null,$price=null,$cart_details=null,$policyqty=null) {
 		$cat = $pcat ? $pcat : GetReq('cat');
 		$cart_page = GetReq('page') ? GetReq('page') : 0;	  	
 		$cartd = explode(';',$cart_details);
@@ -3358,7 +3269,8 @@ SCROLLTOP;
 					$cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
 					$data[] =	number_format($cartd[8],$this->decimals,',','.');		  
 					$cartout = implode(';',$cartd);
-					$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+					//$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+					$data[] = _m("shcart.showsymbol use $cartout;+0+".$cartd[9],1);
 					$data[] = $itemcode;
 					$data[] = "addcart/$cartout/$cat/0/";
 					$body .= $this->combine_tokens($mylooptemplate,$data,true);	
@@ -3392,7 +3304,8 @@ SCROLLTOP;
 		    $data[] = number_format($cartd[8],$this->decimals,',','.');		  
 			  
 			$cartout = implode(';',$cartd);
-			$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+			//$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+			$data[] = _m("shcart.showsymbol use $cartout;+0+".$cartd[9],1);
 			$data[] = $itemcode;
 			$data[] = "addcart/$cartout/$cat/0/";
 			 
@@ -3402,7 +3315,7 @@ SCROLLTOP;
 		}		
 
         return ($body); 		
-	}
+	}*/
 	
 	//db based, read_array_policy
 	public function read_qty_policy($itemcode=null,$price=null,$cart_details=null,$policyqty=null) {
@@ -3443,7 +3356,8 @@ SCROLLTOP;
 					$cartd[9] = intval($data_array['QTY'][$ix]);//prev line //'12';
 					$data[] =	number_format($cartd[8],$this->decimals,',','.');		  
 					$cartout = implode(';',$cartd);
-					$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+					//$data[] = _m("shcart.showsymbol use $cartout;+$cat+$cart_page+0+".$cartd[9],1);
+					$data[] = _m("shcart.showsymbol use $cartout;+0+".$cartd[9],1);
 					$data[] = $itemcode;
 					$data[] = "addcart/$cartout/$cat/0/";
 					$body .= $this->combine_tokens($mylooptemplate,$data,true);	

@@ -1012,11 +1012,13 @@ function addtocart(id,cartdetails)
 		$this->calculate_shipping();	 		 
 	}
 
-    public function showsymbol($id,$group,$page,$allowremove=null,$qty=null) {
+    public function showsymbol($id,$allowremove=null,$qty=null) {
+	//public function showsymbol($id,$group,$page,$allowremove=null,$qty=null) {	
 		$myqty = $qty ? $qty : 1; 
 		$param = explode(";",$id);
 
-		$gr = $group;
+		$page = $param[5];
+		$gr = $param[4]; //$group;
 		$ar = $id;
 
 		$price = $param[8]; 
@@ -1292,7 +1294,8 @@ function addtocart(id,cartdetails)
 					default :	 $data[] = $link . $details;  break; //$param[0] . "<br/>" . 					
 				}
 
-				$data[] = ($this->status) ? null : $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
+				//$data[] = ($this->status) ? null : $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
+				$data[] = ($this->status) ? null : $this->showsymbol($product,1);//<<allow remove here
 
 				$price = floatval(str_replace(",",".",$param[8]));
 				$sumtotal = ($param[9] * $price);
@@ -1407,7 +1410,8 @@ function addtocart(id,cartdetails)
 					$item = $param[1];
 					$utitle = $this->replace_cartchars($item, true);
 					
-					$addButton = $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
+					//$addButton = $this->showsymbol($product,$param[4],$param[5],1);//<<allow remove here
+					$addButton = $this->showsymbol($product,1);//<<allow remove here
 					$link = _m("cmsrt.url use t=$pview&cat=$cat&id=" . $param[0] ."+" . $utitle); 
 			   
 					$itemphoto = _m("shkatalogmedia.get_photo_url use ".$param[7].'+1');
