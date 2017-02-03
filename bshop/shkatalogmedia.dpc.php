@@ -288,7 +288,7 @@ class shkatalogmedia {
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 							$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
-							"template,owner,itmactive,p1,p2,p3,p4,p5 from products ";					
+							"template,owner,itmactive,p1,p2,p3,p4,p5,code2,code3 from products ";					
     }
 	
 	public function event($event=null) {
@@ -1082,7 +1082,46 @@ SCROLLTOP;
 		$sSQL .= " ORDER BY ".$this->itmname .' '. $this->sortdef; //$this->orderid;
 
 	    $this->result = $db->Execute($sSQL,2);
-	}		
+	}	
+
+	/* xml read 2*/
+	protected function xmlread_list2() {
+        $db = GetGlobal('db');	 	
+		$cat = GetReq('cat');				
+		$xmlitems = GetReq('xml');		
+		
+	    $sSQL = $this->selectSQL;		
+		$sSQL .= " WHERE ";	
+
+		if ($cat!=null) {		   
+		  
+			$cat_tree = explode($this->sep(), $cat); 		  
+		      	  
+			if ($cat_tree[0])
+				$whereClause .= ' cat0='.$db->qstr($this->replace_spchars($cat_tree[0],1));		
+			elseif ($this->onlyincategory)
+				$whereClause .= ' (cat0 IS NULL OR cat0=\'\') ';				  
+			if ($cat_tree[1])	
+				$whereClause .= ' and cat1='.$db->qstr($this->replace_spchars($cat_tree[1],1));	
+			elseif ($this->onlyincategory)
+				$whereClause .= ' and (cat1 IS NULL OR cat1=\'\') ';	 
+			if ($cat_tree[2])	
+				$whereClause .= ' and cat2='.$db->qstr($this->replace_spchars($cat_tree[2],1));	
+			elseif ($this->onlyincategory)
+			 	$whereClause .= ' and (cat2 IS NULL OR cat2=\'\') ';		   
+			if ($cat_tree[3])	
+				$whereClause .= ' and cat3='.$db->qstr($this->replace_spchars($cat_tree[3],1));
+			elseif ($this->onlyincategory)
+				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
+		   		
+		}   
+		$sSQL .= $whereClause ? $whereClause . " AND " : null;
+		  
+		$sSQL .= $xmlitems ? "xml=1 and itmactive>0 and active>0" : "itmactive>0 and active>0";		  		   
+		$sSQL .= " ORDER BY ".$this->itmname .' '. $this->sortdef; //$this->orderid;
+
+	    $this->result = $db->Execute($sSQL,2);
+	}	
 	
 	//override
 	protected function read_item($direction=null,$item_id=null) {
@@ -1091,8 +1130,10 @@ SCROLLTOP;
 		$cat = GetReq('cat');				  	
 		
 	    $sSQL = $this->selectSQL;	
-		$sSQL .= " WHERE ".$this->fcode."=";
-		$sSQL .= $this->codetype=='string' ? $db->qstr($item) : $item;
+		$sSQL .= " WHERE " . $this->fcode."=";
+		$sSQL .= ($this->codetype=='string') ? $db->qstr($item) : $item;
+		//extra code (url friendly)
+		$sSQL .= " OR p5=" . $db->qstr($item);
 		  
 		if (($lock = $this->itemlockparam) && (!GetGlobal('UserID')))
 		    $sSQL .=  ' and ' . $lock . ' is null';		  	  
@@ -1300,23 +1341,15 @@ SCROLLTOP;
 	   	
 	    if (!empty($this->result)) {		   
 
-		 $pp = $this->read_policy();
-
-		 $records = $this->result;  
+		 $pp = $this->read_policy(); 
          $item_code = $this->fcode;			
 	
 	     foreach ($this->result as $n=>$rec) {
 		
 			$mem = memory_get_peak_usage(true);//memory_get_usage();
 	   
-			//$cat = $this->getkategories($rec);
-			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-			$ucat = $cat;
-		   
-			if ($rec[$pp]>0)  
-				$price = $this->spt($rec[$pp]); 
-			else 	 
-				$price = $this->zeroprice_msg;		
+			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
+		    $price = ($rec[$pp]>0) ? $this->spt($rec[$pp]) : $this->zeroprice_msg;	
 		 
 			if (defined("SHCART_DPC")) {
 				$cart_code  = $rec[$this->fcode];
@@ -1337,13 +1370,13 @@ SCROLLTOP;
 		    $availability = $this->show_availability($rec['ypoloipo1']);	
 		    $details = null;
             $detailink = null;
-		    $itemlink = _m("cmsrt.url use t=kshow&cat=$ucat&page=$page&id=".$rec[$item_code]); 
-		    $itemlinkname = _m("cmsrt.url use t=kshow&cat=$ucat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 		   
+		    $itemlink = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]); 
+		    $itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 		   
 		   		   
 		  											 
 		    $tokens[] = $itemlinkname;//$rec[$this->itmname];
 			$tokens[] = $rec[$this->itmdescr];
-			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$ucat,$pz,null,$rec[$this->itmname]);
+			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$cat,$pz,null,$rec[$this->itmname]);
 			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()) .'/'. localize($rec['uniname2'],getlocal()):
 										localize($rec['uniname1'],getlocal());  
 			$tokens[] = $units;		  
@@ -1363,11 +1396,7 @@ SCROLLTOP;
             $tokens[] = $this->get_photo_url($rec[$item_code],$pz);	
             $tokens[] = $rec[$this->getmapf('lastprice')];	
             $tokens[] = $rec[$this->itmname]; 
-			  
-			/*if (GetReq('id') || GetReq('cat') || ($originfunction))
-			     $tokens[] = $this->get_xml_links(null,null,$originfunction);			  
-			else*/
-                $tokens[] = null;   
+            $tokens[] = $cat;   
 
             $tokens[] = $this->item_has_discount($rec[$item_code]);
             $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				  
@@ -1390,13 +1419,27 @@ SCROLLTOP;
 			$tokens[] = $rec['p3'];
 			$tokens[] = $rec['p4'];
 			$tokens[] = $rec['p5'];
+			
+			$tokens[] = $rec['weight'];
+			$tokens[] = $rec['volume'];
+			$tokens[] = $rec['dimensions'];
+			$tokens[] = $rec['size'];
+			$tokens[] = $rec['color'];				
+			$tokens[] = $rec['manufacurer'];
+
+			$tokens[] = $rec['code1']; //40
+			$tokens[] = $rec['code2'];				
+			$tokens[] = $rec['code3'];			
+			$tokens[] = $rec['code4'];	
+			$tokens[] = $rec['resources']; 
+			$tokens[] = $rec['ypoloipo1'];			
 			  
 			if (!$custom_template) {
-                $items_grid[] = $this->combine_tokens($mytemplate, $tokens, true);//<<exec after tokens replace
-                $items_list[] = $this->combine_tokens($mytemplate_alt, $tokens, true);//<<exec after tokens replace			  
+                $items_grid[] = $this->combine_tokens($mytemplate, $tokens, true);
+                $items_list[] = $this->combine_tokens($mytemplate_alt, $tokens, true);		  
 			}
 			else
-			    $items_custom[] = $this->combine_tokens($mytemplate, $tokens, true);//<<exec after tokens replace
+			    $items_custom[] = $this->combine_tokens($mytemplate, $tokens, true);
 			
 			$ogimage[] = $this->get_photo_url($rec[$item_code],2);
 			unset($tokens);			  	 				   	   	   	
@@ -1458,19 +1501,15 @@ SCROLLTOP;
 
 		if (!empty($this->result)) {
 	   
-          $pp = $this->read_policy();			
+          $pp = $this->read_policy();
+		  $item_code = $this->fcode;		  
 	
 	      foreach ($this->result as $n=>$rec) {
 		
 			$mem = memory_get_peak_usage(true);//memory_get_usage();
-			$item_code = $this->fcode;
-			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-			$ucat = $cat;
-		
-			if ($rec[$pp]>0) 
-				$price = $this->spt($rec[$pp]);	
-			else 	 
-				$price = $this->zeroprice_msg;
+
+			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
+		    $price = ($rec[$pp]>0) ? $this->spt($rec[$pp]) : $this->zeroprice_msg;
 		   		   
 			if (defined("SHCART_DPC")) {
 				$cart_qty   = 1;
@@ -1491,14 +1530,14 @@ SCROLLTOP;
 			$availability = $this->show_availability($rec['ypoloipo1']);		
 			$details = null;
 			$detailink = null;		   
-			$itemlink = _m("cmsrt.url use t=kshow&cat=$ucat&page=$page&id=".$rec[$item_code]); 
-			$itemlinkname = _m("cmsrt.url use t=kshow&cat=$ucat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 			   
+			$itemlink = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]); 
+			$itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]); 			   
 		   
 		   
             //// tokens method												 
 		    $tokens[] = $itemlinkname;//$rec[$this->itmname];
 			$tokens[] = $rec[$this->itmdescr];
-			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$ucat,$pz,null,$rec[$this->itmname]);
+			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$cat,$pz,null,$rec[$this->itmname]);
 			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()).'/'.localize($rec['uniname2'],getlocal()) :
 										localize($rec['uniname1'],getlocal());  
 			$tokens[] = $units;// . $incart;			 
@@ -1518,11 +1557,7 @@ SCROLLTOP;
 			$tokens[] = $this->get_photo_url($rec[$item_code],$pz);
 			$tokens[] = $rec[$this->getmapf('lastprice')];
 			$tokens[] = $rec[$this->itmname]; 
-			 
-			/*if (GetReq('id') || GetReq('cat') || ($originfunction))
-			    $tokens[] = $this->get_xml_links(null,null,$originfunction);			  
-			else*/
-               $tokens[] = null; 	
+            $tokens[] = $cat; 	
 
             $tokens[] = $this->item_has_discount($rec[$item_code]);
             $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				 
@@ -1544,7 +1579,21 @@ SCROLLTOP;
 			$tokens[] = $rec['p2']; //30
 			$tokens[] = $rec['p3'];
 			$tokens[] = $rec['p4'];
-			$tokens[] = $rec['p5'];			
+			$tokens[] = $rec['p5'];	
+
+			$tokens[] = $rec['weight'];
+			$tokens[] = $rec['volume'];
+			$tokens[] = $rec['dimensions'];
+			$tokens[] = $rec['size'];
+			$tokens[] = $rec['color'];				
+			$tokens[] = $rec['manufacurer'];	
+			
+			$tokens[] = $rec['code1']; //40
+			$tokens[] = $rec['code2'];				
+			$tokens[] = $rec['code3'];			
+			$tokens[] = $rec['code4'];	
+			$tokens[] = $rec['resources']; 
+			$tokens[] = $rec['ypoloipo1'];			
 						
 			$items[] = $this->combine_tokens($mytemplate, $tokens, true);	
 			unset($tokens);													 
@@ -1583,12 +1632,8 @@ SCROLLTOP;
 		 foreach ($this->result as $n=>$rec) {
 						 
 			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-		   
-			if ($rec[$pp]>0) 
-				$price = $this->spt($rec[$pp],$tax);
-			else 	 
-				$price = $this->zeroprice_msg;	
-		 
+		   	$price = ($rec[$pp]>0) ? $this->spt($rec[$pp]) : $this->zeroprice_msg;
+	
 		    $cart_code = $rec[$item_code];
 			$cart_title = $this->replace_cartchars($rec[$this->itmname]);
 			$cart_group = $cat;
@@ -1652,7 +1697,7 @@ SCROLLTOP;
 			$tokens[] = $rec['size'];
 			$tokens[] = $rec['color'];	
 			 
-			$tokens[] = $this->get_xml_links();
+			$tokens[] = $this->get_xml_links(); //$cat ?
             $tokens[] = $this->item_has_discount($rec[$item_code]);
             $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";			 
 			 
@@ -2652,8 +2697,8 @@ SCROLLTOP;
 
 	    foreach ($result as $n=>$rec) {
 			if ($islink) {
-				$ucat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-				$itemlink = _m("cmsrt.url use t=kshow&cat=$ucat&id=". $rec[$this->fcode] ."+". $rec[$attr]); 
+				$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+				$itemlink = _m("cmsrt.url use t=kshow&cat=$cat&id=". $rec[$this->fcode] ."+". $rec[$attr]); 
 				return ($itemlink);
 			}
 			else
@@ -3087,6 +3132,111 @@ SCROLLTOP;
 			$tokens[] = 'http://' . $this->url . '/' . $imgxmlPath . $id . $this->restype;
 			$tokens[] = $cat;
 			//if ($n==0) print_r($tokens);
+			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					
+		}
+		
+		$tt = array();
+		$tt[] = date('Y-m-d h:m'); 
+		$tt[] = implode("", $items);
+		$ret = $this->combine_tokens($xmltemplate, $tt, true);
+		unset($tt);
+		return ($ret);		
+	}	
+	
+	/* rcxml feed 2 */
+	protected function xml_feed2() {
+		$db = GetGlobal('db');	  
+		$format = GetReq('format') ? GetReq('format') : 'sitemap';		
+		$item_code = $this->fcode;
+		$sep = $this->sep();
+		$xmlf = 1;//_m('cms.paramload use xmlf');	
+
+		$xmltemplate = $this->select_template($format);
+		$xmltemplate_products = $this->select_template($format . '-items');
+		$imgxmlPath = 'images/pics/';//_m('cms.paramload use xmlpics'); //else use img token	
+		 
+		$tokens = array();
+		$items = array();
+	    	
+		foreach ($this->result as $n=>$rec) {	
+		    $tokens = array(); //reset
+			
+			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
+			$price = ($rec[$pp]>0) ? $this->spt($rec[$pp]) : $this->zeroprice_msg;
+			$availability = $this->show_availability($rec['ypoloipo1']);	
+		    $details = null;
+            $detailink = null;
+		    $itemlink = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=".$rec[$item_code]); 
+		    $itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=" . $rec[$item_code] . "+". $rec[$this->itmname]);
+			
+			//tokens
+		    $tokens[] = $itemlinkname;
+			$tokens[] = $rec[$this->itmdescr];
+			$tokens[] = $this->list_photo($rec[$item_code],$xdist,$ydist,$myimageclick,$cat,$pz,null,$rec[$this->itmname]);
+			$units = $rec['uniname2'] ? localize($rec['uniname1'],getlocal()) .'/'. localize($rec['uniname2'],getlocal()):
+										localize($rec['uniname1'],getlocal());  
+			$tokens[] = $units;		  
+			  
+			$tokens[] = $rec['itmremark'];
+			$tokens[] = number_format(floatval($price),$this->decimals,',','.');
+			$tokens[] = $cart;
+			$tokens[] = $availability;
+			$tokens[] = $details;
+			$tokens[] = $detailink;
+			$tokens[] = $rec[$item_code]; //10
+			$tokens[] = $itemlink;	
+			  
+			$tokens[] = $in_cart?$in_cart:'0';
+			$tokens[] = $array_cart;
+
+            $tokens[] = $this->get_photo_url($rec[$item_code],$pz);	
+            $tokens[] = $rec[$this->getmapf('lastprice')];	
+            $tokens[] = $rec[$this->itmname]; 
+            $tokens[] = $cat;   
+
+            $tokens[] = $this->item_has_discount($rec[$item_code]);
+            $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";				  
+		      
+			/*date time */
+			$tokens[] = $rec['year'];  //20
+			$tokens[] = $rec['month'];
+			$tokens[] = $rec['day'];
+			$tokens[] = $rec['time'];
+			$tokens[] = $rec['monthname']; 
+			  
+			$tokens[] = $rec['template'];
+			$tokens[] = $rec['owner'];			  
+			$tokens[] = $rec['itmactive'];
+			
+			$tokens[] = $this->item_has_points($rec[$item_code]);
+			
+			$tokens[] = $rec['p1']; 
+			$tokens[] = $rec['p2']; //30
+			$tokens[] = $rec['p3'];
+			$tokens[] = $rec['p4'];
+			$tokens[] = $rec['p5'];
+			
+			$tokens[] = $rec['weight'];
+			$tokens[] = $rec['volume'];
+			$tokens[] = $rec['dimensions'];
+			$tokens[] = $rec['size'];
+			$tokens[] = $rec['color'];				
+			$tokens[] = $rec['manufacurer'];
+
+			$tokens[] = $rec['code1']; //40
+			$tokens[] = $rec['code2'];				
+			$tokens[] = $rec['code3'];			
+			$tokens[] = $rec['code4'];	
+			$tokens[] = $rec['resources']; 
+			$tokens[] = $rec['ypoloipo1'];				
+			
+				
+		    $id2 = $rec['p5'] ? $rec['p5'] : $rec[$item_code]; //url friendly		
+			$tokens[61] = ($xmlf) ? 'http://' . $this->url . '/' . $cat . '/' . $id2 . '.html' :
+								    'http://' . $this->url . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=$id2"); 
+			$tokens[62] = 'http://' . $this->url . '/' . $imgxmlPath . $rec[$item_code] . $this->restype;
+
+			if ($n==0) print_r($tokens);
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					
 		}
 		
@@ -3818,7 +3968,7 @@ EOF;
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 
-		for ($x=$i;$x<40;$x++)
+		for ($x=$i;$x<60;$x++)
 			$ret = str_replace("$".$x."$",'',$ret);
 		
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {

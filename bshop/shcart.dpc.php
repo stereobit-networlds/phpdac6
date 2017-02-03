@@ -2079,7 +2079,7 @@ function addtocart(id,cartdetails)
 	/*...*/
 	protected function get_user_price_policy() {
 		$db = GetGlobal('db');		
-		//if (!$this->loyalty) return 0;	
+		if (!$this->loyalty) return 0;	
 	    $reseller = GetSessionParam('RESELLER');
 		$id = decode(GetSessionParam('UserID'));
 		$lan = getlocal();		
@@ -2145,7 +2145,7 @@ function addtocart(id,cartdetails)
 				if (!empty($dline)) {
 					$this->ppolicynotes = implode('<br/>',$dline);
 					$this->jsDialog($this->ppolicynotes , localize('_discount', $lan));				
-					//SetSessionParam('ppolicytext', $dtext); //used by html dacpages
+					//SetSessionParam('ppolicytext', $dtext); //used by html dac pages
 				}	
 			}			
 	    }
@@ -2209,7 +2209,16 @@ function addtocart(id,cartdetails)
 			}
 
             //disable point records or used coupon
-			//...		
+			//if ($usedpoints = GetSessionParams('points')) {
+			if ($coupon = GetSessionParams('coupon')) {	
+				$sSQL = "update ppolicy set active=0 where active=1 and code1=" .  $db->qstr($coupon);
+				//echo $sSQL;
+				/*$result = $db->Execute($sSQL);
+				
+				//reset coupon
+				SetSessionParam('coupon', '');
+				SetSessionParam('cdiscount', 0);*/
+			}		
 		}				 
 
 		return ($sumofpoints);		
