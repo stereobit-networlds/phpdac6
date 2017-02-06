@@ -89,6 +89,8 @@ $__LOCALE['SHKATALOGMEDIA_DPC'][41]='_lockrec;Locked record;Η εγγραφή ε
 $__LOCALE['SHKATALOGMEDIA_DPC'][42]='_brands;Brands;Κατασκευαστές';
 $__LOCALE['SHKATALOGMEDIA_DPC'][43]='_price;Price;Τιμή';
 $__LOCALE['SHKATALOGMEDIA_DPC'][44]='_filter;Filter;Φίλτρο';
+$__LOCALE['SHKATALOGMEDIA_DPC'][45]='_incart;Already in cart %d items;Έχετε στο καλάθι %d τεμάχια;';
+$__LOCALE['SHKATALOGMEDIA_DPC'][46]='_cartmsg;Cart message;Ενημέρωση;';
 
 class shkatalogmedia {
 	
@@ -364,6 +366,12 @@ class shkatalogmedia {
 
 			case 'kshow'        :	$this->read_item(); 
 			
+									$incart = _m("shcart.getCartItemQty use " . GetReq('id'));
+									if ($incart) {
+										$this->jsDialog(sprintf(localize('_incart', getlocal()), $incart), 
+														localize('_cartmsg', getlocal()));
+									}				
+									
 									if ($this->userLevelID < 5) 
 										_m("cmsvstats.update_item_statistics use ".GetReq('id'));
 									break;
@@ -863,7 +871,7 @@ SCROLLTOP;
 			if (is_numeric($interface))	  
 				$photo = _m("cmsrt.seturl use t=showimage&id=$code&type=$stype");
 			else  
-				$photo = $interface . '?id='.$code.'&type='.$stype;
+				$photo = '/' . $interface . '?id='.$code.'&type='.$stype;
 		}
 		else {//ordinal image
 			$pfile = $this->encode_image_id($code); //_m('shkategories.encode_image_id use '.$code);

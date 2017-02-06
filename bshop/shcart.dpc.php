@@ -43,6 +43,8 @@ $__EVENTS['SHCART_DPC'][16]= "cart-order";
 $__EVENTS['SHCART_DPC'][17]= "cart-submit";
 $__EVENTS['SHCART_DPC'][18]= "cart-cancel";
 $__EVENTS['SHCART_DPC'][19]= "addtocart"; 
+$__EVENTS['SHCART_DPC'][20]= "carttransport";
+$__EVENTS['SHCART_DPC'][21]= "cartpayment";
 
 $__ACTIONS['SHCART_DPC'][0]= "viewcart";
 $__ACTIONS['SHCART_DPC'][1]= "clearcart";
@@ -64,6 +66,9 @@ $__ACTIONS['SHCART_DPC'][16]= "cart-order";
 $__ACTIONS['SHCART_DPC'][17]= "cart-submit";
 $__ACTIONS['SHCART_DPC'][18]= "cart-cancel";
 $__ACTIONS['SHCART_DPC'][19]= "addtocart"; 
+$__ACTIONS['SHCART_DPC'][20]= "carttransport";
+$__ACTIONS['SHCART_DPC'][21]= "cartpayment";
+
 /*
 $__DPCATTR['SHCART_DPC']['viewcart'] = 'viewcart,1,0,1,0,0,0,0,0,0'; 
 $__DPCATTR['SHCART_DPC']['loadcart'] = 'loadcart,1,0,1,0,0,0,0,0,0'; 
@@ -114,10 +119,11 @@ $__LOCALE['SHCART_DPC'][32]='BankTransfer;Bank transfer;Κατάθεση σε τ
 $__LOCALE['SHCART_DPC'][33]='PayOndelivery;Pay on delivery;Αντικαταβολή';//used by mchoice param
 $__LOCALE['SHCART_DPC'][34]='Invoice;Invoice;Τιμολόγιο';//used by mchoice param
 $__LOCALE['SHCART_DPC'][35]='Receipt;Receipt;Απόδειξη';//used by mchoice param
-$__LOCALE['SHCART_DPC'][36]='CompanyDelivery;Our Delivery Service;Διανομή με όχημα της εταιρείας (εντός θεσσαλονίκης)';//used by mchoice param
+$__LOCALE['SHCART_DPC'][36]='CompanyDelivery;Our Delivery Service;Διανομή με όχημα της εταιρείας (εντός θεσσαλονίκης)';
 $__LOCALE['SHCART_DPC'][37]='Logistics;3d Party Logistic Service;Μεταφορική εταιρεία';//used by mchoice param
 $__LOCALE['SHCART_DPC'][38]='Courier;Courier;Courier';//used by mchoice param
 $__LOCALE['SHCART_DPC'][39]='CustomerDelivery;Self Service;Παραλαβή απο το κατάστημα μας';//used by mchoice param
+$__LOCALE['SHCART_DPC'][40]='PayOnCompanyDelivery;Pay at delivery;Πληρωμή κατα την παράδοση (εντός θεσσαλονίκης)';
 
 $__LOCALE['SHCART_DPC'][41]='_RESET;Reset;Καθαρισμός';
 $__LOCALE['SHCART_DPC'][42]='_EMPTY;Empty;Αδειο';
@@ -195,7 +201,7 @@ class shcart extends storebuffer {
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
     var $twig_invoice_template_name, $appname, $mtrackimg; 
     var $agentIsIE, $baseurl, $fastpick, $continue_shopping_goto_cmd;
-	var $loyalty, $ppolicynotes;	
+	var $loyalty, $ppolicynotes, $isValidCoupon;	
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
@@ -302,6 +308,7 @@ class shcart extends storebuffer {
 		$this->cartloopdata = null;   
 		$this->looptotals = null;	
 		$this->ppolicynotes = null;	
+		$this->isValidCoupon = GetSessionParam('coupon') ? true : false;
 
 		$this->status = GetSessionParam('cartstatus') ? GetSessionParam('cartstatus') : 0;			
 		$this->total = floatval(GetSessionParam('subtotal'));
@@ -338,6 +345,15 @@ class shcart extends storebuffer {
     public function event($event) {
 
 		switch ($event) {
+			
+			case "carttransport" : 	//$ps = $this->roadDetails();
+			                        $ps.= $this->payway2();
+									//$ps.= $this->payDetails();
+									die("transportdetails|" . $ps);
+									break;	
+			case "cartpayment"   : 	$ps = $this->payDetails();
+									die("paymentdetails|" . $ps);
+									break;									
 			
 			case "addtocart"     : 	$p = $this->addtocart();
 									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN1', getlocal()));
@@ -443,6 +459,9 @@ class shcart extends storebuffer {
     public function action($act=null) {	
 
 		switch ($act) {
+			case "carttransport": 	break;				
+			case "cartpayment"  : 	break;				
+			
 			case "sship"     	:   $out .= $this->show_supershipping();
 									break;
 	   
@@ -734,23 +753,23 @@ function addtocart(id,cartdetails)
     public function submit_order($sendordermail=null, $invoice_template=null) {
 		$myuser = GetGlobal('UserID');	
 		$user = decode($myuser);
-		$pways = remote_arrayload('SHCART','payways',$this->path);
-		$rways = remote_arrayload('SHCART','roadways',$this->path);
-		$payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
-		$roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
-		$invway = GetParam('invway')?GetParam('invway'):GetSessionParam('invway');	
-		$sxolia = GetParam('sxolia')?GetParam('sxolia'):GetSessionParam('sxolia');
+		//$pways = remote_arrayload('SHCART','payways',$this->path);
+		//$rways = remote_arrayload('SHCART','roadways',$this->path);
+		$payway = $this->getDetailSelection('payway');
+		$roadway = $this->getDetailSelection('roadway');
+		$invway = $this->getDetailSelection('invway');	
+		$sxolia = $this->getDetailSelection('sxolia');
 
 		/*when goto save transaction html, customer/user = mail of customer, problem when user mail,cus mail diff */
 		/*search by customerway / cart customer selection*/
 		$customer = GetSessionParam('customerway') ? GetSessionParam('customerway') : $user;
 		$fkey = 	is_numeric($customer) ? 'id' : 'mail';  
-	   
+	    /*
 		if (!empty($pways))   
 			$p = array_keys($pways,$payway);//print_r($p);
 		if (!empty($rways))   	 
 			$r = array_keys($rways,$roadway);//print_r($r); echo ' >';
-	   
+	    */
 		$this->quick_recalculate();//re-update prices and totals
 	   	   
 		$qty = $this->qty_total;//getcartItems();
@@ -1096,9 +1115,9 @@ function addtocart(id,cartdetails)
 			default : 	$myaction = _m('cmsrt.url use t=cart-checkout'); 
 		}		
 	   
-		$payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
-		$roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
-		$invway = GetParam('invway')?GetParam('invway'):GetSessionParam('invway');	    
+		$payway = $this->getDetailSelection('payway');
+		$roadway = $this->getDetailSelection('roadway');
+		$invway = $this->getDetailSelection('invway');    
 	   
 		$status = $status ? $status : GetReq('status');
    
@@ -1529,7 +1548,16 @@ function addtocart(id,cartdetails)
  		$this->mailerror = $this->cart_mailto($usermail,$subject,$mailout);		    			  
 		  
 		return ($this->mailerror);
-	}	
+	}
+
+	public function getDetailSelection($selection=null) {
+		if (!$selection) return null;
+		
+		$ret = GetParam($selection) ? GetParam($selection) :
+									  GetSessionParam($selection);
+									  
+		return ($ret);							  
+	}
 	
 	public function payway() {
 	    $pways = remote_arrayload('SHCART','payways',$this->path);
@@ -1537,7 +1565,8 @@ function addtocart(id,cartdetails)
 		   
 		$defpay = remote_arrayload('SHCART','payway_default',$this->path);
 		$default_pay = $defpay ? $defpay : 0;
-        $payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');		   
+        //$payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');		   
+		$payway = $this->getDetailSelection('payway');
 		   		   
 		foreach ($pways as $i=>$w) {
 		    $lans_titles = explode('/',$w);
@@ -1561,9 +1590,9 @@ function addtocart(id,cartdetails)
 						$tokens[] = $s1 ? $s1 : $subtokens;						 
 						break;
 	         case 3 :
-		     case 2 :	$mypway = GetParam("payway")?GetParam("payway"):GetSessionParam("payway");
+		     case 2 :	//$mypway = GetParam("payway")?GetParam("payway"):GetSessionParam("payway");
 						//hold param
-						SetSessionParam('payway',$mypway);	
+						SetSessionParam('payway', $payway); //$mypway);	
 						$subtokens[] = localize($mypway, getlocal());
 						$s1 = $this->get_selection_text('payway',$subtokens);
 						$tokens[] = $s1 ? $s1 :$subtokens;						 				 
@@ -1573,7 +1602,67 @@ function addtocart(id,cartdetails)
 		}
 
 		return ($tokens);
+	}
+
+	public function payway2() {
+		$db = GetGlobal('db');	
+		$lan = getlocal();		
+
+        switch ($this->status) {
+			 case 1 :	$template = _m('cmsrt.select_template use ppay');
+						$subtemplate = _m('cmsrt.select_template use ppayline');
+		                //$payway = GetReq('payway');
+						$roadway = GetReq('roadway');
+
+						$sSQL = "select code,title,lantitle,notes from ppayments where active=1";
+						$sSQL.= $roadway ? " and tcodes like '%$roadway%'" : null;
+						$sSQL.= " order by orderid";
+						$res = $db->Execute($sSQL);	
+						//return $sSQL;
+						foreach ($res as $i=>$rec) {
+							$title = $rec['lantitle'] ? localize($rec['lantitle'], $lan) : $rec['title'];
+							$tokens = array($rec['code'], $title, $rec['notes']);
+							$options[] = $this->combine_tokens($subtemplate, $tokens, true);
+							unset ($tokens);
+						}
+						if (!empty($options)) {
+							$opt = implode('', $options);
+							$tokens2 = array('payway', $opt);
+							return $this->combine_tokens($template, $tokens2, true);
+						}	
+						break;
+	         case 3 :
+		     case 2 :	$payway = $this->getDetailSelection('payway');
+						SetSessionParam('payway',$payway);
+						return (localize($payway, $lan));
+	 							 					 
+						break;
+
+			 default : return null;
+		}
 	}	
+	
+	public function payDetails() {
+		$db = GetGlobal('db');	
+		$lan = getlocal();
+		//$payway = $this->getDetailSelection('payway');
+		$code = GetReq('select') ? GetReq('select') : GetParam('payway');		
+
+		$sSQL = "select notes from ppayments ";
+		if ($code) {
+			$sSQL.= "where code=" . $db->qstr($code);
+		}	
+		else { 
+		    if ($roadway = GetReq('roadway')) 
+				$sSQL.= "where tcodes like '%$roadway%' and active=1 order by orderid LIMIT 1";
+			else
+				$sSQL.= "where active=1 order by orderid LIMIT 1";
+		}	
+		
+		$res = $db->Execute($sSQL);	
+
+		return $res->fields[0];			
+	}
 
 	public function roadway() {
 	    $ways = remote_arrayload('SHCART','roadways',$this->path);
@@ -1630,6 +1719,58 @@ function addtocart(id,cartdetails)
 
 		return ($tokens);
 	}
+	
+	public function roadway2() {
+		$db = GetGlobal('db');	
+		$lan = getlocal();
+
+        switch ($this->status) {
+			 case 1 :	$template = _m('cmsrt.select_template use ptrans');
+						$subtemplate = _m('cmsrt.select_template use ptransline');
+		
+						$sSQL = "select code,title,lantitle,notes from ptransports ";
+						$sSQL.= "where active=1 order by orderid";
+						$res = $db->Execute($sSQL);	
+						//echo $sSQL;
+						foreach ($res as $i=>$rec) {
+							$title = $rec['lantitle'] ? localize($rec['lantitle'], $lan) : $rec['title'];
+							$tokens = array($rec['code'], $title, $rec['notes']);
+							$options[] = $this->combine_tokens($subtemplate, $tokens, true);
+							unset ($tokens);
+						}
+						if (!empty($options)) {
+							$opt = implode('', $options);
+							$tokens2 = array('roadway', $opt);
+							return $this->combine_tokens($template, $tokens2, true);
+						}	
+						break;
+	         case 3 :
+		     case 2 :	$roadway = $this->getDetailSelection('roadway');
+						SetSessionParam('roadway',$myrway);
+						return (localize($roadway, $lan));
+	 							 					 
+						break;
+
+			 default : return null;
+		}
+	}	
+	
+	public function roadDetails() {
+		$db = GetGlobal('db');	
+		$lan = getlocal();
+		//$roadway = $this->getDetailSelection('roadway');
+		$code = GetReq('select') ? GetReq('select') : GetParam('roadway');
+		
+		$sSQL = "select notes from ptransports ";
+		if ($code)
+			$sSQL.= "where code=" . $db->qstr($code);
+		else
+			$sSQL.= "where active=1 order by orderid LIMIT 1";
+		
+		$res = $db->Execute($sSQL);	
+
+		return $res->fields[0];	
+	}	
 	
 	public function invoiceway() {
 		$ways = remote_arrayload('SHCART','invways',$this->path);
@@ -1830,7 +1971,8 @@ function addtocart(id,cartdetails)
 	public function comments() {
 	
         switch ($this->status) {
-			case 1  :	$subtokens[] = "<input class=\"myf_input\" type=\"text\" name=\"sxolia\" maxlenght=\"255\" value=\"$this->sxolia\">";
+			case 1  :	//DISABLED FIELD sxolia.htm (USE FIELD INSIDE SHCART.htm)
+			            $subtokens[] = "<input class=\"myf_input\" type=\"text\" name=\"sxolia\" maxlenght=\"255\" value=\"{$this->sxolia}\">";
 						$s1 = $this->get_selection_text('sxolia',$subtokens);	
 						$tokens[] = $s1 ? $s1 : $subtokens;	  
 						break;
@@ -1877,6 +2019,32 @@ function addtocart(id,cartdetails)
 		$out = $this->combine_tokens($mytemplate,$params,true);
 		return ($out);	   	    	
 	}	
+	
+	//standart roadway, payway costs
+	protected function calcShipping() {
+		$db = GetGlobal('db');	
+		$lan = getlocal();
+
+		if ($code = GetParam('roadway')) {
+			$sSQL.= "select cost from ptransports where code=" . $db->qstr($code);
+		}	
+		$res = $db->Execute($sSQL);	
+		$tcost = $res->fields[0];
+		
+		if ($code = GetParam('payway')) {
+			$sSQL.= "select cost from ppayments where code=" . $db->qstr($code);
+		}			
+		$res = $db->Execute($sSQL);	
+		$pcost = $res->fields[0];
+		
+		$result = floatval($tcost) + floatval($pcost);
+		
+		//save shipping cost
+		$this->shippingcost = $result;
+		SetSessionParam('shipcost', $this->shippingcost);
+		
+		return ($result);			
+	}
 	
 	protected function calculate_shipping() {
 		$ways = remote_arrayload('SHCART','roadways',$this->path);
@@ -2016,11 +2184,16 @@ function addtocart(id,cartdetails)
 	    $tr_id = $this->transaction_id ? $this->transaction_id : $transno;
 		$tokens[] = $tr_id; 	
 
-        $payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
-        $roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
-        $invway = GetParam('invway')?GetParam('invway'):GetSessionParam('invway');	   
-        $addressway = GetParam('addressway')?GetParam('addressway'):GetSessionParam('addressway');	   
-        $sxolia = GetParam('sxolia')?GetParam('sxolia'):GetSessionParam('sxolia');		   
+        //$payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
+		$payway = $this->getDetailSelection('payway');
+        //$roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
+		$roadway = $this->getDetailSelection('roadway');
+        //$invway = GetParam('invway')?GetParam('invway'):GetSessionParam('invway');	   
+		$invway = $this->getDetailSelection('invway');
+        //$addressway = GetParam('addressway')?GetParam('addressway'):GetSessionParam('addressway');	   
+		$addressway = $this->getDetailSelection('addressway');
+        //$sxolia = GetParam('sxolia')?GetParam('sxolia'):GetSessionParam('sxolia');		   
+		$sxolia = $this->getDetailSelection('sxolia');
 
 		$myst = remote_paramload('SHCART','onsuccessgototitle',$this->path);
         $onsuccess = explode('/',$myst); 
@@ -2101,6 +2274,7 @@ function addtocart(id,cartdetails)
 					
 					SetSessionParam('coupon', $coupon);
 					SetSessionParam('cdiscount', $cdiscount);
+					$this->isValidCoupon = true;
 					
 					$this->jsDialog(localize('_couponvalid', $lan), 
 									localize('_discount', $lan) . ': '. $cdiscount . '%');	
@@ -2164,6 +2338,7 @@ function addtocart(id,cartdetails)
 					
 					SetSessionParam('coupon', $coupon);
 					SetSessionParam('cdiscount', $cdiscount);
+					$this->isValidCoupon = true;
 					
 					$this->jsDialog(localize('_couponexist', $lan), 
 									localize('_discount', $lan) . ': '. $cdiscount . '%');	
@@ -2176,6 +2351,10 @@ function addtocart(id,cartdetails)
 	    }
 		
 	    return ($ret ? $ret : 0);
+	}
+
+	public function validCoupon() {
+		return $this->isValidCoupon;
 	}	
 	
 	protected function savePoints($user, $trid) {
@@ -2607,7 +2786,7 @@ function addtocart(id,cartdetails)
 		return ($ret);	
 	}
 	
-	public function getCartItemQty($id=null) {
+	public function getCartItemQty($id=null, $default=null) {
 		$qtymeter = 0;
 		if (!$id) return;
 	
@@ -2617,7 +2796,8 @@ function addtocart(id,cartdetails)
 				$qtymeter+=$data[9];
 			}
 		}
-		return ($qtymeter);
+		
+		return ($default ? $default : $qtymeter);		
 	}	
 	
 	protected function colideCart() {

@@ -189,6 +189,22 @@ class cms extends fronthtmlpage {
 		return $this->seturl($query, $title, $jscript);
 	}
 	
+	public function urlCanonical() {
+		$ub = $this->paramload('SHELL', 'urlbase');		
+		$canonical = $this->paramload('CMS', 'canonical'); //.html		
+		
+		if (($_GET['id']) && ($canonical)) {
+			$ret = $ub . "/$cat/$id" . $canonical;
+		}	
+		elseif (($_GET['cat']) && ($canonical)) {
+			$ret = $ub . "/$cat" . $canonical; 
+		}
+		else
+			$ret = $ub . $this->php_self();
+		
+		return $ret;
+	}
+	
 	protected function loadVariables() {
 		$db = GetGlobal('db');
 		$lan = getlocal();
