@@ -424,7 +424,8 @@ class shcart extends storebuffer {
 			case 'cart-order'    :
 			case $this->order    : 	SetSessionParam('cartstatus',2); 
 									$this->status = 2; 
-									$this->calculate_shipping();
+									//$this->calculate_shipping();
+									$this->calcShipping();
 									$this->loopcartdata = $this->loopcart();
 									$this->looptotals = $this->foot();
 									break;
@@ -432,7 +433,8 @@ class shcart extends storebuffer {
 			case $this->submit2  : 
 			case $this->submit   : 	SetSessionParam('cartstatus',3);
 									$this->status = 3; 		  
-									$this->calculate_shipping();		  
+									//$this->calculate_shipping();		  
+									$this->calcShipping();
 									$this->loopcartdata = $this->loopcart();
 									$this->looptotals = $this->foot();
 
@@ -1028,7 +1030,8 @@ function addtocart(id,cartdetails)
 		else
 			SetSessionParam('qty_total',$this->qty_total);//qty count 
 		 
-		$this->calculate_shipping();	 		 
+		//$this->calculate_shipping();	 		 
+		$this->calcShipping();
 	}
 
     public function showsymbol($id,$allowremove=null,$qty=null) {
@@ -1728,8 +1731,11 @@ function addtocart(id,cartdetails)
 			 case 1 :	$template = _m('cmsrt.select_template use ptrans');
 						$subtemplate = _m('cmsrt.select_template use ptransline');
 		
-						$sSQL = "select code,title,lantitle,notes from ptransports ";
-						$sSQL.= "where active=1 order by orderid";
+						//$sSQL = "select code,title,lantitle,notes from ptransports where active=1 order by orderid";
+						/*calc based on cart net value choosing the right transport code, using aggregation(group by)*/
+						$sSQL = "select code,title,lantitle,notes,cost,groupid,cs,orderid from ";
+						$sSQL.= "(select code,title,lantitle,notes,cost,groupid,orderid,cartsum as cs from ptransports where active=1 and cartsum <=" . $this->total;
+						$sSQL.= " group by cartsum DESC,code,cost) x group by groupid order by orderid";
 						$res = $db->Execute($sSQL);	
 						//echo $sSQL;
 						foreach ($res as $i=>$rec) {
@@ -2025,14 +2031,16 @@ function addtocart(id,cartdetails)
 		$db = GetGlobal('db');	
 		$lan = getlocal();
 
-		if ($code = GetParam('roadway')) {
-			$sSQL.= "select cost from ptransports where code=" . $db->qstr($code);
+		if ($code = $this->getDetailSelection('roadway')) {
+			$sSQL = "select cost from ptransports where ";
+			$sSQL.= "code=" . $db->qstr($code);
 		}	
+		//echo $sSQL;
 		$res = $db->Execute($sSQL);	
 		$tcost = $res->fields[0];
 		
-		if ($code = GetParam('payway')) {
-			$sSQL.= "select cost from ppayments where code=" . $db->qstr($code);
+		if ($code = $this->getDetailSelection('payway')) {
+			$sSQL = "select cost from ppayments where code=" . $db->qstr($code);
 		}			
 		$res = $db->Execute($sSQL);	
 		$pcost = $res->fields[0];
@@ -2545,7 +2553,8 @@ function addtocart(id,cartdetails)
 			SetSessionParam('qty_total',$this->qty_total);//qty count
 		 
 	    $this->colideCart();	 
-	    $this->calculate_shipping();			  
+	    //$this->calculate_shipping();			  
+		$this->calcShipping();
 	}
 
 	public function foot($token=null) {
