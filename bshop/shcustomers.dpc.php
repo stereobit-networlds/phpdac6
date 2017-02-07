@@ -1404,6 +1404,33 @@ window.onload=function(){
 	    return ($out);		   
 	}
 	
+	public function getAddresses() {
+        $db = GetGlobal('db');		   
+	    $UserName = GetGlobal('UserName');
+	    $user = $uid ? $uid : decode($UserName);
+		if (!$UserName) return null;
+		
+		//basic
+        $sSQL = "select address,area,zip from customers";
+	    $sSQL.= " where code2=". $db->qstr($user);
+	    $sSQL.= " order by active,id DESC"; 
+	    //echo $sSQL;	   
+        $res = $db->Execute($sSQL);
+		$ret[] = array($res->fields[0],$res->fields[1],$res->fields[2]);	
+	   	   	
+        //alternatives			
+        $sSQL = "select address,area,zip from custaddress";
+	    $sSQL.= " where ccode=". $db->qstr($user);
+	    $sSQL.= " order by active,id DESC"; 
+	    //echo $sSQL;	   
+        $result = $db->Execute($sSQL);
+
+		foreach ($result as $i=>$rec)	
+			$ret[] = array($rec[0],$rec[1],$rec[2]);
+			
+		return ($ret);	
+	}	
+	
 	public function addnewdeliverylink($dpc_after_goto=null) {
 		$mydpcgoto = $dpc_after_goto?$dpc_after_goto:$this->adddelivgoto;
 	

@@ -69,18 +69,6 @@ $__ACTIONS['SHCART_DPC'][19]= "addtocart";
 $__ACTIONS['SHCART_DPC'][20]= "carttransport";
 $__ACTIONS['SHCART_DPC'][21]= "cartpayment";
 
-/*
-$__DPCATTR['SHCART_DPC']['viewcart'] = 'viewcart,1,0,1,0,0,0,0,0,0'; 
-$__DPCATTR['SHCART_DPC']['loadcart'] = 'loadcart,1,0,1,0,0,0,0,0,0'; 
-$__DPCATTR['SHCART_DPC'][$cart_recalc] = '_RECALC,1,0,1,0,0,0,0,0,0';
-$__DPCATTR['SHCART_DPC'][$cart_cancel] = '_CANCELORDER,1,0,1,0,0,0,0,0,0';
-$__DPCATTR['SHCART_DPC'][$cart_order] = '_ORDER,1,0,1,0,0,0,0,0,0'; 
-$__DPCATTR['SHCART_DPC'][$cart_submit] = '_SUBMITORDER,1,0,1,0,0,0,0,0,0';
-$__DPCATTR['SHCART_DPC'][$cart_checkout] = '_CHKOUT,1,0,1,0,0,0,0,0,0';
-$__DPCATTR['SHCART_DPC']['addtocart'] = 'addtocart,0,0,0,0,0,1,0,0,1';
-$__DPCATTR['SHCART_DPC']['removefromcart'] = 'removefromcart,0,0,0,0,0,1,0,0,1';
-$__DPCATTR['SHCART_DPC'][$cart_submit2] = '_SUBMITORDER2,1,0,1,0,0,0,0,0,0';
-*/
 $__LOCALE['SHCART_DPC'][0]='SHCART_DPC;My Cart;Καλάθι Αγορών';
 $__LOCALE['SHCART_DPC'][1]='_GRANDTOTAL;Grand Total;Γενικό Σύνολο';
 $__LOCALE['SHCART_DPC'][2]='loginorregister;Login or Register for a new account;Παρακαλώ προχωρείστε στις απαιτούμενες ενέργειες!';
@@ -110,21 +98,23 @@ $__LOCALE['SHCART_DPC'][24]='_ORDERSUBJECT;Order No ;Παραγγελία No ';
 $__LOCALE['SHCART_DPC'][25]='_MYCART;My Cart;Καλάθι';
 $__LOCALE['SHCART_DPC'][26]='_VIEWCART;View cart;Καλάθι';
 $__LOCALE['SHCART_DPC'][27]='_CHECKOUT;Checkout;Ταμείο';
-
+/*
 $__LOCALE['SHCART_DPC'][28]='Eurobank;Credit card;Πιστωτική κάρτα'; //used by mchoice param
 $__LOCALE['SHCART_DPC'][29]='Piraeus;Credit card;Πιστωτική κάρτα'; //used by mchoice param
 $__LOCALE['SHCART_DPC'][30]='Paypal;Credit card;Πιστωτική κάρτα'; //used by mchoice param
 $__LOCALE['SHCART_DPC'][31]='PayOnsite;Pay on site;Πληρωμή στο κατάστημά μας';//used by mchoice param
 $__LOCALE['SHCART_DPC'][32]='BankTransfer;Bank transfer;Κατάθεση σε τραπεζικό λογαριασμό';//used by mchoice param
 $__LOCALE['SHCART_DPC'][33]='PayOndelivery;Pay on delivery;Αντικαταβολή';//used by mchoice param
+*/
 $__LOCALE['SHCART_DPC'][34]='Invoice;Invoice;Τιμολόγιο';//used by mchoice param
 $__LOCALE['SHCART_DPC'][35]='Receipt;Receipt;Απόδειξη';//used by mchoice param
+
 $__LOCALE['SHCART_DPC'][36]='CompanyDelivery;Our Delivery Service;Διανομή με όχημα της εταιρείας (εντός θεσσαλονίκης)';
-$__LOCALE['SHCART_DPC'][37]='Logistics;3d Party Logistic Service;Μεταφορική εταιρεία';//used by mchoice param
+/*$__LOCALE['SHCART_DPC'][37]='Logistics;3d Party Logistic Service;Μεταφορική εταιρεία';//used by mchoice param
 $__LOCALE['SHCART_DPC'][38]='Courier;Courier;Courier';//used by mchoice param
 $__LOCALE['SHCART_DPC'][39]='CustomerDelivery;Self Service;Παραλαβή απο το κατάστημα μας';//used by mchoice param
 $__LOCALE['SHCART_DPC'][40]='PayOnCompanyDelivery;Pay at delivery;Πληρωμή κατα την παράδοση (εντός θεσσαλονίκης)';
-
+*/
 $__LOCALE['SHCART_DPC'][41]='_RESET;Reset;Καθαρισμός';
 $__LOCALE['SHCART_DPC'][42]='_EMPTY;Empty;Αδειο';
 $__LOCALE['SHCART_DPC'][43]='_BLN3;Clear Cart;Αδειασμα Καλαθιού';
@@ -1614,8 +1604,7 @@ function addtocart(id,cartdetails)
         switch ($this->status) {
 			 case 1 :	$template = _m('cmsrt.select_template use ppay');
 						$subtemplate = _m('cmsrt.select_template use ppayline');
-		                //$payway = GetReq('payway');
-						$roadway = GetReq('roadway');
+						$roadway = GetReq('roadway') ? GetReq('roadway') : 'Courier'; //default
 
 						$sSQL = "select code,title,lantitle,notes from ppayments where active=1";
 						$sSQL.= $roadway ? " and tcodes like '%$roadway%'" : null;
@@ -1905,6 +1894,36 @@ function addtocart(id,cartdetails)
 	   
 	    return ($tokens);
 	}
+	
+	public function addressway2() {
+		   	   
+        switch ($this->status) {
+			 case 1 :	$template = _m('cmsrt.select_template use pcust');
+						$subtemplate = _m('cmsrt.select_template use pcustline');
+						$addressway = GetReq('addressway');						
+						$addresses = _m('shcustomers.getAddresses');
+						//print_r($addresses);
+						foreach ($addresses as $i=>$rec) {
+							$title = $rec[0] .' '. $rec[1] .' '. $rec[2];
+							$tokens = array($title, $title);
+							$options[] = $this->combine_tokens($subtemplate, $tokens, true);
+							unset ($tokens);
+						}
+						if (!empty($options)) {
+							$opt = implode('', $options);
+							$tokens2 = array('addressway', $opt);
+							return $this->combine_tokens($template, $tokens2, true);
+						}	
+						break;
+	         case 3 :						
+			 case 2 :   $addressway = $this->getDetailSelection('addressway');
+						SetSessionParam('addressway',$addressway);
+						return ($addressway);	
+
+			 default : return null;					  	 
+			 	 
+	    }
+	}	
 	
 	public function customerway() {
 		   	   
