@@ -235,13 +235,7 @@ class shtransactions extends transactions {
 				$tokens[] = GetSessionParam('ordercart');
 		  
 				$dd = $this->combine_tokens($myprintcarttemplate,$tokens,true);		
-			/*}
-			else {
-				$headtitle = paramload('SHELL','urltitle');			
-				$hpage = new phtml('../themes/style.css',$d,"<B><h1>$headtitle</h1></B>");
-				$dd = $hpage->render();
-				unset($hpage);		
-			}*/
+
 		}//if
 		
         $fd = fopen($file, 'w');
@@ -282,7 +276,6 @@ class shtransactions extends transactions {
 	     }
 	   }
 	} 
-	
 	
 	//return array of relative sales id's
 	public function getRelativeSales($limit=null,$id=null) {
@@ -325,7 +318,9 @@ class shtransactions extends transactions {
 		$sSQL = "update transactions set tstatus=-2 where tid='" . $this->initial_word . $trid ."'";
         $result = $db->Execute($sSQL);
 		
-        if ($db->Affected_Rows()) { 
+        if ($db->Affected_Rows()) {
+
+			$this->cancelPoints($trid);	
 		  
 		    //send mail to host
 		    $s = localize('_mailcancelsubject', getlocal()) . ' ' . $trid;
@@ -341,6 +336,21 @@ class shtransactions extends transactions {
 		}	
 		else 
 			return false;   	   
+	}
+
+	//ppolicy cancel
+	protected function cancelPoints($trid) {
+		$db = GetGlobal('db');		
+		if (!$trid) return false;
+		
+		$sSQL = "update custpoints set active=0 where source=" . $db->qstr($trid);					
+		$res = $db->Execute($sSQL);
+		
+		//sum of points
+		$sSQL = "update ppolicy set active=0 where descr=" . $db->qstr($trid);
+		$res = $db->Execute($sSQL);			
+
+		return true;	
 	}	
 	
 	protected function mailto($mto=null,$subject=null,$body=null,$template=null) {
@@ -383,7 +393,7 @@ class shtransactions extends transactions {
 				foreach ($res as $n=>$rec) {
 					$i+=1;
 					$transtbl[] = $rec[0].";".$rec[3].";".$rec[4]."/".$rec[5].";".$rec[1]." / ".$rec[2].";" .	
-								number_format($rec[7],2,',','.');		   
+								number_format($rec[6],2,',','.');		   
 				}
 		   
 				$ppager = GetReq('pl')?GetReq('pl'):10;
@@ -417,7 +427,7 @@ class shtransactions extends transactions {
 			return ($out);  
 		}	 
 
-		$myaction = seturl("transview/");	   
+		$myaction = 'transview/'; //seturl("transview/");	   
 	   
 		if (seclevel('TRANSADMIN_',$this->userLevelID)) {
 			$this->admint=1;

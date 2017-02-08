@@ -58,6 +58,7 @@ $__LOCALE['RCMENU_DPC'][20]='_dropelement;Drop elements;Στοιχείο ενα�
 $__LOCALE['RCMENU_DPC'][21]='_newelm;New element;Νέο στοιχείο;';
 $__LOCALE['RCMENU_DPC'][22]='_elmname;Element name;Όνομα στοιχείου;';
 $__LOCALE['RCMENU_DPC'][23]='_elmurl;Element url;Σύνδεσμος στοιχείου;';
+$__LOCALE['RCMENU_DPC'][24]='_selectmenu;Select menu;Επιλέξτε μενού;';
 
 class rcmenu extends cmsmenu {
 
@@ -732,7 +733,10 @@ class rcmenu extends cmsmenu {
 	}	
 	
 	public function currentMenuName() {
-		return $this->selectedMenu ? ucfirst($this->selectedMenu) : ucfirst(localize('_mainmenu', getlocal()));
+		
+		return $this->selectedMenu ? ucfirst($this->selectedMenu) : 
+									 ucfirst(localize('_selectmenu', getlocal()));
+									 /*ucfirst(localize('_mainmenu', getlocal()));*/
 	}
 	
 	public function readSelectedMenu() {
@@ -748,7 +752,8 @@ class rcmenu extends cmsmenu {
 			return $this->nestBuild($menufile);
 		}	
 		
-		return $this->nestBuild(); 
+		//return $this->nestBuild(); 
+		return null; //not selected
 	}
 	
 	public function readCurrentMenu() {
@@ -891,9 +896,9 @@ class rcmenu extends cmsmenu {
 		$stdcmd = array(localize('_newmenu', getlocal())=>$turl98,
 						localize('_newelm', getlocal())=>$turl96,
 						0=>'',									
-						/*localize('_mainmenu', getlocal())=>$turl97,	*/
+						/*localize('_mainmenu', getlocal())=>$turl97,	
 						localize('_edit', getlocal())=>$turl99,
-						1=>'',
+						1=>'',*/
 		                );
 		
 		

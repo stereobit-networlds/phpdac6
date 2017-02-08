@@ -495,7 +495,7 @@ window.onload=function(){
 			$cid = $a;//update
 		else {
 	        //cart procedure
-		    if ($cid=GetSessionParam('customerway')) { 
+		    if ($cid = GetSessionParam('customerway')) { 
 			    $myfkey = 'id';
 			}	
 	        else {//insert procedure
@@ -533,13 +533,13 @@ window.onload=function(){
 		//template
 		$template= $template ? str_replace('.htm', '', $template) : "showcustomerdata";
 		$mytemplate = _m('cmsrt.select_template use ' . $template); 
-	   
+	    /*
 		if ($this->usemailasusername)
 			$recfields = array('name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
 		else
 			$recfields = array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
 		reset($recfields);
-	   
+	    */
 		//when show activate viewed customer so deactivat all other same user clients
 		$this->deactivatecustomers();	   
 	   
@@ -1275,6 +1275,50 @@ window.onload=function(){
 	    return ($recfields);	
 	}	
 	
+	public function getCustomers($id=null, $tokens=false) {
+        $db = GetGlobal('db');		   
+	    $UserName = GetGlobal('UserName');
+	    $user = $uid ? $uid : decode($UserName);
+		if (!$UserName) return null;
+		
+		$sSQL = "select id,name from customers where ";
+		$sSQL .= ($id) ? "id=" . $id : 'code2=' . $db->qstr($user) ;
+		$sSQL .= " order by active DESC"; //active=1 first
+   
+        $res = $db->Execute($sSQL);
+        if (empty($res)) return null;
+		
+		foreach ($res as $i=>$rec)	
+			$ret[] = array($rec[0],$rec[1]);
+			
+		return ($ret);	
+	}	
+	
+	public function getSelectedCustomer($id=null, $tokens=false) {
+        $db = GetGlobal('db');		   
+	    $UserName = GetGlobal('UserName');
+	    $user = $uid ? $uid : decode($UserName);
+		if (!$UserName) return null;
+			
+		if ($id) { 
+			$sSQL = "select name,afm,eforia,prfdescr,address,area,zip,country,voice1,voice2,fax,mail,id from customers";
+			$sSQL.= " where id=$id and code2=". $db->qstr($user);	   
+		}		
+		else { //fetch active by default
+			$sSQL = "select name,afm,eforia,prfdescr,address,area,zip,country,voice1,voice2,fax,mail,id from customers";
+			$sSQL.= " where active=1 and code2=". $db->qstr($user);   
+        }	
+		
+		$res = $db->Execute($sSQL);
+		
+		if ($res->fields[0]) //found
+			$ret = ($tokens) ? array($res->fields[0],$res->fields[1],$res->fields[2],$res->fields[3],$res->fields[4],$res->fields[5],$res->fields[6],
+									 $res->fields[7],$res->fields[8],$res->fields[9],$res->fields[10],$res->fields[11],$res->fields[12]) :
+							   implode('<br/>',array($res->fields[0],$res->fields[1],$res->fields[2],$res->fields[3],$res->fields[4],$res->fields[5],$res->fields[6],
+									 $res->fields[7],$res->fields[8],$res->fields[9],$res->fields[10],$res->fields[11],$res->fields[12]));		
+		
+		return ($ret ? $ret : 'Invalid customer');	
+	}		
 	
 	/////////////////////////////////////////////////DELIVERY ADDRESS
 	
@@ -1410,25 +1454,50 @@ window.onload=function(){
 	    $user = $uid ? $uid : decode($UserName);
 		if (!$UserName) return null;
 		
-		//basic
-        $sSQL = "select address,area,zip from customers";
-	    $sSQL.= " where code2=". $db->qstr($user);
-	    $sSQL.= " order by active,id DESC"; 
+		//basic 
+        $sSQL = "select id,address,area,zip,country from customers";
+	    $sSQL.= " where active=1 and code2=". $db->qstr($user);
+	    //$sSQL.= " order by id"; 
 	    //echo $sSQL;	   
         $res = $db->Execute($sSQL);
-		$ret[] = array($res->fields[0],$res->fields[1],$res->fields[2]);	
+		$ret[] = array(/*$res->fields[0]*/'',$res->fields[1],$res->fields[2],$res->fields[3]);	
 	   	   	
         //alternatives			
-        $sSQL = "select address,area,zip from custaddress";
+        $sSQL = "select id,address,area,zip,country from custaddress";
 	    $sSQL.= " where ccode=". $db->qstr($user);
-	    $sSQL.= " order by active,id DESC"; 
+	    $sSQL.= " order by id"; 
 	    //echo $sSQL;	   
         $result = $db->Execute($sSQL);
-
+        if (empty($result)) return null;
+		
 		foreach ($result as $i=>$rec)	
-			$ret[] = array($rec[0],$rec[1],$rec[2]);
+			$ret[$rec[0]] = array($rec[0],$rec[1],$rec[2],$rec[3],$rec[4]);
 			
 		return ($ret);	
+	}	
+	
+	public function getSelectedAddress($id=null, $tokens=false) {
+        $db = GetGlobal('db');		   
+	    $UserName = GetGlobal('UserName');
+	    $user = $uid ? $uid : decode($UserName);
+		if (!$UserName) return null;
+			
+		if ($id) { //alternatives
+			$sSQL = "select id,address,area,zip,voice1,voice2,fax,mail from custaddress";
+			$sSQL.= " where id=$id and ccode=". $db->qstr($user);	   
+		}		
+		else { //basic
+			$sSQL = "select id,address,area,zip,voice1,voice2,fax,mail from customers";
+			$sSQL.= " where active=1 and code2=". $db->qstr($user);	   
+        }	
+		
+		$res = $db->Execute($sSQL);
+		
+		if ($res->fields[0]) //found
+			$ret = ($tokens) ? array($res->fields[1],$res->fields[2],$res->fields[3],$res->fields[4],$res->fields[5],$res->fields[6]) :
+							   implode(' ', array($res->fields[1],$res->fields[2],$res->fields[3],$res->fields[4],$res->fields[5],$res->fields[6]));		
+		
+		return ($ret ? $ret : 'Invalid address');	
 	}	
 	
 	public function addnewdeliverylink($dpc_after_goto=null) {
@@ -1449,13 +1518,17 @@ window.onload=function(){
 	   	   
 	    //template
 		$mytemplate = _m('cmsrt.select_template use showdeliverylist'); 
-			  		   
+		
+		//new form
+        $out = $this->adddeliveryform();		
+		
+		//existed forms to select	
 	    $addressfields = implode(',',$this->delivery_fields);
         $sSQL = "select id,$addressfields from custaddress";
 	    $sSQL.= " where ccode=". $db->qstr($myui);
 	    $sSQL.= " order by id DESC"; //last to first..selected last address inserted	   
 	    //echo $sSQL;	   
-        $result = $db->Execute($sSQL,2);
+        $result = $db->Execute($sSQL,2);	
 	   
 	    if ($UserName) {
 		   foreach ($result as $n=>$na) {
@@ -1478,9 +1551,7 @@ window.onload=function(){
 					unset($tokens);		   			      		   
 				}//if
 			}//foreach	    
-	    }//if username
-	   
-        $out .= $this->adddeliveryform();	   
+	    }//if username	   
 	   
 	    return ($out);
 	}
@@ -1888,7 +1959,7 @@ window.onload=function(){
         return false;	 
 	}	
 	
-	protected function deactivatecustomers($id=null) {
+	public function deactivatecustomers($id=null) {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
 	    $myui = $id?$id:decode($UserName);	
@@ -1906,7 +1977,7 @@ window.onload=function(){
 	}	
 	
 	//id = id record of table
-	protected function activatecustomer($id=null) {
+	public function activatecustomer($id=null) {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');	   
 	    $myui = decode($UserName);		   

@@ -121,7 +121,28 @@ class jq_grid {
         //$this->javascript();	//in case of test	
 	}
 	
+	
 	function javascript() {
+		
+		//return null; //DISABLED (loaded at html level)
+		//****
+		//if not loaded then error when add or delete row	
+		//****
+ 
+		if (iniload('JAVASCRIPT')) {
+			$js = new jscript;		   
+
+            $js->load_js('jquery.min.js');
+			$js->load_js('jqgrid/js/i18n/grid.locale-en.js'); //html load			
+			$js->load_js('jqgrid/js/jquery.jqGrid.min.js'); //html load
+			$js->load_js('themes/jquery-ui.custom.min.js');//html load
+			unset ($js);
+		}
+			
+	}	
+	
+	function javascript_OLD() {
+		
         $jsapi = "http://www.google.com/jsapi";
    
         $jquery = "google.load(\"jquery\", \"1.6.2\");";   

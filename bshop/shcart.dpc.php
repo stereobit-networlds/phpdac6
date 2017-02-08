@@ -45,6 +45,9 @@ $__EVENTS['SHCART_DPC'][18]= "cart-cancel";
 $__EVENTS['SHCART_DPC'][19]= "addtocart"; 
 $__EVENTS['SHCART_DPC'][20]= "carttransport";
 $__EVENTS['SHCART_DPC'][21]= "cartpayment";
+$__EVENTS['SHCART_DPC'][22]= "cartaddress";
+$__EVENTS['SHCART_DPC'][23]= "cartcustomer";
+$__EVENTS['SHCART_DPC'][24]= "cartcustselect";
 
 $__ACTIONS['SHCART_DPC'][0]= "viewcart";
 $__ACTIONS['SHCART_DPC'][1]= "clearcart";
@@ -68,6 +71,9 @@ $__ACTIONS['SHCART_DPC'][18]= "cart-cancel";
 $__ACTIONS['SHCART_DPC'][19]= "addtocart"; 
 $__ACTIONS['SHCART_DPC'][20]= "carttransport";
 $__ACTIONS['SHCART_DPC'][21]= "cartpayment";
+$__ACTIONS['SHCART_DPC'][22]= "cartaddress";
+$__ACTIONS['SHCART_DPC'][23]= "cartcustomer";
+$__ACTIONS['SHCART_DPC'][24]= "cartcustselect";
 
 $__LOCALE['SHCART_DPC'][0]='SHCART_DPC;My Cart;Καλάθι Αγορών';
 $__LOCALE['SHCART_DPC'][1]='_GRANDTOTAL;Grand Total;Γενικό Σύνολο';
@@ -108,9 +114,9 @@ $__LOCALE['SHCART_DPC'][33]='PayOndelivery;Pay on delivery;Αντικαταβο�
 */
 $__LOCALE['SHCART_DPC'][34]='Invoice;Invoice;Τιμολόγιο';//used by mchoice param
 $__LOCALE['SHCART_DPC'][35]='Receipt;Receipt;Απόδειξη';//used by mchoice param
-
+/*
 $__LOCALE['SHCART_DPC'][36]='CompanyDelivery;Our Delivery Service;Διανομή με όχημα της εταιρείας (εντός θεσσαλονίκης)';
-/*$__LOCALE['SHCART_DPC'][37]='Logistics;3d Party Logistic Service;Μεταφορική εταιρεία';//used by mchoice param
+$__LOCALE['SHCART_DPC'][37]='Logistics;3d Party Logistic Service;Μεταφορική εταιρεία';//used by mchoice param
 $__LOCALE['SHCART_DPC'][38]='Courier;Courier;Courier';//used by mchoice param
 $__LOCALE['SHCART_DPC'][39]='CustomerDelivery;Self Service;Παραλαβή απο το κατάστημα μας';//used by mchoice param
 $__LOCALE['SHCART_DPC'][40]='PayOnCompanyDelivery;Pay at delivery;Πληρωμή κατα την παράδοση (εντός θεσσαλονίκης)';
@@ -335,10 +341,22 @@ class shcart extends storebuffer {
     public function event($event) {
 
 		switch ($event) {
+									
+			case "cartcustselect":  //shcustomer selcus alias for cart
+									_m('shcustomers.deactivatecustomers');//make all decative
+		                            _m('shcustomers.activatecustomer use '.GetReq('customerway')); //activate selected
+									_m('shcustomers.is_reseller');//change type of customer
+			                        break;
+									
+			case "cartcustomer"  : 	$ps = $this->customerDetails();
+									die("customerdetails|" . $ps);
+									break;			
 			
-			case "carttransport" : 	//$ps = $this->roadDetails();
-			                        $ps.= $this->payway2();
-									//$ps.= $this->payDetails();
+			case "cartaddress"   : 	$ps = $this->addressDetails();
+									die("addressdetails|" . $ps);
+									break;				
+			
+			case "carttransport" : 	$ps = $this->payway2();
 									die("transportdetails|" . $ps);
 									break;	
 			case "cartpayment"   : 	$ps = $this->payDetails();
@@ -451,6 +469,8 @@ class shcart extends storebuffer {
     public function action($act=null) {	
 
 		switch ($act) {
+			case "cartcustomer" : 	break;
+			case "cartaddress"  : 	break;
 			case "carttransport": 	break;				
 			case "cartpayment"  : 	break;				
 			
@@ -463,6 +483,7 @@ class shcart extends storebuffer {
 			case 'addtocart'  	:
 			case 'removefromcart': 	break;							
 		 
+			case "cartcustselect": 
 			case "fastpick" 	:	//$out = $this->fastpick ? localize('_FASTPICKON',getlocal()) : localize('_FASTPICKOFF',getlocal());
 									$out .= $this->cartview();
 									break;
@@ -1043,16 +1064,16 @@ function addtocart(id,cartdetails)
 				if ($this->bypass_qty) { //echo 'bypass_qty';
 					$myaction = "addcart/$ar/$gr/$page/";
 
-					$out = "<FORM method=\"POST\" action=\"";
+					$out = "<form method=\"POST\" action=\"";
 					$out .= "$myaction";
 					$out .= "\" name=\"PreSelectQty\">";
 					$out .= $this->setquantity('PRESELQTY',1);
 
 					if (($this->uniname2) && ($param[11]))
-						$out .= "<br>" . $this->setuniname('PRESELUNI',$param[10],$param[10],$param[11]);
+						$out .= "<br/>" . $this->setuniname('PRESELUNI',$param[10],$param[10],$param[11]);
 
 					$out .= $this->submit_qty_button;
-					$out .= "</FORM>";
+					$out .= "</form>";
 				}
 				else
 					$ml = "addcart/$ar/$gr/$page/$myqty/";
@@ -1274,7 +1295,6 @@ function addtocart(id,cartdetails)
 	    $ixw = $ix ? "width=".$ix : "width=".$ix;
 	    $iyh = $iy ? "height=".$iy :null; //empty y=free dim	   
 	   
-		//$myloopcarttemplate = _m('cmsrt.select_template use shcart'.$status);
 		$myloopcarttemplate = _m('cmsrt.select_template use shcartline'); //.php file, code inside
 	   
         reset ($this->buffer);
@@ -1898,14 +1918,18 @@ function addtocart(id,cartdetails)
 	public function addressway2() {
 		   	   
         switch ($this->status) {
-			 case 1 :	$template = _m('cmsrt.select_template use pcust');
-						$subtemplate = _m('cmsrt.select_template use pcustline');
-						$addressway = GetReq('addressway');						
+			 case 1 :	$template = _m('cmsrt.select_template use paddress');
+						$subtemplate = _m('cmsrt.select_template use paddressline');
+						$addressway = GetReq('addressway') ? GetReq('addressway') : 
+									  $this->getDetailSelection('addressway');
+										
 						$addresses = _m('shcustomers.getAddresses');
+						//krsort($addresses);
 						//print_r($addresses);
-						foreach ($addresses as $i=>$rec) {
-							$title = $rec[0] .' '. $rec[1] .' '. $rec[2];
-							$tokens = array($title, $title);
+						foreach ($addresses as $addressid=>$rec) {
+							$selected = ($rec[0]==$addressway) ? 'selected' : '';
+							$title = $rec[1] .' '. $rec[2] .' '. $rec[3];
+							$tokens = array($rec[0], $title, $selected);
 							$options[] = $this->combine_tokens($subtemplate, $tokens, true);
 							unset ($tokens);
 						}
@@ -1918,11 +1942,31 @@ function addtocart(id,cartdetails)
 	         case 3 :						
 			 case 2 :   $addressway = $this->getDetailSelection('addressway');
 						SetSessionParam('addressway',$addressway);
-						return ($addressway);	
+						//return ($addressway);	//is id
+						return _m('shcustomers.getSelectedAddress use ' . $addressway);
 
 			 default : return null;					  	 
 			 	 
 	    }
+	}	
+	
+	//used inside invoice htm(notmpl)
+	public function addressDetails($notmpl=false) {
+		$code = GetReq('addressway') ? GetReq('addressway') : 
+			    $this->getDetailSelection('addressway');		
+
+		if (defined('SHCUSTOMERS_DPC')) {
+
+			if ((!$notmpl) && ($template = _m('cmsrt.select_template use paddressform'))) {
+				
+				$tokens = _m("shcustomers.getSelectedAddress use $code+1");
+				return $this->combine_tokens($template, $tokens, true);
+			}
+			else
+				return _m('shcustomers.getSelectedAddress use ' . $code);			
+		}
+		
+		return null;
 	}	
 	
 	public function customerway() {
@@ -1991,6 +2035,58 @@ function addtocart(id,cartdetails)
 	    }
 	   
 	    return ($tokens);
+	}	
+	
+	public function customerway2() {
+		   	   
+        switch ($this->status) {
+			 case 1 :   $template = _m('cmsrt.select_template use pcust');
+						$subtemplate = _m('cmsrt.select_template use pcustline');
+						$customerway = GetReq('customerway') ? GetReq('customerway') : 
+									   $this->getDetailSelection('customerway');
+										
+						$customers = _m('shcustomers.getCustomers');
+						//print_r($customers);
+						foreach ($customers as $customerid=>$rec) {
+							$selected = ($rec[0]==$customerway) ? 'selected' : '';
+							$tokens = array($rec[0], $rec[1], $selected);
+							$options[] = $this->combine_tokens($subtemplate, $tokens, true);
+							unset ($tokens);
+						}
+						if (!empty($options)) {
+							$opt = implode('', $options);
+							$tokens2 = array('customerway', $opt);
+							return $this->combine_tokens($template, $tokens2, true);
+						}	
+						break;
+	         case 3 :					 	 
+		     case 2 : 	$customerway = $this->getDetailSelection('customerway');
+						SetSessionParam('customerway',$customerway);
+						//return ($customerway); //is id
+						$fields = explode('<br/>', _m('shcustomers.getSelectedCustomer use ' . $customerway));
+						return $fields[0];
+						break;
+
+			 default : 				  	 	 	 
+	    }
+	}	
+	
+	public function customerDetails($notmpl=false) {
+		$code = GetReq('customerway') ? GetReq('customerway') : 
+			    $this->getDetailSelection('customerway');		
+
+		if (defined('SHCUSTOMERS_DPC')) {
+
+			if ((!$notmpl) && ($template = _m('cmsrt.select_template use pcustform'))) {
+				
+				$tokens = _m("shcustomers.getSelectedCustomer use $code+1");
+				return $this->combine_tokens($template, $tokens, true);
+			}
+			else
+				return _m('shcustomers.getSelectedCustomer use ' . $code);			
+		}
+		
+		return null;
 	}	
 	
 	public function comments() {

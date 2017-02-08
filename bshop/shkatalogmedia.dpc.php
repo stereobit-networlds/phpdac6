@@ -599,7 +599,7 @@ SCROLLTOP;
 	    $this->get_max_result();		
 		
 		$group = null;
-		$out = $this->show_submenu('klist',1,$group,null,1);
+		//$out = $this->show_submenu('klist',1,$group,null,1);
 			
 		if (!$this->onlyincategory) 
 		    $out .= $this->list_katalog(0);

@@ -1463,7 +1463,7 @@ EOF;
 		$sSQL = "SELECT email FROM ulists where active=1 and listname=" . $db->qstr($ulistname); 
 		$sSQL.= (isset($start)) ? ($limit ? " LIMIT " . $start . "," . $limit : ($limit ? " LIMIT " . $limit : null)) : null;
 		//echo $sSQL;
-		$this->messages[] = $sSQL;	
+		//$this->messages[] = $sSQL;	
 		$result = $db->Execute($sSQL,2);
 	   
 		if (count($result)>0) {		   
