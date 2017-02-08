@@ -1630,7 +1630,9 @@ function addtocart(id,cartdetails)
         switch ($this->status) {
 			 case 1 :	$template = _m('cmsrt.select_template use ppay');
 						$subtemplate = _m('cmsrt.select_template use ppayline');
-						$roadway = GetReq('roadway') ? GetReq('roadway') : 'Courier'; //default
+						$roadway = GetReq('roadway') ? GetReq('roadway') : 
+									(GetParam('roadway') ? GetParam('roadway') : GetGlobal('roadway'));
+									//'Courier'; //default
 
 						$sSQL = "select code,title,lantitle,notes from ppayments where active=1";
 						$sSQL.= $roadway ? " and tcodes like '%$roadway%'" : null;
@@ -1664,14 +1666,16 @@ function addtocart(id,cartdetails)
 		$db = GetGlobal('db');	
 		$lan = getlocal();
 		//$payway = $this->getDetailSelection('payway');
-		$code = GetReq('select') ? GetReq('select') : GetParam('payway');		
-
+		$code = GetReq('payway') ? GetReq('payway') : GetParam('payway');		
+		$roadway = GetReq('roadway') ? GetReq('roadway') : 
+					(GetParam('roadway') ? GetParam('roadway') : GetGlobal('roadway'));
+		
 		$sSQL = "select notes from ppayments ";
 		if ($code) {
 			$sSQL.= "where code=" . $db->qstr($code);
 		}	
-		else { 
-		    if ($roadway = GetReq('roadway')) 
+		else {  
+			if ($roadway)	
 				$sSQL.= "where tcodes like '%$roadway%' and active=1 order by orderid LIMIT 1";
 			else
 				$sSQL.= "where active=1 order by orderid LIMIT 1";
@@ -1746,14 +1750,16 @@ function addtocart(id,cartdetails)
 			 case 1 :	$template = _m('cmsrt.select_template use ptrans');
 						$subtemplate = _m('cmsrt.select_template use ptransline');
 		
-						//zip, country calcs
-						//echo $zip . '>' . $country;	
-						
 						//$sSQL = "select code,title,lantitle,notes from ptransports where active=1 order by orderid";
-						$res = $this->roadRules($customer_address_array); 
+						$debug = 'start:';
+						$res = $this->roadRules($customer_address_array, $debug); 
+						$debug = null; //reset
 						
-						//echo $sSQL;
 						foreach ($res as $i=>$rec) {
+							
+							if ($i==0) //save 1st when address selected
+								SetGlobal('roadway', $rec['code']); 
+							
 							$title = $rec['lantitle'] ? localize($rec['lantitle'], $lan) : $rec['title'];
 							$tokens = array($rec['code'], $title, $rec['notes']);
 							$options[] = $this->combine_tokens($subtemplate, $tokens, true);
@@ -1761,7 +1767,7 @@ function addtocart(id,cartdetails)
 						}
 						if (!empty($options)) {
 							$opt = implode('', $options);
-							$tokens2 = array('roadway', $opt);
+							$tokens2 = array('roadway', $opt, $debug);
 							return $this->combine_tokens($template, $tokens2, true);
 						}	
 						break;
@@ -1780,7 +1786,8 @@ function addtocart(id,cartdetails)
 		$db = GetGlobal('db');	
 		$lan = getlocal();
 		//$roadway = $this->getDetailSelection('roadway');
-		$code = GetReq('select') ? GetReq('select') : GetParam('roadway');
+		$code = GetReq('roadway') ? GetReq('roadway') : 
+				(GetParam('roadway') ? GetParam('roadway') : GetGlobal('roadway'));
 		
 		$sSQL = "select notes from ptransports ";
 		if ($code)
@@ -1794,7 +1801,7 @@ function addtocart(id,cartdetails)
 	}	
 	
 	//road rules based on zip, country etc
-	protected function roadRules($customer_address_array=null) {
+	protected function roadRules($customer_address_array=null, &$debug) {
 		$db = GetGlobal('db');	
 
 		//customer address based rules		
@@ -1804,23 +1811,52 @@ function addtocart(id,cartdetails)
 			$zip = $customer_address_array[2]; 
 			$country = $customer_address_array[3];
 
-			$sSQL = "select transports,cost,notes from ptransrules where active=1 and ";
+			$sSQL = "select transports,cost,notes,orderid from ptransrules where active=1 and ";
 			
 			if ($address) $sSQLa[] = " address like '%$address%' ";
 			if ($area) $sSQLa[] = " area like '%$area%' ";
 			if ($zip) $sSQLa[] = " zip='$zip' ";
 			if ($country) $sSQLa[] = " country='$country' ";
 			
-			$sSQL.= '(' . implode(' OR ', $sSQLa) . ')';
-		
-			//$res = $db->Execute($sSQL);			
+			$sSQL.= '(' . implode(' OR ', $sSQLa) . ') order by orderid DESC';
+			$debug.= $sSQL;
+			
+			$res = $db->Execute($sSQL);	
+			
+			if (!empty($res)) {
+				$rules = array();
+				foreach ($res as $r=>$rec) {
+					
+					//transportation methods allowed, ptransport code
+					if (strstr($rec['transports'], ',')) { 
+						//comma separator
+						$trmethods = explode(',', $rec['transports']);
+						foreach ($trmethods as $ir=>$method)
+							$rules['transports'][] = $method; 
+					}
+					else		 
+						$rules['transports'][] = $rec['transports']; 
+					
+					$rules['cost'] += floatval($rec['cost']); //sum of costs
+					$rules['notes'][] = $rec['notes']; //sum of notes
+				}	
+			}
+			$debug .= var_export($rules, true);
 		}
 		
 		//basic group transport rules
 		/*calc based on cart net value choosing the right transport code, using aggregation(group by)*/
 		$sSQL = "select code,title,lantitle,notes,cost,groupid,cs,orderid from ";
-		$sSQL.= "(select code,title,lantitle,notes,cost,groupid,orderid,cartsum as cs from ptransports where active=1 and cartsum <=" . $this->total;
-		$sSQL.= " group by cartsum DESC,code,cost) x group by groupid order by orderid";		
+		$sSQL.= "(select code,title,lantitle,notes,cost,groupid,orderid,cartsum as cs from ptransports ";
+		$sSQL.= "where active=1 and cartsum <=" . $this->total;
+		if (!empty($rules['transports'])) { 
+			$codegroup = implode("','", $rules['transports']);
+			$sSQL.= " and code in ('$codegroup') group by cartsum DESC,code,cost) x group by groupid order by orderid";
+		}
+		else	
+			$sSQL.= " group by cartsum DESC,code,cost) x group by groupid order by orderid";		
+		
+		$debug .= $sSQL;
 		
 		$res = $db->Execute($sSQL);	
 		return ($res);	
