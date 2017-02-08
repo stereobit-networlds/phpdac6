@@ -48,6 +48,7 @@ $__EVENTS['SHCART_DPC'][21]= "cartpayment";
 $__EVENTS['SHCART_DPC'][22]= "cartaddress";
 $__EVENTS['SHCART_DPC'][23]= "cartcustomer";
 $__EVENTS['SHCART_DPC'][24]= "cartcustselect";
+$__EVENTS['SHCART_DPC'][25]= "cartinvoice";
 
 $__ACTIONS['SHCART_DPC'][0]= "viewcart";
 $__ACTIONS['SHCART_DPC'][1]= "clearcart";
@@ -74,6 +75,7 @@ $__ACTIONS['SHCART_DPC'][21]= "cartpayment";
 $__ACTIONS['SHCART_DPC'][22]= "cartaddress";
 $__ACTIONS['SHCART_DPC'][23]= "cartcustomer";
 $__ACTIONS['SHCART_DPC'][24]= "cartcustselect";
+$__ACTIONS['SHCART_DPC'][25]= "cartinvoice";
 
 $__LOCALE['SHCART_DPC'][0]='SHCART_DPC;My Cart;Καλάθι Αγορών';
 $__LOCALE['SHCART_DPC'][1]='_GRANDTOTAL;Grand Total;Γενικό Σύνολο';
@@ -341,7 +343,10 @@ class shcart extends storebuffer {
     public function event($event) {
 
 		switch ($event) {
-									
+			case "cartinvoice"   :  $ps = 'x';
+			                        die("invoicedetails|" . $ps);
+									break;	
+			
 			case "cartcustselect":  //shcustomer selcus alias for cart
 									_m('shcustomers.deactivatecustomers');//make all decative
 		                            _m('shcustomers.activatecustomer use '.GetReq('customerway')); //activate selected
@@ -469,6 +474,7 @@ class shcart extends storebuffer {
     public function action($act=null) {	
 
 		switch ($act) {
+			case "cartinvoice"  :  break;	
 			case "cartcustomer" : 	break;
 			case "cartaddress"  : 	break;
 			case "carttransport": 	break;				
@@ -766,6 +772,7 @@ function addtocart(id,cartdetails)
     public function submit_order($sendordermail=null, $invoice_template=null) {
 		$myuser = GetGlobal('UserID');	
 		$user = decode($myuser);
+		$lan = getlocal();
 		//$pways = remote_arrayload('SHCART','payways',$this->path);
 		//$rways = remote_arrayload('SHCART','roadways',$this->path);
 		$payway = $this->getDetailSelection('payway');
@@ -775,15 +782,14 @@ function addtocart(id,cartdetails)
 
 		/*when goto save transaction html, customer/user = mail of customer, problem when user mail,cus mail diff */
 		/*search by customerway / cart customer selection*/
-		$customer = GetSessionParam('customerway') ? GetSessionParam('customerway') : $user;
+		/*$customer = GetSessionParam('customerway') ? 
+		            GetSessionParam('customerway') : $user;
 		$fkey = 	is_numeric($customer) ? 'id' : 'mail';  
-	    /*
-		if (!empty($pways))   
-			$p = array_keys($pways,$payway);//print_r($p);
-		if (!empty($rways))   	 
-			$r = array_keys($rways,$roadway);//print_r($r); echo ' >';
-	    */
-		$this->quick_recalculate();//re-update prices and totals
+		*/
+		$customer = $this->getDetailSelection('customerway');		
+		$fkey = 'id';
+
+		$this->quick_recalculate();
 	   	   
 		$qty = $this->qty_total;//getcartItems();
 		$cost = str_replace(',','.',$this->total);//getcartTotal());
@@ -797,12 +803,12 @@ function addtocart(id,cartdetails)
 			
 				$date = date('d.m.y');			
 				//$invoice_tokens['invoice'] = $invway .' '.$this->transaction_id;
-				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',getlocal()).' '.$this->transaction_id;
+				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',$lan).' '.$this->transaction_id;
 				$invoice_tokens['mynotes'] = $sxolia . "<br/>" . $this->ppolicynotes;
 				$invoice_tokens['mydate'] = $date;	
-				$invoice_tokens['payway'] = localize(GetSessionParam('payway'), getlocal()); 			
-				$invoice_tokens['roadway'] = localize(GetSessionParam('roadway'), getlocal());
-				$invoice_tokens['invway'] = localize(GetSessionParam('invway'), getlocal());
+				$invoice_tokens['payway'] = localize($payway, $lan); 			
+				$invoice_tokens['roadway'] = localize($roadway, $lan);
+				$invoice_tokens['invway'] = localize($invway, $lan);
 			  
 				$tokens = serialize($invoice_tokens);
 				//do it inside transaction func
@@ -1732,7 +1738,7 @@ function addtocart(id,cartdetails)
 		return ($tokens);
 	}
 	
-	public function roadway2() {
+	public function roadway2($customer_address_array=null) {
 		$db = GetGlobal('db');	
 		$lan = getlocal();
 
@@ -1740,12 +1746,12 @@ function addtocart(id,cartdetails)
 			 case 1 :	$template = _m('cmsrt.select_template use ptrans');
 						$subtemplate = _m('cmsrt.select_template use ptransline');
 		
+						//zip, country calcs
+						//echo $zip . '>' . $country;	
+						
 						//$sSQL = "select code,title,lantitle,notes from ptransports where active=1 order by orderid";
-						/*calc based on cart net value choosing the right transport code, using aggregation(group by)*/
-						$sSQL = "select code,title,lantitle,notes,cost,groupid,cs,orderid from ";
-						$sSQL.= "(select code,title,lantitle,notes,cost,groupid,orderid,cartsum as cs from ptransports where active=1 and cartsum <=" . $this->total;
-						$sSQL.= " group by cartsum DESC,code,cost) x group by groupid order by orderid";
-						$res = $db->Execute($sSQL);	
+						$res = $this->roadRules($customer_address_array); 
+						
 						//echo $sSQL;
 						foreach ($res as $i=>$rec) {
 							$title = $rec['lantitle'] ? localize($rec['lantitle'], $lan) : $rec['title'];
@@ -1786,6 +1792,40 @@ function addtocart(id,cartdetails)
 
 		return $res->fields[0];	
 	}	
+	
+	//road rules based on zip, country etc
+	protected function roadRules($customer_address_array=null) {
+		$db = GetGlobal('db');	
+
+		//customer address based rules		
+		if (!empty($customer_address_array)) {
+			$address = $customer_address_array[0];
+			$area = $customer_address_array[1]; 
+			$zip = $customer_address_array[2]; 
+			$country = $customer_address_array[3];
+
+			$sSQL = "select transports,cost,notes from ptransrules where active=1 and ";
+			
+			if ($address) $sSQLa[] = " address like '%$address%' ";
+			if ($area) $sSQLa[] = " area like '%$area%' ";
+			if ($zip) $sSQLa[] = " zip='$zip' ";
+			if ($country) $sSQLa[] = " country='$country' ";
+			
+			$sSQL.= '(' . implode(' OR ', $sSQLa) . ')';
+		
+			//$res = $db->Execute($sSQL);			
+		}
+		
+		//basic group transport rules
+		/*calc based on cart net value choosing the right transport code, using aggregation(group by)*/
+		$sSQL = "select code,title,lantitle,notes,cost,groupid,cs,orderid from ";
+		$sSQL.= "(select code,title,lantitle,notes,cost,groupid,orderid,cartsum as cs from ptransports where active=1 and cartsum <=" . $this->total;
+		$sSQL.= " group by cartsum DESC,code,cost) x group by groupid order by orderid";		
+		
+		$res = $db->Execute($sSQL);	
+		return ($res);	
+	}	
+	
 	
 	public function invoiceway() {
 		$ways = remote_arrayload('SHCART','invways',$this->path);
@@ -1850,6 +1890,51 @@ function addtocart(id,cartdetails)
 			 
 	    return ($tokens);	   	
 	}
+	
+	public function invoiceway2() {
+		//$ways = remote_arrayload('SHCART','invways',$this->path);
+		$defway = remote_paramload('SHCART','invway_default',$this->path); 	
+		$invtype = $defway ? $defway : 0;//override customers default invoice ??
+        $lan = getlocal();
+ 
+		switch ($this->status) {
+			case 1 : 	$template = _m('cmsrt.select_template use pinv');
+						$subtemplate = _m('cmsrt.select_template use pinvline');
+						$invoiceway = GetReq('invway') ? GetReq('invway') : 
+									  $this->getDetailSelection('invway');
+										
+						if (defined('SHCUSTOMERS_DPC'))  { //override invtype!!!
+							$allow = _v('shcustomers.allow_inv_selection');
+							$invtype = _v('shcustomers.invtype');
+							//if (!$allow) return null;
+						}   
+						if ($this->is_reseller)
+							$dtypes = array(localize('_INVOICE',$lan), localize('_APODEIXI',$lan));
+						else 
+							$dtypes = ($invtype) ?  array(localize('_INVOICE',$lan), localize('_APODEIXI',$lan)):
+													array(localize('_APODEIXI',$lan), localize('_INVOICE',$lan));
+
+						foreach ($dtypes as $i=>$doctype) {
+							$selected = ($doctype==$invoiceway) ? 'selected' : '';
+							$tokens = array($doctype, $doctype, $selected, 'invway');
+							$options[] = $this->combine_tokens($subtemplate, $tokens, true);
+							unset ($tokens);
+						}
+						if (!empty($options)) {
+							$opt = implode('', $options);
+							$tokens2 = array('invway', $opt);
+							return $this->combine_tokens($template, $tokens2, true);
+						}	
+						break;
+	        case 3 :
+		    case 2 :	$invoiceway = $this->getDetailSelection('invway');
+						SetSessionParam('invway',$invoiceway);
+						return ($invoiceway);	
+						break;
+
+			 default : 
+	    }		    	
+	}	
 	
 	public function addressway() {
 		   	   
@@ -1960,6 +2045,10 @@ function addtocart(id,cartdetails)
 			if ((!$notmpl) && ($template = _m('cmsrt.select_template use paddressform'))) {
 				
 				$tokens = _m("shcustomers.getSelectedAddress use $code+1");
+				
+				//call roadway - payway
+				$tokens[9] = $this->roadway2($tokens);
+				
 				return $this->combine_tokens($template, $tokens, true);
 			}
 			else
