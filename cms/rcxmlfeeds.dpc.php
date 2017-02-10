@@ -130,7 +130,8 @@ class rcxmlfeeds {
         else
           $file = $this->savepath .'/'. GetReq('xmlfeed') . '.xml';
 	  
-		return file_get_contents($file);
+		if (is_readable($file))
+			return file_get_contents($file);
 	}	
 	
 	

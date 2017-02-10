@@ -119,49 +119,82 @@ class rctransactions extends shtransactions {
 		$out .= "<INPUT TYPE= \"hidden\" ID= \"statsid\" VALUE=\"0\" >";	   	    
 	  
 		return ($out);		   
-	}		
+	}	
+
+	protected function getPaymentsELT($flname, $as=null) {
+		if (!$flname) return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+
+		$sSQL = "select code,lantitle from ppayments";
+		$result = $db->Execute($sSQL);
+
+		foreach ($result as $i=>$rec) {
+			$field = $rec['lantitle'] ? $rec['lantitle'] : $rec['code'];
+			$fields[] = $field;
+			$locales[] = localize($field, $lan);
+		}	
+		
+		$f = "'" . implode("','", $fields) ."'";
+		$l = "'" . implode("','", $locales) ."'";
+		
+		$a = $as ? "as $as" : null;
+		$ret = "ELT(FIELD({$flname}, {$f}), {$l}) {$a}";
+		return ($ret);
+	}
+	
+	protected function getTransportsELT($flname, $as=null) {
+		if (!$flname) return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+
+		$sSQL = "select code,lantitle from ptransports";
+		$result = $db->Execute($sSQL);
+
+		foreach ($result as $i=>$rec) {
+			$field = $rec['lantitle'] ? $rec['lantitle'] : $rec['code'];
+			$fields[] = $field;
+			$locales[] = localize($field, $lan);
+		}	
+		
+		$f = "'" . implode("','", $fields) ."'";
+		$l = "'" . implode("','", $locales) . "'";
+		
+		$a = $as ? "as $as" : null;
+		$ret = "ELT(FIELD({$flname}, {$f}), {$l}) {$a}";
+		return ($ret);
+	}	
 	
 	public function show_grid($x=null,$y=null,$filter=null,$bfilter=null) {
 	    $selected_cus = urldecode(GetReq('cusmail'));
 	
 	    if (defined('MYGRID_DPC')) {
+
+			$lookup1 = $this->getPaymentsELT('i.payway', 'pw'); 
+			$lookup2 = $this->getTransportsELT('i.roadway', 'rw');
 			
-			$lookup1 = "ELT(FIELD(i.payway, 'Eurobank','Piraeus','Paypal','BankTransfer','PayOnsite','PayOndelivery'),".
-			                      "'".localize('Eurobank',getlocal())."',".
-								  "'".localize('Piraeus',getlocal())."',".
-								  "'".localize('Paypal',getlocal())."',".
-			                      "'".localize('BankTransfer',getlocal())."',".
-								  "'".localize('PayOnsite',getlocal())."',".
-								  "'".localize('PayOndelivery',getlocal())."') as pw";			
-								  
-			$lookup2 = "ELT(FIELD(i.roadway, 'CompanyDelivery','CustomerDelivery','Logistics','Courier'),".
-				                  "'".localize('CompanyDelivery',getlocal())."',".
-					   		      "'".localize('CustomerDelivery',getlocal())."',".
-								  "'".localize('Logistics',getlocal())."',".
-								  "'".localize('Courier',getlocal())."') as rw";								  
-		
 		    if ($selected_cus) 
 				$xsSQL2 = "SELECT * FROM (SELECT DISTINCT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i WHERE i.cid='$selected_cus') x";
 			else 
 				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i) x";
 
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+recid|".localize('id',getlocal())."|5|0|||1|1");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tid|".localize('id',getlocal())."|5|0|||0");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tid|".localize('id',getlocal())."|5|0|||1|0");//"|link|5|".seturl('t=cptransviewhtml&editmode=1&tid={tid}').'||');
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tid|".localize('id',getlocal())."|link|5|"."javascript:show_body({tid});".'||');
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+username|".localize('_user',getlocal())."|10|0|||0|1");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cid|".localize('_user',getlocal())."|20|1|");
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tdate|".localize('_date',getlocal())."|boolean|1|ACTIVE:DELETED");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tdate|".localize('_date',getlocal())."|date|0|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ttime|".localize('_time',getlocal())."|9|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|5|0|||||right");	
-			//GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|link|10|"."javascript:show_body({tid});".'||');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+pw|".localize('_payway',getlocal())."|20|1|");			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+rw|".localize('_roadway',getlocal())."|20|1|");
-	        GetGlobal('controller')->calldpc_method("mygrid.column use grid2+qty|".localize('_qty',getlocal())."|5|0|||||right");				
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cost|".localize('_cost',getlocal())."|5|0|||||right");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
-			$ret .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+customers+$xsSQL2+r+".localize('RCTRANSACTIONS_DPC',getlocal())."+recid+1+1+12+300+$x+0+1+1");
+			_m("mygrid.column use grid2+recid|".localize('id',getlocal())."|5|0|||1|1");
+			//_m("mygrid.column use grid2+tid|".localize('id',getlocal())."|5|0|||0");
+			//_m("mygrid.column use grid2+tid|".localize('id',getlocal())."|5|0|||1|0");//"|link|5|".seturl('t=cptransviewhtml&editmode=1&tid={tid}').'||');
+			_m("mygrid.column use grid2+tid|".localize('id',getlocal())."|5|0|"); //"|link|5|"."javascript:show_body({tid});".'||');
+			//_m("mygrid.column use grid2+username|".localize('_user',getlocal())."|10|0|||0|1");
+			_m("mygrid.column use grid2+cid|".localize('_user',getlocal())."|link|10|"."javascript:show_body({tid});".'||');//."|20|1|");
+			//_m("mygrid.column use grid2+tdate|".localize('_date',getlocal())."|boolean|1|ACTIVE:DELETED");			
+			_m("mygrid.column use grid2+tdate|".localize('_date',getlocal())."|6|0|");
+		    _m("mygrid.column use grid2+ttime|".localize('_time',getlocal())."|6|0|");	
+			_m("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|2|0|||||right");	
+			//_m("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|link|10|"."javascript:show_body({tid});".'||');
+		    _m("mygrid.column use grid2+pw|".localize('_payway',getlocal())."|18|1|");			
+		    _m("mygrid.column use grid2+rw|".localize('_roadway',getlocal())."|18|1|");
+	        _m("mygrid.column use grid2+qty|".localize('_qty',getlocal())."|5|0|||||right");				
+			_m("mygrid.column use grid2+cost|".localize('_cost',getlocal())."|5|0|||||right");
+			_m("mygrid.column use grid2+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
+			$ret .= _m("mygrid.grid use grid2+customers+$xsSQL2+r+".localize('RCTRANSACTIONS_DPC',getlocal())."+recid+1+1+12+300+$x+0+1+1");
 
 	    }
 		else 
@@ -183,7 +216,7 @@ class rctransactions extends shtransactions {
 		$tid = GetReq('tid');
 		$cid = GetReq('cid');
 	  
-		$customer_data = GetGlobal('controller')->calldpc_method('shcustomers.showcustomerdata use '.$cid.'+code2');	
+		$customer_data = _m('shcustomers.showcustomerdata use '.$cid.'+code2');	
 	
 		$sSQL = "select tdata,cost,costpt from transactions where tid=".$this->initial_word.$tid;
 		$result = $db->Execute($sSQL);
@@ -191,13 +224,13 @@ class rctransactions extends shtransactions {
 		if (!$out = $this->loadTransactionHtml($this->initial_word.$tid)) {	
 	  
 			$cart_data = unserialize($result->fields['tdata']);
-			$cartshow = GetGlobal('controller')->calldpc_method('shcart.head');	  
+			$cartshow = _m('shcart.head');	  
 			//print_r($cart_data);
 			foreach ($cart_data as $cart_id=>$cart_val) {
 				$vals = explode(';',$cart_val);
-				//$cartshow .= GetGlobal('controller')->calldpc_method('shcart.viewcart use '.$vals[0].'+'.$vals[1].'++++++++'.$vals[8].'+'.$vals[9]);
+				//$cartshow .= _m('shcart.viewcart use '.$vals[0].'+'.$vals[1].'++++++++'.$vals[8].'+'.$vals[9]);
 				$pvals = implode('+',$vals);
-				$cartshow .= GetGlobal('controller')->calldpc_method('shcart.viewcart use '.$pvals);
+				$cartshow .= _m('shcart.viewcart use '.$pvals);
 			}
 	  
 			$cartshow .= "<hr>".localize('_SUBTOTAL',getlocal()).':'.$result->fields['cost'].

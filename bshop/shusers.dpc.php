@@ -425,7 +425,7 @@ class shusers  {
 		}
 		else
 		    $tokens[] = $invtypedescr;//$myinvtype ? 'B' : 'A'; /*inv type title*/
-				  
+		//print_r($tokens);		  
 		$ret = $this->combine_tokens($mytemplate,$tokens);
 		
 		return ($ret);			  

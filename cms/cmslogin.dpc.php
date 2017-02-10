@@ -744,27 +744,29 @@ window.setTimeout('neu()',10);
 			  $sName = $userInfo['name'];
 			  $sId = $userInfo['email'];//name'];//id'];
 			
-			  $sSQL = "select id,username,notes from users WHERE username='{$userInfo['email']}' and notes='ACTIVE' order by id desc LIMIT 1"; //last entry
+			  $sSQL = "select id,username,notes from users WHERE username='{$userInfo['email']}' and (active=1 or notes='ACTIVE') order by id desc LIMIT 1"; //last entry
 			  $uret = $db->Execute($sSQL);
 		
 			  if (!$uret->fields[0]) {
 				 
-				$fbpass	= md5($uret.'!@test@!'.time()); //auto gen password
+				$fbpass	= md5('!@test@!'.time()); //auto gen password
 				  
 				//insert facebook user (active by def)	  
-				$sSQL = "insert into users (active,code2,fname,lname,email,notes,username,subscribe,seclevid, password, vpass, active, fb) values ";
+				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid, password, vpass, active, fb) values ";
 				$sSQL.= "('{$sUsername}','{$userInfo['first_name']}','{$userInfo['last_name']}','{$userInfo['email']}','ACTIVE','{$userInfo['email']}',1,1, '{$fbpass}','{$fbpass}',1,1)";
 				$ret = $db->Execute($sSQL);
 							  
 				if ($db->Affected_Rows()) {
 					if (defined('SHUSERS_DPC'))  
-						GetGlobal('controller')->calldpc_method("shusers.mailtohost use $sUsername++".$userInfo['first_name'].'+'.$userInfo['last_name']);
+						_m("shusers.mailtohost use $sUsername++".$userInfo['first_name'].'+'.$userInfo['last_name']);
 					
 				    if (defined('CMSSUBSCRIBE_DPC'))  
-						GetGlobal('controller')->calldpc_method('cmssubscribe.dosubscribe use '.$sUsername.'+1');
+						_m('cmssubscribe.dosubscribe use '.$sUsername.'+1');
 					
 					$this->update_statistics('registration', $sUsername);
-				}	
+				}
+				//else
+					//return false;		
 			  }	
 			  else {  
 			    //update existed user with facebook data (active by def)
@@ -836,6 +838,95 @@ window.setTimeout('neu()',10);
 			setcookie("cuser","");
 			setcookie("csess","");
 		}
+	}	
+	
+	public function do_guest_login($email=null,$name=null,$address=null,$postcode=null,$country=null) {
+	    $db = GetGlobal('db');	
+		if (!$email) return false;
+		
+		if (($name) && (strstr($name, ' '))) {
+			$p = explode(' ', $name);
+			$fname = array_shift($p);
+			$lname = implode(' ', $p); //rest array
+		}
+		else
+			$fname = $lname = ($name ? $name : 'unknown');
+		
+		if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			
+			$sUsername = $email;
+			//$this->fbhash = '#facebook';
+			//SetSessionParam('fbhash', '#facebook');
+						  
+			$sName = $name;
+			$sId = $email;
+			
+			$sSQL = "select id,username,notes from users WHERE username='{$email}' and (active=1 or notes='ACTIVE') order by id desc LIMIT 1"; //last entry
+			$uret = $db->Execute($sSQL);
+		
+			if (!$uret->fields[0]) {
+				 
+				$pass = md5('!@test@!' . time()); //auto gen password
+				  
+				//insert guest user (active by def)	  
+				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid, password, vpass, active, fb) values ";
+				$sSQL.= "('{$sUsername}','{$fname}','{$lname}','{$email}','ACTIVE','{$email}',1,1, '{$pass}','{$pass}',1,2)";
+				$ret = $db->Execute($sSQL);
+							  
+				if ($db->Affected_Rows()) {
+					//if (defined('SHUSERS_DPC'))  
+						//_m("shusers.mailtohost use $sUsername++".$fname.'+'.$lname);
+					
+					//if (defined('CMSSUBSCRIBE_DPC'))  
+						//_m('cmssubscribe.dosubscribe use '.$sUsername.'+1');
+				
+				    //add customer 
+					if (defined('SHCUSTOMERS_DPC')) 
+						$save = _m("shcustomers.save_guest_customer use $email+$name+$address+$postcode+$country");
+					
+				
+					$this->update_statistics('registration', $sUsername);
+										
+				}
+				else
+					return false;		
+			}	
+			else {  
+				//update existed user 
+				/*$sSQL = "UPDATE users set fname='{$fname}',lname='{$lname}', notes='ACTIVE', active=1, fb=0 WHERE username='{$email}'";
+				$uret = false; 				
+				$ret = $db->Execute($sSQL);
+				*/ //NOT AN UPDATE (EXISTING VALID USER !!!)
+				
+				//add customer address
+				if (defined('SHCUSTOMERS_DPC')) 
+					$save = _m("shcustomers.save_guest_deliveryaddress use $email+$name+$address+$postcode+$country"); 
+					
+			}
+			
+			$GLOBALS['UserID'] = encode($sId);
+			SetSessionParam("UserName", encode($sUsername));
+			SetSessionParam("UserID", encode($sId));
+			SetSessionParam("UserSecID", encode('1'));
+				
+			//if ((defined('SHCUSTOMERS_DPC')))   						  
+			//    _m('shcustomers.is_reseller');					
+				
+			//set cookie
+			if (paramload('SHELL','cookies')) {
+				setcookie("cuser", $sUserName, time()+$this->time_of_session);
+				setcookie("csess", session_id(), time()+$this->time_of_session);
+			}
+
+			$this->update_login_statistics('login', $sUsername);	
+
+			return true;			
+			
+		}
+        else 
+		    SetGlobal('sFormErr',localize('_MSG1',getlocal()));	
+		
+		return false;
 	}	
 	
 	protected function saveSession() {

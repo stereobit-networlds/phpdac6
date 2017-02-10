@@ -21,21 +21,21 @@ $__ACTIONS['RCTRANSPORT_DPC'][4]='cpitemqdel';
 $__LOCALE['RCTRANSPORT_DPC'][0]='RCTRANSPORT_DPC;Transport;Τρόποι αποστολής';
 $__LOCALE['RCTRANSPORT_DPC'][1]='_date;Date;Ημερ.';
 $__LOCALE['RCTRANSPORT_DPC'][2]='_time;Time;Ώρα';
-$__LOCALE['RCTRANSPORT_DPC'][3]='_qty;Quantity;Ποσότητα';
+$__LOCALE['RCTRANSPORT_DPC'][3]='_actions;Actions;Επιλογή';
 $__LOCALE['RCTRANSPORT_DPC'][4]='_items;Items;Είδη';
 $__LOCALE['RCTRANSPORT_DPC'][5]='_active;Active;Ενεργό';
 $__LOCALE['RCTRANSPORT_DPC'][6]='_title;Title;Τίτλος';
 $__LOCALE['RCTRANSPORT_DPC'][7]='_descr;Description;Περιγραφή';
 $__LOCALE['RCTRANSPORT_DPC'][8]='_orderid;Order;Order';
-$__LOCALE['RCTRANSPORT_DPC'][9]='_transports;Transports;Transports';
+$__LOCALE['RCTRANSPORT_DPC'][9]='_transports;Transports;Αποστολές';
 $__LOCALE['RCTRANSPORT_DPC'][10]='_code;Code;Κωδικός';
 $__LOCALE['RCTRANSPORT_DPC'][11]='_lantitle;LTitle;Τίτλος μτφ.';
-$__LOCALE['RCTRANSPORT_DPC'][12]='_size;Size;Μέγεθος';
-$__LOCALE['RCTRANSPORT_DPC'][13]='_dimensions;Dimensions;Διαστάσεις';
-$__LOCALE['RCTRANSPORT_DPC'][14]='_xmlcreate;Create XML;Δημιούργησε XML';
-$__LOCALE['RCTRANSPORT_DPC'][15]='_xml;XML item;Είδος XML';
-$__LOCALE['RCTRANSPORT_DPC'][16]='_cartsum;Cart sum;Σύνολο κλθ.';
-$__LOCALE['RCTRANSPORT_DPC'][17]='_uniname1;Unit;Μον.μετρ.';
+$__LOCALE['RCTRANSPORT_DPC'][12]='_address;Address;Διεύθυνση';
+$__LOCALE['RCTRANSPORT_DPC'][13]='_area;Area;Περιοχή';
+$__LOCALE['RCTRANSPORT_DPC'][14]='_zip;Zip;Ταχ. κωδικός';
+$__LOCALE['RCTRANSPORT_DPC'][15]='_country;Country;Χώρα';
+$__LOCALE['RCTRANSPORT_DPC'][16]='_cartsum;Σcart;Σcart.';
+$__LOCALE['RCTRANSPORT_DPC'][17]='_rules;Rules;Κανονισμοί';
 $__LOCALE['RCTRANSPORT_DPC'][18]='_groupid;Group;Group';
 $__LOCALE['RCTRANSPORT_DPC'][19]='_cost;Cost;Κόστος';
 $__LOCALE['RCTRANSPORT_DPC'][20]='_price;Price;Αξία';
@@ -97,22 +97,20 @@ class rctransport {
     }
 	
 	protected function transport() {
-		$mode = GetReq('mode') ? GetReq('mode') : 'qty';
-        /*
-		$turl0 = seturl('t=cpcrmforms&mode=messages');		
-		$turl1 = seturl('t=cpcrmforms&mode=offers');
-		$button = $this->createButton(localize('_forms', getlocal()), 
-										array(localize('_messages', getlocal())=>$turl0,
-										      localize('_offers', getlocal())=>$turl1,
+		$mode = GetReq('mode');
+        
+		$turl0 = seturl('t=cptransport');		
+		$turl1 = seturl('t=cptransport&mode=rules');
+		$button = $this->createButton(localize('_actions', getlocal()), 
+										array(localize('_transports', getlocal())=>$turl0,
+										      localize('_rules', getlocal())=>$turl1,
 		                                ),'success');		
 																
 		switch ($mode) {
-	
-			case 'qty'      :   
-			default         :   
-			
-		}*/			
-		$content = $this->grid(null,140,5,'e', true);
+			case 'rules'    :   $content = $this->gridRules(null,140,5,'d', true); break;
+			default         :   $content = $this->grid(null,140,5,'e', true);
+		}			
+		
 					
 		$ret = $this->window($this->title, $button, $content);
 		
@@ -214,6 +212,36 @@ class rctransport {
 		
 		return ($out);  	
 	}	
+	
+	
+	protected function gridRules($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;				   
+	    $lan = getlocal() ? getlocal() : 0;  
+		$title = localize('_rules', getlocal()); 
+		
+        $xsSQL = "SELECT * from (select id,active,datein,title,address,area,zip,country,cost,transports,orderid from ptransrules) o ";		   
+		   							
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
+		_m("mygrid.column use grid1+datein|".localize('_date',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|5|1|");//."|link|10|"."javascript:editform(\"{code}\");".'||');	
+		_m("mygrid.column use grid1+address|".localize('_address',getlocal())."|5|1|");		
+		_m("mygrid.column use grid1+area|".localize('_area',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+zip|".localize('_zip',getlocal())."|5|1|");		
+		_m("mygrid.column use grid1+country|".localize('_country',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+cost|".localize('_cost',getlocal())."|5|1|");					
+		//_m("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+transports|".localize('_transports',getlocal())."|5|1|");
+		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|5|1|");//."|link|2|"."javascript:deleteform(\"{code5}\");".'||');
+
+		$out = _m("mygrid.grid use grid1+ptransrules+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		
+		return ($out);  	
+	}		
 	
 	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
 		$type = $t ? $t : 'primary'; //danger /warning / info /success

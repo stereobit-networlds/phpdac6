@@ -192,7 +192,7 @@ class shcustomers {
 	   
 		$deliveryfields = remote_arrayload('SHCUSTOMERS','delivform',$this->path);	
 		if (empty($deliveryfields))
-			$this->delivery_fields = array('address','area','zip','voice1','voice2','fax','mail');	   
+			$this->delivery_fields = array('address','area','zip','country','voice1','voice2','fax','mail');	   
 		else
 			$this->delivery_fields = (array) $deliveryfields;
 		 
@@ -411,16 +411,16 @@ window.onload=function(){
 			switch ($myaction) {
 
 				case "insert2": 
-			               $out .= setError(localize('_MSG10',getlocal()));
-						   $out .= $this->after_registration_goto();
-						   break;
+								$out .= localize('_MSG10',getlocal());
+								$out .= $this->after_registration_goto();
+								break;
 				case "update2": 
-						   $out = setError(localize('_MSG10',getlocal()));
-						   $out .= $this->after_update_goto();
-						   break;
-				case "delete2": $out = setError(localize('_MSG10',getlocal()));
-			               $out .= $this->after_delete_goto();
-			               break;
+								$out = localize('_MSG10',getlocal());
+								$out .= $this->after_update_goto();
+								break;
+				case "delete2": $out = localize('_MSG10',getlocal());
+								$out .= $this->after_delete_goto();
+								break;
 			}		   
 	   }
 	   else {
@@ -432,13 +432,13 @@ window.onload=function(){
 					$out .= $this->makeform($record,null,null,1); //update action
 				}
 				else
-					$out .= setError(localize('_ACCDENIED',getlocal()));
+					$out .= localize('_ACCDENIED',getlocal());
 			}
 			elseif (seclevel('INSERTCUSTOMER_',$this->userLevelID)) {
 		        $out = $this->makeform();
 			}
 			else
-		        $out .= setError(localize('_ACCDENIED',getlocal()));
+		        $out .= localize('_ACCDENIED',getlocal());
 	   }
 
 	   return ($out);
@@ -807,6 +807,7 @@ window.onload=function(){
 	       $sSQL.= ",address=" . $db->qstr(addslashes(GetParam('address')));
 	       $sSQL.= ",area=" . $db->qstr(addslashes(GetParam('area')));
 	       $sSQL.= ",zip=" . $db->qstr(addslashes(GetParam('zip')));
+		   $sSQL.= ",country=" . $db->qstr(addslashes(GetParam('country')));
 	       $sSQL.= ",voice1=" . $db->qstr(addslashes(GetParam('voice1')));
 	       $sSQL.= ",voice2=" . $db->qstr(addslashes(GetParam('voice2')));
 	       $sSQL.= ",fax=" . $db->qstr(addslashes(GetParam('fax')));
@@ -822,19 +823,20 @@ window.onload=function(){
 				if ($this->tellit) {
 				
 					//fetch existing data and send mail to admin
-					$sSQL2 = "select code2,active,name,afm,eforia,prfdescr,address,area,zip,voice1,voice2,fax,mail from customers " . " where id=" . $id;
+					$sSQL2 = "select code2,active,name,afm,eforia,prfdescr,address,area,zip,country,voice1,voice2,fax,mail from customers " . " where id=" . $id;
 					$res2 = $db->Execute($sSQL2,2); 				
 				
 					$mytemplate = _m('cmsrt.select_template use customerinserttell'); 
 			
-					$tokens[] = GetParam('uname');GetParam('lname');			
-					$tokens[] = GetParam('lname'); //$db->qstr($res2->fields['name']);	
+					$tokens[] = GetParam('uname');
+					$tokens[] = GetParam('lname'); 
 					$tokens[] = $res2->fields['afm'];						
 					$tokens[] = $res2->fields['eforia'];			
 					$tokens[] = $res2->fields['prfdescr'];
 					$tokens[] = $res2->fields['address'];
 					$tokens[] = $res2->fields['area'];														
 					$tokens[] = $res2->fields['zip'];			
+					$tokens[] = $res2->fields['country'];
 					$tokens[] = $res2->fields['voice1'];			
 					$tokens[] = $res2->fields['voice2'];			
 					$tokens[] = $res2->fields['fax'];			
@@ -879,7 +881,7 @@ window.onload=function(){
 	     	  
 		$recfields = array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
 
-		$sSQL = "insert into customers (code2,active,name,afm,eforia,prfdescr,address,area,zip,voice1,voice2,fax,mail)";
+		$sSQL = "insert into customers (code2,active,name,afm,eforia,prfdescr,address,area,zip,country,voice1,voice2,fax,mail)";
 		$sSQL.= " values (" .
 	           $db->qstr($uid) . ',1,' .
 	           $db->qstr(addslashes(GetParam('name'))) . ',' .
@@ -889,6 +891,7 @@ window.onload=function(){
 	           $db->qstr(addslashes(GetParam('address'))) . ',' .
 	           $db->qstr(addslashes(GetParam('area'))) . ',' .
 	           $db->qstr(addslashes(GetParam('zip'))) . ',' .
+			   $db->qstr(addslashes(GetParam('country'))) . ',' .
 	           $db->qstr(addslashes(GetParam('voice1'))) . ',' .
 	           $db->qstr(addslashes(GetParam('voice2'))) . ',' .
 	           $db->qstr(addslashes(GetParam('fax'))) . ',' .
@@ -913,7 +916,8 @@ window.onload=function(){
 				$tokens[] = GetParam('prfdescr');
 				$tokens[] = GetParam('address');
 				$tokens[] = GetParam('area');														
-				$tokens[] = GetParam('zip');			
+				$tokens[] = GetParam('zip');		
+				$tokens[] = GetParam('country');
 				$tokens[] = GetParam('voice1');			
 				$tokens[] = GetParam('voice2');			
 				$tokens[] = GetParam('fax');			
@@ -954,7 +958,7 @@ window.onload=function(){
 		}	 
 	   
 		//what to store as mail ?  
-		if ($usemailasusername=GetGlobal('controller')->calldpc_var('shusers.usemailasusername'))	
+		if ($usemailasusername = _v('shusers.usemailasusername'))	
 			$email = $userid;//GetParam('uname');
 		else	 
 			$email = GetParam('eml');
@@ -962,7 +966,7 @@ window.onload=function(){
 		//before set active the current record deactive all others  
 		$d = $this->deactivatecustomers($uid);			 			 
 
-		$sSQL = "insert into customers (code2,active,name,afm,eforia,prfdescr,address,area,zip,voice1,voice2,fax,mail)";
+		$sSQL = "insert into customers (code2,active,name,afm,eforia,prfdescr,address,area,zip,country,voice1,voice2,fax,mail)";
 		$sSQL.= " values (" .
 	           $db->qstr($uid) . ',1,' .
 	           $db->qstr(addslashes(GetParam('lname'))) . ',' . //user's name
@@ -972,6 +976,7 @@ window.onload=function(){
 	           $db->qstr(addslashes(GetParam('address'))) . ',' .
 	           $db->qstr(addslashes(GetParam('area'))) . ',' .
 	           $db->qstr(addslashes(GetParam('zip'))) . ',' .
+			   $db->qstr(addslashes(GetParam('country'))) . ',' .
 	           $db->qstr(addslashes(GetParam('voice1'))) . ',' .
 	           $db->qstr(addslashes(GetParam('voice2'))) . ',' .
 	           $db->qstr(addslashes(GetParam('fax'))) . ',' .
@@ -1024,6 +1029,7 @@ window.onload=function(){
 				$tokens[] = GetParam('address');
 				$tokens[] = GetParam('area');														
 				$tokens[] = GetParam('zip');			
+				$tokens[] = GetParam('country');
 				$tokens[] = GetParam('voice1');			
 				$tokens[] = GetParam('voice2');			
 				$tokens[] = GetParam('fax');			
@@ -1093,6 +1099,7 @@ window.onload=function(){
 	           'address='.$db->qstr(addslashes(GetParam('address'))) . ',' .
 	           'area='.$db->qstr(addslashes(GetParam('area'))) . ',' .
 	           'zip='.$db->qstr(addslashes(GetParam('zip'))) . ',' .
+			   'country='.$db->qstr(addslashes(GetParam('country'))) . ',' .
 	           'voice1='.$db->qstr(addslashes(GetParam('voice1'))) . ',' .
 	           'voice2='.$db->qstr(addslashes(GetParam('voice2'))) . ',' .
 	           'fax='.$db->qstr(addslashes(GetParam('fax'))) . ',' .
@@ -1117,6 +1124,7 @@ window.onload=function(){
 				$tokens[] = GetParam('address');
 				$tokens[] = GetParam('area');														
 				$tokens[] = GetParam('zip');			
+				$tokens[] = GetParam('country');
 				$tokens[] = GetParam('voice1');			
 				$tokens[] = GetParam('voice2');			
 				$tokens[] = GetParam('fax');			
@@ -1462,8 +1470,8 @@ window.onload=function(){
         $res = $db->Execute($sSQL);
 		$ret[] = array(/*$res->fields[0]*/'',$res->fields[1],$res->fields[2],$res->fields[3]);	
 	   	   	
-        //alternatives			
-        $sSQL = "select id,address,area,zip,country from custaddress";
+        //alternatives (may use active for first line ??)		
+        $sSQL = "select id,address,area,zip,country,active from custaddress";
 	    $sSQL.= " where ccode=". $db->qstr($user);
 	    $sSQL.= " order by id"; 
 	    //echo $sSQL;	   
@@ -1483,17 +1491,17 @@ window.onload=function(){
 		if (!$UserName) return null;
 			
 		if ($id) { //alternatives
-			$sSQL = "select id,address,area,zip,voice1,voice2,fax,mail from custaddress";
+			$sSQL = "select id,address,area,zip,country,voice1,voice2,fax from custaddress";
 			$sSQL.= " where id=$id and ccode=". $db->qstr($user);	   
 		}		
 		else { //basic
-			$sSQL = "select id,address,area,zip,voice1,voice2,fax,mail from customers";
+			$sSQL = "select id,address,area,zip,country,voice1,voice2,fax from customers";
 			$sSQL.= " where active=1 and code2=". $db->qstr($user);	   
         }	
 		
 		$res = $db->Execute($sSQL);
 		
-		if ($res->fields[0]) //found
+		if ($res->fields[0]) //found, bypass id token
 			$ret = ($tokens) ? array($res->fields[1],$res->fields[2],$res->fields[3],$res->fields[4],$res->fields[5],$res->fields[6]) :
 							   implode(' ', array($res->fields[1],$res->fields[2],$res->fields[3],$res->fields[4],$res->fields[5],$res->fields[6]));		
 		
@@ -1633,7 +1641,7 @@ window.onload=function(){
 	protected function deactivatedeliveryaddress($id=null) {
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
-	    $myui = $id?$id:decode($UserName);	   
+	    $myui = $id ? $id : decode($UserName);	   
 	   
 	    if ($id) {
 			$sSQL = "update custaddress set active=0";
@@ -1678,7 +1686,7 @@ window.onload=function(){
         $db = GetGlobal('db');	
 	    $UserName = GetGlobal('UserName');
 	    $myui=$uid?$uid:decode($UserName);
-	    $customerway = $preselect ? $preselect : GetReq('customerway');//predef..selected 
+	    $customerway = $preselect ? $preselect : GetReq('customerway');
 	    $out = null;
 	    $style = $style ? $style : "myf_select";
 	   
@@ -1900,6 +1908,7 @@ window.onload=function(){
 					$tokens[] = GetParam('address');
 					$tokens[] = GetParam('area');														
 					$tokens[] = GetParam('zip');			
+					$tokens[] = GetParam('country');
 					$tokens[] = GetParam('voice1');			
 					$tokens[] = GetParam('voice2');			
 					$tokens[] = GetParam('fax');			
@@ -2029,6 +2038,56 @@ window.onload=function(){
 	    return null;	   		
 	}
 	
+	public function save_guest_customer($email=null,$name=null,$address=null,$postcode=null,$country=null) {
+		$db = GetGlobal('db');	
+		if (!$email) return false;
+		
+		if ((trim($country)) && (strstr(trim($country), ' '))) {
+			$p = explode(' ', trim($country));
+			$cuscity = array_shift($p);
+			$cuscountry = implode(' ', $p); //rest array
+		}
+		else
+			$cuscity = $cuscountry = ($country ? trim($country) : '');
+		
+		$sSQL = "insert into customers (code2,active,name,address,area,zip,city,country,mail)";
+		$sSQL.= " values (". $db->qstr($email). ",1,'$name','$address','$address','$postcode','$cuscity','$cuscountry','$email')";
+		//echo $sSQL2;
+		
+		$result = $db->Execute($sSQL,1);	
+		if ($ret = $db->Affected_Rows()) 
+			return true;	
+		
+		return false;
+	}
+
+	public function save_guest_deliveryaddress($email=null,$name=null,$address=null,$postcode=null,$country=null) {	
+		$db = GetGlobal('db');	
+		if (!$email) return false;
+		
+		if ((trim($country)) && (strstr(trim($country), ' '))) {
+			$p = explode(' ', trim($country));
+			$cuscity = array_shift($p);
+			$cuscountry = array_pop($p); //implode(' ', $p); //rest array
+		}
+		else
+			$cuscity = $cuscountry = ($country ? trim($country) : '');
+	   
+	    //delivery address
+
+		//before set active the current record deactive all others  
+		$d = $this->deactivatedeliveryaddress($email);
+	   
+		$sSQL = "insert into custaddress (ccode,active,address,area,zip,country,mail,fax)";
+		$sSQL.= " values (". $db->qstr($email). ",1,'$address','$cuscity','$postcode','$cuscountry','$email','$name')";
+		//echo $sSQL;
+		
+		$result = $db->Execute($sSQL,1);	
+		if ($ret = $db->Affected_Rows()) 
+			return true;			   	   	   
+		
+		return false;	   	
+	}	
 	
 	public function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 

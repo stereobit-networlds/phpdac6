@@ -78,6 +78,7 @@ $__LOCALE['RCUSERS_DPC'][31]='_timezone;Tmzone;Tmzone';
 $__LOCALE['RCUSERS_DPC'][32]='_language;Country;ΓλώσσαΧώρα';
 $__LOCALE['RCUSERS_DPC'][33]='_age;Age;Ηλικία';
 $__LOCALE['RCUSERS_DPC'][34]='_level;Level;Πρόσβαση';
+$__LOCALE['RCUSERS_DPC'][35]='_fb;Linked;Σύνδεση';
 
 class rcusers extends shusers {
 
@@ -137,9 +138,9 @@ class rcusers extends shusers {
 										//auto subscribe
 										if (defined('SHSUBSCRIBE_DPC'))  {
 											if (trim(GetParam('autosub'))=='on')
-												GetGlobal('controller')->calldpc_method('shsubscribe.dosubscribe use '.GetParam("eml"));//.'++-1');
+												_m('shsubscribe.dosubscribe use '.GetParam("eml"));//.'++-1');
 											else
-												GetGlobal('controller')->calldpc_method('shsubscribe.dounsubscribe use '.GetParam("eml"));//.'+-1');
+												_m('shsubscribe.dounsubscribe use '.GetParam("eml"));//.'+-1');
 										}
 										$this->update();
 									}	 
@@ -207,7 +208,7 @@ class rcusers extends shusers {
 		$out = $this->register(GetReq('rec'),'id','rec','cpupdate');
 	   
 		if (defined('RCTRANSACTIONS_DPC')) 
-			$out .= GetGlobal('controller')->calldpc_method("rctransactions.show_grid use +150+1");	        
+			$out .= _m("rctransactions.show_grid use +150+1");	        
        
 		return ($out); 	   
 	}
@@ -268,12 +269,32 @@ class rcusers extends shusers {
 	//not used
     protected function get_country_from_ip() {
 
-		$mycountry = GetGlobal('controller')->calldpc_method("country.find_country");
+		$mycountry = _m("country.find_country");
 		return ($mycountry);
     }
 	
+	protected function getFbELT($flname, $as=null, $eltarr=null) {
+		if (!$flname) return null;
+		$lan = getlocal();
+
+		if (empty($eltarr)) return null;
+		
+		foreach ($eltarr as $id=>$descr) {
+			$fields[] = $id;
+			$locales[] = localize($descr, $lan);
+		}	
+		
+		$f = "'" . implode("','", $fields) ."'";
+		$l = "'" . implode("','", $locales) . "'";
+		
+		$a = $as ? "as $as" : null;
+		$ret = "ELT(FIELD({$flname}, {$f}), {$l}) {$a}";
+		return ($ret);
+	}	
+	
 	protected function viewUsers() {	   
         $sFormErr = GetGlobal('sFormErr');
+		$lan = getlocal();
 	    if (($msg = $this->msg) || ($msg = $sFormErr)) 
 			$out = $msg;	
 		
@@ -284,25 +305,29 @@ class rcusers extends shusers {
 			$edit = $isadmin ? 'd' : 'e';
 			$editf = $isadmin ? 1 : 0;
 			
+			$u = localize('_user', $lan);
+			$lookup1 = $this->getFbELT('fb', 'fbdescr', array('0'=>'Site '.$u, '1'=>'Facebook '.$u, '2'=>'Guest '.$u));
+			
 			$where = null; //"where seclevid<5";  //order by id desc //disable search
-            $xsSQL = "SELECT * from (select id,timein,active,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users $where) o ";		   
+            $xsSQL = "SELECT * from (select id,timein,active,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid,$lookup1 from users $where) o ";		   
 		   
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|0|".seturl('t=cptransactions&cusmail={username}').'||');	   
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|link|5|".seturl('t=cpusractiv&rec={id}').'||');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|20|0|");						
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|20|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|20|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|20|0|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code2|".localize('_code',getlocal())."|20|0|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|$editf|");
+		    _m("mygrid.column use grid1+id|".localize('id',$lan)."|5|0|||1");
+		    _m("mygrid.column use grid1+timein|".localize('_date',$lan)."|link|0|".seturl('t=cptransactions&cusmail={username}').'||');	   
+			_m("mygrid.column use grid1+active|".localize('_active',$lan)."|boolean|1|");
+		    _m("mygrid.column use grid1+notes|".localize('_active',$lan)."|link|5|".seturl('t=cpusractiv&rec={id}').'||');
+		    _m("mygrid.column use grid1+username|".localize('_username',$lan)."|20|0|");						
+			_m("mygrid.column use grid1+fbdescr|".localize('_fb',$lan)."|8|1|");
+		    _m("mygrid.column use grid1+fname|".localize('_fname',$lan)."|20|1|");
+		    _m("mygrid.column use grid1+lname|".localize('_lname',$lan)."|20|1|");
+		    _m("mygrid.column use grid1+ageid|".localize('_age',$lan)."|2|1|");
+		    _m("mygrid.column use grid1+cntryid|".localize('_country',$lan)."|2|1|");
+		    _m("mygrid.column use grid1+lanid|".localize('_language',$lan)."|2|1|");
+		    _m("mygrid.column use grid1+timezone|".localize('_timezone',$lan)."|2|1|");
+		    _m("mygrid.column use grid1+email|".localize('_email',$lan)."|20|0|");
+		    _m("mygrid.column use grid1+code2|".localize('_code',$lan)."|20|0|");			
+			_m("mygrid.column use grid1+seclevid|".localize('_level',$lan)."|5|$editf|");
 		   
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',getlocal())."+id+0+1+36+600++0+1+1");
+		    $out .= _m("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',$lan)."+id+0+1+36+600++0+1+1");
 		   
 		    return ($out); 	
 	    }
@@ -312,6 +337,7 @@ class rcusers extends shusers {
 	
 	protected function viewSuperUsers() {	   
         $sFormErr = GetGlobal('sFormErr');
+		$lan = getlocal();
 		$AdminSecID = GetSessionParam('ADMINSecID');
 		$from = "seclevid>=5";
 		$to = ($AdminSecID>=5) ? "seclevid<=" . intval($AdminSecID) : "seclevid<5";
@@ -327,21 +353,21 @@ class rcusers extends shusers {
 			
             $xsSQL = "SELECT * from (select id,timein,active,code2,ageid,cntryid,lanid,timezone,email,notes,fname,lname,username,seclevid from users where $from and $to) o ";		   
 		   
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|||1");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|1|".seturl('t=cptransactions&cusmail={username}').'||');	   
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+notes|".localize('_active',getlocal())."|link|5|".seturl('t=cpusractiv&rec={id}').'||');
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+username|".localize('_username',getlocal())."|20|$edif|");						
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+fname|".localize('_fname',getlocal())."|20|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lname|".localize('_lname',getlocal())."|20|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+ageid|".localize('_age',getlocal())."|2|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+cntryid|".localize('_country',getlocal())."|2|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+lanid|".localize('_language',getlocal())."|2|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timezone|".localize('_timezone',getlocal())."|2|1|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+email|".localize('_email',getlocal())."|20|0|");
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+code2|".localize('_code',getlocal())."|20|0|");			
-		    GetGlobal('controller')->calldpc_method("mygrid.column use grid1+seclevid|".localize('_level',getlocal())."|5|$edif|");		   
-		    $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',getlocal())."+id+0+1+36+600++0+1+1");
+		    _m("mygrid.column use grid1+id|".localize('id',$lan)."|5|0|||1");
+		    _m("mygrid.column use grid1+timein|".localize('_date',$lan)."|link|1|".seturl('t=cptransactions&cusmail={username}').'||');	   
+			_m("mygrid.column use grid1+active|".localize('_active',$lan)."|boolean|1|");
+		    _m("mygrid.column use grid1+notes|".localize('_active',$lan)."|link|5|".seturl('t=cpusractiv&rec={id}').'||');
+		    _m("mygrid.column use grid1+username|".localize('_username',$lan)."|20|$edif|");						
+		    _m("mygrid.column use grid1+fname|".localize('_fname',$lan)."|20|1|");
+		    _m("mygrid.column use grid1+lname|".localize('_lname',$lan)."|20|1|");
+		    _m("mygrid.column use grid1+ageid|".localize('_age',$lan)."|2|1|");
+		    _m("mygrid.column use grid1+cntryid|".localize('_country',$lan)."|2|1|");
+		    _m("mygrid.column use grid1+lanid|".localize('_language',$lan)."|2|1|");
+		    _m("mygrid.column use grid1+timezone|".localize('_timezone',$lan)."|2|1|");
+		    _m("mygrid.column use grid1+email|".localize('_email',$lan)."|20|0|");
+		    _m("mygrid.column use grid1+code2|".localize('_code',$lan)."|20|0|");			
+		    _m("mygrid.column use grid1+seclevid|".localize('_level',$lan)."|5|$edif|");		   
+		    $out .= _m("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',$lan)."+id+0+1+36+600++0+1+1");
 		   
 		    return ($out); 	
 	    }
@@ -356,7 +382,7 @@ class rcusers extends shusers {
 
 	   if (defined('ABCMAIL_DPC')) {
 	     $ret = $sFormErr;
-	     $ret .= GetGlobal('controller')->calldpc_method('abcmail.create_mail use cpcusmsend+'.$sendto);
+	     $ret .= _m('abcmail.create_mail use cpcusmsend+'.$sendto);
 	   }
 
 	   return ($ret);
@@ -371,7 +397,7 @@ class rcusers extends shusers {
 	   $subject = $subject ? $subject : GetParam('subject');
 	   $body = $body ? $body : GetParam('mail_text');
 
-	   if ($res = GetGlobal('controller')->calldpc_method('rcssystem.sendit use '.$from.'+'.$to.'+'.$subject.'+'.$body)) {
+	   if ($res = _m('rcssystem.sendit use '.$from.'+'.$to.'+'.$subject.'+'.$body)) {
 	     $this->mailmsg = "Send successfull";
 		 return true;
 	   }	 
@@ -385,6 +411,7 @@ class rcusers extends shusers {
 		global $config;	
 		$db = GetGlobal('db');	
 		$id = GetReq('rec');
+		$lan = getlocal();
 	
 		if (GetReq('editmode')) {//default form colors	
 
@@ -397,22 +424,22 @@ class rcusers extends shusers {
 			$resultset = $db->Execute($sSQL,2);	
 			$id = $resultset->fields['id']	;  
 		 
-			GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+50+100+0+0');
-			GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+50+10');
-			GetGlobal('controller')->calldpc_method('dataforms.setformgoto use DPCLINK:cpusers:OK');
-			GetGlobal('controller')->calldpc_method('dataforms.setformtemplate use cpupdateadvok');	   
+			_m('dataforms.setform use myform+myform+5+5+50+100+0+0');
+			_m('dataforms.setformadv use 0+0+50+10');
+			_m('dataforms.setformgoto use DPCLINK:cpusers:OK');
+			_m('dataforms.setformtemplate use cpupdateadvok');	   
 	   
 			$fields = "code1,code2,ageid,clogon,cntryid,email,fname,genid,lanid,lastlogon,lname,notes,seclevid,sesdata" .
 						",startdate,subscribe,username,password,vpass,timezone";		   
 				 
 			$farr = explode(',',$fields);
 			foreach ($farr as $t)
-				$title[] = localize($t,getlocal());
+				$title[] = localize($t,$lan);
 				
 			$titles = implode(',',$title);			 	 					
 		}	 	
 		 
-		$out .= GetGlobal('controller')->calldpc_method("dataforms.getform use update.users+dataformsupdate+Post+Clear+$fields+$titles++id=$id+dummy");	  
+		$out .= _m("dataforms.getform use update.users+dataformsupdate+Post+Clear+$fields+$titles++id=$id+dummy");	  
 	   
 		return ($out);		 
 	}

@@ -63,82 +63,74 @@ class transactions {
 	var $admint;
 	var $status0,$status1,$status2,$status3,$status4;
 	var $details, $tcounter;
-        var $initial_word;
+    var $initial_word;
 
-	function transactions() {
-	   $UserName = GetGlobal('UserName');	
-	   $UserSecID = GetGlobal('UserSecID');
-	   $UserID = GetGlobal('UserID');			
+	public function __construct() {
+		$UserName = GetGlobal('UserName');	
+		$UserSecID = GetGlobal('UserSecID');
+		$UserID = GetGlobal('UserID');			
 
-       $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
-	   $this->username = decode($UserName);
-	   $this->userid = decode($UserID);
+		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
+		$this->username = decode($UserName);
+		$this->userid = decode($UserID);
 	   
-	   $this->pagenum = 30;
-	   $this->searchtext = trim(GetParam("transnum"));
+		$this->pagenum = 30;
+		$this->searchtext = trim(GetParam("transnum"));
 	   
-	   $this->status0 = localize('_TRANSPROC',getlocal());
-	   $this->status1 = localize('_TRANSEND',getlocal());
-	   $this->status2 = localize('_TRANSCANC',getlocal());
-	   $this->status3 = localize('_TRANSMERR',getlocal());	//not submited   
-	   $this->status4 = localize('_TRANSDELL',getlocal());	//deleted 	   
+		$this->status0 = localize('_TRANSPROC',getlocal());
+		$this->status1 = localize('_TRANSEND',getlocal());
+		$this->status2 = localize('_TRANSCANC',getlocal());
+		$this->status3 = localize('_TRANSMERR',getlocal());	//not submited   
+		$this->status4 = localize('_TRANSDELL',getlocal());	//deleted 	   
 
-	   $this->tcounter = paramload('TRANSACTIONS','counter')?paramload('TRANSACTIONS','counter'):0;
-	   $this->storetype = paramload('TRANSACTIONS','storetype');
-	   $this->path = paramload('SHELL','prpath') . paramload('TRANSACTIONS','path');	
-	   //echo $this->path;   
-	   $this->details = paramload('TRANSACTIONS','details');
+		$this->tcounter = paramload('TRANSACTIONS','counter')?paramload('TRANSACTIONS','counter'):0;
+		$this->storetype = paramload('TRANSACTIONS','storetype');
+		$this->path = paramload('SHELL','prpath') . paramload('TRANSACTIONS','path');	
+		//echo $this->path;   
+		$this->details = paramload('TRANSACTIONS','details');
 	   
-	   $this->admint = 0;
+		$this->admint = 0;
 
            $this->initial_word = paramload('TRANSACTIONS','trid');
 	   
-	   //extension must be already loaded
-       if (($this->storetype=='xml') && (!defined(_PHPXMLDUMPER_))) 
-	     die ("TRANSACTION_DPC:Extension missing!");	   
+		//extension must be already loaded
+		if (($this->storetype=='xml') && (!defined(_PHPXMLDUMPER_))) 
+			die ("TRANSACTION_DPC:Extension missing!");	   
 	}
 	
-    function action()  { 
-
-		 //$out = $this->title();
-		 //$out .= $this->form();
-         $out = setNavigator(localize('_TRANSLIST',getlocal()));
-         $out .= $this->viewTransactions();
-
-	   return ($out);
-	}
-	
-	function event($evn) {
+	public function event($evn) {
 	   $a = GetReq('a');
 	   
-	   switch ($evn) {
-	     case "searchtrans"  : SetReq('a',$this->searchtext); break;
-		 case $this->status0 : $this->modifyTransactionStatus(0); break;		 
-		 case $this->status1 : $this->modifyTransactionStatus(1); break;		 
-		 case $this->status2 : $this->modifyTransactionStatus(2); break;
-		 //case $this->status3 : $this->modifyTransactionStatus(3); NO NEED ..PRODUCED by MAIL ERROR
-		 case $this->status4 : $this->modifyTransactionStatus(4); break;		 		 
-		 case "reset_tr"     : $this->reset_db(); break;			 
-	   }
+		switch ($evn) {
+			case "searchtrans"  : SetReq('a',$this->searchtext); break;
+			case $this->status0 : $this->modifyTransactionStatus(0); break;		 
+			case $this->status1 : $this->modifyTransactionStatus(1); break;		 
+			case $this->status2 : $this->modifyTransactionStatus(2); break;
+			//case $this->status3 : $this->modifyTransactionStatus(3); NO NEED ..PRODUCED by MAIL ERROR
+			case $this->status4 : $this->modifyTransactionStatus(4); break;		 		 
+			case "reset_tr"     : $this->reset_db(); break;			 
+		}
+	}	
+	
+    public function action()  { 
+
+        //$out = setNavigator(localize('_TRANSLIST',getlocal()));
+        $out .= $this->viewTransactions();
+
+	    return ($out);
 	}
 
-	function generate_id() {
-       $db = GetGlobal('db');
+	public function generate_id() {
+		$db = GetGlobal('db');
 
-	   if ($this->storetype=='DB') {  //db
+		if ($this->storetype=='DB') {  //db
 	   
-	     $sSQL = "select count('recid') from transactions";
-	     $res = $db->Execute($sSQL,1);
+			$sSQL = "select count('recid') from transactions";
+			$res = $db->Execute($sSQL,1);
 		  
-		 if ($db->model=='ADODB') 
-	       $out = $res->fields[0]+1;//RecordCount()+1;
-		 else //sqlite
-		   //$out = $res[0]+1;//$data[0]+1;
-         $out = $res->fields[0]+1;//$data[0]+1;
-
-		 //echo $out,'>>>';
-       }
-	   else {//xml and txt
+			$out = $res->fields[0]+1;//RecordCount()+1;
+		}
+		else {//xml and txt
 	   
          $dumper = new PHP_XML_Dumper('ID');
 		 $id = $dumper->xml2php($this->path . "id.".$this->storetype); 
@@ -153,16 +145,16 @@ class transactions {
 		 }   
 	     unset($dumper);	
 		 $out = $res[0];	 
-	   }
-	   //print $out;	
-	   return ($out);
+		}
+		//print $out;	
+		return ($out);
 	}
 	
 	//bulk modifications
-	function modifytransactionStatus($state) {
-       $db = GetGlobal('db');
+	public function modifytransactionStatus($state) {
+		$db = GetGlobal('db');
 	   
-	   if ($this->storetype=='DB') {  //db	   
+		if ($this->storetype=='DB') {  //db	   
 	   
 	     $i = 0;
 	     $sSQL = "select tid from transactions";
@@ -171,8 +163,6 @@ class transactions {
 	     while(!$res->EOF) {
 	       $tran = GetParam($res->fields[0]);
 	       if ($tran) {
-		     //$tr[] = $tran;
-		   
 		     $sSQL2 = "update transactions set tstatus=" . $db->qstr($state) .
 		              " where tid=" . $db->qstr($tran);
      	     $result = $db->Execute($sSQL2);
@@ -182,8 +172,8 @@ class transactions {
 	     }
 	     setInfo($i." rows affected.");
 	     //print_r($tr);
-	   }
-	   else { //xml and txt
+		}
+		else { //xml and txt
 	   
          if (is_dir($this->path)) {
            $i=0;
@@ -209,24 +199,24 @@ class transactions {
 		   }  
 	     }
          $mydir->close();	
-		 setInfo($i." transactions affected.");	   
-	   }
+		 //setInfo($i." transactions affected.");	   
+		}
 	}
 
-	function saveTransaction($data=null,$user=null,$payway=null,$roadway=null,$qty=null,$cost=null,$costpt=null) {
-       $db = GetGlobal('db');
-       $myqty = $qty?$qty:0;
-       $mycost = $cost?$cost:0;
-       $mycostpt = $costpt?$costpt:0;
-
-       $ret = 0;
+	public function saveTransaction($data=null,$user=null,$payway=null,$roadway=null,$qty=null,$cost=null,$costpt=null) {
+		$db = GetGlobal('db');
+		$myqty = $qty ? $qty : 0;
+		$mycost = $cost ? $cost : 0;
+		$mycostpt = $costpt ? $costpt : 0;
+		$lan = getlocal();
+		$ret = 0;
 	   
-	   $myuser = $user?$user:$this->userid; 
-	   //echo $myuser,'>>';
+		$myuser = $user ? $user : $this->userid; 
+		//echo $myuser,'>>';
 			 
-       $theid   = $this->generate_id();
+		$theid   = $this->generate_id();
 
-	   if (($theid) && ($myuser)) {
+		if (($theid) && ($myuser)) {
           $id = $theid + $this->tcounter;
 		  $myid = $this->initial_word . $id;  
 	      //$mydate = date('d/m/Y');//get_date("d/m/y");
@@ -283,102 +273,55 @@ class transactions {
 		     $ret = $id;		   
 		   }
 		   
-	   }
-	   //print $ret;
+		}
+		//print $ret;
 
-	   return ($ret);
+		return ($ret);
 	}
 	
-	function viewTransactions() {
-       $db = GetGlobal('db');
-	   $a = GetReq('a');
+	public function viewTransactions() {
+		$db = GetGlobal('db');
+		$a = GetReq('a');
 	   
-	   $apo = GetParam('apo'); //echo $apo;
-	   $eos = GetParam('eos');	//echo $eos;   
+		$apo = GetParam('apo'); //echo $apo;
+		$eos = GetParam('eos');	//echo $eos;   
 
-       $myaction = seturl("t=transview");	   
+		$myaction = seturl("t=transview");	   
 	   
-       if (seclevel('TRANSADMIN_',$this->userLevelID)) {
-	     $this->admint=1;
-         $out .= "<form method=\"POST\" action=\"";
-         $out .= "$myaction";
-         $out .= "\" name=\"Transview\">";		 
-	   }
-	   elseif (seclevel('TRANSCANCEL_',$this->userLevelID)) { 
-	     $this->admint=2;	   
-         $out .= "<form method=\"POST\" action=\"";
-         $out .= "$myaction";
-         $out .= "\" name=\"Transview\">";		   
-	   }
-	   //echo $this->admint,'>>>>';
-	   /*if ($admint==1) $sSQL = "select * from transactions"; //all transactions
-	              else $sSQL = "select * from transactions where cid=" . $db->qstr($this->userid); //user only transactions
-				
-	   $res = $db->Execute($sSQL);
-	   
-	   if ($db->Affected_Rows()) {
-         $i=1; 
-		 $meter = $this->pagenum;
-         while(!$res->EOF) {
-		 
-		    switch ($res->fields[6]) {
-			  case 0 : $status = $this->status0; break;
-			  case 1 : $status = $this->status1; break;	
-			  case 2 : $status = $this->status2; break;				  		  
-			}
- 
-            if ($admint==1) {
-			   //print checkbox 
-			   $checkbox = "<input type=\"checkbox\" name=\"" . $res->fields[1] . 
-			                                     "\" value=\"" . $res->fields[1] . "\">"; 
-			}
-			elseif ($admint==2) {
-			   //print checkbox only if status!=1
-			   $checkbox = "<input type=\"checkbox\" name=\"" . $res->fields[1] . 
-			                                    "\" value=\"" . $res->fields[1] . "\">"; 
-			}												  
-			else $checkbox = "";
-					 
-            $transtbl[] = $checkbox . $i . ";" . 
-                         $res->fields[1] . ";" .
-			             $res->fields[0] . ";" .
-			             $status . ";" .						 
-			             $res->fields[3] . "-" . $res->fields[4];
-
-            //print_r($table->fields);
-	        $res->MoveNext();
-		    $i+=1; $meter+=1;
-	     }	   
-	   
-         //browse
-		 //print_r($transtbl); 
-         $browser = new browse($transtbl,
-		                       localize('_TRANSLIST',getlocal()),
-							   $this->getpage($transtbl,$this->searchtext));
-	     $out .= $browser->render("transview",$this->pagenum,$this,1,0,1,0);
-	     unset ($browser);*/
+		if (seclevel('TRANSADMIN_',$this->userLevelID)) {
+			$this->admint=1;
+			$out .= "<form method=\"POST\" action=\"";
+			$out .= "$myaction";
+			$out .= "\" name=\"Transview\">";		 
+		}
+		elseif (seclevel('TRANSCANCEL_',$this->userLevelID)) { 
+			$this->admint=2;	   
+			$out .= "<form method=\"POST\" action=\"";
+			$out .= "$myaction";
+			$out .= "\" name=\"Transview\">";		   
+		}
 		
-	   if ($this->storetype=='DB') {  //db	 		
+		if ($this->storetype=='DB') {  //db	 		
 		 
-	     if ($this->admint==1) {
-		   $sSQL = "select recid,tid,recid,tstatus,tdate,ttime from transactions"; //all transactions
-		   if ($apo) $sSQL .= " where tdate>='" . trim(reverse_datetime($apo)) . "'";
-		   if ($eos) $sSQL .= " and tdate<='" . trim(reverse_datetime($eos)) . "'";
-		 }  
-	     else {
-		   $sSQL = "select recid,tid,recid,tstatus,tdate,ttime from transactions where cid=" . $db->qstr($this->userid); //user only transactions
-		   if ($apo) $sSQL .= " and tdate>='" . trim(reverse_datetime($apo)) . "'";
-		   if ($eos) $sSQL .= " and tdate<='" . trim(reverse_datetime($eos)) . "'";		   
-		 }  
+			if ($this->admint==1) {
+				$sSQL = "select recid,tid,recid,tstatus,tdate,ttime from transactions"; //all transactions
+				if ($apo) $sSQL .= " where tdate>='" . trim(reverse_datetime($apo)) . "'";
+				if ($eos) $sSQL .= " and tdate<='" . trim(reverse_datetime($eos)) . "'";
+			}  
+			else {
+				$sSQL = "select recid,tid,recid,tstatus,tdate,ttime from transactions where cid=" . $db->qstr($this->userid); //user only transactions
+				if ($apo) $sSQL .= " and tdate>='" . trim(reverse_datetime($apo)) . "'";
+				if ($eos) $sSQL .= " and tdate<='" . trim(reverse_datetime($eos)) . "'";		   
+			}  
 				
 		 
-         $browser = new browseSQL(localize('_TRANSLIST',getlocal()));
-	     $out .= $browser->render($db,$sSQL,"transactions","transview",$this->pagenum,$this,1,0,1,0); //do not search internal because of form conflict
-	     unset ($browser);	
+			$browser = new browseSQL(localize('_TRANSLIST',getlocal()));
+			$out .= $browser->render($db,$sSQL,"transactions","transview",$this->pagenum,$this,1,0,1,0); //do not search internal because of form conflict
+			unset ($browser);	
 		 	 
-		 $buttons = true;
-	   }
-	   else { //xml and txt
+			$buttons = true;
+		}
+		else { //xml and txt
         
          if (is_dir($this->path)) {
            $i=1;
@@ -464,9 +407,9 @@ class transactions {
 	         unset($w);		   
 		   }
          }		      
-	   }		 
+		}		 
 		 
-	   if (($buttons) && ($this->admint)) {
+		if (($buttons) && ($this->admint)) {
 		     if ($this->admint==1) {
 	           $out .= "<input type=\"submit\" name=\"FormAction\" value=\"$this->status0\">&nbsp;";		 
 	           $out .= "<input type=\"submit\" name=\"FormAction\" value=\"$this->status1\">&nbsp;";
@@ -481,22 +424,22 @@ class transactions {
              $out .= "<input type=\"hidden\" name=\"FormName\" value=\"Transview\">";
              $out .= "</FORM>";			 		   
 			 	
-	   }  
+		}  
 	   		 
-	   if ($buttons) {
+		if ($buttons) {
 	   
 	      $out .= $this->searchform();	    
 		 
 		  $dater = new datepicker();	
 		  $out .= $dater->renderspace(seturl("t=transview&a=$a"),"transview");		 
 		  unset($dater);
-	   }	 
+		}	 
 						
 	   
-	   return ($out);
+		return ($out);
 	}
 	
-	function getpage($array,$id){
+	public function getpage($array,$id){
 	
 	   if (count($array)>0) {
          //while(list ($num, $data) = each ($array)) {
@@ -509,7 +452,7 @@ class transactions {
 	   }	 
 	}
 	
-	function getTransaction($trid) {
+	public function getTransaction($trid) {
        $db = GetGlobal('db');
 	   
 	   if ($this->storetype=='DB') {  //db	
@@ -579,7 +522,7 @@ class transactions {
 	   }	 
 	}
 	
-	function getTransactionOwner($trid) {
+	public function getTransactionOwner($trid) {
        $db = GetGlobal('db');
 	   
 	   if ($this->storetype=='DB') {  //db		   
@@ -682,7 +625,7 @@ class transactions {
 	   } 
 	}		
 	
-	function setTransactionStatus($trid,$state) {
+	public function setTransactionStatus($trid,$state) {
        $db = GetGlobal('db');
 	   
 	   if ($this->storetype=='DB') {  //db		   
@@ -725,7 +668,7 @@ class transactions {
 	}
 	
 	//?????
-	function loadnextTransaction() {
+	public function loadnextTransaction() {
        $db = GetGlobal('db');
 	   
 	   if ($this->storetype=='DB') {  //db		   
@@ -743,7 +686,7 @@ class transactions {
 	   }				  
 	}	
 	
-    function searchform()  {
+    public function searchform()  {
 
       $filename = seturl("t=transview&a=&g=&p=");      
 
@@ -767,87 +710,12 @@ class transactions {
       return ($out);
     }	
 	
-     function reset_db() {
-       $db = GetGlobal('db'); 
-		
-	   if ($this->storetype=='DB') {  //db	
-
-         //delete table if exist
-		 $sSQL = "drop table transactions";
-         $db->Execute($sSQL);
-		/* $sSQL = "create table transactions " .
-                    "(" .
-	                "recid integer auto_increment primary key," .
-	                "tid varchar(64)," .
-	                "cid integer," .
-	                "tdate varchar(10)," .
-	                "ttime varchar(5)," .
-	                "tdata text," .
-	                "tstatus integer," .										
-	                "UNIQUE (tid)" .
-                    ")";*/
-					
-          $sSQL = 'CREATE TABLE `transactions` ('
-        . ' `recid` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, '
-        . ' `tid` VARCHAR(64) NOT NULL, '
-        . ' `cid` INT NOT NULL, '
-        . ' `tdate` DATE NOT NULL, '
-        . ' `ttime` TIME NOT NULL, '
-        . ' `tdata` TEXT NOT NULL, '
-        . ' `tstatus` SMALLINT NOT NULL, '
-        . ' `type1` VARCHAR(64) NOT NULL, '
-        . ' `type2` VARCHAR(64) NOT NULL,'
-        . ' INDEX (`cid`),'
-        . ' UNIQUE (`tid`)'
-        . ' )'
-        . ' ENGINE = myisam'
-        . ' CHARACTER SET greek COLLATE greek_general_ci'
-        . ' COMMENT = \'transaction table\';';	
-						
-         $db->Execute($sSQL);   
-			
-		 setInfo(" Reset successfully!");
-	   }
-	   else { //xml and txt
-
-	     //delete transaction files
-         if (is_dir($this->path)) {
-           $i=0;
-           $mydir = dir($this->path); //echo 'PATH:',$fpath;
-            
-           while ($fileread = $mydir->read()) {//echo $fileread,"<br>";
-             if ((!is_dir($fpath.$fileread)) && ($fileread!='.') && 
-			                                    ($fileread!='..') && 
-												($fileread!='id.'.$this->storetype) && 
-												(strstr($fileread,'.'.$this->storetype))) {	
-												
-          												   
-	            unlink($this->path.$fileread); //delete file
-                $i+=1;
-		     }	 
-		   }  
-	     }
-         $mydir->close();		     
-		 
-		 //reset id counter...
-         $dumper = new PHP_XML_Dumper('ID');
-		 $res[0] = 1;
-         $dumper->php2xml($res, $this->path . "id.".$this->storetype);		  
-	     unset($dumper);		 
-		 
-		 setInfo(" Reset $i transactions successfully!");
-	   }	 
-    }
-	
-	function details($id,$storebuffer='sencart') {
+	public function details($id,$storebuffer='sencart') {
 	   
 	   if ($storebuffer)
 	     $ret = GetGlobal('controller')->calldpc_method($storebuffer.'.previewcart use '.$id.'+transview');
 	   return ($ret);
 	}
-	
-	
-	
 	
     function browse($packdata,$view) {
 	
@@ -864,18 +732,12 @@ class transactions {
 	   
 	   $link = seturl("t=loadcart&a=$lname&g=&p=$p" , $fname);
 	   
-       if ($this->admint>0) {//==1) {
+       if ($this->admint>0) {
 			   //print checkbox 
 			   $data[] = "<input type=\"checkbox\" name=\"" . $fname . 
 			                                  "\" value=\"" . $fname . "\">"; 
 	           $attr[] = "left;1%";											  
-	   }
-	   /*elseif ($this->admint==2) {
-			   //print checkbox only if status!=1
-			   $data[] = "<input type=\"checkbox\" name=\"" . $fname . 
-			                                  "\" value=\"" . $fname . "\">"; 
-	           $attr[] = "left;1%";											  
-	   }	*/											  	   
+	   }										  	   
 	   
 							  
        if ($this->details) {//disable cancel and delete form buttons due to form elements in details????
@@ -914,13 +776,6 @@ class transactions {
                                     else $out = $myarticle->render("center::100%::0::group_article_selected::left::0::0::");
 	   unset ($data);
 	   unset ($attr);
-	   
-	 /*  if ($this->details) {
-	     $mydata = $this->details($lname);
-	     $cartwin = new window2($id,$mydata,null,1,null,'HIDE');
-	     $out .= $cartwin->render("center::100%::0::group_dir_body::left::0::0::");
-	     unset ($cartwin);		   
-	   }	 */
 
 	   return ($out);
 	}	
@@ -951,6 +806,4 @@ class transactions {
 
 };
 }
-//}
-//else die("DATABASE DPC REQUIRED!");
 ?>

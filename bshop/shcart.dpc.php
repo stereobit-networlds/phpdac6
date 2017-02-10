@@ -49,6 +49,8 @@ $__EVENTS['SHCART_DPC'][22]= "cartaddress";
 $__EVENTS['SHCART_DPC'][23]= "cartcustomer";
 $__EVENTS['SHCART_DPC'][24]= "cartcustselect";
 $__EVENTS['SHCART_DPC'][25]= "cartinvoice";
+$__EVENTS['SHCART_DPC'][26]= "cartguestuser";
+$__EVENTS['SHCART_DPC'][27]= "cartguestreg";
 
 $__ACTIONS['SHCART_DPC'][0]= "viewcart";
 $__ACTIONS['SHCART_DPC'][1]= "clearcart";
@@ -76,6 +78,8 @@ $__ACTIONS['SHCART_DPC'][22]= "cartaddress";
 $__ACTIONS['SHCART_DPC'][23]= "cartcustomer";
 $__ACTIONS['SHCART_DPC'][24]= "cartcustselect";
 $__ACTIONS['SHCART_DPC'][25]= "cartinvoice";
+$__ACTIONS['SHCART_DPC'][26]= "cartguestuser";
+$__ACTIONS['SHCART_DPC'][27]= "cartguestreg";
 
 $__LOCALE['SHCART_DPC'][0]='SHCART_DPC;My Cart;Καλάθι Αγορών';
 $__LOCALE['SHCART_DPC'][1]='_GRANDTOTAL;Grand Total;Γενικό Σύνολο';
@@ -173,6 +177,12 @@ $__LOCALE['SHCART_DPC'][87]='_coupon;Coupon;Κουπόνι;';
 $__LOCALE['SHCART_DPC'][88]='_usedpointsdiscount;Used points discount;Έκπτωση χρήσης πόντων;';
 $__LOCALE['SHCART_DPC'][89]='_totalcartdiscount;Cart total discount;Έκπτωση συνολικής αξίας;';
 $__LOCALE['SHCART_DPC'][90]='_pointstoset;Loyalty points;Πόντοι επιβράβευσης;';
+$__LOCALE['SHCART_DPC'][91]='_invalidemail;Invalid e-mail;Το e-mail δεν είναι έγκυρο;';
+$__LOCALE['SHCART_DPC'][92]='_invalidname;Invalid name;Το όνομα δεν συμπληρώθηκε;';
+$__LOCALE['SHCART_DPC'][93]='_invalidaddress;Invalid address;Η διεύθυνση δεν συμπληρώθηκε;';
+$__LOCALE['SHCART_DPC'][94]='_invalidpostcode;Invalid postcode;Ο ταχ. κωδικός δεν συμπληρώθηκε;';
+$__LOCALE['SHCART_DPC'][95]='_invalidcountry;Invalid country;Η πόλη,χώρα δεν συμπληρώθηκε;';
+$__LOCALE['SHCART_DPC'][96]='_guesterr;Guest details;Συμπλήρωση στοιχείων;';
 
 $__LOCALE['SHCART_DPC'][99]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
 
@@ -343,6 +353,14 @@ class shcart extends storebuffer {
     public function event($event) {
 
 		switch ($event) {
+			case "cartguestreg"  :  $ps = $this->guestRegistration();
+			                        die($ps); //ajax call
+									break;			
+			
+			case "cartguestuser" :  $ps = $this->guestDetails();
+			                        die("guestdetails|" . $ps);
+									break;
+			
 			case "cartinvoice"   :  $ps = 'x';
 			                        die("invoicedetails|" . $ps);
 									break;	
@@ -474,7 +492,9 @@ class shcart extends storebuffer {
     public function action($act=null) {	
 
 		switch ($act) {
-			case "cartinvoice"  :  break;	
+			case "cartguestreg" :   break;
+			case "cartguestuser":   break;
+			case "cartinvoice"  :   break;	
 			case "cartcustomer" : 	break;
 			case "cartaddress"  : 	break;
 			case "carttransport": 	break;				
@@ -613,10 +633,64 @@ function addtocart(id,cartdetails)
 		return $out;
     }
 	
+	protected function js_guest_registration() {
+		$lan = getlocal();
+		$guesterr = localize('_guesterr', $lan);
+		$invmail = localize('_invalidemail', $lan);
+		$invname = localize('_invalidname', $lan);
+		$invaddr = localize('_invalidaddress', $lan);
+		$invps = localize('_invalidpostcode', $lan);
+		$invcountry = localize('_invalidcountry', $lan);
+		$ajaxurl = seturl("t=");
+		
+		$code = <<<EOF
+/*$('#guestregister').click(function() { 
+	email = $('#guestemail').val();
+	alert('data:'+email);
+});
+*/
+function guestreg()
+{
+	var emailReg = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;	
+    var email = $('#guestemail').val();
+	var gname = $('#guestname').val();
+	var gaddr = $('#guestaddress').val();
+	var gcode = $('#guestpostcode').val();
+	var gcoun = $('#guestcountry').val();
+	
+	var err = '';
+	var validemail = emailReg.test(email);
+	
+	//alert('data:'+gname+' '+gaddr+' '+gcode+' '+gcoun+' '+email+':'+validemail);
+	if (validemail==false) err = '$invmail.<br/>';
+	if (!gname)	err += '$invname.<br/>';
+	if (!gaddr)	err += '$invaddr.<br/>';
+	if (!gcode)	err += '$invps.<br/>'; 
+	if (!gcoun)	err += '$invcountry.<br/>';
+	if (err) 
+		new $.Zebra_Dialog(err, {'type':'error','title':'$guesterr'});
+	else {
+	$.ajax({
+		url: '{$ajaxurl}cartguestreg',
+		type: 'POST',
+		data: {FormAction: 'cartguestreg', email: email, name: gname, address: gaddr, postcode: gcode, country: gcoun},
+		success:function(postdata) {
+					if (postdata) {
+						$('#guestdetails').html(postdata);
+					}		
+	}}); }		
+}	
+EOF;
+		return $code;	
+	}
+	
 	protected function javascript() {
 	
 		if (iniload('JAVASCRIPT')) {
+			
 			$code = $this->js_compute_qty();	
+			$code.= $this->js_guest_registration();
+			
 			$js = new jscript;	
 			$js->load_js($code,"",1);			   
 			unset ($js);
@@ -773,19 +847,10 @@ function addtocart(id,cartdetails)
 		$myuser = GetGlobal('UserID');	
 		$user = decode($myuser);
 		$lan = getlocal();
-		//$pways = remote_arrayload('SHCART','payways',$this->path);
-		//$rways = remote_arrayload('SHCART','roadways',$this->path);
 		$payway = $this->getDetailSelection('payway');
 		$roadway = $this->getDetailSelection('roadway');
 		$invway = $this->getDetailSelection('invway');	
 		$sxolia = $this->getDetailSelection('sxolia');
-
-		/*when goto save transaction html, customer/user = mail of customer, problem when user mail,cus mail diff */
-		/*search by customerway / cart customer selection*/
-		/*$customer = GetSessionParam('customerway') ? 
-		            GetSessionParam('customerway') : $user;
-		$fkey = 	is_numeric($customer) ? 'id' : 'mail';  
-		*/
 		$customer = $this->getDetailSelection('customerway');		
 		$fkey = 'id';
 
@@ -1568,6 +1633,10 @@ function addtocart(id,cartdetails)
 		  
 		return ($this->mailerror);
 	}
+	
+	
+	
+	
 
 	public function getDetailSelection($selection=null) {
 		if (!$selection) return null;
@@ -1578,13 +1647,53 @@ function addtocart(id,cartdetails)
 		return ($ret);							  
 	}
 	
+	public function guestDetails() {
+		//if (defined('SHCUSTOMERS_DPC')) {
+
+			if ($template = _m('cmsrt.select_template use shcartguestform')) {
+				
+				$tokens = array();
+				return $this->combine_tokens($template, $tokens, true);
+			}
+			else
+				return "Guest user registration form missing";			
+		//}
+		
+		return null;
+	}
+
+	//as post come from guest details form
+	public function guestRegistration() {
+		$db = GetGlobal('db');	
+		$lan = getlocal();	
+		$email = GetParam('email');
+		$name = GetParam('name');
+		$address = GetParam('address');
+		$postcode = GetParam('postcode');
+		$country = GetParam('country');
+		
+		//register and login (save customer details or deliv address of existing user)
+		$loggedin = _m("cmslogin.do_guest_login use $email+$name+$address+$postcode+$country");
+		
+		if ($loggedin) { 	
+			
+			if ($template = _m('cmsrt.select_template use shcartguestprocced')) {
+				
+				$tokens = array($email, $name, $address, $postcode, $country);
+				return $this->combine_tokens($template, $tokens, true);
+			}
+			else
+				return "Message: Guest user registration form missing";					
+		}
+		return false; //"Guest user registration failed";
+	}	
+	
 	public function payway() {
 	    $pways = remote_arrayload('SHCART','payways',$this->path);
 		if (!$pways) return null;
 		   
 		$defpay = remote_arrayload('SHCART','payway_default',$this->path);
-		$default_pay = $defpay ? $defpay : 0;
-        //$payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');		   
+		$default_pay = $defpay ? $defpay : 0;	   
 		$payway = $this->getDetailSelection('payway');
 		   		   
 		foreach ($pways as $i=>$w) {
@@ -1630,9 +1739,10 @@ function addtocart(id,cartdetails)
         switch ($this->status) {
 			 case 1 :	$template = _m('cmsrt.select_template use ppay');
 						$subtemplate = _m('cmsrt.select_template use ppayline');
+						
+						$rw = $this->getDetailSelection('roadway');
 						$roadway = GetReq('roadway') ? GetReq('roadway') : 
-									(GetParam('roadway') ? GetParam('roadway') : GetGlobal('roadway'));
-									//'Courier'; //default
+									($rw ? $rw : GetGlobal('roadway'));
 
 						$sSQL = "select code,title,lantitle,notes from ppayments where active=1";
 						$sSQL.= $roadway ? " and tcodes like '%$roadway%'" : null;
@@ -1665,10 +1775,13 @@ function addtocart(id,cartdetails)
 	public function payDetails() {
 		$db = GetGlobal('db');	
 		$lan = getlocal();
-		//$payway = $this->getDetailSelection('payway');
-		$code = GetReq('payway') ? GetReq('payway') : GetParam('payway');		
+		
+		$payway = $this->getDetailSelection('payway');
+		$code = GetReq('payway') ? GetReq('payway') : $payway;		
+		
+		$rw = $this->getDetailSelection('roadway');
 		$roadway = GetReq('roadway') ? GetReq('roadway') : 
-					(GetParam('roadway') ? GetParam('roadway') : GetGlobal('roadway'));
+						($rw ? $rw: GetGlobal('roadway'));
 		
 		$sSQL = "select notes from ppayments ";
 		if ($code) {
@@ -1785,9 +1898,9 @@ function addtocart(id,cartdetails)
 	public function roadDetails() {
 		$db = GetGlobal('db');	
 		$lan = getlocal();
-		//$roadway = $this->getDetailSelection('roadway');
+		$roadway = $this->getDetailSelection('roadway');
 		$code = GetReq('roadway') ? GetReq('roadway') : 
-				(GetParam('roadway') ? GetParam('roadway') : GetGlobal('roadway'));
+					($roadway ? $roadway : GetGlobal('roadway'));
 		
 		$sSQL = "select notes from ptransports ";
 		if ($code)
@@ -2045,8 +2158,7 @@ function addtocart(id,cartdetails)
 									  $this->getDetailSelection('addressway');
 										
 						$addresses = _m('shcustomers.getAddresses');
-						//krsort($addresses);
-						//print_r($addresses);
+
 						foreach ($addresses as $addressid=>$rec) {
 							$selected = ($rec[0]==$addressway) ? 'selected' : '';
 							$title = $rec[1] .' '. $rec[2] .' '. $rec[3];
@@ -2071,7 +2183,7 @@ function addtocart(id,cartdetails)
 	    }
 	}	
 	
-	//used inside invoice htm(notmpl)
+	//also used inside invoice.htm (notmpl)
 	public function addressDetails($notmpl=false) {
 		$code = GetReq('addressway') ? GetReq('addressway') : 
 			    $this->getDetailSelection('addressway');		
@@ -2489,6 +2601,10 @@ function addtocart(id,cartdetails)
 		return ($out);
 	}
 	
+	
+	
+	
+	
 	public function read_policy() {
 		
         /*posted coupon discount or points policy discount*/
@@ -2704,7 +2820,10 @@ function addtocart(id,cartdetails)
 		$out = $this->combine_tokens($mytemplate2, array(0=>$ret, 1=>$this->myquickcartfoot()));
 
 		return ($out);		
-	}		
+	}	
+
+
+	
 	
 	public function quickview($ret_tokens=false, $template1=null, $template2=null) {		
 		 

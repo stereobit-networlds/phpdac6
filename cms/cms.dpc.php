@@ -30,7 +30,7 @@ class cms extends fronthtmlpage {
     var $appname, $httpurl, $tpath;
 	var $seclevid, $userDemoIds;
 	var $session_use_cookie, $protocol, $secprotocol, $sslpath;
-	var $activeSSL, $encURLparam, $shellfn, $dothtml;
+	var $activeSSL, $encURLparam, $shellfn, $aliasExt, $aliasID, $aliasUrl;
 		
 	function __construct() {
 		
@@ -52,9 +52,11 @@ class cms extends fronthtmlpage {
         $this->encURLparam = paramload('SHELL','encodeurl');
 		$this->shellfn = paramload('SHELL','filename');
 
-		$this->dothtml = false; //true; //paramload('SHELL','rewritedothtml');		
-		
 		$this->loadVariables();
+		
+		$this->aliasUrl = $this->paramload('CMS', 'aliasUrl'); //1
+		$this->aliasExt = $this->paramload('CMS', 'aliasExt'); //.html		
+		$this->aliasID = $this->paramload('CMS', 'aliasID'); //p5		
 	}
 	
 	public function isDemoUser() {
@@ -77,7 +79,9 @@ class cms extends fronthtmlpage {
   
 		if ($data = $config[$section][$array]) 
 			return(explode(",",$data));
-    }	
+    }
+
+    //URL funcs	
 	
 	//page cntrl logic url creator
 	protected function getpurl($query=null, $title=null) {
@@ -151,8 +155,10 @@ class cms extends fronthtmlpage {
 		return ($out);
 	}
 	
-	public function url($query=null, $title=null, $jscript=null, $dothtml=null) {
-		$rewritedothtml = $dothtml ? $dothtml : $this->dothtml;
+	public function url($query=null, $title=null, $jscript=null, $usealias=null) {
+		//$rewritedothtml = $usealias ? $this->aliasID : false;
+		//disable inside page urls
+		$rewritedothtml = false; //!!!!!!!!
 			
 		/*.html handler for categories and items 
 		
@@ -171,12 +177,12 @@ class cms extends fronthtmlpage {
 				switch ($cpq) {
 					case 3  : 	//t,cat,id
 								$ret = (($parsed_params['id']) && ($parsed_params['cat'])) ?
-										$parsed_params['cat'] . '/' . $parsed_params['id'] . '.html' :
+										$parsed_params['cat'] . '/' . $parsed_params['id'] . $this->aliasExt :
 										$this->seturl($parsed_query, $title, $jscript);
 								break;	
 					case 2  : 	//t,cat
 								$ret = ($parsed_params['cat']) ?
-										$parsed_params['cat'] . '.html' :
+										$parsed_params['cat'] . $this->aliasExt :
 										$this->seturl($parsed_query, $title, $jscript);
 								break;	
 					case 1  : 	//t
@@ -189,22 +195,21 @@ class cms extends fronthtmlpage {
 		return $this->seturl($query, $title, $jscript);
 	}
 	
-	public function urlCanonical() {
-		$ub = $this->paramload('SHELL', 'urlbase');		
-		$canonical = $this->paramload('CMS', 'canonical'); //.html		
+	public function useUrlAlias($retext=null) {
+
+		$useAlias = $this->aliasUrl ? 
+					($this->aliasID ? $this->aliasID : false) : false;		
+
+		if (($retext) && ($useAlias))
+			return ($this->aliasExt);
 		
-		if (($_GET['id']) && ($canonical)) {
-			$ret = $ub . "/$cat/$id" . $canonical;
-		}	
-		elseif (($_GET['cat']) && ($canonical)) {
-			$ret = $ub . "/$cat" . $canonical; 
-		}
-		else
-			$ret = $ub . $this->php_self();
-		
-		return $ret;
+		return ($useAlias);
 	}
 	
+	
+	//variable funcs
+	
+	//load (and override) config db variables
 	protected function loadVariables() {
 		$db = GetGlobal('db');
 		$lan = getlocal();
@@ -242,7 +247,7 @@ class cms extends fronthtmlpage {
 				}
 			}
 			
-			//extra variable conf
+			//extra variable conf, overwrite prev conf values
 			if (!empty($vars)) {
 				$config = array_merge(GetGlobal('config'), $vars); 			
 				SetGlobal('config',$config); 

@@ -1160,8 +1160,10 @@ EOF;
 		//echo $sSQL;	
 		if (isset($res->fields['data'])) {			
 			$itms[] = (!empty($gr)) ? implode('',$gr) : null; 
-			if (!empty($itms))			
-				$ret = $this->combine_tokens(base64_decode($res->fields['data']), serialize($itms), true);
+			if (!empty($itms))	{		
+				$encdata = base64_decode($res->fields['data']);
+				$ret = $this->combine_tokens($encdata, serialize($itms), true);
+			}	
 		}	
 		else
 			$ret = (!empty($gr)) ? implode('',$gr) : null;
@@ -1544,15 +1546,61 @@ EOF;
 		
 		$oret = $db->Execute($objSQL);
 		return ($oret->fields[0]);			
+	}
+
+	//fetch item real-canonical code when alias used
+	public function getRealItemCode($id, $aliasId=null) {
+		$db = GetGlobal('db');		
+		if ((!$id) || (!$aliasId)) return null;			
+		
+		$code = $this->fcode; //canonical code
+		$objSQL = "select $code from products WHERE $aliasId=" . $db->qstr($id);
+
+		$oret = $db->Execute($objSQL);
+		return ($oret->fields[0]);			
+	}
+	
+	//index file, link rel canonical tag 
+	//must return the canonical (klist/kshow) url, not the alias
+	public function urlCanonical() {
+
+		if ($useAlias = $this->useUrlAlias()) {
+			
+			if ($id = $_GET['id'])  {
+				//when url is "domain.ext/cat/id.html;
+				if (!is_numeric($id)) { // alias used
+				
+				    $cat = $_GET['cat'];
+					//fetch real (canonical) code
+					$c = $this->getRealItemCode($id, $useAlias);
+					
+					$ret = $this->httpurl . "/kshow/$cat/$c/";
+				}
+				else //as is
+					$ret = $this->httpurl . "/kshow/$cat/$id/";
+						
+			}	
+			elseif ($cat = $_GET['cat']) {
+				//when url is "domain.ext/cat.html;
+				$ret = $this->httpurl . "/klist/$cat/";
+			}
+			else
+				$ret = $this->httpurl . $this->php_self(); 			
+		}
+		else
+			$ret = $this->httpurl . $this->php_self(); 
+		
+		return $ret;
 	}	
 
 	public function nformat($n, $dec=0) {
 		return (number_format($n,$dec,',','.'));
 	}		
 
-	public function replace_spchars($string, $reverse=false) {
+	public function replace_spchars($string, $reverse=false, $rep=null) {
+		$repl = $rep ? $rep : $this->replacepolicy;
 		
-		switch ($this->replacepolicy) {	
+		switch ($repl) {	
 	
 			case '_' : $ret = $reverse ?  str_replace('_',' ',$string) : str_replace(' ','_',$string); break;
 			case '-' : $ret = $reverse ?  str_replace('-',' ',$string) : str_replace(' ','-',$string);break;

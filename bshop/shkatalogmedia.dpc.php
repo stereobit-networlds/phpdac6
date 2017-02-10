@@ -129,7 +129,7 @@ class shkatalogmedia {
 	var $isListView, $imgLargeDB, $imgMediumDB, $imgSmallDB;
 	var $ogTags, $siteTitle, $httpurl;
 	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan, $itmplpath;
-	var $max_price, $min_price, $loyalty;
+	var $max_price, $min_price, $loyalty, $useAlias;
 
 	public function __construct() {	
 		$UserSecID = GetGlobal('UserSecID');	
@@ -141,6 +141,7 @@ class shkatalogmedia {
 		$this->urlpath = paramload('SHELL','urlpath');
 		$this->inpath = paramload('ID','hostinpath');		  
 		$this->result = null;
+		$this->lan = getlocal() ? getlocal() : '0';
 
 		$murl = arrayload('SHELL','ip');
 		$this->url = $murl[0];
@@ -151,7 +152,7 @@ class shkatalogmedia {
 		if (($charset=='utf-8') || ($charset=='utf8'))
 			$this->encoding = 'utf8';//must be utf8 not utf-8
 		else  
-			$this->encoding = $char_set[getlocal()]; 		
+			$this->encoding = $char_set[$this->lan]; 		
 
 		$this->imgpath = $this->inpath . '/images/uphotos/';  	  
 		$this->thubpath = $this->inpath . '/images/thub/';
@@ -220,7 +221,7 @@ class shkatalogmedia {
 		$deftoggle = array(0=>'no',1=>'yes');
 		$this->toggler = (!empty($toggle)) ? $toggle : $deftoggle;	  	  
 
-		$this->title = localize('SHKATALOGMEDIA_DPC',getlocal());
+		$this->title = localize('SHKATALOGMEDIA_DPC',$this->lan);
 		$this->restype = $rt ? $rt : $this->restype;	 //parent restype when no additional files....	  
 	  
 		$rt = remote_arrayload('SHKATALOGMEDIA','restype',$this->path);
@@ -256,7 +257,6 @@ class shkatalogmedia {
 		$this->fcode = $this->getmapf('code');
 		$this->lastprice = $this->getmapf('lastprice') ? ','.$this->getmapf('lastprice') : ',xml';
 	  
-		$this->lan = getlocal() ? getlocal() : '0';
 		$this->itmname = $this->lan ? 'itmname' : 'itmfname';
 		$this->itmdescr = $this->lan ? 'itmdescr' : 'itmfdescr';		  
 	  
@@ -280,9 +280,10 @@ class shkatalogmedia {
 		$this->filterajax = false; //true;
 		$this->min_price = 0;
 		$this->max_price = 0;
-		$this->loyalty = _m('cms.paramload use ESHOP+loyalty');
+		$this->loyalty = _m('cmsrt.paramload use ESHOP+loyalty');
 	  
-		$this->itmplpath = 'templates/';	  
+		$this->itmplpath = 'templates/';
+		$this->useAlias = false; //on read item	
 	  
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
@@ -328,7 +329,7 @@ class shkatalogmedia {
 									}
 									if (_v("shcart.fastpick")) {
 										//double empty msg
-										//$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_BLN1', getlocal()));									
+										//$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_BLN1', $this->lan));									
 										$this->javascript(); //katalog filters
 									}	
 									break; 
@@ -341,7 +342,7 @@ class shkatalogmedia {
 									
 									//double empty msg
 									//if (_v("shcart.fastpick"))
-										//$this->jsDialog($this->replace_cartchars($cartstr[1], true), localize('_BLN2', getlocal()) . ' (-)');									
+										//$this->jsDialog($this->replace_cartchars($cartstr[1], true), localize('_BLN2', $this->lan) . ' (-)');									
 									break;		
 		
 			case 'showimage'    : 	$this->show_photodb(GetReq('id'), GetReq('type'));
@@ -364,12 +365,13 @@ class shkatalogmedia {
 									$this->javascript();
 									break;	
 
-			case 'kshow'        :	$this->read_item(); 
+			case 'kshow'        :	$this->useAlias = _m("cmsrt.useUrlAlias");
+			                        $this->read_item(); 
 			
 									$incart = _m("shcart.getCartItemQty use " . GetReq('id'));
 									if ($incart) {
-										$this->jsDialog(sprintf(localize('_incart', getlocal()), $incart), 
-														localize('_cartmsg', getlocal()));
+										$this->jsDialog(sprintf(localize('_incart', $this->lan), $incart), 
+														localize('_cartmsg', $this->lan));
 									}				
 									
 									if ($this->userLevelID < 5) 
@@ -884,7 +886,7 @@ SCROLLTOP;
 	
 	protected function list_photo($code,$x=100,$y=null,$imageclick=1,$mycat=null,$photosize=null,$clickphotosize=null,$altname=null) {
 		$page = GetReq('page')?GetReq('page'):0;		
-		$cat = $mycat?$mycat:GetReq('cat');  
+		$cat = $mycat ? $mycat : GetReq('cat');  
 		$a_name = $altname ? $altname : $code;   
 	   
 		$photo = $this->get_photo_url($code,$photosize);//define size
@@ -897,12 +899,12 @@ SCROLLTOP;
 				$plink = "<a href=\"$photo\">";
 				$lo = "<img src=\"" . $photo . "\"";
 				$lo.= $y ? "height=\"$y\"" : null; 
-				$lo.= "border=\"0\" alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">" . "</a>"; 
+				$lo.= "border=\"0\" alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">" . "</a>"; 
 				$ret = $plink . $lo;
 			}
 			elseif ($imageclick==2) {//product url
 				$myresource = "<img src=\"" . $photo . "\"";
-				$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";
+				$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";
 		  
 				$purl = _m("cmsrt.url use t=kshow&cat=$cat&id=$code"); 
 				$plink = "<a href=\"$purl\">";
@@ -910,12 +912,12 @@ SCROLLTOP;
 			}
 			elseif ($imageclick==0) {//item link
 				$myresource = "<img src=\"" . $photo . "\"";
-				$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";
+				$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";
 				$ret = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=$code+" . $myresource); 
 			} 
 			else {//item link
 				$myresource = "<img src=\"" . $photo . "\"";
-				$myresource.= "alt=\"$a_name". localize('_IMAGE',getlocal()) . "\">";		  
+				$myresource.= "alt=\"$a_name". localize('_IMAGE',$this->lan) . "\">";		  
 				$ret = _m("cmsrt.url use t=kshow&cat=$cat&page=$page&id=$code+" . $myresource); 
 			} 
 		}
@@ -1088,16 +1090,16 @@ SCROLLTOP;
 	}	
 	
 	//override
-	protected function read_item($direction=null,$item_id=null) {
+	protected function read_item($item_id=null) {
         $db = GetGlobal('db');	
 		$item = $item_id ? $item_id : GetReq('id');
 		$cat = GetReq('cat');				  	
 		
 	    $sSQL = $this->selectSQL;	
-		$sSQL .= " WHERE " . $this->fcode."=";
-		$sSQL .= ($this->codetype=='string') ? $db->qstr($item) : $item;
-		//extra code (url friendly)
-		$sSQL .= " OR p5=" . $db->qstr($item);
+		$sSQL .= " WHERE " . $this->fcode . "=" . $db->qstr($item);
+		//$sSQL .= ($this->codetype=='string') ? $db->qstr($item) : $item; //DISABLED
+		//extra code (url alias)
+		$sSQL .= ($this->useAlias) ? " OR {$this->useAlias}=" . $db->qstr($item) : null;
 		  
 		if (($lock = $this->itemlockparam) && (!GetGlobal('UserID')))
 		    $sSQL .=  ' and ' . $lock . ' is null';		  	  
@@ -1109,7 +1111,8 @@ SCROLLTOP;
  
         //update session last viewed items
         $vitems = (array) unserialize(GetSessionParam('lastvieweditems'));	   
-	    $vitems[] = $item;
+		//store default item code
+	    $vitems[] = ($this->useAlias) ? $resultset->fields[$this->fcode] : $item;
 	    if (count($vitems)>12) 
 			$itemout = array_shift($vitems);
 	   	
@@ -1211,9 +1214,9 @@ SCROLLTOP;
 		$asc = GetReq('asc') ? SetSessionParam('asc',GetReq('asc')) : GetSessionParam('asc');
 		$order = GetReq('order') ? SetSessionParam('order',GetReq('order') ) : GetSessionParam('order');	
 		
-		$a = localize('_title',getlocal());
-		$b = localize('_axia',getlocal());
-		$c = localize('_code',getlocal());	   
+		$a = localize('_title', $this->lan);
+		$b = localize('_axia', $this->lan);
+		$c = localize('_code', $this->lan);	   
 		$data = array(1=>$a,2=>$b,3=>$c);
 		$do = ($this->deforder) ? 3 : 1;
  
@@ -1223,8 +1226,8 @@ SCROLLTOP;
 		$combo_char = $this->make_combo($url,$data,null,$selected_order,$style);
 	   	      	   		   
 		//asc/desc
-		$a = localize('_asc',getlocal());
-		$b = localize('_desc',getlocal());
+		$a = localize('_asc', $this->lan);
+		$b = localize('_desc', $this->lan);
 		$data = array(1=>$a,2=>$b);
 		$da = ($this->defasc<0) ? 2 : 1;
  
@@ -1239,14 +1242,14 @@ SCROLLTOP;
         $data2 = array();  	
 	    for ($i=1;$i<4;$i++) {
 			$n = ($this->default_pager * $i);
-			$data2[$n] = localize('_array',getlocal()).' '.$n;
+			$data2[$n] = localize('_array',$this->lan).' '.$n;
         }		  
 		$url = (($cmd=='search') || ($cmd=='filter')) ? _m("cmsrt.seturl use t=$cmd&input=$inp&cat=$cat&pager=#+++1")  : 
 		                                                _m("cmsrt.seturl use t=$cmd&cat=$cat&pager=#+++1")  ;
 	    $combo_pager = $this->make_combo($url,$data2,null,$this->pager,$style);
 	   	  		    	   	   		 	      
 	    $contents = $this->select_template('fpsort');
-		$tokens = array(0=>localize('_order',getlocal()), 1=>$combo_char, 2=>$combo_asceding, 3=>$combo_pager);
+		$tokens = array(0=>localize('_order',$this->lan), 1=>$combo_char, 2=>$combo_asceding, 3=>$combo_pager);
 	    $out = $this->combine_tokens($contents, $tokens, true);	     
 	   
 	   return ($out);	      
@@ -1289,21 +1292,22 @@ SCROLLTOP;
 			if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
 				$is_one_item = $this->read_list(); //read records
 				if ($is_one_item) { 
-					$this->read_item(null,$is_one_item);
+					$this->read_item($is_one_item);
 					$out = $this->show_item();
 					return ($out);
 				}		   
 			}
 			elseif (!$external_read) { //event read the list..if not called by a phpdac page call
 				if ($itemcode = $this->my_one_item) {
-					$this->read_item(null,$itemcode);
+					$this->read_item($itemcode);
 					$out = $this->show_item();
 					return ($out);		   
 				}	   
 			}		 
         } 	      
 	   	
-	    if (!empty($this->result)) {		   
+	    //if (!empty($this->result)) {		   
+		if (count($this->result->fields)>1) {
 
 			$pp = $this->read_policy(); 
 
@@ -1342,6 +1346,15 @@ SCROLLTOP;
 				$toprint .= (!empty($items_custom)) ? implode('',$items_custom) : null;
              		  
 	    }//empty result
+		else {
+			if ($template = _m('cmsrt.select_template use emptyrecs')) {
+				
+				$tokens = array(0=>localize('_norec',$this->lan));
+				$toprint .= $this->combine_tokens($template, $tokens, true);
+			}
+			//else
+				//$toprint .= localize('_norec',$this->lan);			
+		}
 
 	    $out .= $toprint;
 
@@ -1363,14 +1376,14 @@ SCROLLTOP;
 			if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
 				$is_one_item = $this->read_list(); //read records
 				if ($is_one_item) { 
-					$this->read_item(null,$is_one_item);
+					$this->read_item($is_one_item);
 					$out = $this->show_item();
 					return ($out);
 				}		   
 			}
 			elseif (!$external_read) { //event read the list..if not called by a phpdac page call
 				if ($itemcode = $this->my_one_item) {
-					$this->read_item(null,$itemcode);
+					$this->read_item($itemcode);
 					$out = $this->show_item();
 					return ($out);		   
 				}
@@ -1535,10 +1548,17 @@ SCROLLTOP;
 		 }//foreach	   
 	    }//if recs
 	    else {
-		  if ($this->itemlockparam) 
-		    $out = ($goto = $this->itemlockgoto) ? _m($goto) : localize('_lockrec',getlocal());
-		  else 
-		    $out = localize('_norec',getlocal());
+			if ($this->itemlockparam) 
+				$out = ($goto = $this->itemlockgoto) ? _m($goto) : localize('_lockrec',$this->lan);
+			else { 
+				if ($template = _m('cmsrt.select_template use emptyrec')) {
+				
+					$tokens = array(0=>localize('_norec',$this->lan));
+					$out = $this->combine_tokens($template, $tokens, true);
+				}
+				else
+					$out = localize('_norec',$this->lan);
+			}	
 	    }	   
   	   
 	    return ($out);	
@@ -1578,7 +1598,7 @@ SCROLLTOP;
                 
 					default:$addtional_photo_link = _m("cmsrt.seturl use t=kshow&cat=$cat&id=" . GetReq('id') . "&thub=" . $i . "#photo+++1"); 
 			                $plink = "<a href=\"$addtional_photo_link\">";				  
-			                $lo = "<img src=\"" . $ad_photo_big . "\" border=\"0\" alt=\"". localize('_IMAGE',getlocal()) . "\">" . "</a>"; 
+			                $lo = "<img src=\"" . $ad_photo_big . "\" border=\"0\" alt=\"". localize('_IMAGE',$this->lan) . "\">" . "</a>"; 
 			                $adnphoto = $plink . $lo;
 			 
 			                $remarks = 'PHOTO';			 
@@ -1612,8 +1632,7 @@ SCROLLTOP;
 	//overrwriiten
 	public function show_aditional_html_files($id) {	
         $db = GetGlobal('db');	
-	    $lan = getlocal();
-		$slan =  ($this->one_attachment) ? $slan : ($lan ? $lan : '0'); 
+		$slan =  ($this->one_attachment) ? $slan : $this->lan; 
 		 
 	    $code = $this->fcode;	  
         $sSQL = "select data from pattachments ";
@@ -2304,7 +2323,7 @@ SCROLLTOP;
 	}	
 	
 	//disabled due to big stats
-	public function show_last_viewed_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
+	/*public function show_last_viewed_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');							
 		$c = $category ? $category : GetReq('cat');
@@ -2339,6 +2358,12 @@ SCROLLTOP;
 			$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$resources,$nopager,1);
 		  
 		return ($out);				
+	}*/
+	
+	//alias
+	public function show_last_viewed_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$nopager=null,$notable=null) {
+		
+		return $this->show_last_viewed_items_session($items,$linemax,$imgx,$imgy,$imageclick,$template,$ainfo,$external_read,$photosize,$nopager,$notable);
 	}	
 	
 	/*session mode due to big stats*/
@@ -2358,7 +2383,8 @@ SCROLLTOP;
 			$ilist = implode("','",array_reverse($lastviewed));
 		
 			$sSQL = $this->selectSQL;
-			$sSQL .= " WHERE " . $this->fcode." in ('". $ilist ."') and itmactive>0 and active>0";				
+			$sSQL .= " WHERE " . $this->fcode." in ('". $ilist ."')";
+			$sSQL .= " and itmactive>0 and active>0";				
 
 			$resultset = $db->Execute($sSQL,2);	
 			$this->result = $resultset;
@@ -2810,11 +2836,11 @@ SCROLLTOP;
 	}	
 
 	public function get_xml_links($mylan=null,$feed_id=null,$dpcfeed=null) {
-		$lan = $mylan?$mylan:getlocal();//by hand per htm 0,1 page
+		$lan = $mylan ? $mylan : getlocal();
 		$lnk = array();
 		$id = GetReq('id');
 		$cat = GetReq('cat'); //echo $cat;
-		$page = GetReq('page')?GetReq('page'):'0';
+		$page = GetReq('page') ? GetReq('page') : '0';
 		$feed_cmd = $feed_id ? $feed_id : 'feed';	  
 
 		$mytemplate = $this->select_template('xml-links');
@@ -2864,7 +2890,7 @@ SCROLLTOP;
     //read dir for rss page
 	protected function read_all_items() {
        $db = GetGlobal('db');
-	   $lan = GetReq('lan')>=0 ? GetReq('lan') : getlocal();	//in case of post sitemap set lan param uri   
+	   $lan = GetReq('lan')>=0 ? GetReq('lan') : $this->lan;	//in case of post sitemap set lan param uri   
 	   $start = GetReq('start');
 	   	
        //$sSQL = $this->selectSQL;		
@@ -2888,18 +2914,19 @@ SCROLLTOP;
 
 		$xmltemplate = $this->select_template($format);
 		$xmltemplate_products = $this->select_template($format . '-items');
-		$imgxmlPath = _m('cms.paramload use CMS+xmlpics'); //else use img token	
-		$canonical = _m('cms.paramload use CMS+canonical'); //.html		
-		 
+		$imgxmlPath = _m('cmsrt.paramload use CMS+xmlpics'); //else use img token	
+		
+		//$useAlias = _m("cms.useUrlAlias");
+		$useAlias = false; //DISABLED
+ 
 		$items = array();
 		
 		$pp = $this->read_policy(); 
 	    	
 		foreach ($this->result as $n=>$rec) {	
 			
-			$tokens = $this->tokenizeRecord($rec, $pp, null, $canonical, 2, $imgxmlPath);
+			$tokens = $this->tokenizeRecord($rec, $pp, null, $useAlias, 2, $imgxmlPath);
 			//if ($n==0) print_r($tokens);
-			
 			$items[] = $this->combine_tokens($xmltemplate_products, $tokens, true);					
 		}
 		
@@ -2911,11 +2938,14 @@ SCROLLTOP;
 		return ($ret);		
 	}
 
-	protected function tokenizeRecord($rec, $priceID=null, $cart=null, $urlf=false, $imgsize=1, $otherimgpath=null) {
+	protected function tokenizeRecord($rec, $priceID=null, $cart=null, $aliasID=false, $imgsize=1, $otherimgpath=null) {
 			if (!$rec) return null;
 			$tokens = array(); 
 			$pp = $priceID ? $priceID : 'price1';
-		    $id2 = $rec['p5'] ? $rec['p5'] : $rec[$this->fcode]; //url friendly			
+			//xml url alias or canonical	
+		    $id2 = $aliasID ? ($rec[$aliasID] ? $rec[$aliasID] : $rec[$this->fcode]) : 
+				               $rec[$this->fcode]; 		
+			$aliasExt = _v("cmsrt.aliasExt");
 			
 			$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));
 			$price = ($rec[$pp]>0) ? $this->spt($rec[$pp]) : $this->zeroprice_msg;
@@ -2929,8 +2959,8 @@ SCROLLTOP;
 		    $tokens[] = $itemlinkname;
 			$tokens[] = $rec[$this->itmdescr];
 			$tokens[] = $this->list_photo($rec[$this->fcode],null,null,1,$cat,$imgsize,null,$rec[$this->itmname]);
-			$units = $rec['uniname2'] ? localize($rec['uniname1'], getlocal()) .' / '. localize($rec['uniname2'], getlocal()):
-										localize($rec['uniname1'], getlocal());  
+			$units = $rec['uniname2'] ? localize($rec['uniname1'], $this->lan) .' / '. localize($rec['uniname2'], $this->lan):
+										localize($rec['uniname1'], $this->lan);  
 			$tokens[] = $units;		  
 			  
 			$tokens[] = $rec['itmremark'];
@@ -2938,22 +2968,11 @@ SCROLLTOP;
 			
 			if (($cart==true) && (defined("SHCART_DPC"))) {
 				$page = $_GET['page'] ? $_GET['page'] : 0;
-				/*
-				$cart_code  = $rec[$this->fcode];
-				$cart_title = $this->replace_cartchars($rec[$this->itmname]);
-				$cart_group = $cat;
-				$cart_page  = $page;
-				$cart_descr = $this->replace_cartchars($rec[$this->itmdescr]);
-				$cart_photo = $rec[$this->fcode];
-				$cart_price = $price; 
-				$cart_qty   = 1;	
-				
-				//$tokens[] = = _m("shcart.showsymbol use $cart_code;$cart_title;;;$cat;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);
-				$tokens[] = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);
-				*/
+
 				$cartstr = $rec[$this->fcode].';'.
 							$this->replace_cartchars($rec[$this->itmname]).';;;'.
 							$cat.';'.$page.';;'.$rec[$this->fcode].';'.$price.';1;';				
+							
 				$tokens[] = _m("shcart.showsymbol use $cartstr",1);			
 			}	
 			else
@@ -2965,7 +2984,8 @@ SCROLLTOP;
 			$tokens[] = $detailink;
 			$tokens[] = $rec[$this->fcode]; //10
 			
-			$tokens[] = ($urlf) ? $this->httpurl ."/$cat/$id2" . $urlf : $itemlink;	
+			$tokens[] = ($aliasID) ? $this->httpurl ."/$cat/$id2" . $aliasExt : 
+								     $itemlink;	
 			  
 			$tokens[] = (($cart==true) && (defined("SHCART_DPC"))) ?
 							_m("shcart.getCartItemQty use ".$rec[$this->fcode]) : '0';
@@ -3028,14 +3048,13 @@ SCROLLTOP;
 	public function show_last_edited_items($items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$photosize=null,$nopager=null) {	
 	    $limit = $items ? $items : 5;
         $db = GetGlobal('db');	
-	    $lan = getlocal();	
 		$pz = $photosize?$photosize:1;		
 		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;	
 		 
 		if ($this->one_attachment)
 			$slan = null;
 		else
-			$slan = $lan ? $lan : '0';
+			$slan = $this->lan;
 		 
 	    $code = $this->fcode;	  
 		 
@@ -3115,7 +3134,7 @@ SCROLLTOP;
 			/*$combo = _m('shkategories.getKategoryCombo use 1++++++++search+search-combo+1');
 			return '<ul class="categories-filter animate-dropdown">
                 <li class="dropdown">
-                    <a class="dropdown-toggle"  data-toggle="dropdown" href="#">'.localize('SHKATEGORIES_DPC', getlocal()).'</a>
+                    <a class="dropdown-toggle"  data-toggle="dropdown" href="#">'.localize('SHKATEGORIES_DPC', $this->lan).'</a>
                     <ul class="dropdown-menu" role="menu" >'.
 					$combo.'
 					</ul>
@@ -3182,7 +3201,7 @@ SCROLLTOP;
 		
 		//header
         if ($header) {		
-			$tokens[] = localize('_ALL',getlocal());
+			$tokens[] = localize('_ALL',$this->lan);
 			$tokens[] = $input ? '*' : $this->max_selection;
 			$tokens[] = $baseurl . _m("cmsrt.url use t=klist&cat=$cat"); 
 			$tokens[] = (!$input) ? 'checked="checked"' : null;
@@ -3385,7 +3404,7 @@ SCROLLTOP;
 		$res = $db->Execute($sSQL);
 
 		if ($data = base64_decode($res->fields[0])) {
-			return _m('cms.phpcode use ' . $data);
+			return _m('cmsrt.phpcode use ' . $data);
 		}
 			
 		return 0;		
@@ -3506,7 +3525,7 @@ SCROLLTOP;
 */  
 	protected function openGraphTags($tokens=null) {
 		if (!$tokens) return null;
-		$localization = (getlocal()==1) ? 'el_gr' : 'en_us';
+		$localization = ($this->lan==1) ? 'el_gr' : 'en_us';
 		
 		//multiple images
 		if (is_array($tokens[4])) { 

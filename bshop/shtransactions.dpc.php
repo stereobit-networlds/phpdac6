@@ -52,7 +52,7 @@ class shtransactions extends transactions {
 
 	public function __construct() {
    
-		transactions::transactions();
+		transactions::__construct();
 	   
 		self::$staticpath = paramload('SHELL','urlpath');
 		$this->prpath = paramload('SHELL','prpath');
@@ -218,23 +218,17 @@ class shtransactions extends transactions {
 			//d must be serialized array of tokens when template	
 			$d = unserialize($data);		
 		
-			//if ($template) {
+			$myprintcarttemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
 
-				$myprintcarttemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
-
-				//tokens=array=d seems to not come ok..so recall
-				$tokens[] = _v('shcart.transaction_id');//$this->transaction_id;
-				/*if (iniload('JAVASCRIPT'))
-					$tokens[] = _m('javascript.JS_function use js_printwin+'.localize('_PRINT',getlocal()));
-				else*/
-					$tokens[] = '&nbsp;';//dummy
-				
-				//echo $user,'>',$fkey;
-				$tokens[] = _m("shcustomers.showcustomerdata use $user+$fkey+cusdetails.htm");
-				$tokens[] = GetSessionParam('orderdetails');
-				$tokens[] = GetSessionParam('ordercart');
+			$tokens[] = _v('shcart.transaction_id');
+			$tokens[] = '';//dummy
+			
+			//echo $user,'>',$fkey;
+			$tokens[] = _m("shcustomers.showcustomerdata use $user+$fkey+cusdetails.htm");
+			$tokens[] = GetSessionParam('orderdetails');
+			$tokens[] = GetSessionParam('ordercart');
 		  
-				$dd = $this->combine_tokens($myprintcarttemplate,$tokens,true);		
+			$dd = $this->combine_tokens($myprintcarttemplate,$tokens,true);		
 
 		}//if
 		
