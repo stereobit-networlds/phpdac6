@@ -26,19 +26,12 @@ class shkategories {
 
     var $title, $path, $nav_on, $urlpath, $inpath, $httpurl;
 	var $menu, $title2, $usetablelocales, $resourcepath, $resourcefilepath;
-	var $depthview;
-	var $selected_category;
-	
-	var $showcatbannerpath, $showcatimagepath;
-	var $max_selection;
-	var $rewrite, $notencodeurl;
-	var $result_in_table;
-	var $cseparator, $cat_result, $replacepolicy;
-	var $imagex, $imagey;
-	var $encodeimageid;
+	var $depthview, $selected_category, $showcatbannerpath, $showcatimagepath;
+	var $max_selection, $rewrite, $notencodeurl, $result_in_table;
+	var $cseparator, $cat_result, $replacepolicy, $encodeimageid;
+	var $imagex, $imagey, $aliasID, $aliasExt;
 
-	function __construct() {
-		$GRX = GetGlobal('GRX');		
+	public function __construct() {	
 	
 		$this->title = localize('SHKATEGORIES_DPC',getlocal());	
 		$this->title2 = localize('SHSUBKATEGORIES_',getlocal());	  
@@ -48,32 +41,19 @@ class shkategories {
 		$this->urlpath = paramload('SHELL','urlpath');
 		$this->inpath = paramload('ID','hostinpath');			  
 
-		if ($GRX) {
-			 $this->outpoint = loadTheme('point');
-			 $this->bullet = loadTheme('bullet');
-             $this->rightarrow = loadTheme('rarrow');
+		$this->outpoint = '&gt;';
+		$this->bullet = '&gt;';
+        $this->rightarrow = '&gt;';
 			 
-			 if (remote_paramload('SHKATEGORIES','resources',$this->path)) {
-               //$this->resourcepath = paramload('SHELL','urlbase') . paramload('DIRECTORY','resources');	 
-               $ip = $_SERVER['HTTP_HOST'];
-               $pr = paramload('SHELL','protocol');
-               $subdir = paramload('ID','hostinpath');		   
-			   $resources = remote_paramload('SHKATEGORIES','resources',$this->path);
-	           $this->resourcepath = $pr . $ip . $subdir . $resources;	 			  
-			   $this->resourcefilepath = $this->urlpath. $subdir . $resources;	 			    
-			   $this->restype = remote_paramload('SHKATEGORIES','restype',$this->path);
-			 }
-			 else  
-			   $this->resourcepath = null;
+		if ($resources = remote_paramload('SHKATEGORIES','resources',$this->path)) {
+			
+	        $this->resourcepath = $this->httpurl . $this->inpath . $resources;	 			  
+		    $this->resourcefilepath = $this->urlpath . $this->inpath . $resources;	 			    
 		}
-		else {
-			 $this->outpoint = "|";
-			 $this->bullet = "&nbsp;";
-	         $this->rightarrow = ">";
-			 
-             $this->resourcepath = null;	 
-		}	 
-	  		   
+		else  
+		    $this->resourcepath = null; 
+		
+	  	$this->restype = remote_paramload('SHKATEGORIES','restype',$this->path);	   
 		$this->home = localize(paramload('SHELL','rootalias'),getlocal()); 
 		$this->nav_on = remote_paramload('KATEGORIES','navigate',$this->path);
 		$this->menu = remote_paramload('SHKATEGORIES','menu',$this->path);	  
@@ -89,18 +69,20 @@ class shkategories {
 	  
 		$csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
 		$this->cseparator = $csep ? $csep : '^';	
-		//save as var for tags
-		$this->cat_result = null;
-	  
+
 		//thumb xy ..overwriten by shkatalog/shkatlogmedia
 		$this->imagex = remote_paramload('SHKATEGORIES','imagex',$this->path);	
 		$this->imagey = remote_paramload('SHKATEGORIES','imagey',$this->path);	
-
 		//replace policy
 		$this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);	
-	  
 		$this->encodeimageid = remote_paramload('SHKATEGORIES','encodeimageid',$this->path);	  
 	  
+	  	$this->aliasID = _m("cmsrt.useUrlAlias");
+		$this->aliasExt = _v("cmsrt.aliasExt");
+		
+		//save as var for tags
+		$this->cat_result = null;
+		
 		//on all pages
 		$this->search_javascript();		  
 	}  
@@ -137,6 +119,19 @@ class shkategories {
 			$js->load_js($code2,"",1);			   
 			unset ($js);
 		}			   	   	     
+	}	
+	
+	protected function catUrl($cat=null, $action=null) {
+		$t = $action ? $action : 'klist';
+		
+		if ($cat) {
+			$ret = ($this->aliasID) ? $this->httpurl ."/$cat" . $this->aliasExt : 
+									  $this->httpurl . '/' . _m("cmsrt.url use t=$t&cat=$cat");
+		}
+		else
+			$ret = $this->httpurl . '/' . _m("cmsrt.url use t=$t");	
+		
+		return ($ret);
 	}	
 	
 	//for utf strings as products code..encode to digits for saving image
@@ -320,7 +315,7 @@ class shkategories {
 								$tok2[$i][] = _m("cmsrt.url use t=$ti&cat=$gr+$loctitle") . " " . $this->outpoint . " "; 
 								$tok2[$i][] = $gr; //cat name
 								$tok2[$i][] = $loctitle; //cat title
-								$tok2[$i][] = _m("cmsrt.url use t=$ti&cat=$gr"); 
+								$tok2[$i][] = $this->httpurl . '/' . _m("cmsrt.url use t=$ti&cat=$gr"); 
 								$tok2[$i][] = $this->get_image_icon($gr);//$this->show_category_image();//image
                 }  
 			   
@@ -366,7 +361,7 @@ class shkategories {
 					}	
 			
 					$cgroup = $ptree[$cd+1];
-					$_u = _m("cmsrt.url use t=$t&cat=$gr"); 
+					$_u = $this->httpurl . '/' . _m("cmsrt.url use t=$t&cat=$gr"); 
 					$mycat = $treespaces . $this->outpoint . "<a href=\"" . $_u . "\">";
 					$mycat .= summarize(($wordlength-$sp),$line);	
 					$mycat .= "</a>";
@@ -438,7 +433,7 @@ class shkategories {
 							$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 							$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 							$tokens[5] = $group ? 1 : 0; //check for subtree
-							$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); 
+							$tokens[6] = $this->httpurl . '/' . _m("cmsrt.url use t=$t&cat=$gr"); 
 							$out .= $this->combine_tokens($template,$tokens,true);
 							unset($tokens);
 							unset($subcat_tokens);
@@ -449,7 +444,7 @@ class shkategories {
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); 
+						$tokens[6] = $this->httpurl . '/' . _m("cmsrt.url use t=$t&cat=$gr"); 
 						
 						if ($mode) {
 							$out .= $this->combine_tokens($template,$tokens,true);						
@@ -521,7 +516,7 @@ class shkategories {
 							$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
 							$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
 							$tokens[5] = $group ? 1 : 0; //check for subtree
-							$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); 
+							$tokens[6] = $this->httpurl . '/' . _m("cmsrt.url use t=$t&cat=$gr"); 
 							$out .= $this->combine_tokens($mytemplate,$tokens,true);
 							unset($tokens);
 							unset($subcat_tokens);
@@ -532,7 +527,7 @@ class shkategories {
 				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
 						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
 						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = _m("cmsrt.url use t=$t&cat=$gr"); 
+						$tokens[6] = $this->httpurl . '/' . _m("cmsrt.url use t=$t&cat=$gr"); 
 						
 						if ($mode) {
 							$out .= $this->combine_tokens($mytemplate,$tokens,true);						
@@ -552,6 +547,46 @@ class shkategories {
 
 		return ($out); 			      
 	}	
+	
+    public function show_menu($cmd=null,$viewtype=3,$viewtree=0,$group=null,$template=null) { 
+		$group = $group ? $group : $this->replace_spchars(GetReq('cat'),1);	 
+		
+		if ($group) {
+			
+			$mytemplate = ($template) ? _m('cmsrt.select_template use ' . str_replace('.htm', '', $template)) :
+										_m('cmsrt.select_template use fpkatnav-accordion');
+			$subtemplate = _m('cmsrt.select_template use fpkatnav-accordion-group');			
+			
+			switch ($viewtype) { 
+				case 3  : /*experimental for unfolded kategories..*/
+                case 2  : $stree[] = $this->show_tree3($cmd,null,'',0,1,60,1,null,$subtemplate); break;	 			 
+			    case 1  :
+				default : $stree[] = $this->show_tree2($cmd,null,'',0,0,60,1,null,$subtemplate);		 
+			}
+			 
+            $out = $this->combine_tokens($mytemplate,$stree);			 
+		}		
+        return ($out);
+    }		
+	
+	public function show_submenu($cmd=null,$viewtype=3,$group=null,$notheme=null, $rendertable=false) {
+		$group = $group ? $group : GetReq('cat');//$this->replace_spchars(GetReq('cat'),1);	
+	
+		$result = $this->read_tree($group);	
+		$out = $this->view_category($result,$viewtype,$mode,$group,$cmd); 
+		
+	    //table generation
+	    if ($rendertable) {
+	     if ($this->result_in_table) { 
+			$categories = explode('<SPLIT/>',$out); //<li> split..
+			$ret = $this->make_table($categories, $this->result_in_table, 'fptreetable');  	  
+		 }
+		 else
+		    $ret = $out;
+	    }
+		
+        return ($ret);				
+	}		
 	
 	
 	//  SHOW SELECTED TREE FUNCTIONS
@@ -573,19 +608,14 @@ class shkategories {
 
 			if ($outpoint)
 			    $mycat .= str_repeat('&nbsp;',$outpoint) . $this->outpoint;		  
-            $mycat .= "<a href=\"" . _m("cmsrt.url use t=$t&cat=$gr"); 
-			  
-			if ($linkclass) 
-			    $mycat .=  "\" class=\"$linkclass\">";
-			else 
-			    $mycat .=  "\">";
-				
+            $mycat .= "<a href=\"" . $this->catUrl($gr, $t); 
+			$mycat .=  ($linkclass) ? "\" class=\"$linkclass\">" : "\">";
 			$mycat .= $line;		
 			$mycat .= "</a>";	
 		
-			$tokens[] = ($linksonly) ? _m("cmsrt.url use t=$t&cat=$gr")  :
-				                        ($titlesonly ? $line : ($idsonly ? $id : $mycat));
-			$tokens[] = $id;//$winbody;
+			$tokens[] = ($linksonly) ? $this->catUrl($gr, $t) :
+				                   ($titlesonly ? $line : ($idsonly ? $id : $mycat));
+			$tokens[] = $id;
 			$out .= $this->combine_tokens($mytemplate, $tokens, true);					
 
 		}//if  	 
@@ -594,7 +624,7 @@ class shkategories {
 	}
 	
     public function show_selected_tree($cmd=null,$group=null,$showroot=null,$expand=null,$viewlevel=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$linksonly=null,$titlesonly=null,$idsonly=null) {
-		$mystylesheet = $stylesheet?$stylesheet:'group_category_title';	
+		$mystylesheet = $stylesheet ? $stylesheet : 'group_category_title';	
 		$myselcat = $group ? $group : GetReq('cat'); 	  
 
 		static $cd = -1;
@@ -635,46 +665,7 @@ class shkategories {
 		return ($out);
     }	
 	//.....  SHOW SELECTED TREE FUNCTIONS	
-	
-	
-	public function show_submenu($cmd=null,$viewtype=3,$group=null,$notheme=null, $rendertable=false) {
-		$group = $group ? $group : GetReq('cat');//$this->replace_spchars(GetReq('cat'),1);	
-	
-		$result = $this->read_tree($group);	
-		$out = $this->view_category($result,$viewtype,$mode,$group,$cmd); 
-		
-	    //table generation
-	    if ($rendertable) {
-	     if ($this->result_in_table) { 
-			$categories = explode('<SPLIT/>',$out); //<li> split..
-			$ret = $this->make_table($categories, $this->result_in_table, 'fptreetable');  	  
-		 }
-		 else
-		    $ret = $out;
-	    }
-		
-        return ($ret);				
-	}	
-	
-    public function show_menu($cmd=null,$viewtype=3,$viewtree=0,$group=null,$title=null,$tree=null,$template=null) { 
-		$group = $group ? $group : $this->replace_spchars(GetReq('cat'),1);	 
-		
-		if ($group) {
 			
-			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));		
-			$subtemplate = _m('cmsrt.select_template use fpkatnav-accordion-group');			
-			
-			switch ($viewtype) { 
-				case 3  : /*experimental for unfolded kategories..*/
-                case 2  : $stree[] = $this->show_tree3($cmd,null,'',0,1,60,1,null,$subtemplate); break;	 			 
-			    case 1  :
-				default : $stree[] = $this->show_tree2($cmd,null,'',0,0,60,1,null,$subtemplate);		 
-			}
-			 
-            $out = $this->combine_tokens($mytemplate,$stree);			 
-		}		
-        return ($out);
-    }			
 	
 	//read tree table
 	public function read_tree($g=null,$debug=null,$orderctg=null) {
@@ -871,7 +862,7 @@ class shkategories {
 					  
 						$mygroup = $curl;
 			   
-						$_u = _m("cmsrt.url use t=$t&cat=$mygroup");			   
+						$_u = $this->httpurl . '/' . _m("cmsrt.url use t=$t&cat=$mygroup");			   
 						$a = $_u; 
 						$b = "<a href=\"" . $_u . "\">" . $locname . "</a>";
 					}	
