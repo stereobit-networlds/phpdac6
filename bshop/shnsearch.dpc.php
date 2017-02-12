@@ -190,10 +190,9 @@ function get_stype()
 	      
 		$out = $this->form(null,'search',$msg);
 	   
-		//KATEGORIES SEARCH
 		$out .= $this->search_categories($this->text2find,'searchcatres');
 		
-		$out .= $this->list_katalog($this->myimageclick,'search&input='.$this->text2find,'searchres');
+		$out .= $this->list_katalog($this->myimageclick,'search&input='.$this->text2find);//,'searchres'); //use fpkatalog default
 	  
 	    $f1 = _v('shkatalogmedia.max_selection');	    
 	    $f2 = _v('shkategories.max_selection');	   	

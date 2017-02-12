@@ -141,15 +141,14 @@ class rcitemqpolicy {
 	}	
 	
 	protected function saveFormData($id) {
-		//if (!$id) return null;
 		if ((!$id) || (!$_POST)) return null;
 		$db = GetGlobal('db');
 				
 		$data = trim($_POST['formdata']);
-		
+		/*
 		$ret = ($data) ? @file_put_contents($this->path . $id.'.txt', $data) : null;
-						 /*(is_array($_POST) ? unlink($this->path . $id.'.txt') : null);*/
-		
+		*/
+
 		$encdata = base64_encode(trim($_POST['formdata']));	
 		$sSQL = "select code from ppolicyres where ispoints=0 and code=" . $db->qstr($id);
 		$res = $db->Execute($sSQL);	
@@ -166,8 +165,8 @@ class rcitemqpolicy {
 		if ($sSQL1)
 			$db->Execute($sSQL1);
 		
-		//return true;		
-		return ($ret);
+		return true;		
+		//return ($ret);
 	}
 
 	protected function deleteFormData() {
