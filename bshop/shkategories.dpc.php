@@ -11,12 +11,14 @@ $__EVENTS['SHKATEGORIES_DPC'][1]='category';
 $__EVENTS['SHKATEGORIES_DPC'][2]='openf';
 $__EVENTS['SHKATEGORIES_DPC'][3]='kshow';
 $__EVENTS['SHKATEGORIES_DPC'][4]='klist';
+$__EVENTS['SHKATEGORIES_DPC'][5]='catfetch';
 
 $__ACTIONS['SHKATEGORIES_DPC'][0]='shkategories';
 $__ACTIONS['SHKATEGORIES_DPC'][1]='category';
 $__ACTIONS['SHKATEGORIES_DPC'][2]='openf';
 $__ACTIONS['SHKATEGORIES_DPC'][3]='kshow';
 $__ACTIONS['SHKATEGORIES_DPC'][4]='klist';
+$__ACTIONS['SHKATEGORIES_DPC'][5]='catfetch';
 
 $__LOCALE['SHKATEGORIES_DPC'][0]='SHKATEGORIES_DPC;Categories;Κατηγορίες';
 $__LOCALE['SHKATEGORIES_DPC'][1]='SHSUBKATEGORIES_;Subcategories;Υποκατηγορίες';
@@ -90,19 +92,24 @@ class shkategories {
 	public function event($event=null) {
 	
 	    switch ($event) {
-          case 'openf'        : break;			
-          case 'shkategories' :
-		  default             :								
+			case "catfetch"		:  	$ps = $this->show_tree1(GetReq('cat'), 1,null,1);
+			                        die(GetReq('cat') . "|" . $ps);
+									break;			
+			
+			case 'openf'        : 	break;			
+			case 'shkategories' :
+			default             :								
         }					
     }
 	
 	public function action($action=null) {	
 	
 	    switch ($action) {	
-          case 'openf'        : break;		
-          case 'shkategories' :
-		  default             :								  
-		                        	
+		    case "catfetch"		: break;
+		
+			case 'openf'        : break;		
+			case 'shkategories' :
+			default             :								                      	
         }	
 		
 		return ($out);		
@@ -372,90 +379,10 @@ class shkategories {
 		return ($out); 			      
 	}
 	
-	/*using accordion template*/
-	public function show_tree2($cmd=null,$group=null,$mode=0,$template=null) {		
-		$cat = GetReq('cat');    
-		$t = $cmd ? $cmd : 'klist';			
-	   
-	   	static $cd = -1;
-	   
-		$tokens = array();		 
-		$tmpl2_data = _m('cmsrt.select_template use fpkatnav-accordion-inner');  
-			   
-		$ptree = explode($this->cseparator,$cat); 
-		$depth = count($ptree)-1;   
-		$ddir = $this->read_tree($group);
- 
-		$i=0;	 
-		if ($ddir)  {	   
-			reset($ddir);
-			foreach ($ddir as $id => $line) {	
-				if ($line) {
-					$_id = $this->replace_spchars($id);
-			
-					if (trim($group)!=null) {
-						$folder = $group . $this->cseparator . $id; 
-						$gr = $this->replace_spchars($group) . $this->cseparator . $_id;		   
-					}	
-					else {
-						$folder = $id;
-						$gr = $_id;
-					}	
-			  	
-					//$gr = $current_leaf;		 
-					$cgroup = $ptree[$cd+1]; 	 		
-
-					$tokens[0] = $_id;
-					$tokens[1] = $this->summarize(null,$line);//accordion cat name
-					$tokens[2] = null;//_m("cmsrt.url use t=$t&cat=$gr"); //url
-
-					//if ($cgroup==$line) {
-					if (mb_strstr($cgroup,$_id)) {
-						$cd+=1;
-						if ($cd+1<$this->depthview) {//depth view param for hidden categories
-							$subcat_tokens = $this->show_tree2($cmd,$folder,$mode,$template);
-							$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
-							$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
-							$tokens[5] = $group ? 1 : 0; //check for subtree
-							$tokens[6] = $this->catUrl($gr, $t);
-							$out .= $this->combine_tokens($template,$tokens,true);
-							unset($tokens);
-							unset($subcat_tokens);
-						}
-					}//=group
-					else {
-				        $subcat_tokens = $mode ? $this->show_tree2($cmd,$folder,$mode,$template) : null;
-				        $tokens[3] = $mode ? 1 : 0;//accordion no expland-colapse
-						$tokens[4] =  isset($subcat_tokens) ? $this->combine_tokens($tmpl2_data,array('0'=>str_replace(' ','-',$line),'1'=>$subcat_tokens)) : null;
-						$tokens[5] = $group ? 1 : 0; //check for subtree
-						$tokens[6] = $this->catUrl($gr, $t); 
-						
-						if ($mode) {
-							$out .= $this->combine_tokens($template,$tokens,true);						
-						}	
-						else {				   
-						    $_u = $this->catUrl($gr, $t); 
-					        $curl = "<a href=\"" . $_u; 
-							$curl.= "\">" . $this->summarize(null, $line) . "</a>";			
-							$out .= ($group) ? '<li>' . $curl . '</li>' : null;										   					
-						}	
-						
-						//print_r($tokens);	
-						unset($tokens);
-						unset($subcat_tokens);	
-					}			  
-				}//if line
-				$i+=1;
-			}//foreach
-		}//if ddir	
-
-		return ($out); 			      
-	}	
-	
 	/*using accordion template version 3*/
-	public function show_tree3($cmd=null,$group=null,$mode=0,$template=null) {		
+	public function show_tree3($group=null,$mode=0,$template=null) {		
 		$cat = GetReq('cat'); 
-		$t = $cmd ? $cmd : 'klist';	
+		$t = 'klist';	
 		
 		$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));		
 	   
@@ -531,29 +458,173 @@ class shkategories {
 		}//if ddir	
 
 		return ($out); 			      
+	}		
+	
+	public function show_tree2($group=null,$mode=0,$template=null) {		
+		$cat = GetReq('cat');    
+		$t = 'klist';			
+	   
+	   	static $cd = -1;
+	   
+		$tokens = array();		 
+		$line_data = _m('cmsrt.select_template use fpkatnav-accordion-line');
+		$inner_data = _m('cmsrt.select_template use fpkatnav-accordion-inner');    
+		   
+		$ptree = explode($this->cseparator,$cat); 
+		$depth = count($ptree)-1;   
+		$ddir = $this->read_tree($group);
+ 
+		$i=0;	 
+		if ($ddir)  {	   
+			reset($ddir);
+			foreach ($ddir as $id => $line) {	
+				if ($line) {
+					$_id = $this->replace_spchars($id);
+			
+					if (trim($group)!=null) {
+						$folder = $group . $this->cseparator . $id; 
+						$gr = $this->replace_spchars($group) . $this->cseparator . $_id;		   
+					}	
+					else {
+						$folder = $id;
+						$gr = $_id;
+					}	
+			  	
+					//$gr = $current_leaf;		 
+					$cgroup = $ptree[$cd+1]; 	 		
+
+					$tokens[0] = $_id;
+					$tokens[1] = $this->summarize(null,$line);//accordion cat name
+					$tokens[2] = null;//_m("cmsrt.url use t=$t&cat=$gr"); //url
+
+					//if ($cgroup==$line) {
+					if (mb_strstr($cgroup,$_id)) {
+						$cd+=1;
+						if ($cd+1<$this->depthview) {//depth view param for hidden categories
+							$subcat_tokens = $this->show_tree2($folder,$mode,$template);
+							$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
+							$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($inner_data,array('0'=>$_id,'1'=>$subcat_tokens)) : null;
+							$tokens[5] = $group ? 1 : 0; //check for subtree
+							$tokens[6] = $this->catUrl($gr, $t);
+							$out .= $this->combine_tokens($template,$tokens,true);
+						}
+					}//=group
+					else {
+				        $_u = $this->catUrl($gr, $t); 
+						$_t = $this->summarize(null, $line);	
+						$out .= ($group) ? $this->combine_tokens($line_data, array(0=>$_u, 1=>$_t), true) : null;
+					}
+					//print_r($tokens);	
+					unset($tokens);
+					unset($subcat_tokens);						
+				}//if line
+				$i+=1;
+			}//foreach
+		}//if ddir	
+
+		return ($out); 			      
 	}	
 	
-    public function show_menu($cmd=null,$viewtype=3,$viewtree=0,$group=null,$template=null) { 
+	/*using accordion template*/
+	public function show_tree1($group=null,$mode=0,$template=null,$ajaxcall=false) {		
+		$cat = GetReq('cat');    
+		$t = 'klist';			
+	   
+	   	static $cd = -1;
+	   
+		$tokens = array();		 
+		$line_data = _m('cmsrt.select_template use fpkatnav-accordion-line');
+		$inner_data = _m('cmsrt.select_template use fpkatnav-accordion-inner');    
+			   
+		$ptree = explode($this->cseparator,$cat); 
+		$depth = count($ptree)-1;   
+		$ddir = $this->read_tree($group);
+ 
+		$i=0;	 
+		if ($ddir)  {	   
+			reset($ddir);
+			foreach ($ddir as $id => $line) {	
+				if ($line) {
+					$_id = $this->replace_spchars($id);
+			
+					if (trim($group)!=null) {
+						$folder = $group . $this->cseparator . $id; 
+						$gr = $this->replace_spchars($group) . $this->cseparator . $_id;		   
+					}	
+					else {
+						$folder = $id;
+						$gr = $_id;
+					}	
+			  	
+					//$gr = $current_leaf;		 
+					$cgroup = $ptree[$cd+1]; 	 		
+
+					$tokens[0] = $_id;
+					$tokens[1] = $this->summarize(null,$line);//accordion cat name
+					$tokens[2] = $this->catUrl($gr, $t); 
+
+					//if ($cgroup==$line) {
+					if (mb_strstr($cgroup,$_id)) { //selected cat
+						$cd+=1;
+						if ($cd+1<$this->depthview) {//depth view param for hidden categories
+							$subcat_tokens = $this->show_tree1($folder,$mode,$template);
+							$tokens[3] = 1;//isset($subcat_tokens) ? 1 : 0;//accordion expand-collapse
+							$tokens[4] = isset($subcat_tokens) ? $this->combine_tokens($inner_data, array('0'=>$_id,'1'=>$subcat_tokens)) : null;
+							$tokens[5] = $group ? 1 : 0; //check for subtree
+							$tokens[6] = $this->catUrl($gr, $t);
+							$out .= $this->combine_tokens($template,$tokens,true);
+						}
+					}//=group
+					else {				   
+						if ($mode) {
+							if ($group) { //child cat
+								$out .= $this->combine_tokens($line_data, $tokens, true);
+							}
+							else { //parent cat
+								$accordion_group = _m('cmsrt.select_template use fpkatnav-accordion-group');
+								$out .= $this->combine_tokens($accordion_group, $tokens, true);
+							}
+						}	
+						else //browse only selected cat children
+							$out .= ($group) ? $this->combine_tokens($line_data, $tokens, true) : null;
+					}	
+					//print_r($tokens);	
+					unset($tokens);
+					unset($subcat_tokens);						
+				}//if line
+				$i+=1;
+			}//foreach
+		}//if ddir	
+
+		if ($ajaxcall==true) { //fetch inner data
+			$ajaxout = $this->combine_tokens($inner_data, array('0'=>GetReq('cat'),'1'=>$out));
+			return ($ajaxout);
+		}
+		else 
+			return ($out);		      
+	}			
+	
+    public function show_menu($group=null,$template=null) { 
 		$group = $group ? $group : GetReq('cat');	 
 		
 		if ($group) {
 			
 			$mytemplate = ($template) ? _m('cmsrt.select_template use ' . str_replace('.htm', '', $template)) :
 										_m('cmsrt.select_template use fpkatnav-accordion');
-			$subtemplate = _m('cmsrt.select_template use fpkatnav-accordion-group');			
+			$subtemplate = _m('cmsrt.select_template use fpkatnav-accordion-group-selected');			
 			
 			switch ($viewtype) { 
 				case 3  : /*experimental for unfolded kategories..*/
-                case 2  : $stree[] = $this->show_tree3($cmd,null,1,$subtemplate); break;	 			 
+                case 2  : $stree[] = $this->show_tree3($group,1,$subtemplate); break;	 			 
 			    case 1  :
-				default : $stree[] = $this->show_tree2($cmd,null,0,$subtemplate);		 
+				default : $stree[] = $this->show_tree1(null,1,$subtemplate);		 
 			}
 			 
-            $out = $this->combine_tokens($mytemplate,$stree);			 
+            $out = $this->combine_tokens($mytemplate, $stree, true);			 
 		}		
         return ($out);
     }		
-	
+	/*
 	public function show_submenu($cmd=null,$viewtype=3,$group=null,$notheme=null, $rendertable=false) {
 		$group = $group ? $group : GetReq('cat');
 	
@@ -572,7 +643,7 @@ class shkategories {
 		
         return ($ret);				
 	}		
-	
+	*/
 	
 	//  SHOW SELECTED TREE FUNCTIONS
 	protected function show_selected_branch($id,$line,$t=null,$myselcat=null,$expand=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$linksonly=null,$titlesonly=null,$idsonly=null) {
@@ -685,7 +756,8 @@ class shkategories {
 		 
 		$sSQL .= " order by ctgid"; /*ctgoutlnorder";//,ctgid asc"; ***************************/
 		 
-		if ($debug) echo $sSQL; 
+		if ($debug) 
+			echo $sSQL; 
 	   
 		$result = $db->Execute($sSQL,2);
 			   					   
@@ -699,24 +771,18 @@ class shkategories {
 	}	
 
 	protected function set_tree_path($array_path) {
-		$ret = null;
 		$max = count($array_path);
 		
 		foreach ($array_path as $id=>$path) {
-			if (trim($path)) {
-				if ($id==0) 
-					$ret .= $path; 
-			    else 
-					$ret .= $this->cseparator . $path;
-			}    
+			if (trim($path)) 
+				$ret = ($id==0) ? $path : $this->cseparator . $path;
 		}
 		return $ret;
 	}	
 	
+	//????
     protected function isparent($group=null) {
-	   
-	    if ($this->alias) 
-			$group = $this->alias; 
+	    if ($this->alias) $group = $this->alias; 
 		
 		if (is_array($this->read_tree($group))) 
 		  return true;
@@ -731,8 +797,8 @@ class shkategories {
 	
         $splitx = explode ($this->cseparator, $group);
 		
-	    if ($selection!=array_pop($splitx)) 
-		    $cats = explode ($this->cseparator, $group.$this->cseparator.$selection);
+	    if ($selection != array_pop($splitx)) 
+		    $cats = explode ($this->cseparator, $group . $this->cseparator . $selection);
 		else
 		    $cats = explode ($this->cseparator, $group);
 		         
@@ -740,22 +806,21 @@ class shkategories {
     }		
 	
     protected function analyzedir($group,$startup=0,$isroot=false) {
+	    $db = GetGlobal('db');	
+        $sel = GetReq('sel');
+	    $lan = getlocal();
+	    $f = $lan ? $lan : '0';			
+		
+        $adir = array();		
+		
 	    //if executed at event...
 		if (($this->cat_result) && ($isroot==false))
 		    return ($this->cat_result);
-
-        $sel = GetReq('sel');
-	    $db = GetGlobal('db');	
-	    $lan = getlocal();
-	    $f = $lan?$lan:'0';			
-		
-        $adir = array();
 		
 	    if ($isroot) {
 			$depth = 1;			
 			$sSQL = "select distinct cat2,cat{$f}2 from categories where ";
 			$sSQL .= "(ctgid>0 and active>0 and view>0) order by ctgid";
-			//$sSQL .= "ctgid>0 order by ctgid";
 			$result = $db->Execute($sSQL,2);
 			
 			if ($result) { 
@@ -874,7 +939,9 @@ class shkategories {
     }	
 	
 	public function getcurrentkategory($toplevel=null, $url=null) {
-		$g = $this->replace_spchars(GetReq('cat'));	
+		$cat = GetReq('cat');
+		$g = $this->replace_spchars($cat);	
+		
 		$mycattree = $this->analyzedir($g);	
 		if (empty($mycattree)) return;
 	  
@@ -886,15 +953,21 @@ class shkategories {
 							$ret = $dummy;	 
 						break;
 				case 1  ://toplevel
-				default :if ($url) 
-							$ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree)); 
+				default :if ($url) { 
+							//$ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree)); 
+							$_t = array_pop($mycattree);
+							$ret = "<a href=\"" . $this->catUrl($cat) . "\">" . $_t . "</a>";
+						 }	
 						 else 
 							$ret = array_pop(array_reverse($mycattree));	  
 			}
 		}	
 		else {//actual
-			if ($url) 
-				$ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree));
+			if ($url) { 
+				//$ret = _m("cmsrt.url use t=klist&cat=" . GetReq('cat') . "+" . array_pop($mycattree));
+				$_t = array_pop($mycattree);
+				$ret = "<a href=\"" . $this->catUrl($cat) . "\">" . $_t . "</a>";	
+			}	
 			else	  
 				$ret = array_pop($mycattree);	  	
 		}
