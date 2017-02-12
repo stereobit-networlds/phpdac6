@@ -92,14 +92,14 @@ class rccmsvariables extends cmsplus  {
 			case 'cpcmsvarcalendar' : $out .= $this->select(); 
 									  break;
 			
-			case 'cpcmstimevars'	: $editvars = 'd';//_m("cmsrt.isUserLevel use 9") ? 'd' : 'r';
+			case 'cpcmstimevars'	: $editvars = _m("cmsrt.isLevelUser use 8") ? 'd' : 'r';
 			                          $out .= $this->select();
 									  $out .= "<hr/>"; //"<div id='cmstimevars'></div>";
 									  $out .= $this->show_timetable(null,null,null, $editvars, true);
 									  break;
 			
 			case 'cpcmsvars'    	:
-			default             	: $editvars = 'd';//_m("cmsrt.isUserLevel use 9") ? 'd' : 'r';
+			default             	: $editvars = _m("cmsrt.isLevelUser use 8") ? 'd' : 'r';
 			                          $out .= $this->select();
 									  $out .= "<hr/>"; //"<div id='cmsvars'></div>";	
 									  $out .= $this->show_vars(null,null,null, $editvars, true);

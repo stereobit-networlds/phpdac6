@@ -23,7 +23,12 @@ class cronscript {
 		if (class_exists('pcntl', true)) {
 			
 			$ret = eval($script);
-
+			if (($ret==false) && ($error = error_get_last())) {
+				@file_put_contents($this->prpath . '/cronerr.txt', 
+									$error . PHP_EOL . $script);
+									
+				//$ret = true; //bypass					
+			}
 			//test
 			//$ret = $this->testscript();
 		}
@@ -51,7 +56,7 @@ super database;
 		if (empty($data)) return;
 
 		$data = date('d-m-Y H:i:s')."\r\n" . $data . "\r\n----\r\n";
-		$ret = file_put_contents($this->prpath . '/cron.log', $data, FILE_APPEND | LOCK_EX);
+		$ret = @file_put_contents($this->prpath . '/cron.log', $data, FILE_APPEND | LOCK_EX);
 		
 		return $ret;
 	}	

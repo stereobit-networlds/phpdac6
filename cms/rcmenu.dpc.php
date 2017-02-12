@@ -542,14 +542,15 @@ class rcmenu extends cmsmenu {
 		//@file_put_contents("menu.list", $list);				
 		//var_export($menu);
 		
-		//db based, delete menu first save after
-		$this->deleteMenu($filename);
-		//$this->createMenu($filename);//create master menu (use for copy from text while saving)
-		$w = $this->saveMenu($filename, $menu);
+		if ($menu) {
+			//db based, delete menu first save after
+			$this->deleteMenu($filename);
+			//$this->createMenu($filename);//create master menu (use for copy from text while saving)
+			$w = $this->saveMenu($filename, $menu);
 		
-		//text based save
-		$w = $this->writenest_config($menu, $filename);
-		
+			//text based save
+			$w = $this->writenest_config($menu, $filename);
+		}
 		$ret = $w ? localize('_saved', getlocal()) : localize('_notsaved', getlocal());
 		echo $ret;
 		

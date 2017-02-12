@@ -158,7 +158,7 @@ class cms extends fronthtmlpage {
 	public function url($query=null, $title=null, $jscript=null, $usealias=null) {
 		//$rewritedothtml = $usealias ? $this->aliasID : false;
 		//disable inside page urls
-		$rewritedothtml = false; //!!!!!!!!
+		$rewritedothtml = false; //$this->useUrlAlias(); //false; //!!!!!!!!
 			
 		/*.html handler for categories and items 
 		

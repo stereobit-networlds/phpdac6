@@ -70,13 +70,14 @@ class rctree  {
 	 
 	  switch ($action) {
 													  
-		 case 'cptreeleaf'  : $out = $this->childs_grid(null,340,14,'d', true);	 
+		 case 'cptreeleaf'  : $edit = $this->isDemoUser() ? 'r' : 'd';
+		                      $out = $this->childs_grid(null,340,14,$edit, true);	 
 							  break; 
 		 case 'cptreerel'   : 
 							  break;					  
 	     case 'cptree'      :
-		 default            : //$out = "<div id='treerel'></div>";
-		                      $out .= $this->tree_grid(null,140,14,'r', true);	
+		 default            : $edit = $this->isDemoUser() ? 'r' : 'e';
+		                      $out .= $this->tree_grid(null,140,14,$edit, true);	
 							  
 	  }	 
 
@@ -110,10 +111,10 @@ class rctree  {
 
         $xsSQL = "SELECT * from (select id,timein,active,tid,pid,tname,tdescr,tname0,tname1,tname2,items,users,orderid from ctree) o ";		   
 					
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|link|2|"."javascript:treerel(\"{tid}\");".'||');		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('id',getlocal())."|5|0|");//."|link|2|"."javascript:treerel(\"{tid}\");".'||');		
 		//GetGlobal('controller')->calldpc_method("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|1:0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
+		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_date',getlocal())."|link|8|"."javascript:treerel(\"{tid}\");".'||');;//."|5|0|");		
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tid|".localize('_code',getlocal())."|5|1|");	
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|5|1|");			
 		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+tname|".localize('_title',getlocal())."|5|1|");	

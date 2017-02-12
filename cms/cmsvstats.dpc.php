@@ -75,14 +75,10 @@ class cmsvstats  {
 	protected function javascript() {
         if (iniload('JAVASCRIPT')) {
 		
-		    //became universal
-           	//$code = $this->createcookie_js();	//fronthtmlpage universal			
-			
 		    //return no js when tags already loaded 
 			if (isset($this->hashtag) || (isset($this->cid) && isset($this->mc))) {}
 			else {	
-				$code.= $this->javascript_redir();	
-				//$code.= $this->reference_js();			
+				$code.= $this->javascript_redir();				
 		
 				$js = new jscript;
 				$js->load_js($code,"",1);			   
@@ -90,34 +86,6 @@ class cmsvstats  {
 			}	
      	}	  
 	}
-	/*
-	protected function createcookie_js() {
-		
-		$ret = '
-function cc(name,value,days) {
-    if (days) { var date = new Date(); date.setTime(date.getTime()+(days*24*60*60*1000)); var expires = "; expires="+date.toGMTString();} else var expires = "";
-    document.cookie = name+"="+value+expires+"; path=/; domain=.'.str_replace('www.','',$_SERVER['HTTP_HOST']).';" }
-';
-        return ($ret);
-	}
-	
-	//save hasg tag comming from redirection page mtrackurl at root app
-	protected function reference_js() {	
-		//if value 1 means a redir reference hash to split in 2 (save ref for one day)
-		//else is another type of hash (days keep ?)
-		//create cookie is a part of shkatalogmedia js		
-		//cc=createcookies of shkatalogmedia /not loaded yet
-		$code = '		
-if (window.location.hash) {
-	var hash = window.location.hash.substring(1);
-	var value = hash.split("|");
-	if (value[1]!=null) { cc("cid",value[0],"1"); cc("mc",value[1],"1");} else cc("hashtag",hash,"1");
-	sndUrl("katalog.php?t=cmsvmcstart");
-}
-else { }		
-';
-		return ($code);
-	}*/
 	
     protected function javascript_redir()  {
    
@@ -178,7 +146,7 @@ EOF;
         $db = GetGlobal('db'); 
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
-		
+
 		if (GetSessionParam('ADMIN'))
 			return false;
 
@@ -191,9 +159,7 @@ EOF;
 		$ref = $this->cid ? $this->cid : ($this->hashtag ? $this->hashtag : ($iref ? $iref : ''));
 		$cmail = $this->mc ? base64_decode($this->mc) : '';		
 						
-		//$sSQL = "insert into stats (date,day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR) values (";
 		$sSQL = "insert into stats (day,month,year,tid,attr2,attr3,ref,attr1,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT,REFERER) values (";
-		//$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
 		$sSQL.= $myyear . ",";						
@@ -232,7 +198,6 @@ EOF;
 		$cmail = $this->mc ? base64_decode($this->mc) : '';
 
 		$sSQL = "insert into stats (day,month,year,attr1,attr2,attr3,ref,tid,REMOTE_ADDR,HTTP_X_FORWARDED_FOR,HTTP_USER_AGENT,REFERER) values (";
-		//$sSQL.= $mydate . ",";
 		$sSQL.= $myday . ",";
 		$sSQL.= $mymonth . ",";
 		$sSQL.= $myyear . ",";						

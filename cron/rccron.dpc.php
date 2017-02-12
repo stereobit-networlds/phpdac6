@@ -93,8 +93,9 @@ class rccron  {
 							  break;					  
 	     case 'cpcron'      :
 
-		 default            : $out .= "<div id='cronjobs'></div>";
-		                      $out .= $this->crontab_grid(null,140,5,'d', true);	
+		 default            : $edit = _m("cmsrt.isLevelUser use 8") ? 'd' : 'e';
+		                      $out .= "<div id='cronjobs'></div>";
+		                      $out .= $this->crontab_grid(null,140,5,$edit, true);	
 							  
 	  }	 
 

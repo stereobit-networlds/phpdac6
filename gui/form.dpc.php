@@ -957,9 +957,6 @@ if ($_POST["recaptcha_response_field"]) {
 		{
 			return "<TEXTAREA id=\"".$this->name."\" cols=".$this->cols." rows=".$this->rows." name=\"".$this->name."\" class=\"".$this->style."\">".$this->value."</TEXTAREA><BR>";
 		}
-		/*
-			<textarea cols="1" rows="2" name="name"></textarea>
-		*/
 	}
 	
 	class form_element_link extends form_element
@@ -995,6 +992,8 @@ if ($_POST["recaptcha_response_field"]) {
 	}	
 	
 	
+	////////////////////////////////////////////////////// DISABLE..
+	
 	//sdded
 	class mform extends form {
 	
@@ -1003,9 +1002,11 @@ if ($_POST["recaptcha_response_field"]) {
 		  form::form($title, $name, $method, $action,$resetbutton,$enctype);
 	   }
 	   
-	   //override
-       function getForm ($actions_array,$cp=0,$cs=0,$submit_title=null,$reset_title=null)
+	   //override ($actions_array,)
+       function getForm ($cp=0,$cs=0,$submit_title=null,$reset_title=null,$tokens_on=null,$submitjs=null)
 	   {
+		    $actions_array = null;
+			
 		    if ($submit_title) $this->submit_title = $submit_title;
 		    if ($reset_title) $this->reset_title = $reset_title;
 			$enc = $this->enctype?FORM_METHOD_ENCTYPE:null;								
@@ -1081,13 +1082,6 @@ if ($_POST["recaptcha_response_field"]) {
 			for ($group_i=0; $group_i<sizeof ($this->groups); $group_i++)
 			{
 				$group = $this->groups[$group_i];
-				
-				/*if ($group->name != FORM_GROUP_MAIN && $group->name != FORM_GROUP_HIDDEN)
-				{
-					$r .= "<tr>\n\t<td colspan=3 height=2></td>\n</tr>\n";
-					$r .= "<tr>\n\t<td colspan=3 bgcolor=".$this->group_bgcolor."><span class=\"".$this->group_style."\">".$group->title."</td>\n</tr>\n";
-				}*/
-				
 				$color = 0;
 				for ($element_i=0; $element_i<sizeof ($this->elements[$this->groups[$group_i]->name]); $element_i++)
 					switch ($group->name)
@@ -1096,26 +1090,17 @@ if ($_POST["recaptcha_response_field"]) {
 							$tokens[] = $this->elements[$this->groups[$group_i]->name][$element_i]->getTag ();
 							break;
 						default:
-							/*$element = $this->elements[$this->groups[$group_i]->name][$element_i];
-							$bgcolor = $this->element_bgcolor[$color];
-							if ($color >= sizeof ($this->element_bgcolor)-1) $color = 0; else $color ++;
-							$r .= "<tr bgcolor=$bgcolor>\n\t<td valign=top><div align=right class=\"".$this->element_style."\">".$element->title."</td>\n\t<td width=1 valign=top>".$this->element_separator."</td>\n\t<td>";*/
 							$tokens[] = $element->getTag ();
-							//$r .= "</td>\n</tr>\n";
 							break;
 					}
 			}
 			
-			//$r .= "<tr>\n\t<td colspan=3 height=2></td>\n</tr>\n";
 			if ($this->issubmit || $this->isreset)
 			{
-				//$r .= "<tr bgcolor=\"".$this->submit_bgcolor."\">\n\t<td colspan=3 valign=center><div align=center>";
-				
+
 				if (count($actions_array)>1) {//multiple actions
 				  //EXTRA ACTIONS	
 			      foreach ($actions_array as $id=>$act) {
-			      //echo $act;
-			      //if ($id>0) //0= standart action handled by standart form
 			        $mytact .= "&nbsp;<input type=submit name=\"FormAction\" value=\"".$act."\">";
 			      }				
 				}
@@ -1125,11 +1110,9 @@ if ($_POST["recaptcha_response_field"]) {
 					
 				if ($this->isreset)
 					$mytact  = "&nbsp;<input type=reset value=\"".$this->reset_title."\">";
-				//$r .= "</td>\n</tr>";
 			}
 			
 			$mytact  = "</form>";
-			//$r .= "</table>\n";
 			
 			$tokens[] = $mytact;				
 			

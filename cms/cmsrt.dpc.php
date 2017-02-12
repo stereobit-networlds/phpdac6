@@ -44,7 +44,7 @@ class cmsrt extends cms  {
 	var $items, $csvitems;
 	
 	var $lan_set, $selected_lan, $message;
-	var $selectSQL, $codef, $lastprice, $pager, $itmplpath;	
+	var $selectSQL, $fcode, $lastprice, $pager, $itmplpath;	
 	var $lan, $itmname, $itmdescr, $itmeter;
 	var $picbg, $picmd, $picsm, $home, $cat_result, $isCAttach;
 	var $ogTags, $twigTags, $siteTitle, $siteTwiter, $siteFb, $httpurl;	
@@ -125,7 +125,7 @@ class cmsrt extends cms  {
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 							$this->fcode . ',' . $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
-							"template,owner,itmactive from products ";	
+							"template,owner,itmactive,p1,p2,p3,p4,p5,code2,code3 from products ";	
 		$this->itmplpath = 'templates/';					
 
 	    $this->scrollid = 0;//javascript scroll call meter
@@ -163,14 +163,14 @@ class cmsrt extends cms  {
 			case "setlanguage"  : //echo "Current language:",$this->lan_set[$this->selected_lan],"\n";  						
 			                      break; 
 								  
-			case 'kshow'        : if ($this->userLevelID < 5) 
+			case 'kshow'        : if ((!defined('SHKATALOGMEDIA_DPC')) && ($this->userLevelID < 5)) 
 									_m("cmsvstats.update_item_statistics use ".GetReq('id'), 1);
 			
 			                      if (defined('SHKATALOGMEDIA_DPC')) break; else $this->read_item();
 			                      $out = (defined('SHKATALOGMEDIA_DPC')) ? null : $this->show_item(); 
 								  break;
 								  
-			case 'klist'        : if ($this->userLevelID < 5)  
+			case 'klist'        : if ((!defined('SHKATALOGMEDIA_DPC')) &&($this->userLevelID < 5))  
 			                         _m("cmsvstats.update_category_statistics use ".GetReq('cat'), 1);
 			
 			                      $this->isCAttach = $this->get_attachment(GetReq('cat'));
@@ -308,14 +308,14 @@ goBack();
 											         localize($rec['uniname1'],$this->lan);					
 									
 					$in_cart = _m("shcart.getCartItemQty use ".$itemcode,1); 
-					$icon_cart = _m("shcart.showsymbol use $itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;+$cat+$page",1);
-					$array_cart = _m("shkatalogmedia.read_array_policy use " . $itemcode . '+'. $itemprice . "+$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty",1);	   										
+					$icon_cart = _m("shcart.showsymbol use $itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;",1);
+					$array_cart = _m("shkatalogmedia.read_qty_policy use " . $itemcode . '+'. $itemprice . "+$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty",1);	   										
 				}			 
 		   	
 
-				$itemlink = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$itemcode);
-				$itemlinkname = $this->url('t=kshow&cat='.$cat.'&page='.$page.'&id='.$itemcode, $rec[$this->itmname]);		   
-				$detailink = $this->url("t=kshow&cat=$cat&page=$page&id=".$itemcode) . '#details';				
+				$itemlink = $this->httpurl . '/' . $this->url('t=kshow&cat='.$cat.'&id='.$itemcode);
+				$itemlinkname = $this->url('t=kshow&cat='.$cat.'&id='.$itemcode, $rec[$this->itmname]);		   
+				$detailink = $this->httpurl . '/' . $this->url("t=kshow&cat=$cat&id=".$itemcode) . '#details';				
 		   		$details = null;
 		  											 
 				$tokens[] = $itemlinkname;
@@ -1288,11 +1288,15 @@ EOF;
 	    $resultset = $db->Execute($sSQL,2);	
 		if (empty($resultset)) return null;
 		
+		//url alias or canonical	
+		$aliasID = $this->useUrlAlias();		 		
+		
 		$pp = _m('shkatalogmedia.read_policy',1);		
 		$ix =1;
 		foreach ($resultset as $n=>$rec) {
 		
 			$itemcode   = $rec[$this->fcode];
+			$id2 		= $aliasID ? ($rec[$aliasID] ? $this->stralias($rec[$aliasID]) : $itemcode) : $itemcode; 
 			$cat        = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));			
 			
 			$cat = $rec['cat0'] ? $this->replace_spchars($rec['cat0']) : null; 
@@ -1301,7 +1305,8 @@ EOF;
 			$cat .= $rec['cat3'] ? $this->cseparator . $this->replace_spchars($rec['cat3']) : null;
 			$cat .= $rec['cat4'] ? $this->cseparator . $this->replace_spchars($rec['cat4']) : null;
 			
-			$item_url = $this->httpurl . '/' . $this->url('t=kshow&cat='.$cat.'&id='.$itemcode);
+			$item_url = ($aliasID) ? $this->httpurl ."/$cat/$id2" . $this->aliasExt :
+									 $this->httpurl . '/' . $this->url('t=kshow&cat='.$cat.'&id='.$itemcode);
 			$item_name_url = $this->url('t=kshow&cat='.$cat.'&id='.$itemcode, $rec[$this->itmname]);			   
 		    $item_name_url_base = "<a href='$item_url'>".$rec[$this->itmname]."</a>";
 			
@@ -1319,8 +1324,10 @@ EOF;
 			if ($usecode) { /*shkatalogmedia tokens pattern*/
 				$page       = 0;
 				$itemqty    = 1;
-				$itemtitle  = $this->replace_cartchars($rec[$this->itmname]);
-				$itemdescr  = $this->replace_cartchars($rec[$this->itmdescr]);
+				$itemtitle  = $rec[$this->itmname]; 
+				$citemtitle = $this->replace_cartchars($rec[$this->itmname]);
+				$itemdescr  = $rec[$this->itmdescr]; 
+				$citemdescr = $this->replace_cartchars($rec[$this->itmdescr]);
 				$itemphoto  = $itemcode;
 				$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmeida.zeroprice_msg');					
 				$itemunit   = $rec['uniname2'] ? localize($rec['uniname1'],$this->lan) .'/'. localize($rec['uniname2'],$this->lan) :
@@ -1333,20 +1340,20 @@ EOF;
 							3=>$itemunit,
 							4=>$rec['itmremark'],
 							5=> number_format(floatval($itemprice),2,',','.'),
-							6=>_m("shcart.showsymbol use $itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;+$cat+$page",1),
+							6=>_m("shcart.showsymbol use $itemcode;$citemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;+$cat+$page",1),
 							7=>_m('shkatalogmedia.show_availability use '. $rec['ypoloipo1'],1),
 							8=>'',
 							9=>'',
 							10=>$itemcode,
 							11=>$item_url,
 							12=>_m("shcart.getCartItemQty use " . $itemcode,1),
-							13=>_m("shkatalogmedia.read_array_policy use " . $itemcode . '+'. $itemprice . "+$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty",1),
+							13=>_m("shkatalogmedia.read_array_policy use " . $itemcode . '+'. $itemprice . "+$itemcode;$citemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty",1),
 							14=>$item_photo_url,
 							15=>$rec[$this->lastprice],
 							16=>$itemtitle,
 							17=>null,
 							18=>_m('shkatalogmedia.item_has_discount use '. $itemcode,1),
-							19=>"addcart/$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty/$cat/$page/",
+							19=>"addcart/$itemcode;$citemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty/$cat/$page/",
 							20=>$rec['year'],			
 							21=>$rec['month'],
 							22=>$rec['day'],
@@ -1560,27 +1567,28 @@ EOF;
 		return ($oret->fields[0]);			
 	}
 	
-	//index file, link rel canonical tag 
-	//must return the canonical (klist/kshow) url, not the alias
+	//call at tag rel=canonical at index file
+	//must return the canonical (klist/kshow) url, not the alias !!
 	public function urlCanonical() {
 
-		if ($useAlias = $this->useUrlAlias()) {
+		if ($aliasID = $this->useUrlAlias()) {
 			
 			if ($id = $_GET['id'])  {
+				
+				$cat = GetReq('cat');
+				
 				//when url is "domain.ext/cat/id.html;
 				if (!is_numeric($id)) { // alias used
 				
-				    $cat = $_GET['cat'];
 					//fetch real (canonical) code
-					$c = $this->getRealItemCode($id, $useAlias);
-					
+					$c = $this->getRealItemCode($id, $aliasID);	
 					$ret = $this->httpurl . "/kshow/$cat/$c/";
 				}
 				else //as is
 					$ret = $this->httpurl . "/kshow/$cat/$id/";
 						
 			}	
-			elseif ($cat = $_GET['cat']) {
+			elseif ($cat = GetReq('cat')) {
 				//when url is "domain.ext/cat.html;
 				$ret = $this->httpurl . "/klist/$cat/";
 			}
@@ -1618,7 +1626,65 @@ EOF;
 	    }
 		return ($ret);
 	}
+	
+	public function stralias($string) {
+		if (!$string) return null;
+		$g1 = array("'",',','"','+','/',' ','&','.');
+		$g2 = array('-','-',"-","-","-",'-','-','-');
+		
+		$regstr = trim(preg_replace('/\s\s+/', '-', $string)); //double spaces  
+		$str = str_replace($g1,$g2,$regstr);
+		return ($str);
+	}	
 
+	//insert or update an alias field every * days
+	public function updateAliasAll($daysback=null) {
+		$db = GetGlobal('db');
+		$dayb = $daysback ? $daysback : 1;
+		
+		if ($aliasID = $this->useUrlAlias()) {
+			
+			//select records 1 day back
+			$sSQL = "select {$this->fcode},{$this->itmname} from products ";
+			$sSQL.= " where DATE(datein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL $dayb DAY ) ) AND DATE ( NOW() )";
+			//$sSQL.= " where $aliasID is null"; // start
+			$res = $db->Execute($sSQL);			
+			//echo $sSQL;
+			
+			//update n days back
+			foreach ($res as $i=>$rec) {
+				$alias = $this->stralias($rec[$this->itmname]);
+			
+				$sSQL = "update products set $aliasID=" . $db->qstr($alias);
+				$sSQL.= " where {$this->fcode}=" . $db->qstr($rec[0]);
+				//echo $sSQL;
+				//$res = $db->Execute($sSQL);
+			}
+			return true;
+		}
+		return false;	
+	}
+	
+	//at report -> cron
+	public function updateAliasCode($id=null) {
+		$db = GetGlobal('db');		
+		if ((!$id) || (!$aliasID = $this->useUrlAlias())) return false;
+			
+		$sSQL = "select {$this->fcode},{$this->itmname} from products ";
+		$sSQL.= " where {$this->fcode}=" . $db->qstr($id);
+		$res = $db->Execute($sSQL);			
+		
+		if ($res->fields[0]) {
+
+			$alias = $this->stralias($res->fields[1]);
+			$uSQL = "update products set $aliasID=" . $db->qstr($alias);
+			$uSQL.= " where {$this->fcode}=" . $db->qstr($res->fields[0]);
+			$resu = $db->Execute($uSQL);	
+			
+			return true;
+		}
+		return false;
+	}
 
 
     //overrite
