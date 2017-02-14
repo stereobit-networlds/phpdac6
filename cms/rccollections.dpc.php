@@ -22,7 +22,7 @@ $__LOCALE['RCCOLLECTIONS_DPC'][0]='RCCOLLECTIONS_DPC;Select items;Επιλογή
 
 class rccollections {
 	
-	var $title, $prpath, $urlpath, $url, $cat, $item;
+	var $title, $prpath, $urlpath, $url;
 	var $map_t, $map_f, $cseparator, $onlyincategory;
 	var $listName;
 	
@@ -41,9 +41,6 @@ class rccollections {
 
 		$this->owner = GetSessionParam('LoginName');
         $this->savecolpath = remote_paramload('RCCOLLECTIONS','savecolpath',$this->prpath);		
-		
-		$this->cat = GetParam('cat'); //GetReq('cat');	    
-		$this->item = GetParam('id'); //GetReq('id');
 		
 		$this->map_t = remote_arrayload('RCITEMS','maptitle',$this->prpath);	
 		$this->map_f = remote_arrayload('RCITEMS','mapfields',$this->prpath);		
@@ -500,16 +497,20 @@ class rccollections {
 	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname':'itmfname';
 	    $itmdescr = $lan ? 'itmdescr':'itmfdescr';		
-		$code = $this->getmapf('code');
 		
+		$code = $this->getmapf('code');
+		$cpGet = _v('rcpmenu.cpGet');
+
 		$sSQL = 'select id,'.$code.',' . $itmname .' from products where ';
 		
-		if ($this->item) {
-			$sSQL .= $code . '=' . $db->qstr($this->item);
+		//if ($this->item) {
+		if ($id = _m("cmsrt.getRealItemCode use " . $cpGet['id'])) {
+
+			$sSQL .= $code . '=' . $db->qstr($id);
 		}	
-		elseif ($this->cat) {
+		elseif ($cat = $cpGet['cat']) {
 			
-			$cat_tree = explode($this->cseparator, $this->cat);
+			$cat_tree = explode($this->cseparator, $cat);
 
 			if ($cat_tree[0])
 				$whereClause .= ' cat0=' . $db->qstr(_m('cmsrt.replace_spchars use ' . $cat_tree[0]. '+1'));		
@@ -617,9 +618,13 @@ class rccollections {
 		if (!$action) return;
 		$submit = $title ? $title : 'Submit';
 		$cl = $class ? "class=\"$class\"" : null;
+		
+		$cpGet = _v('rcpmenu.cpGet');
+		$id = _m("cmsrt.getRealItemCode use " . $cpGet['id']);	
+		$cat = $cpGet['cat'];	
 		 
-		$c = "<INPUT type=\"hidden\" name=\"cat\" value=\"{$this->cat}\" />";
-		$c .= "<INPUT type=\"hidden\" name=\"item\" value=\"{$this->id}\" />";	
+		$c = "<INPUT type=\"hidden\" name=\"cat\" value=\"{$cat}\" />";
+		$c .= "<INPUT type=\"hidden\" name=\"item\" value=\"{$id}\" />";	
 		
         $c .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . $submit . "\" $cl />";  
         $c .= "<INPUT type=\"hidden\" name=\"FormName\" value=\"Collections\" />";		   
@@ -640,7 +645,7 @@ class rccollections {
 	
 	protected function get_selected_db_items($preset=null, $asis=false) {
         $db = GetGlobal('db');		
-	    $lan = $lang?$lang:getlocal();
+	    $lan = $lang ? $lang : getlocal();
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';	
         $codefield = $this->getmapf('code');
@@ -999,9 +1004,13 @@ class rccollections {
 		if (!$action) return;
 		$submit = $title ? $title : 'Submit';
 		$cl = $class ? "class=\"$class\"" : null;
+		
+		$cpGet = _v('rcpmenu.cpGet');
+		$id = _m("cmsrt.getRealItemCode use " . $cpGet['id']);	
+		$cat = $cpGet['cat'];			
 		 
-		$c = "<INPUT type=\"hidden\" name=\"cat\" value=\"{$this->cat}\" />";
-		$c .= "<INPUT type=\"hidden\" name=\"item\" value=\"{$this->id}\" />";	
+		$c = "<INPUT type=\"hidden\" name=\"cat\" value=\"{$cat}\" />";
+		$c .= "<INPUT type=\"hidden\" name=\"item\" value=\"{$id}\" />";	
 		$c .= "<INPUT type=\"hidden\" name=\"xmlload\" value=\"1\" />";  //<< keep param active to load the xml process page at .php
 		
         $c .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . $submit . "\" $cl />";  

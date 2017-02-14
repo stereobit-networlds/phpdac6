@@ -19,9 +19,7 @@ $__LOCALE['CMSMENU_DPC'][0]='CMSMENU_DPC;Menu;Menu';
 class cmsmenu {
 
 	var $path, $urlpath, $inpath, $menufile, $sliderfile;
-	var $delimiter;
-   
-	var $tmpl_path, $tmpl_name;
+	var $delimiter, $httpurl;
 	var $dropdown_class, $dropdown_class2;   
 	
 	public function __construct() {
@@ -34,7 +32,8 @@ class cmsmenu {
 	   
 		$this->path = paramload('SHELL','prpath');	   
 		$this->urlpath = paramload('SHELL','urlpath');
-		$this->inpath = paramload('ID','hostinpath');	
+		$this->inpath = paramload('ID','hostinpath');
+		$this->httpurl = paramload('SHELL','urlbase');		
 	  
 		$this->menufile = $this->path . 'menu.ini';
 		$this->sliderfile = $this->path . 'slideshow.ini';

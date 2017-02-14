@@ -56,14 +56,11 @@ class rctags extends shtags {
     var $title, $path, $catpath, $catfkey, $cext, $initfile;
 	var $post, $msg;
 	var $browser;
-	var $editmode;
 	var $cseparator;
 
-	function rctags() {
+	public function __construct() {
 	
-      shtags::shtags();
-	  
-	  $this->editmode = GetReq('editmode');	  
+      shtags::shtags(); 
 	  	
 	  $this->title = localize('RCTAGS_DPC',getlocal());	
 	  $this->post = false;  
@@ -73,10 +70,10 @@ class rctags extends shtags {
       $this->cseparator = $csep ? $csep : '^';		  
 	}
 	
-	function event($event=null) {
+	public function event($event=null) {
 	
-	   	 $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	     if ($login!='yes') return null;				
+	   	$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;				
 	
 	    switch ($event) {
 
@@ -87,7 +84,7 @@ class rctags extends shtags {
         }			
     }
 	
-	function action($action=null) {	 		 
+	public function action($action=null) {	 		 
 	
 	    switch ($action) {	
 			
@@ -103,17 +100,18 @@ class rctags extends shtags {
 
 	function show_tags() {
         $db = GetGlobal('db');
-		$item = GetReq('id');	
-		$cat = GetReq('cat'); 
+		$cpGet = _v('rcpmenu.cpGet');		
+		$item = _m("cmsrt.getRealItemCode use " . $cpGet['id']);
+		$cat = $cpGet['cat'];
+		
 		$greek_cat = iconv("UTF-8", "ISO-8859-7", $cat);
 		$greek_item = iconv("UTF-8", "ISO-8859-7", $id);		
 	    $lan = getlocal();
 	    $itmkeywords = $lan?'keywords'.$lan:'keywords0';
-	    $itmdescr = $lan?'descr'.$lan:'descr0';  
-		$itmtitle = $lan?'title'.$lan:'title0';
+	    $itmdescr = $lan ? 'descr'.$lan : 'descr0';  
+		$itmtitle = $lan ? 'title'.$lan : 'title0';
 	
 		$code = $item ? $item : $cat;
-		
 		
         $sSQL = "select code,tag,$itmkeywords,$itmdescr,$itmtitle from ptags ";
 	    $sSQL .= " WHERE code='" . $code . "'";
@@ -121,9 +119,8 @@ class rctags extends shtags {
 	    $resultset = $db->Execute($sSQL,2);	
 	    $result = $resultset;		
 		
-		if ($itmcode = $result->fields[0]) {
-		    $ret = $this->edit_tags($code);
-		}	
+		if ($itmcode = $result->fields[0]) 
+		    $ret = $this->edit_tags($code);	
 		else
             $ret = $this->add_tags($code);	
 
@@ -134,9 +131,9 @@ class rctags extends shtags {
   function add_tags($code=null) {
        $db = GetGlobal('db'); 
 	   $lan = getlocal();
-	   $itmkeywords = $lan?'keywords'.$lan:'keywords0';
-	   $itmdescr = $lan?'descr'.$lan:'descr0'; 	
-       $itmtitle = $lan?'title'.$lan:'title0';	   
+	   $itmkeywords = $lan ? 'keywords'.$lan : 'keywords0';
+	   $itmdescr = $lan ? 'descr'.$lan : 'descr0'; 	
+       $itmtitle = $lan ? 'title'.$lan : 'title0';	   
  	   	 
 	   if (stristr($code ,$this->cseparator))
 	     $cc = explode($this->cseparator,$code);  
@@ -187,42 +184,40 @@ class rctags extends shtags {
        return ($out);  
   }
   
-  function edit_tags($code=null) {
-       $db = GetGlobal('db'); 
-	   $lan = getlocal();
-	   $itmkeywords = $lan?'keywords'.$lan:'keywords0';
-	   $itmdescr = $lan?'descr'.$lan:'descr0'; 
-       $itmtitle = $lan?'title'.$lan:'title0';  	   
-	   //$cc = urlencode($code);
+	public function edit_tags($code=null) {
+		$db = GetGlobal('db'); 
+		$lan = getlocal();
+		$itmkeywords = $lan ? 'keywords'.$lan : 'keywords0';
+		$itmdescr = $lan ? 'descr'.$lan : 'descr0'; 
+		$itmtitle = $lan ? 'title'.$lan : 'title0';  
 	   
-	   $out = $code.':'.$cc;
+		//$cc = urlencode($code);
+		$out = $code.':'.$cc;
 	   
-	   if ($editmode = GetReq('editmode')) {//default form colors	
-		    global $config;
-			$config['FORM']['element_bgcolor1'] = 'EEEEEE';
-			$config['FORM']['element_bgcolor2'] = 'DDDDDD';	
+		global $config;
+		$config['FORM']['element_bgcolor1'] = 'EEEEEE';
+		$config['FORM']['element_bgcolor2'] = 'DDDDDD';	
 
-			$myfields = "tag,$itmkeywords,$itmdescr,$itmtitle,"; //'ctgid,ctgoutline,ctgoutlnorder,';
-			$mytitles = localize('_tag',getlocal()) . ',' . localize('_keywords',getlocal()) . ','. localize('_descr',getlocal()) . ','. localize('_title',getlocal());				
-			
-			//SetParam('code',$code);			
-	   }	   
-	    
-	   $gocat = GetReq('cat');
+		$myfields = "tag,$itmkeywords,$itmdescr,$itmtitle,"; //'ctgid,ctgoutline,ctgoutlnorder,';
+		$mytitles = localize('_tag',getlocal()) . ',' . localize('_keywords',getlocal()) . ','. localize('_descr',getlocal()) . ','. localize('_title',getlocal());				
+   
+	    //$gocat = GetReq('cat');		
+		$cpGet = _v('rcpmenu.cpGet');		
+		$gocat = $this->cpGet['cat'];    
 	   
-	   GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+80+100+0+0');
-	   GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+120+10');	  
+		_m('dataforms.setform use myform+myform+5+5+80+100+0+0');
+		_m('dataforms.setformadv use 0+0+120+10');	  
 
 				 	                    
-       $post = 	localize('_POST',getlocal());
-	   $clear = localize('_CLEAR',getlocal());
-	   $out .= GetGlobal('controller')->calldpc_method("dataforms.getform use update.ptags+dataformsupdate&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++code=$code+dummy");	  
+		$post = 	localize('_POST',getlocal());
+		$clear = localize('_CLEAR',getlocal());
+		$out .= GetGlobal('controller')->calldpc_method("dataforms.getform use update.ptags+dataformsupdate&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++code=$code+dummy");	  
 	   	
-	   return ($out);		 
-  }
+		return ($out);		 
+	}
   
-  //check if code is a tag..so sent back original code
-  function is_tag($code=null) {
+	//check if code is a tag..so sent back original code
+	public function is_tag($code=null) {
         $db = GetGlobal('db');	
 		
 		if (!$code)
@@ -239,14 +234,14 @@ class rctags extends shtags {
 		//else	
             //return ($code);//as-is..no tag
 		return false;	
-  }
-  
-  function show_tag_list() {
+	}
+  /*
+	public function show_tag_list() {
        $db = GetGlobal('db'); 
 	   $lan = getlocal();
-	   $itmkeywords = $lan?'keywords'.$lan:'keywords0';
-	   $itmdescr = $lan?'descr'.$lan:'descr0'; 
-       $itmtitle = $lan?'title'.$lan:'title0';
+	   $itmkeywords = $lan ? 'keywords'.$lan : 'keywords0';
+	   $itmdescr = $lan ? 'descr'.$lan : 'descr0'; 
+       $itmtitle = $lan ? 'title'.$lan : 'title0';
 	   $ret = array();
 
 	   //title head
@@ -313,21 +308,25 @@ class rctags extends shtags {
 	   $out .= $myrec->render("center::100%::0::group_article_table::left::3::3::");
 	   return ($out); 		  
   }
-  
-  function show_tag_list_grid($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
+ */ 
+	public function show_tag_list_grid($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 600;
         $rows = $rows ? $rows : 26;
         $width = $width ? $width : null; //wide
         $mode = $mode ? $mode : 'd';
 	    $noctrl = $noctrl ? 0 : 1;  
-	    $lan = getlocal()?getlocal():0;
-		$selected_code = GetReq('id') ? GetReq('id') :
-		                 (GetReq('cat') ? GetReq('cat') : null);
+	    $lan = getlocal() ? getlocal() : 0;
+		
+		$cpGet = _v('rcpmenu.cpGet');		
+		$selected_code = $cpGet['id'] ? _m("cmsrt.getRealItemCode use " . $cpGet['id']) :
+		                 ($cpGet['cat'] ? $cpGet['cat'] : null);
+						 
+						 
   
 		if (defined('MYGRID_DPC')) {
 		
 			//$xsSQL = "select id,code,tag,keywords{$lan},descr{$lan},title{$lan} from ptags ";
-			//$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ptags+$xsSQL+d++id+1+1+20+400");
+			//$out .= _m("mygrid.grid use grid1+ptags+$xsSQL+d++id+1+1+20+400");
 			
 			$myfields = 'id,code,tag,';
 			$mytitles = localize('_tagid',getlocal()) . ',' . localize('_tagcode',getlocal()) . ',' . localize('_tagtag',getlocal()) . ',';				 		
@@ -382,16 +381,16 @@ class rctags extends shtags {
 		   $out .= 'Initialize jqgrid.';
 	   
 		return ($out);
-  }  
+	}  
   
-  /*used by fast item insert cp*/
-  function add_tags_data($code=null,$title=null,$descr=null,$keywords=null) {
+	/*used by fast item insert cp*/
+	public function add_tags_data($code=null,$title=null,$descr=null,$keywords=null) {
         if (!$code) return;
         $db = GetGlobal('db'); 
 	    $lan = getlocal();
-	    $itmkeywords = $lan?'keywords'.$lan:'keywords0';
-	    $itmdescr = $lan?'descr'.$lan:'descr0'; 
-        $itmtitle = $lan?'title'.$lan:'title0';  
+	    $itmkeywords = $lan ? 'keywords'.$lan : 'keywords0';
+	    $itmdescr = $lan ? 'descr'.$lan : 'descr0'; 
+        $itmtitle = $lan ? 'title'.$lan : 'title0';  
   
         $sSQL = "insert into ptags (code,tag,$itmkeywords,$itmdescr,$itmtitle) values (";
 	    $sSQL .= $db->qstr($code).",".
@@ -403,7 +402,7 @@ class rctags extends shtags {
         //echo $sSQL;
 		$result = $db->Execute($sSQL);
         return ($result);		
-  }
+	}
   
 };
 }

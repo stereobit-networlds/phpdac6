@@ -1556,15 +1556,21 @@ EOF;
 	}
 
 	//fetch item real-canonical code when alias used
-	public function getRealItemCode($id, $aliasId=null) {
+	public function getRealItemCode($id, $aid=null) {
 		$db = GetGlobal('db');		
-		if ((!$id) || (!$aliasId)) return null;			
+		if (!$id) return null;
+		$aliasID = $aid ? $aid : $this->useUrlAlias();	
 		
-		$code = $this->fcode; //canonical code
-		$objSQL = "select $code from products WHERE $aliasId=" . $db->qstr($id);
-
-		$oret = $db->Execute($objSQL);
-		return ($oret->fields[0]);			
+		if ($aliasID) {
+			$code = $this->fcode; //canonical code			
+			
+			$objSQL = "select $code from products WHERE $aliasID=" . $db->qstr($id);
+			$oret = $db->Execute($objSQL);
+			
+			return ($oret->fields[0] ? $oret->fields[0] : $id);			
+		}
+		
+		return ($id); //as is in case of no alias
 	}
 	
 	//call at tag rel=canonical at index file

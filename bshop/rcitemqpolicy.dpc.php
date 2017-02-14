@@ -145,9 +145,6 @@ class rcitemqpolicy {
 		$db = GetGlobal('db');
 				
 		$data = trim($_POST['formdata']);
-		/*
-		$ret = ($data) ? @file_put_contents($this->path . $id.'.txt', $data) : null;
-		*/
 
 		$encdata = base64_encode(trim($_POST['formdata']));	
 		$sSQL = "select code from ppolicyres where ispoints=0 and code=" . $db->qstr($id);
@@ -188,9 +185,6 @@ class rcitemqpolicy {
 		$sSQL = "select data from ppolicyres where ispoints=0 and code=" . $db->qstr($id);
 		$res = $db->Execute($sSQL);	
 		return (base64_decode($res->fields[0]));		
-		
-		//$data = @file_get_contents($this->path . $id.'.txt');
-		//return (trim($data));
 	}
 	
 	protected function items_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {

@@ -261,6 +261,11 @@ class cms extends fronthtmlpage {
 		return false; //already loaded	
 	}
 	
+	protected function exVar($var) {
+		if (!$var) return null;
+		return (strstr($var, '.')) ? _m($var) : $var;		
+	}
+	
 	public function callVar($name=null, $section=null) {
 		if (!$name) return null;
 		$sec = $section ? $section : 'VAR';		
@@ -281,59 +286,51 @@ class cms extends fronthtmlpage {
 			$oddyear = ($res->fields['year'] % 2 == 0) ? false : true;
 			//echo $oddday,$sSQL;
 			
-			$varvalue = $res->fields['isvar'] ? $this->paramload($sec, $value) : $value;
-			
-			if (($res->fields['inday']) && ($res->fields['inodd']) && ($oddday==true)) {
-				//echo 'odd day',$varvalue;
-				return _m($varvalue);
-			}
-			elseif (($res->fields['inday']) && ($res->fields['ineven']) && ($oddday==false)) {
-				//echo 'even day';
-				return _m($varvalue);
-			}
-			elseif (($res->fields['inmonth']) && ($res->fields['inodd']) && ($oddmonth==true)) {
-				//echo 'odd month';
-				return _m($varvalue);
-			}
-			elseif (($res->fields['inmonth']) && ($res->fields['ineven']) && ($oddmonth==false)) {
-				//echo 'even month';
-				return _m($varvalue);
-			}
-			elseif (($res->fields['inyear']) && ($res->fields['inodd']) && ($oddyear==true)) {
-				//echo 'odd year';
-				return _m($varvalue);
-			}
-			elseif (($res->fields['inyear']) && ($res->fields['ineven']) && ($oddyear==false)) {
-				//echo 'even year';
-				return _m($varvalue);
-			}
-			else { //if odd and even is off
-				//echo 'a';
-				if ((!$res->fields['inodd']) && (!$res->fields['ineven']))
-					return _m($varvalue); //always
-			}	
-			
-			/*
-			if ($res->fields['isvar']) {
-				$varvalue = $this->paramload($sec, $value);
-				return _m($varvalue);
-			}	
-			elseif ($res->fields['islocale']) {
-				$varvalue = localize($value, getlocal());
+			if ($res->fields['islocale']) {
+				$varvalue = $res->fields['isvar'] ?
+								localize($this->paramload($sec, $value), getlocal()) :				
+								localize($value, getlocal());
 				return ($varvalue);
 			}	
-			else
-				$varvalue = $value; */
+			else {
+				$varvalue = $res->fields['isvar'] ? $this->paramload($sec, $value) : $value;
+			
+				if (($res->fields['inday']) && ($res->fields['inodd']) && ($oddday==true)) {
+					//echo 'odd day',$varvalue;
+					return $this->exVar($varvalue);
+				}
+				elseif (($res->fields['inday']) && ($res->fields['ineven']) && ($oddday==false)) {
+					//echo 'even day';
+					return $this->exVar($varvalue);
+				}
+				elseif (($res->fields['inmonth']) && ($res->fields['inodd']) && ($oddmonth==true)) {
+					//echo 'odd month';
+					return $this->exVar($varvalue);
+				}
+				elseif (($res->fields['inmonth']) && ($res->fields['ineven']) && ($oddmonth==false)) {
+					//echo 'even month';
+					return $this->exVar($varvalue);
+				}
+				elseif (($res->fields['inyear']) && ($res->fields['inodd']) && ($oddyear==true)) {
+					//echo 'odd year';
+					return $this->exVar($varvalue);
+				}
+				elseif (($res->fields['inyear']) && ($res->fields['ineven']) && ($oddyear==false)) {
+					//echo 'even year';
+					return $this->exVar($varvalue);
+				}
+				else { //if odd and even is off
+					//echo $varvalue . 'a';
+					if ((!$res->fields['inodd']) && (!$res->fields['ineven']))
+						return $this->exVar($varvalue); //always
+				}	
+			}
 		}	
 		//else 
 		//standart vars, conf or locale values
 		$varvalue = $this->paramload($sec, $name);
-		
-		//echo $varvalue;
-		if ($varvalue) 
-			return (strstr($varvalue, '.')) ? _m($varvalue) : localize($varvalue, getlocal());
-
-		return null;	
+		//echo $varvalue . '>';
+		return $this->exVar($varvalue);
 	}
 };
 }

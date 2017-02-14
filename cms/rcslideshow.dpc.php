@@ -607,7 +607,7 @@ class rcslideshow extends cmsmenu {
 		foreach ($data as $i=>$m) {
 			$id = $m['id'];
 			$title = $m['name'];
-			$link = str_replace($csep, '^', $m['value']);
+			$link = str_replace($csep, '^', urldecode($m['value']));
 			$submenu = $m['submenu'];
 			$submenu_items = $m['children'];
 			if (is_array($submenu_items)) 
@@ -749,7 +749,7 @@ class rcslideshow extends cmsmenu {
 		
 		$cpGet = _v('rcpmenu.cpGet');		
 		
-		if ($id = $cpGet['id']) {
+		if ($id = _m("cmsrt.getRealItemCode use " . $cpGet['id'])) {
 			$cat = $cpGet['cat'];
 			$ctitles = $this->getCategoriesTitles($cat);
 			$title = array_pop($ctitles);			
@@ -863,7 +863,7 @@ class rcslideshow extends cmsmenu {
 	protected function addElement() {
 		$elm = array();
 		foreach ($this->slidervars as $param) {
-			$elm[$param] = GetParam($param);
+			$elm[$param] = urldecode(GetParam($param));
 		}	
 		
 		//return new element 

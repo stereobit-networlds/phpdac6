@@ -23,11 +23,11 @@ $__ACTIONS['RCFORM_DPC'][3]='cpviewsubmitedform';
 
 $__DPCATTR['RCFORM_DPC']['cpform'] = 'cpform,1,0,0,0,0,0,0,0,0,0,0,1';
 
-$__LOCALE['RCFORM_DPC'][0]='RCFORM_DPC;Form data;Form data';
+$__LOCALE['RCFORM_DPC'][0]='RCFORM_DPC;Inbox;Εισερχόμενα';
 $__LOCALE['RCFORM_DPC'][1]='_id;Id;Id';
 $__LOCALE['RCFORM_DPC'][2]='_date;Date;Ημ/νία';
 $__LOCALE['RCFORM_DPC'][3]='_email;e-mail;e-mail';
-$__LOCALE['RCFORM_DPC'][4]='_forms;Contact_forms;Φόρμες_επικοινωνίας';
+$__LOCALE['RCFORM_DPC'][4]='_forms;Inbox;Εισερχόμενα';
 $__LOCALE['RCFORM_DPC'][5]='_subject;Subject;Θέμα';
 
 class rcform extends cmsform {

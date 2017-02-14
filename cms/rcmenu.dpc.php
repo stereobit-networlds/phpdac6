@@ -623,7 +623,7 @@ class rcmenu extends cmsmenu {
 		foreach ($data as $i=>$m) {
 			$id = $m['id'];
 			$title = $m['name'];
-			$link = str_replace($csep, '^', $m['value']);
+			$link = str_replace($csep, '^', urldecode($m['value']));
 			$submenu = $m['submenu'];
 			$submenu_items = $m['children'];
 			if (is_array($submenu_items)) 
@@ -766,7 +766,7 @@ class rcmenu extends cmsmenu {
 		
 		$cpGet = _v('rcpmenu.cpGet');		
 		
-		if ($id = $cpGet['id']) {
+		if ($id = _m("cmsrt.getRealItemCode use " . $cpGet['id'])) {
 			//current id item
 			$sSQL = "select $code,$itmname,$itmdescr from products WHERE $code=" . $db->qstr($id);
 			$res = $db->Execute($sSQL);
@@ -778,9 +778,9 @@ class rcmenu extends cmsmenu {
 			//add new element if any
 			$new = $this->element; 			
 			//the cat item,link
-			$a = $this->nestdditem($cat, $title, "klist/$cat/", md5($cat).'-SUBMENU');
+			$a = $this->nestdditem($cat, $title, $this->menuUrl($cat), md5($cat).'-SUBMENU');
 			//the item,link
-			$b = $this->nestdditem($res->fields[0], $res->fields[1], "kshow/$cat/".$res->fields[0] .'/', md5($res->fields[0]).'-SUBMENU');
+			$b = $this->nestdditem($res->fields[0], $res->fields[1], $this->menuUrl($cat, $res->fields[0]), md5($res->fields[0]).'-SUBMENU');
 			
 			return $new . $a . $b;
 		}
@@ -798,16 +798,16 @@ class rcmenu extends cmsmenu {
 			$res = $db->Execute($sSQL);
 			$catitems = null;
 			foreach ($res as $i=>$item)
-				$catitems .= $this->nestdditem($item[0], $item[1], "kshow/$cat/".$item[0] .'/', md5($item[0]).'-SUBMENU');
+				$catitems .= $this->nestdditem($item[0], $item[1], $this->menuUrl($cat, $item[0]), md5($item[0]).'-SUBMENU');
 				
 			$title = array_pop($this->getCategoriesTitles($cat));
 
 			//add new element if any
 			$new = $this->element; 	
 			//the cat items tree
-			$a = $this->nestddgroup($cat, $title, "klist/$cat/", md5($cat).'-SUBMENU', $catitems);			
+			$a = $this->nestddgroup($cat, $title, $this->menuUrl($cat), md5($cat).'-SUBMENU', $catitems);			
 			//just the cat link item
-			$b = $this->nestdditem(array_pop($cats), $title, "klist/$cat/", md5($cat).'-SUBMENU');
+			$b = $this->nestdditem(array_pop($cats), $title, $this->menuUrl($cat), md5($cat).'-SUBMENU');
 			
 			return $new . $b . $a;
 		}	
@@ -824,6 +824,25 @@ class rcmenu extends cmsmenu {
 		return $ret;
 	}
 	
+	protected function menuUrl($cat=null, $id=null) {
+		$t = $id ? 'kshow' : 'klist';
+		
+		if ($id) {
+			$ret = ($aliasExt = _m("cmsrt.useUrlAlias use 1")) ? 
+					$this->httpurl ."/$cat/$id" . $aliasExt : 
+					$this->httpurl . '/' . _m("cmsrt.url use t=$t&cat=$cat&id=$id");			
+		}	
+		elseif ($cat) { 
+			$ret = ($aliasExt = _m("cmsrt.useUrlAlias use 1")) ? 
+					$this->httpurl ."/$cat" . $aliasExt : 
+					$this->httpurl . '/' . _m("cmsrt.url use t=$t&cat=$cat");
+						
+		}							  
+		else
+			$ret = $this->httpurl . '/' . _m("cmsrt.url use t=$t");	
+		
+		return ($ret);
+	}	
 	
 	protected function newElement($button_title,$action) {
 		$promptname = localize('_elmname', getlocal());
@@ -853,7 +872,7 @@ class rcmenu extends cmsmenu {
 		$url = GetParam('elmurl');
 		
 		//return new element 
-		return $this->nestdditem(md5($title), $title, $url, md5($title));	
+		return $this->nestdditem(md5($title), $title, urldecode($url), md5($title));	
 	}
 	
 	protected function getCategoriesTitles($cat=null) {

@@ -76,8 +76,8 @@ class rctree  {
 		 case 'cptreerel'   : 
 							  break;					  
 	     case 'cptree'      :
-		 default            : $edit = $this->isDemoUser() ? 'r' : 'e';
-		                      $out .= $this->tree_grid(null,140,14,$edit, true);	
+		 default            : $edit = $this->isDemoUser() ? 'r' : 'd';
+		                      $out .= $this->tree_grid(null,140,5,$edit, true);	
 							  
 	  }	 
 
