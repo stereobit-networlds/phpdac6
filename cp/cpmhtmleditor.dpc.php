@@ -154,7 +154,10 @@ class cpmhtmleditor {
 
 	//generic html edit
     protected function render($file=null,$tempfile=null) {
-		$id = GetParam('id');
+		$_id = GetParam('id') ? GetParam('id') : $cpGet['id'];
+		$cpGet = _v('rcpmenu.cpGet');		
+		$id = _m("cmsrt.getRealItemCode use " . $_id);		
+				
 		$type = GetParam('type') ? GetParam('type') : '.html'; //default type for text attachment
 		$isTemplate = (substr($mydata,0,8)=='<!DOCTYPE') ? false : true; //html5 !!!!!	
       
@@ -211,7 +214,7 @@ class cpmhtmleditor {
 		$db = GetGlobal('db');		
 		$type = '.html'; //default type for text attachment
 		$cpGet = _v('rcpmenu.cpGet');
-		$id = GetParam('id');
+		$id = GetParam('id');	
 
 		if (isset($_POST['insert'])) { 
 
@@ -294,11 +297,12 @@ class cpmhtmleditor {
     protected function render_edit() { 
 		$db = GetGlobal('db');
 		$type = '.html'; //default type for text attachment
+	    $lan = $lang ? $lang : getlocal();
+	    $itmname = $lan ? 'itmname' : 'itmfname';
+	    $itmdescr = $lan ? 'itmdescr' : 'itmfdescr';		
 		$cpGet = _v('rcpmenu.cpGet');
-		$id = GetParam('id') ? GetParam('id') : $cpGet['id'];
-	    $lan = $lang?$lang:getlocal();
-	    $itmname = $lan?'itmname':'itmfname';
-	    $itmdescr = $lan?'itmdescr':'itmfdescr';		
+		$id = GetParam('id') ? _m("cmsrt.getRealItemCode use " . GetParam('id')) : 
+							   _m("cmsrt.getRealItemCode use " . $cpGet['id']);		
       
 		if (isset($_POST['update'])) { //post edit
 
@@ -376,13 +380,18 @@ class cpmhtmleditor {
 	
 	public function hrefEshopDetails() {
 		$cpGet = _v('rcpmenu.cpGet');		
-		$id = $this->postok ? $this->postok : (GetParam('id') ? GetParam('id') : $cpGet['id']);
+		$id = $this->postok ? $this->postok : 
+				(GetParam('id') ? _m("cmsrt.getRealItemCode use " .GetParam('id')) : 
+								  _m("cmsrt.getRealItemCode use " . $cpGet['id']));
 		return $id ? seturl('t=cpmhtmldetails&id='.$id) : '#';
 	}
 	
 	public function hrefCopyItem() {
 		$cpGet = _v('rcpmenu.cpGet');		
-		$id = $this->postok ? $this->postok : (GetParam('id') ? GetParam('id') : $cpGet['id']);		
+		$id = $this->postok ? $this->postok : 
+			(GetParam('id') ? _m("cmsrt.getRealItemCode use " . GetParam('id')) : 
+							  _m("cmsrt.getRealItemCode use " . $cpGet['id']));		
+			
 		return $id ? seturl('t=cpmhtmlcopy&id='.$id) : '#';
 	}	
 
@@ -645,7 +654,10 @@ class cpmhtmleditor {
 	}
 	
 	protected function gallery($title=null) {
-	    $_id = $title ? $title : GetReq('id'); 
+		$cpGet = _v('rcpmenu.cpGet');		
+		$realid = _m("cmsrt.getRealItemCode use " . $cpGet['id']);		
+		
+	    $_id = $title ? $title : $realid; 
 		$name = $this->encode_image_id($_id);
 		$ret = null;
 		$id = 0;
@@ -1133,7 +1145,8 @@ class cpmhtmleditor {
 		$type = '.html'; //default type for text attachment
 		$cpGet = _v('rcpmenu.cpGet');
 		if ($isupdate)
-			$id = GetParam('id') ? GetParam('id') : $cpGet['id'];	
+			$id = GetParam('id') ? _m("cmsrt.getRealItemCode use " . GetParam('id')) : 
+								   _m("cmsrt.getRealItemCode use " . $cpGet['id']);	
 		else
 			$id = GetParam('id') ? GetParam('id') : null;
 				
@@ -1153,7 +1166,7 @@ class cpmhtmleditor {
 		$lan = getlocal();
 		$cpGet = _v('rcpmenu.cpGet');
 		$scat = $cpGet['cat'];
-		$sid = GetReq('id');//$cpGet['id'];
+		$sid = GetReq('id');//_m("cmsrt.getRealItemCode use " . $cpGet['id']);
 			
 		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";
 		if (!empty($this->record)) {//edit mode
@@ -1205,7 +1218,7 @@ class cpmhtmleditor {
 		$lan = getlocal();
 		$cpGet = _v('rcpmenu.cpGet');
 		$scat = $cpGet['cat'];			
-		$sid = GetReq('id'); //$cpGet['id'];
+		$sid = GetReq('id'); //_m("cmsrt.getRealItemCode use " . $cpGet['id']);
 		
 		$sSQL = "select cat2,cat3,cat4,cat5,cat{$lan}2,cat{$lan}3,cat{$lan}4,cat{$lan}5 from categories ";	
 		if (!empty($this->record)) {//edit mode
@@ -1256,9 +1269,9 @@ class cpmhtmleditor {
         if (!$code) return;
         $db = GetGlobal('db'); 
 	    $lan = getlocal();
-	    $itmkeywords = $lan?'keywords'.$lan:'keywords0';
-	    $itmdescr = $lan?'descr'.$lan:'descr0'; 
-        $itmtitle = $lan?'title'.$lan:'title0';  
+	    $itmkeywords = $lan ? 'keywords'.$lan : 'keywords0';
+	    $itmdescr = $lan ? 'descr'.$lan : 'descr0'; 
+        $itmtitle = $lan ? 'title'.$lan : 'title0';  
   
         $sSQL = "insert into ptags (code,tag,$itmkeywords,$itmdescr,$itmtitle) values (";
 	    $sSQL .= $db->qstr($code).",".
@@ -1276,9 +1289,9 @@ class cpmhtmleditor {
         if (!$code) return;
         $db = GetGlobal('db'); 
 	    $lan = getlocal();
-	    $itmkeywords = $lan?'keywords'.$lan:'keywords0';
-	    $itmdescr = $lan?'descr'.$lan:'descr0'; 
-        $itmtitle = $lan?'title'.$lan:'title0';  
+	    $itmkeywords = $lan ? 'keywords'.$lan : 'keywords0';
+	    $itmdescr = $lan ? 'descr'.$lan : 'descr0'; 
+        $itmtitle = $lan ? 'title'.$lan : 'title0';  
   
         $sSQL = "update ptags set ";
 	    $sSQL .= "tag=" . $db->qstr($title).",".
@@ -1293,12 +1306,13 @@ class cpmhtmleditor {
 	
 	public function getTags() {
 		$cpGet = _v('rcpmenu.cpGet');
-		$code = GetParam('id') ? GetParam('id') : $cpGet['id'];		
+		$code = GetParam('id') ? _m("cmsrt.getRealItemCode use " . GetParam('id')) : 
+								 _m("cmsrt.getRealItemCode use " . $cpGet['id']);	
         if (!$code) return;
 		
         $db = GetGlobal('db'); 
 	    $lan = getlocal();
-	    $itmkeywords = $lan?'keywords'.$lan:'keywords0';
+	    $itmkeywords = $lan ? 'keywords' . $lan : 'keywords0';
   
         $sSQL = "select $itmkeywords from ptags where code=" . $db->qstr($code);
 		$result = $db->Execute($sSQL);
@@ -1310,7 +1324,7 @@ class cpmhtmleditor {
         if (!$cat) return;
         $db = GetGlobal('db'); 
 	    $lan = getlocal();
-	    $lan = $lang?$lang:getlocal();	
+	    $lan = $lang ? $lang : getlocal();	
 		
 	    if (stristr($cat ,$this->cseparator))
 			$cats = explode($this->cseparator,$cat);  
@@ -1504,24 +1518,6 @@ class cpmhtmleditor {
 		$t_current_page = GetParam('mctemplate') ? GetParam('mctemplate') : $this->getField('template'); 
 		$ppath = $this->prpath . _v('cmsrt.tpath') .'/'. _v('cmsrt.template') .'/'. $this->itmplpath ; 
 		
-		/*
-		$path = remote_paramload('FRONTHTMLPAGE','path',$this->prpath);
-		$tpath = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);		
-		$templates = opendir($this->prpath . $path .'/'. $tpath . '/' . $this->itmplpath);
-		//echo $this->prpath . $path .'/'. $tpath . '/' . $this->itmplpath;
-		
-		while($file= readdir($templates)){
-			
-			if (($file=='.') || ($file=='..')) continue;
-			
-			$tf = str_replace('.php','',$file);
-			$selected = ($tf==$t_current_page) ? 'selected' : null;
-			$ret .= "<option value='$tf' $selected>$tf</option>";
-		}
-		closedir();
-		
-		return ($ret);
-		*/
 		foreach (glob($ppath . "*.php") as $filename) {
 			
 			$tf = str_replace(array(".php", $ppath),array('',''), $filename);
@@ -1565,7 +1561,8 @@ class cpmhtmleditor {
 	//select mcpages to publish post with
 	public function mcpages() {
 		$cpGet = _v('rcpmenu.cpGet');
-		$code = GetParam('id') ? GetParam('id') : $cpGet['id'];	
+		$code = GetParam('id') ? _m("cmsrt.getRealItemCode use " .GetParam('id')) : 
+								 _m("cmsrt.getRealItemCode use " . $cpGet['id']);
 		$curMCPage = $this->readMCPage($code, _v('cmsrt.template'));
 		
 		$t_current_page = GetParam('mcpage') ? GetParam('mcpage') : $curMCPage;//$this->getMcPage(); 
@@ -1582,33 +1579,6 @@ class cpmhtmleditor {
 		return ($ret);	
 	}	
 	
-	//select mcpage to publish post with ...!!
-	/*public function frontpages() {
-		
-		$mc_pages = _m("fronthtmlpage.mc_read_files use pages+php++1");
-		
-		$location = _v('rcpmenu.turl'); //GetSessionParam('turldecoded') 
-		$my_current_page = _m("fronthtmlpage.mc_parse_editurl use ".$location);		
-		$mc_current_page = str_replace(array('.php','../'),array('',''),$my_current_page);		
-		
-		foreach ($mc_pages as $mcpage=>$mctitle) {
-			
-		    $mc_page = urlencode(base64_encode($mcpage . '.php'));
-			$selected = ($mc_page==$mc_current_page) ? 'selected' : null;
-			$ret .= "<option value='$mctitle' $selected>$mctitle</option>";
-		}
-		return ($ret);	
-	}
-	
-	public function getMcPage() {
-		$cpGet = _v('rcpmenu.cpGet');
-		$id = GetParam('id') ? GetParam('id') : $cpGet['id'];
-		
-		$p = _m('fronthtmlpage.mcSelectPage use '.$id);
-		
-		return ($p);
-	}	
-	*/
 	public function getVar($var=null) {
 		if (!$var) return null;
 		return ($this->{$var});
@@ -1633,11 +1603,12 @@ class cpmhtmleditor {
 	}	
 
 	public function cpGet($var=null) {
-		
 		$cpGet = _v('rcpmenu.cpGet');
 		
-		if (!$var) return ($this->replace_spchars($cpGet['cat'],1)); //without special chars
-		return ($cpGet['id']);
+		if (!$var) 
+			return ($this->replace_spchars($cpGet['cat'],1)); //without special chars
+		
+		return _m("cmsrt.getRealItemCode use " . $cpGet['id']);
 	}
 	
 	public function viewMessages($var=null) {

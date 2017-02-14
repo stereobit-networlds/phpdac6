@@ -38,6 +38,8 @@ class sqlparser extends skeleton {
 	//return true;
 	if (!$this->import_data) return true; //always true	
 	
+	$this->i = 0;
+	$this->now = date("Y-m-d H:m:s");	
 	
 	if (stristr($this->jf, '.jpg')) { //jpg file
 	
@@ -515,14 +517,16 @@ super database;
 	
     $i=1;		
 	
-	set_time_limit(0);	
+	set_time_limit(50);	
     foreach ($sqlarray as $s=>$sqlstatement) {
 		
-		$runSQL = trim(str_replace("\r\n", "", $sqlstatement));
-		$ix=0;
+		if (trim($sqlstatement)) {
+		
+		  $runSQL = trim(str_replace("\r\n", "", $sqlstatement));
+		  $ix=0;
 			
-		if ((stristr($runSQL,'insert')) || (stristr($runSQL,'update')) ||
-		    (stristr($runSQL,'delete ')) || (stristr($runSQL,'select'))) {
+		  if ((stristr($runSQL,'insert')) || (stristr($runSQL,'update')) ||
+		      (stristr($runSQL,'delete ')) || (stristr($runSQL,'select'))) {
 				
 			if ($res = $db->Execute($runSQL,1)) {
 				$ix=1;
@@ -537,8 +541,8 @@ super database;
 			self::write2disk('sqlparser.log', $postSQL);
 			
 			$i+=1;
-		}	
-		
+		  }	
+		}
 	}	
 	set_time_limit(ini_get('max_execution_time'));	//return to default
 	

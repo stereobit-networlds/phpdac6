@@ -232,7 +232,7 @@ class cpflotcharts {
 
 		$cpGet = _v('rcpmenu.cpGet');	
 			
-        if ($id = $cpGet['id']) {
+        if ($id = _m("cmsrt.getRealItemCode use " . $cpGet['id'])) {
 			
 			$item = _m('rccontrolpanel.getItemName use '.$id);		
 			
@@ -996,7 +996,6 @@ FLOTMAIL;
 	
     protected function flot_crm_stats() {
 		$db = GetGlobal('db'); 	
-
 		$diff = 0;	
 
         if ($cid = urldecode(GetReq('id'))) { //email
@@ -1121,10 +1120,11 @@ FLOTCRM;
 	
     protected function flot_eshop_stats() {
 		$db = GetGlobal('db'); 	
-
+		//$cpGet = _v('rcpmenu.cpGet');	
 		$diff = 0;	
 
         if ($id = urldecode(GetReq('id'))) { //item id
+		//if ($id = _m("cmsrt.getRealItemCode use " . $cpGet['id'])) {
 		
 		    $code = _m('rccontrolpanel.getItemActiveCode use '.$id);		
 			$item = _m('rccontrolpanel.getItemName use '.$code);		

@@ -169,15 +169,15 @@ class rcreplica  {
 
 		$xsSQL = "select * from (SELECT id, stamp, status, acct, REPLACE(file_path,'{$this->urlpath}','') as file_path, file_last_mod FROM fshistory WHERE (status='ADDED' or status='ALTERED' or STATUS='DELETED') and file_path NOT LIKE 'FIRST SCAN%' and stamp > '$backtrace') as o";		
 		//echo $xsSQL;  
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|link|5|".'||');
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal()).'|5|1');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+acct|".localize('_acct',getlocal())."|link|5|"."javascript:filedetails(\"{stamp}\",\"{acct}\");".'||');
+		_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|2|0");	
+		_m("mygrid.column use grid1+stamp|".localize('_stamp',getlocal())."|link|5|".'||');
+		_m("mygrid.column use grid1+status|".localize('_status',getlocal()).'|5|1');			
+		_m("mygrid.column use grid1+acct|".localize('_acct',getlocal())."|link|5|"."javascript:filedetails(\"{stamp}\",\"{acct}\");".'||');
 		//if (!$this->isDemoUser())
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); 		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+file_last_mod|".localize('_filemod',getlocal())."|link|5|"."javascript:details(\"{stamp}\");".'||');
+			_m("mygrid.column use grid1+file_path|".localize('_filepath',getlocal())."|19|1"); 		
+		_m("mygrid.column use grid1+file_last_mod|".localize('_filemod',getlocal())."|link|5|"."javascript:details(\"{stamp}\");".'||');
 		
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+fshistory+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+fshistory+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
 		
 		return ($out);  	
 	}
@@ -196,15 +196,15 @@ class rcreplica  {
 		$xsSQL = "SELECT * FROM (SELECT i.id,i.fid,i.time,i.date,i.execdate,i.status,i.sqlres,i.sqlquery,i.reference FROM syncsql i where i.reference='system' AND i.reference NOT LIKE 'replication' AND i.sqlquery NOT LIKE '%cron%') x";
 		//echo $xsSQL;
 
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('id',getlocal())."|2|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+date|".localize('_date',getlocal())."|link|3|"."javascript:sqldetails({id});".'||');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+execdate|".localize('_xdate',getlocal())."|3|0|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+status|".localize('_status',getlocal())."|1|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+sqlquery|".localize('_query',getlocal())."|25|1|");
-	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+sqlres|".localize('_sqlres',getlocal())."|2|0|");			
-	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+reference|".localize('_ref',getlocal())."|2|0|");
+		_m("mygrid.column use grid2+id|".localize('id',getlocal())."|2|0|");
+		_m("mygrid.column use grid2+time|".localize('_date',getlocal())."|link|3|"."javascript:sqldetails({id});".'||');			
+		_m("mygrid.column use grid2+execdate|".localize('_xdate',getlocal())."|3|0|");			
+		_m("mygrid.column use grid2+status|".localize('_status',getlocal())."|1|0|");
+		_m("mygrid.column use grid2+sqlquery|".localize('_query',getlocal())."|25|1|");
+	    _m("mygrid.column use grid2+sqlres|".localize('_sqlres',getlocal())."|2|0|");			
+	    _m("mygrid.column use grid2+reference|".localize('_ref',getlocal())."|2|0|");
 		
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+syncsql+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid2+syncsql+$xsSQL+$mode+$title+time+$noctrl+1+$rows+$height+$width+1+1+1");
 		
 		return ($out);  	
 	}	

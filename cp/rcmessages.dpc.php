@@ -476,7 +476,7 @@ class rcmessages  {
 		$title = localize('_visits',getlocal());		
 		
 		$cpGet = _v('rcpmenu.cpGet');
-		$id = $cpGet['id']; 	
+		$id = _m("cmsrt.getRealItemCode use " . $cpGet['id']); 	
 		   	
 		if (defined('MYGRID_DPC')) {
 		   
@@ -501,7 +501,8 @@ class rcmessages  {
 
 	public function viewCategoryStatistics($template=null) {
 		$db = GetGlobal('db');
-		$cat = $this->cpGet['cat'];
+		$cpGet = _v('rcpmenu.cpGet');	
+		$cat = $cpGet['cat'];
 		
 		if ((defined('CRMFORMS_DPC')) && ($this->isCrmUser())) {
 			$template = 'crm-' . $template;
@@ -542,7 +543,8 @@ class rcmessages  {
 
 	public function viewItemStatistics($template=null) {
 		$db = GetGlobal('db');
-		$id = $this->cpGet['id'];
+		$cpGet = _v('rcpmenu.cpGet');
+		$id = _m("cmsrt.getRealItemCode use " . $cpGet['id']);
 		
 		if ((defined('CRMFORMS_DPC')) && ($this->isCrmUser())) {
 			$template = 'crm-' . $template;

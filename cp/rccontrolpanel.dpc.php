@@ -478,7 +478,7 @@ $(document).ready(function(){
 			//call cpGet from rcpmenu not this (only def action)
 			$cpGet = _v('rcpmenu.cpGet');	
 			$csep = _m('cmsrt.sep');
-			if ($id = $cpGet['id'])
+			if ($id = _m("cmsrt.getRealItemCode use " . $cpGet['id']))
 				$section = ' &gt; ' . $this->getItemName($id);
 			elseif ($cat = $cpGet['cat'])
 				$section = ' &gt; ' . str_replace($csep, ' &gt; ', _m("cmsrt.replace_spchars use $cat+1"));
@@ -564,7 +564,7 @@ $(document).ready(function(){
 		if ($fs < 0)
 			$this->setTask('danger|'.localize('_upgradeplan', getlocal()).'|99');
 		
-        if ($id = $this->cpGet['id']) {
+        if ($id = _m("cmsrt.getRealItemCode use " . $this->cpGet['id'])) {
 			//return (0); //test bypass
 			$timeins = $this->sqlDateRange('date', true, true);	
 			

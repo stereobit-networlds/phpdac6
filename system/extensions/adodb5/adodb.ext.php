@@ -1222,7 +1222,7 @@ if (!defined('_ADODB_LAYER')) {
 		} else {
 			
 			//REPLICATION (before real sql else error!) //<<<<<
-			if ((stristr($sql, 'select ')==false) && (stristr($sql, 'show ')==false)) {
+			if (($sql) && (stristr($sql, 'select ')==false) && (stristr($sql, 'show ')==false)) {
 				$now = date("Y-m-d H:m:s");
 				$exTables = array('mailqueue', 'panalyze', 'pphotos', 'stats', 'syncsql', 'cpmessages', 'cronjob', 'fsbaseline', 'fshistory', 'fsscanned', 'fsbackup');
 			

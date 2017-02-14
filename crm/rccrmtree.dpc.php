@@ -395,6 +395,51 @@ class rccrmtree {
 		return ($out);  
 	}	
 	
+	
+	protected function getPaymentsELT($flname, $as=null) {
+		if (!$flname) return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+
+		$sSQL = "select code,lantitle from ppayments";
+		$result = $db->Execute($sSQL);
+
+		foreach ($result as $i=>$rec) {
+			$field = $rec['lantitle'] ? $rec['lantitle'] : $rec['code'];
+			$fields[] = $field;
+			$locales[] = localize($field, $lan);
+		}	
+		
+		$f = "'" . implode("','", $fields) ."'";
+		$l = "'" . implode("','", $locales) ."'";
+		
+		$a = $as ? "as $as" : null;
+		$ret = "ELT(FIELD({$flname}, {$f}), {$l}) {$a}";
+		return ($ret);
+	}
+	
+	protected function getTransportsELT($flname, $as=null) {
+		if (!$flname) return null;
+		$db = GetGlobal('db');
+		$lan = getlocal();
+
+		$sSQL = "select code,lantitle from ptransports";
+		$result = $db->Execute($sSQL);
+
+		foreach ($result as $i=>$rec) {
+			$field = $rec['lantitle'] ? $rec['lantitle'] : $rec['code'];
+			$fields[] = $field;
+			$locales[] = localize($field, $lan);
+		}	
+		
+		$f = "'" . implode("','", $fields) ."'";
+		$l = "'" . implode("','", $locales) . "'";
+		
+		$a = $as ? "as $as" : null;
+		$ret = "ELT(FIELD({$flname}, {$f}), {$l}) {$a}";
+		return ($ret);
+	}		
+	
 	public function sales_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $selected_cus = urldecode(GetReq('id'));
 		
@@ -408,20 +453,10 @@ class rccrmtree {
 	
 	    if (defined('MYGRID_DPC')) {
 			
-			$lookup1 = "ELT(FIELD(i.payway, 'Eurobank','Piraeus','Paypal','BankTransfer','PayOnsite','PayOndelivery'),".
-			                      "'".localize('Eurobank',getlocal())."',".
-								  "'".localize('Piraeus',getlocal())."',".
-								  "'".localize('Paypal',getlocal())."',".
-			                      "'".localize('BankTransfer',getlocal())."',".
-								  "'".localize('PayOnsite',getlocal())."',".
-								  "'".localize('PayOndelivery',getlocal())."') as pw";			
-								  
-			$lookup2 = "ELT(FIELD(i.roadway, 'CompanyDelivery','CustomerDelivery','Logistics','Courier'),".
-				                  "'".localize('CompanyDelivery',getlocal())."',".
-					   		      "'".localize('CustomerDelivery',getlocal())."',".
-								  "'".localize('Logistics',getlocal())."',".
-								  "'".localize('Courier',getlocal())."') as rw";								  
-		
+			$lookup1 = $this->getPaymentsELT('i.payway', 'pw'); 
+			$lookup2 = $this->getTransportsELT('i.roadway', 'rw');
+						
+			
 			$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.timein,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i) x";
 				//echo $xsSQL2;
 
