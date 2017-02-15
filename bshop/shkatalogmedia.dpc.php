@@ -419,22 +419,25 @@ class shkatalogmedia {
 										$out = _m("shcart.cartview");   
 									break;								
 		
-			case 'kfilter'      :	/*if ($this->filterajax) {
-										$cats = explode($this->sep(), GetReq('cat'));	
-										$section = 'page-' . array_pop($cats);
-										die($section .'|'.$this->list_katalog(0,'kfilter'));
+			case 'kfilter'      :	$page = GetReq('page');
+			                        if (($this->filterajax) && (!isset($page))) {
+										//$cats = explode($this->sep(), GetReq('cat'));	
+										//$section = 'page-' . array_pop($cats);
+										//die($section .'|'.$this->list_katalog(0,'kfilter'));
+										die($this->list_katalog(0,'kfilter'));
 									}	
-									else*/	
+									else	
 										$out .= $this->list_katalog(0,'kfilter');																 
 									break;
 									
 			case 'ktree'      	:	if ($this->filterajax) {
-										$cats = explode($this->sep(), GetReq('cat'));	
-										$section = 'page-' . array_pop($cats);
-										die($section .'|'.$this->list_katalog(0,'ktree'));
+										//$cats = explode($this->sep(), GetReq('cat'));	
+										//$section = 'page-' . array_pop($cats);
+										//die($section .'|'.$this->list_katalog(0,'ktree'));
+										die($this->list_katalog(0,'ktree'));
 									}	
 									else
-										$out = $this->list_katalog(0,'ktree');	
+										$out = $this->list_katalog(0,'klist');	
 									break;
 								
 			case 'klist'        : 	if (in_array('beforeitemslist',$this->catbanner))//before
@@ -464,24 +467,20 @@ class shkatalogmedia {
     }
 	
 	protected function jsFilter() {
-		$cat = GetReq('cat');	
-		$furl = $this->httpurl . '/' . _m('cmsrt.url use t=kfilter&cat=' . $cat);	
+		$cat = GetReq('cat');
+		$furl = $this->httpurl . '/' . _m("cmsrt.url use t=kfilter&cat=$cat"); 		
 		
-		$js = "
-function filter(f,div) { 
-//alert(div+' '+f);
-/*
-\$('#'+div).html(\"<img src='images/loading.gif' alt='Loading'>\");			
-\$.get('{$furl}'+f+'/', function(data) {\$('#'+div).html(data);});};
-*/
-$.ajax({
-  url: '{$furl}'+f+'/',
-  cache: false,
-  success: function(html){
-    $('#'+div).text(html);
-  }
-})};
-";
+		$js = <<<JSFILTER
+function filter(url,div,fname) {
+	var checkedItems = fname ? 
+		$('input:checkbox[name='+fname+']:checked').map(function() { return $(this).val().toString(); } ).get().join(",") : null;
+	//alert(url+checkedItems+'/');
+	
+	ajaxCall(url+checkedItems+'/',div,1);
+	//gotoTop(div);	
+}
+JSFILTER;
+
 		return ($js);
 	}
 	
@@ -494,13 +493,21 @@ $.ajax({
 		$diff = ($max - $min);
 		$step = ($diff<=100) ? 1 : 10;//($max-$min) / 10;
 		$input = is_numeric(GetParam('input')) ? explode('.', GetParam('input')) : array('0','0');				
-		$furl = $this->httpurl . '/' . _m("cmsrt.url use t=kfilter&cat=$cat"); 
+		$purl = $this->httpurl . '/' . _m("cmsrt.url use t=kfilter&cat=$cat"); 
+		
+		//ajax div
+		$pcats = explode($this->sep(), $cat); 
+		$section = 'page-' . array_pop($pcats); 		
+		
+		$location = ($this->filterajax) ? 
+						"ajaxCall('$purl'+value+'/','$section',1);" :
+						"window.location='$purl'+value+'/';";
 		
 		$js = "
 $('.price-slider').on('slideStop', function(slideEvt) {
 	var p = $('.price-slider').val();
 	var value = p.replace(',', '.');
-	window.location='{$this->httpurl}/kfilter/{$cat}/'+value+'/';
+	$location
 });
 $(document).ready(function () {
 	if ($('.price-slider').length > 0) {
@@ -522,18 +529,18 @@ $(document).ready(function () {
 	protected function scrolltop_javascript_code() {
 
 		$jscroll = <<<SCROLLTOP
-function ajaxcall(pdiv,purl) {
-	var pdiv = pdiv ? pdiv : '#content_div';
-	//console.log(pdiv+purl);
-	$('#'+pdiv).html('<img src="images/loading.gif" alt="Loading">');
-	$.get(purl,function(data) {	$('#'+pdiv).html(data);	});	
+function ajaxCall(url,div,goto) {
+$.ajax({ url: url, cache: false, success: function(html){
+    $('#'+div).html(html);
+	if (goto) gotoTop(div);
+  }})	
 }				
 //scroll smooth to top
-function gotoTop() {
-	//$("a[href='#top']").click(function() {
-	$("html, body").animate({ scrollTop: 0 }, "slow");
+function gotoTop(div) {
+	//console.log(div);
+	var sw = (div) ? $('#'+div).offset().top : 0;
+	$("html, body").animate({ scrollTop: sw }, "slow");
 	return false;
-	//});
 };
 
 SCROLLTOP;
@@ -541,14 +548,12 @@ SCROLLTOP;
 		return ($jscroll);
     }	
 	
-	
 	public function javascript() {
 	
        if (iniload('JAVASCRIPT')) {
 	   
 	        $code = $this->jsFilter();
 			$code.= $this->jsPrice();
-			
 		    $code.= $this->scrolltop_javascript_code();
 		   
 		    $js = new jscript;	
@@ -815,8 +820,17 @@ SCROLLTOP;
 						 $_f . ">=" . $this->spt($_prices[0]) . " and " .
 						 $_f . "<=" . $this->spt($_prices[1]) . ") "; 
 			}
-			else		
-				$sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));		
+			else {		
+				if (strstr($filter, ',')) {
+					//multiple values
+					$fl = explode(',', $filter);
+					foreach ($fl as $feaf)
+						$flf[] = "manufacturer='$feaf'";
+					$sSQL .= ' and (' . implode(' OR ', $flf) . ')';	
+				}
+				else //single value
+					$sSQL .= " and manufacturer=" . $db->qstr($filter);		
+			}	
 		}	
 		$sSQL .= " and itmactive>0 and active>0";
 	    $resultset = $db->Execute($sSQL);	
@@ -1031,8 +1045,17 @@ SCROLLTOP;
 							 $_f . ">=" . $this->spt($_prices[0]) . " and " .
 							 $_f . "<=" . $this->spt($_prices[1]) . ") ";
 				}
-				else 
-					$sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));
+				else { 
+					if (strstr($filter, ',')) {
+						//multiple values
+						$fl = explode(',', $filter);
+						foreach ($fl as $feaf)
+							$flf[] = "manufacturer='$feaf'";
+						$sSQL .= ' and (' . implode(' OR ', $flf) . ')';	
+					}
+					else //single value
+						$sSQL .= " and manufacturer=" . $db->qstr($filter);
+				}	
 			}
 			$sSQL .= " and itmactive>0 and active>0";	
 			$sSQL .= $this->orderSQL();
@@ -1047,6 +1070,7 @@ SCROLLTOP;
 			$this->max_items = $db->Affected_Rows();//count($this->result);
 			
 		    $this->get_max_result(null, $filter);		
+			//$this->max_selection = $db->Affected_Rows();
 	      
 			if ($this->max_items==1) 
 				return ($this->result->fields[$this->fcode]); //to view the item without click on dir			
@@ -1060,14 +1084,31 @@ SCROLLTOP;
         $db = GetGlobal('db');	
 		$page = GetReq('page') ? GetReq('page') : 0;			
 		$cat = GetReq('cat');
+		//not a filter cmd = common cat read
+		if (!$treeid) return $this->read_list();
+			
 		list($treename, $treeleaf) = explode(':', $treeid);
+		if ($treeleaf) {
+			if (strstr($treeleaf, ',')) {
+				//multiple values
+				$tl = explode(',', $treeleaf);
+				foreach ($tl as $leaf)
+					$tlf[] = "ctreemap.tid='$leaf'";
+				$tleafs = '(' . implode(' OR ', $tlf) . ')';	
+			}
+			else //single value
+				$tleafs = "ctreemap.tid='$treeleaf'";
+		}	
+		else //not a filter value = common cat read
+			return $this->read_list();	
 		
 		if ($cat!=null) {		   
 			$cat_tree = explode($this->sep(),$cat); 
 			$sSQL = str_replace(array(' id,', 'orderid,'), 
 								array(' products.id,','products.orderid,'),
 								$this->selectSQL);
-			$sSQL .= ",ctreemap WHERE ctreemap.code=products.id and ctreemap.tid='$treeleaf'";		   
+			$sSQL .= ",ctreemap WHERE ctreemap.code=products.id and ";		   
+			$sSQL .= $tleafs; //"ctreemap.tid='$treeleaf'";
 		      	  
 			if ($cat_tree[0])
 				$whereClause = ' and cat0=' . $db->qstr($this->replace_spchars($cat_tree[0],1));		
@@ -1087,24 +1128,8 @@ SCROLLTOP;
 				$whereClause .= ' and (cat3 IS NULL OR cat3=\'\') ';
 		   		
 			$sSQL .= $whereClause;
-		  
-			/*if ($filter) {
-				if (is_numeric($filter)) {
-					$_f = $this->read_policy();
-					$_prices = explode('.', $filter);
-					$sSQL .= " and (" . 
-							 $_f . ">=" . $this->spt($_prices[0]) . " and " .
-							 $_f . "<=" . $this->spt($_prices[1]) . ") ";
-				}
-				else 
-					$sSQL .= " and manufacturer=" . $db->qstr($this->replace_spchars($filter,1));
-			}*/
 			$sSQL .= " and itmactive>0 and active>0";	
 			$sSQL .= $this->orderSQL();
-			//test
-			//$cats = explode($this->sep(), GetReq('cat'));	
-			//$section = 'page-' . array_pop($cats);
-			//die($section .'|'.$sSQL);
 										
 			if ($this->pager) {
 				$p = $page * $this->pager;
@@ -3175,11 +3200,8 @@ SCROLLTOP;
             </ul>';*/
 		}	
 	  
-		//$contents = ($this->filterajax) ? $this->select_template('searchfilter-ajax') : $this->select_template('searchfilter');
-		$contents = $this->select_template('searchfilter');
-		
-		$tokens = array(); 
-		$r = array();	
+		$contents = ($this->filterajax) ? $this->select_template('searchfilter-ajax') : $this->select_template('searchfilter');
+		//$contents = $this->select_template('searchfilter');
 		
 	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
         if ($incategory) {	
@@ -3218,14 +3240,18 @@ SCROLLTOP;
 			//ajax div
 			$pcats = explode($this->sep(), $cat); 
 			$section = 'page-' . array_pop($pcats); 
-								
+			
+			$tokens = array(); 
+			$r = array();				
 			foreach ($result as $n=>$t) {
 				if (trim($t[0])!='') {
 			        $f = $this->replace_spchars($t[0]);
-					$url = $baseurl . _m("cmsrt.url use t=$command&cat=$cat&input=$f"); 
-					//$theurl = ($this->filterajax) ? /*"filter('{$f}', '{$section}')" "ajaxcall('$section','$url')"*/ "sndReqArg('$url','$section')" : $url;
-					$theurl = $url;
-					
+					//$url = $baseurl . _m("cmsrt.url use t=$command&cat=$cat&input=$f"); 
+					//$theurl = ($this->filterajax) ? "filter('{$url}', '{$section}')" : $url;
+					//$theurl = $url;
+					$url = $this->httpurl . "/$command/$cat/"; 
+					$theurl = ($this->filterajax) ? "filter('$url','$section','filter0')" : $url;
+										
 					$tokens[] = $t[0];
 					$tokens[] = $t[1];
 					$tokens[] = $theurl;
@@ -3234,17 +3260,17 @@ SCROLLTOP;
 					unset($tokens);		
                 }				
 			}	   
-		}
-		
-		//header
-        if ($header) {		
-			$tokens[] = localize('_ALL',$this->lan);
-			$tokens[] = $input ? '*' : $this->max_selection;
-			$tokens[] = $baseurl . _m("cmsrt.url use t=klist&cat=$cat"); 
-			$tokens[] = (!$input) ? 'checked="checked"' : null;
-			$r[] = $this->combine_tokens($contents,$tokens);
-			unset($tokens);
-		}			
+			
+			//header and not ajax
+			if ((!$this->filterajax) && ($header)) {	
+				$tokens[] = localize('_ALL',$this->lan);
+				$tokens[] = $input ? '*' : $this->max_selection;
+				$tokens[] = $baseurl . _m("cmsrt.url use t=klist&cat=$cat");
+				$tokens[] = (!$input) ? 'checked="checked"' : null;
+				$r[] = $this->combine_tokens($contents,$tokens);
+				unset($tokens);
+			}				
+		}		
        
 		$ret = (empty($r)) ? null : implode('',$r);	
 		return ($ret);  
@@ -3294,18 +3320,24 @@ SCROLLTOP;
 			//ajax div
 			$pcats = explode($this->sep(), $cat); 
 			$section = 'page-' . array_pop($pcats); 
+			//single name for one filter applied url
+			//or common name for all filters applied url			
+			$treename = 'filter1';		
 			
-			$r = array();
+			$tokens = array(); 			
+			$r = array();			
 			foreach ($res as $n=>$rec) {
 				$treeid = $treename . ':' . $rec[0]; //0
-				$url = $this->httpurl . '/' . _m("cmsrt.url use t=ktree&cat=$cat&treeid=$treeid");
-				$theurl = ($this->filterajax) ? "sndReqArg('$url','$section')" : $url;
+				//$url = $this->httpurl . '/' . _m("cmsrt.url use t=ktree&cat=$cat&treeid=$treeid");
+				//$theurl = ($this->filterajax) ? "sndReqArg('$url','$section')" : $url;
+				$url = $this->httpurl . "/ktree/$cat/$treename:";
+				$theurl = ($this->filterajax) ? "filter('$url','$section','$treename')" : $url .'/';
 							
-				$tokens[0] = $rec[2] ? $rec[2] : $rec[1];
-				$tokens[1] = '*';
-				$tokens[2] = $theurl;
+				$tokens[0] = $rec[2] ? $rec[2] : $rec[1]; //title
+				$tokens[1] = $rec[0]; //value
+				$tokens[2] = $theurl; //ajax url
 				$tokens[3] = ($rec[1] == $seltreeid) ? 'checked="checked"' : null;
-				$tokens[4] = $treename;
+				$tokens[4] = $treename; 
 				$r[] = $this->combine_tokens($linecontent,$tokens);	
 				unset($tokens);					
 			}	
@@ -3352,8 +3384,9 @@ SCROLLTOP;
 					foreach ($res as $n=>$rec) {
 						$treeid = $groupname . ':' . $rec[0]; 
 						$url = $this->httpurl . '/' . _m("cmsrt.url use t=ktree&cat=$cat&treeid=$treeid");
-						$theurl = ($this->filterajax) ? "sndReqArg('$url','$section')" : $url;
-												
+						//$theurl = ($this->filterajax) ? "sndReqArg('$url','$section')" : $url;
+						$theurl = ($this->filterajax) ? "filter('$url','$section','$groupname')" : $url;
+										
 						$tokens[0] = $rec[2] ? $rec[2] : $rec[1];
 						$tokens[1] = '*';
 						$tokens[2] = $theurl;	
