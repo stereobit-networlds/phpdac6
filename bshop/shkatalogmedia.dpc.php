@@ -350,8 +350,7 @@ class shkatalogmedia {
 		
 			case 'showimage'    : 	$this->show_photodb(GetReq('id'), GetReq('type'));
 
-			case 'kfilter'      :	$filter = GetParam('input');
-									$this->my_one_item = $this->fread_list($filter); 
+			case 'kfilter'      :	$this->my_one_item = $this->fread_list(); 
 									
 									if ($this->userLevelID < 5) {
 										$_filter = $this->replace_spchars($filter,1);
@@ -361,8 +360,7 @@ class shkatalogmedia {
 									$this->javascript();
 									break;	
 									
-			case 'ktree'      :		$tree = GetParam('treeid');
-									$this->my_one_item = $this->tread_list($tree); 
+			case 'ktree'      :		$this->my_one_item = $this->tread_list(); 
 									/*
 									if ($this->userLevelID < 5) {
 										$_filter = $this->replace_spchars($filter,1);
@@ -419,8 +417,8 @@ class shkatalogmedia {
 										$out = _m("shcart.cartview");   
 									break;								
 		
-			case 'kfilter'      :	$page = GetReq('page');
-			                        if (($this->filterajax) && (!isset($page))) {
+			case 'kfilter'      :	//$page = GetReq('page');
+			                        if ($this->filterajax) {//} && (!$page)) {
 										//$cats = explode($this->sep(), GetReq('cat'));	
 										//$section = 'page-' . array_pop($cats);
 										//die($section .'|'.$this->list_katalog(0,'kfilter'));
@@ -440,14 +438,19 @@ class shkatalogmedia {
 										$out = $this->list_katalog(0,'klist');	
 									break;
 								
-			case 'klist'        : 	if (in_array('beforeitemslist',$this->catbanner))//before
-										$out .= _m('shkategories.show_category_banner');									  
+			case 'klist'        : 	if ($page = GetReq('page')) { //ajax
+										die($this->list_katalog(0,'klist'));
+									}
+									else {
+										if (in_array('beforeitemslist',$this->catbanner))//before
+											$out .= _m('shkategories.show_category_banner');									  
 								   								
-									$out .= $this->list_katalog(0);		
+										$out .= $this->list_katalog(0);		
 								
-									//banner down
-									if (in_array('afteritemslist',$this->catbanner))//after
-										$out .= _m('shkategories.show_category_banner');														 
+										//banner down
+										if (in_array('afteritemslist',$this->catbanner))//after
+											$out .= _m('shkategories.show_category_banner');														 
+									}	
 									break;
 
 			case 'kshow'        : 	if (in_array('beforeitem',$this->catbanner))
@@ -467,8 +470,8 @@ class shkatalogmedia {
     }
 	
 	protected function jsFilter() {
-		$cat = GetReq('cat');
-		$furl = $this->httpurl . '/' . _m("cmsrt.url use t=kfilter&cat=$cat"); 		
+		//$cat = GetReq('cat');
+		//$furl = $this->httpurl . '/' . _m("cmsrt.url use t=kfilter&cat=$cat"); 		
 		
 		$js = <<<JSFILTER
 function filter(url,div,fname) {
@@ -530,18 +533,34 @@ $(document).ready(function () {
 
 		$jscroll = <<<SCROLLTOP
 function ajaxCall(url,div,goto) {
-$.ajax({ url: url, cache: false, success: function(html){
-    $('#'+div).html(html);
-	if (goto) gotoTop(div);
-  }})	
+	$.ajax({ url: url, cache: false, success: function(html){
+		$('#'+div).html(html);
+		echo.render(); /*-- lazy loading render --*/  
+	}})
+	if (goto) gotoTop(div);  
 }				
 //scroll smooth to top
 function gotoTop(div) {
-	//console.log(div);
 	var sw = (div) ? $('#'+div).offset().top : 0;
 	$("html, body").animate({ scrollTop: sw }, "slow");
-	return false;
+	/*-- lazy loading render --*/
+	//setTimeout(function() { echo.render();},5000);
+	return true;
 };
+
+echo.init({
+  offset: 100,
+  throttle: 250,	
+  unload: false,	
+  callback: function(element, op) {
+    /*if(op === 'load') {
+      element.classList.add('loaded');
+    } else {
+      element.classList.remove('loaded');
+    }
+	console.log(element+' '+op);*/
+  }
+});
 
 SCROLLTOP;
 
@@ -716,7 +735,7 @@ SCROLLTOP;
 						 $_f . "<=" . $this->spt($_prices[1]) . ") ";
 			}
 			else			
-				$sSQL .= " where manufacturer='" . $this->replace_spchars($text2find,1) . "'";
+				$sSQL .= " where manufacturer=" . $db->qstr($text2find);
 		  
 			if ($incategory) {	
 				$cats = explode($this->sep(),$incategory);
@@ -1008,10 +1027,11 @@ SCROLLTOP;
 	}	
 	
 	/* filter */
-	protected function fread_list($filter=null) {
+	protected function fread_list() {
         $db = GetGlobal('db');	
 		$page = GetReq('page') ? GetReq('page') : 0;			
-		$cat = GetReq('cat');		
+		$cat = GetReq('cat');	
+		$filter = GetParam('input');	
 		
 		if ($cat!=null) {		   
 			$cat_tree = explode($this->sep(),$cat); 
@@ -1080,12 +1100,15 @@ SCROLLTOP;
 	}
 
 	/* tree read */
-	protected function tread_list($treeid=null) {
+	protected function tread_list() {
         $db = GetGlobal('db');	
 		$page = GetReq('page') ? GetReq('page') : 0;			
 		$cat = GetReq('cat');
+		$treeid = GetParam('treeid');
+		
 		//not a filter cmd = common cat read
-		if (!$treeid) return $this->read_list();
+		if (!$treeid) 
+			return $this->read_list();
 			
 		list($treename, $treeleaf) = explode(':', $treeid);
 		if ($treeleaf) {
@@ -1130,12 +1153,12 @@ SCROLLTOP;
 			$sSQL .= $whereClause;
 			$sSQL .= " and itmactive>0 and active>0";	
 			$sSQL .= $this->orderSQL();
-										
+			/* ALL							
 			if ($this->pager) {
 				$p = $page * $this->pager;
 				$sSQL .= " LIMIT $p,".$this->pager; //page element count
 			}
-		  
+		    */
 			$resultset = $db->Execute($sSQL,2);
 			$this->result = $resultset; 
 			$this->max_items = $db->Affected_Rows();//count($this->result);
@@ -1220,7 +1243,59 @@ SCROLLTOP;
 	   
 	    //return ($resultset); 
 		return ($resultset->fields[$this->fcode]); //real code	
-	}		
+	}
+
+	protected function pPage($p, $label, $cmd, $inp=null, $div=null) {
+	    $cat = GetReq('cat');
+	    $pcmd = $cmd ? $cmd : 'klist';		
+		
+		switch ($pcmd) {
+			case 'ktree'  : $treeid = GetParam('treeid');
+			                if ($this->filterajax) {
+								$url = ($treeid) ? $this->httpurl . "/ktree/$cat/$treeid/$p/" :
+												   _m("cmsrt.url use t=klist&cat=$cat&page=$p");
+								$ret = "<a href=\"javascript:void()\" onClick=\"ajaxCall('$url','$div',1)\">" . strval($label) . "</a>";
+							}	
+							else
+								$ret = ($treeid) ? _m("cmsrt.url use t=$pcmd&cat=$cat&treeid=$treeid&page=$p+" . strval($label)) :
+												   _m("cmsrt.url use t=klist&cat=$cat&page=$p");
+			                break;
+							
+			case 'kfilter': if ($this->filterajax) {
+								$url = $this->httpurl .'/';
+								$url.= ($inp) ? _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$p") :
+												_m("cmsrt.url use t=klist&cat=$cat&page=$p");
+								$ret = "<a href=\"javascript:void()\" onClick=\"ajaxCall('$url','$div',1)\">" . strval($label) . "</a>";
+							}
+							else
+								$ret = ($inp) ? _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$p+" . strval($label)) :
+												_m("cmsrt.url use t=klist&cat=$cat&page=$p");
+							break;
+							
+			case 'filter' : 
+			case 'search' : if ($p>0) {
+								//ajax paging
+								$url = $this->httpurl .'/';
+								$url.= ($inp) ? _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&&page=$p") :
+												_m("cmsrt.url use t=klist&cat=$cat&page=$p");
+								$ret = "<a href=\"javascript:void()\" onClick=\"ajaxCall('$url','$div',1)\">" . strval($label) . "</a>";
+							}
+							else
+								$ret =  ($inp) ? _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$p+" . strval($label)) :
+												 _m("cmsrt.url use t=klist&cat=$cat&page=$p");
+			                break;
+			default       : if ($p>0) {
+								//ajax paging
+								$url = $this->httpurl .'/';
+								$url.= _m("cmsrt.url use t=$pcmd&cat=$cat&page=$p");
+								$ret = "<a href=\"javascript:void()\" onClick=\"ajaxCall('$url','$div',1)\">" . strval($label) . "</a>";
+							}
+							else
+								$ret = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$p+" . strval($label));
+		}
+		
+		return ($ret);
+	}
 	
 	protected function show_paging($pagecmd=null,$mytemplate=null,$nopager=null) {
 	    if ($nopager) return;
@@ -1231,6 +1306,10 @@ SCROLLTOP;
 	    $page = GetReq('page') ? GetReq('page') : 0;
 	    $pager = GetReq('pager') ? GetReq('pager') : $this->pager;
 	    $pcmd = $pagecmd ? $pagecmd : 'klist';
+		
+		//ajax div
+		$pcats = explode($this->sep(), $cat); 
+		$section = 'page-' . array_pop($pcats);		
 		  
 	    //echo '|paging>',$this->max_items,':',$this->max_selection;
 	    $mp = $this->max_selection;
@@ -1248,54 +1327,64 @@ SCROLLTOP;
 			$m = 0;
 			for($p=$page+1 ; $p<$max_page ; $p++) {
 				if ($m<$cutter) {
+					/*
 					if (($pcmd=='filter') || ($pcmd=='search'))				 
 						$next_page_no = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$p+" . strval($p+1)); 				
 					elseif ($pcmd=='kfilter')
 						$next_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$p+" . strval($p+1)); 
 					else		
 						$next_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$p+" . strval($p+1)); 
+					*/
+					$next_page_no = $this->pPage($p, $p+1, $pcmd, $inp, $section);
 					$next .= $this->combine_tokens($tmplcontents, array(0=>'',1=>$next_page_no));
 				}
 				$m+=1;
 			}	   
 			if (($next) && (!$tmplcontents)) $next .= "|";
-			$page_next = $page + 1;	
+			/*$page_next = $page + 1;	
 			if (($pcmd=='filter') || ($pcmd=='search'))	 		 
 				$next_label = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$page_next+" . '&gt;');			
 			elseif ($pcmd=='kfilter')
 				$next_label = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$page_next+" . '&gt;');
 			else	
 				$next_label = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$page_next+" . '&gt;'); 
+			*/
+			$next_label = $this->pPage($page+1, '&gt;', $pcmd, $inp, $section);
 			$next .= $this->combine_tokens($tmplcontents, array(0=>'',1=>$next_label));
 		}
 	    
 	    if ($page>0) {
-			$page_prev = $page - 1;
+			/*$page_prev = $page - 1;
             if (($pcmd=='filter') || ($pcmd=='search'))			 
 				$prev_label = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$page_prev+" . '&lt;'); 				
             elseif ($pcmd=='kfilter') 
 				$prev_label = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$page_prev+" . '&lt;'); 		 
 			else	
 				$prev_label = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$page_prev+" . '&lt;'); 	 
+			*/
+			$prev_label = $this->pPage($page-1, '&lt;', $pcmd, $inp, $section);
 			$prev = $this->combine_tokens($tmplcontents, array(0=>'',1=>$prev_label));	
 		 
 			//prev pages
 			$m = $page-$cutter;
 			for($p=0 ; $p<$page ; $p++) {
 				if ($p>=$m) {
-					if (($pcmd=='filter') || ($pcmd=='search'))	 
+					/*if (($pcmd=='filter') || ($pcmd=='search'))	 
 						$prev_page_no = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$p+" . strval($p+1)); 				
 					elseif ($pcmd=='kfilter') 
 						$prev_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$p+" . strval($p+1)); 
 					else
 						$prev_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$p+" . strval($p+1)); 
-			
+					*/
+					$prev_page_no = $this->pPage($p, $p+1, $pcmd, $inp, $section);
 					$prev .= $this->combine_tokens($tmplcontents, array(0=>'',1=>$prev_page_no));
 				}
 			}  
-	    }	 
-	    $cp = $page+1;
-	    $current = $this->combine_tokens($tmplcontents, array(0=>$this->pager_current_class ,1=>"<a href=\"#\">$cp</a>"));   
+	    }
+		
+	    $cpnum = $page+1;
+		$currentpage = "<a href=\"javascript:gotoTop()\">$cpnum</a>";
+	    $current = $this->combine_tokens($tmplcontents, array(0=>$this->pager_current_class ,1=>$currentpage));   
 			
 	    $page_titles = $prev . $current . $next;	  	
         $contents = $this->select_template('fppager');	   

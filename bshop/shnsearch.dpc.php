@@ -92,16 +92,24 @@ class shnsearch {
 	
 		switch ($action) {
 		  
-			case 'filter'        : 	 	$out = $this->form_search();
-										break;			  
+			case 'filter'        : 	if ($page = GetReq('page')) { //ajax
+										die($this->form_search());
+									}
+									else
+										$out = $this->form_search();
+									break;			  
 	  
 			//cart
 			case 'searchtopic'   :
 			case 'addtocart'     :
-			case 'removefromcart':		break;	 
+			case 'removefromcart':	break;	 
 	  
 			case 'search' 		 :		
-			default       		 : 		$out = $this->form_search();
+			default       		 : 	if ($page = GetReq('page')) { //ajax
+										die($this->form_search());
+									}
+									else 	
+										$out = $this->form_search();
 		}	
 	  
 		return ($out);
@@ -192,7 +200,7 @@ function get_stype()
 	   
 		$out .= $this->search_categories($this->text2find,'searchcatres');
 		
-		$out .= $this->list_katalog($this->myimageclick,'search&input='.$this->text2find);//,'searchres'); //use fpkatalog default
+		$out .= $this->list_katalog(0,'search&input='.$this->text2find);//,'searchres'); //use fpkatalog default
 	  
 	    $f1 = _v('shkatalogmedia.max_selection');	    
 	    $f2 = _v('shkategories.max_selection');	   	
