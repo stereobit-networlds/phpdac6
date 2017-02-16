@@ -6,12 +6,14 @@ define("JAVASCRIPT_DPC",true);
 
 $__DPC['JAVASCRIPT_DPC'] = 'jscript';
 
+$e = GetGlobal('controller')->require_dpc('javascript/minifier.lib.php');
+require_once($e);
+
 class jscript {
 
     var $codearray;
 	var $extcodearray;
-	
-	var $encoding, $url, $jspath, $csspath;
+	var $encoding, $url, $jspath, $csspath, $obf;
 
 	function jscript() { 
 	    //encoding
@@ -31,6 +33,9 @@ class jscript {
 		//css path
 		$cp = paramload('JAVASCRIPT','csspath');
 		$this->csspath = $cp ? $cp : null;//'css'; //maybe in js dir
+		
+		$o = paramload('JAVASCRIPT','obf');
+		$this->obf = $o ? true : false;
 	}
 
 
@@ -248,17 +253,12 @@ EOF;
 
 function load_js($jscript,$ver='',$istext=0,$additional_text=null,$nopath=null) {
     $externalcodebuffer = GetGlobal('externalcodebuffer');
+	$fjspathname = ($nopath) ? $jscript : $this->url . $this->jspath . $jscript;
 
-	//$ip = paramload('SHELL','urlbase');
-	
-	if ($nopath)
-	  $fjspathname = $jscript;
-	else  
-      //$fjspathname = $ip . paramload('JAVASCRIPT','jspath') . $jscript;
-	  $fjspathname = $this->url . $this->jspath . $jscript;
-
-    if (!$istext) $js = "<script src=\"$fjspathname\" language=\"JavaScript$ver\" type=\"text/javascript\"></script>\n";
-	         else $js = "<script language=\"JavaScript$ver\">\n" . $jscript . "</script>\n";
+    if (!$istext) 
+		$js = "<script src=\"$fjspathname\" language=\"JavaScript$ver\" type=\"text/javascript\"></script>\n";
+	else 
+		$js = "<script language=\"JavaScript$ver\">\n" . $this->obfuscate($jscript) . "</script>\n";
 	
 	//test purposes (used to pass css text!!!!!!!!)		 
 	$js .= $additional_text;		 
@@ -335,23 +335,11 @@ function load_css($cssname) {
 
 function obfuscate($script=null) {
 	if (!$script) return false;
-
-	//$generatedoutput = $script;
-
-	/*$generatedoutput = str_replace("\\\r\n", "\\n", $generatedoutput);
-	$generatedoutput = str_replace("\\\n", "\\n", $generatedoutput);
-	$generatedoutput = str_replace("\\\r", "\\n", $generatedoutput);
-	$generatedoutput = str_replace("}\r\n", "};\r\n", $generatedoutput);
-	$generatedoutput = str_replace("}\n", "};\n", $generatedoutput);
-	$generatedoutput = str_replace("}\r", "};\r", $generatedoutput);*/
-	//return ($generatedoutput);	
 	
-	/*$myPacker = new JavaScriptPacker($script, 62, true, false);
-	$packed = $myPacker->pack();	
-    return ($packed);*/
+	if (($this->obf) || (paramload('CMS','obfuscate')))
+		return \JShrink\Minifier::minify($script);
 	
-	//return (JSMin::minify($script));
-	return ($script); //Class 'JSMin' not found
+	return ($script);
 }
 
 };

@@ -868,7 +868,10 @@ class shkategories {
 	
 	public function getcurrentkategory($toplevel=null, $url=null, $urlname=false) {
 		$cat = GetReq('cat');
-		//$g = $this->replace_spchars($cat);	
+		if ($urlname) {
+			$urlcats = explode ($this->cseparator, $cat);  	
+			return (array_pop($urlcats)); 		
+		}	
 		
 		$mycattree = $this->analyzedir($cat);
 		
@@ -897,9 +900,8 @@ class shkategories {
 				$_t = array_pop($mycattree);
 				$ret = "<a href=\"" . $this->catUrl($cat) . "\">" . $_t . "</a>";	
 			}	
-			else //clear name or as is (div name)  
-				$ret = ($urlname) ? $this->replace_spchars(array_pop($mycattree)) : 
-									array_pop($mycattree);	  	
+			else  
+				$ret = array_pop($mycattree);	  	
 		}
   
 		return ($ret);
