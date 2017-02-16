@@ -92,8 +92,12 @@ class shnsearch {
 	
 		switch ($action) {
 		  
-			case 'filter'        : 	if ($page = GetReq('page')) { //ajax
-										die($this->form_search());
+			case 'filter'        : 	if ((GetReq('page'))  || (GetReq('asc')) || 
+										(GetReq('order')) || (GetReq('pager'))) { //ajax
+										if (_v('shkatalogmedia.filterajax'))
+											die($this->form_search());
+										else
+											$out = $this->form_search();
 									}
 									else
 										$out = $this->form_search();
@@ -105,8 +109,12 @@ class shnsearch {
 			case 'removefromcart':	break;	 
 	  
 			case 'search' 		 :		
-			default       		 : 	if ($page = GetReq('page')) { //ajax
-										die($this->form_search());
+			default       		 : 	if ((GetReq('page'))  || (GetReq('asc')) || 
+										(GetReq('order')) || (GetReq('pager'))) { //ajax
+										if (_v('shkatalogmedia.filterajax'))
+											die($this->form_search());
+										else
+											$out = $this->form_search();
 									}
 									else 	
 										$out = $this->form_search();
