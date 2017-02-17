@@ -48,7 +48,7 @@ class shtags {
      $this->tagitem = GetReq('id');  //holds item tag	 
 	 	 
 	 //read at init if there is tags in url...???
-     $this->save_global_tag_vars();
+     //$this->save_global_tag_vars();
 
 	 $this->replacepolicy = remote_paramload('SHKATEGORIES','replacechar',$this->path);	 
 	 $csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
@@ -64,7 +64,7 @@ class shtags {
 	 
 	 if ($this->metadb) {
 	   $this->get_tag_info();  //db based
-	   $this->save_global_tag_vars();
+	   //$this->save_global_tag_vars();
 	 }  
 	 else //default ..from categories,products table
 	   $this->get_data_info();
@@ -111,31 +111,24 @@ class shtags {
 	    $itmname = $lan?'itmname':'itmfname';
 	    $itmdescr = $lan?'itmdescr':'itmfdescr';		
 
-		if (defined('SHKATEGORIES_DPC')) {
+		/*if (defined('SHKATEGORIES_DPC')) {
 		  //ECHO 'C'; 
-		  $mytree = GetGlobal('controller')->calldpc_var("shkategories.cat_result");
+		  $mytree = _v("shkategories.cat_result");
 		  //print_r($mytree);
-		  $thetree = (!empty($mytree))?implode(',',$mytree):null;
-		} 		
+		  $thetree = (!empty($mytree)) ? implode(',',$mytree) : null;
+		} */		
 		
-	    if ((!$this->result) || (!$item) || (!$cat)) {
+	    /*if ((!$this->result) || (!$item) || (!$cat)) {
 		  $out = @file_get_contents($this->prpath . $this->default_meta_file);
 		  //return ($out); 		
 		  $this->page_tags = $out;
-		}
+		}*/
 		
 	    if ($item) {
-		  if (defined('SHKATALOGMEDIA_DPC')) {
-			//ECHO 'A'; 
-			$this->result = GetGlobal('controller')->calldpc_var("shkatalogmedia.result");
-			$ppol = GetGlobal('controller')->calldpc_method("shkatalogmedia.read_policy");
-			//print_r($this->result);
-		  }  
-		  elseif (defined('SHKATALOG_DPC')) {
-			//ECHO 'B';
-			$this->result = GetGlobal('controller')->calldpc_var("shkatalog.result");
-			$ppol = GetGlobal('controller')->calldpc_method("shkatalog.read_policy");		  
-		  } 		
+ 
+		  $this->result = _v("shkatalogmedia.result");
+		  $ppol = _m("shkatalogmedia.read_policy");
+		  //print_r($this->result);		
 		
 		  $this->item = $this->result->fields[$itmname];
 		  $this->descr = $this->result->fields[$itmdescr];
@@ -146,12 +139,13 @@ class shtags {
 		  $this->keywords = str_replace(',,',',', $kwords);
 		}
 		elseif ($cat) {//echo 'z'; print_r($mytree);
+		
 		  $cc = explode($this->cseparator, $cat);
 		  $xcat = array_pop($cc);
-		  $this->item = (!empty($mytree))? array_pop($mytree) : $this->replace_spchars($xcat,1);
+		  $this->item = (!empty($mytree)) ? array_pop($mytree) : $this->replace_spchars($xcat,1);
 		  $this->descr = $this->item .',' . $thetree;
 		  $this->price = null;
-		  $this->keywords = $this->item . ',' . $thetree;		
+		  $this->keywords = $this->item;// . ',' . $thetree;		
 		}
         else { //front page
 		  $this->item = null;
@@ -261,9 +255,9 @@ class shtags {
 		   //echo 'z';
 		   $this->get_data_info(); //default
 		}   
-   }
+    }
    
-   function get_content_tag($tag=null,$retf=null) {
+    /*function get_content_tag($tag=null,$retf=null) {
         $db = GetGlobal('db');
 		
 		if (!$this->metadb)
@@ -280,30 +274,28 @@ class shtags {
 		
 		if ($ret = $result->fields[0]) 
             return ($ret);		
-   }
+    }
    
-   function save_global_tag_vars() {
+    function save_global_tag_vars() {
 	    $item = GetReq('id');	
 		$cat = GetReq('cat');
-		//$greek_cat = iconv("UTF-8", "ISO-8859-7", $cat);
-		//$greek_item = iconv("UTF-8", "ISO-8859-7", $item);
-		//echo $greek_item,'>',$item;
 		
         $tcat = $this->get_content_tag($cat); 
         $titem = $this->get_content_tag($item);  
 		
         $this->tagcat = $tcat ? $tcat : $cat; 
         $this->tagitem = $titem ? $titem : $item;  		
-   }
+    }*/
    
-   /*fpitem*/
-   function get_tags($code=null,$retf=null,$tmpl=null) {
+    /*fpitem*/
+    public function get_tags($code=null,$retf=null,$tmpl=null) {
         $db = GetGlobal('db');
 		$tokens = array();
-		$template = $tmpl ? $tmpl : 'fptags.htm';
-        $t = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
+		$template = $tmpl ? $tmpl : 'fptags';
+        /*$t = $this->prpath . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
 		if (($template) && is_readable($t)) 
-			$tcont = @file_get_contents($t);
+			$tcont = @file_get_contents($t);*/
+		$tcont = _m("cmsrt.select_template use $template");
 		
 		$code = $code ? $code : (GetReq('id') ? GetReq('id') : GetReq('cat'));
 		$field = $retf ? $retf : 'tag'; 
@@ -316,63 +308,66 @@ class shtags {
 	    $resultset = $db->Execute($sSQL,2);	
 	    $result = $resultset;	
 
-		if (stristr($result->fields[0],',')) {
-		    $tags = explode(',',$result->fields[0]);
-			foreach ($tags as $tt=>$tag) {
+		$mytags =  $result->fields[0] ? $result->fields[0] : $this->keywords;
 			
-		      if ($tcont) {	
-			    $tokens[] = $tag;
-				$ret .= $this->combine_tokens($tcont, $tokens); 
-				unset($tokens);
-              }	
-              else
-                $ret .= $tag.',';			  
+		if (stristr($mytags, ',')) {
+		    $tags = explode(',',$mytags);
+			foreach ($tags as $tt=>$tag) {
+				
+			    if (!trim($tag)) continue;
+				
+				if ($tcont) {	
+					$tokens[] = $tag;
+					$r[] = $this->combine_tokens($tcont, $tokens); 
+					unset($tokens);
+				}	
+				else
+					$r[] = $tag;			  
 			}
+			if (!empty($r))
+				$ret = implode(', ', $r);
 		}
 		else {
 			if ($tcont) {	
-			    $tokens[] = $result->fields[0];
+			    $tokens[] = $mytags;
 				$ret .= $this->combine_tokens($tcont, $tokens); 
 				unset($tokens);
             }	
             else
-				$ret .= $result->fields[0];	
+				$ret .= $mytags;	
 		} 
 		
 		return ($ret);		
-   }   
+    }   
    
 	//tokens method	
-	function combine_tokens($template_contents,$tokens, $execafter=null) {
+	protected function combine_tokens($template_contents,$tokens, $execafter=null) {
 	
 	    if (!is_array($tokens)) return;
 		
 		if ((!$execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $ret = $fp->process_commands($template_contents);
-		  unset ($fp);
-          //$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+			$fp = new fronthtmlpage(null);
+			$ret = $fp->process_commands($template_contents);
+			unset ($fp);		  		
 		}		  		
 		else
-		  $ret = $template_contents;
+			$ret = $template_contents;
 		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
+	    foreach ($tokens as $i=>$tok) 
 		    $ret = str_replace("$".$i."$",$tok,$ret);
-	    }
+
 		//clean unused token marks
 		for ($x=$i;$x<20;$x++)
-		  $ret = str_replace("$".$x."$",'',$ret);
-		//echo $ret;
+			$ret = str_replace("$".$x."$",'',$ret);
+
 		
 		//execute after replace tokens
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
-		  $fp = new fronthtmlpage(null);
-		  $retout = $fp->process_commands($ret);
-		  unset ($fp);
+			$fp = new fronthtmlpage(null);
+			$retout = $fp->process_commands($ret);
+			unset ($fp);
           
-		  return ($retout);
+			return ($retout);
 		}		
 		
 		return ($ret);

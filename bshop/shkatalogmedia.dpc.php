@@ -77,7 +77,7 @@ $__LOCALE['SHKATALOGMEDIA_DPC'][27]='_prev;Previous;Προηγούμενο';
 $__LOCALE['SHKATALOGMEDIA_DPC'][28]='_offers;Offers;Προσφορές';
 $__LOCALE['SHKATALOGMEDIA_DPC'][29]='_lastitems;New arrivals;Νέες αφίξεις';
 $__LOCALE['SHKATALOGMEDIA_DPC'][30]='_gallery;Additional files;Συνημένα αρχεία';
-$__LOCALE['SHKATALOGMEDIA_DPC'][31]='_availabillity;Product Availabillity;Διαθεσιμότητα προιόντων';
+$__LOCALE['SHKATALOGMEDIA_DPC'][31]='_availabillity;Availabillity;Διαθεσιμότητα';
 $__LOCALE['SHKATALOGMEDIA_DPC'][32]='_items;Items;Προιόντα';
 $__LOCALE['SHKATALOGMEDIA_DPC'][33]='_asc;Asc;Αυξουσα';
 $__LOCALE['SHKATALOGMEDIA_DPC'][34]='_desc;Desc;Φθινουσα';
@@ -1312,41 +1312,17 @@ SCROLLTOP;
 			$m = 0;
 			for($p=$page+1 ; $p<$max_page ; $p++) {
 				if ($m<$cutter) {
-					/*
-					if (($pcmd=='filter') || ($pcmd=='search'))				 
-						$next_page_no = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$p+" . strval($p+1)); 				
-					elseif ($pcmd=='kfilter')
-						$next_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$p+" . strval($p+1)); 
-					else		
-						$next_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$p+" . strval($p+1)); 
-					*/
 					$next_page_no = $this->pPage($p, $p+1, $pcmd, $inp);
 					$next .= $this->combine_tokens($tmplcontents, array(0=>'',1=>$next_page_no));
 				}
 				$m+=1;
 			}	   
 			if (($next) && (!$tmplcontents)) $next .= "|";
-			/*$page_next = $page + 1;	
-			if (($pcmd=='filter') || ($pcmd=='search'))	 		 
-				$next_label = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$page_next+" . '&gt;');			
-			elseif ($pcmd=='kfilter')
-				$next_label = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$page_next+" . '&gt;');
-			else	
-				$next_label = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$page_next+" . '&gt;'); 
-			*/
 			$next_label = $this->pPage($page+1, '&gt;', $pcmd, $inp);
 			$next .= $this->combine_tokens($tmplcontents, array(0=>'',1=>$next_label));
 		}
 	    
 	    if ($page>0) {
-			/*$page_prev = $page - 1;
-            if (($pcmd=='filter') || ($pcmd=='search'))			 
-				$prev_label = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$page_prev+" . '&lt;'); 				
-            elseif ($pcmd=='kfilter') 
-				$prev_label = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$page_prev+" . '&lt;'); 		 
-			else	
-				$prev_label = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$page_prev+" . '&lt;'); 	 
-			*/
 			$prev_label = $this->pPage($page-1, '&lt;', $pcmd, $inp);
 			$prev = $this->combine_tokens($tmplcontents, array(0=>'',1=>$prev_label));	
 		 
@@ -1354,13 +1330,6 @@ SCROLLTOP;
 			$m = $page-$cutter;
 			for($p=0 ; $p<$page ; $p++) {
 				if ($p>=$m) {
-					/*if (($pcmd=='filter') || ($pcmd=='search'))	 
-						$prev_page_no = _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$p+" . strval($p+1)); 				
-					elseif ($pcmd=='kfilter') 
-						$prev_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&input=$inp&page=$p+" . strval($p+1)); 
-					else
-						$prev_page_no = _m("cmsrt.url use t=$pcmd&cat=$cat&page=$p+" . strval($p+1)); 
-					*/
 					$prev_page_no = $this->pPage($p, $p+1, $pcmd, $inp);
 					$prev .= $this->combine_tokens($tmplcontents, array(0=>'',1=>$prev_page_no));
 				}
@@ -1429,11 +1398,7 @@ SCROLLTOP;
 		$c = localize('_code', $this->lan);	   
 		$data = array(1=>$a,2=>$b,3=>$c);
 		$do = ($this->deforder) ? 3 : 1;
-        /*
-		$url = (($cmd=='search') || ($cmd=='filter')) ? 
-				_m("cmsrt.seturl use t=$cmd&input=$inp&cat=$cat&order=#+++1")  : 
-				_m("cmsrt.seturl use t=$cmd&cat=$cat&order=#+++1")  ;
-		*/
+
 		$url = $this->pSortUrl('order');	
 		$selected_order = GetReq('order') ? GetReq('order') : 
 				(GetSessionParam('order') ? GetSessionParam('order') : $do);
@@ -1444,11 +1409,7 @@ SCROLLTOP;
 		$b = localize('_desc', $this->lan);
 		$data = array(1=>$a,2=>$b);
 		$da = ($this->defasc<0) ? 2 : 1;
-        /* 
-        $url = (($cmd=='search') || ($cmd=='filter')) ? 
-				_m("cmsrt.seturl use t=$cmd&input=$inp&cat=$cat&asc=#+++1")  : 
-		        _m("cmsrt.seturl use t=$cmd&cat=$cat&asc=#+++1")  ;
-		*/
+
 		$url = $this->pSortUrl('asc');
 		$selected_asc = GetReq('asc') ? GetReq('asc') : 
 				(GetSessionParam('asc') ? GetSessionParam('asc') : $do);   
@@ -1456,16 +1417,12 @@ SCROLLTOP;
 	   
 		//pager
 		//$max = $this->max_selection;
-	   
         $data2 = array();  	
 	    for ($i=1;$i<4;$i++) {
 			$n = ($this->default_pager * $i);
 			$data2[$n] = localize('_array',$this->lan).' '.$n;
         }		  
-		/*$url = (($cmd=='search') || ($cmd=='filter')) ? 
-				_m("cmsrt.seturl use t=$cmd&input=$inp&cat=$cat&pager=#+++1")  : 
-		        _m("cmsrt.seturl use t=$cmd&cat=$cat&pager=#+++1")  ;
-		*/
+
 		$url = $this->pSortUrl('pager');	
 	    $combo_pager = $this->make_combo($url,$data2,null,$this->pager,$style);
 	   	  		    	   	   		 	      
@@ -1514,17 +1471,18 @@ SCROLLTOP;
 				}	   
 			}		 
         } 	      
-	   	
-	    //if (!empty($this->result)) {		   
+	   		   
 		if (count($this->result->fields)>1) {
 
 			$aliasID = _m("cmsrt.useUrlAlias");
+			$aliasExt = _v("cmsrt.aliasExt");
+			
 			$pp = $this->read_policy(); 
 			
 			foreach ($this->result as $n=>$rec) {
 		
 				$mem = memory_get_peak_usage(true);//memory_get_usage();
-				
+				$tokens = array(); //reset
 				$tokens = $this->tokenizeRecord($rec, $pp, true, $aliasID, $pz);
 			  
 				if (!$custom_template) {
@@ -1534,8 +1492,8 @@ SCROLLTOP;
 				else
 					$items_custom[] = $this->combine_tokens($mytemplate, $tokens, true);
 			
-				$ogimage[] = $this->get_photo_url($rec[$this->fcode],2);
-				unset($tokens);			  	 				   	   	   	
+				$ogimage[] = $tokens[14]; //$this->httpurl . $this->get_photo_url($rec[$this->fcode],2);
+				//unset($tokens); //use last tokens set at og			  	 				   	   	   	
 			}//foreach 
 		  
 			if (!$custom_template) { 
@@ -1545,11 +1503,13 @@ SCROLLTOP;
 					$toprint .= $this->make_table($items, $mylinemax, 'fpkatalogtable', $cat);	  
 			  
 				$toprint .= $this->show_paging($cmd,$mytemplate,$nopager);
-
+	
+				$caturl = $aliasID ? $this->httpurl .'/' . $cat . $aliasExt : $this->httpurl .'/klist/'. $cat . '/';
+				$catarray = explode($this->sep(), $tokens[17]);
 				$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
-														1=>_m('shkategories.getcurrentkategory'),
-														2=>str_replace($this->sep(),' ',$this->replace_spchars($cat,1)),														
-														3=>$this->httpurl .'/klist/'. $cat . '/',
+														1=>array_pop($catarray),
+														2=>$tokens[17],														
+														3=>$caturl,
 														4=>$ogimage, /*$ogimage array of images (with no httpurl)!!*/
 													));			
 			}	
@@ -1671,9 +1631,11 @@ SCROLLTOP;
 			else
                 $icon_cart = null;	
 			
-			$_u = _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]);
-			$itemlink =  $this->httpurl . '/' . $_u; 
-		    $detailink = $this->httpurl . '/' . $_u . '#details'; 	   
+			$_u = ($aliasID) ? 
+					$this->httpurl . "/$cat/$id2" . $aliasExt :
+					$this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]);
+			$itemlink =  $_u; 
+		    $detailink = $_u . '#details'; 	   
 			$availability = $this->show_availability($rec['ypoloipo1']);	
 			 
 	        $linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
@@ -1692,21 +1654,23 @@ SCROLLTOP;
 			$tokens[] = number_format(floatval($price),$this->decimals,',','.');
 			$tokens[] = $icon_cart;      //6
 			$tokens[] = $availability;
-			$tokens[] = ($aliasID) ? $this->httpurl ."/$cat/$id2" . $aliasExt . '#details' : $detailink;	
+			$tokens[] = $detailink;	
 			$tokens[] = $details;
 			$tokens[] = $rec[$item_code]; //10
 			 
 			$tokens[] = $in_cart ? $in_cart : '0';
 			$tokens[] = $array_cart;
 
-            $tokens[] = $ahtml;
-			$tokens[] = $atext;  			 
-			$tokens[] = $afile;
+            $tokens[] = $ahtml; //$atext;  			 
+			$tokens[] = ($aliasID) ? 
+							$this->httpurl . "/$cat" . $aliasExt :
+							$this->httpurl . '/' . _m("cmsrt.url use t=klist&cat=$cat");
+			$tokens[] = _m("shkategories.getcurrentkategory"); //$cat; //$afile;
 			 
             $tokens[] = $rec[$lastprice];	
-            $tokens[] = $this->get_photo_url($rec[$item_code],1);
-            $tokens[] = $this->get_photo_url($rec[$item_code],2);			 
-			$tokens[] = $this->get_photo_url($rec[$item_code],3);			 
+            $tokens[] = $this->httpurl . $this->get_photo_url($rec[$item_code],1);
+            $tokens[] = $this->httpurl . $this->get_photo_url($rec[$item_code],2);			 
+			$tokens[] = $this->httpurl . $this->get_photo_url($rec[$item_code],3);			 
 			 
 			$tokens[] = $rec['weight'];  //20
 			$tokens[] = $rec['volume'];
@@ -1714,7 +1678,7 @@ SCROLLTOP;
 			$tokens[] = $rec['size'];
 			$tokens[] = $rec['color'];	
 			 
-			$tokens[] = $this->get_xml_links(); //$cat ?
+			$tokens[] = $this->get_xml_links(); 
             $tokens[] = $this->item_has_discount($rec[$item_code]);
             $tokens[] = "addcart/$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty/$cat/$cart_page/";			 
 			 
@@ -1741,7 +1705,9 @@ SCROLLTOP;
 			$tokens[] = $rec['p2']; 
 			$tokens[] = $rec['p3'];
 			$tokens[] = $rec['p4'];
-			$tokens[] = $rec['p5'];			
+			$tokens[] = $rec['p5'];	
+
+			$tokens[] = _m("shtags.get_tags use " . $rec[$item_code]);	
 			 
 			//print_r($tokens);
 		 	if ($itmpl = $rec['template'])
@@ -1754,8 +1720,8 @@ SCROLLTOP;
 			$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
 													1=>$tokens[0],
 													2=>$tokens[1],														
-													3=>$this->httpurl .'/'. $itemlink,
-													4=>$this->httpurl . str_replace('//','/','/'. $ogimage[0]),
+													3=>$itemlink,
+													4=>$tokens[18], 
 													));				 
 			 
 			unset($tokens);	 
@@ -3469,7 +3435,7 @@ SCROLLTOP;
     }
 	
 	//all tree groups, view in any category
-	public function filterExtAll() {
+	public function filterExtAll($usedescr=false) {
 	    $db = GetGlobal('db');			
 		if (!$cat = GetParam('cat'))
 			return null;
@@ -3479,23 +3445,35 @@ SCROLLTOP;
 						$this->select_template('extfilterline-ajax') :
 					    $this->select_template('extfilterline') ;	
 		
-		$sSQL = "select tid,tname,tname{$this->lan} from ctree where ";
-		$sSQL.= "active=1 and pid='0' and items=1 ";
-		$sSQL.= "order by orderid";
+		$sSQL = "select tid,tname,tname{$this->lan} from ctree where";
+		$sSQL.= " active=1 and pid='0' and items=1";
+		if ($usedescr) { 
+				//cat based tree filters show
+				$fsQL = "select tid from ctreedescr where attr=" . $db->qstr($cat);
+				$resf = $db->Execute($fsQL);
+				foreach ($resf as $m=>$rem) 
+					$fshow[] = $rem[0];
+                //echo $fsQL; print_r($fshow);
+				if (!empty($fshow)) 
+					$sSQL .= " and tid in ('" . implode("','", array_unique($fshow)) . "')";		
+				else
+					return null;		
+		}		
+		$sSQL.= " order by orderid";
 		//echo $sSQL;
 		$res = $db->Execute($sSQL); 
 		if (!empty($res)) {
 			
 			//single name for one filter applied url
 			//or common name for all filters applied url			
-			//$treename = 'filter1'; //or null				
+			$treename = 'filter1'; //or ..				
 			
 			foreach ($res as $n=>$rec) {			
-				$groupname = $treename ? $treename : $rec[1];
+				$groupname = $treename ? $treename : $rec[1]; //..filter name
 				$toks[] = $rec[2] ? $rec[2] : $rec[1];
 				
 				$sSQL = "select tid,tname,tname{$this->lan} from ctree where ";
-				$sSQL.= "active=1 and pid='{$rec[0]}' and items=1 ";
+				$sSQL.= "active=1 and pid='{$rec[0]}' and items=1 ";				
 				$sSQL.= "order by orderid";
 				//echo $sSQL;
 				$res = $db->Execute($sSQL);
@@ -3510,7 +3488,7 @@ SCROLLTOP;
 									$this->httpurl . '/' . _m("cmsrt.url use t=ktree&cat=$cat&treeid=$treeid");
 										
 						$tokens[0] = $rec[2] ? $rec[2] : $rec[1];
-						$tokens[1] = '*';
+						$tokens[1] = $rec[0];
 						$tokens[2] = $theurl;	
 						$tokens[3] = ($rec[1] == $seltreeid) ? 'checked="checked"' : null;
 						$tokens[4] = $groupname;
@@ -3785,7 +3763,7 @@ SCROLLTOP;
 		    //print_r($tokens[4]);
 			foreach ($tokens[4] as $i=>$img)
 				$ogimage .= '
-		<meta property="og:image" content="'.$this->httpurl . str_replace('//','/','/'.$img).'" />';
+		<meta property="og:image" content="'. $img .'" />';
 		}
 		else
 			$ogimage = '<meta property="og:image" content="'.$tokens[4].'" />
@@ -3804,7 +3782,7 @@ SCROLLTOP;
 EOF;
 		
         //extract first image or just one
-        $img = is_array($tokens[4]) ? $this->httpurl . str_replace('//','/','/'.array_shift($tokens[4])) : $tokens[4];
+        $img = is_array($tokens[4]) ? array_shift($tokens[4]) : $tokens[4];
 
         $ret .= $this->fbTags(array(0=>$tokens[0],1=>$tokens[1],2=>$tokens[2],3=>$tokens[3],4=>$img)) ;//$tokens);
 		$ret .= $this->twitterTags(array(0=>$tokens[0],1=>$tokens[1],2=>$tokens[2],3=>$tokens[3],4=>$img)) ;//$tokens);
@@ -3858,8 +3836,9 @@ EOF;
 	protected function ldTags($tokens=null) {
 		if (!$tokens) return null;
 		
-		$kw = _m('shtags.get_page_info use keywords');
-		$keywords = str_replace(',""','' , '"' . str_replace(',', '","', $kw) . '"');
+		//$kw = _m('shtags.get_page_info use keywords');
+		//$keywords = str_replace(',""','' , '"' . str_replace(',', '","', $kw) . '"');
+		$keywords = '"'. str_replace($this->sep(), '","', $tokens[2]) . '"';
 		
 		$ret = <<<EOF
 		

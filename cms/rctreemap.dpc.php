@@ -1,82 +1,82 @@
 <?php
 
-$__DPCSEC['RCTREEDESCR_DPC']='1;1;1;1;1;1;1;1;1;1;1';
+$__DPCSEC['RCTREEMAP_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-if ( (!defined("RCTREEDESCR_DPC")) && (seclevel('RCTREEDESCR_DPC',decode(GetSessionParam('UserSecID')))) ) {
-define("RCTREEDESCR_DPC",true);
+if ( (!defined("RCTREEMAP_DPC")) && (seclevel('RCTREEMAP_DPC',decode(GetSessionParam('UserSecID')))) ) {
+define("RCTREEMAP_DPC",true);
 
-$__DPC['RCTREEDESCR_DPC'] = 'rctreedescr';
+$__DPC['RCTREEMAP_DPC'] = 'rctreemap';
 
 
-$__EVENTS['RCTREEDESCR_DPC'][0]='cptreedescr';
-$__EVENTS['RCTREEDESCR_DPC'][1]='cpsavetree';
-$__EVENTS['RCTREEDESCR_DPC'][2]='cploadtree';
-$__EVENTS['RCTREEDESCR_DPC'][3]='cptreeframe';
-$__EVENTS['RCTREEDESCR_DPC'][4]='cptreeitems';
+$__EVENTS['RCTREEMAP_DPC'][0]='cptreemap';
+$__EVENTS['RCTREEMAP_DPC'][1]='cpsavetree';
+$__EVENTS['RCTREEMAP_DPC'][2]='cploadtree';
+$__EVENTS['RCTREEMAP_DPC'][3]='cptreeframe';
+$__EVENTS['RCTREEMAP_DPC'][4]='cptreeitems';
 
-$__ACTIONS['RCTREEDESCR_DPC'][0]='cptreedescr';
-$__ACTIONS['RCTREEDESCR_DPC'][1]='cpsavetree';
-$__ACTIONS['RCTREEDESCR_DPC'][2]='cploadtree';
-$__ACTIONS['RCTREEDESCR_DPC'][3]='cptreeframe';
-$__ACTIONS['RCTREEDESCR_DPC'][4]='cptreeitems';
+$__ACTIONS['RCTREEMAP_DPC'][0]='cptreemap';
+$__ACTIONS['RCTREEMAP_DPC'][1]='cpsavetree';
+$__ACTIONS['RCTREEMAP_DPC'][2]='cploadtree';
+$__ACTIONS['RCTREEMAP_DPC'][3]='cptreeframe';
+$__ACTIONS['RCTREEMAP_DPC'][4]='cptreeitems';
 
-$__LOCALE['RCTREEDESCR_DPC'][0]='RCTREEDESCR_DPC;Descriptor;Προσδιοριστικά χαρακτηριστικά';
-$__LOCALE['RCTREEDESCR_DPC'][1]='_date;Date;Ημερ.';
-$__LOCALE['RCTREEDESCR_DPC'][2]='_time;Time;Ώρα';
-$__LOCALE['RCTREEDESCR_DPC'][3]='_qty;Quantity;Ποσότητα';
-$__LOCALE['RCTREEDESCR_DPC'][4]='_items;Items;Είδη';
-$__LOCALE['RCTREEDESCR_DPC'][5]='_active;Active;Ενεργό';
-$__LOCALE['RCTREEDESCR_DPC'][6]='_title;Title;Τίτλος';
-$__LOCALE['RCTREEDESCR_DPC'][7]='_descr;Description;Περιγραφή';
-$__LOCALE['RCTREEDESCR_DPC'][8]='_xml;Xml;Xml';
-$__LOCALE['RCTREEDESCR_DPC'][9]='_color;Color;Χρώμα';
-$__LOCALE['RCTREEDESCR_DPC'][10]='_code;Code;Κωδικός';
-$__LOCALE['RCTREEDESCR_DPC'][11]='_dimensions;Dimension;Διαστάσεις';
-$__LOCALE['RCTREEDESCR_DPC'][12]='_size;Size;Μέγεθος';
-$__LOCALE['RCTREEDESCR_DPC'][13]='_dimensions;Dimensions;Διαστάσεις';
-$__LOCALE['RCTREEDESCR_DPC'][14]='_xmlcreate;Create XML;Δημιούργησε XML';
-$__LOCALE['RCTREEDESCR_DPC'][15]='_xml;XML item;Είδος XML';
-$__LOCALE['RCTREEDESCR_DPC'][16]='_manufacturer;Manufacturer;Κατασκευαστής';
-$__LOCALE['RCTREEDESCR_DPC'][17]='_uniname1;Unit;Μον.μετρ.';
-$__LOCALE['RCTREEDESCR_DPC'][18]='_ypoloipo1;Qty;Υπόλοιπο';
-$__LOCALE['RCTREEDESCR_DPC'][19]='_price0;Price 1;Αξία 1';
-$__LOCALE['RCTREEDESCR_DPC'][20]='_price1;Price 2;Αξία 2';
-$__LOCALE['RCTREEDESCR_DPC'][21]='_treedescr;Tree descriptors;Προσδιοριστικά χαρακτηριστικά';
-$__LOCALE['RCTREEDESCR_DPC'][22]='_treeattach;Map objects;Επισύναψη χαρακτηριστικού';
-$__LOCALE['RCTREEDESCR_DPC'][23]='_items;Items;Προϊόντα';
-$__LOCALE['RCTREEDESCR_DPC'][24]='_users;Users;Χρήστες';
-$__LOCALE['RCTREEDESCR_DPC'][25]='_mode;Select;Επιλογή';
-$__LOCALE['RCTREEDESCR_DPC'][26]='_cats;Categories;Κατηγορίες';
-$__LOCALE['RCTREEDESCR_DPC'][27]='_ctgid;Id;A/A';
-$__LOCALE['RCTREEDESCR_DPC'][28]='_ctgoutline;Branch;Κλαδί';
-$__LOCALE['RCTREEDESCR_DPC'][29]='_ctgoutlnorder;Branch order;Ταξινόμηση';
-$__LOCALE['RCTREEDESCR_DPC'][30]='_search;Search;Αναζητήσιμο';
-$__LOCALE['RCTREEDESCR_DPC'][31]='_active;Active;Ενεργό';
-$__LOCALE['RCTREEDESCR_DPC'][32]='_view;Show;Εμφανές';
-$__LOCALE['RCTREEDESCR_DPC'][33]='_OK;Success;Επιτυχώς';
-$__LOCALE['RCTREEDESCR_DPC'][34]='_cat0;Category 1;Κατηγορία 1';
-$__LOCALE['RCTREEDESCR_DPC'][35]='_cat1;Category 2;Κατηγορία 2';
-$__LOCALE['RCTREEDESCR_DPC'][36]='_cat2;Category 3;Κατηγορία 3';
-$__LOCALE['RCTREEDESCR_DPC'][37]='_cat3;Category 4;Κατηγορία 4';
-$__LOCALE['RCTREEDESCR_DPC'][38]='_cat4;Category 5;Κατηγορία 5';
-$__LOCALE['RCTREEDESCR_DPC'][39]='_id;ID;ID';
-$__LOCALE['RCTREEDESCR_DPC'][40]='_tree;Tree;Δέντρο';
-$__LOCALE['RCTREEDESCR_DPC'][41]='_leaf;Childs;Παιδιά';
-$__LOCALE['RCTREEDESCR_DPC'][42]='_rel;Relation;Σχέση';
-$__LOCALE['RCTREEDESCR_DPC'][43]='_active;Active;Ενεργό';
-$__LOCALE['RCTREEDESCR_DPC'][44]='_timein;Date;Ημερομηνία';
-$__LOCALE['RCTREEDESCR_DPC'][45]='_id;ID;ID';
-$__LOCALE['RCTREEDESCR_DPC'][46]='_title;Title;Τίτλος';
-$__LOCALE['RCTREEDESCR_DPC'][47]='_descr;Description;Περιγραφή';
-$__LOCALE['RCTREEDESCR_DPC'][48]='_code;Code;Κωδικός';
-$__LOCALE['RCTREEDESCR_DPC'][49]='_parent;Parent;Σχέση';
-$__LOCALE['RCTREEDESCR_DPC'][50]='_orderid;Order;Σειρά';
-$__LOCALE['RCTREEDESCR_DPC'][51]='_title0;Title L1;Τίτλος L1';
-$__LOCALE['RCTREEDESCR_DPC'][52]='_title1;Title L2;Τίτλος L2';
-$__LOCALE['RCTREEDESCR_DPC'][53]='_title2;Title L3;Τίτλος L3';
-$__LOCALE['RCTREEDESCR_DPC'][54]='_fields;Identifier;Πρόθεμα';
+$__LOCALE['RCTREEMAP_DPC'][0]='RCTREEMAP_DPC;Tree map;Αντιστοίχιση';
+$__LOCALE['RCTREEMAP_DPC'][1]='_date;Date;Ημερ.';
+$__LOCALE['RCTREEMAP_DPC'][2]='_time;Time;Ώρα';
+$__LOCALE['RCTREEMAP_DPC'][3]='_qty;Quantity;Ποσότητα';
+$__LOCALE['RCTREEMAP_DPC'][4]='_items;Items;Είδη';
+$__LOCALE['RCTREEMAP_DPC'][5]='_active;Active;Ενεργό';
+$__LOCALE['RCTREEMAP_DPC'][6]='_title;Title;Τίτλος';
+$__LOCALE['RCTREEMAP_DPC'][7]='_descr;Description;Περιγραφή';
+$__LOCALE['RCTREEMAP_DPC'][8]='_xml;Xml;Xml';
+$__LOCALE['RCTREEMAP_DPC'][9]='_color;Color;Χρώμα';
+$__LOCALE['RCTREEMAP_DPC'][10]='_code;Code;Κωδικός';
+$__LOCALE['RCTREEMAP_DPC'][11]='_dimensions;Dimension;Διαστάσεις';
+$__LOCALE['RCTREEMAP_DPC'][12]='_size;Size;Μέγεθος';
+$__LOCALE['RCTREEMAP_DPC'][13]='_dimensions;Dimensions;Διαστάσεις';
+$__LOCALE['RCTREEMAP_DPC'][14]='_xmlcreate;Create XML;Δημιούργησε XML';
+$__LOCALE['RCTREEMAP_DPC'][15]='_xml;XML item;Είδος XML';
+$__LOCALE['RCTREEMAP_DPC'][16]='_manufacturer;Manufacturer;Κατασκευαστής';
+$__LOCALE['RCTREEMAP_DPC'][17]='_uniname1;Unit;Μον.μετρ.';
+$__LOCALE['RCTREEMAP_DPC'][18]='_ypoloipo1;Qty;Υπόλοιπο';
+$__LOCALE['RCTREEMAP_DPC'][19]='_price0;Price 1;Αξία 1';
+$__LOCALE['RCTREEMAP_DPC'][20]='_price1;Price 2;Αξία 2';
+$__LOCALE['RCTREEMAP_DPC'][21]='_treemap;Tree map;Αντιστοίχιση';
+$__LOCALE['RCTREEMAP_DPC'][22]='_treemapattach;Select;Επιλογή';
+$__LOCALE['RCTREEMAP_DPC'][23]='_items;Items;Προϊόντα';
+$__LOCALE['RCTREEMAP_DPC'][24]='_users;Users;Χρήστες';
+$__LOCALE['RCTREEMAP_DPC'][25]='_mode;Select;Επιλογή';
+$__LOCALE['RCTREEMAP_DPC'][26]='_cats;Categories;Κατηγορίες';
+$__LOCALE['RCTREEMAP_DPC'][27]='_ctgid;Id;A/A';
+$__LOCALE['RCTREEMAP_DPC'][28]='_ctgoutline;Branch;Κλαδί';
+$__LOCALE['RCTREEMAP_DPC'][29]='_ctgoutlnorder;Branch order;Ταξινόμηση';
+$__LOCALE['RCTREEMAP_DPC'][30]='_search;Search;Αναζητήσιμο';
+$__LOCALE['RCTREEMAP_DPC'][31]='_active;Active;Ενεργό';
+$__LOCALE['RCTREEMAP_DPC'][32]='_view;Show;Εμφανές';
+$__LOCALE['RCTREEMAP_DPC'][33]='_OK;Success;Επιτυχώς';
+$__LOCALE['RCTREEMAP_DPC'][34]='_cat0;Category 1;Κατηγορία 1';
+$__LOCALE['RCTREEMAP_DPC'][35]='_cat1;Category 2;Κατηγορία 2';
+$__LOCALE['RCTREEMAP_DPC'][36]='_cat2;Category 3;Κατηγορία 3';
+$__LOCALE['RCTREEMAP_DPC'][37]='_cat3;Category 4;Κατηγορία 4';
+$__LOCALE['RCTREEMAP_DPC'][38]='_cat4;Category 5;Κατηγορία 5';
+$__LOCALE['RCTREEMAP_DPC'][39]='_id;ID;ID';
+$__LOCALE['RCTREEMAP_DPC'][40]='_tree;Tree;Δέντρο';
+$__LOCALE['RCTREEMAP_DPC'][41]='_leaf;Childs;Παιδιά';
+$__LOCALE['RCTREEMAP_DPC'][42]='_rel;Relation;Σχέση';
+$__LOCALE['RCTREEMAP_DPC'][43]='_active;Active;Ενεργό';
+$__LOCALE['RCTREEMAP_DPC'][44]='_timein;Date;Ημερομηνία';
+$__LOCALE['RCTREEMAP_DPC'][45]='_id;ID;ID';
+$__LOCALE['RCTREEMAP_DPC'][46]='_title;Title;Τίτλος';
+$__LOCALE['RCTREEMAP_DPC'][47]='_descr;Description;Περιγραφή';
+$__LOCALE['RCTREEMAP_DPC'][48]='_code;Code;Κωδικός';
+$__LOCALE['RCTREEMAP_DPC'][49]='_parent;Parent;Σχέση';
+$__LOCALE['RCTREEMAP_DPC'][50]='_orderid;Order;Σειρά';
+$__LOCALE['RCTREEMAP_DPC'][51]='_title0;Title L1;Τίτλος L1';
+$__LOCALE['RCTREEMAP_DPC'][52]='_title1;Title L2;Τίτλος L2';
+$__LOCALE['RCTREEMAP_DPC'][53]='_title2;Title L3;Τίτλος L3';
+$__LOCALE['RCTREEMAP_DPC'][54]='_fields;Identifier;Πρόθεμα';
 
-class rctreedescr {
+class rctreemap {
 	
 	var $title, $prpath, $urlpath, $url;
 	var $map_t, $map_f, $cseparator, $onlyincategory;
@@ -93,7 +93,7 @@ class rctreedescr {
 		$this->prpath = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');	
 		$this->url = paramload('SHELL','urlbase');
-		$this->title = localize('RCTREEDESCR_DPC',getlocal());
+		$this->title = localize('RCTREEMAP_DPC',getlocal());
 
 		$this->owner = GetSessionParam('LoginName');	
 		
@@ -134,7 +134,7 @@ class rctreedescr {
 		
 		$this->selected_items = null;		
 		
-        $this->listName = 'mytreedescr';
+        $this->listName = 'mytreelist';
         $this->savedlist = GetSessionParam($this->listName) ? GetSessionParam($this->listName) : null;
 	
 		$this->fid = GetSessionParam('fid') ? GetSessionParam('fid') : GetReq('fid');
@@ -160,7 +160,7 @@ class rctreedescr {
 			                        break;			 
 		    case 'cpsavetree'     : $this->savedlist = $this->saveList();				
 	                                break;									
-			case 'cptreedescr'    :
+			case 'cptreemap'      :
 			default               :							  
          }
       }
@@ -178,7 +178,7 @@ class rctreedescr {
 		   case 'cploadtree'     :  break;		   
 		   case 'cpsavetree'     :  break;
 								   
-		   case 'cptreedescr'    :						   
+		   case 'cptreemap'      :						   
 		   default               :  $out = $this->gridMode();
 		 }			 
 
@@ -206,9 +206,9 @@ class rctreedescr {
 	protected function gridMode() {
 		$mode = GetReq('mode') ? GetReq('mode') : 'tree';
         
-		$turl0 = seturl('t=cptreedescr&mode=items');		
-		$turl1 = seturl('t=cptreedescr&mode=cats');
-		$turl2 = seturl('t=cptreedescr&mode=tree');
+		$turl0 = seturl('t=cptreemap&mode=items');		
+		$turl1 = seturl('t=cptreemap&mode=cats');
+		$turl2 = seturl('t=cptreemap&mode=tree');
 		$button = $this->createButton(localize('_mode', getlocal()), 
 										array(localize('_items', getlocal())=>$turl0,
 											  localize('_cats', getlocal())=>$turl1,
@@ -223,7 +223,7 @@ class rctreedescr {
 			default         : $content = $this->tree_grid(null,140,5,'r', true);
 		}			
 					
-		$ret = $this->window(localize('_treedescr', getlocal()).': '.localize('_'.$mode, getlocal()), $button, $content);
+		$ret = $this->window(localize('_treemap', getlocal()).': '.localize('_'.$mode, getlocal()), $button, $content);
 		
 		return ($ret);
 	}	
@@ -236,26 +236,25 @@ class rctreedescr {
 		$noctrl = $noctrl ? 0 : 1;				   
 		$title = localize('_tree', getlocal()); 
 		
-		//root leafs, pid=0
-        $xsSQL = "SELECT * from (select id,timein,active,tid,pid,tname,tdescr,tname0,tname1,tname2,items,users,orderid from ctree where pid='0' and items=1 and active=1) o ";		   
+        $xsSQL = "SELECT * from (select id,timein,active,tid,pid,tname,tdescr,tname0,tname1,tname2,items,users,orderid from ctree) o ";		   
 					
 		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");		
 		//_m("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");//"|boolean|1|1:0");		
 		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
 		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
 		_m("mygrid.column use grid1+tid|".localize('_code',getlocal())."|2|0|");
-		//_m("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|2|1|");			
+		_m("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|2|1|");			
 		_m("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|10|"."javascript:ttree(\"{tid}\");".'||');	
 		_m("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|5|0|");		
 		_m("mygrid.column use grid1+tname0|".localize('_title0',getlocal())."|5|1|");			
 		_m("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
 		_m("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
 		//_m("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
-		//_m("mygrid.column use grid1+items|".localize('_items',getlocal())."|2|1|0|");
-		//_m("mygrid.column use grid1+users|".localize('_users',getlocal())."|2|1|0|");
+		_m("mygrid.column use grid1+items|".localize('_items',getlocal())."|2|1|0|");
+		_m("mygrid.column use grid1+users|".localize('_users',getlocal())."|2|1|0|");
 		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
 
-		$out = _m("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+0+$rows+$height+$width+0+1+1");
+		$out = _m("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
 		return ($out);  	
 	}	
@@ -288,7 +287,7 @@ class rctreedescr {
 		_m("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
 		_m("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|0|");
 		_m("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
-		_m("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{code5}\");".'||');
+		_m("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{$code}\");".'||');
 
 		$out = _m("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
@@ -580,7 +579,7 @@ class rctreedescr {
 		
 		//check tree maps
 		if (isset($tid)) {
-			$treeSQL = "select attr from ctreedescr WHERE tid=" . $db->qstr($tid);
+			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);
 			$sSQL .= ' and id not in (' . $treeSQL . ')';
 		}	
 		
@@ -666,7 +665,7 @@ class rctreedescr {
 			
 		//check tree maps
 		if (isset($tid)) {
-			$treeSQL = "select attr from ctreedescr WHERE tid=" . $db->qstr($tid);			
+			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);			
 			$sSQL .= $sesSQL ? $sesSQL . ' OR id in (' . $treeSQL . ')' : ' id in (' . $treeSQL . ')';
 		}
 		else
@@ -715,7 +714,7 @@ class rctreedescr {
 				$codefield . " from products WHERE ";
 
 		if (isset($tid)) {
-			$treeSQL = "select attr from ctreedescr WHERE tid=" . $db->qstr($tid);	
+			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
 			$sSQL .=  ' id in (' . $treeSQL . ')';	
 		}	
         else
@@ -798,7 +797,7 @@ class rctreedescr {
 		$c .= "<INPUT type=\"hidden\" name=\"mode\" value=\"{$mode}\" />";
 		
         $c .= "<INPUT type=\"submit\" name=\"submit\" value=\"" . $submit . "\" $cl />";  
-        $c .= "<INPUT type=\"hidden\" name=\"FormName\" value=\"Treedescr\" />";		   
+        $c .= "<INPUT type=\"hidden\" name=\"FormName\" value=\"Treemap\" />";		   
         $c .= "<INPUT type=\"hidden\" name=\"FormAction\" value=\"" . $action . "\" $cl />";
         return ($c);   		   
 	}
@@ -813,7 +812,7 @@ class rctreedescr {
 			
 			//insert if not in tree
 			foreach ($ids as $i=>$item) {
-				$existSQL = "select attr from ctreedescr WHERE attr=" . $db->qstr($item) . " and tid=" . $db->qstr($tid);	
+				$existSQL = "select code from ctreemap WHERE code=" . $db->qstr($item) . " and tid=" . $db->qstr($tid);	
 				$resultset = $db->Execute($existSQL);
 				
 				if ($this->echoSQL)	echo $existSQL;
@@ -824,7 +823,7 @@ class rctreedescr {
 					continue;
 				}
 				else {
-					$sSQL = 'insert into ctreedescr (tid, attr) values';
+					$sSQL = 'insert into ctreemap (tid, code) values';
 					$sSQL .= ' ('. $db->qstr($tid) . ',' . $db->qstr($item) . ')';		   
 					$db->Execute($sSQL);
 					$m+=1;	
@@ -845,17 +844,17 @@ class rctreedescr {
 			$ids = explode(',', $data);
 			
 			//delete if not in post list
-			$treeSQL = "select attr from ctreedescr WHERE tid=" . $db->qstr($tid);	
+			$treeSQL = "select code from ctreemap WHERE tid=" . $db->qstr($tid);	
 			$result = $db->Execute($treeSQL);
 			if (!empty($result->fields)) {
 				foreach ($result as $r=>$rec) {
-					if (in_array($rec['attr'], $ids)) {
+					if (in_array($rec['code'], $ids)) {
 						//dont remove
 						//if ($this->echoSQL) echo '0<br/>';
 						continue;						
 					}
 					else {
-						$sSQL = 'delete from ctreedescr where tid='. $db->qstr($tid) . ' and attr=' . $db->qstr($rec['attr']);		   
+						$sSQL = 'delete from ctreemap where tid='. $db->qstr($tid) . ' and code=' . $db->qstr($rec['code']);		   
 						$db->Execute($sSQL);
 						$m+=1;	
 						if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";						
