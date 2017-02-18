@@ -13,12 +13,14 @@ $__EVENTS['RCTREEDESCR_DPC'][1]='cpsavetree';
 $__EVENTS['RCTREEDESCR_DPC'][2]='cploadtree';
 $__EVENTS['RCTREEDESCR_DPC'][3]='cptreeframe';
 $__EVENTS['RCTREEDESCR_DPC'][4]='cptreeitems';
+$__EVENTS['RCTREEDESCR_DPC'][5]='cptreeattach';
 
 $__ACTIONS['RCTREEDESCR_DPC'][0]='cptreedescr';
 $__ACTIONS['RCTREEDESCR_DPC'][1]='cpsavetree';
 $__ACTIONS['RCTREEDESCR_DPC'][2]='cploadtree';
 $__ACTIONS['RCTREEDESCR_DPC'][3]='cptreeframe';
 $__ACTIONS['RCTREEDESCR_DPC'][4]='cptreeitems';
+$__ACTIONS['RCTREEDESCR_DPC'][5]='cptreeattach';
 
 $__LOCALE['RCTREEDESCR_DPC'][0]='RCTREEDESCR_DPC;Descriptor;Προσδιοριστικά χαρακτηριστικά';
 $__LOCALE['RCTREEDESCR_DPC'][1]='_date;Date;Ημερ.';
@@ -42,9 +44,9 @@ $__LOCALE['RCTREEDESCR_DPC'][18]='_ypoloipo1;Qty;Υπόλοιπο';
 $__LOCALE['RCTREEDESCR_DPC'][19]='_price0;Price 1;Αξία 1';
 $__LOCALE['RCTREEDESCR_DPC'][20]='_price1;Price 2;Αξία 2';
 $__LOCALE['RCTREEDESCR_DPC'][21]='_treedescr;Tree descriptors;Προσδιοριστικά χαρακτηριστικά';
-$__LOCALE['RCTREEDESCR_DPC'][22]='_treeattach;Map objects;Επισύναψη χαρακτηριστικού';
+$__LOCALE['RCTREEDESCR_DPC'][22]='_attach;Attachments;Επισυνάψεις';
 $__LOCALE['RCTREEDESCR_DPC'][23]='_items;Items;Προϊόντα';
-$__LOCALE['RCTREEDESCR_DPC'][24]='_users;Users;Χρήστες';
+$__LOCALE['RCTREEDESCR_DPC'][24]='_treeattach;Map object;Επισύναψη χαρακτηριστικού';
 $__LOCALE['RCTREEDESCR_DPC'][25]='_mode;Select;Επιλογή';
 $__LOCALE['RCTREEDESCR_DPC'][26]='_cats;Categories;Κατηγορίες';
 $__LOCALE['RCTREEDESCR_DPC'][27]='_ctgid;Id;A/A';
@@ -143,13 +145,13 @@ class rctreedescr {
 	
     public function event($event=null) {
 	
-	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	   if ($login!='yes') return null;				
-
-       if (!$this->msg) {
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;				
   
-	     switch ($event) {
-			 
+	    switch ($event) {
+			
+			case 'cptreeattach'   : break;
+			
 			case 'cptreeframe'    : echo $this->loadframe();
 		                            die();  
 			case 'cptreeitems'    : if ($fid = $this->fid) {
@@ -162,27 +164,29 @@ class rctreedescr {
 	                                break;									
 			case 'cptreedescr'    :
 			default               :							  
-         }
-      }
+        }
     }	
 
     public function action($action=null)  {
 
-	     $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	     if ($login!='yes') return null;		
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;		
 
-	     switch ($action) {
+	    switch ($action) {
 			 
-		   case 'cptreeframe'    :  break;	 
-		   case 'cptreeitems'    :  break;			 	 
-		   case 'cploadtree'     :  break;		   
-		   case 'cpsavetree'     :  break;
+			case 'cptreeattach'  :   $out = $this->treeDescr_grid(null,380,15,'d', true); 
+									 break;
+			 
+			case 'cptreeframe'    :  break;	 
+			case 'cptreeitems'    :  break;			 	 
+			case 'cploadtree'     :  break;		   
+			case 'cpsavetree'     :  break;
 								   
-		   case 'cptreedescr'    :						   
-		   default               :  $out = $this->gridMode();
-		 }			 
+			case 'cptreedescr'    :						   
+			default               :  $out = $this->gridMode();
+		}			 
 
-	     return ($out);
+	    return ($out);
 	}
 	
 	
@@ -192,6 +196,9 @@ class rctreedescr {
 		$fidparam = $this->fid ? "&fid=" . $this->fid : null;
 		
 		switch ($selectmode) {
+			
+			case 'attach': $bodyurl = seturl("t=cptreeattach&id=". $id); break;
+			
 			case 'cats'  : $bodyurl = seturl("t=cptreeitems&mode=cats&id=". $id . $fidparam); break;
 			case 'items' : $bodyurl = seturl("t=cptreeitems&mode=items&id=". $id . $fidparam); break;
 			case 'tree'  : 
@@ -208,15 +215,19 @@ class rctreedescr {
         
 		$turl0 = seturl('t=cptreedescr&mode=items');		
 		$turl1 = seturl('t=cptreedescr&mode=cats');
-		$turl2 = seturl('t=cptreedescr&mode=tree');
+		$turl2 = seturl('t=cptreedescr&mode=attach');
+		$turl3 = seturl('t=cptreedescr&mode=tree');
 		$button = $this->createButton(localize('_mode', getlocal()), 
 										array(localize('_items', getlocal())=>$turl0,
 											  localize('_cats', getlocal())=>$turl1,
 											  0=>'',
-											  localize('_tree', getlocal())=>$turl2,
+											  localize('_attach', getlocal())=>$turl2,
+											  1=>'',
+											  localize('_tree', getlocal())=>$turl3,
 		                                ),'success');		
 																	
 		switch ($mode) {
+			case 'attach'   : $content = $this->treeAttach_grid(null,140,5,'r', true); break;
 	        case 'tree'     : $content = $this->tree_grid(null,140,5,'r', true); break;
 	        case 'cats'     : $content = $this->categories_grid(null,140,5,'r', true); break;
 			case 'items'    : $content = $this->items_grid(null,140,5,'r', true); break;  
@@ -227,7 +238,8 @@ class rctreedescr {
 		
 		return ($ret);
 	}	
-
+	
+	
 	protected function tree_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 800;
         $rows = $rows ? $rows : 36;
@@ -245,8 +257,8 @@ class rctreedescr {
 		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
 		_m("mygrid.column use grid1+tid|".localize('_code',getlocal())."|2|0|");
 		//_m("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|2|1|");			
-		_m("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|10|"."javascript:ttree(\"{tid}\");".'||');	
-		_m("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|5|"."javascript:ttree(\"{tid}\");".'||');	
+		_m("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|10|0|");		
 		_m("mygrid.column use grid1+tname0|".localize('_title0',getlocal())."|5|1|");			
 		_m("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
 		_m("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
@@ -288,7 +300,7 @@ class rctreedescr {
 		_m("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
 		_m("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|0|");
 		_m("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
-		_m("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{code5}\");".'||');
+		_m("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|5|0|");
 
 		$out = _m("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
@@ -340,6 +352,57 @@ class rctreedescr {
 		return ($out);
 	
     }	
+	
+	protected function treeAttach_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;				   
+		$title = localize('_tree', getlocal()); 
+		
+		//root leafs, pid=0
+        $xsSQL = "SELECT * from (select id,timein,active,tid,pid,tname,tdescr,tname0,tname1,tname2,items,users,orderid from ctree where pid='0' and items=1 and active=1) o ";		   
+					
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");				
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
+		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+tid|".localize('_code',getlocal())."|2|0|");			
+		_m("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|5|"."javascript:tattach(\"{tid}\");".'||');	
+		_m("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|10|0|");		
+		_m("mygrid.column use grid1+tname0|".localize('_title0',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
+		_m("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|2|1|");
+
+		$out = _m("mygrid.grid use grid1+ctree+$xsSQL+$mode+$title+id+$noctrl+0+$rows+$height+$width+0+1+1");
+		
+		return ($out);  	
+	}	
+	
+	protected function treeDescr_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 800;
+        $rows = $rows ? $rows : 36;
+        $width = $width ? $width : null; //wide	
+		$mode = $mode ? $mode : 'd';
+		$noctrl = $noctrl ? 0 : 1;				   
+		$title = localize('_attach', getlocal()); 
+		
+		$selectedTreeId = GetReq('id');
+        $xsSQL = "SELECT * from (select id,timein,tid,tname,attr,qty from ctreedescr where tid='$selectedTreeId') o ";		   
+					
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");				
+		//_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
+		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+tid|".localize('_code',getlocal())."|2|1|");			
+		_m("mygrid.column use grid1+tname|".localize('_title',getlocal())."|5|1|");	
+		_m("mygrid.column use grid1+attr|".localize('_descr',getlocal())."|10|1|");					
+		_m("mygrid.column use grid1+qty|".localize('_qty',getlocal())."|2|1|");
+
+		$out = _m("mygrid.grid use grid1+ctreedescr+$xsSQL+$mode+$title+id+$noctrl+0+$rows+$height+$width+0+1+1");
+		
+		return ($out);  	
+	}		
 	
 	protected function createButton($name=null, $urls=null, $t=null, $s=null) {
 		$type = $t ? $t : 'primary'; //danger /warning / info /success
@@ -597,12 +660,20 @@ class rctreedescr {
 
 		return (implode('',$ret));	
 	}	
+	
+	protected function getCurrentCategoryList() {
+		$tid = _m("cmsrt.replace_spchars use " . GetParam('id'));	
+        $catname = _m("cmsrt.replace_spchars use " . $tid . "+1");
+
+		$ret = "<option value='".$tid."'>". $catname."</option>" ;
+		return ($ret);			
+	}
 
     public function getCurrentList() {
 		
         switch (GetReq('mode')) { 
 			case 'tree'  : $ret = $this->getCurrentTreeList(); break;		
-			case 'cats'  : 
+			case 'cats'  : //$ret = $this->getCurrentCategoryList(); break;
 			case 'items' : 
 			default      : $ret = $this->getCurrentSessionList();
 		}	
@@ -684,16 +755,32 @@ class rctreedescr {
 		foreach ($resultset as $n=>$rec) {
 			$check = ((empty($_POST[$this->listName])) && (in_array($rec['id'], $insessionlist))) ? '[+]' : null;
 			$ret[] = "<option value='".$rec['id']."'>". $check . $rec[$code].'-'.$rec[$itmname]."</option>" ;
-		}		
+		}
 		
 		return (implode('',$ret));				
 	}
+	
+	//include categories tree maps
+	protected function viewCategoryList() {	
+		$db = GetGlobal('db');	
+		$catid = _m("cmsrt.replace_spchars use " . GetParam('id'));	
+
+		$scSQL = "select id,attr from ctreedescr where attr=" .	$db->qstr($catid);	
+		$res = $db->Execute($scSQL);
+
+		foreach ($res as $n=>$rec) {
+			$catname = _m("cmsrt.replace_spchars use " . $rec['attr'] . "+1");
+			$ret[] = "<option value='".$rec['attr']."'>". $catname ."</option>" ;
+		}
+
+		return (implode('',$ret));		
+	}		
 
 	public function viewList() {
 		
         switch (GetReq('mode')) { 
 			case 'tree'  : $ret = $this->viewTreeList(); break;		
-			case 'cats'  : 
+			case 'cats'  : //$ret = $this->viewCategoryList(); break;
 			case 'items' : 
 			default      : $ret = $this->viewSessionList();	
 		}			
@@ -824,8 +911,8 @@ class rctreedescr {
 					continue;
 				}
 				else {
-					$sSQL = 'insert into ctreedescr (tid, attr) values';
-					$sSQL .= ' ('. $db->qstr($tid) . ',' . $db->qstr($item) . ')';		   
+					$sSQL = 'insert into ctreedescr (tid, attr, qty) values';
+					$sSQL .= ' ('. $db->qstr($tid) . ',' . $db->qstr($item) . ',0)';		   
 					$db->Execute($sSQL);
 					$m+=1;	
 					if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";
@@ -854,8 +941,8 @@ class rctreedescr {
 						//if ($this->echoSQL) echo '0<br/>';
 						continue;						
 					}
-					else {
-						$sSQL = 'delete from ctreedescr where tid='. $db->qstr($tid) . ' and attr=' . $db->qstr($rec['attr']);		   
+					else { //delete only items not categories qty=NULL
+						$sSQL = 'delete from ctreedescr where qty>=0 and tid='. $db->qstr($tid) . ' and attr=' . $db->qstr($rec['attr']);		   
 						$db->Execute($sSQL);
 						$m+=1;	
 						if ($this->echoSQL) echo "1&nbsp;$sSQL<br/>";						

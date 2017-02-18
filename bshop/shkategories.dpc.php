@@ -492,6 +492,7 @@ class shkategories {
 
 					//if ($cgroup==$line) {
 					if (mb_strstr($cgroup,$_id)) { //selected cat
+						$template = ($cd<0) ? $template : "<li>" . $template . "</li>";
 						$cd+=1;
 						if ($cd+1<$this->depthview) {//depth view param for hidden categories
 							$subcat_tokens = $this->show_tree1($folder,$mode,$template);

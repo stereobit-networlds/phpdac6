@@ -143,12 +143,10 @@ class rctreemap {
 	
     public function event($event=null) {
 	
-	   $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	   if ($login!='yes') return null;				
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;				
 
-       if (!$this->msg) {
-  
-	     switch ($event) {
+	    switch ($event) {
 			 
 			case 'cptreeframe'    : echo $this->loadframe();
 		                            die();  
@@ -162,27 +160,26 @@ class rctreemap {
 	                                break;									
 			case 'cptreemap'      :
 			default               :							  
-         }
-      }
+        }
     }	
 
     public function action($action=null)  {
 
-	     $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
-	     if ($login!='yes') return null;		
+	    $login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
+	    if ($login!='yes') return null;		
 
-	     switch ($action) {
+	    switch ($action) {
 			 
-		   case 'cptreeframe'    :  break;	 
-		   case 'cptreeitems'    :  break;			 	 
-		   case 'cploadtree'     :  break;		   
-		   case 'cpsavetree'     :  break;
+			case 'cptreeframe'    :  break;	 
+			case 'cptreeitems'    :  break;			 	 
+			case 'cploadtree'     :  break;		   
+			case 'cpsavetree'     :  break;
 								   
-		   case 'cptreemap'      :						   
-		   default               :  $out = $this->gridMode();
-		 }			 
+			case 'cptreemap'      :						   
+			default               :  $out = $this->gridMode();
+		}			 
 
-	     return ($out);
+	    return ($out);
 	}
 	
 	
@@ -244,8 +241,8 @@ class rctreemap {
 		_m("mygrid.column use grid1+timein|".localize('_date',getlocal())."|5|0|");		
 		_m("mygrid.column use grid1+tid|".localize('_code',getlocal())."|2|0|");
 		_m("mygrid.column use grid1+pid|".localize('_parent',getlocal())."|2|1|");			
-		_m("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|10|"."javascript:ttree(\"{tid}\");".'||');	
-		_m("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|5|0|");		
+		_m("mygrid.column use grid1+tname|".localize('_title',getlocal())."|link|5|"."javascript:ttree(\"{tid}\");".'||');	
+		_m("mygrid.column use grid1+tdescr|".localize('_descr',getlocal())."|10|0|");		
 		_m("mygrid.column use grid1+tname0|".localize('_title0',getlocal())."|5|1|");			
 		_m("mygrid.column use grid1+tname1|".localize('_title1',getlocal())."|5|1|");		
 		_m("mygrid.column use grid1+tname2|".localize('_title2',getlocal())."|5|1|");			
@@ -287,7 +284,7 @@ class rctreemap {
 		_m("mygrid.column use grid1+manufacturer|".localize('_manufacturer',getlocal())."|5|0|");
 		_m("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|0|");
 		_m("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|0|");
-		_m("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|link|2|"."javascript:tusers(\"{$code}\");".'||');
+		_m("mygrid.column use grid1+xml|".localize('_xml',getlocal())."|5|0|");
 
 		$out = _m("mygrid.grid use grid1+products+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
