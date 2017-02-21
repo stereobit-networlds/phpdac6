@@ -131,7 +131,7 @@ class shkatalogmedia {
 	var $isListView, $imgLargeDB, $imgMediumDB, $imgSmallDB;
 	var $ogTags, $siteTitle, $httpurl;
 	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan, $itmplpath;
-	var $max_price, $min_price, $loyalty;
+	var $realID, $max_price, $min_price, $loyalty;
 
 	public function __construct() {	
 		$UserSecID = GetGlobal('UserSecID');	
@@ -281,6 +281,7 @@ class shkatalogmedia {
 		$this->twitTags = null;
 		$this->min_price = 0;
 		$this->max_price = 0;
+		$this->realID = null;
 		
 		$this->loyalty = _m('cmsrt.paramload use ESHOP+loyalty');
 		$this->itmplpath = _m('cmsrt.paramload use ESHOP+templates'); //'templates/'; //item page templates dir	
@@ -327,27 +328,22 @@ class shkatalogmedia {
 									die($xml);	//xml output
 									break;
 			//cart override
-			case 'addtocart'     : 	if ($this->userLevelID < 5) {
-										$cartstr = explode(';', GetReq('a')); 
+			case 'addtocart'     : 	if ($this->userLevelID < 5) { 
+										$cartstr = explode(';', GetReq('a'));
 										$item = $cartstr[0]; 
 										_m("cmsvstats.update_item_statistics use $item+cartin");
 									}
-									/*if (_v("shcart.fastpick")) {
-										//double empty msg
-										//$this->jsDialog($this->replace_cartchars($cartstr[1],true), localize('_BLN1', $this->lan));									
-										$this->javascript(); //katalog filters
-									}*/	
+									if (_v("shcart.fastpick")) { 
+										$this->jsBrowser();
+									}	
+	
 									break; 
 									
 			case 'removefromcart': 	if ($this->userLevelID < 5) {
 										$cartstr = explode(';', GetReq('a'));
 										$item = $cartstr[0];
 										_m("cmsvstats.update_item_statistics use $item+cartout");
-									}	
-									
-									//double empty msg
-									//if (_v("shcart.fastpick"))
-										//$this->jsDialog($this->replace_cartchars($cartstr[1], true), localize('_BLN2', $this->lan) . ' (-)');									
+									}									
 									break;		
 		
 			case 'showimage'    : 	$this->show_photodb(GetReq('id'), GetReq('type'));
@@ -359,7 +355,7 @@ class shkatalogmedia {
 										_m("cmsvstats.update_category_statistics use $_filter+filter");		  
 									}
 									
-									//$this->javascript();
+									$this->jsBrowser();
 									break;	
 									
 			case 'ktree'      :		$this->my_one_item = $this->tread_list(); 
@@ -374,19 +370,21 @@ class shkatalogmedia {
 									if ($this->userLevelID < 5) 
 										_m("cmsvstats.update_category_statistics use ".GetReq('cat'));		  
 									
-									//$this->javascript();
+									$this->jsBrowser();
 									break;	
 
-			case 'kshow'        :	$realID = $this->read_item(); 
+			case 'kshow'        :	$this->realID = $this->read_item(); 
 			
-									$incart = _m("shcart.getCartItemQty use " . $realID);
+									$incart = _m("shcart.getCartItemQty use " . $thiis->realID);
 									if ($incart) {
 										$this->jsDialog(sprintf(localize('_incart', $this->lan), $incart), 
 														localize('_cartmsg', $this->lan));
 									}				
 									
 									if ($this->userLevelID < 5) 
-										_m("cmsvstats.update_item_statistics use ". $realID);
+										_m("cmsvstats.update_item_statistics use ". $this->realID);
+									
+									$this->jsBrowser();
 									break;
 								
 			default             : 	
@@ -465,23 +463,8 @@ class shkatalogmedia {
 		return ($out);
     }
 	
-	protected function jsFilter() {
-
-		$js = <<<JSFILTER
-function filter(url,div,fname,preset) {
-	var checkedItems = fname ? 
-		$('input:checkbox[name='+fname+']:checked').map(function() { return $(this).val().toString(); } ).get().join(",") : 
-		(preset ? preset : null);
-	//alert(url+checkedItems+'/');
-	
-	ajaxCall(url+checkedItems+'/',div,1);
-}
-JSFILTER;
-
-		return ($js);
-	}
-	
-	protected function jsPrice() {
+	//js called when in catalog page
+	protected function jsCatalog() {
 		//echo $this->max_selection;
 		//if ($this->max_selection<=1) return null;			
 		$cat = GetReq('cat');
@@ -491,6 +474,7 @@ JSFILTER;
 		$step = ($diff<=100) ? 1 : 10;//($max-$min) / 10;
 		$input = is_numeric(GetParam('input')) ? explode('.', GetParam('input')) : array('0','0');				
 		$purl = $this->httpurl . '/' . _m("cmsrt.url use t=kfilter&cat=$cat"); 
+		//echo $this->min_price.'-'.$this->max_price.'-'.$min.'-'.$max.'-'.$diff.'-'.$step;
 		
 		$setPrice = ($div = $this->filterajax) ? 
 						"ajaxCall('$purl'+value+'/','$div',1);" :
@@ -500,7 +484,7 @@ JSFILTER;
 $('.price-slider').on('slideStop', function(slideEvt) {
 	var p = $('.price-slider').val();
 	var value = p.replace(',', '.');
-	console.log(value);
+	//console.log(value);
 	$setPrice
 });
 
@@ -516,56 +500,78 @@ $(document).ready(function () {
             handle: 'square'
         });
     }
+	
+	gotoTop('{$this->filterajax}');	
+	$(window).scroll(function() { 
+	
+		if (agentDiv('{$this->filterajax}',200)) {	
+			$.ajax({ url: 'jsdialog.php?t=jsdcode&cat={$cat}&div={$this->filterajax}', cache: false, success: function(jsdialog){
+				eval(jsdialog);		
+			}})	
+		}	
+	});		
 }); 
 ";
 		return ($js);
+	}
+
+	//js called when in item page
+	protected function jsItem() {
+
+		$js = "
+$(document).ready(function () {
+	gotoTop('{$this->realID}');
+	$(window).scroll(function() { 
+		
+		if (agentDiv('{$this->realID}',300)) {	
+			$.ajax({ url: 'jsdialog.php?t=jsdcode&id={$this->realID}&div={$this->realID}-details', cache: false, success: function(jsdialog){
+				eval(jsdialog);		
+			}})	
+		}
+	});		
+});	
+		";
+		return ($js);	
+	}		
+	
+	protected function jsBrowser() {
+		
+       if (iniload('JAVASCRIPT')) {
+		   
+			$code = ($id = GetReq('id')) ? $this->jsItem() : 
+					(($cat = GetReq('cat')) ? $this->jsCatalog() : null);
+		   
+		    if ($code) {
+				$js = new jscript;	
+				$js->load_js($code,null,1);		
+				unset ($js);
+			}
+	   }	
 	}	
 	
-	protected function scrolltop_javascript_code() {
+	
+	protected function jsFilter() {
 
-		$jscroll = <<<SCROLLTOP
-function ajaxCall(url,div,goto) {
-	$.ajax({ url: url, cache: false, success: function(html){
-		$('#'+div).html(html);
-		echo.render(); /*-- lazy loading render --*/  
-	}})
-	if (goto) gotoTop(div);  
-}				
-//scroll smooth to top
-function gotoTop(div) {
-	var sw = (div) ? $('#'+div).offset().top : 0;
-	$("html, body").animate({ scrollTop: sw }, "slow");
-	/*-- lazy loading render --*/
-	//setTimeout(function() { echo.render();},5000);
-	return true;
-};
+		$js = <<<JSFILTER
+function filter(url,div,fname,preset) {
+	var checkedItems = fname ? 
+		$('input:checkbox[name='+fname+']:checked').map(function() { return $(this).val().toString(); } ).get().join(",") : 
+		(preset ? preset : null);
+	//alert(url+checkedItems+'/');
+	
+	ajaxCall(url+checkedItems+'/',div,1);
+}
+JSFILTER;
 
-echo.init({
-  offset: 100,
-  throttle: 250,	
-  unload: false /*,	
-  callback: function(element, op) {
-    if(op === 'load') {
-      element.classList.add('loaded');
-    } else {
-      element.classList.remove('loaded');
-    }
-	console.log(element+' '+op);
-  }*/
-});
-
-SCROLLTOP;
-
-		return ($jscroll);
-    }	
+		return ($js);
+	}	
 	
 	public function javascript() {
 	
        if (iniload('JAVASCRIPT')) {
 	   
 	        $code = $this->jsFilter();
-			$code.= $this->jsPrice();
-		    $code.= $this->scrolltop_javascript_code();
+		    //$code.= $this->scrolltop_javascript_code(); //moved to cmsrt
 		   
 		    $js = new jscript;	
             $js->load_js($code,null,1);		
@@ -640,9 +646,7 @@ SCROLLTOP;
 		$stype = GetParam('searchtype'); 
 		$scase = GetParam('searchcase'); 
 		$incategory = GetReq('cat');								
-		/*$lastprice = $this->getmapf('lastprice') ? 
-						',' . $this->getmapf('lastprice') : null;	
-		*/
+
 		if (($text2find) && ($text2find!='*')) {
 			$ut = urldecode($text2find);
 			$parts = explode(" ",$text2find);//get special words in text like code:  			
@@ -1436,7 +1440,7 @@ SCROLLTOP;
 	   return ($out);	      
 	}		
 	
-	public function list_katalog($linemax=null,$cmd=null,$template=null,$photosize=null,$nopager=null,$external_read=null) {
+	public function list_katalog($linemax=null,$cmd=null,$template=null,$photosize=null,$nopager=null) {
 	    $cmd = $cmd ? $cmd : 'klist';
 	    $pz = $photosize ? $photosize : 1;		   	
         $cat = GetReq('cat');   
@@ -1456,7 +1460,7 @@ SCROLLTOP;
 			//list-table alternative template
 			$mytemplate_alt = $this->select_template('fpkatalog-alt',$cat);
 	    }
-        
+        /*
         if ($this->oneitemlist) {
 			if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
 				$is_one_item = $this->read_list(); //read records
@@ -1474,7 +1478,7 @@ SCROLLTOP;
 				}	   
 			}		 
         } 	      
-	   		   
+	   	*/	   
 		if (count($this->result->fields)>1) {
 
 			$aliasID = _m("cmsrt.useUrlAlias");
@@ -1513,7 +1517,7 @@ SCROLLTOP;
 														1=>array_pop($catarray),
 														2=>$tokens[17],														
 														3=>$caturl,
-														4=>$ogimage, /*$ogimage array of images (with no httpurl)!!*/
+														4=>$ogimage, /*array of images*/
 													));			
 			}	
 			else //custom template
@@ -1535,13 +1539,15 @@ SCROLLTOP;
 	    return ($out);	
 	}	
 	
-    protected function list_katalog_table($linemax=2,$cmd=null,$template=null,$photosize=null,$nopager=null,$external_read=null) {
+    protected function list_katalog_table($linemax=2,$cmd=null,$template=null,$photosize=null,$nopager=null) {
 		$cmd = $cmd ? $cmd : 'klist';	   
 		$pz = $photosize ? $photosize : 1;
 		$cat = GetReq('cat');	   
-	   
+		$mylinemax = ($linemax>0) ? $linemax : $this->linemax; 	
+		
 		$mytemplate = $this->select_template($template,$cat);
-	   
+		
+	    /*
 		if ($this->oneitemlist) {
 			if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
 				$is_one_item = $this->read_list(); //read records
@@ -1559,7 +1565,7 @@ SCROLLTOP;
 				}
 			}		 
         } 		   
-
+        */
 		if (!empty($this->result)) {
 	   
 			$pp = $this->read_policy();
@@ -1580,7 +1586,7 @@ SCROLLTOP;
 			}	
 			//else	*/
 			//make table			
-			$ret .= $this->make_table($items, $linemax, 'fpkatalogtable', $cat);  	  
+			$ret .= $this->make_table($items, $mylinemax, 'fpkatalogtable', $cat);  	  
 	      				
 			//if ($this->pager) 
 			$ret .= $this->show_paging($cmd,$mytemplate,$nopager);					
@@ -1623,7 +1629,6 @@ SCROLLTOP;
 			$cart_qty = 1;//???
 			if (defined("SHCART_DPC")) {
 				$in_cart = _m("shcart.getCartItemQty use ".$rec[$item_code]); 
-				//$icon_cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;+$cat+$cart_page",1);
 				$icon_cart = _m("shcart.showsymbol use $cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty;",1);
 				$array_cart = $this->read_qty_policy($rec[$item_code],$price,"$cart_code;$cart_title;$path;$MYtemplate;$cart_group;$cart_page;;$cart_photo;$cart_price;$cart_qty");	   
 				
@@ -1638,7 +1643,7 @@ SCROLLTOP;
 					$this->httpurl . "/$cat/$id2" . $aliasExt :
 					$this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]);
 			$itemlink =  $_u; 
-		    $detailink = $_u . '#details'; 	   
+		    $detailink = "javascript:gotoTop('{$this->realID}-details')"; //$_u . '#details'; 	   
 			$availability = $this->show_availability($rec['ypoloipo1']);	
 			 
 	        $linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
@@ -1812,7 +1817,6 @@ SCROLLTOP;
 		return ($out);		 
 	}
 	
-	//overrwriiten
 	public function show_aditional_html_files($id) {	
         $db = GetGlobal('db');	
 		$slan =  ($this->one_attachment) ? $slan : $this->lan; 
@@ -1830,7 +1834,7 @@ SCROLLTOP;
 	}	
 	
 	
-	public function show_p($items=10,$linemax=null,$template=null,$photosize=null,$p=null,$external_read=null) {
+	public function show_p($items=10,$linemax=null,$template=null,$photosize=null,$p=null) {
         $db = GetGlobal('db');					
 		$pz = $photosize ? $photosize : 1;		
 	                                                                             
@@ -1850,9 +1854,9 @@ SCROLLTOP;
 		$this->result = $resultset;	
 		
 		if ($linemax>1)
-			$out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+			$out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-			$out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+			$out = $this->list_katalog(0,null,$template,$pz,1);
 		  
 		return ($out);	
 	}		
@@ -1879,14 +1883,14 @@ SCROLLTOP;
 		$this->result = $resultset;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,$nopager,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,$nopager);
 		  
 		return ($out);	
 	}		
 	
-	public function show_kategory_offers($items=10,$linemax=null,$template=null,$photosize=null,$category=null,$nopager=null,$external_read=null) {
+	public function show_kategory_offers($items=10,$linemax=null,$template=null,$photosize=null,$category=null,$nopager=null) {
         $db = GetGlobal('db');			
 		$c = $category ? $category : GetReq('cat');
 		$cat = explode($this->sep(),$c);			
@@ -1910,14 +1914,14 @@ SCROLLTOP;
 		$this->result = $resultset;	
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,$nopager,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,$nopager);
 		  
 		return ($out);	
 	}		
 	
-	public function show_pcat($items=10,$linemax=null,$template=null,$photosize=null,$p=null,$category=null,$external_read=null) {
+	public function show_pcat($items=10,$linemax=null,$template=null,$photosize=null,$p=null,$category=null) {
         $db = GetGlobal('db');		
 		$mycat = $category ? $category : GetReq('cat');	   			
 		$pz = $photosize ? $photosize : 1;			
@@ -1963,14 +1967,14 @@ SCROLLTOP;
 		$this->result = $resultset;	
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,1);
 		  
 		return ($out);	
 	}
 	
-	public function show_lastincat($items=10,$linemax=null,$template=null,$photosize=null,$ascdesc=null,$category=null,$external_read=null) {
+	public function show_lastincat($items=10,$linemax=null,$template=null,$photosize=null,$category=null,$ascdesc=null) {
         $db = GetGlobal('db');		
 		$mycat = $category ? $category : GetReq('cat');	   		
 		$pz = $photosize ? $photosize : 1;		
@@ -2001,14 +2005,14 @@ SCROLLTOP;
 		$this->result = $resultset;	
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,1);
 		  
 		return ($out);	
 	}		
 
-	public function show_orderid($items=10,$linemax=null,$template=null,$photosize=null,$ascdesc=null,$category=null,$external_read=null) {
+	public function show_orderid($items=10,$linemax=null,$template=null,$photosize=null,$ascdesc=null,$category=null) {
         $db = GetGlobal('db');		
 		$mycat = $category ? $category : GetReq('cat');	   		
 		$pz = $photosize ? $photosize : 1;		
@@ -2054,14 +2058,14 @@ SCROLLTOP;
 		$this->result = $resultset;	
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,1);
 		  
 		return ($out);	
 	}	
 	
-	public function show_orderidis($items=10,$linemax=null,$template=null,$photosize=null,$orderid=null,$external_read=null) {
+	public function show_orderidis($items=10,$linemax=null,$template=null,$photosize=null,$orderid=null) {
         $db = GetGlobal('db');		
 		$mycat = $category ? $category : GetReq('cat');	   			
 		$pz = $photosize ? $photosize : 1;			
@@ -2079,14 +2083,14 @@ SCROLLTOP;
 		$this->result = $resultset;	
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,1);
 		  
 		return ($out);	
 	}	
 	
-	public function show_resources($items=10,$linemax=null,$template=null,$photosize=null,$contition=null,$ofield=null,$desc=null,$external_read=null) {
+	public function show_resources($items=10,$linemax=null,$template=null,$photosize=null,$contition=null,$ofield=null,$desc=null) {
         $db = GetGlobal('db');					
 		$pz = $photosize ? $photosize : 1;	
         $ordfield = $ofield ? $ofield : $this->itmname;
@@ -2107,15 +2111,15 @@ SCROLLTOP;
 		$this->result = $resultset;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,1);
 		  
 		return ($out);	
 	}			
 	 
 	 
-	public function show_group($items=10,$linemax=null,$template=null,$photosize=null,$group=null,$external_read=null) {
+	public function show_group($items=10,$linemax=null,$template=null,$photosize=null,$group=null) {
         $db = GetGlobal('db');				
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
@@ -2137,15 +2141,15 @@ SCROLLTOP;
 		$this->result = $resultset;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,1);
 		  
 		return ($out);	
 	}	 
 	 
 	//override
-	public function show_special($items=10,$linemax=null,$template=null,$photosize=null,$contition=null,$days=12,$external_read=null) {
+	public function show_special($items=10,$linemax=null,$template=null,$photosize=null,$contition=null,$days=12) {
         $db = GetGlobal('db');			
 	    $date2check = time() - ($days * 24 * 60 * 60);
 	    $entrydate = date('Y-m-d',$date2check);		
@@ -2168,14 +2172,14 @@ SCROLLTOP;
 		$this->result = $resultset;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,1);
 		  
 		return ($out);	
 	}	
 	
-	public function show_special_online($items=10,$linemax=null,$template=null,$photosize=null,$field2check=null,$key=null,$external_read=null) {
+	public function show_special_online($items=10,$linemax=null,$template=null,$photosize=null,$field2check=null,$key=null) {
         $db = GetGlobal('db');
 		$dbbuffer = GetGlobal('_sqlbuffer');		
 		$pz = $photosize ? $photosize : 1;						
@@ -2255,54 +2259,21 @@ SCROLLTOP;
 		$this->result = $resultset;		
 		
 		if ($linemax>1)
-		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+		  $out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-          $out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+          $out = $this->list_katalog(0,null,$template,$pz,1);
 		  		  
 		return ($out);	
 	}			
 	
 	//alias
-	public function show_relatives($items=10,$linemax=null,$template=null,$photosize=null,$key=null,$field2check=null,$external_read=null) {
+	public function show_relatives($items=10,$linemax=null,$template=null,$photosize=null,$field2check=null,$key=null) {
 	
-      $ret = show_special_online($items,$linemax,$template,$photosize,$field2check,$key,$external_read);	
+      $ret = show_special_online($items,$linemax,$template,$photosize,$field2check,$key);	
 	  return ($ret);
 	}
 	
-	//??? NOT USED ????
-	/*public function sql_search_relative_titles($mastertitle,$field2check) {
-        $db = GetGlobal('db');	
-		$remarks = 'itmremark';	
-		$sqlout = null;		
-	
-	    $mt = explode(' ',trim($mastertitle));
-        //print_r($mt);
-        $sSQL = "select ".$this->fcode." from products where "; //whole words...
-		  		
-	    foreach ($mt as $i=>$lex) {
-		
-		  if (($la = trim($lex)) && (strlen($la)>4))  {//words max than 4 chars
-		
-		  $ulex = strtoupper($lex);
-		  $dlex = strtolower($lex);
-          
-		  $sqlout[$lex] = "{$this->itmname} like '%$lex%' ";// or $this->itmdescr like '%$lex%' or $remarks like '%$lex%'";// or "; //as is
-		  //$sSQL .= "{$this->itmname} like '% $ulex %' or $this->itmdescr like '% $ulex %' or $remarks like '% $ulex %' or "; //upper case		
-		  //$sSQL .= "{$this->itmname} like '% $dlex %' or $this->itmdescr like '% $dlex %' or $remarks like '% $dlex %'"; //lower case		
-		  
-		  }//if lex
-		} 
-		
-        //print_r($sqlout);  
-		if ($sqlout) {
-		  $sSQL .= implode(' or ',$sqlout);		  
-		  return ($sSQL);
-		}
-		else
-		  return null;
-	} */
-	
-	public function show_relative_sales($items=10,$linemax=null,$template=null,$photosize=null,$id=null,$external_read=null) {
+	public function show_relative_sales($items=10,$linemax=null,$template=null,$photosize=null,$id=null) {
 		$db = GetGlobal('db');	
 		$myid = $id ? $id : GetReq('id');		
 		$pz = $photosize ? $photosize : 1;	  	    
@@ -2333,15 +2304,15 @@ SCROLLTOP;
 				$this->result = $resultset;		
 		
 				if ($linemax>1)
-					$out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+					$out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 				else  	
-					$out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+					$out = $this->list_katalog(0,null,$template,$pz,1);
 			}	 		 		 
 		}
 		return ($out);  
 	}
 	
-	public function show_kategory_items($items=10,$linemax=null,$template=null,$photosize=null, $category=null,$xor=null,$external_read=null) {
+	public function show_kategory_items($items=10,$linemax=null,$template=null,$photosize=null, $category=null,$xor=null) {
         $db = GetGlobal('db');			
 		$mycat = $category ? $category : GetReq('cat');		   
 		$cat = explode($this->sep(),$mycat);		
@@ -2391,9 +2362,9 @@ SCROLLTOP;
 		$this->result = $resultset;	
 		
 		if ($linemax>1) 
-			$out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+			$out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-			$out = $this->list_katalog(0,null,$template,$pz,1,$external_read); 
+			$out = $this->list_katalog(0,null,$template,$pz,1); 
 		  
 		return ($out);	
 	}		
@@ -2425,14 +2396,14 @@ SCROLLTOP;
 		$this->result = $resultset;		
 		
 		if ($linemax>1)
-			$out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager,$external_read);
+			$out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-			$out = $this->list_katalog(0,null,$template,$pz,$nopager,$external_read);
+			$out = $this->list_katalog(0,null,$template,$pz,1);
 		  
 		return ($out);	
 	}	
 	
-	public function show_menu_items($items=10,$linemax=null,$template=null,$photosize=null,$menu=null,$external_read=null) {
+	public function show_menu_items($items=10,$linemax=null,$template=null,$photosize=null,$menu=null) {
         $db = GetGlobal('db');	
 		$pz = $photosize ? $photosize : 1;			
 		
@@ -2452,15 +2423,15 @@ SCROLLTOP;
 			$this->result = $resultset;		
 		
 			if ($linemax>1)
-				$out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager,$external_read);
+				$out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager);
 			else  	
-				$out = $this->list_katalog(0,null,$template,$pz,$nopager,$external_read);		
+				$out = $this->list_katalog(0,null,$template,$pz,$nopager);		
 		}
 		
 		return ($out);
 	}		
 	
-	public function show_last_viewed_items_session($items=10,$linemax=null,$template=null,$photosize=null,$nopager=null,$external_read=null) {
+	public function show_last_viewed_items_session($items=10,$linemax=null,$template=null,$photosize=null,$nopager=null) {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');						
 		$c = $category ? $category : GetReq('cat');	
@@ -2483,18 +2454,18 @@ SCROLLTOP;
 			$this->result = $resultset;	
 
 			if ($linemax>1)
-				$out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager,$external_read);
+				$out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager);
 			else  	
-				$out = $this->list_katalog(0,null,$template,$pz,$nopager,$external_read);
+				$out = $this->list_katalog(0,null,$template,$pz,$nopager);
 		}
 		
 		return ($out);				
 	}	
 	
 	//alias
-	public function show_last_viewed_items($items=10,$linemax=null,$template=null,$photosize=null,$nopager=null,$external_read=null) {
+	public function show_last_viewed_items($items=10,$linemax=null,$template=null,$photosize=null,$nopager=null) {
 		
-		return $this->show_last_viewed_items_session($items,$linemax,$template,$photosize,$nopager,$external_read);
+		return $this->show_last_viewed_items_session($items,$linemax,$template,$photosize,$nopager);
 	}	
 	
 	public function show_last_edited_items($items=10,$linemax=null,$template=null,$photosize=null,$nopager=null) {	
@@ -2538,15 +2509,15 @@ SCROLLTOP;
 		$this->result = $resultset;		 
 		 
 		if ($linemax>1)
-			$out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager,$external_read);
+			$out = $this->list_katalog_table($linemax,null,$template,$pz,$nopager);
 		else  	
-			$out = $this->list_katalog(0,null,$template,$pz,$nopager,$external_read);
+			$out = $this->list_katalog(0,null,$template,$pz,$nopager);
 		  
 		return ($out);			 
 	}	
 
 	//for sitemap call
-	public function show_sitemap_items($items=10,$linemax=null,$template=null,$photosize=null,$category=null,$external_read=null) {
+	public function show_sitemap_items($items=10,$linemax=null,$template=null,$photosize=null,$category=null) {
         $db = GetGlobal('db');		
 		$mycat = $category ? $category : GetReq('cat');	   
 		$cat = explode($this->sep(),$mycat);		
@@ -2565,9 +2536,9 @@ SCROLLTOP;
 		$this->result = $resultset;	
 		
 		if ($linemax>1) 
-			$out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+			$out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		else  	
-			$out = $this->list_katalog(0,null,$template,$pz,1,$external_read); 
+			$out = $this->list_katalog(0,null,$template,$pz,1); 
 		  
 		return ($out);	
 	}		
@@ -2663,7 +2634,7 @@ SCROLLTOP;
 		}  									
 	}
 	
-	public function read_item_weight($itemsarray=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function read_item_weight($items=10,$linemax=null,$template=null,$photosize=null,$itemsarray=null) {
         $db = GetGlobal('db');						
 		$pz = $photosize ? $photosize : 1;	
 		if (!$itemsarray) return;		
@@ -2687,9 +2658,9 @@ SCROLLTOP;
 		$this->result = $resultset;	
 		
 		if ($linemax>1)
-			$out = $this->list_katalog_table($linemax,null,$template,$pz,1,$external_read);
+			$out = $this->list_katalog_table($linemax,null,$template,$pz,1);
 		elseif ($linemax==1)  	
-			$out = $this->list_katalog(0,null,$template,$pz,1,$external_read);
+			$out = $this->list_katalog(0,null,$template,$pz,1);
 		else {//return val
 			foreach ($this->result as $n=>$rec) 
 				$out[$rec[$this->fcode]] = floatval($rec['weight']);
@@ -3771,7 +3742,10 @@ EOF;
 		$fb = explode('/', $this->siteFb); 
 		$fbaddr = array_pop($fb); //get last token
 		
-		$fbid = _v('cmslogin.facebook_id');
+		if (defined('SHLOGIN_DPC'))
+			$fbid = _v('shlogin.facebook_id');
+		else
+			$fbid = _v('cmslogin.facebook_id');
 		
 		$ret = <<<EOF
 		

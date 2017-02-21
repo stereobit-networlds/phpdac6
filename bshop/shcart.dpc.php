@@ -388,6 +388,8 @@ class shcart extends storebuffer {
 			
 			case "addtocart"     : 	$p = $this->addtocart();
 									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN1', getlocal()));
+									
+									$this->jsBrowser();
 									break;					 	
 									
 			case "removefromcart": 	$p = $this->remove(); 
@@ -395,6 +397,8 @@ class shcart extends storebuffer {
 									$this->status = 0;
 
 									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN2', getlocal()));	
+									
+									$this->jsBrowser();
 									break;
 									
 			case "clearcart"     : 	$this->clear(); 
@@ -402,6 +406,8 @@ class shcart extends storebuffer {
 									$this->status = 0;
 
 									$this->jsDialog(localize('_BLN3', getlocal()), localize('_CART', getlocal()));	
+									
+									$this->jsBrowser();
 									break;	
 									
 			case "loadcart"      : 	$this->loadcart(); 
@@ -409,12 +415,16 @@ class shcart extends storebuffer {
 									$this->status = 0; 
 									
 									$this->jsDialog(localize('_BLN1', getlocal()), localize('_CART', getlocal()));
+									
+									$this->jsBrowser();
 									break;			  
 								 
 			case $this->recalc   :
 			case 'calc'          : 	//for auto select and calc reason
 									SetSessionParam('cartstatus',0); 
 									$this->recalculate(); 
+									
+									$this->jsBrowser();
 									break;	  
 	  
 			case "sship"         :	break; //echo GetReq('czone'),'>'; 
@@ -434,7 +444,9 @@ class shcart extends storebuffer {
 										$goto = $oncancel;
 										header("Location: http://".$goto); 
 										exit;
-									}  
+									}
+
+									$this->jsBrowser();		
 									break;								 
 						
 			case _lc('shcart',27,1):
@@ -451,6 +463,8 @@ class shcart extends storebuffer {
 										$this->loopcartdata = $this->loopcart();
 										$this->looptotals = $this->foot();
 									}  
+									
+									$this->jsBrowser();
 									break;
 			case 'cart-order'    :
 			case $this->order    : 	SetSessionParam('cartstatus',2); 
@@ -459,6 +473,8 @@ class shcart extends storebuffer {
 									$this->calcShipping();
 									$this->loopcartdata = $this->loopcart();
 									$this->looptotals = $this->foot();
+									
+									$this->jsBrowser();
 									break;
 			case 'cart-submit'   :						 
 			case $this->submit2  : 
@@ -482,9 +498,13 @@ class shcart extends storebuffer {
 									}
 									$msg = $this->fastpick ? localize('_FASTPICKON',getlocal()) : localize('_FASTPICKOFF',getlocal());
 									$this->jsDialog($msg, localize('_CART', getlocal()));									
+									
+									$this->jsBrowser();
 			case 'viewcart'      :						  
 			default              : 	$this->loopcartdata = $this->loopcart();
 									$this->looptotals = $this->foot();
+									
+									$this->jsBrowser();
 
 		}     
     }
@@ -515,10 +535,97 @@ class shcart extends storebuffer {
 									break;
 		          
 			default          	:	$out = $this->todo ? $this->todolist() : $this->cartview();
-       }
+        }
 
-	   return ($out);
+	    return ($out);
     }
+	
+	protected function jsBrowser() {
+		
+        if (iniload('JAVASCRIPT')) {
+	   
+			switch ($this->status) {
+				case 3      :   $code = $this->jsStatus3(); break;
+				case 2      :   $code = $this->jsStatus2(); break;
+				case 1      :   $code = $this->jsStatus1(); break;
+				case 0      :
+				default 	:	$code = $this->jsStatus0();
+			}		
+		   
+		    if ($code) {
+				$js = new jscript;	
+				$js->load_js($code,null,1);		
+				unset ($js);
+			}
+	    }	
+	}	
+	
+	//cart view
+	protected function jsStatus0() {
+		   
+		if ($addtocart = GetReq('a')) {
+			$cartstr = explode(';', $addtocart);
+			$urlstr = "&id=" . $cartstr[0];
+		}
+		else
+			$urlstr = ($cat = GetReq('cat')) ? "&cat=" . $cat : "&id=cart0";
+		
+		$code = "
+$(document).ready(function () {		
+	gotoTop('cart-page');	
+	
+	$(window).scroll(function() { 
+	
+		if (agentDiv('cart-page')) {
+			$.ajax({ url: 'jsdialog.php?t=jsdcode{$urlstr}&div=cart-page', cache: false, success: function(jsdialog){
+				eval(jsdialog);		
+			}})	
+		}	
+	});			
+});	
+";
+		
+		$code.= $this->js_compute_qty();	
+		$code.= $this->js_guest_registration();
+		return ($code);
+	}
+	
+	//cart-checkout or login page
+	protected function jsStatus1() {
+		$code = "
+$(document).ready(function () {		
+	gotoTop('cart-page');	
+	
+	$(window).scroll(function() { 
+	
+		if (agentDiv('cart-page')) {
+			$.ajax({ url: 'jsdialog.php?t=jsdcode&id=cart1&div=cart-page', cache: false, success: function(jsdialog){
+				eval(jsdialog);		
+			}})	
+		}	
+	});	
+});	
+";		
+		return ($code);
+	}
+
+	protected function jsStatus2() {
+		$code = "
+$(document).ready(function () {		
+	gotoTop('cart-page');	
+});	
+";		
+		return ($code);		
+	}
+
+	protected function jsStatus3() {
+		$code = "
+$(document).ready(function () {		
+	gotoTop('cart-page');	
+});	
+";		
+		return ($code);			
+	}	
 	
 	protected function dispatch_pay_engines() {
 		$payway = strtoupper(trim(GetSessionParam('payway')));//override 	
@@ -623,6 +730,12 @@ function preselqty(id,step,limit)
   else if ((step>0) && (presel<limit))qty = presel + Number(step);
   else qty = presel;  
 }
+";	
+		return $out;
+    }
+	
+	protected function js_addtocart() {
+		$out = "	
 function addtocart(id,cartdetails)
 {
   var preselqty = Number(document.getElementById(id).value);
@@ -644,11 +757,6 @@ function addtocart(id,cartdetails)
 		$ajaxurl = seturl("t=");
 		
 		$code = <<<EOF
-/*$('#guestregister').click(function() { 
-	email = $('#guestemail').val();
-	alert('data:'+email);
-});
-*/
 function guestreg()
 {
 	var emailReg = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;	
@@ -685,11 +793,10 @@ EOF;
 	}
 	
 	protected function javascript() {
-	
+
 		if (iniload('JAVASCRIPT')) {
 			
-			$code = $this->js_compute_qty();	
-			$code.= $this->js_guest_registration();
+			$code = $this->js_addtocart();	
 			
 			$js = new jscript;	
 			$js->load_js($code,"",1);			   
@@ -1673,7 +1780,10 @@ EOF;
 		$country = GetParam('country');
 		
 		//register and login (save customer details or deliv address of existing user)
-		$loggedin = _m("cmslogin.do_guest_login use $email+$name+$address+$postcode+$country");
+		if (defined('SHLOGIN_DPC'))
+			$loggedin = _m("shlogin.do_guest_login use $email+$name+$address+$postcode+$country");
+		else	
+			$loggedin = _m("cmslogin.do_guest_login use $email+$name+$address+$postcode+$country");
 		
 		if ($loggedin) { 	
 			
@@ -3104,7 +3214,9 @@ EOF;
 		 
 		switch ($this->todo) {
 
-			case 'loginorregister' :if (defined('CMSLOGIN_DPC')) 
+			case 'loginorregister' :if (defined('SHLOGIN_DPC')) 
+										$a = _m("shlogin.quickform use +viewcart+shcart>cartview+status+1");  
+									else
 										$a = _m("cmslogin.quickform use +viewcart+shcart>cartview+status+1");  
 
 									if (defined('SHUSERS_DPC')) 
@@ -3681,7 +3793,7 @@ EOF;
 	    $bc = self::$myf_button_class;
 	   
 	    if (($image) && (is_readable($path."/images/".$image.".png"))) {
-			$imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
+			$imglink = "<a href=\"$link\" title='$title'><img alt='$title' src='images/".$image.".png'/></a>";
 		}
 	   
 		if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
@@ -3694,7 +3806,10 @@ EOF;
 			return ($imglink);
 	
 		//else button	
-		if ($link)
+		$ret = "<a class=\"$bc\" href=\"$link\">" . $title . "</a>";
+		return ($ret);
+		
+		/*if ($link)
 			$ret = "<a href=\"$link\">";
 		  
 		$ret .= "<input type=\"button\" class=\"".$bc."\" value=\"".$title."\" />";
@@ -3702,7 +3817,7 @@ EOF;
 		if ($link)
 			$ret .= "</a>";	   
 		  
-		return ($ret);
+		return ($ret);*/
 	}
 	
 	protected function replace_cartchars($string, $reverse=false) {

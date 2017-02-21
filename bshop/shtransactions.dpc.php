@@ -409,12 +409,14 @@ class shtransactions extends transactions {
 		$UserName = GetGlobal('UserName');	   
 	   
 		if (!$UserName) {
-			if (defined('CMSLOGIN_DPC')) {
-				_m("cmslogin.login_javascript"); 	 
-				$out = _m("cmslogin.quickform use +transview+shtransactions>viewTransactions");		   
+			if (defined('SHLOGIN_DPC')) {
+				_m("shlogin.login_javascript"); 	 
+				$out = _m("shlogin.quickform use +transview+shtransactions>viewTransactions");		   
 			}  
-			elseif (defined('SHLOGIN_DPC')) 
-				$out = _m("shlogin.quickform use +transview+shtransactions>viewTransactions");
+			else {
+				_m("cmslogin.login_javascript"); 
+				$out = _m("cmslogin.quickform use +transview+shtransactions>viewTransactions");
+			}	
 			//else
 				//$out = ("You must be logged in to view this page.");
 		   
