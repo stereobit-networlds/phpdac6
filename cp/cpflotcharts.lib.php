@@ -231,6 +231,7 @@ class cpflotcharts {
 	    $month = GetParam('month') ? GetParam('month') : date('m');	
 
 		$cpGet = _v('rcpmenu.cpGet');	
+		$noBots = _m('rccontrolpanel.avoidBotsSQL use HTTP_USER_AGENT+1');		
 			
         if ($id = _m("cmsrt.getRealItemCode use " . $cpGet['id'])) {
 			
@@ -241,7 +242,8 @@ class cpflotcharts {
 			
 			//stats (item)
 			//$sSQL = "select count(id) as hits,year,month from stats where tid='$id' " . $timeins . " group by year, month order by year, month";
-			$sSQL = "select count(id) as hits, DAY(date) as day from stats where tid='$id' " . $timeins . " group by DAY(date) order by DAY(date)";
+			$noBots = _m('rccontrolpanel.avoidBotsSQL use HTTP_USER_AGENT+1');
+			$sSQL = "select count(id) as hits, DAY(date) as day from stats where $noBots tid='$id' " . $timeins . " group by DAY(date) order by DAY(date)";
 			$res = $db->Execute($sSQL,2);
 			//echo $sSQL;
             $this->make_chart_data('Visits0', $res, array('day','hits'), $item, array('day',$diff));
@@ -256,7 +258,7 @@ class cpflotcharts {
 				
 			  $csepcat = isset($csepcat) ? $csepcat . $csep . $cat : $cat; 	
 			  //echo $csepcat . '<br/>'; 	
-			  $sSQL = "select count(id) as hits, DAY(date) as day from stats where attr1='". $csepcat ."' ". $timeins ." group by DAY(date) order by DAY(date)";
+			  $sSQL = "select count(id) as hits, DAY(date) as day from stats where $noBots attr1='". $csepcat ."' ". $timeins ." group by DAY(date) order by DAY(date)";
 			  $res = $db->Execute($sSQL,2);
 			  
 			  $ix = $i + 1;
@@ -288,7 +290,7 @@ class cpflotcharts {
 			foreach ($categories as $i=>$cat) {
 				
 			  $csepcat = isset($csepcat) ? $csepcat . $csep . $cat : $cat; 		
-			  $sSQL = "select count(id) as hits, DAY(date) as day from stats where attr1='". $csepcat ."' ". $timeins ." group by DAY(date) order by DAY(date)";
+			  $sSQL = "select count(id) as hits, DAY(date) as day from stats where $noBots attr1='". $csepcat ."' ". $timeins ." group by DAY(date) order by DAY(date)";
 			  $res = $db->Execute($sSQL,2);
 			  
 			  $this->make_chart_data('Visits'.$i, $res, array('day','hits'), _m("cmsrt.replace_spchars use $cat+1"), array('day',$diff));	
@@ -327,7 +329,7 @@ class cpflotcharts {
 			$timeins = $this->sqlDateRange('date', true, false, $diff);			
 			
 			//where tid IS NOT NULL 
-			$sSQL = "select count(id) as hits, DAY(date) as day from stats where " . $timeins . " group by DAY(date) order by DAY(date)";
+			$sSQL = "select count(id) as hits, DAY(date) as day from stats where $noBots $timeins group by DAY(date) order by DAY(date)";
 			$res = $db->Execute($sSQL,2);
 			//echo $sSQL;
             $this->make_chart_data('Visits0', $res, array('day','hits'), localize('_hits',getlocal()), array('day',$diff));
@@ -997,6 +999,7 @@ FLOTMAIL;
     protected function flot_crm_stats() {
 		$db = GetGlobal('db'); 	
 		$diff = 0;	
+		$noBots = _m('rccontrolpanel.avoidBotsSQL use HTTP_USER_AGENT+1');		
 
         if ($cid = urldecode(GetReq('id'))) { //email
 		
@@ -1122,6 +1125,7 @@ FLOTCRM;
 		$db = GetGlobal('db'); 	
 		//$cpGet = _v('rcpmenu.cpGet');	
 		$diff = 0;	
+		$noBots = _m('rccontrolpanel.avoidBotsSQL use HTTP_USER_AGENT+1');		
 
         if ($id = urldecode(GetReq('id'))) { //item id
 		//if ($id = _m("cmsrt.getRealItemCode use " . $cpGet['id'])) {
@@ -1132,7 +1136,7 @@ FLOTCRM;
 			//stats
 			$diff = 0;
 			$timeins = $this->sqlDateRange('date', true, true, $diff);
-			$sSQL = "select count(id) as hits, DAY(date) as day from stats where tid='$code' " . $timeins . " group by DAY(date) order by DAY(date)";
+			$sSQL = "select count(id) as hits, DAY(date) as day from stats where tid='$code' $noBots $timeins group by DAY(date) order by DAY(date)";
 			$res = $db->Execute($sSQL,2);
             $this->make_chart_data('Visits0', $res, array('day','hits'), $item, array('day',$diff));
 

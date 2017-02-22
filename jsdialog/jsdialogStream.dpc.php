@@ -14,12 +14,12 @@ GetGlobal('controller')->get_parent('JSDIALOG_DPC','JSDIALOGSTREAM_DPC');
 
 $__EVENTS['JSDIALOGSTREAM_DPC'][4]='jsdialogstream';
 $__EVENTS['JSDIALOGSTREAM_DPC'][5]='jsdtime';
-//$__EVENTS['JSDIALOGSTREAM_DPC'][6]='jsno';
+$__EVENTS['JSDIALOGSTREAM_DPC'][6]='jsdcode';
 //$__EVENTS['JSDIALOGSTREAM_DPC'][7]='jscancel';
 
 $__ACTIONS['JSDIALOGSTREAM_DPC'][4]='jsdialogstream';
 $__ACTIONS['JSDIALOGSTREAM_DPC'][5]='jsdtime';
-//$__ACTIONS['JSDIALOGSTREAM_DPC'][6]='jsno';
+$__ACTIONS['JSDIALOGSTREAM_DPC'][6]='jsdcode';
 //$__ACTIONS['JSDIALOGSTREAM_DPC'][7]='jscancel';
 
 $__LOCALE['JSDIALOGSTREAM_DPC'][0]='JSDIALOGSTREAM_DPC;JS dialog stream;JS dialog stream';
@@ -32,31 +32,32 @@ class jsdialogStream extends jsdialog {
 	var $title, $prpath, $urlpath, $url;
 	var $dajaxpage;
 
-    function __construct() {
+    public function __construct() {
 		
 		jsdialog::__construct();
 
 		//load personilized scenario...	
 	}
 	
-    function event($event=null) {
+    public function event($event=null) {
 		
 	    switch ($event) {
-		 
-		    case 'jsdtime'        : die($this->respond()); 
-	                                break;
-
+			
+			case 'jsdcode'        : break; //bypass, exec code at .php body
+		    case 'jsdtime'        : die($this->respond()); break;
 			case 'jsdialogstream' :
-			default               :	jsdialog::event($event);						  
-									
+			default               :	jsdialog::event($event);						  						
         }
     }	
 
-    function action($action=null)  { 
+    public function action($action=null)  { 
 	
 	    switch ($action) {
-		   case 'jsdialogstream'  : 
-		   default                : $out = jsdialog::action($action);
+			
+			case 'jsdcode'         : $out = null; break; //bypass, exec code at .php body	
+			case 'jsdtime'         : $out = null; break;
+			case 'jsdialogstream'  : 
+			default                : $out = jsdialog::action($action);
 		}			 
 
 	    return ($out);

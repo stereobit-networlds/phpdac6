@@ -519,6 +519,14 @@ $(document).ready(function () {
 	protected function jsItem() {
 
 		$js = "
+function jsShowPhoto(name) {		
+	new $.Zebra_Dialog(
+		'<img src=\"{$this->thubpath_large}{$this->realID}.jpg\" />', {
+		'width': 800,
+		'position' : ['top + 20','center'],
+		'title':  name});		
+}
+		
 $(document).ready(function () {
 	gotoTop('{$this->realID}');
 	$(window).scroll(function() { 
@@ -1677,8 +1685,11 @@ JSFILTER;
 			 
             $tokens[] = $rec[$lastprice];	
             $tokens[] = $this->httpurl . $this->get_photo_url($rec[$item_code],1);
-            $tokens[] = $this->httpurl . $this->get_photo_url($rec[$item_code],2);			 
-			$tokens[] = $this->httpurl . $this->get_photo_url($rec[$item_code],3);			 
+            $tokens[] = $this->httpurl . $this->get_photo_url($rec[$item_code],2);	
+			/* big pic */		
+			$tokens[] = defined('JSDIALOG_DPC') ? 
+							"javascript:jsShowPhoto('{$rec[$this->itmname]}');" :
+							$this->httpurl . $this->get_photo_url($rec[$item_code],3);			 
 			 
 			$tokens[] = $rec['weight'];  //20
 			$tokens[] = $rec['volume'];

@@ -456,6 +456,18 @@ $(document).ready(function(){
 		return $js;
 	}	   	
 	
+	public function avoidBotsSQL($field=null, $useand=false) {
+		$agent = $a ? $a : $this->useragent;
+		$avoiduseragent = _m("cms.arrayload use CMS+httpUserAgentsToAvoid");
+		
+		if (!empty($avoiduseragent))
+			$sSQL = " $field NOT REGEXP '" . implode("|", $avoiduseragent) . "'";
+
+		$sSQL.= ($sSQL && $useand) ? " and " : null;			
+		
+		return ($sSQL);
+	}	
+	
     public function select_timeline($template=null, $year=null, $month=null) {
 		$t = GetReq('t') ? GetReq('t') : 'cp';
 		$year = GetParam('year') ? GetParam('year') : date('Y'); 

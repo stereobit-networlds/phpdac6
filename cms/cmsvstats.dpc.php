@@ -17,6 +17,12 @@ $__DPCATTR['CMSVSTATS_DPC']['cmsvstats'] = 'cmsvstats,1,0,0,0,0,0,0,0,0,0,0,1';
 
 $__LOCALE['CMSVSTATS_DPC'][0]='CMSVSTATS_DPC;Statistics;Στατιστική';
 
+
+//http://stackoverflow.com/questions/12257584/how-to-detect-fake-users-crawlers-and-curl
+
+//test
+//SELECT count(tid), count(attr1),`HTTP_USER_AGENT` FROM `stats` where `HTTP_USER_AGENT` NOT LIKE 'Mozilla%' group by `HTTP_USER_AGENT` order by date DESC LIMIT 5000
+
 class cmsvstats  {
 
     var $title;
@@ -147,7 +153,7 @@ EOF;
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
 
-		if (GetSessionParam('ADMIN'))
+		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
 			return false;
 
 	    $currentdate = time();
@@ -183,7 +189,7 @@ EOF;
 	public function update_category_statistics($cat, $tid=null, $iref=null) {
         $db = GetGlobal('db'); 
 		
-		if (GetSessionParam('ADMIN'))
+		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
 			return false;		
 
         $UserName = GetGlobal('UserName');		
@@ -225,7 +231,7 @@ EOF;
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
 		
-		if (GetSessionParam('ADMIN'))
+		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
 			return false;		
 	
 	    $currentdate = time();
@@ -260,7 +266,7 @@ EOF;
 	public function update_action_statistics($id, $user=null) {
         $db = GetGlobal('db'); 
 		
-		if (GetSessionParam('ADMIN'))
+		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
 			return false;		
 
 	    $currentdate = time();	
@@ -291,7 +297,7 @@ EOF;
 	public function update_event_statistics($id, $user=null) {
         $db = GetGlobal('db'); 
 		
-		if (GetSessionParam('ADMIN'))
+		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
 			return false;		
 
 	    $currentdate = time();	
@@ -318,6 +324,22 @@ EOF;
 		else 
 			return false;		
 	}	
+	
+	public function isBot($a=null) {
+		$agent = $a ? $a : $_SERVER['HTTP_USER_AGENT'];
+		
+		if (
+			/*(stristr($agent, 'bingbot')) ||
+			(stristr($agent, 'hrefsbot')) ||
+			(stristr($agent, 'googlebot')) ||
+			(stristr($agent, 'skroutzbot')) ||
+			(stristr($agent, 'bot')) ||*/
+			(stristr($agent, 'facebookexternal')) 
+			)	 
+			return true;
+		
+		return false;	
+	}
 };
 }
 ?>

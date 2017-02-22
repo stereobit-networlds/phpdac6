@@ -514,11 +514,12 @@ class rcmessages  {
 		$t = $template ? _m("cmsrt.select_template use $template+1") : null;		
 		
         $timein = _m('rccontrolpanel.sqlDateRange use date+1+1');			
+		$noBots = _m('rccontrolpanel.avoidBotsSQL use HTTP_USER_AGENT+1');
 		
-		$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where attr1='$cat' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc LIMIT 100";
+		$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where $noBots attr1='$cat' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc LIMIT 100";
         $result = $db->Execute($sSQL);
 		if (!$result) return ;
-		
+
 		foreach ($result as $i=>$rec) {
 			$rtokens = array();
 			$visitor = $this->checkmail($rec['attr3']) ? $rec['attr3'] : 
@@ -556,9 +557,11 @@ class rcmessages  {
 		$t = $template ? _m("cmsrt.select_template use $template+1") : null;
 		
         $timein = _m('rccontrolpanel.sqlDateRange use date+1+1');			
-		
-		$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where tid='$id' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc LIMIT 100";
+		$noBots = _m('rccontrolpanel.avoidBotsSQL use HTTP_USER_AGENT+1');
+			
+		$sSQL = "SELECT id,date,DATE_FORMAT(date, '%d-%m-%Y') as day,attr2,attr3,REMOTE_ADDR FROM stats where $noBots tid='$id' $timein group by day,attr2,attr3,REMOTE_ADDR order by id desc LIMIT 100";
         $result = $db->Execute($sSQL);
+
 		if (!$result) return ;
 		
 		foreach ($result as $i=>$rec) {

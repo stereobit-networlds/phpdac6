@@ -155,20 +155,19 @@ class cmsagent {
 		return ($respond);
 	}
 	
-	protected function getHistory($save=false) {
-		$db = GetGlobal('db'); 
-		
-		if (($save==true) && ($hist = GetSessionParam('_SQLHIST')))
-			return true;
+	protected function getHistory($save=false, $daysback=null) {		
+		if (($save==true) && ($history = GetSessionParam('_AGNHIST')))
+			return (unserialize($history));
 	
-		$UserName = GetGlobal('UserName');	
-		$finduser = $UserName ? 
-					"attr2=" . $db->qstr(decode($UserName)) . ' OR attr3=' . $db->qstr(decode($UserName)) : 
-					"attr2=" . $db->qstr(session_id());	
+		$db = GetGlobal('db'); 	
+		$user = GetGlobal('UserName') ? decode(GetGlobal('UserName')) : null;	
 		
 		//can be based on ip and date before today		
-		$sSQL = "SELECT tid,attr1,REMOTE_ADDR,HTTP_USER_AGENT,REFERER from stats ";
-		$sSQL.= "where $finduser ORDER BY DATE DESC LIMIT 100";
+		$sSQL = "SELECT tid,attr1,REMOTE_ADDR,HTTP_USER_AGENT,REFERER from stats where ";
+		$sSQL.= $user ? " attr2=" . $db->qstr($user) . ' OR attr3=' . $db->qstr($user) : 
+					    " attr2=" . $db->qstr(session_id());
+		$sSQL.= $daysback ? " and DATE(date) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL $daysback DAY ) )" : null;					
+		$sSQL.= " ORDER BY DATE DESC LIMIT 100";
 		$res = $db->Execute($sSQL); 
 	
 		if (!empty($res->fields)) {
@@ -199,20 +198,39 @@ class cmsagent {
 			}
 		}
 		
-		if ($save==true) { //save in ses
-			$story = array($this->menus,
-						   $this->searches, /*...*/	
-						  );
-			SetSessionParam('_SQLHIST', serialize($story));
-		}
+		
+		$story = array('menus'=>$this->menus, 
+						'searches'=>$this->searches, 
+						'filters'=>$this->filters,
+						'actions'=>$this->actions, 
+						'events'=>$this->events,
+						'pages'=>$this->pages,
+						'items'=>$this->items,
+						'categories'=>$this->categories,
+						'cartin'=>$this->cartin,
+						'cartout'=>$this->cartout,
+						'checkout'=>$this->checkout,
+						'user'=>array($user, $rec['REMOTE_ADDR'], $rec['HTTP_USER_AGENT'], $rec['REFERER'])
+					  );
+						  
+		if ($save==true)  //save in ses
+			SetSessionParam('_AGNHIST', serialize($story));
 
-		return true;	
+		return ($story);	
 	}	
 	
 
 	public function isBot($a=null) {
 		$agent = $a ? $a : $this->useragent;
+		$avoiduseragent = _m("cms.arrayload use CMS+httpUserAgentsToAvoid");
 		
+		if (!empty($avoiduseragent)) {
+			foreach ($avoiduseragent as $i=>$ua) {
+				if (stristr($agent, 'bingbot')) 
+					return true;
+			}
+		}
+		/*
 		if (
 			(stristr($agent, 'bingbot')) ||
 			(stristr($agent, 'hrefsbot')) ||
@@ -221,7 +239,7 @@ class cmsagent {
 			(stristr($agent, 'bot')) ||
 			(stristr($agent, 'facebookexternal')) 
 			)	 
-			return true;
+			return true;*/
 		
 		return false;	
 	}	

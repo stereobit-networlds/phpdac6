@@ -256,9 +256,9 @@ function load_js($jscript,$ver='',$istext=0,$additional_text=null,$nopath=null) 
 	$fjspathname = ($nopath) ? $jscript : $this->url . $this->jspath . $jscript;
 
     if (!$istext) 
-		$js = "<script src=\"$fjspathname\" language=\"JavaScript$ver\" type=\"text/javascript\"></script>\n";
+		$js = "<script type=\"text/javascript\" src=\"$fjspathname\"></script>\n";
 	else 
-		$js = "<script language=\"JavaScript$ver\">\n" . $this->obfuscate($jscript) . "</script>\n";
+		$js = "<script type=\"text/javascript\">\n" . $this->obfuscate($jscript) . "</script>\n";
 	
 	//test purposes (used to pass css text!!!!!!!!)		 
 	$js .= $additional_text;		 

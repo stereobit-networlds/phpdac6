@@ -6,7 +6,7 @@ define("RCLOYALTY_DPC",true);
 
 $__DPC['RCLOYALTY_DPC'] = 'rcloyalty';
 
-$__EVENTS['RCLOYALTY_DPC'][0]='cplotalty';
+$__EVENTS['RCLOYALTY_DPC'][0]='cployalty';
 $__EVENTS['RCLOYALTY_DPC'][1]='cpitemqfetch';
 $__EVENTS['RCLOYALTY_DPC'][2]='cpitemqform';
 $__EVENTS['RCLOYALTY_DPC'][3]='cpitemqdetail';

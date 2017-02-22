@@ -72,7 +72,7 @@ class rcshop {
 	var $ckeditver, $url;	
 	var $appname, $urkRedir, $isHostedApp; 
 	
-	function __construct() {
+	public function __construct() {
 
 		$this->path = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');
@@ -89,7 +89,7 @@ class rcshop {
 		$this->isHostedApp = remote_paramload('RCBULKMAIL','hostedapp', $this->path);		
 	}
 
-    function event($event=null) {
+    public function event($event=null) {
 	
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 		if ($login!='yes') return null;		 
@@ -114,7 +114,7 @@ class rcshop {
 			
     }   
 	
-    function action($action=null) {
+    public function action($action=null) {
 		
 		$login = $GLOBALS['LOGIN'] ? $GLOBALS['LOGIN'] : $_SESSION['LOGIN'];
 		if ($login!='yes') return null;	
@@ -178,17 +178,7 @@ class rcshop {
 	protected function loadsubframe($ajaxdiv=null, $module=null, $init=false) {
 		$module = $module ? $module : GetParam('module'); //module details
 		$id = GetParam('id'); //form id
-		/*
-		if ($module=='formtest') {
-			_m("crmrt.renderTemplate use ". $id . "++_test.html");
-			if (is_readable($this->urlpath . '/_test.html')) {
-				$frame = "<iframe src =\"{$this->url}/_test.html\" width=\"100%\" height=\"460px\"><p>Your browser does not support iframes</p></iframe>";    
-				return ($frame);
-			}
-		}
-		else
-			@unlink($this->urlpath . '/_test.html'); //erase test file
-		*/
+
 		if ($init)
 			$bodyurl = seturl("t=cpshopformdetail&iframe=1&id=$id&module=$module");
 		else
@@ -412,17 +402,16 @@ class rcshop {
 	
 	    if (defined('MYGRID_DPC')) {	
 			
-			$code = _m("cmsrt.getmapf use code");
-			
+			$code = _m("cmsrt.getmapf use code");			
 			$cpGet = _v('rcpmenu.cpGet');
-			$cat = $cpGet['cat'];
-			if ($cat) {
-				$csep = _v('rccontrolpanel.cseparator');
+
+			if ($cat = $cpGet['cat']) {
+				$csep = _v('cmsrt.cseparator');
 				$categories = explode($csep, $cat);			
 				foreach ($categories as $i=>$c) 
                    $ds[] = 'cat'.strval($i)."='"._m("cmsrt.replace_spchars use $c+1") . "'";  
 				
-				$dSQL = implode (' AND ', $ds);
+				$dSQL = (!empty($ds)) ? implode (' AND ', $ds) : " $code=0";
 			}	
 			else
 				$dSQL = " $code=0"; //dummy, null grid					

@@ -137,7 +137,7 @@ class cmsrt extends cms  {
 	public function event($event=null) {
 	    $param1 = GetGlobal('param1');	
 
-		$this->refresh_page_js();
+		//$this->refresh_page_js(); 
 		
 		switch ($event) {
 			case 'frontpage'    : die($this->frontpage()); break;
@@ -147,8 +147,11 @@ class cmsrt extends cms  {
 			case 'included_1'   :
 		    case 'included_0'   : die($this->included()); break;				
 			
-			case "lang"  		: $this->selected_lan = GetParam("langsel"); break;
-			case "setlanguage"  : $this->selected_lan = $param1; break;
+			case "lang"  		: $this->selected_lan = GetParam("langsel"); 
+								  $this->refresh_page_js();
+								  break;
+			case "setlanguage"  : $this->selected_lan = $param1; 
+								  break;
 			
 			case "index"        : 
 			default 			: //$this->read_list();
@@ -190,6 +193,7 @@ class cmsrt extends cms  {
 			
            	$code = $this->createcookie_js();				
 			$code.= $this->javascript_ajax();
+			$code.= $this->scrolltop_javascript_code();			
 			
 			if (!strstr($_ENV["SCRIPT_FILENAME"],'/cp/')) {/*CP script, jquery conflict with jqgrid*/	
 
@@ -206,6 +210,51 @@ class cmsrt extends cms  {
      	}	  
 	}		
 
+	protected function scrolltop_javascript_code() {
+
+		$jscroll = <<<SCROLLTOP
+function ajaxCall(url,div,goto) {
+	$.ajax({ url: url, cache: false, success: function(html){
+		$('#'+div).html(html);
+		echo.render(); /*-- lazy loading render --*/  
+	}})
+	if (goto) gotoTop(div);  
+}				
+function atEnd() {
+	if ($(window).scrollTop() + $(window).height() == $(document).height()) 
+			return 1; else return 0;
+}
+function atDiv(div,offset=0,margin=100) {
+	if (!div) return atEnd();
+	if (($(window).scrollTop() >= $('#'+div).offset().top + offset) &&
+		($(window).scrollTop() <= $('#'+div).offset().top + offset + margin))
+		return 1; else return 0;	
+}
+function gotoTop(div) {
+	var sw = (div) ? $('#'+div).offset().top : 0;
+	$("html, body").animate({ scrollTop: sw }, "slow");
+	return true;
+};
+
+SCROLLTOP;
+/*
+echo.init({
+  offset: 100,
+  throttle: 250,	
+  unload: false ,	
+  callback: function(element, op) {
+    if(op === 'load') {
+      element.classList.add('loaded');
+    } else {
+      element.classList.remove('loaded');
+    }
+	console.log(element+' '+op);
+  }
+});
+*/
+		return ($jscroll);
+    }		
+	
     protected function refresh_page_js() {
    
 		if (iniload('JAVASCRIPT')) {
@@ -218,7 +267,7 @@ class cmsrt extends cms  {
     } 	
 	
     //refresh to set lang
-    function js_refresh() {
+    protected function js_refresh() {
    
 		$ret = " 
 function neu() {top.frames.location.href = \"index.php\";} 
@@ -273,7 +322,7 @@ goBack();
 		return (null);
 	}		
 	
-	protected function list_katalog($imageclick=null,$cmd=null,$template=null,$no_additional_info=null,$external_read=null,$photosize=null,$resources=null,$nopager=null,$nolinemax=null,$originfunction=null) {
+	protected function list_katalog($linemax=null,$cmd=null,$template=null,$photosize=null,$nopager=null) {
 	    $cmd = $cmd ? $cmd : 'klist';
 	    $pz = $photosize ? $photosize : 2;	//3	   
 	    $xdist = $this->imagex ? $this->imagex:100;
@@ -282,8 +331,8 @@ goBack();
 	    $page = GetReq('page') ? GetReq('page') : 0;
 	    $ogImage = array();
 
-	    $mylinemax = ($nolinemax) ? null : $this->linemax;   
-	    $myimageclick = 1; // : $imageclick;
+	    $mylinemax = ($linemax) ? $linemax : $this->linemax;   
+	    $myimageclick = 1; 
   
         $t = $template ? $template : 'fpkatalog';
 	    $mytemplate = $this->select_template($t);			      
@@ -327,7 +376,7 @@ goBack();
 				$tokens[] = $rec['itmremark'];
 				$tokens[] = number_format(floatval($price),$this->decimals,',','.');
 				$tokens[] = $cart;
-				$tokens[] = _m('shkatalogmedia.show_availability use '. $rec['ypoloipo1'],1);
+				$tokens[] = null;//_m('shkatalogmedia.show_availability use '. $rec['ypoloipo1'],1);
 				$tokens[] = $details;
 				$tokens[] = $detailink;
 				$tokens[] = $itemcode;
@@ -341,7 +390,7 @@ goBack();
 				$tokens[] = $rec[$this->itmname]; 
 			  
                 $tokens[] = null;   
-				$tokens[] = _m('shkatalogmedia.item_has_discount use '. $itemcode,1);
+				$tokens[] = null;//_m('shkatalogmedia.item_has_discount use '. $itemcode,1);
 				$tokens[] = "addcart/$itemcode;$itemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty/$cat/$page/";				  
 		      
 				/*date time */
@@ -386,7 +435,7 @@ goBack();
 	/*homepage call*/
 	/*public function frontpage() {
 		$this->read_list();
-		return $this->list_katalog(0,'klist','fpkatalog',null,null,3);
+		return $this->list_katalog(0,'klist','fpkatalog',3);
 	}*/
 	
 	/*ajax loading call after first loading*/
@@ -399,7 +448,7 @@ goBack();
 		}
 
 		$this->read_list($param);
-		$out = $this->list_katalog($param,'klist','fpkatalog',null,null,3);
+		$out = $this->list_katalog(0,'klist','fpkatalog',3);
 		
 		return ($out);		
 	}	
@@ -1000,7 +1049,7 @@ EOF;
 
 	
 	
-	public function show_lastincat($ascdesc=null,$category=null,$items=10,$linemax=null,$imgx=100,$imgy=75,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null) {
+	public function show_lastincat($items=10,$linemax=null,$template=null,$photosize=null,$category=null,$ascdesc=null) {
         $db = GetGlobal('db');		
 		$mycat = $category ? $category : GetReq('cat');	   		
 		$pz = $photosize ? $photosize : 1;		
@@ -1028,17 +1077,14 @@ EOF;
 		$sSQL .= $items ? " LIMIT " . $items : null;			
 
 	    $resultset = $db->Execute($sSQL,2);	
-		$this->result = $resultset;
+		$this->result = $resultset;	
 		
-		$xmax = $imgx ? $imgx : 100;
-		$ymax = $imgy ? $imgy : 75;		
-		
-        $out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,null,null,$linemax,"");
+        $out = $this->list_katalog(null,null,$template,$pz);
 		  
 		return ($out);	
 	}		
 	
-	public function show_menu_items($menu=null,$items=10,$linemax=null,$imgx=100,$imgy=null,$imageclick=0,$template=null,$ainfo=null,$external_read=null,$photosize=null,$xor=null) {
+	public function show_menu_items($items=10,$linemax=null,$template=null,$photosize=null,$menu=null) {
         $db = GetGlobal('db');	
 		$pz = $photosize ? $photosize : 1;	
 		
@@ -1055,15 +1101,12 @@ EOF;
 			$sSQL .= $items ? " LIMIT " . $items : null;	
 
 			$resultset = $db->Execute($sSQL);	
-			$this->result = $resultset;
-		
-			$xmax = $imgx ? $imgx : 100;
-			$ymax = $imgy ? $imgy : null;// free y 75;		
+			$this->result = $resultset;	
 		
 			if ($linemax>1)
-				$out = $this->list_katalog_table($linemax,$xmax,$ymax,$imageclick,0,null,$template,$ainfo,null,$external_read,$pz,$resources,$nopager,null,$notable);
+				$out = $this->list_katalog_table($linemax,null,$template,$pz);
 			else  	
-				$out = $this->list_katalog(null,null,$template,$ainfo,$external_read,$pz,$nopager,$linemax);		
+				$out = $this->list_katalog(null,null,$template,$pz);		
 		}
 		
 		return ($out);

@@ -27,7 +27,7 @@ class jsdialog {
 	var $title, $prpath, $urlpath, $url;
 	var $dajaxpage;
 
-    function __construct() {
+    public function __construct() {
 		
 		$this->prpath = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');	
@@ -38,7 +38,7 @@ class jsdialog {
 		$this->dajaxpage = 'jsdialog.php';
 	}
 	
-    function event($event=null) {
+    public function event($event=null) {
 		
 	    switch ($event) {
 		 
@@ -57,7 +57,7 @@ class jsdialog {
         }
     }	
 
-    function action($action=null)  { 
+    public function action($action=null)  { 
 	
 	    switch ($action) {
 		   case 'jsdialog'       : 
