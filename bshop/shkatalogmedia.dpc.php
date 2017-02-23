@@ -528,7 +528,7 @@ $(document).ready(function () {
 function jsShowPhoto(name) {		
 	new $.Zebra_Dialog(
 		'<img src=\"{$this->thubpath_large}{$this->realID}.jpg\" />', {
-		'width': 800,
+		'width': 800, 'height': 600,
 		'position' : ['top + 20','center'],
 		'title':  name});		
 }

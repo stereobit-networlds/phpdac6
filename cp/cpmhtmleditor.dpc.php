@@ -54,8 +54,10 @@ class cpmhtmleditor {
 		self::$staticpath = paramload('SHELL','urlpath');
 	
 		$this->urlpath = paramload('SHELL','urlpath');		  
-		$this->urlbase = paramload('SHELL','urlbase');	
-		
+		//$this->urlbase = paramload('SHELL','urlbase');	
+		$this->urlbase = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$this->urlbase.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
+				
 		$this->prpath = paramload('SHELL','prpath');
 		$tmpl_path = remote_paramload('FRONTHTMLPAGE','template',$this->prpath);
 		$this->template = $tmpl_path ? $tmpl_path .'/' : null;
@@ -164,9 +166,9 @@ class cpmhtmleditor {
 		if (isset($_POST['htmltext'])) {
 			if ($id) { //db	 
 				$mytext = str_replace(' use','&nbsp;use',str_replace('+','<SYN>',$this->unload_spath(str_replace("'","\'",$_POST['htmltext'])))); //!!!!!!!!!!!!!!
-				//$save = GetGlobal('controller')->calldpc_method("rcitems.add_attachment_data use ".$id ."+". $type."+".$mytext);		 
+				//$save = _m("rcitems.add_attachment_data use ".$id ."+". $type."+".$mytext);		 
 				$save = $this->add_attachment_data($id,$type,$mytext);
-				//$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+				//$mydata = _m("rcitems.has_attachment2db use " . $id ."+$type+1"); 
 				$mydata = $this->has_attachment2db($id,$type,1);
 			}
 			else {//text
@@ -176,7 +178,7 @@ class cpmhtmleditor {
 		}
 		else {//load
 			if ($id) { //db
-				//$mydata = GetGlobal('controller')->calldpc_method("rcitems.has_attachment2db use " . $id ."+$type+1"); 
+				//$mydata = _m("rcitems.has_attachment2db use " . $id ."+$type+1"); 
 				$mydata = $this->has_attachment2db($id,$type,1);
 			}
 			else {//text

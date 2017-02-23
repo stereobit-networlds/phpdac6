@@ -483,8 +483,17 @@ class rcpmenu {
 	
 		$ret = str_replace(array('@','^','www.','|','_CAT','_ID','_SCAT'),
 		                   array('?t=',$csep,'http://www.','?',$cat, $id, $selected_cat),$link);
-						   	
-		return ($ret);
+		/*				   	
+		$sslMenu = _m('cmsrt.paramload use CMS+ssl');					
+		//$httpurl = _v('cms.httpurl');
+		$httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
+		//if no ssl param then use standard protocol (https jqgid licence)
+		$sslMenu ? $httpurl .'/cp/' : 'http://' . $_SERVER['HTTP_HOST'] .'/cp/';
+		*/)
+		$sslurl = null;
+		
+		return ($sslurl . $ret);
 	}
 
 	protected function combine_tokens($template_contents,$tokens, $execafter=null) {

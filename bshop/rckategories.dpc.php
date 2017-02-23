@@ -87,8 +87,10 @@ class rckategories extends shkategories {
 		shkategories::__construct();  
 	  	
 		$this->title = localize('RCKATEGORIES_DPC',getlocal());	 
-		$this->urlbase = paramload('SHELL','urlbase').'/';	  
-	
+		//$this->urlbase = paramload('SHELL','urlbase');
+		$this->urlbase = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$this->urlbase.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
+		
 		$csep = remote_paramload('SHKATEGORIES','csep',$this->path); 
 		$this->cseparator = $csep ? $csep : '^';	
 		
@@ -188,11 +190,11 @@ class rckategories extends shkategories {
     }	
 	
 	//call from html
-	public function javascript() {
+	/*public function javascript() {
 		$editurl = seturl("t=cpeditframe&id=");
 		$out = "function edit_cat() { var str = arguments[0]; sndReqArg('$editurl'+str,'editcat');}";		
 		return ($out);
-	}
+	}*/
 	
 	/*not used */
     protected function set_viewable() {
@@ -389,17 +391,17 @@ class rckategories extends shkategories {
 
 		$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
 
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|link|5|".$editlink.'||');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|10|1|");
-	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|10|1|");				
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|10|1|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|10|1|");
-	    GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
+		_m("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");	
+		_m("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|link|5|".$editlink.'||');		
+		_m("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|10|1|");
+	    _m("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|10|1|");				
+		_m("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|10|1|");
+		_m("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|10|1|");
+	    _m("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
+		_m("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
+		_m("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
 		
-		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+		$out .= _m("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 		
 	    return ($out);
 	
@@ -430,16 +432,16 @@ class rckategories extends shkategories {
 
 			$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
 
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|link|5|".$editlink.'||');		
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|10|1|");				
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
-			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+			_m("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");	
+			_m("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|link|5|".$editlink.'||');		
+			_m("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|10|1|");				
+			_m("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
+			_m("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
+			_m("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
+			$out .= _m("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 			return ($out);
 		} 
 		else {
@@ -456,22 +458,22 @@ class rckategories extends shkategories {
 
 			$xsSQL = 'select * from (select '.$myfields . ' from categories) as o';
 
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|1|");	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|5|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat1|".localize('_cat0',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat2|".localize('_cat1',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat3|".localize('_cat2',getlocal())."|10|1|");				
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat4|".localize('_cat3',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat5|".localize('_cat4',getlocal())."|10|1|");			
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}1|".localize('_cat0',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|10|1|");				
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|10|1|");
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
-			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+			_m("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|1|");	
+			_m("mygrid.column use grid2+ctgid|".localize('_ctgid',getlocal())."|5|1|");
+			_m("mygrid.column use grid2+cat1|".localize('_cat0',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+cat2|".localize('_cat1',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+cat3|".localize('_cat2',getlocal())."|10|1|");				
+			_m("mygrid.column use grid2+cat4|".localize('_cat3',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+cat5|".localize('_cat4',getlocal())."|10|1|");			
+			_m("mygrid.column use grid2+cat{$lan}1|".localize('_cat0',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+cat{$lan}2|".localize('_cat1',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+cat{$lan}3|".localize('_cat2',getlocal())."|10|1|");				
+			_m("mygrid.column use grid2+cat{$lan}4|".localize('_cat3',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+cat{$lan}5|".localize('_cat4',getlocal())."|10|1|");
+			_m("mygrid.column use grid2+active|".localize('_active',getlocal()).'|boolean|1');	
+			_m("mygrid.column use grid2+search|".localize('_search',getlocal()).'|boolean|1');	
+			_m("mygrid.column use grid2+view|".localize('_view',getlocal()).'|boolean|1');	
+			$out .= _m("mygrid.grid use grid2+categories+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 			return ($out);
 		}
 	
@@ -624,20 +626,20 @@ class rckategories extends shkategories {
 			//echo $myfields,'-',$mytitles;
 		
 			$gocat = GetReq('cat'); 
-			GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+50+100+0+0');
-			GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+50+10+id');	  	   
-			//GetGlobal('controller')->calldpc_method("dataforms.setformgoto use PHPDAC:rcupload.editmode_upload_files:".localize('_OK',getlocal()));
-			//GetGlobal('controller')->calldpc_method('dataforms.setformtemplate use cpitemsadd'); //use template		   
+			_m('dataforms.setform use myform+myform+5+5+50+100+0+0');
+			_m('dataforms.setformadv use 0+0+50+10+id');	  	   
+			//_m("dataforms.setformgoto use PHPDAC:rcupload.editmode_upload_files:".localize('_OK',getlocal()));
+			//_m('dataforms.setformtemplate use cpitemsadd'); //use template		   
 				 				 
 			$post = 	localize('_POST',getlocal());
 			$clear = localize('_CLEAR',getlocal());
-			$out .= GetGlobal('controller')->calldpc_method("dataforms.getform use insert.categories+dataformsinsert&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++dummy+dummy");	  
+			$out .= _m("dataforms.getform use insert.categories+dataformsinsert&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++dummy+dummy");	  
 		 
 		} //id
 	   
 		if (defined('MYGRID_DPC')) {
            $xsSQL = "select id,ctgid,ctgoutline,ctgoutlnorder,cat1,cat2,cat3,cat4,cat5,cat01,cat02,cat03,cat04,cat05,cat11,cat12,cat13,cat14,cat15 from categories ";
-		   $out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+categories+$xsSQL+d++id+1+1+20+400");
+		   $out .= _m("mygrid.grid use grid1+categories+$xsSQL+d++id+1+1+20+400");
 		}		   
 	   
 		return ($out);  
@@ -749,12 +751,12 @@ class rckategories extends shkategories {
 	    
 		$gocat = GetReq('cat');
 	   
-		GetGlobal('controller')->calldpc_method('dataforms.setform use myform+myform+5+5+50+100+0+0');
-		GetGlobal('controller')->calldpc_method('dataforms.setformadv use 0+0+50+10');	  
+		_m('dataforms.setform use myform+myform+5+5+50+100+0+0');
+		_m('dataforms.setformadv use 0+0+50+10');	  
 				 	                    
 		$post = 	localize('_POST',getlocal());
 		$clear = localize('_CLEAR',getlocal());
-		$out .= GetGlobal('controller')->calldpc_method("dataforms.getform use update.categories+dataformsupdate&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++id=$id+dummy");	  
+		$out .= _m("dataforms.getform use update.categories+dataformsupdate&cat=$gocat&editmode=$editmode+$post+$clear+$myfields+$mytitles++id=$id+dummy");	  
 	   	
 		return ($out);		 
     }
@@ -778,11 +780,11 @@ class rckategories extends shkategories {
 		foreach ($cats as $c) {
 		   if (trim($c)) {//$cat = str_replace(' ','_',$c);
 		       $cat = $this->replace_spchars($c);
-		       $editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&editmode=1&id=".$cat;
+		       $editurl = $this->urlbase . "/cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&id=".$cat;
                $frame .= "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    		   
 		   }
 		}   
-		//$editurl = $this->urlbase . "cp/cpmhtmleditor.php?htmlfile=&type=.html&editmode=1&id=".$cat;
+		//$editurl = $this->urlbase . "/cp/cpmhtmleditor.php?htmlfile=&type=.html&id=".$cat;
 		//$frame = "<iframe src =\"$editurl\" width=\"100%\" height=\"750px\"><p>Your browser does not support iframes</p></iframe>";    
 
 		if ($ajaxdiv)
@@ -802,13 +804,13 @@ class rckategories extends shkategories {
 
 		if ($cat) {//preselected cat
 			//$editurl = seturl("t=cpeditcat&editmode=1&cat=".$cat);//$id;
-			$editurl = $this->urlbase . "cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&editmode=1&id=".$cat;
+			$editurl = $this->urlbase . "/cp/cpmhtmleditor.php?t=cpmhtmleditor&iframe=1&htmlfile=&type=.html&id=".$cat;
 			$init_content = "<iframe src =\"$editurl\" width=\"100%\" height=\"350px\"><p>Your browser does not support iframes</p></iframe>";    
 		}
 		else
 			$init_content = null; 
 	 
-		//$rd .= GetGlobal('controller')->calldpc_method("ajax.setajaxdiv use editcat+".$init_content);	   	   
+		//$rd .= _m("ajax.setajaxdiv use editcat+".$init_content);	   	   
 		$rd .= "<div id=\"editcat\">".$init_content . "</div>";	   	   
 	   		
 		return ($rd);			     

@@ -193,20 +193,15 @@ class rctransport {
 		
         $xsSQL = "SELECT * from (select id,active,code,title,lantitle,cost,groupid,cartsum,orderid from ptransports) o ";		   
 		   							
-		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
-		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
-		//_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|");
-		//_m("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
-		_m("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");	
-		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|10|"."javascript:editform(\"{code}\");".'||');	
-		_m("mygrid.column use grid1+lantitle|".localize('_lantitle',getlocal())."|5|1|");		
-		//_m("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");			
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");				
+		_m("mygrid.column use grid1+code|".localize('_code',getlocal())."|link|5|"."javascript:editform(\"{code}\");".'||');
+		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|10|1|");	
+		_m("mygrid.column use grid1+lantitle|".localize('_lantitle',getlocal())."|5|1|");			
 		_m("mygrid.column use grid1+cost|".localize('_cost',getlocal())."|5|1|");		
 		_m("mygrid.column use grid1+groupid|".localize('_groupid',getlocal())."|5|1|");
 		_m("mygrid.column use grid1+cartsum|".localize('_cartsum',getlocal())."|5|1|");					
-		//_m("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|1|");
-		//_m("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|1|");
-		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|5|1|");//."|link|2|"."javascript:deleteform(\"{code5}\");".'||');
+		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|5|1|");
 
 		$out = _m("mygrid.grid use grid1+ptransports+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
@@ -225,18 +220,17 @@ class rctransport {
 		
         $xsSQL = "SELECT * from (select id,active,datein,title,address,area,zip,country,cost,transports,orderid from ptransrules) o ";		   
 		   							
-		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");
 		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
 		_m("mygrid.column use grid1+datein|".localize('_date',getlocal())."|5|0|");		
-		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|5|1|");//."|link|10|"."javascript:editform(\"{code}\");".'||');	
+		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|5|1|");
 		_m("mygrid.column use grid1+address|".localize('_address',getlocal())."|5|1|");		
 		_m("mygrid.column use grid1+area|".localize('_area',getlocal())."|5|1|");			
 		_m("mygrid.column use grid1+zip|".localize('_zip',getlocal())."|5|1|");		
 		_m("mygrid.column use grid1+country|".localize('_country',getlocal())."|5|1|");
 		_m("mygrid.column use grid1+cost|".localize('_cost',getlocal())."|5|1|");					
-		//_m("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|1|");
 		_m("mygrid.column use grid1+transports|".localize('_transports',getlocal())."|5|1|");
-		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|5|1|");//."|link|2|"."javascript:deleteform(\"{code5}\");".'||');
+		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|5|1|");
 
 		$out = _m("mygrid.grid use grid1+ptransrules+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		

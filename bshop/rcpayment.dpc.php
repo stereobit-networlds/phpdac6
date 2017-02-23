@@ -194,20 +194,16 @@ class rcpayment {
 		
         $xsSQL = "SELECT * from (select id,active,code,title,lantitle,cost,tcodes,orderid from ppayments) o ";		   
 		   							
-		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
-		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");		
-		//_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|");
-		//_m("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
-		_m("mygrid.column use grid1+code|".localize('_code',getlocal())."|5|1|");	
-		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|link|10|"."javascript:editform(\"{code}\");".'||');	
+		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");
+		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|boolean|1|");			
+		_m("mygrid.column use grid1+code|".localize('_code',getlocal())."|link|5|"."javascript:editform(\"{code}\");".'||');
+		_m("mygrid.column use grid1+title|".localize('_title',getlocal())."|10|1|");	
 		_m("mygrid.column use grid1+lantitle|".localize('_lantitle',getlocal())."|5|1|");		
 		_m("mygrid.column use grid1+tcodes|".localize('_tcodes',getlocal())."|10|1|");			
 		_m("mygrid.column use grid1+cost|".localize('_cost',getlocal())."|5|1|");		
 		//_m("mygrid.column use grid1+groupid|".localize('_groupid',getlocal())."|5|1|");
 		//_m("mygrid.column use grid1+cartsum|".localize('_cartsum',getlocal())."|5|1|");					
-		//_m("mygrid.column use grid1+size|".localize('_size',getlocal())."|5|1|");
-		//_m("mygrid.column use grid1+color|".localize('_color',getlocal())."|5|1|");
-		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|5|1|");//."|link|2|"."javascript:deleteform(\"{code5}\");".'||');
+		_m("mygrid.column use grid1+orderid|".localize('_orderid',getlocal())."|5|1|");
 
 		$out = _m("mygrid.grid use grid1+ppayments+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 		
