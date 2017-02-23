@@ -61,9 +61,7 @@ class cmsform {
 	var $recaptcha_public_key, $recaptcha_private_key, $userecaptcha;
 	
 	var $cntform, $cntformtitles, $checkuserasterisk, $asterisk;
-	var $country_id, $post, $msg;
-	
-	var $tmpl_path, $tmpl_name;	
+	var $country_id, $post, $msg, $ssl;
 	
 	public function __construct() {
 		
@@ -91,12 +89,9 @@ class cmsform {
 		
 		$this->country_id = remote_paramload('CMSFORM','countryid',$this->path);
 		
+		$this->ssl = (isset($_SERVER['HTTPS'])) ? true : false;
 		$this->post = false;
-		$this->msg = null;		
-
-	    $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	    $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	   
-	   		
+		$this->msg = null;			
 	}
 	
     //overwriten
@@ -183,7 +178,7 @@ class cmsform {
 			$myform = _m('cmsrt._ct use cform');
 	   
 			if (defined('RECAPTCHA_DPC')) {
-				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	
+				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	
 				$myform = str_replace('<@RECAPTCHA@>',$recaptcha,$myform);		   
 			}
 	 

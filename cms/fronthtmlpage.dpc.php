@@ -51,9 +51,13 @@ class fronthtmlpage {
 		$this->htmlpage = paramload('FRONTHTMLPAGE','path') ? paramload('FRONTHTMLPAGE','path') : 'html'; 
 		$this->urlpath = paramload('SHELL','urlpath');			
 		$this->urltitle = paramload('SHELL','urltitle');					
-		
+		/*
 		$murl = arrayload('SHELL','ip');
         $this->url = (!empty($murl)) ? $murl[0] : paramload('SHELL','urlbase'); 			
+		*/
+		$this->url = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$this->url.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
+				
 		$this->infolder = paramload('ID','hostinpath');		
 		
 		//check if html file name based on action exist
@@ -70,17 +74,17 @@ class fronthtmlpage {
 			$htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file;
 		//echo '>',$htmlfile;
 		
-		if (!is_readable($htmlfile)) {//check for parent file
+		/*if (!is_readable($htmlfile)) {//check for parent file
 
 			$cphtmlpath = "/../cp/$this->htmlpage/";
 			$parentfile = $this->urlpath . $cphtmlpath . $file; 
 			if (is_readable($parentfile)) 
 				$this->htmlfile = $parentfile;
 		}
-		else {
+		else {*/
 			$cphtmlpath = $this->infolder . '/cp/' . $this->htmlpage;		
 			$this->htmlfile = $htmlfile;//$this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file; 
-		}  
+		//}  
 		
 		//echo '>',$this->htmlfile;
 
@@ -172,11 +176,21 @@ class fronthtmlpage {
 			return ($htmldata);
 		}
 	  
-		if (is_file($this->htmlfile)) { 
+		if (is_file($this->htmlfile)) {
+		
 			$htmdata = file_get_contents($this->htmlfile);
 			$this->process_javascript($htmdata, $pageout);		
 			$ret = $this->process_commands($pageout);
 			$ret = str_replace("<?". $this->argument ."?>",$data,$ret);
+			
+			$tokens[] = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';	
+			$tokens[] = (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];
+			$tokens[] = $_SERVER['REQUEST_URI'];
+			$tokens[] = 'utf-8';			
+			
+			//print_r($tokens);
+			$tags = array('$0$','$1$','$2$', '$3$');		
+			$ret = str_replace($tags, $tokens, $ret);	
 		  		
 			if (!$this->session_use_cookie)
 				$ret = $this->propagate_session($ret); 
@@ -251,7 +265,7 @@ class fronthtmlpage {
 	}	
 
 	public function get_admin_link($notheme=false) {	
-
+	
 		if (is_array($_GET)) {
 		  foreach ($_GET as $i=>$t) {
 		    if ( ($i!='action') && ($i!='turl') ) 
@@ -269,10 +283,10 @@ class fronthtmlpage {
 		$icon_file = $this->urlpath.'/'.$this->infolder.'/images/editpage.png';
 		
         SetSessionParam('authverify',1);		
-				
+			
 		$ret .= $notheme ? seturl("modify=".urlencode(base64_encode('stereobit'))."&turl=".$target_url.$mynewquery):
 		                   seturl("modify=".urlencode(base64_encode('stereobit'))."&turl=".$target_url.$mynewquery,$this->editmode_point); 	
-		
+			
 		return ($ret);
 	}
 	
@@ -302,10 +316,10 @@ class fronthtmlpage {
 
 		if ($editmode_point) {
 			$img = "<img src='$editmode_point' />";
-			$ret = "<a href='cp.php?turl=".$target_url ."' alt='e-Enterprise'>".$editmode_point."</a>"; 	
+			$ret = "<a href='$httpurl/cp.php?turl=".$target_url ."' alt='e-Enterprise'>".$editmode_point."</a>"; 	
 		}	
 		else
-            $ret = "cp.php?turl=".$target_url; 	
+            $ret = "$httpurl/cp.php?turl=".$target_url; 	
 		
 		return ($ret);
 	}	
@@ -335,7 +349,7 @@ class fronthtmlpage {
 		@file_put_contents('cp/.turl',urlencode(base64_encode($turl)),LOCK_EX);
 		@file_put_contents('cp/.htmlfile',urlencode(base64_encode($file2edit)),LOCK_EX);
 		
-		$mainframe_url = 'http://' . $this->url . str_replace('.','#',$this->anel);	
+		$mainframe_url = $this->url . str_replace('.','#',$this->anel);	
 			
 		$fp = <<<EOF
 <html>
@@ -383,7 +397,7 @@ EOF;
 			if (($this->argument) && ($this->edithtml)) {
 				//edit html...
 				if ($is_cpwizard)
-				    $mainframe_url = "http://".$this->url;
+				    $mainframe_url = $this->url;
 				elseif ($is_cropwiz)	
 					$mainframe_url = $turl; //$this->url;					
 				else
@@ -391,7 +405,7 @@ EOF;
 		    }						 
 			else {
                 if ($is_cpwizard)
-				    $mainframe_url = "http://".$this->url;
+				    $mainframe_url = $this->url;
 				elseif ($is_cropwiz)	
 					$mainframe_url = $turl; 					
 				else			
@@ -400,7 +414,7 @@ EOF;
 		}  
 		else { 
 		    if ($is_cpwizard)
-				$mainframe_url = "http://".$this->url;
+				$mainframe_url = $this->url;
 			else
 			    $mainframe_url = $is_oversized ?  $this->self_addspace(true) : $this->cpfp($turl);
 	  	}
@@ -435,20 +449,20 @@ EOF;
 	
 	protected function cpfp($turl) {
 			
-		$ret = 	"cp/cp.php?turl=" . urlencode(base64_encode($turl));		
+		$ret = 	$this->url . "/cp/cp.php?turl=" . urlencode(base64_encode($turl));		
 		return ($ret);
 	}	
 	
 	protected function cpeditor($file) {
 			
-		$ret = 	"cp/cpmhtmleditor.php?htmlfile=" . urlencode(base64_encode($file));		
+		$ret = 	$this->url . "/cp/cpmhtmleditor.php?htmlfile=" . urlencode(base64_encode($file));		
 		return ($ret);
 	}		
 	
 	protected function self_addspace($retlink=false) {
 			
-		$ret = $retlink ? 'cp/cp.php?t=cpupgrade&wf=addspace' :
-			              "<a href='cp/cp.php?t=cpupgrade&wf=addspace'>" . localize('_addspace', getlocal())."</a>";				
+		$ret = $retlink ? $this->url . '/cp/cp.php?t=cpupgrade&wf=addspace' :
+			              "<a href='{$this->url}/cp/cp.php?t=cpupgrade&wf=addspace'>" . localize('_addspace', getlocal())."</a>";				
 		return ($ret);
 	}	
 	
@@ -598,7 +612,7 @@ EOF;
 	public function php_self($usedomain=null) {
 	
 	    if ($usedomain)
-		  $ret = $this->url;
+		  $ret = $this->url . '/';
 		  
 	    $ret .= $_SERVER['REQUEST_URI'];// ? '/'.$_SERVER['REQUEST_URI'] : null;
 		return urldecode($ret);
@@ -849,12 +863,13 @@ EOF;
 	
 	public function baseURL($uri=null){
 	    $request_uri = $uri ? $uri : $_SERVER['REQUEST_URI'];
-		return sprintf(
+		/*return sprintf(
 			"%s://%s%s",
 			isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
 			$_SERVER['SERVER_NAME'],
-			dirname($request_uri) /*$_SERVER['REQUEST_URI']*/
-		);
+			dirname($request_uri) 
+		);*/
+		return ($this->url);
 	}
 
     public function mcRoot($tmplname=null) {

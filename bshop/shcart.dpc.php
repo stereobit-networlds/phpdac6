@@ -225,17 +225,21 @@ class shcart extends storebuffer {
 		self::$staticpath = paramload('SHELL','urlpath');
 		$this->path = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');
-		$this->inpath = paramload('ID','hostinpath'); 
-		$this->baseurl = paramload('SHELL','urlbase');
+		$this->inpath = paramload('ID','hostinpath');
 		
-		$murl = arrayload('SHELL','ip');
-		$this->url = $this->murl[0];			
+		//$this->baseurl = paramload('SHELL','urlbase');
+		$this->baseurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$this->baseurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];
+		//$murl = arrayload('SHELL','ip');
+		$this->url = $this->baseurl; //$this->murl[0];			
 		
+		/*
 		$senc = arrayload('SHELL','char_set'); 
 		$c = getlocal() ? getlocal() : 0; 
 		$this->s_enc = $senc[$c]; 
 		$this->t_enc = paramload('SHELL','charset');	 		
-
+        */
+		
 		$this->minus = remote_paramload('SHCART','minusqtyclass',$this->path);
 		$this->plus = remote_paramload('SHCART','plusqtyclass',$this->path);
 		$this->removeitemclass = remote_paramload('SHCART','removeitemclass',$this->path);		

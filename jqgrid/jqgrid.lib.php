@@ -124,11 +124,11 @@ class jq_grid {
 	
 	function javascript() {
 		
-		//return null; //DISABLED (loaded at html level)
+		return null; //DISABLED (loaded at html level)
 		//****
 		//if not loaded then error when add or delete row	
 		//****
- 
+ /*
 		if (iniload('JAVASCRIPT')) {
 			$js = new jscript;		   
 
@@ -138,7 +138,7 @@ class jq_grid {
 			$js->load_js('themes/jquery-ui.custom.min.js');//html load
 			unset ($js);
 		}
-			
+*/			
 	}	
 	
 	function javascript_OLD() {

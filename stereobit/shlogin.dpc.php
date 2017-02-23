@@ -85,7 +85,7 @@ class shlogin {
 	var $login_goto,$logout_goto;  
 	var $urlpath, $inpath;
 	var $recaptcha_public_key, $recaptcha_private_key; 
-	var $resetPass, $isLogin;	
+	var $resetPass, $isLogin, $ssl;	
 	var $tmpl_path, $tmpl_name;	
 	
 	static $staticpath;
@@ -153,6 +153,7 @@ class shlogin {
 	   
 	   $this->resetPass = false;
 	   $this->isLogin = false;
+	   $this->ssl = (isset($_SERVER['HTTPS'])) ? true : false;
 	   
        //timezone	   
        date_default_timezone_set('Europe/Athens');		   
@@ -419,7 +420,7 @@ class shlogin {
 	   //if ((!$currentuser) || ($this->formerror!=localize('ok2',getlocal()))) {
 	   
 	     if (defined('RECAPTCHA_DPC')) {
-	         $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+	         $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 	     }	
 		 if ($tokensout) {
 		   $tokens[] = $this->formerror;
@@ -480,7 +481,7 @@ class shlogin {
 	
 	public function recaptcha() {
 		if (defined('RECAPTCHA_DPC')) {
-	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 			return $recaptcha;
 	    }	
 		return false;

@@ -29,7 +29,7 @@ class stlogin extends shlogin {
 	var $inactive_on_register;	
 	var $tmpl_path, $tmpl_name;	
 	
-	var $recaptcha;
+	var $recaptcha, $ssl;
 
 	function __construct() {
 		
@@ -52,6 +52,7 @@ class stlogin extends shlogin {
 	   
 	   $rp = remote_paramload('STLOGIN','recaptcha',$this->path);
 	   $this->recaptcha = $rp ? true : false;
+	   $this->ssl = (isset($_SERVER['HTTPS'])) ? true : false;
 	   
        //timezone	   
        date_default_timezone_set('Europe/Athens');		   
@@ -526,7 +527,7 @@ class stlogin extends shlogin {
 	
 	public function recaptcha() {
 		if ((defined('RECAPTCHA_DPC')) && ($this->recaptcha==true)) {
-	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 			return $recaptcha;
 	    }	
 		return false;

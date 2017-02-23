@@ -17,14 +17,18 @@ class jscript {
 
 	function jscript() { 
 	    //encoding
-        $char_set  = arrayload('SHELL','char_set');	  
+        /*$char_set  = arrayload('SHELL','char_set');	  
         $charset  = paramload('SHELL','charset');	  		
 	    if (($charset=='utf-8') || ($charset=='utf8'))
 	      $this->encoding = 'utf8';//must be utf8 not utf-8
 	    else  
 	      $this->encoding = $char_set[getlocal()];
-			
-		$this->url = paramload('SHELL','urlbase');
+		*/
+		$this->encoding = 'utf-8';
+		//$this->url = paramload('SHELL','urlbase');
+		$this->url = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$this->url.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
+		
 			
 		//js path
 		$jp = paramload('JAVASCRIPT','jspath');

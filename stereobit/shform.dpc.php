@@ -50,7 +50,7 @@ class shform {
 	
 	var $formerror, $cc;
 	
-	var $recaptcha;
+	var $recaptcha, $ssl;
 	
 	function __construct() {
 		
@@ -89,6 +89,8 @@ class shform {
 
 	    $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
 	    $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	   
+		
+		$this->ssl = (isset($_SERVER['HTTPS'])) ? true : false;
 	   		
 	}
 	
@@ -280,7 +282,7 @@ class shform {
 	
 	public function recaptcha() {
 		if ((defined('RECAPTCHA_DPC')) && ($this->recaptcha==true)) {
-	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 			return $recaptcha;
 	    }	
 		return false;

@@ -87,7 +87,7 @@ class cmslogin {
     var $after_goto, $dpc_after_goto,$login_successfull;
 	var $login_goto, $logout_goto;  
 	var $recaptcha_public_key, $recaptcha_private_key;	
-	var $resetPass, $isLogin, $isRegistered;
+	var $resetPass, $isLogin, $isRegistered, $ssl;
 	var $inactive_on_register, $recaptcha, $appname, $mtrackimg;	
 	var $facebook_id, $facebook_key, $facebook_userId, $facebook, $fbhash;		
 
@@ -130,7 +130,8 @@ class cmslogin {
 	    $this->resetPass = false;
 	    $this->isLogin = false;
 	    $this->isRegistered = false;
-	    $this->formerror = null;		
+	    $this->formerror = null;
+		$this->ssl = (isset($_SERVER['HTTPS'])) ? true : false;		
 	
 	    //facebook login 
 	    $this->facebook_id = remote_paramload('CMSLOGIN','fbid',$this->path); 
@@ -463,7 +464,7 @@ window.setTimeout('neu()',10);
 	        $url = _m('cmsrt.seturl use t=shremember');
 			
 			if (defined('RECAPTCHA_DPC')) 
-				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   	   
+				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   	   
          
 			$tokens[] = $this->formerror;
 			$tokens[] = $recaptcha;		    
@@ -487,7 +488,7 @@ window.setTimeout('neu()',10);
         $url = _m('cmsrt.seturl use t=chpass' . $sectoken); 
 	   
 	    if (defined('RECAPTCHA_DPC')) 
-	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 		
 		$tokens[] = $this->formerror;		   
 		$tokens[] = $recaptcha;		   
@@ -1244,7 +1245,7 @@ window.setTimeout('neu()',10);
 
 	public function recaptcha() {
 		if ((defined('RECAPTCHA_DPC')) && ($this->recaptcha==true)) {
-	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 			return $recaptcha;
 	    }	
 		return false;

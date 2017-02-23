@@ -147,15 +147,20 @@ class shkatalogmedia {
 
 		$murl = arrayload('SHELL','ip');
 		$this->url = $murl[0];
-		$this->httpurl = paramload('SHELL','urlbase');  
-
+		//$this->httpurl = paramload('SHELL','urlbase');  
+		$this->httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$this->httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];				
+		
+        /*
 		$char_set  = arrayload('SHELL','char_set');	  
 		$charset  = paramload('SHELL','charset');	  		
 		if (($charset=='utf-8') || ($charset=='utf8'))
 			$this->encoding = 'utf8';//must be utf8 not utf-8
 		else  
 			$this->encoding = $char_set[$this->lan]; 		
-
+        */
+		$this->encoding = 'utf-8';
+		
 		$this->imgpath = $this->inpath . '/images/uphotos/';  	  
 		$this->thubpath = $this->inpath . '/images/thub/';
 		$photo_bg = remote_paramload('SHKATALOG','photobgpath',$this->path);		  
@@ -430,8 +435,9 @@ class shkatalogmedia {
 										$out = $this->list_katalog(0,'klist');	
 									break;
 								
-			case 'klist'        : 	if ((GetReq('page')) || (GetReq('asc')) || 
-										(GetReq('order')) || (GetReq('pager'))) { //ajax
+			case 'klist'        : 	if (((GetReq('page')) || (GetReq('asc')) || 
+										(GetReq('order')) || (GetReq('pager'))) &&
+										($this->filterajax )) { //ajax
 										die($this->list_katalog(0,'klist'));
 									}
 									else { //click from categories (no ajax)

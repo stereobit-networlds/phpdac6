@@ -42,7 +42,10 @@ class cms extends fronthtmlpage {
 		$this->userDemoIds = array(5,6,7,8); //8 
 		
 		$this->tpath = $this->htmlpage; //fronthtmlpage
-		$this->httpurl = paramload('SHELL','protocol') . $this->url;	
+		
+		//$this->httpurl = paramload('SHELL','protocol') . $this->url;	
+		$this->httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$this->httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
 
 		$this->session_use_cookie = paramload('SHELL','sessionusecookie');
 		$this->protocol = paramload('SHELL','protocol');
@@ -80,7 +83,8 @@ class cms extends fronthtmlpage {
 		if ($data = $config[$section][$array]) 
 			return(explode(",",$data));
     }
-
+	
+		
     //URL funcs	
 	
 	//page cntrl logic url creator
@@ -108,10 +112,12 @@ class cms extends fronthtmlpage {
 	public function seturl($query=null, $title=null, $jscript=null, $norewrite=null) {   
    
 		//look if ip is in ip pool	
-		$ipool = arrayload('SHELL','ip'); 
+		/*$ipool = arrayload('SHELL','ip'); 
 		$ip = (in_array($_SERVER['HTTP_HOST'],$ipool)) ? $_SERVER['HTTP_HOST'] : $ipool[0]; //default  
   
         $name = $this->activeSSL ? $this->secprotocol . $ip . $this->sslpath : $this->protocol . $ip; 
+		*/
+		$name = $this->httpurl;
                          
 		//mv controller or page controller caller???
 		$xurl = "/" . pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);

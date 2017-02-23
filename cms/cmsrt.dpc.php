@@ -104,7 +104,6 @@ class cmsrt extends cms  {
 		$this->lan_set = arrayload('SHELL','languages');
 		$this->message = remote_paramload('SHLANGS','message',$this->path);	
 		
-		$this->httpurl = paramload('SHELL','urlbase');  		
 		$this->home = localize(paramload('SHELL','rootalias'),getlocal());
 		$this->cat_result = null;
 		

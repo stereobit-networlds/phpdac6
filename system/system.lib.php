@@ -455,44 +455,48 @@ function url($url,$title,$jscript=null) {
 
 
 function seturl($query='',$title='',$ssl=0,$jscript='',$sid=1,$rewrite=null) {
-  $__USERAGENT = GetGlobal('__USERAGENT');   
-  
-  $rewrite = $rewrite?$rewrite:paramload('SHELL','rewrite');
-  $session_use_cookie = paramload('SHELL','sessionusecookie');
-  if ($session_use_cookie) $sid=0;  
-  
-  $subpath = pathinfo($_SERVER['PHP_SELF'],PATHINFO_DIRNAME);  
-  
-  $query_p = explode("|",$query);
+	$__USERAGENT = GetGlobal('__USERAGENT'); 
 
-  if (isset($query_p[1])) {
-    $query = $query_p[1];
-	$subpath = $query_p[0];
-  }	
-  else 
-    $query = $query_p[0];	
- 
-  if ($subpath=="\\") $subpath = null;  
+	$rewrite = $rewrite ? $rewrite : paramload('SHELL','rewrite');
+	$session_use_cookie = paramload('SHELL','sessionusecookie');
+	if ($session_use_cookie) $sid=0;  
   
-  $protocol = paramload('SHELL','protocol');
-  $secprotocol = paramload('SHELL','secureprotocol');  
-  $sslpath  = paramload('SHELL','sslpath');
+	$subpath = pathinfo($_SERVER['PHP_SELF'],PATHINFO_DIRNAME);  
+  
+	$query_p = explode("|",$query);
+
+	if (isset($query_p[1])) {
+		$query = $query_p[1];
+		$subpath = $query_p[0];
+	}	
+	else 
+		$query = $query_p[0];	
+ 
+	if ($subpath=="\\") $subpath = null;  
+  
+/* 
+	$protocol = paramload('SHELL','protocol');
+	$secprotocol = paramload('SHELL','secureprotocol');  
+	$sslpath  = paramload('SHELL','sslpath');
   
 	
     $ipool = arrayload('SHELL','ip'); //print_r($ipool);
     if (in_array($_SERVER['HTTP_HOST'],$ipool)) 
-      $ip = $_SERVER['HTTP_HOST']; //remote user call
+		$ip = $_SERVER['HTTP_HOST']; //remote user call
     else 
-      $ip = $ipool[0]; //default  
+		$ip = $ipool[0]; //default  
   
-                         $activeSSL = paramload('SHELL','ssl');
-                         $encURLparam = paramload('SHELL','encodeurl');  //echo '>>>',$encURLparam,'<<<';
+    $activeSSL = paramload('SHELL','ssl');
+    $encURLparam = paramload('SHELL','encodeurl');  //echo '>>>',$encURLparam,'<<<';
 
-                         if (($activeSSL) && ($ssl)) 
-						   $name = $secprotocol . $ip . $sslpath; 
-                         else 
-						   $name = $protocol . $ip; 
-                         
+    if (($activeSSL) && ($ssl)) 
+	    $name = $secprotocol . $ip . $sslpath; 
+    else 
+	   $name = $protocol . $ip; 
+*/
+	$name = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+	$name.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
+                           
 						 //mv controller or page controller caller???
 						 $xurl = "/".pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);
 
@@ -545,7 +549,7 @@ function seturl($query='',$title='',$ssl=0,$jscript='',$sid=1,$rewrite=null) {
                          if ($title) $out = "<A href=\"" . $url . "\" $jscript>" . $title . "</A>";
                          else $out = $url;
 
-  return ($out);
+	return ($out);
 }
     
 	//page cntrl logic url creator
