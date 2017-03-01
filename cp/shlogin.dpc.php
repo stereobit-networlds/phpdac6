@@ -6,6 +6,9 @@ define("SHLOGIN_DPC",true);
 
 $__DPC['SHLOGIN_DPC'] = 'shlogin';
 
+$a = GetGlobal('controller')->require_dpc('libs/scaptcha.lib.php');
+require_once($a);
+
 $__EVENTS['SHLOGIN_DPC'][0]='shlogin';
 $__EVENTS['SHLOGIN_DPC'][1]='dologin';
 $__EVENTS['SHLOGIN_DPC'][2]='dologout';
@@ -755,7 +758,8 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 		if (defined('RECAPTCHA_DPC')) {
 	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 			return $recaptcha;
-	    }	
+	    }
+		
 		return false;
 	}		
 
@@ -1118,8 +1122,11 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 	   $db = GetGlobal('db');
 	   $u = GetParam("myusername");
 	   $m = GetParam("myemail");  
+	   //$captcha = GetParam("mycaptcha");
 	   
-       //if ($this->valid_recaptcha($norecaptcha)) {	  //<<<
+        //if ($this->valid_recaptcha($norecaptcha)) {	  //<<<
+	    //if (($captcha) && ($captcha==$_SESSION['CAPTCHA'])) {
+		if (true===$this->valid_captcha()) {	
 
 			if ($m) {// && (!$u)) {//mail only -> send username and password
 				$sSQL = "SELECT username, password, notes FROM users WHERE " .
@@ -1160,7 +1167,7 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 			else 	
 				SetGlobal('sFormErr',"OKREMINDER");////$msg);
 		 
-	   //}//recaptcha	       
+	    }//recaptcha	       
 	}
 
 	protected function do_the_captcha() {
@@ -1168,14 +1175,17 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 		//$this->captcha = new captcha();//strlen($this->result),'jpeg',$this->result);
 		//$captcha->sent_header();
 		//echo $captcha;
+		
+		return $this->valid_captcha();
 	}
 
 	protected function show_the_captcha() {
-
+		/*
 	    $result = decode(GetReq('c'));
 		$captcha = new captcha(strlen($result),'jpeg',$result);
 
-		die();
+		die();*/
+		die($this->captchaImage());
 	}
 
 	public function is_logged_in() {
@@ -1408,6 +1418,28 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 			return true;
 		else 
 			return false;		
+	}
+
+	public function captchaImage() {
+		
+		if (defined('SCAPTCHA_DPC')) {
+			$cpc = new scaptcha();
+			$_SESSION['CAPTCHA'] = $cpc->captchaInit();
+			
+			return $cpc->captchaImage();
+		}
+
+		return 'scpatcha is not defined';	
+	}
+
+	protected function valid_captcha($fieldname=null) {
+	    $captcha = $fieldname ? GetParam($fieldname) : GetParam("mycaptcha");		
+	    if (!defined('SCAPTCHA_DPC')) return true;
+
+		if (($captcha) && ($captcha==$_SESSION['CAPTCHA'])) 	
+			return true;
+		
+		return false;
 	}	
 	
 };

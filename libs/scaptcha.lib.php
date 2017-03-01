@@ -4,34 +4,14 @@ define("SCAPTCHA_DPC",true);
 
 $__DPC['SCAPTCHA_DPC'] = 'scaptcha';
 
-if( !function_exists('hex2rgb') ) {
-    function hex2rgb($hex_str, $return_string = false, $separator = ',') {
-        $hex_str = preg_replace("/[^0-9A-Fa-f]/", '', $hex_str); // Gets a proper hex string
-        $rgb_array = array();
-        if( strlen($hex_str) == 6 ) {
-            $color_val = hexdec($hex_str);
-            $rgb_array['r'] = 0xFF & ($color_val >> 0x10);
-            $rgb_array['g'] = 0xFF & ($color_val >> 0x8);
-            $rgb_array['b'] = 0xFF & $color_val;
-        } elseif( strlen($hex_str) == 3 ) {
-            $rgb_array['r'] = hexdec(str_repeat(substr($hex_str, 0, 1), 2));
-            $rgb_array['g'] = hexdec(str_repeat(substr($hex_str, 1, 1), 2));
-            $rgb_array['b'] = hexdec(str_repeat(substr($hex_str, 2, 1), 2));
-        } else {
-            return false;
-        }
-        return $return_string ? implode($separator, $rgb_array) : $rgb_array;
-    }
-}
-
 class scaptcha {
 	
 	var $bg_path, $font_path, $captcha_config;
 	
 	public function __construct() {
 		
-		$this->bg_path = dirname(__FILE__) . '/backgrounds/';
-		$this->font_path = dirname(__FILE__) . '/fonts/';		
+		$this->bg_path = getcwd() . '/images/backgrounds/';
+		$this->font_path = getcwd() . '/images/fonts/';		
 		
 		// Default values
 		$this->captcha_config = array(
@@ -39,17 +19,17 @@ class scaptcha {
         'min_length' => 5,
         'max_length' => 5,
         'backgrounds' => array(
-            $bg_path . '45-degree-fabric.png',
-            $bg_path . 'cloth-alike.png',
-            $bg_path . 'grey-sandbag.png',
-            $bg_path . 'kinda-jean.png',
-            $bg_path . 'polyester-lite.png',
-            $bg_path . 'stitched-wool.png',
-            $bg_path . 'white-carbon.png',
-            $bg_path . 'white-wave.png'
+            $this->bg_path . '45-degree-fabric.png',
+            $this->bg_path . 'cloth-alike.png',
+            $this->bg_path . 'grey-sandbag.png',
+            $this->bg_path . 'kinda-jean.png',
+            $this->bg_path . 'polyester-lite.png',
+            $this->bg_path . 'stitched-wool.png',
+            $this->bg_path . 'white-carbon.png',
+            $this->bg_path . 'white-wave.png'
         ),
         'fonts' => array(
-            $font_path . 'times_new_yorker.ttf'
+            $this->font_path . 'times_new_yorker.ttf'
         ),
         'characters' => 'ABCDEFGHJKLMNPRSTUVWXYZabcdefghjkmnprstuvwxyz23456789',
         'min_font_size' => 28,
@@ -89,7 +69,7 @@ class scaptcha {
 		}
 
 		// Generate HTML for image src
-		if ( strpos($_SERVER['SCRIPT_FILENAME'], $_SERVER['DOCUMENT_ROOT']) ) {
+		/*if ( strpos($_SERVER['SCRIPT_FILENAME'], $_SERVER['DOCUMENT_ROOT']) ) {
 			$image_src = substr(__FILE__, strlen( realpath($_SERVER['DOCUMENT_ROOT']) )) . '?_CAPTCHA&amp;t=' . urlencode(microtime());
 			$image_src = '/' . ltrim(preg_replace('/\\\\/', '/', $image_src), '/');
 		} else {
@@ -99,23 +79,26 @@ class scaptcha {
 		}
 
 		$_SESSION['_CAPTCHA']['config'] = serialize($this->captcha_config);
-
+		
+		//print_r($this->captcha_config);
+		//echo $image
 		return array(
 			'code' => $this->captcha_config['code'],
 			'image_src' => $image_src
-		);		
+		);*/
+		return 	$this->captcha_config['code'];
 	}
 	
 	public function captchaImage() {
 		// Draw the image
-		if( isset($_GET['_CAPTCHA']) ) {
+		//if( isset($_GET['_CAPTCHA']) ) {
 
 			//session_start();
 
-			$captcha_config = unserialize($_SESSION['_CAPTCHA']['config']);
+			$captcha_config = $this->captcha_config; //unserialize($_SESSION['_CAPTCHA']['config']);
 			if( !$captcha_config ) exit();
 
-			unset($_SESSION['_CAPTCHA']);
+			//unset($_SESSION['_CAPTCHA']);
 
 			// Pick random background, get info, and start captcha
 			$background = $captcha_config['backgrounds'][mt_rand(0, count($captcha_config['backgrounds']) -1)];
@@ -169,8 +152,28 @@ class scaptcha {
 			imagepng($captcha);
 			
 			die();
-		}		
+		//}		
 	}
+}
+
+if( !function_exists('hex2rgb') ) {
+    function hex2rgb($hex_str, $return_string = false, $separator = ',') {
+        $hex_str = preg_replace("/[^0-9A-Fa-f]/", '', $hex_str); // Gets a proper hex string
+        $rgb_array = array();
+        if( strlen($hex_str) == 6 ) {
+            $color_val = hexdec($hex_str);
+            $rgb_array['r'] = 0xFF & ($color_val >> 0x10);
+            $rgb_array['g'] = 0xFF & ($color_val >> 0x8);
+            $rgb_array['b'] = 0xFF & $color_val;
+        } elseif( strlen($hex_str) == 3 ) {
+            $rgb_array['r'] = hexdec(str_repeat(substr($hex_str, 0, 1), 2));
+            $rgb_array['g'] = hexdec(str_repeat(substr($hex_str, 1, 1), 2));
+            $rgb_array['b'] = hexdec(str_repeat(substr($hex_str, 2, 1), 2));
+        } else {
+            return false;
+        }
+        return $return_string ? implode($separator, $rgb_array) : $rgb_array;
+    }
 }
 
 }
