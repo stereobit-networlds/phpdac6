@@ -245,8 +245,7 @@ class shusers  {
 				              $this->update();
 			                }
 							
-							if ((defined('CMSLOGIN_DPC')) && (_v('cmslogin.fbhash'))) 
-								$this->fbjs();							
+							$this->fbjs();							
 				            break;
 							
             case "delete":  if (defined('CMSSUBSCRIBE_DPC')) {
@@ -254,12 +253,10 @@ class shusers  {
 						    }
 				            $this->_delete();
 							
-							if ((defined('CMSLOGIN_DPC')) && (_v('cmslogin.fbhash'))) 
-								$this->fbjs();							
+							$this->fbjs();							
 				            break;
 							
-			default      :  if ((defined('CMSLOGIN_DPC')) && (_v('cmslogin.fbhash'))) 
-								$this->fbjs();				
+			default      :  $this->fbjs();				
           }
        }
 	}
@@ -267,7 +264,18 @@ class shusers  {
 	public function action($action) {
 
        switch ($action) {
-	         case 'useractivate':   if (defined('CMSLOGIN_DPC')) { 
+	         case 'useractivate':   if (defined('SHLOGIN_DPC')) { 
+									    if (defined('SHCART_DPC')) {
+										    $carthasvalue = _m("shcart.getcartTotal use 1");
+											if ($carthasvalue>0)
+											   $out .= _m("shlogin.quickform use +viewcart+shcart>cartview+status+1");	 
+											else   
+											   $out .= _m('shlogin.form use html');
+										}
+                                        else 										 
+											$out .= _m('shlogin.form');
+								    }
+									elseif (defined('CMSLOGIN_DPC')) { 
 									    if (defined('SHCART_DPC')) {
 										    $carthasvalue = _m("shcart.getcartTotal use 1");
 											if ($carthasvalue>0)
@@ -293,16 +301,21 @@ class shusers  {
 	
 
 	protected function fbjs() {
-		$code = "function fbfetch() {
-		FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(response) {\$('#fname').val(response.first_name); \$('#lname').val(response.last_name); })};		
+		$hash = (defined('SHLOGIN_DPC')) ? _v('shlogin.fbhash') : _v('cmslogin.fbhash');		
+        if (($hash) && (defined('CMSLOGIN_DPC') || defined('SHLOGIN_DPC'))) {   
+		
+		
+			$code = "function fbfetch() {
+FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(response) {\$('#fname').val(response.first_name); \$('#lname').val(response.last_name); })};		
 ";
 
-        if (iniload('JAVASCRIPT')) {
+			if (iniload('JAVASCRIPT')) {
 	   
-			$js = new jscript;		   	 	
-			$js->load_js($code,null,1);		
-			unset ($js);
-	    }	
+				$js = new jscript;		   	 	
+				$js->load_js($code,null,1);		
+				unset ($js);
+			}
+		}		
 	}	
 
     function get_seclevels() {
@@ -641,9 +654,12 @@ class shusers  {
 			if ( (defined('SHCART_DPC')) && (seclevel('SHCART_DPC',$this->userLevelID)) ) {
 			    $out .= _m('shcustomers.after_registration_goto');
 			}
-			elseif ( (defined('CMSLOGIN_DPC')) && (seclevel('CMSLOGIN_DPC',$this->userLevelID)) ) {
-			    $out .= _m('cmslogin.html_form');
+			elseif (defined('SHLOGIN_DPC')) { 
+			    $out .= _m('shlogin.html_form');
 		    }
+			elseif (defined('CMSLOGIN_DPC')) {
+				$out .= _m('cmslogin.html_form');
+			}	
 	    }
 	    else {//goto customer registration
        
@@ -652,7 +668,10 @@ class shusers  {
 				$this->new_user_id = _m('shcustomers.getmaxid')+1;
                 $out .= _m('shcustomers.register use '.$this->new_user_id);
 		    }	  
-		    elseif ( (defined('CMSLOGIN_DPC')) && (seclevel('CMSLOGIN_DPC',$this->userLevelID)) ) {
+			elseif ( (defined('SHLOGIN_DPC')) ) {
+			    $out .= _m('shlogin.html_form');
+			}	
+		    elseif ( (defined('CMSLOGIN_DPC')) ) {
 			    $out .= _m('cmslogin.html_form');
 		    }
 		    else //continue rendering

@@ -446,7 +446,7 @@ window.onload=function(){
 	
 	public function after_registration_goto() {
 	
-		if ( (defined('CMSLOGIN_DPC')) && (seclevel('CMSLOGIN_DPC',$this->userLevelID)) ) {	
+		if ( (defined('CMSLOGIN_DPC')) || (defined('SHLOGIN_DPC')) ) {	
 		
 		    //already in...
 		    if (GetSessionParam('UserID')) {
@@ -461,7 +461,10 @@ window.onload=function(){
 			      $out = null; //goto fp
 		    } 
 			else {
-			    $out .= _m('cmslogin.html_form');
+				if (defined('SHLOGIN_DPC'))
+					$out .= _m('shlogin.html_form');
+				else
+					$out .= _m('cmslogin.html_form');
 			    SetPreSessionParam('afterlogingoto','shcart.cartview');
 			}
 		} 		 
