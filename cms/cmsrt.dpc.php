@@ -594,8 +594,8 @@ goBack();
 				$this->ogTags = $this->openGraphTags(array(0=>$this->siteTitle,
 														1=>$tokens[0],
 														2=>$tokens[1],														
-														3=>$this->httpurl .'/'. $itemlink,
-														4=>$this->httpurl . str_replace('//','/','/'. $ogimage[0]),
+														3=>$itemlink,
+														4=>$ogimage[0],
 													));				 
 			 
 				unset($tokens);	 
@@ -953,7 +953,7 @@ goBack();
 		    //print_r($tokens[4]);
 			foreach ($tokens[4] as $i=>$img)
 				$ogimage .= '
-		<meta property="og:image" content="'.$this->httpurl . str_replace('//','/','/'.$img).'" />';
+		<meta property="og:image" content="'. $img .'" />';
 		}
 		else
 			$ogimage = '<meta property="og:image" content="'.$tokens[4].'" />
@@ -972,7 +972,7 @@ goBack();
 EOF;
 		
         //extract first image or just one
-        $img = is_array($tokens[4]) ? $this->httpurl . str_replace('//','/','/'.array_shift($tokens[4])) : $tokens[4];
+        $img = is_array($tokens[4]) ? array_shift($tokens[4]) : $tokens[4];
 
         $ret .= $this->fbTags(array(0=>$tokens[0],1=>$tokens[1],2=>$tokens[2],3=>$tokens[3],4=>$img)) ;//$tokens);
 		$ret .= $this->twitterTags(array(0=>$tokens[0],1=>$tokens[1],2=>$tokens[2],3=>$tokens[3],4=>$img)) ;//$tokens);
@@ -1675,6 +1675,7 @@ EOF;
 		return ($ret);
 	}
 	
+	//update `products` set p5=replace(replace(replace(replace(replace(replace(replace(replace(itmname,"'",'-'),'"','-'),',','-'),'+','-'),'/','-'),'&','-'),'.','-'),' ','-') where code5='66001'
 	public function stralias($string) {
 		if (!$string) return null;
 		$g1 = array("'",',','"','+','/',' ','&','.');
@@ -1695,19 +1696,23 @@ EOF;
 			//select records 1 day back
 			$sSQL = "select {$this->fcode},{$this->itmname} from products ";
 			$sSQL.= " where DATE(datein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL $dayb DAY ) ) AND DATE ( NOW() )";
-			//$sSQL.= " where $aliasID is null"; // start
-			$res = $db->Execute($sSQL);			
+			$sSQL.= " where active>0 and itmactive>0 and $aliasID is null"; // start
+			$res = $db->Execute($sSQL);	//!!!! disabled		
 			//echo $sSQL;
 			
+			$i = 0;
 			//update n days back
 			foreach ($res as $i=>$rec) {
-				$alias = $this->stralias($rec[$this->itmname]);
+				
+				$alias = $this->stralias($rec[1]);
 			
 				$sSQL = "update products set $aliasID=" . $db->qstr($alias);
 				$sSQL.= " where {$this->fcode}=" . $db->qstr($rec[0]);
 				//echo $sSQL;
-				//$res = $db->Execute($sSQL);
+				$res = $db->Execute($sSQL);
+				$i+=1;
 			}
+			//echo $i . '-' . $sSQL;
 			return true;
 		}
 		return false;	

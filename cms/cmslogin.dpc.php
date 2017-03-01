@@ -522,7 +522,7 @@ window.setTimeout('neu()',10);
 			$ret = _m('cmsrt._ct use userchpass+' . serialize($tokens));
 		}	  
 		else {//login
-			if (!$editmode)
+			//if (!$editmode)
 				$ret = $this->html_form(); 
 	    }	
 		  
