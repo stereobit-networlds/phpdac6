@@ -287,8 +287,7 @@ class rccontrolpanel {
 							 
 		 case "cpupgrade"   :					 
 		 case "cp"          :
-		 default         	:  $this->isCrmEnabled();
-		                     
+		 default         	:   $this->isCrmEnabled();	
 		}  
 
     }

@@ -490,7 +490,7 @@ class rcpmenu {
 		$httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
 		//if no ssl param then use standard protocol (https jqgid licence)
 		$sslMenu ? $httpurl .'/cp/' : 'http://' . $_SERVER['HTTP_HOST'] .'/cp/';
-		*/)
+		*/
 		$sslurl = null;
 		
 		return ($sslurl . $ret);
