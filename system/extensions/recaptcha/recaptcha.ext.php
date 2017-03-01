@@ -124,16 +124,24 @@ function recaptcha_get_html ($pubkey, $error = null, $use_ssl = false)
            $errorpart = "&amp;error=" . $error;
         }
         return '<script type="text/javascript" src="'. $server . '/challenge?k=' . $pubkey . $errorpart . '"></script>
-
 	<noscript>
-  		<iframe src="'. $server . '/noscript?k=' . $pubkey . $errorpart . '" height="300" width="500" frameborder="0"></iframe><br/>
+  		<iframe src="'. $server . '/noscript?k=' . $pubkey . $errorpart . '" height="300" width="500" frameborder="0"></iframe>
   		<textarea name="recaptcha_challenge_field" rows="3" cols="40"></textarea>
   		<input type="hidden" name="recaptcha_response_field" value="manual_challenge"/>
 	</noscript>';
 }
+/*
+function recaptchaJs($ssl=false) {
+	$server = $ssl ? RECAPTCHA_API_SECURE_SERVER : RECAPTCHA_API_SERVER ;
+	return $server . '/challenge?k=' . $pubkey;
+}
 
+$pubkey = paramload('RECAPTCHA','pubkey');
 
-
+$js = new jscript;
+$js->load_js(RECAPTCHA_API_SECURE_SERVER . '/challenge?k=' . $pubkey,null,null,null,1);
+unset($js);
+*/
 
 /**
  * A ReCaptchaResponse is returned from recaptcha_check_answer()
