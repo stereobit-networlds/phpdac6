@@ -112,10 +112,6 @@ class shlogin {
 	var $userLevelID;
 	var $msg;
 	var $outpoint;
-	var $sslscript;
-	var $ses_prothema;
-	var $ses_path;
-	var $ssl;
     var $time_of_session;
 	var $reseller_attr, $path;
 	var $username, $userid;
@@ -124,8 +120,8 @@ class shlogin {
     var $after_goto, $dpc_after_goto,$login_successfull;
 	var $login_goto,$logout_goto;  
 	var $urlpath, $inpath;
-	var $recaptcha_public_key, $recaptcha_private_key;	
-	var $tmpl_path, $tmpl_name;	
+	var $recaptcha_public_key, $recaptcha_private_key, $ssl;	
+	//var $tmpl_path, $tmpl_name;	
 	
 	static $staticpath;
 
@@ -134,34 +130,24 @@ class shlogin {
 	   $UserName = GetGlobal('UserName');
 	   $UserSecID = GetGlobal('UserSecID');
 	   $UserID = GetGlobal('UserID'); 
-	   $GRX = GetGlobal('GRX');
 	   
 	   $this->username = decode($UserName);
 	   $this->userid = decode($UserID);
        $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
 	   $this->msg = $sFormErr;
-	   $this->ssl = paramload('SHELL','ssl');
-	   $this->outpoint = "|";
 	   
 	   self::$staticpath = paramload('SHELL','urlpath');
 
-	   if ($remoteuser=GetSessionParam('REMOTELOGIN'))
-	     $this->path = paramload('SHELL','prpath')."instances/$remoteuser/";
-	   else
-	     $this->path = paramload('SHELL','prpath');
-		 
+       $this->path = paramload('SHELL','prpath');
 	   $this->urlpath = paramload('SHELL','urlpath');
 	   $this->inpath = paramload('ID','hostinpath');			 
-
-	   $this->sslscript = "<script src=\"".paramload('SHLOGIN','sslscript')."\"></script>";
-	   $this->ses_prothema = paramload('SHLOGIN','sespro');
-	   $this->ses_path = paramload('SHELL','sespath');
 
        $this->must_reenter_password	= null;
 
 	   $this->link = seturl("t=rempwd",localize("_HERE",getlocal()));
 	   $this->message = localize("_IFORGET",getlocal());
 	   $this->formerror = null;
+	   $this->ssl = (isset($_SERVER['HTTPS'])) ? true : false;		   
 
 	   $this->title = localize('SHLOGIN_DPC',getlocal());
        $logintime = remote_paramload('SHLOGIN','logintime',$this->path);
@@ -187,11 +173,11 @@ class shlogin {
 	   $this->recaptcha_public_key = remote_paramload('RECAPTCHA','pubkey',$this->path);							  
 	   $this->recaptcha_private_key = remote_paramload('RECAPTCHA','privkey',$this->path);	      
 	   
-	   $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	   $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	   
+	   //$this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
+	   //$this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	   
 	   
        //timezone	   
-       date_default_timezone_set('Europe/Athens');		   
+       //date_default_timezone_set('Europe/Athens');		   
 	}
 
     function event($sAction) {
@@ -351,7 +337,7 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 
 		return ($out);
 	}
-
+/*
 	public function html_form($tokensout=null) {
 	    $sFormErr = GetGlobal('sFormErr');
 	    $UserID = GetGlobal('UserID');
@@ -380,10 +366,10 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 		}
 		 
 		//NOT FOR PASSWORDS FORM
-	     /*if (defined('RECAPTCHA_DPC')) {
-	         $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+	     //if (defined('RECAPTCHA_DPC')) {
+	       //  $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 			 //echo $recaptcha;
-	    }	*/		 
+	    //}			 
 		 
 		$t =  $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'.str_replace('.',getlocal().'.','login.htm') ;
 
@@ -391,14 +377,6 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 			$mytemplate = file_get_contents($t);
 			$tokensout = 1;
         }		 	 
-
-	    //SSL tm
-	    if ($this->ssl) {
-		    //$loginform .= $this->sslscript;
-	        $sslwin = new window("",$this->sslscript);
-	        $loginform .= $sslwin->render("center::100%::0::group_article_selected::right::0::0::");
-	        unset ($sslwin);
-	    }
 
         if ($tokensout) {
 		    if (($sFormErr=='ok')||($sFormErr=='Ok')||($sFormErr=='OK')||($sFormErr=='OKREMINDER')) {//fix ok global msg
@@ -485,7 +463,32 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 			return ($toprint);
 		}				   
 	}
+*/
 
+	public function html_form() {
+	    $sFormErr = GetGlobal('sFormErr');
+	    $UserID = GetGlobal('UserID');
+        $logonurl = _m('cmsrt.seturl use t=dologin'); 	
+		 
+		if ($UserID) {
+			
+			$tokens[] = _m('cmsrt.seturl use t=dologout'); 
+			$tokens[] = localize('_SHLOGOUT',getlocal());
+
+			$ret = _m('cmsrt._ct use logout+' . serialize($tokens));
+	 	
+		    return ($ret);
+		}	 
+		
+	    if (($sFormErr=='ok')||($sFormErr=='Ok')||($sFormErr=='OK')||($sFormErr=='OKREMINDER')) 
+  		    $tokens[] = (stristr($sFormErr,'ok')) ? localize('_OK', getlocal()) : localize('_OKREMINDER', getlocal());
+		else
+		    $tokens[] = $sFormErr; 
+				   
+		return _m('cmsrt._ct use login+' . serialize($tokens));
+	}
+
+/*	
     public function form($agent='HTML') {
 	    $sFormErr = GetGlobal('sFormErr');
         $UserID = GetGlobal('UserID');
@@ -518,7 +521,20 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 
 		return ($toprint);
     }
+*/
 
+    public function form() {
+	   
+        if ($this->login_successfull) {
+			$user = decode(GetSessionParam('UserName'));
+			$tokens = array(0=>$user);
+			return _m('cmsrt._ct use loginsuccess+' . serialize($tokens));
+	    }	 
+        else
+			return $this->html_form();
+    }	
+
+/*	
     public function quickform($attr=null,$after_goto=null,$dpc_after_goto=null,$param_name=null,$param=null) {
 		$winattr = $attr?$attr:"center::100%::0::group_win_body::left::0::0::";
 		$UserID = GetGlobal('UserID');
@@ -599,7 +615,34 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 			return ($out);
 		}	 
     }
+*/
+
+    public function quickform($attr=null,$after_goto=null,$dpc_after_goto=null,$param_name=null,$param=null) {
+		$UserID = GetGlobal('UserID');
+		$this->after_goto = $after_goto;
+		$sFormErr = GetGlobal('sFormErr');		
 	
+		if ($dpc_after_goto) 
+			SetSessionParam('afterlogingoto',str_replace('>','.',$dpc_after_goto));
+
+        if ($this->after_goto) {
+            $logonurl = _m('cmsrt.seturl use t=' .$this->after_goto . '&$param_name='.$param); //seturl("t=".$this->after_goto."&$param_name=".$param,0,1);
+            $this->after_goto = null;
+        }
+        else
+            $logonurl = _m('cmsrt.seturl use t='); //seturl("",0,1);
+
+		if (!$UserID) {
+			$tokens[] = $sFormErr;
+			$tpkens[] = $logonurl;
+			$tokens[] = $this->after_goto;
+			$ret = _m('cmsrt._ct use qlogin+' . serialize($tokens));
+			return ($ret);	
+		}	
+		
+		return false;
+    }
+/*	
 	protected function isoldpass($username) {
 	    $db = GetGlobal('db');
 	   
@@ -612,6 +655,7 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 	
         return false;	
 	}
+*/	
 
     public function do_login($user='',$pwd='',$editmode=null) {
 	    $db = GetGlobal('db');
@@ -709,7 +753,7 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 	
 	public function recaptcha() {
 		if (defined('RECAPTCHA_DPC')) {
-	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 			return $recaptcha;
 	    }	
 		return false;
@@ -763,13 +807,13 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 	   }
 	   //}//recaptcha
 	}
-	
+/*	
     public function form_reset_pass($tokensout=null,$username=null) {
 	    $sectoken = GetReq('sectoken') ? '&sectoken='.GetReq('sectoken') : null;
         $url = seturl("t=chpass".$sectoken,0,1);
 	   
 	    if (defined('RECAPTCHA_DPC')) 
-	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 		
 		if ($tokensout)
 			$tokens[] = $this->formerror;
@@ -825,8 +869,22 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 		  
 	   return ($out);
     }	
+*/
+    protected function form_reset_pass($username=null) {
+	    $sectoken = GetReq('sectoken') ? '&sectoken='.GetReq('sectoken') : null;
+        $url = _m('cmsrt.seturl use t=chpass' . $sectoken); 
+	   
+	    if (defined('RECAPTCHA_DPC')) 
+	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
+		
+		$tokens[] = $this->formerror;		   
+		$tokens[] = $recaptcha;		   
+        $tokens[] = GetReq('sectoken');//use in form hidden element ajax call					   		   
+		 
+	    return ($tokens); 		 
+    }	
 	
-	protected function html_reset_pass($editmode=null) {
+	protected function html_reset_pass() {
 	    $UserName = GetGlobal('UserName');
 	   
 	    if ($id = base64_decode(urldecode(GetReq('sectoken')))) {//by mail link
@@ -848,17 +906,12 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 			$currentuser = null;	   
 	
 	    if (($currentuser) && ($this->formerror!=localize('ok2',getlocal()))) {
-			$toks = $this->form_reset_pass(1, $currentuser);
-		
-			$mydata = str_replace('+','<@>',implode('<TOKENS>',$toks));
-		
-			if (!$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userchpass.htm+".$mydata)) 
-				$ret = $this->form_reset_pass(null,$currentuser);
-		  
+			$tokens = (array) $this->form_reset_pass($currentuser);
+			$ret = _m('cmsrt._ct use userchpass+' . serialize($tokens));			
 	    }	  
 	    else {//login
-			if (!$editmode)
-				$ret = $this->html_form(); 
+			//if (!$editmode)
+				//$ret = $this->html_form(); 
 	    }	
 		  
 	    return ($ret);  
@@ -926,7 +979,7 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 	    $ret = $this->message . "&nbsp;" . $this->link;
 		return ($ret);
 	}
-
+/*
     public function remform($tokensout=null) {
 
 		$url = seturl("t=shremember",0,1);
@@ -934,14 +987,7 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 		if ($this->formerror!=localize("ok", getlocal())) {//"ok") {
 	   
 			if (defined('RECAPTCHA_DPC')) 
-				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, $this->recaptcha_private_key);	   	   
-
-			if ($this->ssl) {
-				//$loginform .= $this->sslscript;
-				$sslwin = new window("",$this->sslscript);
-				$loginform .= $sslwin->render("center::100%::0::group_article_selected::right::0::0::");
-				unset ($sslwin);
-			}
+				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   	   
          
 			if ($tokensout) 
 				$tokens[] = $this->formerror;
@@ -1041,16 +1087,31 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 				return ($out);			 
 	    }
     }
+*/
+
+    protected function remform() {
+
+  	    if ($this->formerror!=localize("ok", getlocal())) {
+	        $url = _m('cmsrt.seturl use t=shremember');
+			
+			if (defined('RECAPTCHA_DPC')) 
+				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   	   
+         
+			$tokens[] = $this->formerror;
+			$tokens[] = $recaptcha;		    
+		}
+		else {	
+            $logonurl = _m('cmsrt.seturl use t='); //seturl("",0,1);		
+			$tokens[] = localize('_SENDCRE',getlocal());	
+			$tokens[] = null; //dummy	
+	    }
+		return ($tokens); 		
+    }
 	
 	public function html_remform() {
-	
-   		$toks = $this->remform(1);
-		$mydata = str_replace('+','<@>',implode('<TOKENS>',$toks));
-		
-		if (!$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use remlogin.htm+".$mydata)) 
-			$ret = $this->remform();
-		  
-		return ($ret);  
+
+		$tokens = (array) $this->remform();	
+		return _m('cmsrt._ct use remlogin+' . serialize($tokens));		
 	}
 
 	protected function do_the_job() {
@@ -1069,20 +1130,22 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 
 				if (($u=$result->fields['username']) && ($p=$result->fields['password'])) {
  
+					$tokens[] = $u;
 					$tokens[] = null; 
+					
 					$timestamp = time(); 
 					$sectoken = urlencode(base64_encode($u.'|'.$timestamp));
 					$reset_url = seturl('t=chpass&sectoken='.$sectoken);
 					$tokens[] = $reset_url;			  
 				
-					$sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
-					$mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userremind.htm+".$sd."+1");
+					//$sd = str_replace('+','<@>',implode('<TOKENS>',$tokens));
+					//$mailbody = GetGlobal('controller')->calldpc_method("fronthtmlpage.subpage use userremind.htm+".$sd."+1");
+					$mailbody = _m('cmsrt._ct use userremind+' . serialize($tokens) . '+1');
 			   
 					$from = $this->accountmailfrom;
 					$this->mailto($from,$m,localize('_UMAILREMSUBC',getlocal()),$mailbody);
 
-					$this->formerror = localize("ok", getlocal());//localize('_MSG2',getlocal()); //"ok";
-					
+					$this->formerror = localize("ok", getlocal());
 					$this->update_login_statistics('cplogin-renew', $u);
 				}
 				else 
@@ -1139,7 +1202,7 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 			return ($mailerror);
 		}
 	}
-	
+/*	
 	public function login_with_key($key=null,$code=null,$ischar=null) {
 	    $db = GetGlobal('db');
 		 	
@@ -1163,8 +1226,8 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 		  
 			if (strcmp($hash,$hash2cmp)==0) {
           
-				if (/*($result->fields[$this->actcode]>0) &&*////PROBLEM
-		         (strcmp(trim($result->fields['notes']),"DELETED")!=0)) {
+				//if (($result->fields[$this->actcode]>0) &&///PROBLEM
+		         if ((strcmp(trim($result->fields['notes']),"DELETED")!=0)) {
 					 
 					$sUsername = $result->fields['username']; 
 					 
@@ -1196,10 +1259,10 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
   		                setInfo(localize('_WELLCOME',getlocal()) . " " . $sUsername);
 
 					//set cookie
-					/*if (paramload('SHELL','cookies')) {
-					    setcookie("cuser",$UserName,time()+$this->time_of_session);//,time()+3600,"","stereobit.gr",0);
-						setcookie("csess",session_id(),time()+$this->time_of_session);
-					}*/
+					//if (paramload('SHELL','cookies')) {
+					  //  setcookie("cuser",$UserName,time()+$this->time_of_session);//,time()+3600,"","stereobit.gr",0);
+						//setcookie("csess",session_id(),time()+$this->time_of_session);
+					//}
 					
 					$this->update_login_statistics('cplogin', $sUsername);
 					
@@ -1216,6 +1279,7 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 	    else
 			return false;
     }
+*/
    
 	protected function valid_recaptcha() {
 	 
@@ -1259,21 +1323,18 @@ function neu(){	top.frames.location.href = \"$goto\"} window.setTimeout(\"neu()\
 		if (defined('FRONTHTMLPAGE_DPC')) {
 			$fp = new fronthtmlpage(null);
 			$ret = $fp->process_commands($template_contents);
-			unset ($fp);
-			//$ret = GetGlobal('controller')->calldpc_method("fronthtmlpage.process_commands use ".$template_contents);		  		
+			unset ($fp);	  		
 		}		  		
 		else
 			$ret = $template_contents;
 		  
-		//echo $ret;
-	    foreach ($tokens as $i=>$tok) {
-            //echo $tok,'<br>';
+	    foreach ($tokens as $i=>$tok) 
 		    $ret = str_replace("$".$i,$tok,$ret);
-	    }
+
 		//clean unused token marks
 		for ($x=$i;$x<10;$x++)
 			$ret = str_replace("$".$x,'',$ret);
-		//echo $ret;
+
 		return ($ret);
 	}   
 
