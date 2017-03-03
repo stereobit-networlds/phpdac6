@@ -57,15 +57,27 @@ $__LOCALE['RCULISTS_DPC'][16]='_mailstatus;Reason;Αιτία';
 $__LOCALE['RCULISTS_DPC'][17]='_cleanlist;Clean list;Καθαρισμός λίστας';
 $__LOCALE['RCULISTS_DPC'][18]='_failmargin;Fail margin;Αποτυχίες';
 $__LOCALE['RCULISTS_DPC'][19]='_denyview;Hidden;Απόκρυψη';
+$__LOCALE['RCULISTS_DPC'][20]='_subupdate;Update list;Ενημέρωση λίστας';
+$__LOCALE['RCULISTS_DPC'][21]='_subremove;Remove from list;Αφαίρεση απο την λίστα';
+$__LOCALE['RCULISTS_DPC'][22]='_subcheck;Force activation;Με ενεργοποποίηση των ανενεργών';
+$__LOCALE['RCULISTS_DPC'][23]='_subscan;Extract elements;Εξαγωγή άλλων στοιχείων';
+$__LOCALE['RCULISTS_DPC'][24]='_subutils;Utilities;Ενέργειες';
+$__LOCALE['RCULISTS_DPC'][25]='_newlistprompt;Enter a name for a new mailing list or leave blank;Εισάγετε το όνομα της νέας λίστας ή κενό για εισαγωγή σε υπάρχουσα';
+$__LOCALE['RCULISTS_DPC'][26]='_sellistprompt;Choose an existing mailing list;Επιλέξτε λίστα εισαγωγής';
+$__LOCALE['RCULISTS_DPC'][27]='_subinsinto;Inset into list;Εισαγωγή σε λίστα';
+$__LOCALE['RCULISTS_DPC'][28]='_selectlist;Select list;Επιλέξτε λίστα';
+$__LOCALE['RCULISTS_DPC'][29]='_newlist;New list;Νεα λίστα';
+$__LOCALE['RCULISTS_DPC'][30]='_listsep;List separator;Σύμβολο διαχωρισμού';
+$__LOCALE['RCULISTS_DPC'][31]='_subtext;CSV emails;Emails με διαχωριστικά';
+$__LOCALE['RCULISTS_DPC'][32]='_subsubmit;Submit;Εκτέλεση';
 
 class rculists  {
 
     var $title, $urlpath, $path, $seclevid, $userDemoIds;
-	var $savehtmlpath;
-	var $messages;
+	var $savehtmlpath, $messages, $owner, $defsep;
 
 	public function __construct() {
-		$GRX = GetGlobal('GRX');
+	
 		$this->title = localize('RCULISTS_DPC',getlocal());
 		$this->prpath = paramload('SHELL','prpath'); 
 		$this->urlpath = paramload('SHELL','urlpath');	
@@ -77,6 +89,8 @@ class rculists  {
 		$this->seclevid = GetSessionParam('ADMINSecID');
 		$this->userDemoIds = array(5,6);//,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 
+		$this->owner = decode(GetSessionParam('UserName'));//$_POST['Username'] ? $_POST['Username'] : GetSessionParam('LoginName');		
+		$this->defsep = ',';
 		$this->messages = null;	
 	}
 
@@ -90,8 +104,9 @@ class rculists  {
 			case 'cpcleanbounce'        :   $clean = $this->cleanListFromBounce(); 
 			                                break;
 
-			case 'cpsubscribe'    		: 	$s1 = $this->dosubscribe();
-											$s2 = (GetParam('scan')) ? $this->mass_subscribe() : $this->bulk_subscribe();				
+			case 'cpsubscribe'    		: 	//$s1 = $this->dosubscribe();
+											//$s2 = (GetParam('scan')) ? $this->mass_subscribe() : $this->bulk_subscribe();				
+											$this->subscribePost();
 											break;
 									
 		    case 'cpunsubscribe'  		: 	$this->dounsubscribe();				
@@ -354,8 +369,7 @@ class rculists  {
 	   	   
 	     $sSQL = "update mailqueue set active=1,mailstatus='USER_ACTIV' where id=" . $rec;
 	     $res = $db->Execute($sSQL,1);	
-	}	
-
+	}		
 
 	public function postSubmit($action, $title=null, $class=null) {
 		if (!$action) return;
@@ -378,143 +392,250 @@ class rculists  {
 		}	
         return ($out);
     }		
-
-	protected function dosubscribe($mail=null,$name=null) {
-        $db = GetGlobal('db');
-        $sFormErr = GetGlobal('sFormErr');	
-        $name = $name ? $name : 'unknown'; 		
-	    $ret = false;
-	    $mail = $mail ? $mail : GetParam('submail');
-		if (!$mail) return false;
-	   
-        $dtime = date('Y-m-d h:i:s');		
 	
-		//when a new name of a list keep the new name else selected ulist else default
-		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : (GetParam('ulist') ? GetParam('ulist') : 'default');
 
-		if ($this->_checkmail($mail))  {
-			$sSQL = "SELECT email,active FROM ulists where email=". $db->qstr($mail) . 
-			        " and listname=" . $db->qstr($ulistname); 
+	protected function subscribePost() {
+		
+		//$s1 = $this->dosubscribe(); //disabled one field email insert
+		
+		$subscan = GetParam('subscan'); //scanner mode
+		$subupdate = GetParam('subupdate'); //update mode
+		$subcheck = GetParam('subcheck'); //check mode
+		$subremove = GetParam('subremove'); //remove mode (unsubscribe)
+		
+		//$this->messages[] = $subscan ? 'Scan text ON' : 'Scan text OFF';
+		if ($subscan) $this->messages[] = localize('_subscan',getlocal());
+		//$this->messages[] = $subupdate ? 'Update ON' : 'Update OFF';
+		if ($subupdate) $this->messages[] = localize('_subupdate',getlocal());
+		//$this->messages[] = $subcheck ? 'Check ON' : 'Check OFF';
+		if ($subcheck) $this->messages[] = localize('_subcheck',getlocal());
+		//$this->messages[] = $subremove ? 'Remove ON' : 'Remove OFF';
+		if ($subremove) $this->messages[] = localize('_subremove',getlocal());
+		
+		if ($subscan)  {//scanner mode
+		
+			$this->mass_subscribe(true); 
+			
+			return true;
+		}	
+		else { //other modes
+		
+			if ($subremove) {  
+				//if subupdate is on dont delete, update active=0
+				$this->bulk_subscribe('remove',$subupdate,false);	
+			}		
+			elseif ($subupdate) {
+				//if subcheck is on, update if mail exists and check if active with subcheck
+				$this->bulk_subscribe('update',$subcheck,false);	
+			}
+			else//insert all mails in selected list (double mails allowed)	
+				$this->bulk_subscribe(null,null,true);
+			
+			return true;
+		}
+
+		return false;	
+	}	
+
+	protected function dosubscribe($email=null, $name=null, $silent=false, $exist=false) {
+        $db = GetGlobal('db');
+        $dtime = date('Y-m-d h:i:s');		
+        $subname = $name ? $name : 'unknown'; 		
+	    $mail = $email ? $email : GetParam('submail');
+		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 
+						(GetParam('ulist') ? GetParam('ulist') : null);
+		
+		if ((!$mail) || (!$ulistname)) return false;		
+	
+		if ($this->_checkmail(self::strLower($mail)))  {
+			$sSQL = "SELECT email,active FROM ulists where email=". $db->qstr(self::strLower($mail)) . 
+			        " and listname=" . $db->qstr(self::strLower($ulistname)); 
 			$ret = $db->Execute($sSQL,2);
 				
             if (empty($ret->fields[0])) {
 				
 				$sSQL = "insert into ulists (email,startdate,active,lid,listname,name,owner) " .
 						"values (" .
-						$db->qstr(strtolower($mail)) . "," . $db->qstr($dtime) . "," .
+						$db->qstr(self::strLower($mail)) . "," . $db->qstr($dtime) . "," .
 						"1,1," . 
-						$db->qstr(strtolower($ulistname)) . "," .
-						$db->qstr($name) . "," .
+						$db->qstr(self::strLower($ulistname)) . "," .
+						$db->qstr($subname) . "," .
 						$db->qstr($this->owner) . 
 						")";  
-				$db->Execute($sSQL,1);		    
-				$ret = true;					
+				$db->Execute($sSQL);	
+				//$this->messages[] = $sSQL; //test
+				
+				if (!$silent)
+					$this->messages[] = $mail . ' added in list ' . self::strLower($ulistname);	
+				
+				return true;					
             }
 			else {
-				//update DO NOT ENABLE ALREADY DISABLED emails
-				//$sSQL = "update ulists set active=1 where listname='".strtolower($ulistname)."' and email=" . $db->qstr(strtolower($mail));  
-				//$db->Execute($sSQL,1);	
-				//$ret = true;			   
+				if ($exist) { //subcheck on
+					//update ENABLE ALREADY DISABLED emails !!!
+					$sSQL = "update ulists set active=1 where listname='". self::strLower($ulistname) .
+							"' and email=" . $db->qstr(self::strLower($mail));  
+					$db->Execute($sSQL,1);
+					
+					if (!$silent)
+						$this->messages[] = $mail . ' activated in list. Exist in ' . self::strLower($ulistname);	
+					//$this->messages[] = $sSQL; //test
+					return true;		
+				}
+				else {
+					if (!$silent)
+						$this->messages[] = $mail . ' NOT added in list. Exist in ' . self::strLower($ulistname);	
+					return false;
+				}
 			}	
 		}
-		else 
-		    SetGlobal('sFormErr', localize('_MSG5',getlocal()));
+
+		$this->messages[] = localize('_MSG5',getlocal()) .' '. $mail;		
 	   
-	    return $ret;	   	
+	    return false;	   	
 	}
 
-	protected function dounsubscribe($mail=null) {
+	protected function dounsubscribe($mail=null, $silent=false) {
         $db = GetGlobal('db');
         $sFormErr = GetGlobal('sFormErr');	
 	    $mail = $mail ? $mail : GetParam('submail');
-		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';		
-		if (!$mail) return false;  
+		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 
+						(GetParam('ulist') ? GetParam('ulist') : 'none');		
 		
-		if ($this->_checkmail($mail))  {
+		if ((!$mail) || (!$ulistname)) return false;  
+		
+		if ($this->_checkmail(self::strLower($mail)))  {
 
-			$sSQL = "update ulists set active=0 where email=" . $db->qstr($mail) . ' and listname=' . $db->qstr($ulistname); 
+			$sSQL = "update ulists set active=0 where email=" . $db->qstr(self::strLower($mail)) . 
+					' and listname=' . $db->qstr(self::strLower($ulistname)); 
 			$result = $db->Execute($sSQL,1);
-		    //echo $sSQL;
+		    //$this->messages[] = $sSQL; //test
+			
+			if (!$silent)
+				$this->messages[] = $mail . ' deactivated';
 			return true;
-		}	
-				
+		}
+			
+		$this->messages[] = localize('_MSG5',getlocal()) .' '. $mail;;
+		
         return false;		
 	}	
 	
-	protected function subscribe_extracting_name($token=null) {
-        $db = GetGlobal('db'); 
-		if (!$token) return;	
-		$matches = array();
-					
-	    //method 1 name <mail>
-	    $pattern = "@<(.*?)>@";
-	    preg_match($pattern,$token,$matches);
-	    $extracted_mail = trim(strtolower($matches[1]));
-
-		if ($this->_checkmail($extracted_mail)) {	  
-		  if ($name = str_replace($extracted_mail,'',$token)) {
-		    //echo $name,'<br>'
-		    $name = str_replace('"','',$name);
-		    $name = str_replace("'",'',$name);
-		    $name = str_replace('<>','',$name);			
-		  }
-		  $s = $this->dosubscribe($extracted_mail,$name);
-		  return ($s);	   
-	    }
-		else { //method 2 name [mail]
-	      $pattern2 = "@[(.*?)]@";
-	      preg_match($pattern2,$token,$matches);
-	      //print_r($matches);
-	      $extracted_mail = trim(strtolower($matches[1]));
-		 
-		  if ($this->_checkmail($extracted_mail)) {	  
-		    if ($name = str_replace($extracted_mail,'',$token)) {		
-		      $name = str_replace('"','',$name);
-			  $name = str_replace("'",'',$name);
-		      $name = str_replace('[]','',$name);			
-		    }
-		    $s = $this->dosubscribe($extracted_mail,$name);
-		    return ($s);		   			   
-	      }
-		  else { //method 3 name mail
-		    $mytokens = explode(' ',$token);
-		    $name = trim($mytokens[0]);
-		    $extracted_mail = trim(strtolower($mytokens[1])); 
-		  
-		    if ($this->_checkmail($extracted_mail)) {		
-		      if ($name = str_replace($extracted_mail,'',$token)) {
-		        $name = str_replace('"','',$name);
-			    $name = str_replace("'",'',$name);
-			  }	
-		      $s = $this->dosubscribe($extracted_mail,$name);
-		      return ($s);	   
-			}  
-	      }		  
+	protected function bulk_subscribe($mode=null, $force=null, $silent=false) {
+        $db = GetGlobal('db');
+		$dtime = date('Y-m-d h:i:s');
+		$subname = ''; 		
+		$separator = GetParam('separator') ? GetParam('separator') : $this->defsep;	  
+		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 
+						(GetParam('ulist') ? GetParam('ulist') : null);		
+		
+		if (!$ulistname) {
+			$this->messages[] = localize('_selectlist',getlocal());	
+			return false;
+		}	
+		
+		$mailtext = str_replace(array('\r','\n'), array('',''), trim(GetParam('csvmails')));	  		  	
+		if (!$mailtext) {
+			$this->messages[] = '0 mails added to list ' . self::strLower($ulistname);	
+			return false;
+		}	
+		
+		$mymails = strstr($mailtext, $separator) ? 
+					explode($separator, $mailtext) : array(0=>trim($mailtext));	
+		$_smails = 0;
+		set_time_limit(120);
+		switch ($mode) {
+			
+			case 'update' : foreach ($mymails as $i=>$tok) {
+								if (trim($tok)) {
+									if ($force) { //subscheck on
+										if ($ok = $this->dosubscribe($tok, '', $silent, true))
+											$_smails += 1;
+									}
+									else { //subcheck off
+										if ($ok = $this->dosubscribe($tok, '', $silent, false))
+											$_smails += 1;	
+									}
+								}	
+							}
+							$this->messages[] =  $_smails . ' mails in ' . self::strLower($ulistname);
+							break;
+			
+			case 'remove' : foreach ($mymails as $i=>$tok) {
+								if (trim($tok)) {
+									if ($force) { //subscheck
+										if ($ok = $this->dounsubscribe($tok, $silent))
+											$_smails += 1;
+									}
+									else {
+										$sSQL = "delete from ulists where email=". $db->qstr(self::strLower($tok)) .
+												" and  listname=" . $db->qstr(self::strLower($ulistname)) . 
+												" and owner=" . $db->qstr($this->owner); //owner restiction
+										$db->Execute($sSQL);
+										$_smails += 1;		
+										//$this->messages[] = $sSQL;
+									}
+								}
+							}
+							$this->messages[] = $_smails . ' mails removed from' . self::strLower($ulistname);	 
+							break;
+			
+			case 'insert':
+			default 	:	$sSQL = "insert into ulists (email,startdate,active,lid,listname,name,owner) values ";	
+							foreach ($mymails as $i=>$tok) {
+								if (trim($tok)) {
+									$sql[] = "(" . $db->qstr(self::strLower($tok)) . "," . $db->qstr($dtime) . "," .
+											"1,1," . $db->qstr(self::strLower($ulistname)) . "," .	
+											$db->qstr($subname) . "," . $db->qstr($this->owner) . ")";  
+								}		
+							}
+							$sSQL .= implode(',', $sql);
+							$db->Execute($sSQL);		  
+							//$this->messages[] = $sSQL;
+							$_smails = count($mymails);
+							$this->messages[] = $_smails . ' mails added in ' . self::strLower($ulistname);	 
 		}
-
-        return false;
+		set_time_limit(ini_get('max_execution_time'));
+		
+		return true;	
 	}		
 	
-	protected function mass_subscribe() {
-		$mailtext = GetParam('csvmails');	  
-		$separator = GetParam('separator') ? GetParam('separator') : ';';
-		if (!$mailtext) return;
-	  
-		$mymails = explode($separator,$mailtext);
+	protected function mass_subscribe($silent=false) {	  
+		$separator = GetParam('separator') ? GetParam('separator') : $this->defsep;
+		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 
+						(GetParam('ulist') ? GetParam('ulist') : null);		
+					
+		if (!$ulistname) {
+			$this->messages[] = localize('_selectlist',getlocal());	
+			return false;
+		}	
+		
+		$mailtext = str_replace(array('\r','\n'), array('',''), trim(GetParam('csvmails')));
+		if (!$mailtext) {
+			$this->messages[] = '0 mails added to list ' . $ulistname;	
+			return false;
+		}			
+		
+		$mymails = strstr($mailtext, $separator) ? 
+					explode($separator, $mailtext) : array(0=>trim($mailtext));	
+					
 		$x=0; $x2=0;
 		$n=0;
 		$e=0;
 		set_time_limit(120);
 		foreach ($mymails as $i=>$tok) {
-			if ($doit = $this->dosubscribe(trim(strtolower($tok)))) {//is a mail address...
-			if ($doit>0) 
-				$x+=1;
-			elseif ($doit<0) 
-				$x2+=1;
+			
+			if (!trim($tok)) continue;
+			
+			if ($doit = $this->dosubscribe($tok,'undefined',$silent)) {//is a mail address...
+				if ($doit>0) 
+					$x+=1;
+				elseif ($doit<0) 
+					$x2+=1;
 			}  
 			else {//..is a combo mail/name
 		
-				$doit_2 = $this->subscribe_extracting_name($tok);
+				$doit_2 = $this->subscribe_extracting_name($tok, $silent);
 		  
 				if ($doit_2) {
 					$n+=1;
@@ -531,44 +652,69 @@ class rculists  {
 		}
 		set_time_limit(ini_get('max_execution_time'));
 	  
-		$msg = $x . ' mails added, ';
-		$msg .= $x2 . ' mails updated from ' . count($mymails) . ', ';	  
-		$msg .= $n . ' names extracted,';	  
-		$msg .= $e . ' tokens not recognized.';	  
+		$this->messages[] = $x . ' mails added';
+		$this->messages[] =	$x2 . ' mails updated from ' . count($mymails);	
+		$this->messages[] =	$n . ' names extracted';
+		$this->messages[] = $e . ' tokens not recognized';
 	  
-		SetGlobal('sFormErr', $msg);
+		SetGlobal('sFormErr', implode(', ', $this->messages));
+		
 		return true;	
 	}	
-	
-	/*bulk sql*/
-	protected function bulk_subscribe() {
-        $db = GetGlobal('db');
-		
-		$mailtext = GetParam('csvmails');	  
-		if (!$mailtext) return;
-		
-		$separator = GetParam('separator') ? GetParam('separator') : ';';
-		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';	  
-		$dtime = date('Y-m-d h:i:s');	  
-		$mymails = explode($separator,$mailtext);
 
-		set_time_limit(120);
-		$sSQL = "insert into ulists (email,startdate,active,lid,listname,name,owner) values ";	
-		foreach ($mymails as $i=>$tok) {
-			$sql[] = "(" . $db->qstr(strtolower($tok)) . "," . $db->qstr($dtime) . "," .
-					"1,1," . $db->qstr(strtolower($ulistname)) . "," .	$db->qstr($name) . "," . $db->qstr($this->owner) . ")";  
+	protected function subscribe_extracting_name($token=null, $silent=false) {
+        $db = GetGlobal('db'); 
+		if (!$token) return;	
+		$matches = array();
+					
+	    //method 1 name <mail>
+	    $pattern = "@<(.*?)>@";
+	    preg_match($pattern,$token,$matches);
+	    $extracted_mail = trim(strtolower($matches[1]));
+
+		if ($this->_checkmail($extracted_mail)) {	  
+		  if ($name = str_replace($extracted_mail,'',$token)) {
+		    //echo $name,'<br>'
+		    $name = str_replace('"','',$name);
+		    $name = str_replace("'",'',$name);
+		    $name = str_replace('<>','',$name);			
+		  }
+		  $s = $this->dosubscribe($extracted_mail,$name,$silent);
+		  return ($s);	   
+	    }
+		else { //method 2 name [mail]
+	      $pattern2 = "@[(.*?)]@";
+	      preg_match($pattern2,$token,$matches);
+	      //print_r($matches);
+	      $extracted_mail = trim(strtolower($matches[1]));
+		 
+		  if ($this->_checkmail($extracted_mail)) {	  
+		    if ($name = str_replace($extracted_mail,'',$token)) {		
+		      $name = str_replace('"','',$name);
+			  $name = str_replace("'",'',$name);
+		      $name = str_replace('[]','',$name);			
+		    }
+		    $s = $this->dosubscribe($extracted_mail,$name,$silent);
+		    return ($s);		   			   
+	      }
+		  else { //method 3 name mail
+		    $mytokens = explode(' ',$token);
+		    $name = trim($mytokens[0]);
+		    $extracted_mail = trim(strtolower($mytokens[1])); 
+		  
+		    if ($this->_checkmail($extracted_mail)) {		
+		      if ($name = str_replace($extracted_mail,'',$token)) {
+		        $name = str_replace('"','',$name);
+			    $name = str_replace("'",'',$name);
+			  }	
+		      $s = $this->dosubscribe($extracted_mail,$name,$silent);
+		      return ($s);	   
+			}  
+	      }		  
 		}
-		set_time_limit(ini_get('max_execution_time'));
-	  
-	    $sSQL .= implode(',', $sql);
-		$db->Execute($sSQL);		  
-	    //echo $sSQL;
-		
-		$msg = count($mymails) . ' mails added, ';	  
-		SetGlobal('sFormErr', $msg);	
-		
-		return true;	
-	}	
+
+        return false;
+	}		
 
 	public function viewUList($exclude_selected=false) {
 		$db = GetGlobal('db');
@@ -653,11 +799,14 @@ class rculists  {
 
     protected function _checkmail($data) {
 
-		if( !eregi("^[a-z0-9]+([_\\.-][a-z0-9]+)*" . "@([a-z0-9]+([\.-][a-z0-9]{1,})+)*$", $data, $regs) )  
-			return false;
-
-		return true;  
+        $ret = filter_var($data, FILTER_VALIDATE_EMAIL);
+		return ($ret);  
 	}	
+
+	protected static function strLower($str) {
+		return strtolower(trim($str));
+		//return mb_strtolower(trim($str));
+	}
 
 };
 }

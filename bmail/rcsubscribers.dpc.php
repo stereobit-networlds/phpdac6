@@ -23,6 +23,7 @@ $__LOCALE['RCSUBSCRIBERS_DPC'][4]='_SUBMAIL;e-Mail;e-Mail';
 $__LOCALE['RCSUBSCRIBERS_DPC'][5]='_SUBDATE;Insert date;Ημερομηνία εισαγωγής';
 $__LOCALE['RCSUBSCRIBERS_DPC'][6]='_SUBΝΑΜΕ;Name;Όνομα';
 $__LOCALE['RCSUBSCRIBERS_DPC'][7]='_FAILED;Failed;Αποτυχίες';
+$__LOCALE['RCSUBSCRIBERS_DPC'][8]='_INSUPDDATE;Update date;Ημερομηνία μεταβολής';
 
 class rcsubscribers  {
 
@@ -74,16 +75,18 @@ class rcsubscribers  {
 	    if (defined('MYGRID_DPC')) {
 		
 			$sSQL = "select * from (";
-			$sSQL.= "SELECT id,startdate,active,failed,name,email,listname FROM ulists";
+			$sSQL.= "SELECT id,datein,startdate,active,failed,name,email,listname FROM ulists";
 			$sSQL .= ') as o';  		   
 			//echo $sSQL;
-			_m("mygrid.column use grid1+id|".localize('_ID',getlocal()));
+			_m("mygrid.column use grid1+id|".localize('_ID',getlocal()).'|2|0');
 			_m("mygrid.column use grid1+email|".localize('_SUBMAIL',getlocal()).'|10|1');
-			_m("mygrid.column use grid1+startdate|".localize('_SUBDATE',getlocal()).'|10|0');		   
-			_m("mygrid.column use grid1+name|".localize('_FNAME',getlocal()).'|20|1');	
+			_m("mygrid.column use grid1+listname|".localize('_LISTNAME',getlocal()).'|10|1');
+			_m("mygrid.column use grid1+startdate|".localize('_SUBDATE',getlocal()).'|8|0');
+			_m("mygrid.column use grid1+datein|".localize('_INSUPDDATE',getlocal()).'|8|0');			
+			_m("mygrid.column use grid1+name|".localize('_FNAME',getlocal()).'|19|1');	
 			_m("mygrid.column use grid1+active|".localize('_ACTIVE',getlocal()).'|boolean|1');	
 			_m("mygrid.column use grid1+failed|".localize('_FAILED',getlocal()).'|5|1');	
-			_m("mygrid.column use grid1+listname|".localize('_LISTNAME',getlocal()).'|20|1');		
+			//_m("mygrid.column use grid1+listname|".localize('_LISTNAME',getlocal()).'|20|1');		
 			$out .= _m("mygrid.grid use grid1+ulists+$sSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");//+0+1+0");
 
 	    }
