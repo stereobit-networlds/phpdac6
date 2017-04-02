@@ -104,7 +104,7 @@ class shform {
 	
 						    //if (!$err=$this->checkFields()) {	
                             if ($this->valid_recaptcha()) {							
-							  if (($m = GetParam("email")) && ($this->domain_exists($m))) {
+							  if (($m = GetParam("email")) /*&& ($this->domain_exists($m))*/) {
 							  
 								$subject = GetParam("info");
 								$body = addslashes(GetParam("cperson")) . ' ('. $m . ') - ' . $subject; 
