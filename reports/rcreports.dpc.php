@@ -176,7 +176,8 @@ class rcreports  {
 		$title = localize('_results', $lan);// . '_' . $id;		
 
 		list($xsSQL, $fields, $table) = $this->load_report_sql($id); 
-		
+		//echo $xsSQL;
+
 		if ($fields) { //not necessery except if set column attributes
 			$_fields = explode(',',$fields);
 			foreach ($_fields as $i=>$f) {
@@ -247,7 +248,7 @@ class rcreports  {
 			$phrases = explode(' ', $mysql);
 		    if (stristr($mysql, 'where')) {
 				foreach ($phrases as $p) {
-					if (strstr($p,'where')) break;
+					if (stristr($p,'where')) break;
 					$table = $p;	
 				}	
 			}
@@ -481,7 +482,7 @@ class rcreports  {
 		return ($out);	 
 	}		
 	
-	protected function mailto($to=null,$subject=null,$body=null) {
+	public function mailto($to=null,$subject=null,$body=null) {
 		$htmlbody = '<html><body>'.$body.'</body></html>';
 		$from = $this->from;
 		  

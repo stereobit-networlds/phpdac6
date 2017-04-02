@@ -104,19 +104,19 @@ class rcblacklist  {
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
 	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('RCBLACKLIST_DPC',getlocal()); //localize('_items', $lan);	
+		$title = localize('RCBLACKLIST_DPC',getlocal()); 
 
         $myfields = "id,timein,status,REMOTE_ADDR,HTTP_X_FORWARDED_FOR";  		
 
 		$xsSQL = 'select * from (select '.$myfields . ' from blacklistip) as o';
 		//echo $xsSQL ;
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+id|".localize('_id',getlocal())."|1|0");	
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+status|".localize('_status',getlocal()).'|boolean|1');			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+timein|".localize('_timein',getlocal())."|5|0|");			
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+REMOTE_ADDR|".localize('_REMOTE_ADDR',getlocal())."|link|5|"."javascript:blactivity(\"{REMOTE_ADDR}\");".'||');	 
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid1+HTTP_X_FORWARDED_FOR|".localize('_HTTP_X_FORWARDED_FOR',getlocal())."|5|0|");			
+		_m("mygrid.column use grid1+id|".localize('_id',getlocal())."|link|5|"."javascript:blactivity(\"{REMOTE_ADDR}\");".'||');	  //."|1|0");	
+		_m("mygrid.column use grid1+status|".localize('_status',getlocal()).'|boolean|1');			
+		_m("mygrid.column use grid1+timein|".localize('_timein',getlocal())."|5|0|");			
+		_m("mygrid.column use grid1+REMOTE_ADDR|".localize('_REMOTE_ADDR',getlocal())."|5|1|");//."|link|5|"."javascript:blactivity(\"{REMOTE_ADDR}\");".'||');	 
+		_m("mygrid.column use grid1+HTTP_X_FORWARDED_FOR|".localize('_HTTP_X_FORWARDED_FOR',getlocal())."|5|0|");			
 	
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+blacklistip+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
+		$out = _m("mygrid.grid use grid1+blacklistip+$xsSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width");
 		
 		return ($out);  	
 	}		
@@ -137,16 +137,16 @@ class rcblacklist  {
 		   		   
 		//echo $sSQL;
 
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+date|".localize('_timein',getlocal()).'|5|0');				
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid2+tid|".localize('_tid',getlocal()).'|10|0');
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr1|".localize('_attr1',getlocal()).'|19|0');			
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid2+attr3|".localize('_attr3',getlocal()).'|10|0');
-        GetGlobal('controller')->calldpc_method("mygrid.column use grid2+ref|".localize('_ref',getlocal()).'|10|0');		
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+REMOTE_ADDR|".localize('_REMOTE_ADDR',getlocal()).'|5|0');	 
-		GetGlobal('controller')->calldpc_method("mygrid.column use grid2+HTTP_X_FORWARDED_FOR|".localize('_HTTP_X_FORWARDED_FOR',getlocal())."|5|0|");			
+		_m("mygrid.column use grid2+id|".localize('_id',getlocal())."|5|0|");
+		_m("mygrid.column use grid2+date|".localize('_timein',getlocal()).'|5|0');				
+        _m("mygrid.column use grid2+tid|".localize('_tid',getlocal()).'|10|0');
+        _m("mygrid.column use grid2+attr1|".localize('_attr1',getlocal()).'|19|0');			
+        _m("mygrid.column use grid2+attr3|".localize('_attr3',getlocal()).'|10|0');
+        _m("mygrid.column use grid2+ref|".localize('_ref',getlocal()).'|10|0');		
+		_m("mygrid.column use grid2+REMOTE_ADDR|".localize('_REMOTE_ADDR',getlocal()).'|5|0');	 
+		_m("mygrid.column use grid2+HTTP_X_FORWARDED_FOR|".localize('_HTTP_X_FORWARDED_FOR',getlocal())."|5|0|");			
 
-		$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid2+stats+$sSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
+		$out .= _m("mygrid.grid use grid2+stats+$sSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+0+1+1");
 	    return ($out);
 	
     }				

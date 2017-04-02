@@ -60,8 +60,9 @@ class shagent extends cmsagent {
 	
 	/* override using array_key */
 	protected function isLoadedMessage() {
+		if (empty($this->pastMsg)) return false;
 		
-		if ((array_key_exists($this->msgId,$this->pastMsg)) && 
+		if ((array_key_exists($this->msgId, $this->pastMsg)) && 
 			($this->pastMsg[$this->msgId] == $this->currentDiv)) 
 				return true;
 		
@@ -127,7 +128,8 @@ class shagent extends cmsagent {
 			
 			$this->saveMessage(); //save the viewed message
 			
-			if (($msg) && ($this->ip == '46.190.78.7')) //debug, only me 
+			//if (($msg) && ($this->ip == '109.242.189.69')) //debug, only me 
+			if ($msg)
 				return ($msg);
 		}	
 		

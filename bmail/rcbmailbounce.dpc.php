@@ -360,7 +360,7 @@ class rcbmailbounce {
 		
 				$xtimes = $result->fields[0] ? intval($result->fields[0])+1 : 1;
 		
-				$sSQL = 'update ulists set failed=' . $xtimes . " where email=" . $db->qstr($to);
+				$sSQL = 'update ulists set failed=' . $xtimes . " where active=1 and email=" . $db->qstr($to);
 				$result = $db->Execute($sSQL,1);
 
 				//also update mailqueue (last sending mail)		

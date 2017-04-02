@@ -226,20 +226,10 @@ class cmsagent {
 		
 		if (!empty($avoiduseragent)) {
 			foreach ($avoiduseragent as $i=>$ua) {
-				if (stristr($agent, 'bingbot')) 
+				if (stristr($agent, $ua)) 
 					return true;
 			}
 		}
-		/*
-		if (
-			(stristr($agent, 'bingbot')) ||
-			(stristr($agent, 'hrefsbot')) ||
-			(stristr($agent, 'googlebot')) ||
-			(stristr($agent, 'skroutzbot')) ||
-			(stristr($agent, 'bot')) ||
-			(stristr($agent, 'facebookexternal')) 
-			)	 
-			return true;*/
 		
 		return false;	
 	}	

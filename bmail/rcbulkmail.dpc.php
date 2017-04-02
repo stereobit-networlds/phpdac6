@@ -304,7 +304,7 @@ class rcbulkmail {
 											$this->loadTemplate2(); 	
 										}										
 										else
-											$this->loadTemplate();	
+											$this->loadTemplate();
 									  
 										if ($this->ulistselect = GetReq('ulistselect')) 
 											SetSessionParam('ulistselect', $this->ulistselect); 
@@ -1334,6 +1334,7 @@ EOF;
 		$cid = $this->_CID($body, $title, $to);
         $active = GetParam('savecmp') ? 1 : 0;	
 		
+		//weblink token 10 (0..9 token reserved frontpage.process_html_file)
 		if ($viewashtml = GetParam('webviewlink')) {
 			$pageurl = $this->webview ? $this->encUrl($this->savehtmlurl):
 										$this->encUrl($this->savehtmlurl . $cid . '.html');
@@ -1343,13 +1344,14 @@ EOF;
 			$rtext = $this->add_remarks_to_hide($text); //add remark to easilly remove 
 			//if use tokens place at atoken
 			if ($hastokens = GetParam('usetokens')) 
-				$rtokens[0] = $this->add_remarks_to_hide($text); 
+				$rtokens[10] = $this->add_remarks_to_hide($text); 
 			else  //else at end of body
 				$body = str_replace('</body>',$rtext .'</body>', $body);							   	
 		}
 		else
-			$rtokens[0] = ''; //dummy token to replace if $0$ exist in page
+			$rtokens[10] = ''; //dummy token to replace if $0$ exist in page
 		
+		//unsub link token 11 (0..9 token reserved frontpage.process_html_file)
 		if ($unsublink = GetParam('unsubscribelink')) {
 			$unlink = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_here',getlocal())."</a>";			
 			
@@ -1357,13 +1359,13 @@ EOF;
 			$rtext = $this->add_remarks_to_hide($text);
 			//if use tokens place at atoken
 			if ($hastokens = GetParam('usetokens'))
-				$rtokens[1] = $this->add_remarks_to_hide($text);
+				$rtokens[11] = $this->add_remarks_to_hide($text);
 			else //else at end of body
 				$body = str_replace('</body>',$rtext .'</body>', $body);		
 		}
 		else
-			$rtokens[1] = ''; //dummy token to replace if $1$ exist in page
-		
+			$rtokens[11] = ''; //dummy token to replace if $1$ exist in page
+
 		$body =  $this->combine_tokens($body, $rtokens); //in case of tokens	
 		
 		

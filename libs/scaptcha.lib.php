@@ -10,8 +10,8 @@ class scaptcha {
 	
 	public function __construct() {
 		
-		$this->bg_path = getcwd() . '/images/backgrounds/';
-		$this->font_path = getcwd() . '/images/fonts/';		
+		$this->bg_path = getcwd() . '/images/captcha/backgrounds/';
+		$this->font_path = getcwd() . '/images/captcha/fonts/';		
 		
 		// Default values
 		$this->captcha_config = array(

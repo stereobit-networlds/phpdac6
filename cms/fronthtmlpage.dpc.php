@@ -145,10 +145,6 @@ class fronthtmlpage {
 		
 		//problem returning part (outside html body)
 		$this->preprocess = 0;//_v('pcntl.preprosess')		
-
-		//date_default_timezone_set('Europe/Athens');
-
-		//$this->javascript();	//moved to cmsrt
 	}	
 	
     public function render($actiondata) { 	

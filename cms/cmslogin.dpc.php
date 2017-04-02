@@ -89,7 +89,7 @@ class cmslogin {
 	var $recaptcha_public_key, $recaptcha_private_key;	
 	var $resetPass, $isLogin, $isRegistered, $ssl;
 	var $inactive_on_register, $recaptcha, $appname, $mtrackimg;	
-	var $facebook_id, $facebook_key, $facebook_userId, $facebook, $fbhash;		
+	var $facebook_id, $facebook_key, $facebook_userId, $facebook, $fbhash, $fbmode, $fbredir, $fbin;		
 
 	public function __construct() {
 	    $sFormErr = GetGlobal('sFormErr');
@@ -119,7 +119,11 @@ class cmslogin {
 	    $this->recaptcha_public_key = remote_paramload('RECAPTCHA','pubkey',$this->path);							  
 	    $this->recaptcha_private_key = remote_paramload('RECAPTCHA','privkey',$this->path);			
 	    $rp = remote_paramload('CMSLOGIN','recaptcha',$this->path);
-	    $this->recaptcha = $rp ? true : false;				
+	    $this->recaptcha = $rp ? true : false;	
+
+		$this->appname = paramload('ID','instancename');
+		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
+		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";				
 		
 	    $this->inactive_on_register = remote_paramload('SHUSERS','inactive_on_register',$this->path);		
 		$acode = remote_paramload('RCCUSTOMERS','activecode',$this->path);
@@ -133,17 +137,18 @@ class cmslogin {
 	    $this->formerror = null;
 		$this->ssl = (isset($_SERVER['HTTPS'])) ? true : false;		
 	
-	    //facebook login 
-	    $this->facebook_id = remote_paramload('CMSLOGIN','fbid',$this->path); 
-	    $this->facebook_key = remote_paramload('CMSLOGIN','fbkey',$this->path); 
-	    $this->facebook_userId = null;	
-		$this->fbhash = GetSessionParam('fbhash');	
-	   	//echo $this->fbhash,'>';
+	    //facebook login 	
+	    $this->facebook_id = _m('cms.paramload use CMS+fbid'); //remote_paramload('CMSLOGIN','fbid',$this->path); 
+	    $this->facebook_key = _m('cms.paramload use CMS+fbkey'); //remote_paramload('CMSLOGIN','fbkey',$this->path); 
+		$this->fbmode = _m('cms.paramload use CMS+fbLogMode');	
+		$this->fbauto = _m('cms.paramload use CMS+fbAutoLogin');
+		$this->fbhash = GetSessionParam('fbhash');		
+		$this->fbin = GetSessionParam('fbin');	
+	    $this->facebook_userId = null;			
+		//echo $this->fbmode,'>';		
 		
-		$this->appname = paramload('ID','instancename');
-		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
-		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";		
-	   
+		if (!$this->fbmode)
+			$this->login_javascript(); //load allways, redirect anypage
 	}
 
     public function event($sAction) {
@@ -155,15 +160,24 @@ class cmslogin {
 		    case 'rempwd'       : 	break;
 			case 'shrememberajax':
 		    case 'shremember'   : 	$this->do_the_job(); 
+			
+									if ($this->fbmode==1)
+										$this->login_javascript(); //redirect only when in login page
+									
 									break;
+									
 		    case 'shcaptcha'    : 	$this->do_the_captcha(); 
 									break;
 			case 'shlogin'      :
-            case 'cmslogin'     : 	//$this->login_javascript(); //added in page load always
+            case 'cmslogin'     : 	if ($this->fbmode==1)
+										$this->login_javascript(); //redirect only when in login page
 									break;
 
 			case "dologinajax"  :
-            case "dologin"      : 	$this->login_successfull = $this->is_fb_logged_in() ? $this->do_facebook_login() : $this->do_login();
+            case "dologin"      : 	if (GetParam('Username')) //default login
+										$this->login_successfull = $this->do_login();
+									else //fb etc login	
+										$this->login_successfull = $this->is_fb_logged_in() ? $this->do_facebook_login() : $this->do_login();
 							        /* 
 									if (defined('SHCART_DPC')) 
 										$cartnotempty = _m('shcart.notempty');
@@ -265,12 +279,22 @@ class cmslogin {
 	    }	
 	}		
 	
-	public function fblogin_javascript() {
+	public function fblogin_javascript($isUser=false) {
 		$UserID = GetGlobal('UserID');	
-		if ($UserID) return null; //not a fb login when already logged in
+		if (($isUser==false) && ($UserID)) return null; //not a fb login when already logged in
 		
 	    if (!$this->facebook_id) return null;	
 		$localization = (getlocal()==1) ? 'el_GR' : 'en_US';
+		
+		if ($this->fbauto) {
+			$fbRedir = "FB.Event.subscribe('auth.login', function(response) {
+		var hash = window.location;	  
+		if (response.status === 'connected') { 
+			window.location.href='dologin/#facebook^'+hash;}	
+		else window.location.href='dologout/#^'+hash;
+		 });
+"; 
+		}	
 	
 	
 		$fbjslogin = <<<FBLOGIN
@@ -281,8 +305,10 @@ class cmslogin {
             if (response.status === 'connected') {
                 var uid = response.authResponse.userID;
                 var accessToken = response.authResponse.accessToken;
-                // Do something with the access token
-				testAPI();} else {
+				/* //Do something with the access token
+				testAPI(); */
+			} 
+			else {
 				var hash = window.location;				
                 // Subscribe to the event 'auth.authResponseChange' and wait for the user to autenticate
                 FB.Event.subscribe('auth.authResponseChange', function(response) {
@@ -290,13 +316,8 @@ class cmslogin {
                 },true);           
             }
 		  });	
-
-		  FB.Event.subscribe('auth.login', function(response) {
-			var hash = window.location;	  
-			if (response.status === 'connected') { 
-				window.location.href='dologin/#facebook^'+hash;}	
-			else window.location.href='dologout/#^'+hash;
-		  });	  
+ 
+		  $fbRedir
         };	
 		
 		(function(d, s, id){
@@ -307,14 +328,14 @@ class cmslogin {
 			fjs.parentNode.insertBefore(js, fjs);
 		}(document, 'script', 'facebook-jssdk'));
 
-		function testAPI() {
+		/*function testAPI() {
 			console.log('Welcome!  Fetching your information.... ');
 			FB.api('/me?fields=id,email,name', function(response) {
 				console.log('Successful login for: ' + response.email);
 				document.getElementById('status').innerHTML =
 				'Thanks for logging in, ' + response.name + '!';
 			});
-		}		
+		}*/		
 FBLOGIN;
 	
 		return ($fbjslogin);
@@ -354,10 +375,14 @@ FBLOGIN;
 		
 		$cookie_name = 'fbsr_'. $this->facebook->getAppId();
 		//echo $cookie_name.'>';
-		if (array_key_exists($cookie_name, $_COOKIE))
+		if (array_key_exists($cookie_name, $_COOKIE)) {
+			SetSessionParam('fbin',1);
 			return true;
+		}	
 		
 		$this->facebook->destroySession();
+		
+		SetSessionParam('fbin',null);
 		return false;	
 	}	
 	
@@ -547,7 +572,8 @@ window.setTimeout('neu()',10);
 	    $pwd2 = GetParam("vPassword");
        
 	    if ($this->valid_recaptcha()) {
-		if (($pwd!=null) && ($pwd2!=null)) {
+		//if (_m('cmsrt.valid_captcha')===true) {	
+		  if (($pwd!=null) && ($pwd2!=null)) {
 
 			if ((strcmp($pwd,$pwd2)==0)) {
 		 
@@ -569,8 +595,8 @@ window.setTimeout('neu()',10);
 				$this->formerror = localize('_MSG21',getlocal());
 				SetGlobal('sFormErr',$this->formerror);
 			}  
-	   }
-	   }//recaptcha
+	      }
+	    }//recaptcha
 	}	
 
 	protected function do_the_job() {
@@ -578,7 +604,8 @@ window.setTimeout('neu()',10);
 	    $u = GetParam("myusername");
 	    $m = GetParam("myemail");  
 	   
-        if ($this->valid_recaptcha($norecaptcha)) {	 
+        if ($this->valid_recaptcha()) {	
+		//if (_m('cmsrt.valid_captcha')===true) {		
 
 			if ($this->domain_exists($m)) {
 				$sSQL = "SELECT username, password, notes FROM users WHERE email='" . addslashes($m) . "' and username is not null";
@@ -731,8 +758,10 @@ window.setTimeout('neu()',10);
 		if ($this->is_fb_logged_in()) {
 			$this->facebook_userId = $this->facebook->getUser();
 			//echo "FB User Id : " . $this->facebook_userId;
-			//if ($this->facebook_userId) {
-			$userInfo = $this->facebook->api('/me?fields=id,email,name,first_name,last_name');
+			//when use api /me error...OAuthException: An active access token must be used to query information about the current user
+			//$userInfo = $this->facebook->api('/me?fields=id,email,name,first_name,last_name');
+			if ($this->facebook_userId) 
+				$userInfo = $this->facebook->api('/'.$this->facebook_userId . '?fields=id,email,name,first_name,last_name');			
 
 			//echo "<pre>";
 			//print_r($userInfo);
@@ -826,7 +855,8 @@ window.setTimeout('neu()',10);
 			unset($_COOKIE[$cookie_name2]);*/
 		
 			$this->facebook->destroySession();	//<<<<<<< not destroyed
-			SetSessionParam('fbhash', null);	
+			SetSessionParam('fbhash', null);
+			SetSessionParam('fbin', null);
 		//}			
 	  
 	    $GLOBALS['UserID'] = null;
@@ -841,7 +871,7 @@ window.setTimeout('neu()',10);
 		}
 	}	
 	
-	public function do_guest_login($email=null,$name=null,$address=null,$postcode=null,$country=null) {
+	public function do_guest_login($email=null,$name=null,$address=null,$postcode=null,$country=null,$tel=null) {
 	    $db = GetGlobal('db');	
 		if (!$email) return false;
 		
@@ -883,7 +913,7 @@ window.setTimeout('neu()',10);
 				
 				    //add customer 
 					if (defined('SHCUSTOMERS_DPC')) 
-						$save = _m("shcustomers.save_guest_customer use $email+$name+$address+$postcode+$country");
+						$save = _m("shcustomers.save_guest_customer use $email+$name+$address+$postcode+$country+$tel");
 					
 				
 					$this->update_statistics('registration', $sUsername);
@@ -901,7 +931,7 @@ window.setTimeout('neu()',10);
 				
 				//add customer address
 				if (defined('SHCUSTOMERS_DPC')) 
-					$save = _m("shcustomers.save_guest_deliveryaddress use $email+$name+$address+$postcode+$country"); 
+					$save = _m("shcustomers.save_guest_deliveryaddress use $email+$name+$address+$postcode+$country+$tel"); 
 					
 			}
 			
@@ -1244,42 +1274,48 @@ window.setTimeout('neu()',10);
 	}	
 
 	public function recaptcha() {
+		
 		if ((defined('RECAPTCHA_DPC')) && ($this->recaptcha==true)) {
 	        $recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	   
 			return $recaptcha;
-	    }	
+	    }
+		//else
+			//die(_m('cmsrt.captchaImage'));
+		
 		return false;
 	}		
    
 	protected function valid_recaptcha() {
 	 
-	    if ((!defined('RECAPTCHA_DPC')) || ($this->recaptcha==false)) return true; 
-		//print_r($_POST);
-		  
-        if ($_POST["recaptcha_response_field"]) {
-            $resp = recaptcha_check_answer ($this->recaptcha_private_key,
-                                            $_SERVER["REMOTE_ADDR"],
-                                            $_POST["recaptcha_challenge_field"],
-                                            $_POST["recaptcha_response_field"]);
+	    if ((defined('RECAPTCHA_DPC')) && ($this->recaptcha==true)) { 
+
+			if ($_POST["recaptcha_response_field"]) {
+				$resp = recaptcha_check_answer ($this->recaptcha_private_key,
+												$_SERVER["REMOTE_ADDR"],
+												$_POST["recaptcha_challenge_field"],
+												$_POST["recaptcha_response_field"]);
 											
-            if ($resp->is_valid) {
-                $error = null;//echo "You got it!";
-				$ret = true;
-            } 
+				if ($resp->is_valid) {
+					$error = null;//echo "You got it!";
+					$ret = true;
+				} 
+				else {
+					// set the error code so that we can display it
+					$error = $resp->error;
+					$ret = false;
+					$msg = "Incorrect recaptcha entry!";				
+				}
+			}
 			else {
-                // set the error code so that we can display it
-                $error = $resp->error;
 				$ret = false;
-		        $msg = "Incorrect recaptcha entry!";				
-            }
-		}
-		else {
-		    $ret = false;
-		    $msg = "Recaptcha entry required!";			  
-		}
+				$msg = "Recaptcha entry required!";			  
+			}
 		  
-		$this->formerror = $msg;
-		SetGlobal('sFormErr',$msg);
+			$this->formerror = $msg;
+			SetGlobal('sFormErr',$msg);
+		}
+		else
+			$ret = _m('cmsrt.valid_captcha');
 		  
 		return ($ret);																			 
     }   	

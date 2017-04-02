@@ -48,7 +48,7 @@ class rcxmlfeeds {
 
     var $prpath, $title, $select_fields, $xmlindex, $cdate, $savepath;
 	var $cseparator, $url, $imgpath, $restype;
-	var $pricef, $pricevat, $decimal;
+	var $pricef, $pricevat, $decimal, $httpurl;
 
     public function __construct() {
 	  
@@ -75,7 +75,10 @@ class rcxmlfeeds {
 		$this->decimal = remote_paramload('RCXMLFEEDS','decimal',$this->path);
 
 		$murl = arrayload('SHELL','ip');
-		$this->url = $murl[0]; 	 
+		$this->url = $murl[0];
+
+		$this->httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$this->httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];						
 
 		$this->restype = remote_paramload('RCITEMS','restype',$this->path);	   
 	}
@@ -250,8 +253,8 @@ class rcxmlfeeds {
 			
 			$_cat = _m('cmsrt.replace_spchars use '.$cat);//str_replace(' ','_', $cat);
 			
-			$recarray['itemurl'] = 'http://' . $this->url . '/' . seturl('t=kshow&cat='.$_cat.'&id='.$id,null,null,null,null,1);
-			$recarray['itemimg'] = 'http://' . $this->url . '/' . $this->imgpath . $id . $this->restype;
+			$recarray['itemurl'] = $this->httpurl . '/' . seturl('t=kshow&cat='.$_cat.'&id='.$id,null,null,null,null,1);
+			$recarray['itemimg'] = $this->httpurl . '/' . $this->imgpath . $id . $this->restype;
 			$recarray['itemcat'] = $cat; /** <<<<<<<<<<<<<<<<<<<<<<<<<<< also add **/
 			
 			$ret_array[] = (array) $recarray;

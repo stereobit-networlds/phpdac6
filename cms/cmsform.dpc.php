@@ -169,23 +169,15 @@ class cmsform {
 	protected function mailform() {
 		$sFormErr = GetGlobal('sFormErr');
 	 
-		/*if ($this->post==true) {
+		$myform = _m('cmsrt._ct use cform');
 	   
-			$out = $this->msg;
+		if (defined('RECAPTCHA_DPC')) {
+			$recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	
+			$myform = str_replace('<@RECAPTCHA@>',$recaptcha,$myform);		   
 		}
-		else { */
 	 
-			$myform = _m('cmsrt._ct use cform');
-	   
-			if (defined('RECAPTCHA_DPC')) {
-				$recaptcha = recaptcha_get_html($this->recaptcha_public_key, null, $this->ssl);	
-				$myform = str_replace('<@RECAPTCHA@>',$recaptcha,$myform);		   
-			}
-	 
-			//$out .= $sFormErr . $this->msg;
-			$out .= $myform; 
-		//}
-	   
+		$out .= $myform; 
+
 		return ($out);
 	}
 	 
@@ -196,86 +188,95 @@ class cmsform {
     } 	
 	 
     protected function checkFields($bypass=null,$checkasterisk=null) {
-	   $sFormErr = GetGlobal('sFormErr');
-	   SetGlobal('sFormErr',"");	   
+		$sFormErr = GetGlobal('sFormErr');
+		SetGlobal('sFormErr',"");
+		$this->msg = null;	
+	
+		//if ($this->valid_recaptcha()) {    
+	   
+		if ($bypass) 
+			return null;		  
+	   
+		$recfields = (array) $this->cntform;//custom fields
+		$titlefields = (array) $this->cntformtitles;
+	   
+		if (!$recfields) {
+			$recfields = array('company','cperson','email','subject','mail_text');
+			$titlefields = array('_COMPANY','_CPERSON','_EMAIL','_SUBJECT','_BODY'); 
+		}	   
+	   
+		if ($checkasterisk) {
+			foreach ($recfields as $field_num => $fieldname) {
 
-       if ($this->valid_recaptcha()) {	   
-	   
-	   if ($bypass) 
-	     return null;		  
-	   
-	   $recfields = (array) $this->cntform;//custom fields
-	   $titlefields = (array) $this->cntformtitles;
-	   
-       if (!$recfields) {
+				$titles = explode('/',remote_paramload('SHFORM',$fieldname,$this->path));
+				$title = $titles[getlocal()];
+				if (strstr($title,'*')) { //check by titile using *
 
-	      $recfields = array('company','cperson','email','subject','mail_text');
-		  $titlefields = array('_COMPANY','_CPERSON','_EMAIL','_SUBJECT','_BODY'); 
-       }	   
-	   
-	   if ($checkasterisk) {
-	     foreach ($recfields as $field_num => $fieldname) {
+					if(!strlen(GetParam(_with($fieldname)))) {
+						$this->msg .= localize('_MSG12',getlocal()) . " <font color=\"red\">" .
+									$title . "</font> " .
+									localize('_MSG11',getlocal()) . "<br>";		  			
+					}
+				}
+			}		   
+		}	
+		else { 
+			foreach ($recfields as $field_num => $fieldname) {
 
-			$titles = explode('/',remote_paramload('SHFORM',$fieldname,$this->path));
-			$title = $titles[getlocal()];
-	     	if (strstr($title,'*')) { //check by titile using *
-
-              if(!strlen(GetParam(_with($fieldname)))) {
-                $this->msg .= localize('_MSG12',getlocal()) . " <font color=\"red\">" .
-		                     $title . "</font> " .
-		                     localize('_MSG11',getlocal()) . "<br>";		  			
-			  }
-			}
-		 }		   
-	   }	
-	   else { 
-         foreach ($recfields as $field_num => $fieldname) {
-
-           if(!strlen(GetParam(_with($fieldname)))) {
-             $this->msg .= localize('_MSG12',getlocal()) . " <font color=\"red\">" .
-		                  localize($titlefields[$field_num],getlocal()) . "</font> " .
-		                  localize('_MSG11',getlocal()) . "<br>";
-           }
-		 }	     
-       }
+				if(!strlen(GetParam(_with($fieldname)))) {
+					$this->msg .= localize('_MSG12',getlocal()) . " <font color=\"red\">" .
+								localize($titlefields[$field_num],getlocal()) . "</font> " .
+								localize('_MSG11',getlocal()) . "<br>";
+				}
+			}	     
+		}
 	   
-	   //mail chek	 
-	   if ((GetParam("email")) && (checkmail(GetParam("email"))==false))
-		   $this->msg .= localize('_INVALIDMAIL',getlocal()) . "<br>";	
+		//mail chek	 
+		if ((GetParam("email")) && (checkmail(GetParam("email"))==false))
+			$this->msg .= localize('_INVALIDMAIL',getlocal()) . "<br>";	
 	   
-	   }
+		//} //recaptha
 	   
-       return ($this->msg);
+	    if (_m('cmsrt.valid_captcha')===true) { 
+			$ret = $this->msg;
+	    }
+		else
+			$ret = $this->msg  . ' Invalid captcha!';
+	   
+        return ($ret);
     }	   
 			  
 	 
 	protected function valid_recaptcha() {
 	 
-	    if ((!defined('RECAPTCHA_DPC')) || (!$this->userecaptcha)) return true;
+	    if ((defined('RECAPTCHA_DPC')) && ($this->userecaptcha)) {
 		  
-        if ($_POST["recaptcha_response_field"]) {
-            $resp = recaptcha_check_answer ($this->recaptcha_private_key,
-                                            $_SERVER["REMOTE_ADDR"],
-                                            $_POST["recaptcha_challenge_field"],
-                                            $_POST["recaptcha_response_field"]);
+			if ($_POST["recaptcha_response_field"]) {
+				$resp = recaptcha_check_answer ($this->recaptcha_private_key,
+												$_SERVER["REMOTE_ADDR"],
+												$_POST["recaptcha_challenge_field"],
+												$_POST["recaptcha_response_field"]);
 											
-			//print_r($resp);
-            if ($resp->is_valid) {
-                $error = null;//echo "You got it!";
-				$ret = true;
-            } 
+				//print_r($resp);
+				if ($resp->is_valid) {
+					$error = null;//echo "You got it!";
+					$ret = true;
+				} 
+				else {
+					// set the error code so that we can display it
+					$error = $resp->error;
+					$ret = false;
+					$this->msg .= "Incorrect recaptcha entry!";				
+				}
+			}
 			else {
-                # set the error code so that we can display it
-                $error = $resp->error;
 				$ret = false;
-		        $this->msg .= "Incorrect recaptcha entry!";				
-            }
+				$this->msg .= "Recaptcha entry required!";			  
+			}
 		}
-		else {
-		    $ret = false;
-		    $this->msg .= "Recaptcha entry required!";			  
-		}
-
+		else
+			$ret = _m('cmsrt.valid_captcha');
+		
 		return ($ret);												
 									 
     }  

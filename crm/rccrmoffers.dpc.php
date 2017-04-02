@@ -918,8 +918,10 @@ class rccrmoffers {
 		$docid = md5($body .'|'. $r .'|'. $to);
 		
 		//if ($viewashtml = GetParam('webviewlink')) {
-		$rtokens[0] = ''; //dummy token to replace if $0$ exist in page
+		//token 10 (0..9 token reserved frontpage.process_html_file)
+		$rtokens[10] = ''; //dummy token to replace if $0$ exist in page
 		
+		//unsub link token 11 (0..9 token reserved frontpage.process_html_file)
 		if ($unsublink = GetParam('unsubscribelink')) {
 			$unlink = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_here',getlocal())."</a>";			
 			
@@ -927,12 +929,12 @@ class rccrmoffers {
 			$rtext = $this->add_remarks_to_hide($text);
 			//if use tokens place at atoken
 			if ($hastokens = GetParam('usetokens'))
-				$rtokens[1] = $this->add_remarks_to_hide($text);
+				$rtokens[11] = $this->add_remarks_to_hide($text);
 			else //else at end of body
 				$body = str_replace('</body>',$rtext .'</body>', $body);		
 		}
 		else
-			$rtokens[1] = ''; //dummy token to replace if $1$ exist in page
+			$rtokens[11] = ''; //dummy token to replace if $1$ exist in page
 		
 		$body =  $this->combine_tokens($body, $rtokens); //in case of tokens	
   

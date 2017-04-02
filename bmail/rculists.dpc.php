@@ -62,14 +62,22 @@ $__LOCALE['RCULISTS_DPC'][21]='_subremove;Remove from list;Αφαίρεση απ
 $__LOCALE['RCULISTS_DPC'][22]='_subcheck;Force activation;Με ενεργοποποίηση των ανενεργών';
 $__LOCALE['RCULISTS_DPC'][23]='_subscan;Extract elements;Εξαγωγή άλλων στοιχείων';
 $__LOCALE['RCULISTS_DPC'][24]='_subutils;Utilities;Ενέργειες';
-$__LOCALE['RCULISTS_DPC'][25]='_newlistprompt;Enter a name for a new mailing list or leave blank;Εισάγετε το όνομα της νέας λίστας ή κενό για εισαγωγή σε υπάρχουσα';
-$__LOCALE['RCULISTS_DPC'][26]='_sellistprompt;Choose an existing mailing list;Επιλέξτε λίστα εισαγωγής';
+$__LOCALE['RCULISTS_DPC'][25]='_newlistprompt;Enter a name for a new mailing list;Εισάγετε το όνομα της νέας λίστας';
+$__LOCALE['RCULISTS_DPC'][26]='_sellistprompt;Choose an existing list;Επιλέξτε λίστα εισαγωγής';
 $__LOCALE['RCULISTS_DPC'][27]='_subinsinto;Inset into list;Εισαγωγή σε λίστα';
 $__LOCALE['RCULISTS_DPC'][28]='_selectlist;Select list;Επιλέξτε λίστα';
 $__LOCALE['RCULISTS_DPC'][29]='_newlist;New list;Νεα λίστα';
 $__LOCALE['RCULISTS_DPC'][30]='_listsep;List separator;Σύμβολο διαχωρισμού';
 $__LOCALE['RCULISTS_DPC'][31]='_subtext;CSV emails;Emails με διαχωριστικά';
 $__LOCALE['RCULISTS_DPC'][32]='_subsubmit;Submit;Εκτέλεση';
+$__LOCALE['RCULISTS_DPC'][33]='_INSUPDDATE;Update date;Ημερομηνία μεταβολής';
+$__LOCALE['RCULISTS_DPC'][34]='_ACTIVE;Active;Ενεργό';
+$__LOCALE['RCULISTS_DPC'][35]='_LISTNAME;List;Όνομα λίστας';
+$__LOCALE['RCULISTS_DPC'][36]='_ID;Id;Α/Α';
+$__LOCALE['RCULISTS_DPC'][37]='_FAILED;Failed;Αποτυχίες';
+$__LOCALE['RCULISTS_DPC'][38]='_doublemailcheck;Double mails check;Έλεγχος διπλοτύπων';
+$__LOCALE['RCULISTS_DPC'][39]='_cleanbad;Disable bad mails;Απενεργοποίηση κακογραμμένων email';
+$__LOCALE['RCULISTS_DPC'][40]='_cleanfailed;Disable failed;Απενεργοποίηση αποτυχημένων αποστολών';
 
 class rculists  {
 
@@ -148,7 +156,7 @@ class rculists  {
 
 		switch ($action) {
 			
-			case 'cpcleanbounce'       : $out = $this->viewMails(null,400,16,'r',false,true); 
+			case 'cpcleanbounce'       : $out = $this->viewBounceList(); 
 			                             break;
 			
 			case 'cpunsubscribe'       :	 
@@ -274,14 +282,16 @@ class rculists  {
 		   	
 		if (defined('MYGRID_DPC')) {
 		    $title = str_replace(' ','_',localize('_MAILQUEUE',getlocal()));
-		   
+		    
 		    if ($invalid) {
-				$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue where (status=-1 or status=-2) and active>-9) as o";	
+				$campaign = ($cid = GetParam('cid')) ? " and cid='$cid' " : null;
+				$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue where (status=-1 or status=-2) and active>-9 $campaign) as o";	
 				$nosearch = 1;
 			}
 			else {
-				$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue) as o";  				
-				$nosearch = 0;
+				$campaign = ($cid = GetParam('cid')) ? " where cid='$cid' " : null;
+				$sSQL = "select * from (select id,active,timeout,receiver,subject,reply,status,mailstatus,cid from mailqueue $campaign) as o";  				
+				$nosearch = $campaign ? 1 : 0;
 			}	
 		   		   
 		    _m("mygrid.column use grid9+id|".localize('_id',getlocal())."|2|1|");
@@ -403,13 +413,9 @@ class rculists  {
 		$subcheck = GetParam('subcheck'); //check mode
 		$subremove = GetParam('subremove'); //remove mode (unsubscribe)
 		
-		//$this->messages[] = $subscan ? 'Scan text ON' : 'Scan text OFF';
 		if ($subscan) $this->messages[] = localize('_subscan',getlocal());
-		//$this->messages[] = $subupdate ? 'Update ON' : 'Update OFF';
 		if ($subupdate) $this->messages[] = localize('_subupdate',getlocal());
-		//$this->messages[] = $subcheck ? 'Check ON' : 'Check OFF';
 		if ($subcheck) $this->messages[] = localize('_subcheck',getlocal());
-		//$this->messages[] = $subremove ? 'Remove ON' : 'Remove OFF';
 		if ($subremove) $this->messages[] = localize('_subremove',getlocal());
 		
 		if ($subscan)  {//scanner mode
@@ -542,6 +548,13 @@ class rculists  {
 		
 		$mymails = strstr($mailtext, $separator) ? 
 					explode($separator, $mailtext) : array(0=>trim($mailtext));	
+					
+		//check double mails
+		$this->messages[] = count($mymails) . ' mails scanned';
+		$this->messages[] = localize('_doublemailcheck',getlocal());
+		$mymails = array_unique($mymails);
+		$this->messages[] = count($mymails) . ' mails to import';
+		
 		$_smails = 0;
 		set_time_limit(120);
 		switch ($mode) {
@@ -569,15 +582,15 @@ class rculists  {
 									}
 									else {
 										$sSQL = "delete from ulists where email=". $db->qstr(self::strLower($tok)) .
-												" and  listname=" . $db->qstr(self::strLower($ulistname)) . 
-												" and owner=" . $db->qstr($this->owner); //owner restiction
+												" and  listname=" . $db->qstr(self::strLower($ulistname));// . 
+												//" and owner=" . $db->qstr($this->owner); //owner restiction
 										$db->Execute($sSQL);
 										$_smails += 1;		
 										//$this->messages[] = $sSQL;
 									}
 								}
 							}
-							$this->messages[] = $_smails . ' mails removed from' . self::strLower($ulistname);	 
+							$this->messages[] = $_smails . ' mails removed from ' . self::strLower($ulistname);	 
 							break;
 			
 			case 'insert':
@@ -618,6 +631,12 @@ class rculists  {
 		
 		$mymails = strstr($mailtext, $separator) ? 
 					explode($separator, $mailtext) : array(0=>trim($mailtext));	
+					
+		//check double mails
+		$this->messages[] = count($mymails) . ' mails scanned';
+		$this->messages[] = localize('_doublemailcheck',getlocal());
+		$mymails = array_unique($mymails);
+		$this->messages[] = count($mymails) . ' mails to import';					
 					
 		$x=0; $x2=0;
 		$n=0;
@@ -716,7 +735,7 @@ class rculists  {
         return false;
 	}		
 
-	public function viewUList($exclude_selected=false) {
+	public function viewUList($exclude_selected=false, $selectedID=null) {
 		$db = GetGlobal('db');
 		
 		$sSQL = 'select distinct listname from ulists ';		   
@@ -729,26 +748,71 @@ class rculists  {
 		
 		//print_r($resultset);
 		foreach ($resultset as $n=>$rec) {
-			$ret  .= "<option value='".$rec[0]."'>". $rec[0]."</option>" ;
+			$selected = $selectedID ? (GetParam($selectedID)==$rec[0] ? ' selected' : null) : null;
+			$ret  .= "<option value='".$rec[0]."'$selected>". $rec[0]."</option>" ;
         }		
         
 		return ($ret);			
 	}	
+	
+	
+	protected function viewBounceList() {
+		$selectUList = ($ulist=GetParam('ulist')) ? " and listname='$ulist' " : null;
+		
+		if ($ulist) {//selected list
+			$title = str_replace(' ','_',$ulist);
+			
+			$sSQL = "select * from (";
+			$sSQL.= "SELECT id,datein,startdate,active,failed,name,email,listname FROM ulists where active=1 and failed>0 $selectUList";
+			$sSQL .= ') as o';  		   
+			//echo $sSQL;
+			_m("mygrid.column use grid1+id|".localize('_ID',getlocal()).'|2|0');
+			_m("mygrid.column use grid1+email|".localize('_SUBMAIL',getlocal()).'|10|1');
+			_m("mygrid.column use grid1+listname|".localize('_LISTNAME',getlocal()).'|10|1');
+			_m("mygrid.column use grid1+startdate|".localize('_SUBDATE',getlocal()).'|8|0');
+			_m("mygrid.column use grid1+datein|".localize('_INSUPDDATE',getlocal()).'|8|0');			
+			_m("mygrid.column use grid1+name|".localize('_FNAME',getlocal()).'|19|1');	
+			_m("mygrid.column use grid1+active|".localize('_ACTIVE',getlocal()).'|boolean|1');	
+			_m("mygrid.column use grid1+failed|".localize('_FAILED',getlocal()).'|5|1');	
+			//_m("mygrid.column use grid1+listname|".localize('_LISTNAME',getlocal()).'|20|1');		
+			$out = _m("mygrid.grid use grid1+ulists+$sSQL+$mode+$title+id+$noctrl+1+$rows+$height+$width+1+1+1");
+		
+		}
+		else //campaign msg list
+			$out = $this->viewMails(null,400,16,'r',false,true); 
+		
+		return $out;
+	}	
 
 	protected function cleanListFromBounce($fid=null) {
-		$db = GetGlobal('db');		
+		$db = GetGlobal('db');	
+		$cleanbad = GetParam('cleanbad');
+		$cleanfailed = GetParam('cleanfailed');		
 		$sendtimes = GetParam('fid') ? GetParam('fid') : ($fid ? $fid : 0);
-		$m=0;
+		$campaign = ($cid = GetParam('cid')) ? " and cid='$cid' " : null;
+		$ulistname = ($ulist = GetParam('ulist')) ? " and listname='$ulist' " : null;
+		$backtime = " and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 265 DAY ) ) AND DATE ( NOW() )";
+		$camptime = $campaign ? null : $backtime; //time limit 265 days when no campaign id
+		$ret = 0;
 		
-		//clean Invalid mails
-		$sSQL = 'select receiver from mailqueue where active=0 and status=-1 group by receiver order by receiver';		   
+		if ($cleanbad) $this->messages[] = localize('_cleanbad',getlocal());
+		if ($cleanfailed) $this->messages[] = localize('_cleanfailed',getlocal());
+		
+		//clean Invalid mails 
+		$m = 0;		
+		$sSQL = $ulistname ?
+					"select receiver,count(m.id) as c from mailqueue m LEFT JOIN ulists ON receiver=email where m.active=0 and status=-1 $ulistname and ulists.active=1 $backtime group by receiver" :
+					"select receiver,count(id) as c from mailqueue where active=0 and status=-1 $campaign $camptime group by receiver";		   				
 	    $result = $db->Execute($sSQL,2);
 		if (!empty($result)) {
 			foreach ($result as $i=>$rec) {
-				if ($sendtimes) { // if post
-					$sSQL = 'update ulists set active=0 where active=1 and failed>0 and email='.$db->qstr($rec[0]);
+				$m+=1;
+				if (($cleanbad) && ($sendtimes) && (intval($rec[1])>0)) { // if post
+					$sSQL = "update ulists set active=0 where active=1 and failed>0 and email=".$db->qstr($rec[0]);
+					$sSQL.= $ulistname;
 					$resultset = $db->Execute($sSQL);
-					$this->messages[] = $rec[0] . ' is invalid, became inactive';				
+					//$this->messages[] = $rec[0] . ' is invalid, became inactive';				
+					//$this->messages[] = $sSQL; //test
 					
 					//clean body data from queue
 					$sSQL2 = "update mailqueue set active=-9,pass='',body='' where active=0 and status=-1 and receiver=".$db->qstr($rec[0]);
@@ -757,35 +821,44 @@ class rculists  {
 				else
 					$this->messages[] = $rec[0] . ' is invalid';				
 			}
-			//echo 'Invalid:'.$i;
-			$m = $i+1;
+			if ($m) {			
+				$this->messages[] = ($sendtimes) ?  
+										$m . ' invalid mails deactivated' :
+										$m . ' invalid mails';
+			}							
 		}
 		
 		//clean bounced mails
-		$sSQL = 'select receiver,count(id) as c from mailqueue where active=0 and reply IS NULL and status=-2 group by receiver';		   
+		$m = 0;
+		$sSQL = $ulistname ?
+					"select receiver,count(m.id) as c from mailqueue m LEFT JOIN ulists ON receiver=email where m.active=0 and reply IS NULL and status=-2 $ulistname and ulists.active=1 $backtime group by receiver" :
+					"select receiver,count(id) as c from mailqueue where active=0 and reply IS NULL and status=-2 $campaign $camptime group by receiver";		   			
 	    $result = $db->Execute($sSQL,2);
 		if (!empty($result)) {
-			$ix = 0;
 			foreach ($result as $i=>$rec) {
-				if (($sendtimes) && (intval($rec[1])>$sendtimes)) {	//if post
-					$sSQL = 'update ulists set active=0 where active=1 and failed>0 and email='.$db->qstr($rec[0]);
+				$m+=1;
+				if (($cleanfailed) && ($sendtimes) && (intval($rec[1])>=$sendtimes)) {	//if post
+					$sSQL = "update ulists set active=0 where active=1 and failed>$sendtimes and email=".$db->qstr($rec[0]);
+					$sSQL.= $ulistname;
 					$resultset = $db->Execute($sSQL);		
-					$this->messages[] = $rec[0] . ' became inactive, has failed transmitions:'.$rec[1];			
+					//$this->messages[] = $rec[0] . ' became inactive, has failed transmitions:'.$rec[1];			
+					//$this->messages[] = $sSQL; //test
 					
 					//clean body data from queue based on fails					
 					$sSQL2 = "update mailqueue set active=-9,pass='',body='' where active=0 and status=-2 and reply IS NULL and receiver=".$db->qstr($rec[0]);
 					$result = $db->Execute($sSQL2);	
-					$ix+=1;	
 				}
-				//else
-					//$this->messages[] = $rec[0] . ' has failed transmitions:'.$rec[1];
+				else
+					$this->messages[] = $rec[0] . ' failed to transmit '.$rec[1] . ' times';
 			}
-			//echo 'Bounce:'.$i.'->'.$ix;
-			$this->messages[] = ($ix ? $ix : $i+1) . ' emails failed to transmit';
-			$m+=$ix;
+			if ($m) {
+				$this->messages[] = ($sendtimes) ?	
+										$m . ' emails deactivated':
+										$m . ' emails failed to transmit';
+			}
 		}
-		//echo 'Sum:'.$m;
-		return $m;
+
+		return true;
 	}
 	
 	public function viewMessages() {

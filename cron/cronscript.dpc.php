@@ -22,6 +22,8 @@ class cronscript {
 		
 		if (class_exists('pcntl', true)) {
 			
+			set_time_limit(120);
+			
 			$ret = eval($script);
 			if (($ret==false) && ($error = error_get_last())) {
 				@file_put_contents($this->prpath . '/cronerr.txt', 
@@ -31,7 +33,10 @@ class cronscript {
 			}
 			//test
 			//$ret = $this->testscript();
+			
+			set_time_limit(ini_get('max_execution_time'));
 		}
+		
 		return ($ret ? true : false);
     }
 	

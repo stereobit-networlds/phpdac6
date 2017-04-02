@@ -237,7 +237,7 @@ class rculiststats  {
 		$sSQL = "select count(id) from mailqueue where active=0" . $ownerSQL . $cidortime ;		
 		$this->runSql('inactiveQueue', $sSQL);
 		
-		//dummy where to add owner and cid
+		//all campaign msgs, -9 is stopped campaign, -8 paused
 		$sSQL = "select count(id) from mailqueue where active is not null " . $ownerSQL . $cidortime ; 
 		$tq = $this->runSql('totalQueue', $sSQL); 		
 		//echo $tq, $sSQL;
@@ -254,7 +254,7 @@ class rculiststats  {
 		$bl = $this->runSql('badmail', $sSQL);			
 		$sSQL = "select count(id) from mailqueue where status=-2 and active=0" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
 		$fl = $this->runSql('bounced', $sSQL);			
-		$sSQL = "select count(id) from mailqueue where (active=1 or active=-8 or active=-9)" . $ownerSQL . $cidortime;  //on sent mails (active=0)		
+		$sSQL = "select count(id) from mailqueue where (active=1 or active=-8)" . $ownerSQL . $cidortime;  //on sent mails (active=0) // or active=-9		
 		$sl = $this->runSql('notsentyet', $sSQL);			
 	
 		$sSQL = "SELECT COUNT( DISTINCT (subject) ) FROM mailqueue where active=1" . $ownerSQL;	

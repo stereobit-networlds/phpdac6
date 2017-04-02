@@ -298,19 +298,22 @@ class shusers  {
        return ($out);
 	}
 
-	
-
 	protected function fbjs() {
-		$hash = (defined('SHLOGIN_DPC')) ? _v('shlogin.fbhash') : _v('cmslogin.fbhash');		
-        if (($hash) && (defined('CMSLOGIN_DPC') || defined('SHLOGIN_DPC'))) {   
+		$hash = GetSessionParam('fbhash'); //(defined('SHLOGIN_DPC')) ? _v('shlogin.fbhash') : _v('cmslogin.fbhash');		
+        if ($hash) { //} && (defined('CMSLOGIN_DPC') || defined('SHLOGIN_DPC'))) {   
 		
-		
-			$code = "function fbfetch() {
+			$fbin = (defined('SHLOGIN_DPC')) ? _m('shlogin.is_fb_logged_in') : _m('cmslogin.is_fb_logged_in');
+			$fbid = (defined('SHLOGIN_DPC')) ? _v('shlogin.facebook_userId') : _v('cmslogin.facebook_userId');
+			
+			//load fb js when in update page
+			if (_m('cms.paramload use CMS+fbLogMode')==1) 
+				$code = (defined('SHLOGIN_DPC')) ? _m('shlogin.fblogin_javascript use 1') : _m('cmslogin.fblogin_javascript use 1');
+			
+			$code .= "function fbfetch() {
 FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(response) {\$('#fname').val(response.first_name); \$('#lname').val(response.last_name); })};		
 ";
 
 			if (iniload('JAVASCRIPT')) {
-	   
 				$js = new jscript;		   	 	
 				$js->load_js($code,null,1);		
 				unset ($js);
@@ -411,7 +414,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 	   
 		$tmz = isset($tmz_id) ? $tmz_id : $this->tmz_id;   
 		$tokens[] = "<select name=\"timezone\" class=\"myf_select\">" . get_options_file('timezones',false,true,$tmz) . "</select>";
-	   
+
 		if (defined('CMSSUBSCRIBE_DPC')) {
 			//check if user is in sub list
 			if (_m('cmssubscribe.isin use '.$eml))  
@@ -419,7 +422,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 
 			$tokens[] = "<input type=\"checkbox\" class=\"myf_checkbox\" name=\"autosub\"". $statin . ">";      
 	    }
-		 
+
 		//submit section
         if ((seclevel('UPDATEUSR_',$this->userLevelID)) || ($isupdate)) {
               $updcmd = $cmd ? $cmd : 'update';
@@ -438,9 +441,9 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		}
 		else
 		    $tokens[] = $invtypedescr;//$myinvtype ? 'B' : 'A'; /*inv type title*/
-		//print_r($tokens);		  
+		//print_r($tokens);					
 		$ret = $this->combine_tokens($mytemplate,$tokens);
-		
+
 		return ($ret);			  
 	}
 
@@ -626,7 +629,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 					$record = $this->getuser(null,null,null,1);
 				   
 	            $out .= $this->regform($record,$mycmd_update,1,null,1,1,1); //update action
-				 
+
 				//VIEW CUSTOMER LISTS
 				if (defined('SHCUSTOMERS_DPC')) {
 					//$out .= _m('shcustomers.addcustomerform');	  

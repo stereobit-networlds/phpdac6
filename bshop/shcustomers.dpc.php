@@ -2041,7 +2041,7 @@ window.onload=function(){
 	    return null;	   		
 	}
 	
-	public function save_guest_customer($email=null,$name=null,$address=null,$postcode=null,$country=null) {
+	public function save_guest_customer($email=null,$name=null,$address=null,$postcode=null,$country=null,$tel=null) {
 		$db = GetGlobal('db');	
 		if (!$email) return false;
 		
@@ -2053,8 +2053,8 @@ window.onload=function(){
 		else
 			$cuscity = $cuscountry = ($country ? trim($country) : '');
 		
-		$sSQL = "insert into customers (code2,active,name,address,area,zip,city,country,mail)";
-		$sSQL.= " values (". $db->qstr($email). ",1,'$name','$address','$address','$postcode','$cuscity','$cuscountry','$email')";
+		$sSQL = "insert into customers (code2,active,name,address,area,zip,city,country,mail,voice1)";
+		$sSQL.= " values (". $db->qstr($email). ",1,'$name','$address','$address','$postcode','$cuscity','$cuscountry','$email','$tel')";
 		//echo $sSQL2;
 		
 		$result = $db->Execute($sSQL,1);	
@@ -2064,7 +2064,7 @@ window.onload=function(){
 		return false;
 	}
 
-	public function save_guest_deliveryaddress($email=null,$name=null,$address=null,$postcode=null,$country=null) {	
+	public function save_guest_deliveryaddress($email=null,$name=null,$address=null,$postcode=null,$country=null,$tel=null) {	
 		$db = GetGlobal('db');	
 		if (!$email) return false;
 		
@@ -2081,8 +2081,8 @@ window.onload=function(){
 		//before set active the current record deactive all others  
 		$d = $this->deactivatedeliveryaddress($email);
 	   
-		$sSQL = "insert into custaddress (ccode,active,address,area,zip,country,mail,fax)";
-		$sSQL.= " values (". $db->qstr($email). ",1,'$address','$cuscity','$postcode','$cuscountry','$email','$name')";
+		$sSQL = "insert into custaddress (ccode,active,address,area,zip,country,mail,fax,voice1)";
+		$sSQL.= " values (". $db->qstr($email). ",1,'$address','$cuscity','$postcode','$cuscountry','$email','$name','$tel')";
 		//echo $sSQL;
 		
 		$result = $db->Execute($sSQL,1);	

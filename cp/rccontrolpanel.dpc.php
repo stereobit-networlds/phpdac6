@@ -568,7 +568,9 @@ $(document).ready(function(){
 		$db = GetGlobal('db'); 	
 		$path = $this->application_path;
         $year = GetParam('year') ? GetParam('year') : date('Y'); 
-	    $month = GetParam('month') ? GetParam('month') : date('m');		
+	    $month = GetParam('month') ? GetParam('month') : date('m');	
+
+		//$this->create_templates_XML();//null, true); return;
 			
 		$fs = $this->free_space();
 		//if $total_size<0 ...goto upgrade.....		
@@ -1161,7 +1163,33 @@ $(document).ready(function(){
         }
 
 		return ($ret);
-    }    			
+    }    	
+
+	//put partial files into one xml file
+	protected function create_templates_XML($template=false, $iscp=false) {
+		$tpath = $iscp ? _v('cmsrt.cptemplate') : ($template ? $template : _v('cmsrt.template'));
+		$ppath = $this->prpath . _v('cmsrt.tpath') .'/'. $tpath . '/' ; 
+		
+		$xml = new pxml();
+		$xml->encoding = 'utf-8';
+		$xml->addtag('e-Enterprise',null,null,"url={$this->httpurl}|name=$xml->urltitle|encoding=utf-8");							
+		$xml->addtag('template','e-Enterprise',$ppath,null);						
+		
+		foreach (glob($ppath . "*.php") as $filename) {
+			
+			$ftitle = str_replace(array(".php", $ppath), array('',''), $filename);
+			$fdata = trim(@file_get_contents($filename));
+			
+			$xml->addtag('part','template',null,null);				      
+			$xml->addtag('name','part',$ftitle,null);				   
+			$xml->addtag('body','part',$xml->cdata($fdata),null);				   			   				   			   
+										
+		}
+		//$xml->dumpxml();
+		$ret = @file_put_contents($ppath . '/template-parts.xml', $xml->getxml(1));
+		
+		return ($ret);	
+	}	
   
 	public function get_user_name($nopro=0) {
 		if ((GetSessionParam('LOGIN')) && ($user=GetSessionParam('USER')))
@@ -1320,7 +1348,7 @@ $(document).ready(function(){
 		}		
 		
 		return ($ret);
-	} 	
+	} 		
 	
 };
 }

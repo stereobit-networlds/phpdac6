@@ -153,7 +153,7 @@ EOF;
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
 
-		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
+		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;
 
 	    $currentdate = time();
@@ -189,7 +189,7 @@ EOF;
 	public function update_category_statistics($cat, $tid=null, $iref=null) {
         $db = GetGlobal('db'); 
 		
-		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
+		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;		
 
         $UserName = GetGlobal('UserName');		
@@ -231,7 +231,7 @@ EOF;
         $UserName = GetGlobal('UserName');	
 		$name = $UserName ? decode($UserName) : session_id();
 		
-		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
+		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;		
 	
 	    $currentdate = time();
@@ -266,7 +266,7 @@ EOF;
 	public function update_action_statistics($id, $user=null) {
         $db = GetGlobal('db'); 
 		
-		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
+		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;		
 
 	    $currentdate = time();	
@@ -297,7 +297,7 @@ EOF;
 	public function update_event_statistics($id, $user=null) {
         $db = GetGlobal('db'); 
 		
-		if ((GetSessionParam('ADMIN')) || ($this->isBot()))
+		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;		
 
 	    $currentdate = time();	
@@ -326,20 +326,18 @@ EOF;
 	}	
 	
 	public function isBot($a=null) {
-		$agent = $a ? $a : $_SERVER['HTTP_USER_AGENT'];
+		$agent = $a ? $a : $this->useragent;
+		$avoiduseragent = _m("cms.arrayload use CMS+httpUserAgentsToAvoid");
 		
-		if (
-			/*(stristr($agent, 'bingbot')) ||
-			(stristr($agent, 'hrefsbot')) ||
-			(stristr($agent, 'googlebot')) ||
-			(stristr($agent, 'skroutzbot')) ||
-			(stristr($agent, 'bot')) ||*/
-			(stristr($agent, 'facebookexternal')) 
-			)	 
-			return true;
+		if (!empty($avoiduseragent)) {
+			foreach ($avoiduseragent as $i=>$ua) {
+				if (stristr($agent, $ua)) 
+					return true;
+			}
+		}
 		
 		return false;	
-	}
+	}	
 };
 }
 ?>

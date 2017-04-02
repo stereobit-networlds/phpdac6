@@ -7,9 +7,6 @@ define("SHKATALOGMEDIA_DPC",true);
 
 $__DPC['SHKATALOGMEDIA_DPC'] = 'shkatalogmedia';
 
-$e = GetGlobal('controller')->require_dpc('shell/pxml.lib.php');
-require_once($e);
-
 $__EVENTS['SHKATALOGMEDIA_DPC'][0]='katalog';
 $__EVENTS['SHKATALOGMEDIA_DPC'][1]='klist';
 $__EVENTS['SHKATALOGMEDIA_DPC'][2]='kshow';
@@ -136,31 +133,24 @@ class shkatalogmedia {
 	public function __construct() {	
 		$UserSecID = GetGlobal('UserSecID');	
 		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);	  
-	
-		$this->msg = null;
-		$this->post = null;		  
+		
 		$this->path = paramload('SHELL','prpath');	//echo $this->path;
 		$this->urlpath = paramload('SHELL','urlpath');
-		$this->inpath = paramload('ID','hostinpath');		  
-		$this->result = null;
-		$this->lan = getlocal() ? getlocal() : '0';
-
-		$murl = arrayload('SHELL','ip');
-		$this->url = $murl[0];
+		$this->inpath = paramload('ID','hostinpath');
+		
+		//$murl = arrayload('SHELL','ip');
+		//$this->url = $murl[0];
 		//$this->httpurl = paramload('SHELL','urlbase');  
 		$this->httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
-		$this->httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];				
+		$this->httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];						
 		
-        /*
-		$char_set  = arrayload('SHELL','char_set');	  
-		$charset  = paramload('SHELL','charset');	  		
-		if (($charset=='utf-8') || ($charset=='utf8'))
-			$this->encoding = 'utf8';//must be utf8 not utf-8
-		else  
-			$this->encoding = $char_set[$this->lan]; 		
-        */
-		$this->encoding = 'utf-8';
-		
+		$languange = getlocal();
+		$this->lan = $languange ? $languange : '0';
+		$this->encoding = 'utf-8';			
+		$this->msg = null;
+		$this->post = null;		  
+		$this->result = null;				
+
 		$this->imgpath = $this->inpath . '/images/uphotos/';  	  
 		$this->thubpath = $this->inpath . '/images/thub/';
 		$photo_bg = remote_paramload('SHKATALOG','photobgpath',$this->path);		  
@@ -297,7 +287,7 @@ class shkatalogmedia {
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 							$this->fcode. $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
-							"template,owner,itmactive,p1,p2,p3,p4,p5,code2,code3 from products ";					
+							"template,owner,itmactive,p1,p2,p3,p4,p5,code2,code3,datein from products ";					
 							
 		$this->javascript();					
     }
@@ -306,25 +296,15 @@ class shkatalogmedia {
 	
 	    switch ($event) {
 			
-			case 'sitemap'       : 	if ($dpc = GetReq('dpc')) {
-										$dpccmd = str_replace(',','+',$dpc);							   
-										_m($dpccmd);		  
-									}  
-		                      
-									$xml = $this->sitemap_feed(true);
-									die($xml);	//xml output
+			case 'sitemap'       : 	die($this->sitemap_feed(true));	//xml output
 									break;		
 		
-			case 'feed'          :	if (GetReq('id'))
-										$this->read_item();
-									elseif (GetReq('cat'))  
+			case 'feed'          :	if ($id = GetReq('id')) 
+										$this->realID = $this->read_item(); 
+									elseif ($cat = GetReq('cat')) 
 										$this->read_list();
-									else {
-										$dpccmd = str_replace(',','+',GetReq('dpc'));								   
-										_m($dpccmd);		  
-									}  
-									$xml = $this->katalog_feed();
-									die($xml);	//xml output
+																		  
+									die($this->katalog_feed()); //xml output	
 									break;
 								 
 			case 'xmlout'        :  _m("cmsvstats.update_category_statistics use ".GetReq('cat')."+xmlout"); 
@@ -380,7 +360,7 @@ class shkatalogmedia {
 
 			case 'kshow'        :	$this->realID = $this->read_item(); 
 			
-									$incart = _m("shcart.getCartItemQty use " . $thiis->realID);
+									$incart = _m("shcart.getCartItemQty use " . $this->realID);
 									if ($incart) {
 										$this->jsDialog(sprintf(localize('_incart', $this->lan), $incart), 
 														localize('_cartmsg', $this->lan));
@@ -1474,25 +1454,7 @@ JSFILTER;
 			//list-table alternative template
 			$mytemplate_alt = $this->select_template('fpkatalog-alt',$cat);
 	    }
-        /*
-        if ($this->oneitemlist) {
-			if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
-				$is_one_item = $this->read_list(); //read records
-				if ($is_one_item) { 
-					$this->read_item($is_one_item);
-					$out = $this->show_item();
-					return ($out);
-				}		   
-			}
-			elseif (!$external_read) { //event read the list..if not called by a phpdac page call
-				if ($itemcode = $this->my_one_item) {
-					$this->read_item($itemcode);
-					$out = $this->show_item();
-					return ($out);		   
-				}	   
-			}		 
-        } 	      
-	   	*/	   
+   
 		if (count($this->result->fields)>1) {
 
 			$aliasID = _m("cmsrt.useUrlAlias");
@@ -1561,25 +1523,6 @@ JSFILTER;
 		
 		$mytemplate = $this->select_template($template,$cat);
 		
-	    /*
-		if ($this->oneitemlist) {
-			if (!$this->result->sql) { //AUTOMATED...when sql exist by prev query dont read a new
-				$is_one_item = $this->read_list(); //read records
-				if ($is_one_item) { 
-					$this->read_item($is_one_item);
-					$out = $this->show_item();
-					return ($out);
-				}		   
-			}
-			elseif (!$external_read) { //event read the list..if not called by a phpdac page call
-				if ($itemcode = $this->my_one_item) {
-					$this->read_item($itemcode);
-					$out = $this->show_item();
-					return ($out);		   
-				}
-			}		 
-        } 		   
-        */
 		if (!empty($this->result)) {
 	   
 			$pp = $this->read_policy();
@@ -1594,11 +1537,6 @@ JSFILTER;
 		   
 			}//foreach	
 	   
-			/*if ($notable) {//single product view called by phpdac funcs
-				$nt = (!empty($items)) ? implode('', $items) : null;
-				return ($nt);
-			}	
-			//else	*/
 			//make table			
 			$ret .= $this->make_table($items, $mylinemax, 'fpkatalogtable', $cat);  	  
 	      				
@@ -2688,112 +2626,43 @@ JSFILTER;
 	
 	//XML FEEDS
 	
-    public function katalog_feed($read_all=false, $off_categories=false, $off_items=false) {
+    public function katalog_feed() { 
 		$db = GetGlobal('db');  
-		$format = GetReq('format')?GetReq('format'):'rss2';	
-		$code = $this->fcode;
-		$i=0;	  
-		$isutf8 = (stristr($this->encoding, 'utf8')) ? true : false;
-		if ($read_all)
-			$this->read_all_items();
-	
-		$sep = $this->sep();
+		$format = GetReq('format') ? GetReq('format') : 'rss2';	
+		//echo 'format:' . $format;
+		$imgxmlPath = _m('cmsrt.paramload use CMS+xmlpics'); //else use img token	
+		$aliasID = _m("cmsrt.useUrlAlias"); 	
 
 		$xml = new pxml();
 		$xml->encoding = $this->encoding;	//must be utf8 not utf-8
 		  
 		$this->xml_formater($xml,$format,1);	  
 
-		//categories  
-		if (!$off_categories) {
-	  
-			$ddir = _m("shkategories.read_tree use ".GetReq('cat')."++1"); //$this->read_tree(GetReq('cat'),null,1);
-	  
-			if (!empty($ddir)) {
-				foreach ($ddir as $g=>$lan_g) {
+		if (!empty($this->result)) {
+			$i=0;	
+		  	$pp = $this->read_policy(); 
 			
-			       $cat = GetReq('cat');
-				   $c = $cat ? $cat . $sep . $g : $g;
-				   $_u = _m("cmsrt.url use t=klist&cat=$c");
-				   $cat_url = $this->httpurl . '/' . $_u; 
-			
-		           $p[] = $g;
-			       $p[] = $lan_g;
-                   $p[] = $cat_url;			   
-			       $p[] = $cat;
-			       $p[] = $lan_g;
-			       $p[] = null;
-			       $p[] = null;
-				   $p[] = null;
-				   $p[] = null;
-				   $p[] = null;
-				   $p[] = null;
-				   $p[] = null;	
-                   $p[] = null; 				   
-				   
-			       $this->xml_formater($xml,$format,null,$p);
-				   unset($p);				  	 
-			 
-			       $i+=1;
-				}				   
+			foreach ($this->result as $n=>$rec) {
+					
+				$tokens = $this->tokenizeRecord($rec, $pp, null, $aliasID, 2, $imgxmlPath);					
+				$this->xml_formater($xml,$format,null,$tokens);
+				//echo $rec[$this->fcode] . ',';
+			    $i+=1;	
 			}
-		}//off
-	  
-		//items  
-		if (!$off_items) {
-			if (!empty($this->result)) {		  	
-				foreach ($this->result as $n=>$rec) {
-	  
-					$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
+		} //else echo '--';
 
-					$price = number_format(floatval($price1),2);					 
-					//echo $price,'>';
-				      		
-                    $_u = _m("cmsrt.url use t=kshow&cat=$cat&id=". $rec[$code]);							
-				    $item_url = $this->httpurl . '/' . $_u; 
-                    if ($this->photodb)
-						$item_photo_url = $this->httpurl . '/showphoto.php?id='.$rec[$code].'&type=LARGE';
-				    else
-						$item_photo_url = $this->httpurl . '/' . $this->img_large . '/' . $rec[$code] . $this->restype;
-				   
-					$p[] = $rec[$code];
-					$p[] = $rec[$this->itmname];
-					$p[] = $item_url;			   
-					$p[] = $cat;
-					$p[] = $rec[$this->itmdescr];
-			        $p[] = $item_photo_url;
-			        $p[] = $price;
-				    $p[] = $rec['cat0'];
-				    $p[] = $rec['cat1'];
-				    $p[] = $rec['cat2'];
-				    $p[] = $rec['cat3'];
-				    $p[] = $rec['cat4'];	
-                    $p[] = $rec['itmremark'];
-				   
-			        $this->xml_formater($xml,$format,null,$p);
-				    unset($p);	//holds record data to pass it at xml formater				  	 
-			 
-			        $i+=1;	
-				}
-			} //else echo '--';
-		}//off
-
-		$data = $xml->getxml(1);
-	  
-		return($data);	  
+		return $xml->getxml(1); 
     }	
 	
     public function sitemap_feed($read_all=false) {
-		$db = GetGlobal('db');
-		$i=0;	  
-		$format = 'sitemap';	
-		$code = $this->fcode;	  
-		$isutf8 = (stristr($this->encoding, 'utf-8')) ? true : false;
+		$db = GetGlobal('db');  
+		$format = 'sitemap';
+		$imgxmlPath = _m('cmsrt.paramload use CMS+xmlpics'); //else use img token	
+		$aliasID = _m("cmsrt.useUrlAlias"); 					
 
-		$sSQL = "select id,sysupd,cat0,cat1,cat2,cat3,cat4,".$code." from products ";
-		$sSQL .= " WHERE ";
-		$sSQL .= "itmactive>0 and active>0 ";	
-		$sSQL .= " ORDER BY id,sysupd DESC LIMIT 6000";			
+		$sSQL = $this->selectSQL; 
+		$sSQL .= " WHERE itmactive>0 and active>0 ";	
+		$sSQL .= " ORDER BY datein,id DESC LIMIT 6000";			
 		
 		$resultset = $db->Execute($sSQL,2);			
 
@@ -2804,26 +2673,19 @@ JSFILTER;
 	  
 		//items  
 		if (!empty($resultset)) {		  	
+			$i=0;
+			$pp = $this->read_policy(); 
+			
+			foreach ($resultset as $n=>$rec) {
 
-			foreach ($resultset as $n=>$rec) {      			      		   
-				$cat = $this->getkategoriesS(array(0=>$rec['cat0'],1=>$rec['cat1'],2=>$rec['cat2'],3=>$rec['cat3'],4=>$rec['cat4']));	      			      		   
-				$_u = _m("cmsrt.url use t=kshow&cat=$cat&id=". $rec[$code]);
-				$item_url = $this->httpurl . '/' . $_u; 
-
-				$p[] = $item_url;
-				//in case of 0000-00-00..is null
-				$p[] = (substr($rec['sysupd'],0,1)!='0') ? array_shift(explode(' ',$rec['sysupd'])) : null;		   
-
-				$this->xml_formater($xml,$format,null,$p);
-				unset($p);	//holds record data to pass it at xml formater				  	 
-			 
+				$tokens = $this->tokenizeRecord($rec, $pp, null, $aliasID, 2, $imgxmlPath);				
+				$this->xml_formater($xml,$format,null,$tokens);
 				$i+=1;	
 				//if ($i==1111) break; //stop to test			
 			}
 		} 
 
-		$data = $xml->getxml(1);
-		return($data);	  
+		return $xml->getxml(1);
     }		
 
 	protected function xml_formater(& $xml,$format=null,$init=null,$params=null,$encoding=null) {
@@ -2834,23 +2696,18 @@ JSFILTER;
 	   
 	    if ($init) {
 		  
-		    if ($this->encoding)
-				$enc = $this->encoding;
-			else
-				$enc = $xml->charset;
+		    $enc = $this->encoding ? $this->encoding : $xml->charset;
 
             switch ($format) {
-				case 'sitemap' : $enc ='utf8';
-			                    $xml->addtag('urlset',null,null,"xmlns=http://www.sitemaps.org/schemas/sitemap/0.9");							
+				
+				case 'sitemap' :$xml->addtag('urlset',null,null,"xmlns=http://www.sitemaps.org/schemas/sitemap/0.9");							
                                 break; 			   
-				case 'skroutz' : $enc ='utf8';
-			                    $xml->addtag('skroutzstore',null,null,"url={$this->httpurl}|name=$xml->urltitle|encoding=$enc");							
+				case 'skroutz' :$xml->addtag('skroutzstore',null,null,"url={$this->httpurl}|name=$xml->urltitle|encoding=$enc");							
 	                            $xml->addtag('products','skroutzstore',null,null);
 								break;
-				case 'rss1'    : echo 'rss1';
+				case 'rss1'    :echo 'rss1';
 	   					        break; 								
-				case 'rss2'    : $enc ='utf-8';
-			                    $xml->addtag('rss',null,null,"version=2.0");							
+				case 'rss2'    :$xml->addtag('rss',null,null,"version=2.0");							
 	                            $xml->addtag('channel','rss',$xml->urltitle,null);
 	                            $xml->addtag('title','channel',$xml->urltitle.', '.$cat_title,null);								
 	                            $xml->addtag('link','channel',$this->httpurl,null);									
@@ -2859,13 +2716,12 @@ JSFILTER;
 	                            $xml->addtag('pubDate','channel',$date,null);									
 	                            $xml->addtag('lastBuildDate','channel',$date,null);	
 	                            $xml->addtag('docs','channel',null,null);																	
-	                            $xml->addtag('generator','channel','stereobit.networlds PHPDAC 2.1',null);									
+	                            $xml->addtag('generator','channel','e-Enterprise',null);									
 	                            $xml->addtag('managingEditor','channel',$xml->urltitle,null);									
 	                            $xml->addtag('webMaster','channel',null,null);									
 	                            $xml->addtag('ttl','channel','15',null);									
 	   					        break; 
-				case 'atom'    : $enc ='utf-8';
-			                    $xml->addtag('feed',null,null,"xmlns=http//www.w3.org/2005/Atom");							
+				case 'atom'    :$xml->addtag('feed',null,null,"xmlns=http//www.w3.org/2005/Atom");							
 	                            $xml->addtag('title','feed',$xml->urltitle,null);
 	                            $xml->addtag('subtitle','feed',null,null);								
 	                            $xml->addtag('link','feed','/',"href=" . $this->httpurl . "/atom/|rel=self");									
@@ -2876,7 +2732,7 @@ JSFILTER;
 	                            $xml->addtag('name','author',$xml->urltitle,null);																	
 	                            $xml->addtag('email','author',null,null);									
 	   					        break; 								
-				default        : $xml->addtag('default-xml',null,null,"url={$this->httpurl}|name=$xml->urltitle|encoding=$enc");							
+				default        :$xml->addtag('default-xml',null,null,"url={$this->httpurl}|name=$xml->urltitle|encoding=$enc");							
 	                            $xml->addtag('products','default-xml',null,null);
 												
 		    }		  
@@ -2885,6 +2741,7 @@ JSFILTER;
 		else {
             //product loop xml tags 		  
             switch ($format) {
+		
 				case 'sitemap' :$xml->addtag('url','urlset',null,null);
 								//$xml->addtag('name','url',$xml->cdata($params[1]),null); 
 								$xml->addtag('loc','url',$params[0],null); 
@@ -2894,51 +2751,42 @@ JSFILTER;
 								$xml->addtag('priority','url','0.5',null);
 								break;
 			 
-	           case 'skroutz' : $cats = explode($this->sep() ,$params[3]);	
-								$manufacturer = $this->replace_spchars(array_shift($cats),1);
-								$category = $this->replace_spchars($params[3],1);
-								$category = str_replace($this->sep() ,'/',$category);
-								$xf = ($this->itemfimagex?$this->itemfimagex:640);
-								$yf = ($this->itemfimagey?$this->itemfimagey:480);	
-								$xt = ($this->imagex?$this->imagex:160);
-								$yt = ($this->imagey?$this->imagey:120);				   		   
-			   	  
-								$xml->addtag('product','products',null,"id=".$params[0]);
+	           case 'skroutz' : $xml->addtag('product','products',null,"id=".$params[10]);
 			   
-								$xml->addtag('name','product',$xml->cdata($params[1]),null);  //cdata val
-								$xml->addtag('link','product',$params[2],null);  //http://... val
-								$xml->addtag('price_with_vat','product',$params[6],null);  //price 11.11
-								$xml->addtag('category','product',$xml->cdata($category),"id=".$params[3]); //cdata val = descr, id=code
-								$xml->addtag('image','product',$params[5],"width=$xf|height=$yf");  //http://... image
-								$xml->addtag('thumbnail','product',$params[5],"width=$xt|height=$yt");  //http://... thumbnail
-								$xml->addtag('manufacturer','product',$xml->cdata($manufacturer),null);  //cdata val
+								$xml->addtag('name','product',$xml->cdata($params[16]),null);  //cdata val
+								$xml->addtag('link','product',$params[11],null);  //http://... val
+								$xml->addtag('price_with_vat','product',$params[47],null);  //price 11.11
+								$xml->addtag('category','product',$xml->cdata($params[17]),"id=".$params[10]); //cdata val = descr, id=code
+								$xml->addtag('image','product',$params[14]); //,"width=$xf|height=$yf");  //http://... image
+								$xml->addtag('thumbnail','product',$params[14]); //,"width=$xt|height=$yt");  //http://... thumbnail
+								$xml->addtag('manufacturer','product',$xml->cdata($params[39]),null);  //cdata val
 								$xml->addtag('shipping','product',null,"type=accurate|currency=euro");  //ship cost 11.11
-								$xml->addtag('sku','product','/',null);  //...
-								$xml->addtag('ssku','product','/',null);  //...
-								$xml->addtag('description','product',$xml->cdata($params[4]),null);  //cdata val		  
+								$xml->addtag('sku','product',$params[41]);//'/',null);  
+								$xml->addtag('ssku','product',$params[42]);//'/',null);  
+								$xml->addtag('description','product',$xml->cdata($params[1]),null);  //cdata val		  
 								break;
 			   case 'rss1'    : //echo 'rss1';
 								break; 								
 			   case 'rss2'    : //echo 'rss2';
 								$xml->addtag('item','channel',null,null);				   
 			   
-								$xml->addtag('title','item',$xml->cdata($params[1]),null);				   
-								$xml->addtag('link','item',$params[2],null);
-								$xml->addtag('description','item',$xml->cdata($params[4]),null);				   			   				   			   
+								$xml->addtag('title','item',$xml->cdata($params[16]),null);				   
+								$xml->addtag('link','item',$params[11],null);
+								$xml->addtag('description','item',$xml->cdata($params[1]),null);				   			   				   			   
 								$xml->addtag('author','item',$xml->urltitle,null);
-								$xml->addtag('category','item',$xml->cdata($params[3]),null);
-								$xml->addtag('comments','item',$xml->cdata(strip_tags($params[12])),null);
-								$xml->addtag('pubDate','item',$date,null);				   			   
-								$xml->addtag('guid','item',$params[0],null);			   
+								$xml->addtag('category','item',$xml->cdata($params[17]),null);
+								$xml->addtag('comments','item',$xml->cdata(strip_tags($params[4])),null);
+								$xml->addtag('pubDate','item',date(DATE_RFC822, strtotime($params[48]))); //$date,null);				   			   
+								$xml->addtag('guid','item',$params[10],null);			   
 								break; 
 			   case 'atom'    : //echo 'atom';
 								$xml->addtag('entry','feed',null,null);				   
 			   
-								$xml->addtag('title','entry',$params[1],null);				   
-								$xml->addtag('link','entry',$params[2],null);
-								$xml->addtag('id','entry',$params[0],null);				   			   				   			   
+								$xml->addtag('title','entry',$params[16],null);				   
+								$xml->addtag('link','entry',$params[11],null);
+								$xml->addtag('id','entry',$params[10],null);				   			   				   			   
 								$xml->addtag('updated','entry',$date,null);				   			   
-								$xml->addtag('summary','entry',$params[4],null);				   
+								$xml->addtag('summary','entry',$params[1],null);				   
 								break; 
 			   default ://seo links
 								$xml->addtag('product','products',null,"id=");
@@ -2946,9 +2794,9 @@ JSFILTER;
 								$xml->addtag('name','product',$xml->cdata('name'),null);  //cdata val
 								$xml->addtag('link','product',null,null);  //http://... val
 								$xml->addtag('price_with_vat','product',null,null);  //price 11.11
-								$xml->addtag('category','product',$xml->cdata('category'),"id=\"\""); //cdata val = descr, id=code
-								$xml->addtag('image','product',null,"width=|height=");  //http://... image
-								$xml->addtag('thumbnail','product',null,"width=|height=");  //http://... thumbnail
+								$xml->addtag('category','product',$xml->cdata($params[17]),"id=\"\""); //cdata val = descr, id=code
+								$xml->addtag('image','product');//,null,"width=|height=");  //http://... image
+								$xml->addtag('thumbnail','product');//,null,"width=|height=");  //http://... thumbnail
 								$xml->addtag('manufacturer','product',$xml->cdata('manufacturer'),null);  //cdata val
 								$xml->addtag('shipping','product',null,"type=|currency=");  //ship cost 11.11
 								$xml->addtag('description','product',$xml->cdata('description'),null);  //cdata val		  			   
@@ -2962,80 +2810,8 @@ JSFILTER;
 		}
 		 
 		return 0;
-	}	
-
-	public function get_xml_links($mylan=null,$feed_id=null,$dpcfeed=null) {
-		$lan = $mylan ? $mylan : getlocal();
-		$lnk = array();
-		$id = GetReq('id');
-		$cat = GetReq('cat'); //echo $cat;
-		$page = GetReq('page') ? GetReq('page') : '0';
-		$feed_cmd = $feed_id ? $feed_id : 'feed';	  
-
-		$mytemplate = $this->select_template('xml-links');
-	  
-		//RSS	
-		if (stristr($this->feed_on,'rss')) {
-			if ($dpcfeed) //special phpdac page without params			  
-				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&dpc=$dpcfeed&format=rss2"); 
-			elseif ($id)
-				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&id=$id&format=rss2"); 
-			elseif ($cat)
-				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&format=rss2"); 
-			else  
-				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&format=rss2"); 
-		}
-		//ATOM
-		if (stristr($this->feed_on,'atom')) {	  
-			if ($dpcfeed) //special phpdac page without params		  
-				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&dpc=$dpcfeed&format=atom"); 
-			elseif ($id)
-				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&id=$id&format=atom"); 
-			elseif ($cat)
-				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&format=atom"); 
-			else  
-				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&format=atom"); 	  
-		}		
-
-		if (!empty($lnk)) {
-			foreach ($lnk as $t=>$w) {    
-				if ($w) {
-					$icon_file = $this->urlpath.'/'.$this->infolder.'/images/'.strtolower($t).'.png';
-					if (is_readable($icon_file)) 
-						$mylink = "<img src=\"". $this->infolder.'/images/'.strtolower($t).'.png' ."\" border=\"0\" alt=\"$t\">";
-					else 
-						$mylink = $t;
-			  
-					$tokens[] = "<a href=\"$w\">".$mylink."</a>";
-				}	
-			}
-		
-			$out = $this->combine_tokens($mytemplate, $tokens);
-		}
-
-		return ($out);  
-	}	
+	}		
 	
-    //read dir for rss page
-	protected function read_all_items() {
-       $db = GetGlobal('db');
-	   $lan = GetReq('lan')>=0 ? GetReq('lan') : $this->lan;	//in case of post sitemap set lan param uri   
-	   $start = GetReq('start');
-	   	
-       //$sSQL = $this->selectSQL;		
-       $sSQL = "select id,itmname,itmfname,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,".$this->fcode." from products ";
-	   $sSQL .= " WHERE ";
-	   $sSQL .= "itmactive>0 and active>0 ";	
-
-	   $sSQL .= " ORDER BY cat0,cat1,cat2,cat3,cat4,{$this->itmname} asc ";
-	   $sSQL .= $start ? " LIMIT $start,10000" : " LIMIT 10000";			
-	   //echo $sSQL;
-		
-	   $resultset = $db->Execute($sSQL,2);	
-	   $this->result = $resultset; 
- 	   $this->max_items = $db->Affected_Rows();//count($this->result);	   
-       return (null);//$this->max_items);		   
-	}
 	
 	/* rcxml feed */
 	protected function xml_feed() {  
@@ -3169,30 +2945,12 @@ JSFILTER;
 			
 		$pwt = $this->pricewithtax($price, _v('shcart.tax'));
 		$tokens[] = number_format($pwt, $this->decimals,',','.'); //(floatval($price)*24/100)+floatval($price)
+		
+		$tokens[] = $rec['datein'] ; //48
 				
 		return ($tokens);
 	}		
 	
-	public function item_var($field=null,$code=null, $photosize=null, $array=null) {	
-        $db = GetGlobal('db');					
-		$lastprice = $this->getmapf('lastprice')?','.$this->getmapf('lastprice'):null;		
-		
-		$itemcode = $code ? $code : GetReq('id');
-	    $retfield = $field ? $field : $this->itmname;	                       
-						   
-        $sSQL = $this->selectSQL;
-		$sSQL .= " WHERE " . $this->fcode . "='" . $itemcode ."'";	
-		
-	    $resultset = $db->Execute($sSQL,2);	
-		
-		if (($retfield=='sysins') || ($retfield=='sysupd'))
-			$ret = date("d-m-Y", strtotime($resultset->fields[$retfield]));
-		else
-			$ret = $resultset->fields[$retfield];
-		
-        $out = ($array) ? $resultset->fields : $ret;
-		return ($out);	
-	}	
 	
 	//FILTERS
 	//manufacturer standart item field
@@ -3443,6 +3201,7 @@ JSFILTER;
 	}
 
 	
+	
 
 	//CART PRICE QTY POLICY	
 	
@@ -3577,17 +3336,86 @@ JSFILTER;
 		if ($data = base64_decode($res->fields[0])) {	
 			return true;
 		}
-
-		/*$file = $this->path . $id . '.txt';
-		
-		if (is_readable($file)) 
-		    return true;*/
 			
 		return false;	
 	}	
 	
 	
+
+	// ETC
 	
+	public function item_var($field=null,$code=null, $photosize=null, $array=null) {	
+        $db = GetGlobal('db');					
+		$lastprice = $this->getmapf('lastprice') ? ',' . $this->getmapf('lastprice') : null;		
+		
+		$itemcode = $code ? $code : GetReq('id');
+	    $retfield = $field ? $field : $this->itmname;	                       
+						   
+        $sSQL = $this->selectSQL;
+		$sSQL .= " WHERE " . $this->fcode . "='" . $itemcode ."'";	
+		
+	    $resultset = $db->Execute($sSQL,2);	
+		
+		if (($retfield=='sysins') || ($retfield=='sysupd'))
+			$ret = date("d-m-Y", strtotime($resultset->fields[$retfield]));
+		else
+			$ret = $resultset->fields[$retfield];
+		
+        $out = ($array) ? $resultset->fields : $ret;
+		return ($out);	
+	}		
+
+	public function get_xml_links($mylan=null,$feed_id=null,$dpcfeed=null) {
+		$lan = $mylan ? $mylan : getlocal();
+		$lnk = array();
+		$id = GetReq('id');
+		$cat = GetReq('cat'); //echo $cat;
+		$page = GetReq('page') ? GetReq('page') : '0';
+		$feed_cmd = $feed_id ? $feed_id : 'feed';	  
+
+		$mytemplate = $this->select_template('xml-links');
+	  
+		//RSS	
+		if (stristr($this->feed_on,'rss')) {
+			if ($dpcfeed) //special phpdac page without params			  
+				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&dpc=$dpcfeed&format=rss2"); 
+			elseif ($id)
+				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&id=$id&format=rss2"); 
+			elseif ($cat)
+				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&format=rss2"); 
+			else  
+				$lnk['RSS'] = _m("cmsrt.url use t=$feed_cmd&format=rss2"); 
+		}
+		//ATOM
+		if (stristr($this->feed_on,'atom')) {	  
+			if ($dpcfeed) //special phpdac page without params		  
+				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&dpc=$dpcfeed&format=atom"); 
+			elseif ($id)
+				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&id=$id&format=atom"); 
+			elseif ($cat)
+				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&cat=$cat&page=$page&format=atom"); 
+			else  
+				$lnk['ATOM'] = _m("cmsrt.url use t=$feed_cmd&format=atom"); 	  
+		}		
+
+		if (!empty($lnk)) {
+			foreach ($lnk as $t=>$w) {    
+				if ($w) {
+					$icon_file = $this->urlpath.'/'.$this->infolder.'/images/'.strtolower($t).'.png';
+					if (is_readable($icon_file)) 
+						$mylink = "<img src=\"". $this->infolder.'/images/'.strtolower($t).'.png' ."\" border=\"0\" alt=\"$t\">";
+					else 
+						$mylink = $t;
+			  
+					$tokens[] = "<a href=\"$w\">".$mylink."</a>";
+				}	
+			}
+		
+			$out = $this->combine_tokens($mytemplate, $tokens);
+		}
+
+		return ($out);  
+	}	
 	
 	//set ordersing online using <phpdac>
 	public function set_order($orderby=null,$asc=null) {
@@ -3922,7 +3750,7 @@ EOF;
 	        }
 		}	
         return ($toprint); 		
-    }		
+    }			
 	
 	/*cat based select */
 	protected function select_template($tmpl=null,$cat=null) {

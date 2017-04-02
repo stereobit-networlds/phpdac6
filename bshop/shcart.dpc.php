@@ -182,7 +182,8 @@ $__LOCALE['SHCART_DPC'][92]='_invalidname;Invalid name;Το όνομα δεν σ
 $__LOCALE['SHCART_DPC'][93]='_invalidaddress;Invalid address;Η διεύθυνση δεν συμπληρώθηκε;';
 $__LOCALE['SHCART_DPC'][94]='_invalidpostcode;Invalid postcode;Ο ταχ. κωδικός δεν συμπληρώθηκε;';
 $__LOCALE['SHCART_DPC'][95]='_invalidcountry;Invalid country;Η πόλη,χώρα δεν συμπληρώθηκε;';
-$__LOCALE['SHCART_DPC'][96]='_guesterr;Guest details;Συμπλήρωση στοιχείων;';
+$__LOCALE['SHCART_DPC'][96]='_invalidphone;Invalid phone number;Ο αριθμός τηλεφώνου δεν συμπληρώθηκε;';
+$__LOCALE['SHCART_DPC'][97]='_guesterr;Guest details;Συμπλήρωση στοιχείων;';
 
 $__LOCALE['SHCART_DPC'][99]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
 
@@ -230,15 +231,7 @@ class shcart extends storebuffer {
 		//$this->baseurl = paramload('SHELL','urlbase');
 		$this->baseurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
 		$this->baseurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];
-		//$murl = arrayload('SHELL','ip');
-		$this->url = $this->baseurl; //$this->murl[0];			
-		
-		/*
-		$senc = arrayload('SHELL','char_set'); 
-		$c = getlocal() ? getlocal() : 0; 
-		$this->s_enc = $senc[$c]; 
-		$this->t_enc = paramload('SHELL','charset');	 		
-        */
+		$this->url = $this->baseurl; 		
 		
 		$this->minus = remote_paramload('SHCART','minusqtyclass',$this->path);
 		$this->plus = remote_paramload('SHCART','plusqtyclass',$this->path);
@@ -469,6 +462,7 @@ class shcart extends storebuffer {
 									}  
 									
 									$this->jsBrowser();
+									$this->fbjs();
 									break;
 			case 'cart-order'    :
 			case $this->order    : 	SetSessionParam('cartstatus',2); 
@@ -509,7 +503,7 @@ class shcart extends storebuffer {
 									$this->looptotals = $this->foot();
 									
 									$this->jsBrowser();
-
+									$this->fbjs();
 		}     
     }
 
@@ -543,6 +537,23 @@ class shcart extends storebuffer {
 
 	    return ($out);
     }
+	
+	protected function fbjs() {
+		
+		if (_m('cms.paramload use CMS+fbLogMode')==1) {
+			
+			$fbin = (defined('SHLOGIN_DPC')) ? _m('shlogin.is_fb_logged_in') : _m('cmslogin.is_fb_logged_in');
+			$fbid = (defined('SHLOGIN_DPC')) ? _v('shlogin.facebook_userId') : _v('cmslogin.facebook_userId');
+						
+			$code = (defined('SHLOGIN_DPC')) ? _m('shlogin.fblogin_javascript') : _m('cmslogin.fblogin_javascript');
+
+			if (iniload('JAVASCRIPT')) {
+				$js = new jscript;		   	 	
+				$js->load_js($code,null,1);		
+				unset ($js);
+			}
+		}		
+	}		
 	
 	protected function jsBrowser() {
 		
@@ -758,6 +769,7 @@ function addtocart(id,cartdetails)
 		$invaddr = localize('_invalidaddress', $lan);
 		$invps = localize('_invalidpostcode', $lan);
 		$invcountry = localize('_invalidcountry', $lan);
+		$invphone = localize('_invalidphone', $lan);
 		$ajaxurl = seturl("t=");
 		
 		$code = <<<EOF
@@ -769,6 +781,7 @@ function guestreg()
 	var gaddr = $('#guestaddress').val();
 	var gcode = $('#guestpostcode').val();
 	var gcoun = $('#guestcountry').val();
+	var gphon = $('#guestphone').val();
 	
 	var err = '';
 	var validemail = emailReg.test(email);
@@ -777,6 +790,7 @@ function guestreg()
 	if (validemail==false) err = '$invmail.<br/>';
 	if (!gname)	err += '$invname.<br/>';
 	if (!gaddr)	err += '$invaddr.<br/>';
+	if (!gphon)	err += '$invphone.<br/>';
 	if (!gcode)	err += '$invps.<br/>'; 
 	if (!gcoun)	err += '$invcountry.<br/>';
 	if (err) 
@@ -785,7 +799,7 @@ function guestreg()
 	$.ajax({
 		url: '{$ajaxurl}cartguestreg',
 		type: 'POST',
-		data: {FormAction: 'cartguestreg', email: email, name: gname, address: gaddr, postcode: gcode, country: gcoun},
+		data: {FormAction: 'cartguestreg', email: email, name: gname, address: gaddr, tel: gphon, postcode: gcode, country: gcoun},
 		success:function(postdata) {
 					if (postdata) {
 						$('#guestdetails').html(postdata);
@@ -1782,18 +1796,19 @@ EOF;
 		$address = GetParam('address');
 		$postcode = GetParam('postcode');
 		$country = GetParam('country');
+		$tel = str_replace('+','00', GetParam('tel'));
 		
 		//register and login (save customer details or deliv address of existing user)
 		if (defined('SHLOGIN_DPC'))
-			$loggedin = _m("shlogin.do_guest_login use $email+$name+$address+$postcode+$country");
+			$loggedin = _m("shlogin.do_guest_login use $email+$name+$address+$postcode+$country+$tel");
 		else	
-			$loggedin = _m("cmslogin.do_guest_login use $email+$name+$address+$postcode+$country");
+			$loggedin = _m("cmslogin.do_guest_login use $email+$name+$address+$postcode+$country+$tel");
 		
 		if ($loggedin) { 	
 			
 			if ($template = _m('cmsrt.select_template use shcartguestprocced')) {
 				
-				$tokens = array($email, $name, $address, $postcode, $country);
+				$tokens = array($email, $name, $address, $postcode, $country, $tel);
 				return $this->combine_tokens($template, $tokens, true);
 			}
 			else

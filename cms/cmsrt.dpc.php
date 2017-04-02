@@ -12,12 +12,13 @@ $__EVENTS['CMSRT_DPC'][2]='setlanguage';
 //$__EVENTS['CMSRT_DPC'][3]='katalog';
 //$__EVENTS['CMSRT_DPC'][4]='klist';
 //$__EVENTS['CMSRT_DPC'][5]='kshow';
-$__EVENTS['CMSRT_DPC'][3] = 'included_0';
-$__EVENTS['CMSRT_DPC'][4] = 'included_1';
-$__EVENTS['CMSRT_DPC'][5] = 'included_2';
-$__EVENTS['CMSRT_DPC'][6] = 'included_3';
-$__EVENTS['CMSRT_DPC'][7] = 'included_4';
-$__EVENTS['CMSRT_DPC'][8] = 'frontpage';
+$__EVENTS['CMSRT_DPC'][3]='included_0';
+$__EVENTS['CMSRT_DPC'][4]='included_1';
+$__EVENTS['CMSRT_DPC'][5]='included_2';
+$__EVENTS['CMSRT_DPC'][6]='included_3';
+$__EVENTS['CMSRT_DPC'][7]='included_4';
+$__EVENTS['CMSRT_DPC'][8]='frontpage';
+$__EVENTS['CMSRT_DPC'][9]='captchaimage';
 
 $__ACTIONS['CMSRT_DPC'][0]='shlangs';
 $__ACTIONS['CMSRT_DPC'][1]='lang';
@@ -25,6 +26,7 @@ $__ACTIONS['CMSRT_DPC'][2]='setlanguage';
 $__ACTIONS['CMSRT_DPC'][3]='katalog';
 $__ACTIONS['CMSRT_DPC'][4]='klist';
 $__ACTIONS['CMSRT_DPC'][5]='kshow';
+$__ACTIONS['CMSRT_DPC'][9]= 'captchaimage';
 
 $__DPCATTR['CMSRT_DPC']['shlangs'] = 'shlangs,1,0,0,0,0,0,0,0,0,0,0,1';
 $__DPCATTR['CMSRT_DPC']['lang'] = 'lang,0,0,0,0,0,0,0,0,0,0,1';
@@ -33,8 +35,15 @@ $__DPCATTR['CMSRT_DPC']['setlanguage'] = 'setlanguage,0,0,0,0,0,0,0,0,0,0,0';
 $__LOCALE['CMSRT_DPC'][0]='SHLANGS_DPC;Languanges;Γλώσσα';
 $__LOCALE['CMSRT_DPC'][1]='_HOME;Home;Αρχική';
 
-$a = GetGlobal('controller')->require_dpc('cms/cms.dpc.php');
+$a = GetGlobal('controller')->require_dpc('cms/pxml.lib.php');
 require_once($a);
+
+$b = GetGlobal('controller')->require_dpc('libs/scaptcha.lib.php');
+require_once($b);
+
+$c = GetGlobal('controller')->require_dpc('cms/cms.dpc.php');
+require_once($c);
+
 
 class cmsrt extends cms  {
 	
@@ -139,6 +148,8 @@ class cmsrt extends cms  {
 		//$this->refresh_page_js(); 
 		
 		switch ($event) {
+			case 'captchaimage' : die($this->captchaImage()); break;
+			
 			case 'frontpage'    : die($this->frontpage()); break;
 			case 'included_4'   :
 			case 'included_3'   :
@@ -1013,8 +1024,8 @@ EOF;
 		$fb = explode('/', $this->siteFb); 
 		$fbaddr = array_pop($fb); //get last token
 		
-		$fbid = _v('cmslogin.facebook_id');
-		
+		//$fbid = _v('cmslogin.facebook_id');
+		$fbid = $this->paramload('CMS', 'fbid'); 
 		$ret = <<<EOF
 		
 	    <meta property="fb:app_id" content="$fbid" />
@@ -1521,13 +1532,21 @@ EOF;
 	public function select_template($tfile=null, $iscp=false) {
 		if (!$tfile) return;
 	  
-	    $path = $iscp ? $this->prpath . $this->tpath .'/'. $this->cptemplate .'/' : 
-		                $this->prpath . $this->tpath .'/'. $this->template .'/' ; 
+	    $path = $iscp ? $this->prpath . $this->tpath .'/'. $this->cptemplate . '/' : 
+		                $this->prpath . $this->tpath .'/'. $this->template . '/' ; 
 	    
-		//unified languange .php part page		
-		//if (is_readable($path . $tfile.'.php')) {
-		if ($data = trim(@file_get_contents($path . $tfile . '.php'))) {	
-			
+		//big file to load in every page
+		/*if ($data = trim(@file_get_contents($path . 'template-parts.xml'))) {
+			//echo '.xml';
+			$xparts = new SimpleXMLElement($data);
+
+			if ((string) $xparts->part->name == $tfile) {
+				//echo $tfile . '.xml';
+				return ($xparts->part->body);
+			}
+		}		
+		else*/if ($data = trim(@file_get_contents($path . $tfile . '.php'))) {		
+			//echo '.php';
 			if (substr($data, -2) == '?>') {
 				//$data = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", "", $data)));
 				$data = '?>' . $data . ((substr($data, -2) == '?>') ? '<?php ' : '');
@@ -1542,6 +1561,7 @@ EOF;
 		}
 
 		//.htm files
+		//echo '.htm';
 		return @file_get_contents($path . str_replace('.', $this->lan.'.', str_replace('.htm', '', $tfile) . '.htm')); 
     }	
 
@@ -1684,61 +1704,56 @@ EOF;
 		$regstr = trim(preg_replace('/\s\s+/', '-', $string)); //double spaces  
 		$str = str_replace($g1,$g2,$regstr);
 		return ($str);
-	}	
-
-	//insert or update an alias field every * days
-	public function updateAliasAll($daysback=null) {
+	}		
+	
+	//cron func
+	public function replaceAliasCode($csvItems=null, $isStr=false) {
 		$db = GetGlobal('db');
-		$dayb = $daysback ? $daysback : 1;
+		if (!$csvItems) return false;
 		
 		if ($aliasID = $this->useUrlAlias()) {
 			
-			//select records 1 day back
-			$sSQL = "select {$this->fcode},{$this->itmname} from products ";
-			$sSQL.= " where DATE(datein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL $dayb DAY ) ) AND DATE ( NOW() )";
-			$sSQL.= " where active>0 and itmactive>0 and $aliasID is null"; // start
-			$res = $db->Execute($sSQL);	//!!!! disabled		
-			//echo $sSQL;
+			if ($isStr) {
+				$itms = explode(',', $csvItems);
+				$items = "'" . implode("','", $itms) . "'";
+			}  
+			else
+				$items = $csvItems;
 			
-			$i = 0;
-			//update n days back
-			foreach ($res as $i=>$rec) {
-				
-				$alias = $this->stralias($rec[1]);
+			$sSQL = "update products set $aliasID = ";
+			$sSQL.= " replace(replace(replace(replace(replace(replace(replace(replace(replace(itmname,'#','-'),\"'\",'-'),'\"','-'),',','-'),'+','-'),'/','-'),'&','-'),'.','-'),' ','-')";
+			$sSQL.= " where {$this->fcode} IN (" . $items . ")";
+			$res = $db->Execute($sSQL);
 			
-				$sSQL = "update products set $aliasID=" . $db->qstr($alias);
-				$sSQL.= " where {$this->fcode}=" . $db->qstr($rec[0]);
-				//echo $sSQL;
-				$res = $db->Execute($sSQL);
-				$i+=1;
-			}
-			//echo $i . '-' . $sSQL;
-			return true;
+			return ($sSQL);
 		}
+		
 		return false;	
 	}
-	
-	//at report -> cron
-	public function updateAliasCode($id=null) {
-		$db = GetGlobal('db');		
-		if ((!$id) || (!$aliasID = $this->useUrlAlias())) return false;
-			
-		$sSQL = "select {$this->fcode},{$this->itmname} from products ";
-		$sSQL.= " where {$this->fcode}=" . $db->qstr($id);
-		$res = $db->Execute($sSQL);			
-		
-		if ($res->fields[0]) {
 
-			$alias = $this->stralias($res->fields[1]);
-			$uSQL = "update products set $aliasID=" . $db->qstr($alias);
-			$uSQL.= " where {$this->fcode}=" . $db->qstr($res->fields[0]);
-			$resu = $db->Execute($uSQL);	
+
+	
+	public function captchaImage() {
+		
+		if (defined('SCAPTCHA_DPC')) {
+			$cpc = new scaptcha();
+			$_SESSION['CAPTCHA'] = $cpc->captchaInit();
 			
-			return true;
+			return $cpc->captchaImage();
 		}
-		return false;
+
+		return 'scpatcha is not defined';	
 	}
 
+	public function valid_captcha($fieldname=null) {
+	    $captcha = $fieldname ? GetParam($fieldname) : GetParam("mycaptcha");		
+	    if (!defined('SCAPTCHA_DPC')) return true;
+
+		if (($captcha) && ($captcha==$_SESSION['CAPTCHA'])) 	
+			return true;
+		
+		return false;
+	}	
 
     //overrite
 	public function included($fname=null, $enable_ajax=false, $divargs=null, $divname=null) {
