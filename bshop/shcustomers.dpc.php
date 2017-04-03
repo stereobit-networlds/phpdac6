@@ -601,7 +601,8 @@ window.onload=function(){
 
     protected function makeform($fields='',$notitle=null,$cmd=null,$isupdate=null,$go_to=null,$setinvtype=null) {
 	    $sFormErr = GetGlobal('sFormErr');
-	    $goto = $go_to ? $go_to : "t=signup2&a=".GetParam('a'); 
+		$customerid = GetParam('a');
+	    $goto = $go_to ? $go_to : "editcus/$customerid/"; //"t=signup2&a=".GetParam('a'); 
 	   
 	    if (!$invtype = GetSessionParam('invtype'))
 			$invtype = GetParam('invtype') ? GetParam('invtype') : ($setinvtype ? $setinvtype : $this->invtype);
@@ -1798,7 +1799,7 @@ window.onload=function(){
 					$myactions[] = null; 
 			    }	 
 			    else {//just modify account
-					$signup2 = seturl('t=signup2&a='.$id);
+					$signup2 = "editcus/$id/"; //seturl('t=signup2&a='.$id);
 					$myactions[] = $this->myf_button(localize('_UPDCUSTOMER',getlocal()),$signup2);
 			    }	 
 			   
@@ -1807,7 +1808,7 @@ window.onload=function(){
 					$myactions[] = $this->myf_button(localize('_SELCUSTOMER',getlocal()),$cgoto);
 			    }	 
 			    else {
-					$selcus = seturl('t=selcus&id='.$id);			 			   
+					$selcus = "selectcus/$id/"; //seturl('t=selcus&id='.$id);			 			   
 					$myactions[] = $this->myf_button(localize('_SELCUSTOMER',getlocal()),$selcus);
 			    }
 			   
@@ -1815,7 +1816,7 @@ window.onload=function(){
 					$myactions[] = null;
 		        }		 
 			    else {//just modify account
-					$remcus = seturl('t=removecus&id='.$id);
+					$remcus = "removecus/$id/";//seturl('t=removecus&id='.$id);
 					$myactions[] = $this->myf_button(localize('_REMCUSTOMER',getlocal()),$remcus);
 			    }				 
 			   

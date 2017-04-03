@@ -162,55 +162,10 @@ class cmsusers  {
 									break;
 
 			case "insertajax" 	:
-            case "insert"		: 	/*if ($this->includecusform) {
-			
-										if (defined('SHCUSTOMERS_DPC')) {
-										//echo 'a>';
-										if ($this->check_existing_customer) {
-											//echo 'b>';
-											if ($cid = _m('shcustomers.customer_exist use 1')) {
-												if ($cid<>-1) {//not mapped customer	
-													//echo 'c1>';
-													$checkcuserr = null;
-													$this->map_customer = true;						 
-													$this->customer_exist_id = $cid;
-												}
-												else {//already maped customer
-													//echo 'c2>';
-													$checkcuserr = localize('_CUSTEXISTS',getlocal());//'Customer exist!';
-													$this->map_customer = false;	
-													$this->customer_exist_id = null;
-													SetGlobal('sFormErr',$checkcuserr);
-												}
-											}
-											else  {//new customer
-												//echo 'c>';
-												$checkcuserr = _m('shcustomers.checkFields use +'.$this->checkuseasterisk);   
-												$this->map_customer = null; //new customer	
-											} 
-										}
-										else {//new customer
-											$checkcuserr = _m('shcustomers.checkFields use +'.$this->checkuseasterisk);
-											//SetGlobal('sFormErr',$checkcuserr);
-										}
-										}
-							   
-										//user check  
-										$checkusrerr = $this->checkFields(null,$this->checkuseasterisk);
-										//echo 'errors:',$checkusrerr,'|',$checkcuserr;
-							 
-										if ((!$checkusrerr) && (!$checkcuserr))  {		
-											//echo 'e>';
-											$this->insert_with_customer();							  					 
-										} 
-							 
-									}//not include cus form
-									else */	
-									$this->insert();
+            case "insert"		: 	$this->insert();
 									break;
 						   
-            case "update"		:  	//auto subscribe
-									if (defined('CMSSUBSCRIBE_DPC')) { 
+            case "update"		:  	if (defined('CMSSUBSCRIBE_DPC')) { 
 										$email = GetParam("eml");	
 										if (trim(GetParam('autosub'))=='on')
 											_m("cmssubscribe.dosubscribe use $email+1");
@@ -222,8 +177,7 @@ class cmsusers  {
 									$this->fbjs();							
 									break;
 							
-            case "delete"		:  	//auto unsubscribe
-									if (defined('CMSSUBSCRIBE_DPC')) {
+            case "delete"		:  	if (defined('CMSSUBSCRIBE_DPC')) {
 										$email = GetParam("eml");
 										_m("cmssubscribe.dounsubscribe use $email+1");
 									}
@@ -239,28 +193,7 @@ class cmsusers  {
 	public function action($action) {
 
         switch ($action) {
-	        case 'useractivate':   if (defined('SHLOGIN_DPC')) { 
-									    if (defined('SHCART_DPC')) {
-										    $carthasvalue = _m("shcart.getcartTotal use 1");
-											if ($carthasvalue>0)
-											   $out .= _m("shlogin.quickform use +viewcart+shcart>cartview+status+1");	 
-											else   
-											   $out .= _m('shlogin.form use html');
-										}
-                                        else 										 
-											$out .= _m('shlogin.form');
-								    }
-									elseif (defined('CMSLOGIN_DPC')) { 
-									    if (defined('SHCART_DPC')) {
-										    $carthasvalue = _m("shcart.getcartTotal use 1");
-											if ($carthasvalue>0)
-											   $out .= _m("cmslogin.quickform use +viewcart+shcart>cartview+status+1");	 
-											else   
-											   $out .= _m('cmslogin.form use html');
-										}
-                                        else 										 
-											$out .= _m('cmslogin.form');
-								    }		 	
+	        case 'useractivate':    $out = 	$this->userActivateForm();	
 	                                break;
 										 
 			case "insertajax":		$msg = ($sFormErr=="ok") ? localize('_SUCCESSREG',getlocal()) :  GetGlobal('sFormErr');
@@ -1518,6 +1451,35 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		 
 		return false;
 	}	
+	
+	protected function userActivateForm() {
+		if (defined('SHLOGIN_DPC')) { 
+			if (defined('SHCART_DPC')) {
+			    $carthasvalue = _m("shcart.getcartTotal use 1");
+				if ($carthasvalue>0)
+			 	    $out .= _m("shlogin.quickform use +viewcart+shcart>cartview+status+1");	 
+				else   
+				    $out .= _m('shlogin.form use html');
+			}
+            else 										 
+			    $out .= _m('shlogin.form');
+		}
+		elseif (defined('CMSLOGIN_DPC')) { 
+		    if (defined('SHCART_DPC')) {
+			    $carthasvalue = _m("shcart.getcartTotal use 1");
+				if ($carthasvalue>0)
+				    $out .= _m("cmslogin.quickform use +viewcart+shcart>cartview+status+1");	 
+				else   
+				    $out .= _m('cmslogin.form use html');
+			}
+            else 										 
+				$out .= _m('cmslogin.form');
+		}
+		else
+			$out = null;
+
+		return ($out);	
+	}
 	
     protected function _checkmail($data) {
 

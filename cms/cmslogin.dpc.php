@@ -87,7 +87,7 @@ class cmslogin {
     var $after_goto, $dpc_after_goto,$login_successfull;
 	var $login_goto, $logout_goto;  
 	var $recaptcha_public_key, $recaptcha_private_key;	
-	var $resetPass, $isLogin, $isRegistered, $ssl;
+	var $resetPass, $isLogin, $isRegistered, $ssl, $failedLogins;
 	var $inactive_on_register, $recaptcha, $appname, $mtrackimg;	
 	var $facebook_id, $facebook_key, $facebook_userId, $facebook, $fbhash, $fbmode, $fbredir, $fbin;		
 
@@ -116,6 +116,10 @@ class cmslogin {
 	    $this->login_goto = remote_paramload('CMSLOGIN','login_goto',$this->path);		
 	    $this->after_goto = remote_paramload('CMSLOGIN','aftergoto',$this->path);
 	    $this->dpc_after_goto = GetSessionParam('afterlogingoto') ? GetSessionParam('afterlogingoto') : $this->after_goto;		
+		
+		$flogins = _m('cms.paramload use CMS+failedLogins');
+		$this->failedLogins = is_numeric($flogins) ? ($flogins-1) : 2;	//zero count	
+		
 	    $this->recaptcha_public_key = remote_paramload('RECAPTCHA','pubkey',$this->path);							  
 	    $this->recaptcha_private_key = remote_paramload('RECAPTCHA','privkey',$this->path);			
 	    $rp = remote_paramload('CMSLOGIN','recaptcha',$this->path);
@@ -423,14 +427,18 @@ window.setTimeout('neu()',10);
 	}	
 	
     public function form() {
+		$failedtimes = GetSessionParam('failedLogin');
 	   
         if ($this->login_successfull) {
 			$user = decode(GetSessionParam('UserName'));
 			$tokens = array(0=>$user);
 			return _m('cmsrt._ct use loginsuccess+' . serialize($tokens));
 	    }	 
-        else
-			return $this->html_form();
+        else {
+			//return $this->html_form();
+			$form = ($failedtimes > $this->failedLogins) ? $this->html_remform() : $this->html_form();
+			return $form;
+		}	
     }	
 	
 	public function html_form() {
@@ -645,14 +653,17 @@ window.setTimeout('neu()',10);
 		 
 	    }//recaptcha
 
+		SetSessionParam('failedLogin', null); //reset fails at login		
 		$this->resetPass = false;
+
 		return false;	
 	}	
 	
     public function do_login($user='',$pwd='') {
 	    $db = GetGlobal('db');
 	    $sFormErr = GetGlobal('sFormErr');
-	    $UserName = GetGlobal('UserName');  
+	    $UserName = GetGlobal('UserName'); 
+		$failedtimes = GetSessionParam('failedLogin');	
 		
 	    //recaptcha NOT FOR PASSWORDS FORM 
         //if ($this->valid_recaptcha()) {		   		
@@ -711,10 +722,13 @@ window.setTimeout('neu()',10);
 				$this->isLogin = true;
 				return true;
             }
-            else {
-				$this->update_login_statistics('login-failed', $sUsername);
+            else { 
+				//echo $failedtimes . '>';
+				SetSessionParam('failedLogin', $failedtimes+1);
 				
+				$this->update_login_statistics('login-failed', $sUsername);
 				SetGlobal('sFormErr',localize('_MSG1',getlocal()));
+				
 				return false;
             }
 	    }  

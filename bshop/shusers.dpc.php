@@ -43,11 +43,13 @@ class shusers extends cmsusers {
 
 		switch ($event) {
 			
+			case "insertajax":
             case "insert"	: 	$this->insertExt();
 								$this->jsBrowser(); 
 								break;			
 			
 			case 'update'   :			
+			case 'delete'   :
 			case 'signup'   :   $this->jsBrowser(); //break;
 			default 		: 	cmsusers::event($event);
 		}

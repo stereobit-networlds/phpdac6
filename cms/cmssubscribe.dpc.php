@@ -168,6 +168,7 @@ class cmssubscribe {
 			if ($mymail==$mail) {//is in db but already enabled or disabled  re-enable subscription
 				$sSQL = "update ulists set active=1 where listname='$dlist' and email=" . $db->qstr(strtolower($mail));  
 				$db->Execute($sSQL,1);
+				
 				//echo $sSQL;		
 				if (!$bypasscheck)    
 					$this->msg =  localize('_MSG6',getlocal());			 
