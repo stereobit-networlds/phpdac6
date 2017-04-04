@@ -103,7 +103,8 @@ class shkategories {
 										_m("cmsvstats.update_category_statistics use $cat+menu");
 									
 			                        $ps = $this->show_tree1($cat,1,null,1);
-			                        die($cat . "|" . $ps);
+			                        //die($cat . "|" . $ps); //sndReqArg method
+									die($ps); //ajaxCall jquery method
 									break;			
 			
 			case 'openf'        : 	break;			
