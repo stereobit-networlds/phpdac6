@@ -652,7 +652,32 @@ $(document).ready(function () {
 		$gotoSection = 'cart-summary';//'cart-page';
 		
 		$code = "
-$(document).ready(function () {	
+$(document).ready(function () {
+	
+    if (/{$mobileDevices}/i.test(navigator.userAgent)) {
+		
+	  $('#addressway').on('change', function (e) {
+		url = 'katalog.php?t=cartaddress&addressway='+$(this).val();
+		$.ajax({ url: url, cache: false, success: function(html){
+			$('#addressdetails').html(html);
+		}});
+      });
+	
+	  $('#roadway').on('change', function (e) {
+		url = 'katalog.php?t=carttransport&roadway='+$(this).val();
+		$.ajax({ url: url, cache: false, success: function(html){
+			$('#transportdetails').html(html);
+		}});
+      });	
+	
+	  $('#payway').on('change', function (e) {
+		url = 'katalog.php?t=cartpayment&payway='+$(this).val();
+		$.ajax({ url: url, cache: false, success: function(html){
+			$('#paymentdetails').html(html);
+		}});
+      });		
+	}
+	
 	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
 		window.scrollTo(0,parseInt($('#$gotoSection').offset().top, 10));
 	else {		

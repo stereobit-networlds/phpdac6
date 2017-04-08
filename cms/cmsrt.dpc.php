@@ -230,14 +230,15 @@ class cmsrt extends cms  {
 	//http://stackoverflow.com/questions/12225456/jquery-scrolltop-does-not-work-in-scrolling-div-on-mobile-browsers-alternativ
 	//if(navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/)) { 
 	protected function scrolltop_javascript_code() {
+		$mobileDevices = $this->mobileMatchDev();
 
 		$jscroll = <<<SCROLLTOP
 function ajaxCall(url,div,goto) {
 	$.ajax({ url: url, cache: false, success: function(html){
 		$('#'+div).html(html);
-	}})
+	}});
 	if (goto) {
-		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		if (/{$mobileDevices}/i.test(navigator.userAgent)) 
 			window.scrollTo(0,parseInt($('#'+div).offset().top, 10));
 		else 		
 			gotoTop(div);  
