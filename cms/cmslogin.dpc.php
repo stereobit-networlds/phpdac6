@@ -39,9 +39,9 @@ $__ACTIONS['CMSLOGIN_DPC'][11]='shlogin';
 $__DPCATTR['CMSLOGIN_DPC']['cmslogin'] = 'cmslogin,1,0,0,0,0,0,0,0,0,0,0,1';
 
 $__LOCALE['CMSLOGIN_DPC'][0]='CMSLOGIN_DPC;Login;Σύνδεση';
-$__LOCALE['CMSLOGIN_DPC'][1]='_SHLOGOUT;Logout;Αποσύνδεση';
-$__LOCALE['CMSLOGIN_DPC'][2]='SHLOGIN_CNF;Logout;Αποσύνδεση';
-$__LOCALE['CMSLOGIN_DPC'][3]='SHLOGIN_UNK;Login;Σύνδεση';
+$__LOCALE['CMSLOGIN_DPC'][1]='_CMSLOGOUT;Logout;Αποσύνδεση';
+$__LOCALE['CMSLOGIN_DPC'][2]='CMSLOGIN_CNF;Logout;Αποσύνδεση';
+$__LOCALE['CMSLOGIN_DPC'][3]='CMSLOGIN_UNK;Login;Σύνδεση';
 $__LOCALE['CMSLOGIN_DPC'][4]='_USERNAME;Username;Χρήστης';
 $__LOCALE['CMSLOGIN_DPC'][5]='_PASSWORD;Password;Κωδικός';
 $__LOCALE['CMSLOGIN_DPC'][6]='_WELLCOME;Welcome;Καλωσήρθες';
@@ -77,12 +77,8 @@ $__LOCALE['CMSLOGIN_DPC'][34]='_mailmxerr;Wrong e-mail;Λανθασμένο e-ma
 
 class cmslogin {
 
-	var $userLevelID;
-	var $msg;
-    var $time_of_session;
-	var $reseller_attr, $path, $urlpath;
+	var $path, $urlpath, $userLevelID, $msg, $time_of_session;
 	var $username, $userid;
-    var $actcode;
     var $iname, $load_sesssion;
     var $after_goto, $dpc_after_goto,$login_successfull;
 	var $login_goto, $logout_goto;  
@@ -110,7 +106,7 @@ class cmslogin {
 
 	    $this->title = localize('CMSLOGIN_DPC',getlocal());		
 	    $this->load_session = remote_paramload('CMSLOGIN','loadsession',$this->path);
-	    $this->reseller_attr = remote_paramload('CMSLOGIN','reseller',$this->path); //DISABLED
+	    //$this->reseller_attr = remote_paramload('CMSLOGIN','reseller',$this->path); //DISABLED
 	    $this->accountmailfrom = remote_paramload('CMSLOGIN','accountmailfrom',$this->path);	   
 	    $this->logout_goto = remote_paramload('CMSLOGIN','logout_goto',$this->path);
 	    $this->login_goto = remote_paramload('CMSLOGIN','login_goto',$this->path);		
@@ -130,9 +126,7 @@ class cmslogin {
 		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";				
 		
 	    $this->inactive_on_register = remote_paramload('SHUSERS','inactive_on_register',$this->path);		
-		$acode = remote_paramload('RCCUSTOMERS','activecode',$this->path);
-	    $this->actcode = $acode ? $acode : 'code2';      
-		
+   		
         $this->must_reenter_password = null;		
 	    $this->login_successfull = false;		
 	    $this->resetPass = false;
@@ -449,7 +443,7 @@ window.setTimeout('neu()',10);
 		if ($UserID) {
 			
 			$tokens[] = _m('cmsrt.seturl use t=dologout'); 
-			$tokens[] = localize('_SHLOGOUT',getlocal());
+			$tokens[] = localize('_CMSLOGOUT',getlocal());
 
 			$ret = _m('cmsrt._ct use logout+' . serialize($tokens));
 	 	
@@ -616,7 +610,8 @@ window.setTimeout('neu()',10);
 		//if (_m('cmsrt.valid_captcha')===true) {		
 
 			if ($this->domain_exists($m)) {
-				$sSQL = "SELECT username, password, notes FROM users WHERE email='" . addslashes($m) . "' and username is not null";
+				//$sSQL = "SELECT username, password FROM users WHERE email='" . addslashes($m) . "' and username is not null";
+				$sSQL = "SELECT username, password FROM users WHERE username=" . $db->qstr(addslashes($m));
 				$result = $db->Execute($sSQL,2);
 
 				if (($u=$result->fields['username']) && ($p=$result->fields['password'])) {
@@ -675,12 +670,12 @@ window.setTimeout('neu()',10);
 
 	    if (($sUsername) && ($sPassword)) {
 
-	        $sSQL = "SELECT ".$this->actcode.", sesid, notes, seclevid, clogon FROM users" . " WHERE username ='" .
+	        $sSQL = "SELECT username, sesid, active, seclevid, clogon FROM users" . " WHERE username ='" .
 			   	    addslashes($sUsername) . "' AND password='" . md5(addslashes($sPassword)) . "'";	
  		  
             $result = $db->Execute($sSQL,2);
 
-			if (($result->fields[$this->actcode]) && (strcmp(trim($result->fields['notes']),"DELETED")!=0)) {
+			if (($result->fields['username']) && ($result->fields['active']=1)) {
 		  
 		        if (intval($result->fields['seclevid'])>=5) { 
 					$GLOBALS['LOGIN'] = 'yes';					
@@ -694,9 +689,9 @@ window.setTimeout('neu()',10);
                 if ($this->load_session)
 				    $this->loadSession($sUsername);
 
-				$GLOBALS['UserID'] = encode($result->fields[$this->actcode]);
+				$GLOBALS['UserID'] = encode($result->fields['username']);
                 SetSessionParam("UserName", encode($sUsername));
-                SetSessionParam("UserID", encode($result->fields[$this->actcode]));
+                SetSessionParam("UserID", encode($result->fields['username']));
                 SetSessionParam("UserSecID", encode($result->fields['seclevid']));
 							  
 				if ((defined('SHCUSTOMERS_DPC')))   						  
@@ -788,7 +783,7 @@ window.setTimeout('neu()',10);
 			  $sName = $userInfo['name'];
 			  $sId = $userInfo['email'];//name'];//id'];
 			
-			  $sSQL = "select id,username,notes from users WHERE username='{$userInfo['email']}' and (active=1 or notes='ACTIVE') order by id desc LIMIT 1"; //last entry
+			  $sSQL = "select id from users WHERE username='{$userInfo['email']}' and active=1 order by id desc LIMIT 1"; //last entry
 			  $uret = $db->Execute($sSQL);
 		
 			  if (!$uret->fields[0]) {
@@ -796,13 +791,15 @@ window.setTimeout('neu()',10);
 				$fbpass	= md5('!@test@!'.time()); //auto gen password
 				  
 				//insert facebook user (active by def)	  
-				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid, password, vpass, active, fb) values ";
-				$sSQL.= "('{$sUsername}','{$userInfo['first_name']}','{$userInfo['last_name']}','{$userInfo['email']}','ACTIVE','{$userInfo['email']}',1,1, '{$fbpass}','{$fbpass}',1,1)";
+				$sSQL = "insert into users (code2,fname,lname,email,username,subscribe,seclevid, password, vpass, active, fb) values ";
+				$sSQL.= "('{$sUsername}','{$userInfo['first_name']}','{$userInfo['last_name']}','{$userInfo['email']}','{$userInfo['email']}',1,1, '{$fbpass}','{$fbpass}',1,1)";
 				$ret = $db->Execute($sSQL);
 							  
 				if ($db->Affected_Rows()) {
 					if (defined('SHUSERS_DPC'))  
 						_m("shusers.mailtohost use $sUsername++".$userInfo['first_name'].'+'.$userInfo['last_name']);
+					else	
+						_m("cmsusers.mailtohost use $sUsername++".$userInfo['first_name'].'+'.$userInfo['last_name']);
 					
 				    if (defined('CMSSUBSCRIBE_DPC'))  
 						_m('cmssubscribe.dosubscribe use '.$sUsername.'+1');
@@ -814,7 +811,7 @@ window.setTimeout('neu()',10);
 			  }	
 			  else {  
 			    //update existed user with facebook data (active by def)
-				$sSQL = "UPDATE users set fname='{$userInfo['first_name']}',lname='{$userInfo['last_name']}', notes='ACTIVE', active=1, fb=1 WHERE username='{$userInfo['email']}'";
+				$sSQL = "UPDATE users set fname='{$userInfo['first_name']}',lname='{$userInfo['last_name']}', active=1, fb=1 WHERE username='{$userInfo['email']}'";
                 $uret = false; 				
 				$ret = $db->Execute($sSQL);
               } 
@@ -906,7 +903,7 @@ window.setTimeout('neu()',10);
 			$sName = $name;
 			$sId = $email;
 			
-			$sSQL = "select id,username,notes from users WHERE username='{$email}' and (active=1 or notes='ACTIVE') order by id desc LIMIT 1"; //last entry
+			$sSQL = "select id from users WHERE username='{$email}' and active=1 order by id desc LIMIT 1"; //last entry
 			$uret = $db->Execute($sSQL);
 		
 			if (!$uret->fields[0]) {
@@ -914,14 +911,15 @@ window.setTimeout('neu()',10);
 				$pass = md5('!@test@!' . time()); //auto gen password
 				  
 				//insert guest user (active by def)	  
-				$sSQL = "insert into users (code2,fname,lname,email,notes,username,subscribe,seclevid, password, vpass, active, fb) values ";
-				$sSQL.= "('{$sUsername}','{$fname}','{$lname}','{$email}','ACTIVE','{$email}',1,1, '{$pass}','{$pass}',1,2)";
+				$sSQL = "insert into users (code2,fname,lname,email,username,subscribe,seclevid, password, vpass, active, fb) values ";
+				$sSQL.= "('{$sUsername}','{$fname}','{$lname}','{$email}','{$email}',1,1,'{$pass}','{$pass}',1,2)";
 				$ret = $db->Execute($sSQL);
 							  
 				if ($db->Affected_Rows()) {
-					//if (defined('SHUSERS_DPC'))  
-						//_m("shusers.mailtohost use $sUsername++".$fname.'+'.$lname);
-					
+					if (defined('SHUSERS_DPC'))  
+						_m("shusers.mailtohost use $sUsername++".$fname.'+'.$lname);
+					else
+						_m("cmsusers.mailtohost use $sUsername++".$fname.'+'.$lname);
 					//if (defined('CMSSUBSCRIBE_DPC'))  
 						//_m('cmssubscribe.dosubscribe use '.$sUsername.'+1');
 				
@@ -938,7 +936,7 @@ window.setTimeout('neu()',10);
 			}	
 			else {  
 				//update existed user 
-				/*$sSQL = "UPDATE users set fname='{$fname}',lname='{$lname}', notes='ACTIVE', active=1, fb=0 WHERE username='{$email}'";
+				/*$sSQL = "UPDATE users set fname='{$fname}',lname='{$lname}', active=1, fb=0 WHERE username='{$email}'";
 				$uret = false; 				
 				$ret = $db->Execute($sSQL);
 				*/ //NOT AN UPDATE (EXISTING VALID USER !!!)
@@ -953,10 +951,7 @@ window.setTimeout('neu()',10);
 			SetSessionParam("UserName", encode($sUsername));
 			SetSessionParam("UserID", encode($sId));
 			SetSessionParam("UserSecID", encode('1'));
-				
-			//if ((defined('SHCUSTOMERS_DPC')))   						  
-			//    _m('shcustomers.is_reseller');					
-				
+					
 			//set cookie
 			if (paramload('SHELL','cookies')) {
 				setcookie("cuser", $sUserName, time()+$this->time_of_session);
@@ -1011,14 +1006,14 @@ window.setTimeout('neu()',10);
 	public function myf_login_logout($link=null,$glue=null) {
 	
 	    if ($UserID = GetGlobal('UserID')) {
-	        $url = _m('cmsrt.url use t=dologout+' . localize('_SHLOGOUT',getlocal())); //seturl("t=dologout",localize('_SHLOGOUT',getlocal()),null,null,null,true);
+	        $url = _m('cmsrt.url use t=dologout+' . localize('_CMSLOGOUT',getlocal())); 
 			$myfb = ($link) ? (($glue) ? '<'.$glue.'>'.$url.'</'.$glue.'>' : $url) :
-			                  $this->myf_button(localize('_SHLOGOUT',getlocal()),'dologout/','_SHLOGOUT');
+			                  $this->myf_button(localize('_CMSLOGOUT',getlocal()),'dologout/','_CMSLOGOUT');
 	    }
 	    else {
-		    $url = _m('cmsrt.url use t=login+' . localize('CMSLOGIN_DPC',getlocal())); //seturl("t=login",localize('CMSLOGIN_DPC',getlocal()),null,null,null,true);
+		    $url = _m('cmsrt.url use t=login+' . localize('CMSLOGIN_DPC',getlocal())); 
 		    $myfb = ($link) ? (($glue) ? '<'.$glue.'>'.$url.'</'.$glue.'>' : $url) :
-			                  $this->myf_button(localize('CMSLOGIN_DPC',getlocal()),'login/','_SHLOGIN');
+			                  $this->myf_button(localize('CMSLOGIN_DPC',getlocal()),'login/','_CMSLOGIN');
 	    }
 	   
 	    return ($myfb);
@@ -1084,9 +1079,9 @@ window.setTimeout('neu()',10);
 		    else
                 $sSQL .= $db->qstr(addslashes($uname)) . ",";
 			
-			$active = $this->inactive_on_register ? 'DELETED' : 'ACTIVE';
+			$notes = ''; //$this->inactive_on_register ? 'DELETED' : 'ACTIVE';
 			
-			$sSQL .= $db->qstr($active) . "," . $seclevid;
+			$sSQL .= $db->qstr($notes) . "," . $seclevid;
 	        $sSQL .= ")";
             //echo $sSQL;
             $ret = $db->Execute($sSQL);	 //print_r($ret);

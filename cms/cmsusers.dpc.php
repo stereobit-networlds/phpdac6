@@ -35,7 +35,7 @@ $__LOCALE['CMSUSERS_DPC'][2]='_PASSWORD;Password;Κωδικός';
 $__LOCALE['CMSUSERS_DPC'][3]='_MSG9;The following fields are optional.;Τα παρακάτω πεδία εξυπηρετούν στατιστικούς λόγους και δεν είναι απαραίτητα.';
 $__LOCALE['CMSUSERS_DPC'][4]='_MSG10;Successfull registration!;Επιτυχής καταχώρηση!';
 $__LOCALE['CMSUSERS_DPC'][5]='_MSG11;is required;είναι απαραίτητο';
-$__LOCALE['CMSUSERS_DPC'][6]='_MSG12;The value in field;Το στοιχείο';
+$__LOCALE['CMSUSERS_DPC'][6]='_MSG12;The field;Το στοιχείο';
 $__LOCALE['CMSUSERS_DPC'][7]='_MSG13;No valid Password !;Ο κωδικός δεν συμφωνεί με την επιβεβαιωσή του';
 $__LOCALE['CMSUSERS_DPC'][8]='_MSG17;Invalid data. Your username used by someone else!;Μη αποδεκτά δεδομένα. Το όνομα χρήστη είναι δεσμευμένο';
 $__LOCALE['CMSUSERS_DPC'][9]='_MSG18;Invalid update or the data has no diference!;Μη αποδεκτά δεδομένα ή μη διαφορά νέων δεδομένων';
@@ -82,12 +82,10 @@ class cmsusers  {
 	var $userLevelID, $msg, $pagenum, $searchtext;
 	var $country_id, $language_id, $age_id, $gender_id, $job_id;
 
-	var $dbase, $tell_it, $atok, $leeid;//, $predef_customer, $includecusform;
-	var $unknown_sec, $security; //$customer_sec, 
-	var $c_message, $it_sendfrom, $username, $userid;
+	var $username, $userid, $security;
+	var $tell_it, $tell_subject, $it_sendfrom;
 	var $new_user_id, $usemail2send, $usemailasusername;
-	var $usrform, $usrformtitles, $checkuseasterisk, $asterisk;
-	//var $continue_register_customer, $check_existing_customer, $map_customer, $customer_exist_id;
+	var $usrform, $usrformtitles, $checkuseasterisk;
     var $deny_multiple_users, $inactive_on_register, $stay_inactive;	
 	var $appname, $mtrackimg;	
 
@@ -101,52 +99,32 @@ class cmsusers  {
 		$this->userLevelID = $UserSecID ? decode($UserSecID) : 0;
 		$this->username = $UserName ? decode($UserName) : null;
 		$this->userid = $UserID ? decode($UserID) : null;
-		$this->searchtext = trim(GetParam("usernum"));
+		
 		$this->path = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');	   
 
-		//startup select vals
-		$this->country_id = remote_paramload('SHUSERS','countryid',$this->path);
-		$this->language_id = remote_paramload('SHUSERS','lanid',$this->path);
-		$this->age_id = remote_paramload('SHUSERS','ageid',$this->path);
-		$this->gender_id = remote_paramload('SHUSERS','genderid',$this->path);
-		$this->tmz_id = remote_paramload('SHUSERS','tmzid',$this->path);	   
-		$this->job_id = 0;
-		$this->msg = $sFormErr;
-		$this->pagenum = 30;		
-
-		$this->atok = remote_paramload('SHUSERS','atok',$this->path);
-		$this->leeid = remote_paramload('SHUSERS','leeid',$this->path);
-		//$this->customer_sec = remote_paramload('SHUSERS','ifcustomer',$this->path);
-		$this->unknown_sec = remote_paramload('SHUSERS','else',$this->path);
-		$this->c_message = remote_paramload('SHUSERS','mailmsg',$this->path);
-		$this->it_sendfrom = remote_paramload('SHUSERS','sendusernamefrom',$this->path);
-
-		//init security
-		$this->security = $this->unknown_sec ? $this->unknown_sec : 0; //default
-
-		//$this->predef_customer = null;
-		$this->usemailasusername =  remote_paramload('SHUSERS','usemailasusername',$this->path);
-		$this->usemail2send =  remote_paramload('SHUSERS','usemail2send',$this->path);
-		$this->tell_it = remote_paramload('SHUSERS','tellregisterto',$this->path);
-	   
-		//$cusform = remote_paramload('SHUSERS','includecusform',$this->path); 
-		//$this->includecusform = $cusform ? true : false;	 
-	   
-		$this->usrform = remote_arrayload('SHUSERS','usrform',$this->path);		   
-		$this->usrformtitles = remote_arrayload('SHUSERS','usrformtitles',$this->path);		
-		$this->checkuseasterisk = remote_paramload('SHUSERS','checkasterisk',$this->path);	 
-		$this->asterisk = $this->checkuseasterisk?'&nbsp;':'*'; //echo $this->asterisk,'>'; 
-	   
-		//$this->continue_register_customer = remote_paramload('SHUSERS','continueregcus',$this->path);
-		$this->deny_multiple_users = remote_paramload('SHUSERS','denymultuser',$this->path);	   
-		   	   	   
-		//$this->check_existing_customer = remote_paramload('SHCUSTOMERS','checkexist',$this->path);
-		//$this->map_customer = null;
-		//$this->customer_exist_id = null;
-		$this->inactive_on_register = remote_paramload('SHUSERS','inactive_on_register',$this->path);	   
-		$this->stay_inactive = remote_paramload('SHUSERS','stay_inactive',$this->path); 
+		$this->country_id = remote_paramload('CMSUSERS','countryid',$this->path);
+		$this->language_id = remote_paramload('CMSUSERS','lanid',$this->path);
+		$this->age_id = remote_paramload('CMSUSERS','ageid',$this->path);
+		$this->gender_id = remote_paramload('CMSUSERS','genderid',$this->path);
+		$this->tmz_id = remote_paramload('CMSUSERS','tmzid',$this->path);	   		
+		$this->it_sendfrom = remote_paramload('CMSUSERS','sendusernamefrom',$this->path);
+		$this->usemailasusername =  remote_paramload('CMSUSERS','usemailasusername',$this->path);
+		$this->usemail2send =  remote_paramload('CMSUSERS','usemail2send',$this->path);
+		$this->tell_it = remote_paramload('CMSUSERS','tellregisterto',$this->path);
+	    $this->tell_subject = remote_paramload('CMSUSERS','tellsubject',$this->path);
+		$this->usrform = remote_arrayload('CMSUSERS','usrform',$this->path);		   
+		$this->usrformtitles = remote_arrayload('CMSUSERS','usrformtitles',$this->path);		
+		$this->checkuseasterisk = remote_paramload('CMSUSERS','checkasterisk',$this->path);	 
+		$this->deny_multiple_users = remote_paramload('CMSUSERS','denymultuser',$this->path);	   
+		$this->inactive_on_register = remote_paramload('CMSUSERS','inactive_on_register',$this->path);	   
+		$this->stay_inactive = remote_paramload('CMSUSERS','stay_inactive',$this->path); 
 	   	
+		$this->security = 1; //default	
+		$this->job_id = 0;
+		$this->pagenum = 30;		
+		$this->msg = $sFormErr;			
+		
 		$this->appname = paramload('ID','instancename');	
 		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
 		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	   
@@ -167,10 +145,10 @@ class cmsusers  {
 						   
             case "update"		:  	if (defined('CMSSUBSCRIBE_DPC')) { 
 										$email = GetParam("eml");	
-										if (trim(GetParam('autosub'))=='on')
+										if (GetParam('autosub')) //=='on')
 											_m("cmssubscribe.dosubscribe use $email+1");
-										else
-											_m("cmssubscribe.dounsubscribe use $email+1");
+										//else
+											//_m("cmssubscribe.dounsubscribe use $email+1");
 									}	
 									
 									$this->update();
@@ -231,7 +209,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 
     public function get_seclevels() {
 
-      $levels = explode(",",paramload('SHUSERS','groups'));
+      $levels = explode(",",paramload('CMSUSERS','groups'));
       return ($levels);
     }
 
@@ -242,30 +220,12 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		$is_update = $UserName ? true : false; 
 		if ($is_update)
 			$readonly = 'READONLY';	   
-	   /* DISABLE INVOICE TYPE, DELIVERY DDRESS
-		if (isset($noinvtype))//no for update
-			$invtype = '0';
-		else {
-			$invtype = _m('shcustomers.get_invoice_type');
-			$invtypedescr = _m('shcustomers.get_invoice_type_descr');
-		}	 
-		 
-		if (isset($nodelivery))//no for update
-			$delivery = '0';
-		else	 	   
-			$delivery = _m('shcustomers.get_delivery_address');	 
-		 
-		$myinvtype = GetReq('invtype');  //ger req when error
-		//echo '>',$invtype,'>',$delivery;
-		
-		$_t = ($isupdate) ? 'usrupdate' . $delivery . $invtype : 'usrregister' . $delivery . $invtype;	   
-		*/
+
 		$_t = ($isupdate) ? 'usrupdate00' : 'usrregister00';	   
 		$mytemplate = _m('cmsrt.select_template use ' . $_t);
 	   
 		if ($fields) {
 			$myfields = explode(";",$fields); //print_r($myfields);
-			//print_r($myfields);
 			$fname = $myfields[0];
 			$lname = $myfields[1];
 			$uname = $myfields[2];
@@ -287,7 +247,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 			$eml = GetParam('eml');  
 		}
 
-		$sFileName = seturl("t=signup&a=$a&g=$g&invtype=".$myinvtype,0,1);
+		$sFileName = seturl("t=signup",0,1);
 
         $tokens[] = localize('_FORMWARN',getlocal()) . '<br>' . $sFormErr . "<form method=\"POST\" action=\"" .$sFileName. "\" name=\"Registration\">";	   
 	    $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"fname\" maxlength=\"50\" value=\"" . ToHTML($fname) . "\" size=\"30\" >";
@@ -298,16 +258,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 	    $tokens[] = "<input type=\"password\" class=\"myf_input\" name=\"pwd2\" maxlength=\"50\" value=\"" . ToHTML($pwd2) . "\" size=\"15\" >";
 	   
         if (!$this->usemailasusername) 
-	        $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"eml\" maxlength=\"55\" value=\"" . ToHTML($eml) . "\" size=\"25\" >";
-	   
-	   
-	    //INCLUDE CUSTOMER DATA TO MIX IN ONE FORM..SQL EXECUTE USER AND CUS QUERY... 
-        /* DISABLED
-		 if (($this->includecusform) && (!$noincludecusform)) {
-			$custokens = _m('shcustomers.makesubform');	
-			foreach ($custokens as $t)	 
-				$tokens[] = $t;    
-	    }*/	   
+	        $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"eml\" maxlength=\"55\" value=\"" . ToHTML($eml) . "\" size=\"25\" >";   
 
 	    $tokens[] = localize('_MSG9',getlocal());
 
@@ -350,9 +301,6 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		    $tokens[] = $lname;
 			$tokens[] = $statin; //subscription
 		}
-		/* DISABLED else
-		    $tokens[] = $invtypedescr;//$myinvtype ? 'B' : 'A'; //inv type title
-		*/
 		
 		//print_r($tokens);					
 		$ret = $this->combine_tokens($mytemplate,$tokens);
@@ -362,7 +310,8 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 
     protected function checkFields($bypass=null,$checkasterisk=null) {
 		$sFormErr = GetGlobal('sFormErr');
-		SetGlobal('sFormErr',"");	   
+		SetGlobal('sFormErr',"");
+		$lan = getlocal() ? getlocal() : '0';	
 	   
 		if ($bypass) 
 			return null;		   
@@ -385,8 +334,8 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		if ($checkasterisk) {
 
 			foreach ($recfields as $field_num => $fieldname) {
-				$titles = explode('/',remote_paramload('SHUSERS',$fieldname,$this->path));
-				$title = $titles[getlocal()];
+				$titles = explode('/', remote_paramload('CMSUSERS',$fieldname,$this->path));
+				$title = $titles[$lan];
 				
 				if (strstr($title,'*')) { //check by title using *
 					if (!strlen(GetParam(_with($fieldname)))) 
@@ -532,13 +481,6 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 				   
 	            $out .= $this->regform($record,$mycmd_update,1,null,1,1,1); //update action
 
-				//VIEW CUSTOMER LISTS
-				/* DISABLED 
-				if (defined('SHCUSTOMERS_DPC')) {
-					//$out .= _m('shcustomers.addcustomerform');	  
-					//$out .= _m('shcustomers.show_customer_delivery');  				 
-					$out .= _m('shcustomers.show_customers_list');	  
-		        }*/
 		   }
 	   }
 
@@ -550,39 +492,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 
 		if (defined('CMSLOGIN_DPC')) 
 		    $out = _m('cmslogin.html_form');		
-	
-        /* DISABLED 
-		if ($this->predef_customer) {//repdefined customer
-			$out .= $this->predef_customer . "<h4>".$this->atok."</h4>";	
-	    }
-	    elseif ($this->includecusform) {//customer has submited with user form
-			if (defined('SHCART_DPC')) {
-			    $out .= _m('shcustomers.after_registration_goto');
-			}
-			elseif (defined('SHLOGIN_DPC')) { 
-			    $out .= _m('shlogin.html_form');
-		    }
-			elseif (defined('CMSLOGIN_DPC')) {
-				$out .= _m('cmslogin.html_form');
-			}	
-	    }
-	    else {//goto customer registration
-       
-		    if (($this->continue_register_customer) && (defined('SHCUSTOMERS_DPC')) ) {
-				//find id......
-				$this->new_user_id = _m('shcustomers.getmaxid')+1;
-                $out .= _m('shcustomers.register use '.$this->new_user_id);
-		    }	  
-			elseif ( (defined('SHLOGIN_DPC')) ) {
-			    $out .= _m('shlogin.html_form');
-			}	
-		    elseif (defined('CMSLOGIN_DPC')) {
-			    $out .= _m('cmslogin.html_form');
-		    }
-		    else //continue rendering
-				$out .= '';	 
-	    }	
-		*/				   				   
+			   				   
 						   
 	    return ($out);
 	}	
@@ -593,14 +503,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 	    if ((GetGlobal('UserID')) && 
 			(stristr($myaction,'update'))) {//already in..modify account
 
-			if ($myaction=='update') {//user
 				$out .= $this->register();
-			}
-			/*DISABLED 
-			elseif ($myaction=='update2')  {
-				if (defined('SHCUSTOMERS_DPC'))   
-					$out .= _m('shcustomers.register');		   
-			}*/
 	    }	
 	   
 	    return ($out);
@@ -611,60 +514,18 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		return ($out);
 	}
 	
-	//check if the registered user is a valid sen user and if it is return his leeid
-	//preset is used to pass lanme+fname as default username	
-/*	protected function find_predefined_customer() {
-	    $a = GetParam('fname');
-	    $b = GetParam('lname');	
-	
-        //SEN SUPPORT : get customer data or register new customer
-        if ( (defined('SHCUSTOMERS_DPC')) && (seclevel('SHCUSTOMERS_DPC',$this->UserLevelID)) ) {
-
-		  $WSQL = "NAME='$a' AND PRFDESCR='$b'";//PRFDESCR='$b'";
-
-		  $leeid = _m('shcustomers.search_customer_id use '.$WSQL);
-		  //echo "LEEID:",$leeid;
-		  if ($leeid) {
-		    $this->predef_customer = _m('shcustomers.showcustomerdata use '.$leeid);
-
-			//overwrite default user leeid
-			$this->leeid = $leeid;
-			//set security param
-			$this->security = $this->customer_sec; //customer sec id
-			//return leeid as username
-			return ($leeid);
-		  }
-
-	    }
-	   
-	    return null;	
-	}
-*/
 	protected function pre_insert_task($preset=null) {
 		$a = GetParam('fname');
 		$b = GetParam('lname');	
-		$c = GetParam('uname');		  
+		//$c = GetParam('uname');	
+		$c = ($this->usemailasusername) ? GetParam("uname") : GetParam("eml");	
 	          
-		//if ($this->usemailasusername) {
-			if ($this->_checkmail($c))	
-				$genun = strtolower(trim($c)); //string = code of cus
-			else
-				return null;  
-		/*}	 
-		else	{//find predef customer
-			$genun = $this->find_predefined_customer(); //number=code2 of cus	 
-       
-			//CHECK
-			//default username = the combination of fname (as inserted by user) plus lname=job title
-			//else if is customer this function return leeid of customer where is the username
-			if (!$genun)	{
-				if ($preset)
-					$genun = $preset;
-				else  
-					$genun = $a.' '.$b; //combine fisrt last name
-			}	
-		} 
-		*/ 
+		if ($this->_checkmail($c))	
+			$genun = strtolower(trim($c)); //string = code of cus
+		else
+			return null; 
+		
+		//$genun = $this->usemailasusername ? : $a.' '.$b;
 		//echo '>'.$genun;	 
 		return ($genun);
 	}
@@ -686,7 +547,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 			
 		$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
-		$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
+		$ss = $this->tell_subject;
 		$subject = localize($ss, getlocal());
 		$mysubject = $subject ? $subject : localize('_UMAILSUBC',getlocal());
 		
@@ -697,51 +558,59 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 	//send username/password to user
 	protected function mailtoclient($username=null,$password=null,$fname=null,$lname=null) {
 		
-	  if ($this->it_sendfrom) {
+		if ($this->it_sendfrom) {
 
-		$hash = md5('stereobit9networlds8and7the6heart5breakers');
-		$sectoken = urlencode(base64_encode($username.'|'.$hash));
-		$account_enable_link = seturl('t=useractivate&sectoken='.$sectoken);
-		//echo $account_enable_link;
+			$hash = md5('stereobit9networlds8and7the6heart5breakers');
+			$sectoken = urlencode(base64_encode($username.'|'.$hash));
+			$account_enable_link = seturl('t=useractivate&sectoken='.$sectoken);
+			//echo $account_enable_link;
 		
-		$mytemplate = _m('cmsrt.select_template use userinsert'); 
-		$tokens = array(); //reset	
-		$tokens[] = $username;	
-		$tokens[] = $password;
-        $tokens[] = $account_enable_link;		  
+			$mytemplate = _m('cmsrt.select_template use userinsert'); 
+			$tokens = array(); //reset	
+			$tokens[] = $username;	
+			$tokens[] = $password;
+			$tokens[] = $account_enable_link;		  
 			
-		$mailbody = $this->combine_tokens($mytemplate,$tokens);
+			$mailbody = $this->combine_tokens($mytemplate,$tokens);
 		
-		$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
-		$subject = localize($ss, getlocal());
-		$mysubject = $subject?$subject:localize('_UMAILSUBC',getlocal());
+			$ss = $this->tell_subject;
+			$subject = localize($ss, getlocal());
+			$mysubject = $subject ? $subject : localize('_UMAILSUBC',getlocal());
 
-        if ($this->usemailasusername) 
-	      $this->mailto($this->it_sendfrom,$username,$mysubject,$mailbody);//,1,1);	   
-	    else 
-	      $this->mailto($this->it_sendfrom,GetParam('eml'),$mysubject,$mailbody);//,1,1);	 
-	  }		
+			if ($this->usemailasusername) 
+				$this->mailto($this->it_sendfrom,$username,$mysubject,$mailbody);//,1,1);	   
+			else 
+				$this->mailto($this->it_sendfrom,GetParam('eml'),$mysubject,$mailbody);//,1,1);	 
+			
+			return true;
+		}
+		
+		return false;	
 	}	
 
 	//parameter is the result of input = username
 	protected function after_insert_task($username=null,$password=null,$fname=null,$lname=null) {
 
-      //mail registration info to the company
-	  $this->mailtohost($username,$password,$fname,$lname);
+		//mail registration info to the company
+		$this->mailtohost($username,$password,$fname,$lname);
 	  
-      //send username/password to user
-	  $this->mailtoclient($username,$password,$fname,$lname);
+		//send username/password to user
+		$this->mailtoclient($username,$password,$fname,$lname);
 	  
-	  $this->auto_subscribe();
+		$this->auto_subscribe();
+		
+		return true;
 	}
 	
-	protected function auto_subscribe() {
-		if (!$submail) return false;
-		$submail = ($this->usemailasusername)  ? GetParam("uname") : GetParam("eml");	
+	protected function auto_subscribe() {		
+		$subscribe = GetParam('autosub');
+		$email = ($this->usemailasusername) ? GetParam("uname") : GetParam("eml");	
+		if (!$email) return false;
 		 
 		if (defined('CMSSUBSCRIBE_DPC')) {
-			if (trim(GetParam('autosub'))=='on') {
-				_m('cmssubscribe.dosubscribe use '.$submail.'+1+-1');
+			//if (trim(GetParam('autosub'))=='on') {
+			if ($subscribe) {	
+				_m("cmssubscribe.dosubscribe use $email+1");
 				return true;
 			}  
 	    }	
@@ -752,7 +621,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 	protected function insert() {
 		$db = GetGlobal('db');
 		$sFormErr = GetGlobal('sFormErr');
-		$seclevid = $this->security ? $this->security : '0';  	   
+		$seclevid = $this->security;  	   
 
 		if (!$err = $this->checkFields(null,$this->checkuseasterisk)) {		
 		
@@ -846,128 +715,12 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		
 		return false;	
 	}
-/*	
-	protected function insert_with_customer() {
-		$db = GetGlobal('db');
-		$sFormErr = GetGlobal('sFormErr');
-		$seclevid = $this->security ? $this->security : '0';   
 
-		$user_code = $this->pre_insert_task();	
-		//echo '+',$user_code;
-	   
-		if (!$user_code) {
-			SetGlobal('sFormErr',localize('_MSG21',getlocal()).' #3');
-			return null;	   
-		}	
-	   
-		//save it to restore if 2nd step exist to insert custime and to connect
-		SetSessionParam('new_user_code',$user_code); 
-
-		if ($un = $this->username_exist()) {
-	
-			SetGlobal('sFormErr', localize('_MSG17',getlocal()) . ' ' . $un);
-		}
-		else {	 
-			//start map procedure
-			$map_customer = null;
-	     
-			//echo '>',$this->check_existing_customer;
-			if ($this->check_existing_customer) {
-				if ($this->map_customer===true)//map a customer
-					$sFormErr = 'ok';
-				elseif ($this->map_customer===false)//already mapped error	 
-					$sFormErr = 'Customer is already mapped!';//will not be shown just err...
-				else //is null = new customer	 
-					$sFormErr = _m('shcustomers.subinsert use '.$user_code.'+1');
-			}
-			else //register new customer
-				$sFormErr = _m('shcustomers.subinsert use '.$user_code.'+1');
-		 
-			if ($sFormErr=='ok') {//start user registartion
-		
-				$activ = $this->inactive_on_register ? '0' : '1';	
-				  
-				//$code2 = $this->leeid;//?$this->leeid:$code; echo $code;
-				$sSQL = "insert into users (active,code2,fname,lname,username,password,vpass,email,CNTRYID,LANID,AGEID,GENID,timezone,notes,fb";
-
-				if (seclevel('USERSMNG_',$this->userLevelID)) {
-					$sSQL .= ",STARTDATE,IPINS,IPUPD,LASTLOGON,SECPARAM,SESID,SECLEVID";
-				}
-				else {
-					$sSQL .= ",SECLEVID"; //only security
-				}
-
-				$sSQL .= ")" .  " values ($activ," .
-						"'" . addslashes($user_code) . "'," . //username as usercode
-						"'" . addslashes(GetParam("fname")) . "'," .
-						"'" . addslashes(GetParam("lname")) . "'," .
-						"'" . addslashes($user_code) . "'," . //username=usercode
-						"'" . md5(addslashes(GetParam("pwd"))) . "'," .
-						"'" . md5(addslashes(GetParam("pwd2"))) . "',";
-
-				if ($this->usemailasusername)
-					$sSQL .= "'" . addslashes($user_code) . "',";//email = usercode
-				else
-					$sSQL .= "'" . addslashes(GetParam("eml")) . "',";
-				
-				$active = $this->inactive_on_register ? 'DELETED ': 'ACTIVE';	
-
-				$sSQL .= GetParam("country_id")  ? (GetParam("country_id") . ",") : "0,";
-				$sSQL .= GetParam("language_id") ? (GetParam("language_id") . ",") : "0,";
-				$sSQL .= GetParam("age")         ? (GetParam("age") . ",") : "0,";
-				$sSQL .= GetParam("gender")      ? (GetParam("gender") . ",") : "0,";
-				$sSQL .= GetParam("timezone")    ? ($db->qstr(GetParam("timezone"))) : "'',";				
-				$sSQL .= "'$active',0"; //default active
-
-				if (seclevel('USERSMNG_',$this->userLevelID)) {
-					$sSQL .= ",";
-					$sSQL .= GetParam("dcreate") ? GetParam("dcreate") . "," : date('Y-m-d') . ",";
-					$sSQL .= $db->qstr(GetParam("ipins")) . ",";
-					$sSQL .= $db->qstr(GetParam("ipupd"))  . ",";
-					$sSQL .= $db->qstr(GetParam("llogin")) . ",";
-					$sSQL .= $db->qstr(GetParam("sparam")) . ",";
-					$sSQL .= $db->qstr(GetParam("sesid"))  . ",";
-					$sSQL .= GetParam("seclevid") ;
-				}
-				else {
-					$sSQL .= "," . $seclevid ;//only security automated (predefined customer)
-				}
-
-				$sSQL .= ")";
-				//echo $sSQL;
-				$ret = $db->Execute($sSQL);	 
-
-				if ($ret = $db->Affected_Rows()) {
-					//map procedure cntinue after user registration
-					if (($this->check_existing_customer) && ($this->map_customer===true)) {
-						//echo 'user code:',$user_code;
-						$map = _m('shcustomers.map_customer use '.$user_code.'+'.$this->customer_exist_id);
-					}
-					
-					$this->update_statistics('registration', $user_code);
-		 
-					SetGlobal('sFormErr',"ok");
-					$this->after_insert_task($user_code,GetParam("pwd"),GetParam("fname"),GetParam("lname"));//send code to customer	   
-				}
-				else {
-					//rollback
-					//delete inserted customer.....
-					if ((!$this->check_existing_customer) && ($this->map_customer===null)) //if NOT map procedure
-						$rollback = _m('shcustomers.subdelete use '.$user_code);
-		 
-					$ret = $db->ErrorMsg();
-					//echo $ret;
-					SetGlobal('sFormErr',localize('_MSG20',getlocal()).' #4');
-				}
-			}	
-	    }//if customer inserted       
-	} 
-*/	
 	public function update_user_code($c,$codef=null) {
 		$db = GetGlobal('db');	
 		$currentuser = decode($UserName);	   
 	
-		$code = $codef?$codef:$this->leeid;
+		$code = $codef ? $codef : 'code2';
 		$sSQL = "UPDATE users set $code=" . $c;
 		$sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
 	   
@@ -992,7 +745,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 					"fname=" . $db->qstr(GetParam("fname"))  . "," .
 					"lname=" . $db->qstr(GetParam("lname"));			
 
-			$subscribe = GetParam('autosub')?1:0;	
+			$subscribe = GetParam('autosub') ? 1 : 0;	
 			$CNTRYID = GetParam("country_id") ? GetParam("country_id") : '0';	   
 			$LANID = GetParam("language_id") ? GetParam("language_id") : '0';
 			$AGEID = GetParam("age") ? GetParam("age") : '0';
@@ -1053,7 +806,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 				$sSQL = "delete from users where id=" . GetReq('rec');
 			}
 			elseif ($g!='admin') {
-				$sSQL = "UPDATE users set active=0, NOTES='DELETED'";
+				$sSQL = "UPDATE users set active=0";
      
 				if (!$a)
 					$sSQL .= " WHERE $myfkey =" . $myrec . "'";
@@ -1157,6 +910,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 	}		
 	
 	protected function update_statistics($id, $user=null) {
+		
         if (defined('CMSVSTATS_DPC'))	
 			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
 		
@@ -1167,7 +921,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
     // generate user selection list
     /////////////////////////////////////////////////////////////////
     protected function selectUser($select=0) {
-		$levels = explode(",",paramload('SHUSERS','groups'));
+		$levels = explode(",",paramload('CMSUSERS','groups'));
 
 		if ($levels) {
 			reset ($levels);
@@ -1226,41 +980,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 
         return $options_str;
     }
-/*	
-	public function get_cus_type($id,$field='username',$istext=1) {
-        $db = GetGlobal('db');
-		$mycode = $field;
 
-	    $sSQL = "select attr1,username from customers,users where $mycode=";
-		
-		switch ($istext) {
-		  case 1 : $sSQL .= $db->qstr($id); break;
-		  case 0 :
-		  default: $sSQL .= $id;
-		}
-		
-		$sSQL .= " and customers.code2=users.code2";
-		$ret = $db->Execute($sSQL,2);
-		
-		return ($ret->fields[0]);		
-	}	
-	
-	public function get_cus_name() {
-        $db = GetGlobal('db');
-		$user = decode(GetGlobal('UserID'));
-
-	    $sSQL = "select name,username from customers,users where users.code2=" . $db->qstr($user);
-		$sSQL .= " and active=1 and customers.code2=users.code2";
-		$res = $db->Execute($sSQL,2);
-		
-		//incase of no mapped customer get username
-		$name = $res->fields['name']?$res->fields['name']:$user;
-		
-		//$nk = seturl('t=signup');//addnewcus&select=1');
-		$ret = "<a href='signup/'>" . $name . "</a>";
-		return ($ret);		
-	}
-*/	
 	public function get_user_name($prefix=null,$edituser=null) {
         $db = GetGlobal('db');
 		$user = decode(GetGlobal('UserID'));
@@ -1291,7 +1011,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		$db = GetGlobal('db');	
 		$currentuser = $this->username;	   
 	
-		$code = $codef?$codef:$this->leeid;
+		$code = $codef ? $codef : 'code2';
 		$sSQL = "select timezone from users";
 		if ($c)
 			$sSQL .= " WHERE " . $code."=" . $c;
@@ -1309,7 +1029,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		$db = GetGlobal('db');	
 		$currentuser = $this->username;	   
 	
-		$code = $codef?$codef:$this->leeid;
+		$code = $codef ? $codef : 'code2';
 		$sSQL = "update users set timezone='$tmz'";
 		if ($c)
 			$sSQL .= " WHERE " . $code."=" . $c;
@@ -1317,6 +1037,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 			$sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
 	   
 		$db->Execute($sSQL);
+		
 		if($db->Affected_Rows()) 
 			return true;
 		
@@ -1353,7 +1074,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		$db = GetGlobal('db');	
 		$currentuser = $this->username;	   
 	
-		$code = $codef?$codef:$this->leeid;
+		$code = $codef ? $codef : 'code2';
 		$sSQL = "select cntryid from users";
 		if ($c)
 			$sSQL .= " WHERE " . $code."=" . $c;
@@ -1370,7 +1091,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		$db = GetGlobal('db');	
 		$currentuser = $this->username;	   
 	
-		$code = $codef?$codef:$this->leeid;
+		$code = $codef ? $codef : 'code2';
 		$sSQL = "update users set cntryid='$cntryid'";
 		if ($c)
 			$sSQL .= " WHERE " . $code."=" . $c;
@@ -1378,6 +1099,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 			$sSQL .= " WHERE USERNAME ='" . $currentuser . "'";
 	   
 		$db->Execute($sSQL);
+		
 		if($db->Affected_Rows()) 
 			return true;
 		
@@ -1429,7 +1151,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		//echo '>',strcmp($hash,$hash2cmp);
         if (($this->user_exists($email)) && (strcmp($hash,$hash2cmp)==0)) {		 
 		 
-			$sSQL = "update users set active=1,notes='ACTIVE' where email = '" . $email ."'";
+			$sSQL = "update users set active=1 where email = '" . $email ."'";
 			//echo $sSQL;		 
 			$db->Execute($sSQL);
 			if($db->Affected_Rows()) {

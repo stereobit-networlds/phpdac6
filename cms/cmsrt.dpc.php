@@ -220,15 +220,28 @@ class cmsrt extends cms  {
      	}	  
 	}		
 
+	protected function scrollTo() {
+		if ($this->mobile) 
+			return "new $.Zebra_Dialog('test', {'type':'error','title':'x'});";
+		
+		return "$('html, body').animate({ scrollTop: sw }, 'slow',function(){ $('html,body').clearQueue();});";
+	}
+	//http://stackoverflow.com/questions/12260279/scrolltop-not-working-in-android-mobiles
+	//http://stackoverflow.com/questions/12225456/jquery-scrolltop-does-not-work-in-scrolling-div-on-mobile-browsers-alternativ
+	//if(navigator.userAgent.match(/(iPod|iPhone|iPad|Android)/)) { 
 	protected function scrolltop_javascript_code() {
 
 		$jscroll = <<<SCROLLTOP
 function ajaxCall(url,div,goto) {
 	$.ajax({ url: url, cache: false, success: function(html){
 		$('#'+div).html(html);
-		echo.render(); /*-- lazy loading render --*/  
 	}})
-	if (goto) gotoTop(div);  
+	if (goto) {
+		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+			window.scrollTo(0,parseInt($('#'+div).offset().top, 10));
+		else 		
+			gotoTop(div);  
+	}	
 }				
 function atEnd() {
 	if ($(window).scrollTop() + $(window).height() == $(document).height()) 
@@ -240,28 +253,19 @@ function atDiv(div,offset=0,margin=100) {
 		($(window).scrollTop() <= $('#'+div).offset().top + offset + margin))
 		return 1; else return 0;	
 }
-function gotoTop(div) {
+function gotoTop(div) {	
 	var sw = (div) ? $('#'+div).offset().top : 0;
-	$("html, body").animate({ scrollTop: sw }, "slow");
+	
+	$('html, body').animate({ scrollTop: sw }, 'slow', 
+	function(){
+        $('html,body').clearQueue();
+    });
+	
 	return true;
 };
 
 SCROLLTOP;
-/*
-echo.init({
-  offset: 100,
-  throttle: 250,	
-  unload: false ,	
-  callback: function(element, op) {
-    if(op === 'load') {
-      element.classList.add('loaded');
-    } else {
-      element.classList.remove('loaded');
-    }
-	console.log(element+' '+op);
-  }
-});
-*/
+
 		return ($jscroll);
     }		
 	
@@ -1545,26 +1549,21 @@ EOF;
 				return ($xparts->part->body);
 			}
 		}		
-		else*/if ($data = trim(@file_get_contents($path . $tfile . '.php'))) {		
+		else*/
+		if (($this->mobile) && ($data = trim(@file_get_contents($path . 'mob@'.$tfile . '.php')))) {
+			//echo 'mobile ver .php';
+			return $this->dCompile($data);
+		}
+		elseif ($data = trim(@file_get_contents($path . $tfile . '.php'))) {		
 			//echo '.php';
-			if (substr($data, -2) == '?>') {
-				//$data = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", "", $data)));
-				$data = '?>' . $data . ((substr($data, -2) == '?>') ? '<?php ' : '');
-				return eval($data);				
-			}
-			elseif (substr($data, -8) == '/phpdac>') {
-				//one big cmd with other phpdac inside as raw text
-				return _m(substr($data,8,-9));
-			}
-			else
-				return ($data);
+			return $this->dCompile($data);
 		}
 
 		//.htm files
 		//echo '.htm';
 		return @file_get_contents($path . str_replace('.', $this->lan.'.', str_replace('.htm', '', $tfile) . '.htm')); 
-    }	
-
+    }		
+	
 	public function createButton($name=null, $urls=null, $t=null, $s=null) {
 		$type = $t ? $t : 'primary'; //danger /warning / info /success
 		switch ($s) {
@@ -1754,11 +1753,47 @@ EOF;
 		
 		return false;
 	}	
+	
+	
+	//override
+	public function include_part($fname=null, $args=null, $uselans=null, $tmplname=null) {	
+	
+		if ($this->mobile) {
+			$fparts = explode('/',$fname);
+			$lastpart = 'mob@' . array_pop($fparts);
+			$mobilefname = implode('/', $fparts);
+			$mobilefname.= '/'. $lastpart;
 
+			$ret = parent::include_part($mobilefname,$args,$uselans,$tmplname);
+			//if ($ret) echo $mobilefname . '<br/>';
+		} 
+
+		return ($ret) ? $ret : parent::include_part($fname,$args,$uselans,$tmplname);
+			
+	}	
+
+	//override
+	public function include_part_arg($fname=null, $args=null, $uselans=null, $tmplname=null) {
+		
+		if ($this->mobile) {
+			$fparts = explode('/',$fname);
+			$lastpart = 'mob@' . array_pop($fparts);
+			$mobilefname = implode('/', $fparts);
+			$mobilefname.= '/'. $lastpart;
+
+			$ret = parent::include_part_arg($mobilefname,$args,$uselans,$tmplname);
+			//if ($ret) echo $mobilefname . '<br/>';
+		} 
+
+		return ($ret) ? $ret : parent::include_part_arg($fname,$args,$uselans,$tmplname);
+			
+	}
+	
     //overrite
 	public function included($fname=null, $enable_ajax=false, $divargs=null, $divname=null) {
 
-		$param = $_GET['param'] ? $_GET['param'] : $fname;
+		$p = $_GET['param'] ? $_GET['param'] : $fname;
+		$param = ($this->mobile) ? 'mob@' . $p : $p;
 	
 		if ($enable_ajax) {
 			$out = $this->get_scrollid(get_class($this),'included', "$param", $divargs, $divname, true); 		

@@ -895,7 +895,7 @@ EOF;
 				
 			//echo 'INCLUDE_PART:'.$pathname;
 			if ($contents = trim(@file_get_contents($pathname))) {	
-					
+				/*	
 				if (substr($contents, -2) == '?>') {
 					$contents = '?>' . $contents . ((substr($contents, -2) == '?>') ? '<?php ' : '');
 					$contents = eval($contents);
@@ -905,6 +905,8 @@ EOF;
 					$contents = _m(substr($contents,8,-9));
 				}
 				//else as is
+				*/
+				$contents = $this->dCompile($contents);
 				
 				//replace content args
 				if (!empty($arguments)) {
@@ -955,7 +957,7 @@ EOF;
 				
 			//echo 'INCLUDE_PART:'.$pathname;
 			if ($contents = trim(@file_get_contents($pathname))) {	
-					
+				/*	
 				if (substr($contents, -2) == '?>') {
 					$contents = '?>' . $contents . ((substr($contents, -2) == '?>') ? '<?php ' : '');
 					$contents = eval($contents);	
@@ -964,6 +966,8 @@ EOF;
 					//one big cmd with other phpdac inside as raw text
 					$contents = _m(substr($contents,8,-9));
 				}
+				*/
+				$contents = $this->dCompile($contents);
 				
 				//replace content args
 				if (!empty($arguments)) {
@@ -986,6 +990,22 @@ EOF;
 		    return ('<b>Invalid part argument:</b>'.$pathname);
 		else  
             return null; 		
+	}	
+	
+	public function dCompile($data=null) {
+		if (!$data) return null;
+		
+		if (substr($data, -2) == '?>') {
+			//$data = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", "", $data)));
+			$data = '?>' . $data . ((substr($data, -2) == '?>') ? '<?php ' : '');
+			return eval($data);				
+		}
+		elseif (substr($data, -8) == '/phpdac>') {
+			//one big cmd with other phpdac inside as raw text
+			return _m(substr($data,8,-9));
+		}
+		else
+			return ($data);		
 	}	
 
 	/*todo: read form external template file*/

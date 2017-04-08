@@ -53,9 +53,8 @@ class cmssubscribe {
 	var $subject2,$body2;	
 	var $tell_it, $tell_from;
 	var $tell_user, $owner;
-	var $tmpl_path, $tmpl_name;
 
-	function __construct() {
+	public function __construct() {
 	
 	  $this->title = localize('CMSSUBSCRIBE_DPC',getlocal());	
 	  $this->msg = null;	
@@ -65,29 +64,27 @@ class cmssubscribe {
 	  $this->inpath = paramload('ID','hostinpath');		   
 	  
 	  $this->t_advsubscr = localize('_MSG4',getlocal());
-	  $this->mesout = paramload('SHSUBSCRIBE','umsg');	
+	  $this->mesout = paramload('CMSSUBSCRIBE','umsg');	
 	  $this->t_entermail = paramload('SHSUBSCRIBE','say');
 	  
-	  $this->domain = paramload('SHSUBSCRIBE','domain');
-	  $this->tell_it = remote_paramload('SHSUBSCRIBE','tellsubscriptionto',$this->path);
-	  $this->tell_from = remote_paramload('SHSUBSCRIBE','tellsubscriptionfrom',$this->path);
+	  $this->domain = paramload('CMSSUBSCRIBE','domain');
+	  $this->tell_it = remote_paramload('CMSSUBSCRIBE','tellsubscriptionto',$this->path);
+	  $this->tell_from = remote_paramload('CMSSUBSCRIBE','tellsubscriptionfrom',$this->path);
 	  
-      $s1 = remote_paramload('SHSUBSCRIBE','subjecttotell',$this->path);//'New Subscription' 	   
+      $s1 = remote_paramload('CMSSUBSCRIBE','subjecttotell',$this->path);//'New Subscription' 	   
 	  $this->subject = localize($s1, getlocal()); 		    	    	   
-	  $s2 = remote_paramload('SHSUBSCRIBE','subjecttotellatdel',$this->path);//'New Subscription' 	   
+	  $s2 = remote_paramload('CMSSUBSCRIBE','subjecttotellatdel',$this->path);//'New Subscription' 	   
 	  $this->subject2 = localize($s2, getlocal());
 	  	  
-	  $this->body = remote_paramload('SHSUBSCRIBE','bodytotell',$this->path);	  
-	  $this->body2 = remote_paramload('SHSUBSCRIBE','bodytotellatdel',$this->path);		
+	  $this->body = remote_paramload('CMSSUBSCRIBE','bodytotell',$this->path);	  
+	  $this->body2 = remote_paramload('CMSSUBSCRIBE','bodytotellatdel',$this->path);		
 	  
-	  $this->tell_user = remote_paramload('SHSUBSCRIBE','telluser',$this->path);  
+	  $this->tell_user = remote_paramload('CMSSUBSCRIBE','telluser',$this->path);  
 	  $this->owner = $this->tell_user; //remote_paramload('SHSUBSCRIBE','telluser',$this->path);  
-	  
-	  $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	  $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	  
+
 	}
 	
-    function event($event) {	
+    public function event($event) {	
   
 	    switch ($event) {
 	        case 'subscribeajax'   :  $this->dosubscribe(); break;											
@@ -101,7 +98,7 @@ class cmssubscribe {
         }
     }	
 
-    function action($action)  { 
+    public function action($action)  { 
 
 		 switch ($action) {
 	        case 'subscribeajax'   :  die(GetGlobal('sFormErr')); break;											

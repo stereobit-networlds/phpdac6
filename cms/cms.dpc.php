@@ -28,11 +28,11 @@ require_once($a);
 class cms extends fronthtmlpage {
 
     var $appname, $httpurl, $tpath;
-	var $seclevid, $userDemoIds, $useragent;
+	var $seclevid, $userDemoIds, $useragent, $mobile;
 	var $session_use_cookie, $protocol, $secprotocol, $sslpath;
 	var $activeSSL, $encURLparam, $shellfn, $aliasExt, $aliasID, $aliasUrl;
 		
-	function __construct() {
+	public function __construct() {
 		
 		fronthtmlpage::__construct();
 		
@@ -47,7 +47,8 @@ class cms extends fronthtmlpage {
 		$this->httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
 		$this->httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];				
 		
-		$this->useragent = $_SERVER['HTTP_USER_AGENT'];		
+		$this->useragent = $_SERVER['HTTP_USER_AGENT'];	
+		$this->mobile = $this->isMobile();		
 		
 		$this->session_use_cookie = paramload('SHELL','sessionusecookie');
 		$this->protocol = paramload('SHELL','protocol');
@@ -62,6 +63,7 @@ class cms extends fronthtmlpage {
 		$this->aliasUrl = $this->paramload('CMS', 'aliasUrl'); //1
 		$this->aliasExt = $this->paramload('CMS', 'aliasExt'); //.html		
 		$this->aliasID = $this->paramload('CMS', 'aliasID'); //p5		
+
 	}
 	
 	public function isDemoUser() {
@@ -99,6 +101,11 @@ class cms extends fronthtmlpage {
 		}
 		
 		return false;	
+	}	
+	
+	//http://stackoverflow.com/questions/4117555/simplest-way-to-detect-a-mobile-device
+	public function isMobile() {
+		return preg_match("/(android|avantgo|blackberry|bolt|boost|cricket|docomo|fone|hiptop|mini|mobi|palm|phone|pie|tablet|up\.browser|up\.link|webos|wos)/i", $this->useragent);
 	}	
 	
 		
