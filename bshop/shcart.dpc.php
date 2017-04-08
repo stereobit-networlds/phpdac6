@@ -205,7 +205,7 @@ class shcart extends storebuffer {
 	var $todo, $quicktax,$showtaxretail,$is_reseller, $cartlinedetails, $notallowremove;
 	var $cartloopdata, $looptotals, $shipcalcmethod, $s_enc, $t_enc, $itemclick, $imagex, $imagey;
 	var $cartprintwin, $itemscount, $supershipping, $shipzone, $shipmethods, $parcelunit, $parcelweight;
-    var $submit2, $url, $printout, $print_title;
+    var $submit2, $url, $printout, $print_title, $cartsumitems;
 	
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
     var $twig_invoice_template_name, $appname, $mtrackimg; 
@@ -350,17 +350,15 @@ class shcart extends storebuffer {
     public function event($event) {
 
 		switch ($event) {
-			case "cartguestreg"  :  $ps = $this->guestRegistration();
-			                        die($ps); //ajax call
+			case "cartguestreg"  :  die($this->guestRegistration()); 
 									break;			
 			
-			case "cartguestuser" :  $ps = $this->guestDetails();
-			                        //die("guestdetails|" . $ps); //sndReqArg
-									die($ps); //ajaxCall
+			case "cartguestuser" :  die($this->guestDetails()); 
 									break;
 			
-			case "cartinvoice"   :  $ps = 'x';
-			                        die("invoicedetails|" . $ps);
+			case "cartinvoice"   :  //$ps = 'x'; //none
+			                        //die("invoicedetails|" . $ps);
+									die('x');
 									break;	
 			
 			case "cartcustselect":  //shcustomer selcus alias for cart
@@ -369,19 +367,23 @@ class shcart extends storebuffer {
 									_m('shcustomers.is_reseller');//change type of customer
 			                        break;
 									
-			case "cartcustomer"  : 	$ps = $this->customerDetails();
-									die("customerdetails|" . $ps);
+			case "cartcustomer"  : 	//$ps = $this->customerDetails();
+									//die("customerdetails|" . $ps);
+									die($this->customerDetails());
 									break;			
 			
-			case "cartaddress"   : 	$ps = $this->addressDetails();
-									die("addressdetails|" . $ps);
+			case "cartaddress"   : 	//$ps = $this->addressDetails();
+									//die("addressdetails|" . $ps);
+									die($this->addressDetails());
 									break;				
 			
-			case "carttransport" : 	$ps = $this->payway2();
-									die("transportdetails|" . $ps);
+			case "carttransport" : 	//$ps = $this->payway2();
+									//die("transportdetails|" . $ps);
+									die($this->payway2());
 									break;	
-			case "cartpayment"   : 	$ps = $this->payDetails();
-									die("paymentdetails|" . $ps);
+			case "cartpayment"   : 	//$ps = $this->payDetails();
+									//die("paymentdetails|" . $ps);
+									die($this->payDetails());
 									break;									
 			
 			case "addtocart"     : 	$p = $this->addtocart();
@@ -562,35 +564,49 @@ class shcart extends storebuffer {
 		}		
 	}		
 	
-	protected function jsBrowser() {
-		
-        if (iniload('JAVASCRIPT')) {
+	//called by shusers.dologin
+	public function jsBrowser() {
 	   
-			switch ($this->status) {
-				case 3      :   $code = $this->jsStatus3(); break;
-				case 2      :   $code = $this->jsStatus2(); break;
-				case 1      :   $code = $this->jsStatus1(); break;
-				case 0      :
-				default 	:	$code = $this->jsStatus0();
-			}		
+		switch ($this->status) {
+			case 3      :   $code = $this->jsStatus3(); break;
+			case 2      :   $code = $this->jsStatus2(); break;
+			case 1      :   $code = $this->jsStatus1(); break;
+			case 0      :
+			default 	:	$code = $this->jsStatus0();
+		}		
 		   
-		    if ($code) {
-				$js = new jscript;	
-				$js->load_js($code,null,1);		
-				unset ($js);
-			}
-	    }	
+		if ($code) {
+			$js = new jscript;	
+			$js->load_js($code,null,1);		
+			unset ($js);
+		}
 	}	
 	
 	//cart view
 	protected function jsStatus0() {
-		   
+		$mobileDevices = _m('cmsrt.mobileMatchDev');		
+		$gotoSection = 'cart-page'; 
+		
 		if ($addtocart = GetReq('a')) {
 			$cartstr = explode(';', $addtocart);
 			$urlstr = "&id=" . $cartstr[0];
+			
+			$gotoSection = 'cart-Product' . $this->_count();
 		}
-		else
-			$urlstr = ($cat = GetReq('cat')) ? "&cat=" . $cat : "&id=cart0";
+		else {
+			$urlstr = ($cat = GetReq('cat')) ? "&cat=" . $cat : "&id=" . $gotoSection;
+			
+			//echo $this->cartsumitems; //not calculated yet
+			if ((GetReq('t')=='calc') && ($cartsumitems = $this->_count())) { //goto calc products1..n
+				for($i=1;$i<=$cartsumitems;$i++) {
+					if ($calcItemVal = GetReq('Product'.$i)) { 
+						$gotoSection = 'cart-Product' . $i; 
+						//echo $i; 
+						break;
+					}	
+				}	
+			}		
+		}	
 		
 		$code = $this->js_compute_qty();			
 		$code.= $this->js_guest_registration();		
@@ -598,7 +614,7 @@ class shcart extends storebuffer {
 $('#guestdetailsbutton').on('click touchstart',function(){
 	$.ajax({ url: 'katalog.php?t=cartguestuser', cache: false, success: function(html){
 		$('#guestdetails').html(html);
-		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		if (/{$mobileDevices}/i.test(navigator.userAgent)) 
 			window.scrollTo(0,parseInt($('#guestdetails').offset().top, 10));
 		else
 			gotoTop('guestdetails');
@@ -606,13 +622,18 @@ $('#guestdetailsbutton').on('click touchstart',function(){
 });	
 		
 $(document).ready(function () {
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
-		window.scrollTo(0,parseInt($('#cart-page').offset().top, 10));
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#$gotoSection').offset().top, 10));
 	else {		
-		gotoTop('cart-page');	
+		gotoTop('$gotoSection');	
 	
 		$(window).scroll(function() { 
-			if (agentDiv('cart-page')) {
+			if (agentDiv('$gotoSection')) {
+				$.ajax({ url: 'jsdialog.php?t=jsdcode{$urlstr}&div=$gotoSection', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}
+			else if (agentDiv('cart-page')) {
 				$.ajax({ url: 'jsdialog.php?t=jsdcode{$urlstr}&div=cart-page', cache: false, success: function(jsdialog){
 					eval(jsdialog);		
 				}})	
@@ -627,16 +648,19 @@ $(document).ready(function () {
 	
 	//cart-checkout or login page
 	protected function jsStatus1() {
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
+		$gotoSection = 'cart-summary';//'cart-page';
+		
 		$code = "
 $(document).ready(function () {	
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
-		window.scrollTo(0,parseInt($('#cart-page').offset().top, 10));
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#$gotoSection').offset().top, 10));
 	else {		
-		gotoTop('cart-page');	
+		gotoTop('$gotoSection');	
 	
 		$(window).scroll(function() { 
-			if (agentDiv('cart-page')) {
-				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=cart1&div=cart-page', cache: false, success: function(jsdialog){
+			if (agentDiv('$gotoSection')) {
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=cart-status-1&div=$gotoSection', cache: false, success: function(jsdialog){
 					eval(jsdialog);		
 				}})	
 			}	
@@ -648,24 +672,30 @@ $(document).ready(function () {
 	}
 
 	protected function jsStatus2() {
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
+		$gotoSection = 'cart-summary';//'cart-page';
+		
 		$code = "
 $(document).ready(function () {	
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
-		window.scrollTo(0,parseInt($('#cart-page').offset().top, 10));
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#$gotoSection').offset().top, 10));
 	else 	
-		gotoTop('cart-page');	
+		gotoTop('$gotoSection');	
 });	
 ";		
 		return ($code);		
 	}
 
 	protected function jsStatus3() {
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
+		$gotoSection = 'cart-page';
+		
 		$code = "
 $(document).ready(function () {	
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
-		window.scrollTo(0,parseInt($('#cart-page').offset().top, 10));
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#$gotoSection').offset().top, 10));
 	else 	
-		gotoTop('cart-page');	
+		gotoTop('$gotoSection');	
 });	
 ";		
 		return ($code);			
@@ -1523,8 +1553,10 @@ EOF;
 		$myloopcarttemplate = _m('cmsrt.select_template use shcartline'); //.php file, code inside
 	   
         reset ($this->buffer);
+		
+		$this->cartsumitems = 0;
 	    $this->qty_total = 0;
-	    $this->total = 0;	     	
+	    $this->total = 0;	
 	
         foreach ($this->buffer as $prod_id => $product) {
 
@@ -1572,12 +1604,14 @@ EOF;
 				$data[] = $utitle;
 				$data[] = $itemphoto;
 				$data[] = $param[0];
+				$data[] = $aa;
                
 			    $loopout .= $this->combine_tokens($myloopcarttemplate,$data,true);
 				  
 	            unset ($data);
 		        unset ($param);
 		    }
+			$this->cartsumitems = $aa; //sum of cart items
 	    }
 	   	   
 	    return ($loopout);  	 	
@@ -2702,15 +2736,10 @@ EOF;
 	    $tr_id = $this->transaction_id ? $this->transaction_id : $transno;
 		$tokens[] = $tr_id; 	
 
-        //$payway = GetParam('payway')?GetParam('payway'):GetSessionParam('payway');
 		$payway = $this->getDetailSelection('payway');
-        //$roadway = GetParam('roadway')?GetParam('roadway'):GetSessionParam('roadway');
-		$roadway = $this->getDetailSelection('roadway');
-        //$invway = GetParam('invway')?GetParam('invway'):GetSessionParam('invway');	   
-		$invway = $this->getDetailSelection('invway');
-        //$addressway = GetParam('addressway')?GetParam('addressway'):GetSessionParam('addressway');	   
-		$addressway = $this->getDetailSelection('addressway');
-        //$sxolia = GetParam('sxolia')?GetParam('sxolia'):GetSessionParam('sxolia');		   
+		$roadway = $this->getDetailSelection('roadway');	   
+		$invway = $this->getDetailSelection('invway');	   
+		$addressway = $this->getDetailSelection('addressway');		   
 		$sxolia = $this->getDetailSelection('sxolia');
 
 		$myst = remote_paramload('SHCART','onsuccessgototitle',$this->path);
