@@ -126,7 +126,7 @@ class shkatalogmedia {
 	var $pager_current_class;
 	var $orderid, $sortdef, $bypass_order_list;
 	var $isListView, $imgLargeDB, $imgMediumDB, $imgSmallDB;
-	var $ogTags, $siteTitle, $httpurl;
+	var $ogTags, $siteTitle, $httpurl, $mobile;
 	var $selectSQL, $fcode, $lastprice, $itmname, $itmdescr, $lan, $itmplpath;
 	var $realID, $max_price, $min_price, $loyalty;
 
@@ -283,6 +283,7 @@ class shkatalogmedia {
 		
 		$ajax = _m('cmsrt.paramload use ESHOP+ajax'); //div name		
 		$this->filterajax = $ajax ? 'page-' . _m('shkategories.getcurrentkategory use ++1') : false; 
+		$this->mobile = _v('cmsrt.mobile');
 	  
 		$this->selectSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
@@ -318,10 +319,8 @@ class shkatalogmedia {
 										$item = $cartstr[0]; 
 										_m("cmsvstats.update_item_statistics use $item+cartin");
 									}
-									if (_v("shcart.fastpick")) { 
+									if (_v("shcart.fastpick")) 
 										$this->jsBrowser();
-									}	
-	
 									break; 
 									
 			case 'removefromcart': 	if ($this->userLevelID < 5) {
@@ -349,6 +348,7 @@ class shkatalogmedia {
 										$_filter = $this->replace_spchars(GetParam('treeid'),1);
 										_m("cmsvstats.update_category_statistics use $_filter+filter");		  
 									}	
+									$this->jsBrowser();
 									break;			
 									
 			case 'klist'        :   $this->my_one_item = $this->read_list(); 
@@ -401,14 +401,14 @@ class shkatalogmedia {
 										$out = _m("shcart.cartview");   
 									break;								
 		
-			case 'kfilter'      :	if ($this->filterajax) {
+			case 'kfilter'      :	if (($this->filterajax) && (!$this->mobile)) {
 										die($this->list_katalog(0,'kfilter'));
 									}	
 									else	
 										$out .= $this->list_katalog(0,'kfilter');																 
 									break;
 									
-			case 'ktree'      	:	if ($this->filterajax) {
+			case 'ktree'      	:	if (($this->filterajax) && (!$this->mobile)) {
 										die($this->list_katalog(0,'ktree'));
 									}	
 									else
@@ -417,7 +417,7 @@ class shkatalogmedia {
 								
 			case 'klist'        : 	if (((GetReq('page')) || (GetReq('asc')) || 
 										(GetReq('order')) || (GetReq('pager'))) &&
-										($this->filterajax )) { //ajax
+										(($this->filterajax ) && (!$this->mobile))) { //ajax
 										die($this->list_katalog(0,'klist'));
 									}
 									else { //click from categories (no ajax)
@@ -458,21 +458,30 @@ class shkatalogmedia {
 		$max = ($this->max_price) ? ceil($this->max_price) : 10; //700;
 		$diff = ($max - $min);
 		$step = ($diff<=100) ? 1 : 10;//($max-$min) / 10;
-		$input = is_numeric(GetParam('input')) ? explode('.', GetParam('input')) : array('0','0');				
+		
+		$inp = $_GET['input']; //GetParam('input');
+		$input = is_numeric($inp) ? explode('.', $inp) : array('0','0');				
+		//echo 'Input:'. GetParam('input') .' '.$input[0] .' '.$input[1]; 
 		$purl = $this->httpurl . '/' . _m("cmsrt.url use t=kfilter&cat=$cat"); 
 		//echo $this->min_price.'-'.$this->max_price.'-'.$min.'-'.$max.'-'.$diff.'-'.$step;
-		
-		$setPrice = ($div = $this->filterajax) ? 
-						"ajaxCall('$purl'+value+'/','$div',1);" :
-						"window.location='$purl'+value+'/';";
-		
-		$js = "
-$('.price-slider').on('slideStop', function(slideEvt) {
+					
+		$onPrice = (($div = $this->filterajax) && (!$this->mobile)) ?		
+"$('.price-slider').on('slideStop', function(slideEvt) {
 	var p = $('.price-slider').val();
 	var value = p.replace(',', '.');
 	//console.log(value);
-	$setPrice
+	ajaxCall('$purl'+value+'/','$div',1);
+});" :			
+"$('.price-slider').on('slideStop', function(slideEvt) {
+	var p = $('.price-slider').val();
+	var value = p.replace(',', '.');
+	//console.log(value);
+	window.location='$purl'+value+'/';
 });
+";					
+								
+		$js = "
+$onPrice
 
 $(document).ready(function () {
 	if ($('.price-slider').length > 0) {
@@ -487,15 +496,19 @@ $(document).ready(function () {
         });
     }
 	
-	gotoTop('{$this->filterajax}');	
-	$(window).scroll(function() { 
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#{$this->filterajax}').offset().top, 10));
+	else {	
+		gotoTop('{$this->filterajax}');	
+		$(window).scroll(function() { 
 	
-		if (agentDiv('{$this->filterajax}',200)) {	
-			$.ajax({ url: 'jsdialog.php?t=jsdcode&cat={$cat}&div={$this->filterajax}', cache: false, success: function(jsdialog){
-				eval(jsdialog);		
-			}})	
-		}	
-	});		
+			if (agentDiv('{$this->filterajax}',200)) {	
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&cat={$cat}&div={$this->filterajax}', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}	
+		});
+	}		
 }); 
 ";
 		return ($js);
@@ -505,24 +518,33 @@ $(document).ready(function () {
 	protected function jsItem() {
 
 		$js = "
-function jsShowPhoto(name) {		
-	new $.Zebra_Dialog(
-		'<img src=\"{$this->thubpath_large}{$this->realID}.jpg\" />', {
-		'width': 800, 'height': 600,
-		'position' : ['top + 20','center'],
-		'title':  name});		
+function jsShowPhoto(name) {	
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+	}	
+	else {	
+		new $.Zebra_Dialog(
+			'<img src=\"{$this->thubpath_large}{$this->realID}.jpg\" />', {
+			'width': 800, 'height': 600,
+			'position' : ['top + 20','center'],
+			'title':  name});		
+	}	
 }
 		
 $(document).ready(function () {
-	gotoTop('{$this->realID}');
-	$(window).scroll(function() { 
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#{$this->realID}').offset().top, 10));
+	else {
+		gotoTop('{$this->realID}');
+
+		$(window).scroll(function() { 
 		
-		if (agentDiv('{$this->realID}',300)) {	
-			$.ajax({ url: 'jsdialog.php?t=jsdcode&id={$this->realID}&div={$this->realID}-details', cache: false, success: function(jsdialog){
-				eval(jsdialog);		
-			}})	
-		}
-	});		
+			if (agentDiv('{$this->realID}',300)) {	
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&id={$this->realID}&div={$this->realID}-details', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}
+		});
+	}		
 });	
 		";
 		return ($js);	
@@ -530,17 +552,14 @@ $(document).ready(function () {
 	
 	protected function jsBrowser() {
 		
-       if (iniload('JAVASCRIPT')) {
+		$code = ($id = GetReq('id')) ? $this->jsItem() : 
+				(($cat = GetReq('cat')) ? $this->jsCatalog() : null);
 		   
-			$code = ($id = GetReq('id')) ? $this->jsItem() : 
-					(($cat = GetReq('cat')) ? $this->jsCatalog() : null);
-		   
-		    if ($code) {
-				$js = new jscript;	
-				$js->load_js($code,null,1);		
-				unset ($js);
-			}
-	   }	
+		if ($code) {
+			$js = new jscript;	
+			$js->load_js($code,null,1);		
+			unset ($js);
+		}	
 	}	
 	
 	
@@ -551,7 +570,6 @@ function filter(url,div,fname,preset) {
 	var checkedItems = fname ? 
 		$('input:checkbox[name='+fname+']:checked').map(function() { return $(this).val().toString(); } ).get().join(",") : 
 		(preset ? preset : null);
-	//alert(url+checkedItems+'/');
 	
 	ajaxCall(url+checkedItems+'/',div,1);
 }
@@ -561,16 +579,12 @@ JSFILTER;
 	}	
 	
 	public function javascript() {
-	
-       if (iniload('JAVASCRIPT')) {
-	   
-	        $code = $this->jsFilter();
-		    //$code.= $this->scrolltop_javascript_code(); //moved to cmsrt
-		   
-		    $js = new jscript;	
-            $js->load_js($code,null,1);		
-		    unset ($js);
-	   }	
+  
+	    $code = $this->jsFilter();
+
+		$js = new jscript;	
+        $js->load_js($code,null,1);		
+		unset ($js);	
 	}		
 
 	protected function jsDialog($text=null, $title=null) {
@@ -1237,7 +1251,7 @@ JSFILTER;
 
 	protected function pPage($p, $label, $cmd, $inp=null, $div=null) {
 	    $cat = GetReq('cat');
-	    $pcmd = $cmd ? $cmd : 'klist';		
+	    $pcmd = $cmd ? $cmd : 'klist';
 		
 		switch ($pcmd) {
 			case 'ktree'  : $treeid = GetParam('treeid');
@@ -1263,10 +1277,10 @@ JSFILTER;
 							break;
 							
 			case 'filter' : 
-			case 'search' : if (($p>0) && ($div = $this->filterajax)) {
+			case 'search' : if (($p>0) && ($div = $this->filterajax) && (!$this->mobile)) {
 								//ajax paging
 								$url = $this->httpurl .'/';
-								$url.= ($inp) ? _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&&page=$p") :
+								$url.= ($inp) ? _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$p") :
 												_m("cmsrt.url use t=klist&cat=$cat&page=$p");
 								$ret = "<a href=\"javascript:void(0)\" onClick=\"ajaxCall('$url','$div',1)\">" . strval($label) . "</a>";
 							}
@@ -1274,7 +1288,7 @@ JSFILTER;
 								$ret =  ($inp) ? _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=$p+" . strval($label)) :
 												 _m("cmsrt.url use t=klist&cat=$cat&page=$p");
 			                break;
-			default       : if (($p>0) && ($div = $this->filterajax)) {
+			default       : if (($p>0) && ($div = $this->filterajax) && (!$this->mobile)) {
 								//ajax paging
 								$url = $this->httpurl .'/';
 								$url.= _m("cmsrt.url use t=$pcmd&cat=$cat&page=$p");
@@ -1303,11 +1317,48 @@ JSFILTER;
 	    //echo $max_page.">>>>".$mp.">>>>".$this->pager;
 	    $cutter = 2;//5	 
 	   
-	    if ($mp<=$pager) return;  
+	    if ($mp<=$pager) return; 
 
-	    $tmplcontents = $this->select_template('fppager-button');
+		//mobile version
+		/*if ($this->mobile)	{
+			//$current = "<a class='le-button' href='javascript:window.scrollTo(0,0,10)'>$page</a>";
+			//return ($current);
+			if ($page>0) 
+				$prev = str_replace("<a ","<a class='le-button' ",$this->pPage($page-1, 'Prev', $pcmd, $inp));
+			if ($page < $max_page) {
+				//$next = str_replace("<a ","<a class='le-button' ",$this->pPage($page+1, 'Next', $pcmd, $inp));
+				
+				$nx =  ($inp) ? _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=" . strval($page+1)) :
+								_m("cmsrt.url use t=klist&cat=$cat&page=" . strval($page+1));
+								 
+				$next = "<a class='le-button' href='$nx'>Next</a>";
+				
+				$url = $this->httpurl .'/';
+				$url.= _m("cmsrt.url use t=$pcmd&cat=$cat&page=" . strval($page+1));
+				$next = "<button id='myDiv' class='le-button'>Next</button>";
+				
+				//$code = "$('#myDiv').on('click touchstart',function(){ ajaxCall('$url','{$this->filterajax}',1); alert('test');});";
+				
+				//page arg is always 0+1 
+				$code = "$('#myDiv').on('click touchstart',function(){
+							$.ajax({ url: '$url', cache: false, success: function(html){
+								$('#{$this->filterajax}').html(html);
+								window.scrollTo(0,parseInt($('#{$this->filterajax}').offset().top, 10));
+							}})
+						});";	
+				$js = new jscript;	
+				$js->load_js($code,null,1);		
+				unset ($js);
+			}	
+			
+			return ($prev . $next);
+		}*/
+	
+	    //template
+	    //$tmplcontents = $this->select_template('fppager-button');
+		$tmplcontents = _m('cmsrt.select_template use fppager-button');
 	   
-	    if ($page<$max_page) {//&& ($mp<$pager)) { 
+	    if ($page < $max_page) {//&& ($mp<$pager)) { 
 
 			//next pages
 			$m = 0;
@@ -1338,11 +1389,14 @@ JSFILTER;
 	    }
 		
 	    $cpnum = $page+1;
-		$currentpage = "<a href=\"javascript:gotoTop()\">$cpnum</a>";
-	    $current = $this->combine_tokens($tmplcontents, array(0=>$this->pager_current_class ,1=>$currentpage));   
-			
+		$currentpage = ($this->mobile) ? 
+						"<a href=\"javascript:window.scrollTo(0,parseInt($('#{$this->filterajax}').offset().top),10)\">$cpnum</a>" :
+						"<a href=\"javascript:gotoTop('{$this->filterajax}')\">$cpnum</a>";
+	    $current = $this->combine_tokens($tmplcontents, array(0=>"class='{$this->pager_current_class}'" ,1=>$currentpage));   
+	
 	    $page_titles = $prev . $current . $next;	  	
-        $contents = $this->select_template('fppager');	   
+        //$contents = $this->select_template('fppager');
+		$contents = _m('cmsrt.select_template use fppager');	
 	    $ret = $this->combine_tokens($contents, array(0=>$page_titles),true);	
 	   
 	    return ($ret);
@@ -1427,7 +1481,8 @@ JSFILTER;
 		$url = $this->pSortUrl('pager');	
 	    $combo_pager = $this->make_combo($url,$data2,null,$this->pager,$style);
 	   	  		    	   	   		 	      
-	    $contents = $this->select_template('fpsort');
+	    //$contents = $this->select_template('fpsort');
+		$contents = _m('cmsrt.select_template use fpsort');
 		$tokens = array(0=>localize('_order',$this->lan), 1=>$combo_char, 2=>$combo_asceding, 3=>$combo_pager);
 	    $out = $this->combine_tokens($contents, $tokens, true);	     
 	   
@@ -1442,7 +1497,7 @@ JSFILTER;
 	    $ogImage = array();
 
 	    $mylinemax = ($linemax>0) ? $linemax : $this->linemax;   
-  
+		
         if ($template) {  /*custom template list*/
 			$custom_template = true;
 			$tmpl = explode('.',$template);
@@ -1595,7 +1650,10 @@ JSFILTER;
 					$this->httpurl . "/$cat/$id2" . $aliasExt :
 					$this->httpurl . '/' . _m("cmsrt.url use t=kshow&cat=$cat&id=".$rec[$item_code]);
 			$itemlink =  $_u; 
-		    $detailink = "javascript:gotoTop('{$this->realID}-details')"; //$_u . '#details'; 	   
+			
+		    $detailink = ($this->mobile) ? 
+							"javascript:window.scrollTo(0,parseInt($('#{$this->realID}-details').offset().top, 10))" :
+							"javascript:gotoTop('{$this->realID}-details')"; //$_u . '#details'; 	   
 			$availability = $this->show_availability($rec['ypoloipo1']);	
 			 
 	        $linkphoto = $this->list_photo($rec[$item_code],null,null,$lnktype,$cat,2,3,$rec[$this->itmname]);	
@@ -1721,7 +1779,8 @@ JSFILTER;
 	    $this->allow_show_resource = true; //enable it after show main item image		
 	
 	    $template= $tmpl ? $tmpl : 'fpitemaddfiles';	    	
-		$mytemplate = $this->select_template($template);
+		//$mytemplate = $this->select_template($template);
+		$mytemplate = _m("cmsrt.select_template use $template");
          
         $slide_index = 1; //start at 1, 1=main image 		 
 		//multiple images
@@ -2507,7 +2566,7 @@ JSFILTER;
 	   
 		return null; //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< DISABLED
 
-		$mytemplate = $template ? $this->select_template($template) : null;	   
+		$mytemplate = $template ? _m("cmsrt.select_template use $template") : null;	   
 	   
 		$sSQL = "select id,itmname,itmfname,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,".$this->fcode." from products ";
 		$sSQL .= " WHERE ";
@@ -2817,8 +2876,8 @@ JSFILTER;
 	protected function xml_feed() {  
 		$format = GetReq('format') ? GetReq('format') : 'sitemap';			
 
-		$xmltemplate = $this->select_template($format);
-		$xmltemplate_products = $this->select_template($format . '-items');
+		$xmltemplate = _m("cmsrt.select_template use $format");
+		$xmltemplate_products = _m("cmsrt.select_template use $format" . '-items');
 		$imgxmlPath = _m('cmsrt.paramload use CMS+xmlpics'); //else use img token	
 		
 		//$aliasID = _m("cmsrt.useUrlAlias");
@@ -2958,7 +3017,7 @@ JSFILTER;
 		if (!$field) return;
 		
 	    $db = GetGlobal('db');		
-		$baseurl = $this->httpurl . '/'; //ie compatibility		
+		$baseurl = $this->httpurl . '/'; 	
 		$command = $cmd ? $cmd : 'search';
 		$stype = GetParam('searchtype');
 		$scase = GetParam('searchcase');
@@ -2981,9 +3040,9 @@ JSFILTER;
             </ul>';*/
 		}	
 	  
-		$contents = ($this->filterajax) ? 
-						$this->select_template('searchfilter-ajax') : 
-						$this->select_template('searchfilter');
+		$contents = (($this->filterajax) && (!$this->mobile)) ? 
+					_m('cmsrt.select_template use searchfilter-ajax') : 
+					_m('cmsrt.select_template use searchfilter');
 		
 	    $sSQL = "SELECT DISTINCT ".$field.",count(id) from products WHERE ";			
         if ($incategory) {	
@@ -3027,7 +3086,7 @@ JSFILTER;
 				if (trim($t[0])!='') {
 			        $f = $this->replace_spchars($t[0]);
 					$url = $this->httpurl . "/$command/$cat/"; 
-					$theurl = ($div = $this->filterajax) ? 
+					$theurl = (($div = $this->filterajax) && (!$this->mobile)) ? 
 								"filter('$url','$div','filter0')" : 
 								$baseurl . _m("cmsrt.url use t=$command&cat=$cat&input=$f");
 										
@@ -3040,8 +3099,12 @@ JSFILTER;
                 }				
 			}	   
 			
-			//header and not ajax
-			if ((!$this->filterajax) && ($header)) {	
+			//header or mobile and not ajax
+			//if ((!$this->filterajax) && ($header)) {	
+			if (($this->filterajax) && (!$this->mobile)) {
+				//nothing
+			}	
+			elseif (($header) || ($this->mobile)) {
 				$tokens[] = localize('_ALL',$this->lan);
 				$tokens[] = $input ? '*' : $this->max_selection;
 				$tokens[] = $baseurl . _m("cmsrt.url use t=klist&cat=$cat");
@@ -3063,10 +3126,10 @@ JSFILTER;
 		if (!$cat = GetParam('cat'))
 			return null;
 
-		$content = $this->select_template('extfilter');			
-		$linecontent = ($this->filterajax) ? 
-						$this->select_template('extfilterline-ajax') :
-					    $this->select_template('extfilterline') ;
+		$content = _m('cmsrt.select_template use extfilter');			
+		$linecontent = (($this->filterajax) && (!$this->mobile)) ? 
+						_m('cmsrt.select_template use extfilterline-ajax') :
+					    _m('cmsrt.select_template use extfilterline');
 
 		$sSQL = "select tname,tname{$this->lan},active,tid from ctree where active=1 and tname='$treename'";
 		$res = $db->Execute($sSQL);
@@ -3105,7 +3168,7 @@ JSFILTER;
 			foreach ($res as $n=>$rec) {
 				$treeid = $treename . ':' . $rec[0]; //0
 				$url = $this->httpurl . "/ktree/$cat/$treename:";
-				$theurl = ($div = $this->filterajax) ? 
+				$theurl = (($div = $this->filterajax) && (!$this->mobile)) ? 
 							"filter('$url','$div','$treename')" : 
 							$this->httpurl . '/' . _m("cmsrt.url use t=ktree&cat=$cat&treeid=$treeid");
 							
@@ -3134,10 +3197,10 @@ JSFILTER;
 		if (!$cat = GetParam('cat'))
 			return null;
 		
-		$content = $this->select_template('extfilter');			
-		$linecontent = ($this->filterajax) ? 
-						$this->select_template('extfilterline-ajax') :
-					    $this->select_template('extfilterline') ;	
+		$content = _m('cmsrt.select_template use extfilter');			
+		$linecontent = (($this->filterajax) && (!$this->mobile)) ? 
+						_m('cmsrt.select_template use extfilterline-ajax') :
+					    _m('cmsrt.select_template use extfilterline');	
 		
 		$sSQL = "select tid,tname,tname{$this->lan} from ctree where";
 		$sSQL.= " active=1 and pid='0' and items=1";
@@ -3177,7 +3240,7 @@ JSFILTER;
 					foreach ($res as $n=>$rec) {
 						$treeid = $groupname . ':' . $rec[0]; 
 						$url = $this->httpurl . "/ktree/$cat/$groupname:";
-						$theurl = ($div = $this->filterajax) ? 
+						$theurl = (($div = $this->filterajax) && (!$this->mobile)) ? 
 									"filter('$url','$div','$groupname')" : 
 									$this->httpurl . '/' . _m("cmsrt.url use t=ktree&cat=$cat&treeid=$treeid");
 										
@@ -3281,9 +3344,9 @@ JSFILTER;
 				$style = $data_array['style'];
 				$titlesON = $data_array['titles'];
 				$elements = $titlesON?1:0;	
+				
 				$template = $data_array['template'] ? $data_array['template'] : 'fpitempolicy';
-		  
-				$mylooptemplate = $this->select_template($template);
+				$mylooptemplate = _m("cmsrt.select_template use $template");
 			
 				foreach ($data_array['PRICE'] as $ix=>$ax) {
 					$data[] = $data_array['QTY'][$ix];
@@ -3373,7 +3436,7 @@ JSFILTER;
 		$page = GetReq('page') ? GetReq('page') : '0';
 		$feed_cmd = $feed_id ? $feed_id : 'feed';	  
 
-		$mytemplate = $this->select_template('xml-links');
+		$mytemplate = _m('cmsrt.select_template use xml-links');
 	  
 		//RSS	
 		if (stristr($this->feed_on,'rss')) {
@@ -3624,12 +3687,13 @@ EOF;
         return $ret;
 	}
 	
+	//http://stackoverflow.com/questions/20060608/select-onchange-event-on-mobile
 	public function make_combo($url2go,$values,$title=null,$selection=null,$style=null) {
 	    $mystyle = $style ? $style : $this->asccombostyle;
 		$name = $title ? $title : 'name' . md5($url2go);
 	
 		$r = "<select name=\"".$name."\" class=\"" . $mystyle . "\"" . ( $size != 0 ? "size=\"".$size."\"" : "");
-		$r.= ($div = $this->filterajax) ? 
+		$r.= (($div = $this->filterajax) && (!$this->mobile)) ? 
 				" onChange=\"ajaxCall(this.options[this.selectedIndex].value,'$div',1)\">" :
 				" onChange=\"location=this.options[this.selectedIndex].value\">";
 			  

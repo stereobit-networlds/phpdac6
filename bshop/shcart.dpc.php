@@ -355,7 +355,8 @@ class shcart extends storebuffer {
 									break;			
 			
 			case "cartguestuser" :  $ps = $this->guestDetails();
-			                        die("guestdetails|" . $ps);
+			                        //die("guestdetails|" . $ps); //sndReqArg
+									die($ps); //ajaxCall
 									break;
 			
 			case "cartinvoice"   :  $ps = 'x';
@@ -387,6 +388,7 @@ class shcart extends storebuffer {
 									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN1', getlocal()));
 									
 									$this->jsBrowser();
+									$this->fbjs();
 									break;					 	
 									
 			case "removefromcart": 	$p = $this->remove(); 
@@ -396,6 +398,7 @@ class shcart extends storebuffer {
 									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN2', getlocal()));	
 									
 									$this->jsBrowser();
+									$this->fbjs();
 									break;
 									
 			case "clearcart"     : 	$this->clear(); 
@@ -405,6 +408,7 @@ class shcart extends storebuffer {
 									$this->jsDialog(localize('_BLN3', getlocal()), localize('_CART', getlocal()));	
 									
 									$this->jsBrowser();
+									$this->fbjs();
 									break;	
 									
 			case "loadcart"      : 	$this->loadcart(); 
@@ -414,6 +418,7 @@ class shcart extends storebuffer {
 									$this->jsDialog(localize('_BLN1', getlocal()), localize('_CART', getlocal()));
 									
 									$this->jsBrowser();
+									$this->fbjs();
 									break;			  
 								 
 			case $this->recalc   :
@@ -422,6 +427,7 @@ class shcart extends storebuffer {
 									$this->recalculate(); 
 									
 									$this->jsBrowser();
+									$this->fbjs();
 									break;	  
 	  
 			case "sship"         :	break; //echo GetReq('czone'),'>'; 
@@ -498,6 +504,7 @@ class shcart extends storebuffer {
 									$this->jsDialog($msg, localize('_CART', getlocal()));									
 									
 									$this->jsBrowser();
+									$this->fbjs();
 			case 'viewcart'      :						  
 			default              : 	$this->loopcartdata = $this->loopcart();
 									$this->looptotals = $this->foot();
@@ -586,17 +593,21 @@ class shcart extends storebuffer {
 			$urlstr = ($cat = GetReq('cat')) ? "&cat=" . $cat : "&id=cart0";
 		
 		$code = "
-$(document).ready(function () {		
-	gotoTop('cart-page');	
+$(document).ready(function () {
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#cart-page').offset().top, 10));
+	else {		
+		gotoTop('cart-page');	
 	
-	$(window).scroll(function() { 
+		$(window).scroll(function() { 
 	
-		if (agentDiv('cart-page')) {
-			$.ajax({ url: 'jsdialog.php?t=jsdcode{$urlstr}&div=cart-page', cache: false, success: function(jsdialog){
-				eval(jsdialog);		
-			}})	
-		}	
-	});			
+			if (agentDiv('cart-page')) {
+				$.ajax({ url: 'jsdialog.php?t=jsdcode{$urlstr}&div=cart-page', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}	
+		});	
+	}		
 });	
 ";
 		
@@ -608,17 +619,21 @@ $(document).ready(function () {
 	//cart-checkout or login page
 	protected function jsStatus1() {
 		$code = "
-$(document).ready(function () {		
-	gotoTop('cart-page');	
+$(document).ready(function () {	
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#cart-page').offset().top, 10));
+	else {		
+		gotoTop('cart-page');	
 	
-	$(window).scroll(function() { 
+		$(window).scroll(function() { 
 	
-		if (agentDiv('cart-page')) {
-			$.ajax({ url: 'jsdialog.php?t=jsdcode&id=cart1&div=cart-page', cache: false, success: function(jsdialog){
-				eval(jsdialog);		
-			}})	
-		}	
-	});	
+			if (agentDiv('cart-page')) {
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=cart1&div=cart-page', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}	
+		});
+	}	
 });	
 ";		
 		return ($code);
@@ -626,8 +641,11 @@ $(document).ready(function () {
 
 	protected function jsStatus2() {
 		$code = "
-$(document).ready(function () {		
-	gotoTop('cart-page');	
+$(document).ready(function () {	
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#cart-page').offset().top, 10));
+	else 	
+		gotoTop('cart-page');	
 });	
 ";		
 		return ($code);		
@@ -635,8 +653,11 @@ $(document).ready(function () {
 
 	protected function jsStatus3() {
 		$code = "
-$(document).ready(function () {		
-	gotoTop('cart-page');	
+$(document).ready(function () {	
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#cart-page').offset().top, 10));
+	else 	
+		gotoTop('cart-page');	
 });	
 ";		
 		return ($code);			
