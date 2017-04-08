@@ -130,11 +130,11 @@ class shkategories {
 	
 		if (iniload('JAVASCRIPT')) {
 
-			$id = remote_paramload('SHKATEGORIES','idsearch',$this->path);	  
+			//$id = remote_paramload('SHKATEGORIES','idsearch',$this->path);	  
+			$code = $this->js_make_search_url();//$id);	
 			
-			$code2 = $this->js_make_search_url($id);	
 			$js = new jscript;	
-			$js->load_js($code2,"",1);			   
+			$js->load_js($code,null,1);			   
 			unset ($js);
 		}			   	   	     
 	}	
@@ -557,26 +557,7 @@ class shkategories {
 		}		
         return ($out);
     }		
-	/*
-	public function show_submenu($cmd=null,$viewtype=3,$group=null,$notheme=null, $rendertable=false) {
-		$group = $group ? $group : GetReq('cat');
-	
-		$result = $this->read_tree($group);	
-		$out = $this->view_category($result,$viewtype,$mode,$group,$cmd); 
-		
-	    //table generation
-	    if ($rendertable) {
-	     if ($this->result_in_table) { 
-			$categories = explode('<SPLIT/>',$out); //<li> split..
-			$ret = $this->make_table($categories, $this->result_in_table, 'fptreetable');  	  
-		 }
-		 else
-		    $ret = $out;
-	    }
-		
-        return ($ret);				
-	}		
-	*/
+
 	
 	//  SHOW SELECTED TREE FUNCTIONS
 	protected function show_selected_branch($id,$line,$t=null,$myselcat=null,$expand=null,$stylesheet=null,$outpoint=null,$br=1,$template=null,$linkclass=null,$linksonly=null,$titlesonly=null,$idsonly=null) {
@@ -1176,13 +1157,14 @@ class shkategories {
 	}
 	
 	//called by getCombo, getKategoryCombo without select
-	protected function js_make_search_url($id=null) {
-	    $id_element= $id ? $id : 'input';
-		$out = "	
-function gocatsearch(url)
-{ var inp = document.getElementById('$id_element').value;
-  var ret = inp ? url.replace('*', inp) : url.replace('*/', '*/');
-  window.location.href = ret;
+	protected function js_make_search_url() { //$id=null) {
+		$fid = _m('cmsrt.paramload use CMS+search-id');	
+	    $id_element= $fid ? $fid : 'input';
+		
+		$out = "function gocatsearch(url) {
+	var inp = document.getElementById('$id_element').value;
+	var ret = inp ? url.replace('*', inp) : url.replace('*/', '*/');
+	window.location.href = ret;
 }
 ";
       return ($out);	

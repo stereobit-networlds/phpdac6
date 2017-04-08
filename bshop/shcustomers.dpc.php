@@ -56,8 +56,8 @@ $__LOCALE['SHCUSTOMERS_DPC'][10]='_UPDATE;Update;Ενημέρωση';
 $__LOCALE['SHCUSTOMERS_DPC'][11]='_DELETE;Delete;Διαγραφή';
 $__LOCALE['SHCUSTOMERS_DPC'][12]='_MSG10;Successfull registration!;Επιτυχής καταχώρηση!';
 $__LOCALE['SHCUSTOMERS_DPC'][13]='_MSG11;is required;είναι απαραίτητο';
-$__LOCALE['SHCUSTOMERS_DPC'][14]='_MSG12;The value in field;Η τιμή στο πεδίο';
-$__LOCALE['SHCUSTOMERS_DPC'][15]='_ACCDENIED;Access denied;Απαγορυμένη πρόσβαση';
+$__LOCALE['SHCUSTOMERS_DPC'][14]='_MSG12;The field;Το στοιχείο';
+$__LOCALE['SHCUSTOMERS_DPC'][15]='_ACCDENIED;Access denied;Απαγορευμένη πρόσβαση';
 $__LOCALE['SHCUSTOMERS_DPC'][16]='_EFORIA;Tax department;Δ.Ο.Υ.';
 $__LOCALE['SHCUSTOMERS_DPC'][17]='_SEARCHCUST;Searchin;Ευρεση';
 $__LOCALE['SHCUSTOMERS_DPC'][18]='_SEARCHRES;Results;Αποτελέσματα Αναζήτησης';
@@ -129,7 +129,7 @@ class shcustomers {
 	var $appname, $mtrackimg;
     var $rewrite; 	
 
-	function __construct() {
+	public function __construct() {
 		$UserSecID = GetGlobal('UserSecID');
 		$sFormErr = GetGlobal('sFormErr');
 		$UserName = GetGlobal('UserName');
@@ -341,6 +341,16 @@ class shcustomers {
 		return ($out);
 	}
 	
+	protected function checkFieldsJs($err=null, $title=null) {
+			
+		$code = "
+	new $.Zebra_Dialog('$err', {'type':'error','title':'$title'});";
+		
+		$js = new jscript;	
+		$js->load_js($code,null,1);			   
+		unset ($js);
+	}	
+	
 	protected function js_map_customer() {	
 		$message = 'Customer found. Map?';	
 		$vars = $this->make_customerpost_get();  
@@ -375,7 +385,8 @@ window.onload=function(){
 		
 			$code = "
 window.onload=function(){
-  alert('$message');	
+  //alert('$message');	
+  new $.Zebra_Dialog('$message', {'type':'error','title':''});
 } 
 ";	  
 			$js = new jscript;		   
@@ -866,6 +877,8 @@ window.onload=function(){
 	   
 		if ($error = $this->checkFields(null,$this->checkuseasterisk)) {
 			SetGlobal('sFormErr',$error);
+			$this->checkFieldsJs($error);
+			
 			return false;
 		}	   
   
@@ -1077,6 +1090,8 @@ window.onload=function(){
 
 	    if ($error = $this->checkFields(null,$this->checkuseasterisk)) {
 			SetGlobal('sFormErr',$error);
+			$this->checkFieldsJs($error);
+			
 			return false;//($error);
 	    }		   
 
@@ -1174,7 +1189,7 @@ window.onload=function(){
 		$result = $db->Execute($sSQL,2);
 
 	    return ($result->fields[0]);
-	}
+	}		
 
     public function checkFields($bypass=null,$checkasterisk=null) {
 		$sFormErr = GetGlobal('sFormErr');
@@ -1930,8 +1945,9 @@ window.onload=function(){
 		   }
 	    }
 		else {
-		   //echo $db->ErrorMsg();
-		   SetGlobal('sFormErr',$error);
+			//echo $db->ErrorMsg();
+			SetGlobal('sFormErr',$error);
+		   	$this->checkFieldsJs($error);
 		}
 		
 		return false;	   	

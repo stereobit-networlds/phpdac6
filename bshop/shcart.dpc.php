@@ -592,7 +592,19 @@ class shcart extends storebuffer {
 		else
 			$urlstr = ($cat = GetReq('cat')) ? "&cat=" . $cat : "&id=cart0";
 		
-		$code = "
+		$code = $this->js_compute_qty();			
+		$code.= $this->js_guest_registration();		
+		$code.= "
+$('#guestdetailsbutton').on('click touchstart',function(){
+	$.ajax({ url: 'katalog.php?t=cartguestuser', cache: false, success: function(html){
+		$('#guestdetails').html(html);
+		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+			window.scrollTo(0,parseInt($('#guestdetails').offset().top, 10));
+		else
+			gotoTop('guestdetails');
+	}})
+});	
+		
 $(document).ready(function () {
 	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
 		window.scrollTo(0,parseInt($('#cart-page').offset().top, 10));
@@ -600,7 +612,6 @@ $(document).ready(function () {
 		gotoTop('cart-page');	
 	
 		$(window).scroll(function() { 
-	
 			if (agentDiv('cart-page')) {
 				$.ajax({ url: 'jsdialog.php?t=jsdcode{$urlstr}&div=cart-page', cache: false, success: function(jsdialog){
 					eval(jsdialog);		
@@ -610,9 +621,7 @@ $(document).ready(function () {
 	}		
 });	
 ";
-		
-		$code.= $this->js_compute_qty();	
-		$code.= $this->js_guest_registration();
+
 		return ($code);
 	}
 	
@@ -626,7 +635,6 @@ $(document).ready(function () {
 		gotoTop('cart-page');	
 	
 		$(window).scroll(function() { 
-	
 			if (agentDiv('cart-page')) {
 				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=cart1&div=cart-page', cache: false, success: function(jsdialog){
 					eval(jsdialog);		
@@ -822,11 +830,11 @@ function guestreg()
 		type: 'POST',
 		data: {FormAction: 'cartguestreg', email: email, name: gname, address: gaddr, tel: gphon, postcode: gcode, country: gcoun},
 		success:function(postdata) {
-					if (postdata) {
-						$('#guestdetails').html(postdata);
-					}		
+			if (postdata) {
+				$('#guestdetails').html(postdata);
+			}		
 	}}); }		
-}	
+}
 EOF;
 		return $code;	
 	}

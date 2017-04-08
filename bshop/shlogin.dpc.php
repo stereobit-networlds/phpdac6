@@ -28,6 +28,10 @@ class shlogin extends cmslogin {
 	public function event($event=null) {
 
 		switch ($event) {
+			
+			case 'rempwd'   : 	$this->jsBrowser();
+								break;
+			
 			case 'dologin'  :
 			case 'shlogin'  :
 			case 'cmslogin' :   cmslogin::event($event);
@@ -58,15 +62,19 @@ class shlogin extends cmslogin {
 	protected function jsLogin() {
  
 		$code = "
-	gotoTop('authentication');	
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#authentication').offset().top, 10));
+	else {		
+		gotoTop('authentication');	
 	
-	$(window).scroll(function() { 
-		if (agentDiv('authentication')) {
-			$.ajax({ url: 'jsdialog.php?t=jsdcode&id=login&div=authentication', cache: false, success: function(jsdialog){
-				eval(jsdialog);		
-			}})	
-		}	
-	});			
+		$(window).scroll(function() { 
+			if (agentDiv('authentication')) {
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=login&div=authentication', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}	
+		});	
+	}	
 ";
 		
 		return ($code);

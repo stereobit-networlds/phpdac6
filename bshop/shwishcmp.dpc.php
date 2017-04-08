@@ -36,26 +36,38 @@ $__LOCALE['SHWISHCMP_DPC'][5]='SHWISHLIST_CNF;Wish List;Wish List';
 class shwishcmp extends shkatalogmedia {
 
 
-    function __construct() {
+    public function __construct() {
    
        shkatalogmedia::__construct();	
 
     }
    
-    function event($event=null) {
+    public function event($event=null) {
    
        switch ($event) {
 	   
-	     case 'cmpadditem'     : $this->cmpadd(); break;
-		 case 'cmpdelitem'     : $this->cmprem(); break;	   
+	     case 'cmpadditem'    : $this->cmpadd(); 
+								$this->jsBrowser();
+								break;
+								
+		 case 'cmpdelitem'    : $this->cmprem(); 
+								$this->jsBrowser();
+								break;	   
 		 
-	     case 'wsadditem'     : $this->add(); break;
-		 case 'wsdelitem'     : $this->rem(); break;
-		 default              : //shwishlist::event($event);						
+	     case 'wsadditem'     : $this->add(); 
+								$this->jsBrowser();
+								break;
+								
+		 case 'wsdelitem'     : $this->rem(); 
+								$this->jsBrowser();
+								break;
+		 
+		 default              : //shwishlist::event($event);
+								$this->jsBrowser();
 	   }
     }
    
-    function action($action=null) {
+    public function action($action=null) {
 
        switch ($action) {
 	     case 'cmpadditem'    : 
@@ -70,11 +82,45 @@ class shwishcmp extends shkatalogmedia {
 	   return ($out);
     } 
 	
-	function add() {
+	protected function jsBrowser() {
+		
+		$code = $this->jsWishCmp();		
+		   
+		if ($code) {
+			$js = new jscript;	
+			$js->load_js($code,null,1);		
+			unset ($js);
+		}
+	}
+
+	protected function jsWishCmp() {
+ 
+		$code = "
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#main-content').offset().top, 10));
+	else {		
+		gotoTop('main-content');	
+	
+		$(window).scroll(function() { 
+			if (agentDiv('main-content')) {
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=cmpwish&div=authentication', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}	
+		});	
+	}	
+";
+		
+		return ($code);
+	}	
+	
+	
+	
+	protected function add() {
 	    if (!$id=GetReq('id')) return;
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
-        $name = $UserName?decode($UserName):null;		
+        $name = $UserName ? decode($UserName) : null;		
 		if ($name) {
 			$sSQL = "insert into wishlist (tid,cid,listname) values (" . 
 					$db->qstr($id) .",". 
@@ -87,11 +133,11 @@ class shwishcmp extends shkatalogmedia {
 		return false;
 	}
 	
-	function rem() {
+	protected function rem() {
 	    if (!$id=GetReq('id')) return;
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
-        $name = $UserName?decode($UserName):null;
+        $name = $UserName ? decode($UserName) : null;
         if ($name) {		
 			$sSQL = "delete from wishlist where tid=" . 
 					$db->qstr($id) ." and cid=". $db->qstr($name) .
@@ -103,10 +149,10 @@ class shwishcmp extends shkatalogmedia {
 		return false;
 	}
 	
-	function wishcount() {
+	public function wishcount() {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
-        $name = $UserName?decode($UserName):null;
+        $name = $UserName ? decode($UserName) : null;
         if ($name) {		
 			$sSQL = "select count(tid) from wishlist where " . 
 					"cid=". $db->qstr($name) .
@@ -118,7 +164,7 @@ class shwishcmp extends shkatalogmedia {
 		return 0;
 	}	
 	
-	function getWSLists() {
+	protected function getWSLists() {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
 	    $name = $UserName?decode($UserName):null; 
@@ -139,7 +185,7 @@ class shwishcmp extends shkatalogmedia {
 		return ($out);	
 	} 	
 
-	function viewWishList() {
+	protected function viewWishList() {
        $db = GetGlobal('db');
 	   $a = GetReq('a');
        $UserName = GetGlobal('UserName');	   
@@ -165,12 +211,12 @@ class shwishcmp extends shkatalogmedia {
 	
 	/********************* compare items ***********************/
 	
-	function cmpadd() {
+	protected function cmpadd() {
 	    if (!$id=GetReq('id')) return;
 		if ($this->cmpcount()>3) return;
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
-        $name = $UserName?decode($UserName):null;		
+        $name = $UserName ? decode($UserName) : null;		
 		if ($name) {
 			$sSQL = "insert into wishlist (tid,cid,listname) values (" . 
 					$db->qstr($id) .",". 
@@ -183,11 +229,11 @@ class shwishcmp extends shkatalogmedia {
 		return false;
 	}
 	
-	function cmprem() {
+	protected function cmprem() {
 	    if (!$id=GetReq('id')) return;
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
-        $name = $UserName?decode($UserName):null;
+        $name = $UserName ? decode($UserName) : null;
         if ($name) {		
 			$sSQL = "delete from wishlist where tid=" . 
 					$db->qstr($id) ." and cid=". $db->qstr($name) .
@@ -199,10 +245,10 @@ class shwishcmp extends shkatalogmedia {
 		return false;
 	}	
 	
-	function cmpcount() {
+	public function cmpcount() {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
-        $name = $UserName?decode($UserName):null;
+        $name = $UserName ? decode($UserName) : null;
         if ($name) {		
 			$sSQL = "select count(tid) from wishlist where " . 
 					"cid=". $db->qstr($name) .
@@ -214,10 +260,10 @@ class shwishcmp extends shkatalogmedia {
 		return 0;
 	}		
 	
-	function getCMPLists() {
+	protected function getCMPLists() {
         $db = GetGlobal('db');
         $UserName = GetGlobal('UserName');	
-	    $name = $UserName?decode($UserName):null;
+	    $name = $UserName ? decode($UserName) : null;
 		$codename = $this->getmapf('code');
 		
         $sSQL = "select id,sysins,code1,pricepc,price2,sysins,itmname,itmfname,uniname1,uniname2,active,code4," .
@@ -235,7 +281,7 @@ class shwishcmp extends shkatalogmedia {
 		return ($out);		
 	} 	
 	
-	function viewCompareList() {
+	protected function viewCompareList() {
        $db = GetGlobal('db');
 	   $a = GetReq('a');
        $UserName = GetGlobal('UserName');	   
@@ -258,10 +304,10 @@ class shwishcmp extends shkatalogmedia {
 	   return ($out);
 	}	
 
-	function getpage($array,$id){
+	public function getpage($array,$id){
 	
 	   if (count($array)>0) {
-         //while(list ($num, $data) = each ($array)) {
+
          foreach ($array as $num => $data) {
 		    $msplit = explode(";",$data);
 			if ($msplit[1]==$id) return floor(($num+1) / $this->pagenum)+1;
@@ -271,16 +317,16 @@ class shwishcmp extends shkatalogmedia {
 	   }	 
 	}
 
-    function browse($packdata,$view) {
+    protected function browse($packdata,$view) {
 	
-	   $data = explode("||",$packdata); //print_r($data);
+	   $data = explode("||",$packdata); 
 	
        $out = $this->view_ws($data[0],$data[1],$data[2],$data[3],$data[4]);//,$data[5]);
 
 	   return ($out);
 	}		
 	
-    function view_ws($id,$did,$ddate,$dtime,$status) {
+    protected function view_ws($id,$did,$ddate,$dtime,$status) {
     }	
 };
 }

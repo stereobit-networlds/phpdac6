@@ -21,7 +21,7 @@ class shusers extends cmsusers {
    
 	var $includecusform, $continue_register_customer, $predef_customer;
 	var $check_existing_customer, $map_customer, $customer_exist_id;	
-	var $customer_sec;
+	var $customer_sec, $unknown_sec, $leeid, $atok;
 	
 	public function __construct() {
 		
@@ -29,7 +29,8 @@ class shusers extends cmsusers {
 		
 		$this->continue_register_customer = remote_paramload('SHUSERS','continueregcus',$this->path);		
 		$this->customer_sec = remote_paramload('SHUSERS','ifcustomer',$this->path);		
-		
+		$this->atok = remote_paramload('SHUSERS','atok',$this->path);
+		$this->leeid = remote_paramload('SHUSERS','leeid',$this->path);
 		$cusform = remote_paramload('SHUSERS','includecusform',$this->path); 
 		$this->includecusform = $cusform ? true : false;
 
@@ -37,6 +38,24 @@ class shusers extends cmsusers {
 		$this->map_customer = null;
 		$this->customer_exist_id = null;
 		$this->predef_customer = null;	
+		
+		//override
+		$this->it_sendfrom = remote_paramload('SHUSERS','sendusernamefrom',$this->path);
+		$this->usemailasusername =  remote_paramload('SHUSERS','usemailasusername',$this->path);
+		$this->usemail2send =  remote_paramload('SHUSERS','usemail2send',$this->path);
+		$this->tell_it = remote_paramload('SHUSERS','tellregisterto',$this->path);		
+		$this->tell_subject = remote_paramload('CMSUSERS','tellsubject',$this->path);
+		$this->usrform = remote_arrayload('SHUSERS','usrform',$this->path);		   
+		$this->usrformtitles = remote_arrayload('SHUSERS','usrformtitles',$this->path);		
+		$this->checkuseasterisk = remote_paramload('SHUSERS','checkasterisk',$this->path);		
+		$this->deny_multiple_users = remote_paramload('SHUSERS','denymultuser',$this->path);
+		$this->inactive_on_register = remote_paramload('SHUSERS','inactive_on_register',$this->path);	   
+		$this->stay_inactive = remote_paramload('SHUSERS','stay_inactive',$this->path); 
+		
+	   	//override security
+		$this->unknown_sec = remote_paramload('SHUSERS','else',$this->path);
+		$this->security = $this->unknown_sec ? $this->unknown_sec : 0; //default
+
 	}
    
 	public function event($event=null) {
@@ -82,19 +101,33 @@ class shusers extends cmsusers {
 	protected function jsUser() {
  
 		$code = "
-	gotoTop('checkout-page');	
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#checkout-page').offset().top, 10));
+	else {		
+		gotoTop('checkout-page');	
 	
-	$(window).scroll(function() { 
-		if (agentDiv('checkout-page')) {
-			$.ajax({ url: 'jsdialog.php?t=jsdcode&id=user&div=signup', cache: false, success: function(jsdialog){
-				eval(jsdialog);		
-			}})	
-		}	
-	});			
+		$(window).scroll(function() { 
+			if (agentDiv('checkout-page')) {
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=user&div=signup', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}	
+		});
+	}		
 ";
 		
 		return ($code);
-	}	
+	}
+
+	protected function checkFieldsJs($err=null, $title=null) {
+			
+		$code = "
+	new $.Zebra_Dialog('$err', {'type':'error','title':'$title'});";
+		
+		$js = new jscript;	
+		$js->load_js($code,null,1);			   
+		unset ($js);
+	}		
 	
 	protected function insertExt() {
 
@@ -138,6 +171,8 @@ class shusers extends cmsusers {
 				$ret = $this->insert_with_customer();							  		
 				return ($ret);	
 			} 
+			else
+				$this->checkFieldsJs($checkusrerr);// . $checkcuserr);
 							 
 		}//not include cus form
 		else {	
@@ -243,6 +278,8 @@ class shusers extends cmsusers {
 				}
 			}
 		}
+		else
+			$this->checkFieldsJs($err);
 		
 		return false;	
 	}	
@@ -454,8 +491,7 @@ class shusers extends cmsusers {
 	protected function after_update_goto() {
 	    $myaction = GetParam('FormAction');
 
-	    if ((GetGlobal('UserID')) && (stristr($myaction,'update'))) {
-			//update1 or update2 (user or customer)
+	    if (GetGlobal('UserID'))  {
 	      
 			if ($myaction=='update') {//user
 				$out .= $this->register();
@@ -533,10 +569,11 @@ class shusers extends cmsusers {
     public function regform($fields='',$cmd=null,$isupdate=null,$isadmin=null,$nodelivery=null,$noinvtype=null,$noincludecusform=null) {
 		$UserName = GetGlobal('UserName');
 		$sFormErr = GetGlobal('sFormErr');
+		$myinvtype = GetParam('invtype');
+		
 		//readonly username field when update
 		$is_update = $UserName ? true : false; 
-		if ($is_update)
-			$readonly = 'READONLY';	   
+		if ($is_update)	$readonly = 'READONLY';	   
 	   
 		if (isset($noinvtype))//no for update
 			$invtype = '0';
@@ -549,16 +586,18 @@ class shusers extends cmsusers {
 			$delivery = '0';
 		else	 	   
 			$delivery = _m('shcustomers.get_delivery_address');	 
-		 
-		$myinvtype = GetReq('invtype');  //ger req when error
-		//echo '>',$invtype,'>',$delivery;
+		
+		//ger req when error	
+		$myinvoice = isset($myinvtype) ? $myinvtype : ($invtype ? $invtype : '0');  
+		//echo $myinvtype,'>',$invtype,'>',$delivery;
 
-		$_t = ($isupdate) ? 'usrupdate' . $delivery . $invtype : 'usrregister' . $delivery . $invtype;	   
+		$_t = ($isupdate) ? 'usrupdate' . $delivery . $myinvoice : 
+							'usrregister' . $delivery . $myinvoice;	   
 		$mytemplate = _m('cmsrt.select_template use ' . $_t);
-	   
+	    //echo $_t;
+		
 		if ($fields) {
 			$myfields = explode(";",$fields); //print_r($myfields);
-			//print_r($myfields);
 			$fname = $myfields[0];
 			$lname = $myfields[1];
 			$uname = $myfields[2];
@@ -580,7 +619,8 @@ class shusers extends cmsusers {
 			$eml = GetParam('eml');  
 		}
 
-		$sFileName = seturl("t=signup&a=$a&g=$g&invtype=".$myinvtype,0,1);
+		//$sFileName = seturl("t=signup&a=$a&g=$g&invtype=".$myinvtype,0,1);
+		$sFileName = seturl("t=signup&invtype=".$myinvtype,0,1);
 
         $tokens[] = localize('_FORMWARN',getlocal()) . '<br>' . $sFormErr . "<form method=\"POST\" action=\"" .$sFileName. "\" name=\"Registration\">";	   
 	    $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"fname\" maxlength=\"50\" value=\"" . ToHTML($fname) . "\" size=\"30\" >";
@@ -650,6 +690,7 @@ class shusers extends cmsusers {
 
 		return ($ret);			  
 	}	
+	
 	
 	public function get_cus_type($id,$field='username',$istext=1) {
         $db = GetGlobal('db');

@@ -66,6 +66,9 @@ class shnsearch {
 		$this->pager = 10;
 
 		$this->text2find = GetParam('Input') ? GetParam('Input') : GetReq('input');			
+		
+		//on all pages
+		$this->javascript();			
 	}
 
 	public function event($event=null) {
@@ -111,7 +114,7 @@ class shnsearch {
 			case 'search' 		 :		
 			default       		 : 	if ((GetReq('page'))  || (GetReq('asc')) || 
 										(GetReq('order')) || (GetReq('pager'))) { //ajax
-										if (_v('shkatalogmedia.filterajax'))
+										if (_v('shkatalogmedia.filterajax') && (!_v('shkatalogmedia.mobile')))
 											die($this->form_search());
 										else
 											$out = $this->form_search();
@@ -122,6 +125,37 @@ class shnsearch {
 	  
 		return ($out);
 	}
+	
+	public function javascript() {
+		//$id = remote_paramload('SHKATEGORIES','idsearch',$this->path);	  
+			
+		$fid = _m('cmsrt.paramload use CMS+search-id');	
+		$bid = _m('cmsrt.paramload use CMS+search-button-id');
+			
+		$code = $this->js_search_onclick($bid, $fid);	
+			
+		$js = new jscript;	
+		$js->load_js($code,null,1);			   
+		unset ($js);
+	}	
+	
+	protected function js_search_onclick($buttonId=null, $inputId=null) {
+	    $felement= $inputId ? $inputId : 'input';
+		$belement= $buttonId ? $buttonId : 'search-button';
+		
+		$code = "
+$(document).ready(function () {
+	$('#$belement').on('click',function(){
+		var url = 'search/*/';
+		var inp = document.getElementById('$felement').value;
+		var ret = inp ? url.replace('*', inp) : url.replace('*/', '*/');
+		//alert('search:'+ret);
+		window.location.href = ret;
+	});
+});
+";
+      return ($code);	
+	}	
 	
 	protected function search_javascript() {
 		
@@ -136,6 +170,8 @@ class shnsearch {
 	}
 	
 	protected function js_make_search_url() {
+		$searchincat = _m('shkategories.getcurrentkategory');		
+		
 		$out = "
 function get_sinput()
 {
@@ -152,6 +188,23 @@ function get_stype()
   var ret = document.searchform.searchtype.value;
   return ret;
 }
+
+$(document).ready(function () {
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#section-{$searchincat}').offset().top, 10));
+	else {
+		gotoTop('section-{$searchincat}');
+
+		$(window).scroll(function() { 
+		
+			if (agentDiv('category-grid',300)) {	
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=search&div=search', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}
+		});
+	}		
+});	
 ";
 
 		return ($out);	
@@ -324,8 +377,8 @@ function get_stype()
 	}		
 	
 	protected function list_katalog($imageclick=null,$cmd=null,$template=null) {
-	
-		$ret = _m('shkatalogmedia.list_katalog use '.$imageclick.'+'.$cmd.'+'.$template.'++1');
+		
+		$ret = _m('shkatalogmedia.list_katalog use '.$imageclick.'+'.$cmd.'+'.$template);
 
 		return ($ret);	  
 	}		
