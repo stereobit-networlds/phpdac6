@@ -101,11 +101,19 @@ class cms extends fronthtmlpage {
 		}
 		
 		return false;	
+	}
+
+	public function mobileMatchDev() {
+		$mstr = $this->paramload('CMS', 'mobileDevices');
+		$ret = $mstr ? str_replace(',','|',$mstr) : "Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini";
+		return $ret;
 	}	
 	
 	//http://stackoverflow.com/questions/4117555/simplest-way-to-detect-a-mobile-device
 	public function isMobile() {
-		return preg_match("/(android|avantgo|blackberry|bolt|boost|cricket|docomo|fone|hiptop|mini|mobi|palm|phone|pie|tablet|up\.browser|up\.link|webos|wos)/i", $this->useragent);
+		//return preg_match("/(android|avantgo|blackberry|bolt|boost|cricket|docomo|fone|hiptop|mini|mobi|palm|phone|pie|tablet|up\.browser|up\.link|webos|wos)/i", $this->useragent);
+		$pregmob = strtolower($this->mobileMatchDev());
+		return preg_match("/($pregmob)/i", $this->useragent);
 	}	
 	
 		

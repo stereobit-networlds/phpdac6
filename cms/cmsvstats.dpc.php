@@ -41,9 +41,12 @@ class cmsvstats  {
 		if (!$this->http_referer = $_SESSION['http_referer']) { 
 			$this->http_referer = $_SERVER['HTTP_REFERER'];
 			$_SESSION['http_referer'] = $_SERVER['HTTP_REFERER'];	
-		}	
+		}
+		//echo $this->http_referer .'>';	
+		
 		//alternative for long sessions
 		/*if (!isset($_COOKIE['origin_ref'])) {
+			$this->http_referer = $_SERVER['HTTP_REFERER'];
 			setcookie('http_referer', $_SERVER['HTTP_REFERER']);		
 		}*/
 	  

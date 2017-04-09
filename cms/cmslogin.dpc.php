@@ -234,17 +234,21 @@ class cmslogin {
 									die(localize('_WELLCOME',getlocal()) . ' ' . $goto); 
 									break;
 								 
-            case "dologin"      : 	//goto after login with ses param
-									if (($this->dpc_after_goto) && ($this->login_successfull)) {
-										//echo $this->dpc_after_goto,'>';
-										$mydpc = explode('.',$this->dpc_after_goto);//check security
-										$mydpcname = strtoupper($mydpc[0]).'_DPC';				 
-										if (seclevel($mydpcname,$this->userLevelID)) 
-											$out = _m($this->dpc_after_goto);
-										else
-											$out = $this->form();//default action  
-										$this->dpc_after_goto = null;
-										SetSessionParam('afterlogingoto','');
+            case "dologin"      : 	if ($this->login_successfull) {
+										
+										//echo 'cmslogin:',$this->dpc_after_goto,'>';
+										//$mydpc = explode('.',$this->dpc_after_goto);//check security
+										//$mydpcname = strtoupper($mydpc[0]).'_DPC';				 
+										//if (seclevel($mydpcname,$this->userLevelID)) 
+											
+										if ($this->dpc_after_goto) {
+											$out = _m($this->dpc_after_goto); 
+											
+											$this->dpc_after_goto = null; //reset
+											SetSessionParam('afterlogingoto',''); //reset											
+										}
+										else		
+											$out = $this->form();
 									}
 									else 
 										$out = $this->form(); 
@@ -467,7 +471,7 @@ window.setTimeout('neu()',10);
 			SetSessionParam('afterlogingoto',str_replace('>','.',$dpc_after_goto));
 
         if ($this->after_goto) {
-            $logonurl = _m('cmsrt.seturl use t=' .$this->after_goto . '&$param_name='.$param); //seturl("t=".$this->after_goto."&$param_name=".$param,0,1);
+            $logonurl = _m('cmsrt.seturl use t=' .$this->after_goto . "&$param_name=".$param); //seturl("t=".$this->after_goto."&$param_name=".$param,0,1);
             $this->after_goto = null;
         }
         else
