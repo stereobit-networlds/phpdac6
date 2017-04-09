@@ -3853,12 +3853,9 @@ EOF;
 		return ($ret);
 	}
 
-	protected function submitScript() {
-		$ret = "/* submit analytics script */";
+	protected function submitScript($referer=null) {
+		$ret = "/* $referer submit analytics script */";
 		
-		//$amount = GetSessionParam('amount'); //this->myfinalcost					 								 
-		//$subtotal = GetSessionParam('subtotal'); //$this->total
-		//$total = GetSessionParam('total'); //this->myfinalcost
 		$roadway = GetSessionParam('roadway');
 		$payway = GetSessionParam('payway');	
 		$addressway = GetSessionParam('addressway');
@@ -3875,6 +3872,9 @@ EOF;
 		
 		$trid = GetSessionParam('TransactionID') ;//$this->transaction_id		
 		
+		$tmplbody = $referer ? $referer . '-js-analytics' : 'cart-js-analytics';
+		$tmplline = $referer ? $referer . '-js-item-analytics' : 'cart-js-item-analytics';		
+		
 		$tokens = array(0=>$trid, 
 		                1=>number_format(floatval($ordertotal),$this->dec_num), 
 		                2=>number_format(floatval($ordersubtotal),$this->dec_num), 
@@ -3884,7 +3884,7 @@ EOF;
 						);	
 						
 
-		$ret .= _m('cmsrt._ct use cart-js-analytics+' . serialize($tokens) . '+1');
+		$ret .= _m("cmsrt._ct use $tmplbody+" . serialize($tokens) . '+1');
 		
 		$tokens = array();
 		foreach ($this->buffer as $prod_id => $product) {
@@ -3898,7 +3898,7 @@ EOF;
 				//extra order tokens
 				$tokens[19] = $trid; //max combine no
 				
-				$ret .= _m('cmsrt._ct use cart-js-item-analytics+' . serialize($tokens) . '+1');
+				$ret .= _m("cmsrt._ct use $tmplline+" . serialize($tokens) . '+1');
 				unset($tokens);
 			}	
 		}		
@@ -3908,9 +3908,17 @@ EOF;
 	}
     /*call from this submit_order */
 	protected function analytics() {
-	
-		if (iniload('JAVASCRIPT')) {
-			$code = $this->submitScript();	
+		
+		$referer = $_SESSION['http_referer']; //as saved by vstats
+		
+		$rstr = $this->paramload('ESHOP', 'refererAnalytics');
+		$refs = $rstr ? str_replace(',','|',strtolower($mstr)) : "skroutz|bestprice|google";
+		
+		//create analytics script if referer
+		if (preg_match("/($refs)/i", $referer, $matches)) {
+			
+			$code = $this->submitScript($matches[0]);	
+			
 			$js = new jscript;	
 			$js->load_js($code,"",1);			   
 			unset ($js);
@@ -3941,16 +3949,6 @@ EOF;
 		//else button	
 		$ret = "<a class=\"$bc\" href=\"$link\">" . $title . "</a>";
 		return ($ret);
-		
-		/*if ($link)
-			$ret = "<a href=\"$link\">";
-		  
-		$ret .= "<input type=\"button\" class=\"".$bc."\" value=\"".$title."\" />";
-	   
-		if ($link)
-			$ret .= "</a>";	   
-		  
-		return ($ret);*/
 	}
 	
 	protected function replace_cartchars($string, $reverse=false) {

@@ -3,6 +3,10 @@ $__DPCSEC['CMS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
 //namespace cms;
 
+function _r($r=null) {
+	return $r ? GetGlobal('controller')->require_dpc($r) : null;
+}
+
 function _v($v=null,$val=null) {
 	return $v ? GetGlobal('controller')->calldpc_var($v, $val) : null;
 }
@@ -22,8 +26,8 @@ define("CMS_DPC",true);
 
 $__DPC['CMS_DPC'] = 'cms';
 
-$a = GetGlobal('controller')->require_dpc('cms/fronthtmlpage.dpc.php');
-require_once($a);
+require_once(_r('cms/fronthtmlpage.dpc.php'));
+require_once(_r('cms/minify.dpc.php'));
 
 class cms extends fronthtmlpage {
 
@@ -115,6 +119,30 @@ class cms extends fronthtmlpage {
 		$pregmob = strtolower($this->mobileMatchDev());
 		return preg_match("/($pregmob)/i", $this->useragent);
 	}	
+	
+	public function cssMin($css=null) {
+		if (!$css) return null;
+		//if (paramload('CMS','minify'))
+			return minify::cssMinify($css);
+	
+		return ($css);
+	}	
+	
+	public function jsMin($js=null) {
+		if (!$js) return null;
+		//if (paramload('CMS','minify'))
+			return minify::jsMinify($js);
+	
+		return ($js);
+	}
+
+	public function htmlMin($htm=null) {
+		if (!$htm) return null;
+		//if (paramload('CMS','minify'))
+			return minify::htmlMinify($htm);
+	
+		return ($htm);
+	}		
 	
 		
     //URL funcs	
