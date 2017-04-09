@@ -36,6 +36,7 @@ $__LOCALE['RCTRANSACTIONS_DPC'][7]='_cost;Cost A;Κόστος A';
 $__LOCALE['RCTRANSACTIONS_DPC'][8]='_costpt;Cost B;Κόστος B';
 $__LOCALE['RCTRANSACTIONS_DPC'][9]='_xxx;Cost B;Κόστος Β';
 $__LOCALE['RCTRANSACTIONS_DPC'][10]='_user;User;Πελάτης';
+$__LOCALE['RCTRANSACTIONS_DPC'][11]='_referer;Ref;Ref';
 
 $__LOCALE['RCTRANSACTIONS_DPC'][28]='Eurobank;Credit card;Πιστωτική κάρτα'; //used by mchoice param
 $__LOCALE['RCTRANSACTIONS_DPC'][29]='Piraeus;Credit card;Πιστωτική κάρτα'; //used by mchoice param
@@ -174,9 +175,9 @@ class rctransactions extends shtransactions {
 			$lookup2 = $this->getTransportsELT('i.roadway', 'rw');
 			
 		    if ($selected_cus) 
-				$xsSQL2 = "SELECT * FROM (SELECT DISTINCT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i WHERE i.cid='$selected_cus') x";
+				$xsSQL2 = "SELECT * FROM (SELECT DISTINCT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt,i.referer FROM transactions i WHERE i.cid='$selected_cus') x";
 			else 
-				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt FROM transactions i) x";
+				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt,i.referer FROM transactions i) x";
 
 			_m("mygrid.column use grid2+recid|".localize('id',getlocal())."|5|0|||1|1");
 			//_m("mygrid.column use grid2+tid|".localize('id',getlocal())."|5|0|||0");
@@ -194,6 +195,7 @@ class rctransactions extends shtransactions {
 	        _m("mygrid.column use grid2+qty|".localize('_qty',getlocal())."|5|0|||||right");				
 			_m("mygrid.column use grid2+cost|".localize('_cost',getlocal())."|5|0|||||right");
 			_m("mygrid.column use grid2+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
+			_m("mygrid.column use grid2+referer|".localize('_referer',getlocal())."|10|0|");
 			$ret .= _m("mygrid.grid use grid2+customers+$xsSQL2+r+".localize('RCTRANSACTIONS_DPC',getlocal())."+recid+1+1+12+300+$x+0+1+1");
 
 	    }

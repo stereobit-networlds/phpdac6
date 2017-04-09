@@ -25,11 +25,13 @@ class shagent extends cmsagent {
     protected $agnStartsAfterNMsg; //start show msgs after a msg silent period
 	protected $agnStopsAfterNMsg; //stop show msgs after a number of messages
 	
-	var $divlist;
+	var $divlist, $http_referer;
    
 	public function __construct() {
 		
 		cmsagent::__construct();
+		
+		$this->http_referer = $_SESSION['http_referer']; //as saved at vstats
 		
 		//XMLHttpRequest cannot load http://www.stereobit.gr/jsdialog.php?t=jsdcode&id=ff134785e032f39bd9509e58262c4c6c&div=last&_=1487604756270. 
 		//No 'Access-Control-Allow-Origin' header is present on the requested resource. 

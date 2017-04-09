@@ -464,6 +464,8 @@ class shkatalogmedia {
 		//echo 'Input:'. GetParam('input') .' '.$input[0] .' '.$input[1]; 
 		$purl = $this->httpurl . '/' . _m("cmsrt.url use t=kfilter&cat=$cat"); 
 		//echo $this->min_price.'-'.$this->max_price.'-'.$min.'-'.$max.'-'.$diff.'-'.$step;
+		
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
 					
 		$onPrice = (($div = $this->filterajax) && (!$this->mobile)) ?		
 "$('.price-slider').on('slideStop', function(slideEvt) {
@@ -496,7 +498,7 @@ $(document).ready(function () {
         });
     }
 	
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
 		window.scrollTo(0,parseInt($('#{$this->filterajax}').offset().top, 10));
 	else {	
 		gotoTop('{$this->filterajax}');	
@@ -516,10 +518,11 @@ $(document).ready(function () {
 
 	//js called when in item page
 	protected function jsItem() {
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
 
 		$js = "
 function jsShowPhoto(name) {	
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) {
 	}	
 	else {	
 		new $.Zebra_Dialog(
@@ -531,7 +534,7 @@ function jsShowPhoto(name) {
 }
 		
 $(document).ready(function () {
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
 		window.scrollTo(0,parseInt($('#{$this->realID}').offset().top, 10));
 	else {
 		gotoTop('{$this->realID}');
@@ -1319,43 +1322,6 @@ JSFILTER;
 	   
 	    if ($mp<=$pager) return; 
 
-		//mobile version
-		/*if ($this->mobile)	{
-			//$current = "<a class='le-button' href='javascript:window.scrollTo(0,0,10)'>$page</a>";
-			//return ($current);
-			if ($page>0) 
-				$prev = str_replace("<a ","<a class='le-button' ",$this->pPage($page-1, 'Prev', $pcmd, $inp));
-			if ($page < $max_page) {
-				//$next = str_replace("<a ","<a class='le-button' ",$this->pPage($page+1, 'Next', $pcmd, $inp));
-				
-				$nx =  ($inp) ? _m("cmsrt.url use t=$pcmd&input=$inp&cat=$cat&page=" . strval($page+1)) :
-								_m("cmsrt.url use t=klist&cat=$cat&page=" . strval($page+1));
-								 
-				$next = "<a class='le-button' href='$nx'>Next</a>";
-				
-				$url = $this->httpurl .'/';
-				$url.= _m("cmsrt.url use t=$pcmd&cat=$cat&page=" . strval($page+1));
-				$next = "<button id='myDiv' class='le-button'>Next</button>";
-				
-				//$code = "$('#myDiv').on('click touchstart',function(){ ajaxCall('$url','{$this->filterajax}',1); alert('test');});";
-				
-				//page arg is always 0+1 
-				$code = "$('#myDiv').on('click touchstart',function(){
-							$.ajax({ url: '$url', cache: false, success: function(html){
-								$('#{$this->filterajax}').html(html);
-								window.scrollTo(0,parseInt($('#{$this->filterajax}').offset().top, 10));
-							}})
-						});";	
-				$js = new jscript;	
-				$js->load_js($code,null,1);		
-				unset ($js);
-			}	
-			
-			return ($prev . $next);
-		}*/
-	
-	    //template
-	    //$tmplcontents = $this->select_template('fppager-button');
 		$tmplcontents = _m('cmsrt.select_template use fppager-button');
 	   
 	    if ($page < $max_page) {//&& ($mp<$pager)) { 

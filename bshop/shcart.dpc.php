@@ -356,35 +356,29 @@ class shcart extends storebuffer {
 			case "cartguestuser" :  die($this->guestDetails()); 
 									break;
 			
-			case "cartinvoice"   :  //$ps = 'x'; //none
-			                        //die("invoicedetails|" . $ps);
-									die('x');
+			case "cartinvoice"   :  die($this->invoiceDetails());
 									break;	
-			
-			case "cartcustselect":  //shcustomer selcus alias for cart
-									_m('shcustomers.deactivatecustomers');//make all decative
-		                            _m('shcustomers.activatecustomer use '.GetReq('customerway')); //activate selected
-									_m('shcustomers.is_reseller');//change type of customer
-			                        break;
 									
-			case "cartcustomer"  : 	//$ps = $this->customerDetails();
-									//die("customerdetails|" . $ps);
-									die($this->customerDetails());
+			case "cartcustomer"  : 	die($this->customerDetails());
 									break;			
 			
-			case "cartaddress"   : 	//$ps = $this->addressDetails();
-									//die("addressdetails|" . $ps);
-									die($this->addressDetails());
+			case "cartaddress"   : 	die($this->addressDetails());
 									break;				
 			
-			case "carttransport" : 	//$ps = $this->payway2();
-									//die("transportdetails|" . $ps);
-									die($this->payway2());
+			case "carttransport" : 	die($this->payway2());
 									break;	
-			case "cartpayment"   : 	//$ps = $this->payDetails();
-									//die("paymentdetails|" . $ps);
-									die($this->payDetails());
-									break;									
+									
+			case "cartpayment"   : 	die($this->payDetails());
+									break;
+
+			case "cartcustselect":  if (defined('SHCUSTOMERS_DPC'))  {
+										//shcustomer selcus alias for cart
+										_m('shcustomers.deactivatecustomers');//make all decative
+										_m('shcustomers.activatecustomer use '.GetReq('customerway')); //activate selected
+										$this->is_reseller = _m('shcustomers.is_reseller');//change type of customer
+									}
+									$this->jsBrowser();
+			                        break;									
 			
 			case "addtocart"     : 	$p = $this->addtocart();
 									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN1', getlocal()));
@@ -591,13 +585,13 @@ class shcart extends storebuffer {
 			$cartstr = explode(';', $addtocart);
 			$urlstr = "&id=" . $cartstr[0];
 			
-			$gotoSection = 'cart-Product' . $this->_count();
+			$gotoSection = 'cart-Product' . $this->getcartCount();
 		}
 		else {
 			$urlstr = ($cat = GetReq('cat')) ? "&cat=" . $cat : "&id=" . $gotoSection;
 			
 			//echo $this->cartsumitems; //not calculated yet
-			if ((GetReq('t')=='calc') && ($cartsumitems = $this->_count())) { //goto calc products1..n
+			if ((GetReq('t')=='calc') && ($cartsumitems = $this->getcartCount())) { //goto calc products1..n
 				for($i=1;$i<=$cartsumitems;$i++) {
 					if ($calcItemVal = GetReq('Product'.$i)) { 
 						$gotoSection = 'cart-Product' . $i; 
@@ -655,27 +649,47 @@ $(document).ready(function () {
 $(document).ready(function () {
 	
     if (/{$mobileDevices}/i.test(navigator.userAgent)) {
-		
-	  $('#addressway').on('change', function (e) {
+	  //delegate events
+		  
+	  //$('#addressway').on('change', function (e) { 
+	  $('body').on('change', '#addressway', function(){
 		url = 'katalog.php?t=cartaddress&addressway='+$(this).val();
 		$.ajax({ url: url, cache: false, success: function(html){
 			$('#addressdetails').html(html);
 		}});
       });
 	
-	  $('#roadway').on('change', function (e) {
+	  //$('#roadway').on('change', function (e) {
+	  $('body').on('change', '#roadway', function(){
 		url = 'katalog.php?t=carttransport&roadway='+$(this).val();
 		$.ajax({ url: url, cache: false, success: function(html){
 			$('#transportdetails').html(html);
 		}});
       });	
 	
-	  $('#payway').on('change', function (e) {
+	  //$('#payway').on('change', function (e) {
+	  $('body').on('change', '#payway', function(){
 		url = 'katalog.php?t=cartpayment&payway='+$(this).val();
 		$.ajax({ url: url, cache: false, success: function(html){
 			$('#paymentdetails').html(html);
 		}});
-      });		
+      });	
+
+	  //$('#customerway').on('change', function (e) {
+	  $('body').on('change', '#customerway', function(){
+		url = 'katalog.php?t=cartcustomer&customerway='+$(this).val();
+		$.ajax({ url: url, cache: false, success: function(html){
+			$('#customerdetails').html(html);
+		}});
+      });	
+
+	  //$('#invoiceway').on('change', function (e) {
+	  $('body').on('change', '#invoiceway', function(){
+		url = 'katalog.php?t=cartinvoice&invway='+$(this).val();
+		$.ajax({ url: url, cache: false, success: function(html){
+			$('#invoicedetails').html(html);
+		}});
+      });	  
 	}
 	
 	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
@@ -930,7 +944,7 @@ EOF;
 		//..poping allways javascript alert(stock_message)
 		//so check if param a exist to proceed.
 		if ($a!='') {//echo $a,'>';
-			if ($this->_count() < $this->maxcart) { //check cart maximum items
+			if ($this->getcartCount() < $this->maxcart) { //check cart maximum items
 
 				$this->qty_total+=1;
 				SetSessionParam('qty_total',$this->qty_total);
@@ -2273,7 +2287,8 @@ EOF;
 							$allow = _v('shcustomers.allow_inv_selection');
 							$invtype = _v('shcustomers.invtype');
 							//if (!$allow) return null;
-						}   
+						}  
+						//echo $this->is_reseller,'>';		
 						if ($this->is_reseller)
 							$dtypes = array(localize('_INVOICE',$lan), localize('_APODEIXI',$lan));
 						else 
@@ -2301,6 +2316,18 @@ EOF;
 			 default : 
 	    }		    	
 	}	
+	
+	public function invoiceDetails($notmpl=false) {
+		$code = GetReq('invway') ? GetReq('invway') : 
+			    $this->getDetailSelection('invway');
+
+		if (defined('SHCUSTOMERS_DPC')) {
+			//$isreseller = $this->is_reseller;//GetSessionParam('RESELLER');			
+			//$customer = _m('shcustomers.getSelectedCustomer use ' . $code);
+		}		
+		
+		return null;
+	}		
 	
 	public function addressway() {
 		   	   
@@ -3342,6 +3369,10 @@ EOF;
 	   }
 
 	   return ($ret);
+	}
+	
+	public function getcartCount() {
+		return $this->_count();
 	}
 	
 	public function getcartTotal($noformat=null, $tax=null) {

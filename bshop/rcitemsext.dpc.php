@@ -59,11 +59,11 @@ class rcitemsext {
 		$this->urlpath = paramload('SHELL','urlpath');
 		
 		$this->select_fields = array('code5','cat0','cat1','cat2','cat3',/*'cat4',*/
-									 'itmactive','active','itmname','uniname1',
+									 'itmactive','active','itmname','uniname1','xml',
 									 'ypoloipo1','price0','price1','price2','pricepc',
 									 'manufacturer','size','dimensions','color','resources');
 	   	
-		$this->editf = array('itmactive','active','itmname','uniname1',
+		$this->editf = array('itmactive','active','itmname','uniname1','xml',
 							'ypoloipo1','price0','price1','price2','pricepc',
 							'manufacturer','size','color','dimensions','resources');
 	   

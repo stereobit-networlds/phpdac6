@@ -235,10 +235,13 @@ class shcustomers {
 
          switch($sAction)   {
 						   
-            case "addnewdeliv"      : break;
+            case "addnewdeliv"      : $this->jsBrowser();
+									  break;
             case "removedeliv"      : $this->delivok = $this->removedeliveryaddress();
+									  $this->jsBrowser();
 						              break;
             case "savenewdeliv"     : $this->delivok = $this->savedeliveryaddress();
+									  $this->jsBrowser();
 						              break;						   						   						   
 									  
             case "addnewus"         : break;
@@ -340,6 +343,39 @@ class shcustomers {
 		}
 		return ($out);
 	}
+	
+	protected function jsBrowser() {
+		
+		$code = $this->jsCust();		
+		   
+		if ($code) {
+			$js = new jscript;	
+			$js->load_js($code,null,1);		
+			unset ($js);
+		}
+	}
+
+	protected function jsCust() {
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
+		
+		$code = "
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#checkout-page').offset().top, 10));
+	else {		
+		gotoTop('checkout-page');	
+	
+		$(window).scroll(function() { 
+			if (agentDiv('transactions')) {
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=trans&div=transactions', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}	
+		});	
+	}	
+";
+		
+		return ($code);
+	}		
 	
 	protected function checkFieldsJs($err=null, $title=null) {
 			
@@ -736,7 +772,7 @@ window.onload=function(){
 	   	   	
 	}
 	
-	function select_invoice($itype=null,$cmd=null) {
+	public function select_invoice($itype=null,$cmd=null) {
 	  $selected_inv_type = GetReq('invtype');
 	  $t = $cmd?$cmd:GetReq('t');
 	  //in case of cart procedure
@@ -753,9 +789,8 @@ window.onload=function(){
 	
 	public function get_invoice_type() {
 	  
-	  $ret = $this->invtype?$this->invtype:'0';
+	  $ret = $this->invtype ? $this->invtype : '0';
 	  return ($ret);
-	  //return (GetSessionParam('invtype'));
 	}
 	
 	public function get_invoice_type_descr() {
@@ -763,7 +798,6 @@ window.onload=function(){
 	  $ret = $this->invtype ? localize('_INVOICE',getlocal()) :
 	                          localize('_APODEIXI',getlocal());
 	  return ($ret);
-	  //return (GetSessionParam('invtype'));
 	}	
 	
 	public function customer_exist($returnid=false) {
@@ -1230,7 +1264,7 @@ window.onload=function(){
 	
 	public function get_cus_type($id,$field=null,$istext=0) {
         $db = GetGlobal('db');
-		$mycode = $field?$field:'code2';
+		$mycode = $field ? $field : 'code2';
 
 		if ($id) { 
 			$sSQL = "select attr1 from customers where active=1 and $mycode=";
