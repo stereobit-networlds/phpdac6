@@ -688,7 +688,7 @@ class transactions {
 	
     public function searchform()  {
 
-      $filename = seturl("t=transview&a=&g=&p=");      
+      $filename = seturl("t=transview");      
 
       $toprint  = "<FORM action=". $filename . " method=post class=\"thin\">";
       $toprint .= "<P><FONT face=\"Arial, Helvetica, sans-serif\" size=1><STRONG>";
@@ -730,7 +730,7 @@ class transactions {
 	   $p = GetReq('p');
 	   $a = GetReq('a');
 	   
-	   $link = seturl("t=loadcart&a=$lname&g=&p=$p" , $fname);
+	   $link = seturl("t=loadcart&p=$p" , $fname);
 	   
        if ($this->admint>0) {
 			   //print checkbox 
@@ -785,15 +785,15 @@ class transactions {
 	   $t = GetReq('t');
 	   $sort = GetReq('sort');  
 	
-       $data[] = seturl("t=$t&a=&g=1&p=$p&sort=$sort&col=0" ,  "A/A" );
+       $data[] = seturl("t=$t&g=1&p=$p&sort=$sort&col=0" ,  "A/A" );
 	   $attr[] = "left;10%";							  
-	   $data[] = seturl("t=$t&a=&g=2&p=$p&sort=$sort&col=1" , localize('_TRANSACTION',getlocal()) );
+	   $data[] = seturl("t=$t&g=2&p=$p&sort=$sort&col=1" , localize('_TRANSACTION',getlocal()) );
 	   $attr[] = "left;30%";
-	   $data[] = seturl("t=$t&a=&g=3&p=$p&sort=$sort&col=2" , localize('_TRANSTAT',getlocal()) );
+	   $data[] = seturl("t=$t&g=3&p=$p&sort=$sort&col=2" , localize('_TRANSTAT',getlocal()) );
 	   $attr[] = "left;30%";
-	   $data[] = seturl("t=$t&a=&g=4&p=$p&sort=$sort&col=3" , localize('_DATE',getlocal()) );
+	   $data[] = seturl("t=$t&g=4&p=$p&sort=$sort&col=3" , localize('_DATE',getlocal()) );
 	   $attr[] = "left;15%";
-	   $data[] = seturl("t=$t&a=&g=4&p=$p&sort=$sort&col=4" , localize('_TIME',getlocal()) );
+	   $data[] = seturl("t=$t&g=4&p=$p&sort=$sort&col=4" , localize('_TIME',getlocal()) );
 	   $attr[] = "left;15%";	   
 
   	   $mytitle = new window('',$data,$attr);

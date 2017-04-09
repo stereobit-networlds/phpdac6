@@ -70,13 +70,16 @@ class shtransactions extends transactions {
 	public function event($event=null) {
    
 		switch ($event) {
-			case 'cancelorder'   : $this->cancelOrder(GetReq('tid')); break;   
+			case 'cancelorder'  : 	$this->cancelOrder(GetReq('tid')); 
+									$this->jsBrowser();
+									break;   
 		   
-			case 'transviewhtml' : $this->viewTransactionHtml();
+			case 'transviewhtml': 	$this->viewTransactionHtml();
 									die();
 									break;
 								
-			default              : transactions::event($event);						
+			default             :	transactions::event($event);
+									$this->jsBrowser();
 		}
    }
    
@@ -90,25 +93,95 @@ class shtransactions extends transactions {
 
 		return ($out);
 	}   
+	
+	protected function jsBrowser() {
+		
+		$code = $this->jsTrans();		
+		   
+		if ($code) {
+			$js = new jscript;	
+			$js->load_js($code,null,1);		
+			unset ($js);
+		}
+	}
+
+	protected function jsTrans() {
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
+		
+		$code = "
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
+		window.scrollTo(0,parseInt($('#questions').offset().top, 10));
+	else {		
+		gotoTop('questions');	
+	
+		$(window).scroll(function() { 
+			if (agentDiv('transactions')) {
+				$.ajax({ url: 'jsdialog.php?t=jsdcode&id=trans&div=transactions', cache: false, success: function(jsdialog){
+					eval(jsdialog);		
+				}})	
+			}	
+		});	
+	}	
+";
+		
+		return ($code);
+	}	
    
 	//overwrite
 	public function saveTransaction($data='',$user='',$payway=null,$roadway=null,$qty=null,$cost=null,$costpt=null) {
-   
 		//execute default save and get id
-		$id = transactions::saveTransaction($data,$user,$payway,$roadway,$qty,$cost,$costpt);
-   
-		//save xml file
-		$xml = new pxml();
-		$xml->addtag('ORDER',null,null,"id=".$id);							
-		$xml->addtag('XUL','ORDER',null,null); 
-		$xml->addtag('GTKWINDOW','XUL',null,null);
+		//$id = transactions::saveTransaction($data,$user,$payway,$roadway,$qty,$cost,$costpt);
+		$db = GetGlobal('db');
+		
+		$myqty = $qty ? $qty : 0;
+		$mycost = $cost ? $cost : 0;
+		$mycostpt = $costpt ? $costpt : 0;
+		
+		$myuser = $user ? $user : $this->userid;
+		$theid = $this->generate_id();
+		$referer = GetSessionParam('http_referer'); //as saved at vstats
+
+		if (($theid) && ($myuser)) {
+			$id = $theid + $this->tcounter;
+			$myid = $this->initial_word . $id;  
+			$mydate = date('Y/m/d'); 
+			$mytime = date('H:i:s');
+			$mydata = $data;
+			
+			$sSQL = "insert into transactions (tid,cid,tdate,ttime,tdata,tstatus,payway,roadway,qty,cost,costpt,referer) values " .
+					"(" .
+					$db->qstr($myid) . "," .
+					$db->qstr($myuser) . "," .
+					$db->qstr($mydate) . "," .
+					$db->qstr($mytime) . "," .
+					$db->qstr($mydata) . "," . 
+					"0," .
+					$db->qstr($payway) . "," . 
+					$db->qstr($roadway) . "," .
+					$myqty . "," .
+					$mycost . "," .
+					$mycostpt . ",".				 				 				 
+					$db->qstr($referer) . ")";
+
+	        $res = $db->Execute($sSQL);			
+			//echo $sSQL;
+			
+			if ($db->Affected_Rows()) {
+				//echo 'save xml';
+				$xml = new pxml();
+				$xml->addtag('ORDER',null,null,"id=".$id);							
+				$xml->addtag('XUL','ORDER',null,null); 
+				$xml->addtag('GTKWINDOW','XUL',null,null);
 							
-		$ret = $xml->getxml();
-		$this->save2disk($id,$ret);
-	  
-		unset($xml);   
+				$ret = $xml->getxml();
+				$this->save2disk($id,$ret);
+				unset($xml); 
+
+				return ($id); //true	
+			}
+		} 	
 							
-		return ($id);						
+		return false;						
 	}
    
 	protected function save2disk($id,$data) {
@@ -390,7 +463,7 @@ class shtransactions extends transactions {
 								number_format($rec[6],2,',','.');		   
 				}
 		   
-				$ppager = GetReq('pl')?GetReq('pl'):10;
+				$ppager = GetReq('pl') ? GetReq('pl') : 10;
 				$browser = new browse($transtbl,null,$this->getpage($transtbl,$this->searchtext));
 				$out .= $browser->render("transview",$ppager,$this,1,0,0,0);
 				unset ($browser);	

@@ -94,9 +94,10 @@ class shwishcmp extends shkatalogmedia {
 	}
 
 	protected function jsWishCmp() {
- 
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
+		
 		$code = "
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
 		window.scrollTo(0,parseInt($('#main-content').offset().top, 10));
 	else {		
 		gotoTop('main-content');	

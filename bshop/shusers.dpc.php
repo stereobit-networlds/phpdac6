@@ -99,9 +99,10 @@ class shusers extends cmsusers {
 	}
 
 	protected function jsUser() {
- 
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
+		
 		$code = "
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
 		window.scrollTo(0,parseInt($('#checkout-page').offset().top, 10));
 	else {		
 		gotoTop('checkout-page');	

@@ -32,7 +32,16 @@ class shlogin extends cmslogin {
 			case 'rempwd'   : 	$this->jsBrowser();
 								break;
 			
-			case 'dologin'  :
+			case 'dologin'  :   if (defined('SHCART_DPC')) { 									
+									//when cart items and goto cart
+									/*if (_m('shcart.getcartCount')) {
+										//echo 'shlogin:';
+										SetSessionParam('cartstatus',1); 
+										_v('shcart.status use 1'); 
+									}*/
+									_m('shcart.jsBrowser');
+								}	
+								//break;
 			case 'shlogin'  :
 			case 'cmslogin' :   cmslogin::event($event);
 								$this->jsBrowser(); 
@@ -44,7 +53,14 @@ class shlogin extends cmslogin {
    
 	public function action($action=null) {
 
-		$out = cmslogin::action($action);
+		switch ($action) {
+			case 'dologin'	: 	/*if ($this->login_successfull) {
+									if (defined('SHCART_DPC')) {
+									}
+								}	
+								break;*/
+			default 		: 	$out = cmslogin::action($action);
+		}	
 		return ($out);
 	}
 	
@@ -60,9 +76,10 @@ class shlogin extends cmslogin {
 	}
 
 	protected function jsLogin() {
- 
+		$mobileDevices = _m('cmsrt.mobileMatchDev');
+
 		$code = "
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
 		window.scrollTo(0,parseInt($('#authentication').offset().top, 10));
 	else {		
 		gotoTop('authentication');	

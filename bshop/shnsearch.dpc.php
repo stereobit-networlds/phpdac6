@@ -142,9 +142,9 @@ class shnsearch {
 	protected function js_search_onclick($buttonId=null, $inputId=null) {
 	    $felement= $inputId ? $inputId : 'input';
 		$belement= $buttonId ? $buttonId : 'search-button';
-		
+//$(document).ready(function () {		
+//});
 		$code = "
-$(document).ready(function () {
 	$('#$belement').on('click',function(){
 		var url = 'search/*/';
 		var inp = document.getElementById('$felement').value;
@@ -152,7 +152,6 @@ $(document).ready(function () {
 		//alert('search:'+ret);
 		window.location.href = ret;
 	});
-});
 ";
       return ($code);	
 	}	
@@ -170,6 +169,7 @@ $(document).ready(function () {
 	}
 	
 	protected function js_make_search_url() {
+		$mobileDevices = _m('cmsrt.mobileMatchDev');		
 		$searchincat = _m('shkategories.getcurrentkategory');		
 		
 		$out = "
@@ -190,7 +190,7 @@ function get_stype()
 }
 
 $(document).ready(function () {
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) 
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
 		window.scrollTo(0,parseInt($('#section-{$searchincat}').offset().top, 10));
 	else {
 		gotoTop('section-{$searchincat}');
