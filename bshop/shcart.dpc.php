@@ -198,7 +198,7 @@ class shcart extends storebuffer {
 	var $detailqty, $stock_msg, $overitem, $ignoreqtyzero, $qtytototal,$total;
 	var $path,$autopay, $mydiscount, $mytaxcost, $myfinalcost, $myshippingcost, $discount;
 
-	var $urlpath, $user, $aftersubmitgoto, $aftercancelgoto;
+	var $urlpath, $user, $aftersubmitgoto, $aftercancelgoto, $onSuccessGotoTitle;
 	var $todo, $quicktax,$showtaxretail,$is_reseller, $cartlinedetails, $notallowremove;
 	var $cartloopdata, $looptotals, $shipcalcmethod, $s_enc, $t_enc, $itemclick, $imagex, $imagey;
 	var $cartprintwin, $itemscount, $supershipping, $shipzone, $shipmethods, $parcelunit, $parcelweight;
@@ -265,6 +265,7 @@ class shcart extends storebuffer {
 		$this->ordermailsubject = remote_paramload('SHCART','ordermailsubject',$this->path);
 		$this->aftersubmitgoto = remote_paramload('SHCART','aftersubmitgoto',$this->path);
 		$this->aftercancelgoto = remote_paramload('SHCART','cancelgoto',$this->path);
+		$this->onSuccessGotoTitle = remote_paramload('SHCART','onsuccessgototitle',$this->path);
 		$this->test2pay = remote_paramload('SHCART','test2pay',$this->path);
 		
 		$rw = remote_paramload('SHCART','rewrite',$this->path);
@@ -436,8 +437,7 @@ class shcart extends storebuffer {
 								 
 			case $this->cancel   : 	SetSessionParam('cartstatus',0); 
 									$this->status = 0; 
-									//$this->cancel_order(); used by pay engines
-								 
+
 									if ($goto = $this->aftercancelgoto) {
 										header("Location: http://".$goto); 
 										exit;
@@ -1053,6 +1053,15 @@ function addtocart(id,cartdetails)
         return false;
     } 	
 	
+	public function getDetailSelection($selection=null) {
+		if (!$selection) return null;
+		
+		$ret = GetParam($selection) ? GetParam($selection) :
+									  GetSessionParam($selection);
+									  
+		return ($ret);							  
+	}	
+	
     public function submit_order($doSubmit=false) {
 		$payway = $this->getDetailSelection('payway');
 		$roadway = $this->getDetailSelection('roadway');
@@ -1110,20 +1119,6 @@ function addtocart(id,cartdetails)
 				SetSessionParam('TransactionID',$this->transaction_id);
 
 				if ($doSubmit==true) {
-					/*
-					if (!$error = $this->goto_mailer($this->transaction_id, $this->twig_invoice_template_name)) { 
-			
-					$this->analytics();
-					$this->logcart();
-					$this->savePoints($user ,$this->transaction_id);
-					$this->clear();
-
-					$this->update_statistics('cart-submit', $user);
-				
-					//transport save
-					if (defined('TRANSPORT_DPC')) 
-						_m('transport.finalize use '.$this->transaction_id.'+'.$this->shippingcost);			
-					}*/
 					$this->submitCartOrder($this->transaction_id);
 				}
 				//else called by payengines when end of procedure
@@ -1154,7 +1149,7 @@ function addtocart(id,cartdetails)
 	}
 	//alias, used by pay engines
 	public function cancelCartOrder() {
-		$this->cancel_order();
+		//$this->cancel_order(); //!!! not affceted
 	}	
 	
 	//used by pay engines when comeback
@@ -1170,21 +1165,21 @@ function addtocart(id,cartdetails)
 			_m("cmsrt.cmsMail use $from+{$this->cartreceive_mail}+$subject+$body");
 		}			
 		
-		//$_trid = $trid ? $trid : $this->transaction_id;	
+		$_trid = $trid ? $trid : $this->transaction_id;	
 			
-		if (!$error = $this->goto_mailer($trid, $subject)) { 
+		if (!$error = $this->goto_mailer($_trid, $subject)) { 
 			
 			$this->analytics();
 			$this->logcart();
-			$this->savePoints($this->user ,$trid);
+			$this->savePoints($this->user ,$_trid);
 			$this->clear();
+			
+			//transport save
+			if (defined('TRANSPORT_DPC')) 
+				_m("transport.finalize use $_trid+" . $this->shippingcost);						
 
 			$this->update_statistics('cart-submit', $this->user);
 				
-			//transport save
-			if (defined('TRANSPORT_DPC')) 
-				_m("transport.finalize use $trid+" . $this->shippingcost);			
-			
 			return true;
 		}
 
@@ -1195,8 +1190,6 @@ function addtocart(id,cartdetails)
 	}
 
 	protected function goto_mailer($trid=null, $subject=null) {
-	
-		//$this->transaction_id = $trid ? $trid : $this->transaction_id;		
 	
 	    if ($mytrid = $this->printout) {
 			//fetch saved transaction html body
@@ -1433,6 +1426,47 @@ function addtocart(id,cartdetails)
 		//$this->calculate_shipping();	 		 
 		$this->calcShipping();
 	}
+	
+    public function setquantity($id,$qty=null) {
+
+		$r = $this->readonly ? 'readonly' : null;
+
+		$qtyname = $id ;
+		$myqty = is_numeric($qty) ? $qty : 0;
+		$selectedqty = GetParam($qtyname) ? GetParam($qtyname) : $myqty;
+	  
+		if (!$this->status) { //only if status=0 else when cart status > 0 qty change
+	  
+			if (($this->maxqty<0) || ($this->readonly)) { //free style
+		    
+				$onchange = "onkeyup=computeqty('$qtyname',0)"; 
+				$onclickadd = "onclick=computeqty('$qtyname',1)";
+				$onclickreduce = "onclick=computeqty('$qtyname',-1)";
+			
+				$out = $this->minus ? "<a class='$this->minus' href='#reduce' $onclickreduce></a>" : null;
+				$out.= "<input id=\"$qtyname\" name=\"$qtyname\" $onchange value=\"$selectedqty\" size=\"{$this->maxlength}\" maxlength=\"{$this->maxlength}\" $r >";//<<4 max lenght of qty		  
+				$out.= $this->plus ? "<a class='$this->plus' href='#add' $onclickadd></a>" : null;
+			}
+			else { //combo style
+		  
+				$url_location = $this->url . '/calc/'; 
+		  
+				$out = "<SELECT class=\"myf_select_tiny\" name=\"$qtyname\" "; //>"
+				$out .= "onChange=\"location='$url_location'+'$qtyname'+'/'+this.options[this.selectedIndex].value+'/'\">"; 
+				//$out .= "onChange=\"this.form.submit()\">";
+				for ($j=1;$j<=$this->maxqty;$j++) {
+					if (($selectedqty) && ($selectedqty==$j)) 
+						$out .= "<OPTION value='$j' selected>$j";
+					else $out .= "<OPTION value='$j'>$j";
+				}  
+				$out .= "</OPTION></SELECT>";
+			}	
+		}
+		else
+			$out = $qty; 
+		  
+		return ($out);
+	}	
 
     public function showsymbol($id,$allowremove=null,$qty=null) {
 	//public function showsymbol($id,$group,$page,$allowremove=null,$qty=null) {	
@@ -1895,15 +1929,6 @@ function addtocart(id,cartdetails)
 	   	   
 	    return ($loopout);  	 	
 	}	
-	
-	public function getDetailSelection($selection=null) {
-		if (!$selection) return null;
-		
-		$ret = GetParam($selection) ? GetParam($selection) :
-									  GetSessionParam($selection);
-									  
-		return ($ret);							  
-	}
 	
 	public function guestDetails() {
 		//if (defined('SHCUSTOMERS_DPC')) {
@@ -2644,114 +2669,6 @@ function addtocart(id,cartdetails)
 		$out = $this->combine_tokens($mytemplate,$params,true);
 		return ($out);	   	    	
 	}	
-	
-	//standart roadway, payway costs
-	protected function calcShipping() {
-		$db = GetGlobal('db');	
-
-		if ($code = $this->getDetailSelection('roadway')) {
-			$sSQL = "select cost from ptransports where ";
-			$sSQL.= "code=" . $db->qstr($code);
-		}	
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);	
-		$tcost = $res->fields[0];
-		
-		if ($code = $this->getDetailSelection('payway')) {
-			$sSQL = "select cost from ppayments where code=" . $db->qstr($code);
-		}			
-		$res = $db->Execute($sSQL);	
-		$pcost = $res->fields[0];
-		
-		$result = floatval($tcost) + floatval($pcost);
-		
-		//save shipping cost
-		$this->shippingcost = $result;
-		SetSessionParam('shipcost', $this->shippingcost);
-		
-		return ($result);			
-	}
-	
-	protected function calculate_shipping() {
-		$ways = remote_arrayload('SHCART','roadways',$this->path);
-		//print_r($ways);
-		//echo 'a';
-		if (!$ways) return null;	
-		//echo 'b';
-		$wp = $ways[0];
-		$w = explode('/',$wp);
-		$roadway = array_pop($w);
-		$shipway = GetParam("roadway") ? //no table in greek
-						($this->lan ? //if in greek, get the english descr
-								str_replace('/'.GetParam("roadway"),'',$ways[0]) ://standart english descr 0array ??? 
-								GetParam("roadway")
-						) :
-						(GetSessionParam("roadway") ? 
-								GetSessionParam("roadway") : 
-								$roadway  //standart english descr ??? 0array
-						);	
-		//echo 'b',$shipway;
-		if ($this->supershipping) {
-			//echo 'c';
-			$cartweight = $this->weightCart();
-			//echo '>',$cartweight; 
-		
-			$this->shippingcost = $this->calc_supershipping($cartweight,$shipway);
-			SetSessionParam('shipcost',$this->shippingcost);
-			//echo 'ship calc result:',$result;
-			return ($this->shippingcost);
-		 
-		}
-		else {//standart method	
-			//echo 'd';
-			foreach ($ways as $wid=>$way) {
-				if (stristr($way,$shipway)) {
-					$id = $wid;
-				}
-			}		
-			$rfile = 'roadway'.$id.'.ini';
-			//echo '>',$rfile;
-			$file = $this->path . $rfile; //strtolower($shipway) . '.ini';
-			if (is_readable($file)) {
-				$data = parse_ini_file($file,1);
-				//print_r($data);
-		
-				$method = $this->shipcalcmethod[$id];//per ship selection
-		
-				/*RECURSION... one func calls another..DISABLE*/
-				//$this->quick_recalculate();	//to update totals and prices..	
-		
-				switch ($method) {
-		
-					case 2 ://use weight as param..invoke sql
-							break;
-		
-					case 1 ://use items num as param
-							$selector = floatval($this->qtytotal);
-							break;
-		
-					case 0 :
-					default: //using price as param
-							$selector = floatval($this->total);
-				}
-		
-				//echo $selector,'>';
-				foreach ($data as $shipkey=>$shiparams) {
-					$rcost = floatval($shipkey);
-					//echo '<br>',$selector,'<=',$rcost;
-					if ($selector<=$rcost){
-						$result = floatval($shiparams['cost']);
-						break;
-					}  
-				}
-		
-				$this->shippingcost += $result;
-				//echo $this->shippingcost,'>';
-				SetSessionParam('shipcost',$this->shippingcost);
-			}
-		}//method
-		return ($result);
-	}
 
 
     protected function calculate_totals() {
@@ -2797,43 +2714,46 @@ function addtocart(id,cartdetails)
     }
 	
 	protected function finalize_cart_success() {
-        $goto = $this->aftersubmitgoto ?
-				$this->aftersubmitgoto : GetSessionParam('aftersubmitgoto');
-				
-		$tokens[] = $this->transaction_id;					
+		if ($mygototitle = $this->onSuccessGotoTitle) {
+			$onsuccess = explode('/',$mygototitle); 
+			$onsuccesstitle = $onsuccess[$this->lan];
+		}
+		else 
+			$onsuccesstitle = localize('_HOME',$this->lan);	
 		
-		$this->update_statistics('cart-final-purchase', $this->user);			
-
+        $goto = $this->aftersubmitgoto ?
+				$this->aftersubmitgoto : GetSessionParam('aftersubmitgoto');		
+				
+		$gobutton =  _m("cmsrt.url use t=$goto+$onsuccesstitle");
+		
 		$payway = $this->getDetailSelection('payway');
 		$roadway = $this->getDetailSelection('roadway');	   
 		$invway = $this->getDetailSelection('invway');	   
 		$addressway = $this->getDetailSelection('addressway');		   
-		$sxolia = $this->getDetailSelection('sxolia');
-
-		$myst = remote_paramload('SHCART','onsuccessgototitle',$this->path);
-        $onsuccess = explode('/',$myst); 
-		$onsuccesstitle = $onsuccess[$this->lan];
-		$goto_title = $onsuccesstitle ? $onsuccesstitle : localize('_HOME',$this->lan);
-
-		$gobutton =  _m('cmsrt.url use t=' . $goto . '+' . $goto_title); 
+		$sxolia = $this->getDetailSelection('sxolia'); 
 				
+		$tokens[] = $this->transaction_id;				
 		$tokens[] = $this->print_button();		
 		$tokens[] = $gobutton; 
 
 		$mycarttemplate = _m('cmsrt.select_template use shcartsuccess');	
 		$out = $this->combine_tokens($mycarttemplate,$tokens,true);
 
+		//change status of transaction
+        //if (defined('SHTRANSACTIONS_DPC')) 
+		   // _m('shtransactions.setTransactionStatus use '.$this->transaction_id."+1");
+		
+		$this->update_statistics('cart-final-purchase', $this->user);					
+		
 		return ($out);
 	}
 
 	protected function finalize_cart_error() {
-
-		$this->update_statistics('cart-final-error', $this->user);		
-
+		
 		if ($err1 = $this->mailerror) {
 			//change status of transaction
             if (defined('SHTRANSACTIONS_DPC')) 
-		        _m('shtransactions.setTransactionStatus use '.$this->transaction_id."+3");
+		        _m('shtransactions.setTransactionStatus use '.$this->transaction_id."+-3");
 			
 			$error = $err1;//echo $error;
 		}
@@ -2841,7 +2761,7 @@ function addtocart(id,cartdetails)
 		if ($err2 = $this->submiterror) { 
 			//change status of transaction ?!
             if (defined('SHTRANSACTIONS_DPC')) 
-		        _m('shtransactions.setTransactionStatus use '.$this->transaction_id."+3");
+		        _m('shtransactions.setTransactionStatus use '.$this->transaction_id."+-4");
 						
 			$error .= $err2; //"/Invalid transaction id.";
 		}	
@@ -2853,6 +2773,8 @@ function addtocart(id,cartdetails)
 		$mycarttemplate = _m('cmsrt.select_template use shcarterror');
 		$out = $this->combine_tokens($mycarttemplate,$tokens,true);	
 
+		$this->update_statistics('cart-final-error', $this->user);				
+		
 		return ($out);
 	}
 	
@@ -2876,8 +2798,7 @@ function addtocart(id,cartdetails)
 		$db = GetGlobal('db');		
 		if (!$this->loyalty) return 0;
 		
-	    $reseller = GetSessionParam('RESELLER');
-		//$id = decode(GetSessionParam('UserID'));	
+	    $reseller = GetSessionParam('RESELLER');	
 
 		if ($id = $this->user) { 
 		
@@ -3451,14 +3372,144 @@ function addtocart(id,cartdetails)
 		$this->setStore();    
 	}
 	
+	
+	
+	//standart roadway, payway costs
+	protected function calcShipping() {
+		$db = GetGlobal('db');	
+
+		if ($code = $this->getDetailSelection('roadway')) {
+			$sSQL = "select cost from ptransports where ";
+			$sSQL.= "code=" . $db->qstr($code);
+		}	
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);	
+		$tcost = $res->fields[0];
+		
+		if ($code = $this->getDetailSelection('payway')) {
+			$sSQL = "select cost from ppayments where code=" . $db->qstr($code);
+		}			
+		$res = $db->Execute($sSQL);	
+		$pcost = $res->fields[0];
+		
+		$result = floatval($tcost) + floatval($pcost);
+		
+		//save shipping cost
+		$this->shippingcost = $result;
+		SetSessionParam('shipcost', $this->shippingcost);
+		
+		return ($result);			
+	}	
+	
+	protected function get_country_shipzone($cid) {
+		$db = GetGlobal('db');	
+	  
+		if ($cid>=0) {
+			$id = $cid+1;//plus 1 to find rec	   
+			$sSQL = "select zone from pcountry where id=".$id;
+			$resultset = $db->Execute($sSQL,2);	
+			$result = $resultset;	
+          
+			$ret = $resultset->fields[0];
+			//echo $sSQL,$ret;
+			return ($ret);		  
+		}
+	}	
+	
+	/* disabled */
+	protected function calculate_shipping() {
+		$ways = remote_arrayload('SHCART','roadways',$this->path);
+		//print_r($ways);
+		//echo 'a';
+		if (!$ways) return null;	
+		//echo 'b';
+		$wp = $ways[0];
+		$w = explode('/',$wp);
+		$roadway = array_pop($w);
+		/*$shipway = GetParam("roadway") ? //no table in greek
+						($this->lan ? //if in greek, get the english descr
+								str_replace('/'.GetParam("roadway"),'',$ways[0]) ://standart english descr 0array ??? 
+								GetParam("roadway")
+						) :
+						(GetSessionParam("roadway") ? 
+								GetSessionParam("roadway") : 
+								$roadway  //standart english descr ??? 0array
+						);*/	
+		$shipway = $this->getDetailSelection('roadway');				
+		//echo 'b',$shipway;
+		
+		if ($this->supershipping) {
+			//echo 'c';
+			$cartweight = $this->weightCart();
+			//echo '>',$cartweight; 
+		
+			$this->shippingcost = $this->calc_supershipping($cartweight,$shipway);
+			SetSessionParam('shipcost',$this->shippingcost);
+			//echo 'ship calc result:',$result;
+			return ($this->shippingcost);
+		 
+		}
+		else {//standart method	
+			//echo 'd';
+			foreach ($ways as $wid=>$way) {
+				if (stristr($way,$shipway)) {
+					$id = $wid;
+				}
+			}		
+			$rfile = 'roadway'.$id.'.ini';
+			//echo '>',$rfile;
+			$file = $this->path . $rfile; //strtolower($shipway) . '.ini';
+			if (is_readable($file)) {
+				$data = parse_ini_file($file,1);
+				//print_r($data);
+		
+				$method = $this->shipcalcmethod[$id];//per ship selection
+		
+				/*RECURSION... one func calls another..DISABLE*/
+				//$this->quick_recalculate();	//to update totals and prices..	
+		
+				switch ($method) {
+		
+					case 2 ://use weight as param..invoke sql
+							break;
+		
+					case 1 ://use items num as param
+							$selector = floatval($this->qtytotal);
+							break;
+		
+					case 0 :
+					default: //using price as param
+							$selector = floatval($this->total);
+				}
+		
+				//echo $selector,'>';
+				foreach ($data as $shipkey=>$shiparams) {
+					$rcost = floatval($shipkey);
+					//echo '<br>',$selector,'<=',$rcost;
+					if ($selector<=$rcost){
+						$result = floatval($shiparams['cost']);
+						break;
+					}  
+				}
+		
+				$this->shippingcost += $result;
+				//echo $this->shippingcost,'>';
+				SetSessionParam('shipcost',$this->shippingcost);
+			}
+		}//method
+		return ($result);
+	}	
+	
 	protected function show_supershipping() {
 		$db = GetGlobal('db');
-		$shipway = GetParam("roadway")?GetParam("roadway"):GetSessionParam("roadway");
+		$shipway = $this->getDetailSelection('roadway');
 		//$mymethod = strtolower(trim(str_replace(' ','',$shipway)));
 	  
 		$weight = $this->weightCart();
+		
 		$user_country_id = _m('shuser.get_user_country');
-		$czone = GetReq('czone')?GetReq('czone'):$user_country_id;	  
+		$czone = GetReq('czone') ? GetReq('czone') : $user_country_id;	  
+		
 		$cservice = GetReq('cservice');
 		$mymethod = strtolower(trim(str_replace(' ','',$cservice))) ?
 	              strtolower(trim(str_replace(' ','',$cservice))) :
@@ -3575,21 +3626,7 @@ function addtocart(id,cartdetails)
 		}
 		return ($out);  
 	}
-	
-	protected function get_country_shipzone($cid) {
-		$db = GetGlobal('db');	
-	  
-		if ($cid>=0) {
-			$id = $cid+1;//plus 1 to find rec	   
-			$sSQL = "select zone from pcountry where id=".$id;
-			$resultset = $db->Execute($sSQL,2);	
-			$result = $resultset;	
-          
-			$ret = $resultset->fields[0];
-			//echo $sSQL,$ret;
-			return ($ret);		  
-		}
-	}
+		
 	
 	protected function calc_supershipping($weight=null, $method=null) {
 		$db = GetGlobal('db');
@@ -3696,47 +3733,8 @@ function addtocart(id,cartdetails)
 		return null; 
 	}	
 	
-    public function setquantity($id,$qty=null) {
-
-		$r = $this->readonly ? 'readonly' : null;
-
-		$qtyname = $id ;
-		$myqty = is_numeric($qty) ? $qty : 0;
-		$selectedqty = GetParam($qtyname) ? GetParam($qtyname) : $myqty;
-	  
-		if (!$this->status) { //only if status=0 else when cart status > 0 qty change
-	  
-			if (($this->maxqty<0) || ($this->readonly)) { //free style
-		    
-				$onchange = "onkeyup=computeqty('$qtyname',0)"; 
-				$onclickadd = "onclick=computeqty('$qtyname',1)";
-				$onclickreduce = "onclick=computeqty('$qtyname',-1)";
-			
-				$out = $this->minus ? "<a class='$this->minus' href='#reduce' $onclickreduce></a>" : null;
-				$out.= "<input id=\"$qtyname\" name=\"$qtyname\" $onchange value=\"$selectedqty\" size=\"{$this->maxlength}\" maxlength=\"{$this->maxlength}\" $r >";//<<4 max lenght of qty		  
-				$out.= $this->plus ? "<a class='$this->plus' href='#add' $onclickadd></a>" : null;
-			}
-			else { //combo style
-		  
-				$url_location = $this->url . '/calc/'; 
-		  
-				$out = "<SELECT class=\"myf_select_tiny\" name=\"$qtyname\" "; //>"
-				$out .= "onChange=\"location='$url_location'+'$qtyname'+'/'+this.options[this.selectedIndex].value+'/'\">"; 
-				//$out .= "onChange=\"this.form.submit()\">";
-				for ($j=1;$j<=$this->maxqty;$j++) {
-					if (($selectedqty) && ($selectedqty==$j)) 
-						$out .= "<OPTION value='$j' selected>$j";
-					else $out .= "<OPTION value='$j'>$j";
-				}  
-				$out .= "</OPTION></SELECT>";
-			}	
-		}
-		else
-			$out = $qty; 
-		  
-		return ($out);
-	}	
-
+	
+	
     public function price_with_tax($price=null) {
 		if (!$price) return '0,00';
 		$myprice = floatval(str_replace(array('.',','),array('','.'),$price));

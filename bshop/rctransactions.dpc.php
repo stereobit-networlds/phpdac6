@@ -38,6 +38,15 @@ $__LOCALE['RCTRANSACTIONS_DPC'][9]='_xxx;Cost B;Κόστος Β';
 $__LOCALE['RCTRANSACTIONS_DPC'][10]='_user;User;Πελάτης';
 $__LOCALE['RCTRANSACTIONS_DPC'][11]='_referer;Ref;Ref';
 
+$__LOCALE['RCTRANSACTIONS_DPC'][12]='_status0;Submited;Παρελήφθει';
+$__LOCALE['RCTRANSACTIONS_DPC'][13]='_status1;Active;Ενεργή';
+$__LOCALE['RCTRANSACTIONS_DPC'][14]='_status2;Processing;Επεξεργασία';
+$__LOCALE['RCTRANSACTIONS_DPC'][15]='_status3;Closed;Κλεισμένο';
+$__LOCALE['RCTRANSACTIONS_DPC'][16]='_status1m;Canceled;Ακυρώθηκε';
+$__LOCALE['RCTRANSACTIONS_DPC'][17]='_status2m;ERROR;ERROR';
+$__LOCALE['RCTRANSACTIONS_DPC'][18]='_status3m;ERROR:Send mail;ERROR:αποστολή e-mail';
+$__LOCALE['RCTRANSACTIONS_DPC'][19]='_status4m;ERROR:Cast submit;ERROR:αποστολή στοιχείων';
+
 $__LOCALE['RCTRANSACTIONS_DPC'][28]='Eurobank;Credit card;Πιστωτική κάρτα'; //used by mchoice param
 $__LOCALE['RCTRANSACTIONS_DPC'][29]='Piraeus;Credit card;Πιστωτική κάρτα'; //used by mchoice param
 $__LOCALE['RCTRANSACTIONS_DPC'][30]='Paypal;Credit card;Πιστωτική κάρτα'; //used by mchoice param
@@ -166,6 +175,24 @@ class rctransactions extends shtransactions {
 		return ($ret);
 	}	
 	
+	protected function getStatusELT($flname, $as=null) {
+		if (!$flname) return null;
+		$lan = getlocal();
+		$a = $as ? "as $as" : null;
+		
+		$ret = "ELT(FIELD($flname, '0','1','2','3','-1','-2','-3','-4'),".
+				                  "'".localize('_status0',$lan)."',".
+					   		      "'".localize('_status1',$lan)."',".
+								  "'".localize('_status2',$lan)."',".
+								  "'".localize('_status3',$lan) . "',".
+								  "'".localize('_status1m',$lan)."',".
+					   		      "'".localize('_status2m',$lan)."',".
+								  "'".localize('_status3m',$lan)."',".
+								  "'".localize('_status4m',$lan).
+								  "') $a";
+		return ($ret);
+	}	
+	
 	public function show_grid($x=null,$y=null,$filter=null,$bfilter=null) {
 	    $selected_cus = urldecode(GetReq('cusmail'));
 	
@@ -173,11 +200,12 @@ class rctransactions extends shtransactions {
 
 			$lookup1 = $this->getPaymentsELT('i.payway', 'pw'); 
 			$lookup2 = $this->getTransportsELT('i.roadway', 'rw');
+			$lookup3 = $this->getStatusELT('i.tstatus', 'ts');
 			
 		    if ($selected_cus) 
-				$xsSQL2 = "SELECT * FROM (SELECT DISTINCT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt,i.referer FROM transactions i WHERE i.cid='$selected_cus') x";
+				$xsSQL2 = "SELECT * FROM (SELECT DISTINCT i.recid,i.tid,i.cid,i.tdate,i.ttime,$lookup3,$lookup1,$lookup2,i.qty,i.cost,i.costpt,i.referer FROM transactions i WHERE i.cid='$selected_cus') x";
 			else 
-				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.tdate,i.ttime,i.tstatus,$lookup1,$lookup2,i.qty,i.cost,i.costpt,i.referer FROM transactions i) x";
+				$xsSQL2 = "SELECT * FROM (SELECT i.recid,i.tid,i.cid,i.tdate,i.ttime,$lookup3,$lookup1,$lookup2,i.qty,i.cost,i.costpt,i.referer FROM transactions i) x";
 
 			_m("mygrid.column use grid2+recid|".localize('id',getlocal())."|5|0|||1|1");
 			//_m("mygrid.column use grid2+tid|".localize('id',getlocal())."|5|0|||0");
@@ -188,10 +216,10 @@ class rctransactions extends shtransactions {
 			//_m("mygrid.column use grid2+tdate|".localize('_date',getlocal())."|boolean|1|ACTIVE:DELETED");			
 			_m("mygrid.column use grid2+tdate|".localize('_date',getlocal())."|6|0|");
 		    _m("mygrid.column use grid2+ttime|".localize('_time',getlocal())."|6|0|");	
-			_m("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|2|0|||||right");	
+			_m("mygrid.column use grid2+ts|".localize('_status',getlocal())."|10|0|");//"|2|0|||||right");	
 			//_m("mygrid.column use grid2+tstatus|".localize('_status',getlocal())."|link|10|"."javascript:show_body({tid});".'||');
-		    _m("mygrid.column use grid2+pw|".localize('_payway',getlocal())."|18|1|");			
-		    _m("mygrid.column use grid2+rw|".localize('_roadway',getlocal())."|18|1|");
+		    _m("mygrid.column use grid2+pw|".localize('_payway',getlocal())."|18|0|");			
+		    _m("mygrid.column use grid2+rw|".localize('_roadway',getlocal())."|18|0|");
 	        _m("mygrid.column use grid2+qty|".localize('_qty',getlocal())."|5|0|||||right");				
 			_m("mygrid.column use grid2+cost|".localize('_cost',getlocal())."|5|0|||||right");
 			_m("mygrid.column use grid2+costpt|".localize('_costpt',getlocal())."|5|0|||||right");
