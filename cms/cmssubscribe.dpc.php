@@ -170,12 +170,18 @@ class cmssubscribe {
 				if (!$bypasscheck)    
 					$this->msg =  localize('_MSG6',getlocal());			 
 				 
-				if ($this->tell_it) //tell to me
-					$this->mailto($this->tell_from,$this->tell_it,$this->subject,$mailbody);
+				if ($this->tell_it) {//tell to me
+					//$this->mailto($this->tell_from,$this->tell_it,$this->subject,$mailbody);
+					$body = str_replace('+','<SYN/>',$mailbody); //_v("cmsrt.mbody use $mailbody");
+					$mailerr = _m("cmsrt.cmsMail use {$this->tell_from}+{$this->tell_it}+{$this->subject}+$body");
+				}	
 				 			     							  
 				//tell to subscriber
-				if ($mail_tell_user>0) 	   
-					$this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 
+				if ($mail_tell_user>0) {	   
+					//$this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 
+					$body = str_replace('+','<SYN/>',$mailbody); //_v("cmsrt.mbody use $mailbody");
+					$mailerr = _m("cmsrt.cmsMail use {$this->tell_from}+$mail+{$this->subject}+$body");
+				}	
 		  }		  
           else {
 				$sSQL = "insert into ulists (email,startdate,active,lid,listname,name,owner) " .
@@ -188,11 +194,16 @@ class cmssubscribe {
 					$this->msg = localize('_MSG6',getlocal());	
 				 
 				//echo $sSQL;
-				if ($this->tell_it) //tell to me
-					$this->mailto($this->tell_from,$this->tell_it,$this->subject,$mailbosy);
+				if ($this->tell_it) {//tell to me
+					//$this->mailto($this->tell_from,$this->tell_it,$this->subject,$mailbody);
+					$body = str_replace('+','<SYN/>',$mailbody); //_v("cmsrt.mbody use $mailbody");
+					$mailerr = _m("cmsrt.cmsMail use {$this->tell_from}+{$this->tell_it}+{$this->subject}+$body");
+				}	
 				 			     							  
 				//tell to subscriber	   
-				$this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 	 	 
+				//$this->mailto($this->tell_from,$mail,$this->subject,$mailbody);	 	 	 
+				$body = str_replace('+','<SYN/>',$mailbody); //_v("cmsrt.mbody use $mailbody");
+				$mailerr = _m("cmsrt.cmsMail use {$this->tell_from}+$mail+{$this->subject}+$body");
 		  }
 		  
 		  $this->update_statistics('subscribe', $mail);
@@ -223,12 +234,18 @@ class cmssubscribe {
             //echo $sSQL;
 			$this->msg = localize('_MSG8',getlocal());
 		    
-			if ($this->tell_it) //tell to me
-				$this->mailto($this->tell_from,$this->tell_it,$this->subject2,$mailbody);
+			if ($this->tell_it) {//tell to me
+				//$this->mailto($this->tell_from,$this->tell_it,$this->subject2,$mailbody);
+				$body = str_replace('+','<SYN/>',$mailbody); //_v("cmsrt.mbody use $mailbody");
+				$mailerr = _m("cmsrt.cmsMail use {$this->tell_from}+{$this->tell_it}+{$this->subject2}+$body");
+			}	
 				 			     							  
 			//tell to subscriber   
-			if ($mail_tell_user>0) 			 
-					$this->mailto($this->tell_from,$mail,$this->subject2,$mailbody);	 	  
+			if ($mail_tell_user>0) { 			 
+				//$this->mailto($this->tell_from,$mail,$this->subject2,$mailbody);	 	  
+				$body = str_replace('+','<SYN/>',$mailbody); //_v("cmsrt.mbody use $mailbody");
+				$mailerr = _m("cmsrt.cmsMail use {$this->tell_from}+$mail+{$this->subject2}+$body");		
+			}		
 			
 			$this->update_statistics('unsubscribe', $mail);
 		  //}  
@@ -275,11 +292,7 @@ class cmssubscribe {
 	
 	protected function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 	
-	    /*if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
-		  $ret = _m("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
-        }
-		else {*/
-		    if (defined('SMTPMAIL_DPC'))  {
+	    if (defined('SMTPMAIL_DPC'))  {
 		       $smtpm = new smtpmail;
 			   
 		       $smtpm->to($to); 
@@ -291,10 +304,9 @@ class cmssubscribe {
 			   unset($smtpm);
 			   
 			   if (!$mailerror) return (true);
-			}
-			else
-				die('SMTP ERROR!');		
-		//}
+		}
+		else
+			die('SMTP ERROR!');		
 		
 	    return (false);  			 
 	}							

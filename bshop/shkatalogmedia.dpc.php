@@ -567,12 +567,28 @@ $(document).ready(function () {
 	
 	
 	protected function jsFilter() {
-
+		
+		//$jsChars = str_replace('+','\[+]', $this->replace_jschars());
+		//echo $jsChars, '<br/>';
+		
 		$js = <<<JSFILTER
+		
+String.prototype.allReplace = function(obj) {
+    var retStr = this;
+    for (var x in obj) {
+        retStr = retStr.replace(new RegExp(x, 'g'), obj[x]);
+    }
+    return retStr;
+};		
+		
 function filter(url,div,fname,preset) {
 	var checkedItems = fname ? 
-		$('input:checkbox[name='+fname+']:checked').map(function() { return $(this).val().toString(); } ).get().join(",") : 
-		(preset ? preset : null);
+		$('input:checkbox[name='+fname+']:checked').map(
+			function() { 
+				return $(this).val().toString().allReplace({'\'':'_', ',':'~', '"':'*', '\[+]':'plus', '/':':', ' ':'-', '-&-':'-n-'});
+				//return $(this).val().toString().allReplace({ $jsChars }); 
+			} 
+		).get().join(",") : (preset ? preset : null);
 	
 	ajaxCall(url+checkedItems+'/',div,1);
 }
@@ -3463,8 +3479,8 @@ JSFILTER;
 			if (floatval($qty)>=floatval($s)) return ($i+1);
 
 		return 0;
-	}		
-	
+	}
+		
 	protected function replace_spchars($string, $reverse=false) {
 		
 		$rp = _v('shkategories.replacepolicy');
@@ -3487,6 +3503,33 @@ JSFILTER;
 	    }
 		return ($ret);
 	}
+	
+	//use at javascript replace
+	protected function replace_jschars($reverse=false) {
+		$char = array();
+		if ($reverse) {
+			$g1 = array("'",',','"','+','/',' ',' & ');
+			$g2 = array('_','~',"*","plus",":",'-',' n ');
+			foreach ($g2 as $i=>$k) 
+				$char[$k] = $g1[$i];			
+		}	 
+		else {
+			$g1 = array("'",',','"','+','/',' ','-&-');
+			$g2 = array('_','~',"*","plus",":",'-','-n-');		  	
+			foreach ($g1 as $i=>$k) 
+				$char[$k] = $g2[$i];		
+		}		
+		
+		foreach ($char as $from=>$to) {
+			//escape "
+			$f = (strstr($from, "'")) ? "'\''" : "'$from'"; 
+			$t = (strstr($to, "'")) ? "'\''" : "'$to'";
+			$r[] = $f . ':' . $t;
+		}	
+			
+		$ret = implode(', ', $r);
+		return ($ret);
+	}	
 	
 	public function replace_cartchars($string, $reverse=false) {
 		if (!$string) return null;

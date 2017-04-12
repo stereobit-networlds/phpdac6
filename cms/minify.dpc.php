@@ -56,35 +56,6 @@ class minify {
 
 	}
 	
-	function obfuscate($script=null) {
-		if (!$script) return false;
-	
-		if (($this->obf) || (paramload('CMS','obfuscate')))
-			return \Minify\minify::setMinify($script);
-	
-		return ($script);
-	}
-	
-	static public function setMinify($js, $options = array())
-	{
-		try{
-			ob_start();
-			$currentOptions = array_merge(self::$defaultOptions, $options);
-
-			if(!isset(self::$jshrink))
-				self::$jshrink = new Minifier();
-
-			self::$jshrink->breakdownScript($js, $currentOptions);
-			return ob_get_clean();
-
-		}catch(Exception $e){
-			if(isset(self::$jshrink))
-				self::$jshrink->clean();
-
-			ob_end_clean();
-			throw $e;
-		}
-	}
 	*/
 	
 	static public function cssMinify($css=null) {

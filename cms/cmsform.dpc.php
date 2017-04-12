@@ -122,14 +122,19 @@ class cmsform {
                                 $ret = $db->Execute($sSQL);	 
 								
 								$mailinsubject = $subject . ' (' . $email . ')';
-								$this->mailto($this->sendaddress,$this->sendaddress,$mailinsubject,$message,1);							  
+								//$this->mailto($this->sendaddress,$this->sendaddress,$mailinsubject,$message,1);							  
+								$body = str_replace('+','<SYN/>',$message); 
+								$mailerr = _m("cmsrt.cmsMail use {$this->sendaddress}+{$this->sendaddress}+$mailinsubject+$body");
 							  
 								$this->post = true;
 								$this->update_statistics('contact', $email);
 									
 								//verify
-								if ($this->verify) 
-									$this->mailto($this->verify_address,$email,$this->verify_subject,$this->verify_message,1);								  									  
+								if ($this->verify) { 
+									//$this->mailto($this->verify_address,$email,$this->verify_subject,$this->verify_message,1);								  									  
+									$body = str_replace('+','<SYN/>',$this->verify_message); 
+									$mailerr = _m("cmsrt.cmsMail use {$this->verify_address}+$email+{$this->verify_subject}+$body");
+								}	
 
 								//subscribe		
 								if (trim(GetParam('subscribe'))) 

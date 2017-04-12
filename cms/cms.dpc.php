@@ -26,8 +26,11 @@ define("CMS_DPC",true);
 
 $__DPC['CMS_DPC'] = 'cms';
 
-require_once(_r('cms/fronthtmlpage.dpc.php'));
 require_once(_r('cms/minify.dpc.php'));
+require_once(_r('cms/pxml.lib.php'));
+require_once(_r('libs/scaptcha.lib.php'));
+
+require_once(_r('cms/fronthtmlpage.dpc.php'));
 
 class cms extends fronthtmlpage {
 
@@ -142,7 +145,12 @@ class cms extends fronthtmlpage {
 			return minify::htmlMinify($htm);
 	
 		return ($htm);
-	}		
+	}	
+
+	public function validMail($mail=null) {
+		$valid = filter_var($mail, FILTER_VALIDATE_EMAIL);
+		return ($valid);		
+	}	
 	
 		
     //URL funcs	

@@ -6,11 +6,8 @@ define("SHCART_DPC",true);
 
 $__DPC['SHCART_DPC'] = 'shcart';
 
-$a = GetGlobal('controller')->require_dpc('bshop/storebuffer.lib.php');
-require_once($a);
-
-$b = GetGlobal('controller')->require_dpc('bshop/mchoice.dpc.php');
-require_once($b);
+require_once(_r('bshop/storebuffer.lib.php'));
+require_once(_r('bshop/mchoice.dpc.php'));
 
 //$__LOCALE['SHCART_DPC'][27]='_CHKOUT;Checkout;Ταμείο';
 //echo _lc('shcart',27,2);
@@ -194,7 +191,7 @@ $__DPCEXT['SHCART_DPC']='showsymbol';
 
 class shcart extends storebuffer {
 
-	var $uniname2, $status, $qtytotal;
+	var $uniname2, $status, $qtytotal, $lan;
 	var $liveupdate, $moneysymbol, $maxcart;
 	var $allowqtyover, $mailerror, $sxolia, $continue_button;
     var $rejectqty, $checkout, $order, $submit, $cancel, $recalc;
@@ -208,7 +205,7 @@ class shcart extends storebuffer {
     var $submit2, $url, $printout, $print_title, $cartsumitems;
 	
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
-    var $twig_invoice_template_name, $appname, $mtrackimg; 
+    var $twig_invoice_template_name;//, $appname, $mtrackimg; 
     var $agentIsIE, $baseurl, $fastpick, $continue_shopping_goto_cmd;
 	var $loyalty, $ppolicynotes, $isValidCoupon;	
 	
@@ -219,9 +216,10 @@ class shcart extends storebuffer {
 		$UserSecID = GetGlobal('UserSecID');	
 		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);		
 		
-		storebuffer::storebuffer('cart');
+		storebuffer::__construct('cart');
 		
-		$this->title = localize('SHCART_DPC',getlocal());		
+		$this->lan = getlocal();		
+		$this->title = localize('SHCART_DPC',$this->lan);				
 		
 		self::$staticpath = paramload('SHELL','urlpath');
 		$this->path = paramload('SHELL','prpath');
@@ -289,17 +287,17 @@ class shcart extends storebuffer {
 		$rm = remote_paramload('SHCART','notallowremove',$this->path);
 		$this->notallowremove = $rm ? $rm : 0;	
 
-		$this->twig_invoice_template_name = str_replace('.', getlocal() . '.', 'invoice.htm');
+		$this->twig_invoice_template_name = str_replace('.', $this->lan . '.', 'invoice.htm');
 		//echo $this->twig_invoice_template_name; 
 		
 		$this->continue_button = 1; 	
 		
-        $this->checkout    = trim(localize('_CHKOUT',getlocal()));				 	
-        $this->order       = trim(localize('_ORDER',getlocal()));
-	    $this->submit      = trim(localize('_SUBMITORDER',getlocal()));
-		$this->submit2 	   = trim(localize('_SUBMITORDER2',getlocal()));		
+        $this->checkout    = trim(localize('_CHKOUT',$this->lan));				 	
+        $this->order       = trim(localize('_ORDER',$this->lan));
+	    $this->submit      = trim(localize('_SUBMITORDER',$this->lan));
+		$this->submit2 	   = trim(localize('_SUBMITORDER2',$this->lan));		
 	    $this->cancel      = trim(localize('_CANCELORDER',getlocal()));
-	    $this->recalc      = trim(localize('_RECALC',getlocal()));			
+	    $this->recalc      = trim(localize('_RECALC',$this->lan));			
 					
 		$this->total = (double) 0.0;
   	    $this->qtytotal = GetSessionParam('qty_total');    
@@ -325,12 +323,7 @@ class shcart extends storebuffer {
 		$this->printout = GetSessionParam('printout') ? GetSessionParam('printout') : null;	  
 		$this->transaction_id = GetSessionParam('TransactionID') ? GetSessionParam('TransactionID') : null;
 		$this->fastpick = GetSessionParam('fastpick') ? true : false;
-		$this->is_reseller = GetSessionParam('RESELLER');
-
-		$this->loyalty = _m('cms.paramload use ESHOP+loyalty'); 		
-	  
-		if ($this->maxqty<0) // || ($this->readonly)) { //free style
-			$this->javascript(); //ONLY WHEN DEFAULT VIEW EVENT ??	
+		$this->is_reseller = GetSessionParam('RESELLER');	
 			
 		$useragent = $_SERVER["HTTP_USER_AGENT"];		
 		$this->agentIsIE = (strpos($useragent, 'Trident') !== false) ? '1' : '0';	 //ie 11 
@@ -341,10 +334,15 @@ class shcart extends storebuffer {
 	   
 		$myf_submit = remote_paramload('SHCART','buttonclasssubmit',$this->path);
 		self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';		  
-
+		/*
 	    $this->appname = paramload('ID','instancename');	
-	    $tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
-	    $this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";			
+	    $tcode = _m('cms.paramload use CMS+mtrack');//remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
+	    $this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack/";	//.php		
+		*/
+		$this->loyalty = _m('cms.paramload use ESHOP+loyalty'); 		
+	  
+		if ($this->maxqty<0) // || ($this->readonly)) { //free style
+			$this->javascript(); //ONLY WHEN DEFAULT VIEW EVENT ??		
     }
 
     public function event($event) {
@@ -381,7 +379,7 @@ class shcart extends storebuffer {
 			                        break;									
 			
 			case "addtocart"     : 	$p = $this->addtocart();
-									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN1', getlocal()));
+									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN1', $this->lan));
 									
 									$this->jsBrowser();
 									$this->fbjs();
@@ -391,7 +389,7 @@ class shcart extends storebuffer {
 									SetSessionParam('cartstatus',0); 
 									$this->status = 0;
 
-									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN2', getlocal()));	
+									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN2', $this->lan));	
 									
 									$this->jsBrowser();
 									$this->fbjs();
@@ -401,7 +399,7 @@ class shcart extends storebuffer {
 									SetSessionParam('cartstatus',0); 
 									$this->status = 0;
 
-									$this->jsDialog(localize('_BLN3', getlocal()), localize('_CART', getlocal()));	
+									$this->jsDialog(localize('_BLN3', $this->lan), localize('_CART', $this->lan));	
 									
 									$this->jsBrowser();
 									$this->fbjs();
@@ -411,7 +409,7 @@ class shcart extends storebuffer {
 									SetSessionParam('cartstatus',0); 
 									$this->status = 0; 
 									
-									$this->jsDialog(localize('_BLN1', getlocal()), localize('_CART', getlocal()));
+									$this->jsDialog(localize('_BLN1', $this->lan), localize('_CART', $this->lan));
 									
 									$this->jsBrowser();
 									$this->fbjs();
@@ -496,8 +494,8 @@ class shcart extends storebuffer {
 										SetSessionParam('fastpick',null);
 										$this->fastpick = false;
 									}
-									$msg = $this->fastpick ? localize('_FASTPICKON',getlocal()) : localize('_FASTPICKOFF',getlocal());
-									$this->jsDialog($msg, localize('_CART', getlocal()));									
+									$msg = $this->fastpick ? localize('_FASTPICKON',$this->lan) : localize('_FASTPICKOFF',$this->lan);
+									$this->jsDialog($msg, localize('_CART', $this->lan));									
 									
 									$this->jsBrowser();
 									$this->fbjs();
@@ -531,7 +529,7 @@ class shcart extends storebuffer {
 			case 'removefromcart': 	break;							
 		 
 			case "cartcustselect": 
-			case "fastpick" 	:	//$out = $this->fastpick ? localize('_FASTPICKON',getlocal()) : localize('_FASTPICKOFF',getlocal());
+			case "fastpick" 	:	//$out = $this->fastpick ? localize('_FASTPICKON',$this->lan) : localize('_FASTPICKOFF',$this->lan);
 									$out .= $this->cartview();
 									break;
 		          
@@ -740,6 +738,115 @@ $(document).ready(function () {
 		return ($code);			
 	}	
 	
+	//called by input field onkeyup when free qty edit is on
+	protected function js_compute_qty() {
+        $url = $this->url . '/calc/'; 
+	
+		$out = "	
+function computeqty(textbox,n)
+{
+  var textInput = Number(document.getElementById(textbox).value); var qty = textInput + n;  
+  if (qty>0){var location = '$url'+textbox+'/'+qty+'/';	window.location.href = location;}	
+}
+function preselqty(id,step,limit)
+{
+  var presel = Number(document.getElementById(id).value);
+  if ((step<0) && (presel>limit)) qty = presel + Number(step);
+  else if ((step>0) && (presel<limit))qty = presel + Number(step);
+  else qty = presel;  
+}
+";	
+		return $out;
+    }
+	
+	protected function js_guest_registration() {
+
+		$guesterr = localize('_guesterr', $this->lan);
+		$invmail = localize('_invalidemail', $this->lan);
+		$invname = localize('_invalidname', $this->lan);
+		$invaddr = localize('_invalidaddress', $this->lan);
+		$invps = localize('_invalidpostcode', $this->lan);
+		$invcountry = localize('_invalidcountry', $this->lan);
+		$invphone = localize('_invalidphone', $this->lan);
+		$ajaxurl = seturl("t=");
+		
+		$code = <<<EOF
+function guestreg()
+{
+	var emailReg = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;	
+    var email = $('#guestemail').val();
+	var gname = $('#guestname').val();
+	var gaddr = $('#guestaddress').val();
+	var gcode = $('#guestpostcode').val();
+	var gcoun = $('#guestcountry').val();
+	var gphon = $('#guestphone').val();
+	
+	var err = '';
+	var validemail = emailReg.test(email);
+	
+	//alert('data:'+gname+' '+gaddr+' '+gcode+' '+gcoun+' '+email+':'+validemail);
+	if (validemail==false) err = '$invmail.<br/>';
+	if (!gname)	err += '$invname.<br/>';
+	if (!gaddr)	err += '$invaddr.<br/>';
+	if (!gphon)	err += '$invphone.<br/>';
+	if (!gcode)	err += '$invps.<br/>'; 
+	if (!gcoun)	err += '$invcountry.<br/>';
+	if (err) 
+		new $.Zebra_Dialog(err, {'type':'error','title':'$guesterr'});
+	else {
+	$.ajax({
+		url: '{$ajaxurl}cartguestreg',
+		type: 'POST',
+		data: {FormAction: 'cartguestreg', email: email, name: gname, address: gaddr, tel: gphon, postcode: gcode, country: gcoun},
+		success:function(postdata) {
+			if (postdata) {
+				$('#guestdetails').html(postdata);
+			}		
+	}}); }		
+}
+EOF;
+		return $code;	
+	}
+	
+	protected function js_addtocart() {
+		$out = "	
+function addtocart(id,cartdetails)
+{
+  var preselqty = Number(document.getElementById(id).value);
+  var location = cartdetails+preselqty+'/';
+  window.location.href = location;
+};
+";	
+		return $out;
+    }	
+	
+	protected function javascript() {
+
+		if (iniload('JAVASCRIPT')) {
+			
+			$code = $this->js_addtocart();	
+			
+			$js = new jscript;	
+			$js->load_js($code,"",1);			   
+			unset ($js);
+		}			   	   	     
+	}	
+	
+	protected function jsDialog($text=null, $title=null) {
+	
+       if (defined('JSDIALOGSTREAM_DPC')) {
+	   
+			if ($text)	
+				$code = _m("jsdialogstream.say use $text+$title++2000");
+			else
+				$code = _m('jsdialogstream.streamDialog use jsdtime');
+		   
+			$js = new jscript;	
+			$js->load_js($code,null,1);		
+			unset ($js);
+	   }	
+	}	
+	
 	protected function dispatch_pay_engines() {
 		$payway = strtoupper(trim(GetSessionParam('payway')));//override 	
 	  
@@ -824,115 +931,6 @@ $(document).ready(function () {
 			SetSessionParam('sxolia',null);								 
 			SetSessionParam('qty_total',null);
 		} 
-	}
-	
-	//called by input field onkeyup when free qty edit is on
-	protected function js_compute_qty() {
-        $url = $this->url . '/calc/'; 
-	
-		$out = "	
-function computeqty(textbox,n)
-{
-  var textInput = Number(document.getElementById(textbox).value); var qty = textInput + n;  
-  if (qty>0){var location = '$url'+textbox+'/'+qty+'/';	window.location.href = location;}	
-}
-function preselqty(id,step,limit)
-{
-  var presel = Number(document.getElementById(id).value);
-  if ((step<0) && (presel>limit)) qty = presel + Number(step);
-  else if ((step>0) && (presel<limit))qty = presel + Number(step);
-  else qty = presel;  
-}
-";	
-		return $out;
-    }
-	
-	protected function js_addtocart() {
-		$out = "	
-function addtocart(id,cartdetails)
-{
-  var preselqty = Number(document.getElementById(id).value);
-  var location = cartdetails+preselqty+'/';
-  window.location.href = location;
-};
-";	
-		return $out;
-    }
-	
-	protected function js_guest_registration() {
-		$lan = getlocal();
-		$guesterr = localize('_guesterr', $lan);
-		$invmail = localize('_invalidemail', $lan);
-		$invname = localize('_invalidname', $lan);
-		$invaddr = localize('_invalidaddress', $lan);
-		$invps = localize('_invalidpostcode', $lan);
-		$invcountry = localize('_invalidcountry', $lan);
-		$invphone = localize('_invalidphone', $lan);
-		$ajaxurl = seturl("t=");
-		
-		$code = <<<EOF
-function guestreg()
-{
-	var emailReg = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;	
-    var email = $('#guestemail').val();
-	var gname = $('#guestname').val();
-	var gaddr = $('#guestaddress').val();
-	var gcode = $('#guestpostcode').val();
-	var gcoun = $('#guestcountry').val();
-	var gphon = $('#guestphone').val();
-	
-	var err = '';
-	var validemail = emailReg.test(email);
-	
-	//alert('data:'+gname+' '+gaddr+' '+gcode+' '+gcoun+' '+email+':'+validemail);
-	if (validemail==false) err = '$invmail.<br/>';
-	if (!gname)	err += '$invname.<br/>';
-	if (!gaddr)	err += '$invaddr.<br/>';
-	if (!gphon)	err += '$invphone.<br/>';
-	if (!gcode)	err += '$invps.<br/>'; 
-	if (!gcoun)	err += '$invcountry.<br/>';
-	if (err) 
-		new $.Zebra_Dialog(err, {'type':'error','title':'$guesterr'});
-	else {
-	$.ajax({
-		url: '{$ajaxurl}cartguestreg',
-		type: 'POST',
-		data: {FormAction: 'cartguestreg', email: email, name: gname, address: gaddr, tel: gphon, postcode: gcode, country: gcoun},
-		success:function(postdata) {
-			if (postdata) {
-				$('#guestdetails').html(postdata);
-			}		
-	}}); }		
-}
-EOF;
-		return $code;	
-	}
-	
-	protected function javascript() {
-
-		if (iniload('JAVASCRIPT')) {
-			
-			$code = $this->js_addtocart();	
-			
-			$js = new jscript;	
-			$js->load_js($code,"",1);			   
-			unset ($js);
-		}			   	   	     
-	}	
-	
-	protected function jsDialog($text=null, $title=null) {
-	
-       if (defined('JSDIALOGSTREAM_DPC')) {
-	   
-			if ($text)	
-				$code = _m("jsdialogstream.say use $text+$title++2000");
-			else
-				$code = _m('jsdialogstream.streamDialog use jsdtime');
-		   
-			$js = new jscript;	
-			$js->load_js($code,null,1);		
-			unset ($js);
-	   }	
 	}		
 
 	public function addtocart($item=null,$qty=null) {
@@ -978,7 +976,7 @@ EOF;
 					if ((!$this->ignoreqtyzero) && ($preqty>$params[14]) && ($this->allowqtyover)) {
 
 						$stockout = ($params[14]-$preqty);
-						$stock_message = $params[0].",".$params[1].localize('_STOCKOUT',getlocal()) . "(" . $stockout . ")";
+						$stock_message = $params[0].",".$params[1].localize('_STOCKOUT',$this->lan) . "(" . $stockout . ")";
 
 						$preqty = $params[14];//set qty= max storage
 						//echo "DIATHESIOMo:",$params[14];
@@ -1001,7 +999,7 @@ EOF;
 					}
 				}
 				else {
-					$input_message = localize('_INPUTERR',getlocal());
+					$input_message = localize('_INPUTERR',$this->lan);
 					if (iniload('JAVASCRIPT')) {
 						$code = "alert('$input_message')";
 						$js = new jscript;
@@ -1019,7 +1017,7 @@ EOF;
 					$this->update_statistics('cart-add', $user);
 			}
 			else
-				setInfo(localize('_MSG15',getlocal()));
+				setInfo(localize('_MSG15',$this->lan));
 		}//if $a
 		 
 		$this->quick_recalculate();//re-update prices and totals
@@ -1069,7 +1067,6 @@ EOF;
     public function submit_order($sendordermail=null, $invoice_template=null) {
 		$myuser = GetGlobal('UserID');	
 		$user = decode($myuser);
-		$lan = getlocal();
 		$payway = $this->getDetailSelection('payway');
 		$roadway = $this->getDetailSelection('roadway');
 		$invway = $this->getDetailSelection('invway');	
@@ -1091,12 +1088,12 @@ EOF;
 			
 				$date = date('d.m.y');			
 				//$invoice_tokens['invoice'] = $invway .' '.$this->transaction_id;
-				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',$lan).' '.$this->transaction_id;
+				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',$this->lan).' '.$this->transaction_id;
 				$invoice_tokens['mynotes'] = $sxolia . "<br/>" . $this->ppolicynotes;
 				$invoice_tokens['mydate'] = $date;	
-				$invoice_tokens['payway'] = localize($payway, $lan); 			
-				$invoice_tokens['roadway'] = localize($roadway, $lan);
-				$invoice_tokens['invway'] = localize($invway, $lan);
+				$invoice_tokens['payway'] = localize($payway, $this->lan); 			
+				$invoice_tokens['roadway'] = localize($roadway, $this->lan);
+				$invoice_tokens['invway'] = localize($invway, $this->lan);
 			  
 				$tokens = serialize($invoice_tokens);
 				//do it inside transaction func
@@ -1137,6 +1134,8 @@ EOF;
 				if (defined('TRANSPORT_DPC')) 
 					_m('transport.finalize use '.$this->transaction_id.'+'.$this->shippingcost);			
 			}
+			//else
+				//die($error);
 		}
     }
 	
@@ -1193,7 +1192,7 @@ EOF;
 			$tokens[] = $this->transaction_id;
 		}  
 		
-	    $bprint = _m('javascript.JS_function use js_printwin+'.localize('_PRINT',getlocal()));
+	    $bprint = _m('javascript.JS_function use js_printwin+'.localize('_PRINT',$this->lan));
         $tokens[] =  $bprint;			
 
         if ($invoice_template) { // && (is_readable($t))) {
@@ -1209,7 +1208,7 @@ EOF;
 			$x = 'notes123';//.var_export($invoice_tokens, true);
 			$date = date('d.m.y');			
 			//$invoice_tokens['invoice'] = GetSessionParam('invway') .' '.$this->transaction_id;
-			$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',getlocal()).' '.$this->transaction_id;
+			$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',$this->lan).' '.$this->transaction_id;
 			$invoice_tokens['mynotes'] = GetSessionParam('sxolia');//$x;
 		    $invoice_tokens['mydate'] = $date;				
 				
@@ -1295,7 +1294,7 @@ EOF;
 				if ((!$this->ignoreqtyzero) && ($selectedqty>$param[14]) && ($this->allowqtyover)) { //enable - disable check over qty selection
 
 					$stockout = ($param[14]-$selectedqty);
-					$stock_message = $param[0] . ",". $this->replace_cartchars($param[1], true) . localize('_STOCKOUT',getlocal()) . "(" . $stockout . ")";
+					$stock_message = $param[0] . ",". $this->replace_cartchars($param[1], true) . localize('_STOCKOUT',$this->lan) . "(" . $stockout . ")";
 					$this->stock_msg .= $stock_message . "<br>";
 					$jcode .= "alert('$stock_message');";
 
@@ -1372,20 +1371,20 @@ EOF;
 				else
 					$ml = "addcart/$ar/$gr/$page/$myqty/";
 				
-				$out = $this->myf_button(localize('_ADDCARTITEM',getlocal()),$ml,'_ADDCARTITEM');
+				$out = $this->myf_button(localize('_ADDCARTITEM',$this->lan),$ml,'_ADDCARTITEM');
 			}
 			else {
 		   
 				if (($this->notallowremove)&&(!$allowremove)) {//add again 		   	 		   
 					$ml = "addcart/$ar/$gr/$page/$myqty/";			 
-					$out = $this->myf_button(localize('_ADDCARTITEM',getlocal()),$ml,'_ADDCARTITEM');
+					$out = $this->myf_button(localize('_ADDCARTITEM',$this->lan),$ml,'_ADDCARTITEM');
 				}	 
 				else {//remove 		   	 		   
 					$mr = "remcart/$ar/$gr/$page/";
 
 					$out = $this->removeitemclass ? 
 							"<a class='$this->removeitemclass' href='$mr'></a>" :
-							$this->myf_button(localize('_REMCARTITEM',getlocal()),$mr,'_REMCARTITEM');    
+							$this->myf_button(localize('_REMCARTITEM',$this->lan),$mr,'_REMCARTITEM');    
 				}	 
 			}
 			//}
@@ -1393,14 +1392,14 @@ EOF;
 		}
 		else {
 			if (!($this->isin($param[0]))) 
-				$out = $this->myf_button(localize('_NOTAVAL',getlocal()),'#notavailable','_NOTAVAL');
+				$out = $this->myf_button(localize('_NOTAVAL',$this->lan),'#notavailable','_NOTAVAL');
 			
 			if ($allowremove) {
 				$mr = "remcart/$ar/$gr/$page/";
 
 				$out .= $this->removeitemclass ? 
 						"<a class='$this->removeitemclass' href='$mr'></a>" :
-						$this->myf_button(localize('_REMCARTITEM',getlocal()),$mr,'_REMCARTITEM');		
+						$this->myf_button(localize('_REMCARTITEM',$this->lan),$mr,'_REMCARTITEM');		
 			}		
 		}	
 
@@ -1487,11 +1486,11 @@ EOF;
 						 
 					case 2  :   SetSessionParam('ordercart',$this->quickview());
 					
-								$details  = '<br/>'.localize('_PWAY',getlocal()) . ':'. GetParam('payway');
-								$details .= '<br/>'.localize('_RWAY',getlocal()) . ':'. GetParam('roadway');
-								$details .= '<br/>'.localize('_IWAY',getlocal()) . ':'. GetParam('invway');	   
-								$details .= '<br/>'.localize('_DELIVADDRESS',getlocal()) . ':'. GetParam('addressway');	   
-								$details .= '<br/>'.localize('_SXOLIA',getlocal()) .':'. GetParam('sxolia');		   
+								$details  = '<br/>'.localize('_PWAY',$this->lan) . ':'. GetParam('payway');
+								$details .= '<br/>'.localize('_RWAY',$this->lan) . ':'. GetParam('roadway');
+								$details .= '<br/>'.localize('_IWAY',$this->lan) . ':'. GetParam('invway');	   
+								$details .= '<br/>'.localize('_DELIVADDRESS',$this->lan) . ':'. GetParam('addressway');	   
+								$details .= '<br/>'.localize('_SXOLIA',$this->lan) .':'. GetParam('sxolia');		   
 								SetSessionParam('orderdetails',$details);
 				
 								break;
@@ -1509,7 +1508,7 @@ EOF;
 				$tokens[] = null;
 				$tokens[] = null;			 
 				$tokens[] = $this->looptotals;*/ //not totals when empty
-				$tokens[] = localize('_EMPTY',getlocal());	 		   
+				$tokens[] = localize('_EMPTY',$this->lan);	 		   
 		  
 			}
 	    }
@@ -1788,19 +1787,19 @@ EOF;
 
 			$template = $invoice_template ? str_replace('.htm', '', $invoice_template) : "shcartmail";
 		  	
-			$details  = '<br/>'.localize('_PWAY',getlocal()) .':'. GetSessionParam('payway');
-			$details .= '<br/>'.localize('_RWAY',getlocal()) .':'. GetSessionParam('roadway');
-			$details .= '<br/>'.localize('_IWAY',getlocal()) .':'. GetSessionParam('invway');	   
-			$details .= '<br/>'.localize('_DELIVADDRESS',getlocal()) .':'. GetSessionParam('addressway');	   
-			$details .= '<br/>'.localize('_SXOLIA',getlocal()) .':'. GetSessionParam('sxolia');		   	  
+			$details  = '<br/>'.localize('_PWAY',$this->lan) .':'. GetSessionParam('payway');
+			$details .= '<br/>'.localize('_RWAY',$this->lan) .':'. GetSessionParam('roadway');
+			$details .= '<br/>'.localize('_IWAY',$this->lan) .':'. GetSessionParam('invway');	   
+			$details .= '<br/>'.localize('_DELIVADDRESS',$this->lan) .':'. GetSessionParam('addressway');	   
+			$details .= '<br/>'.localize('_SXOLIA',$this->lan) .':'. GetSessionParam('sxolia');		   	  
 
 			if ($invoice_template) {
 				//init tokens
 				$invoice_tokens = array();
 				$invoice_tokens['trid']       = $this->transaction_id;
-				$invoice_tokens['payway']     = localize(GetSessionParam('payway'), getlocal());
-				$invoice_tokens['roadway']    = localize(GetSessionParam('roadway'), getlocal());
-				$invoice_tokens['invway']     = localize(GetSessionParam('invway'), getlocal());
+				$invoice_tokens['payway']     = localize(GetSessionParam('payway'), $this->lan);
+				$invoice_tokens['roadway']    = localize(GetSessionParam('roadway'), $this->lan);
+				$invoice_tokens['invway']     = localize(GetSessionParam('invway'), $this->lan);
 				$invoice_tokens['addressway'] = GetSessionParam('addressway');
 				$invoice_tokens['sxolia']     = GetSessionParam('sxolia');		   
 				$invoice_tokens['cusdata']    = (array) _m('shcustomers.showcustomerdata use +++1');//array();	  
@@ -1809,7 +1808,7 @@ EOF;
 				$x = 'notes123';//.var_export($invoice_tokens, true);
 				$date = date('d.m.y');			
 				//$invoice_tokens['invoice'] = GetSessionParam('invway') .' '.$this->transaction_id;
-				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',getlocal()).' '.$this->transaction_id;
+				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',$this->lan).' '.$this->transaction_id;
 				$invoice_tokens['mynotes'] = GetSessionParam('sxolia');//$x;
 				$invoice_tokens['mydate'] = $date;
 				if (defined('TWIGENGINE_DPC')) {
@@ -1850,7 +1849,7 @@ EOF;
 	        $subject = str_replace('@',$this->transaction_id,$ordermailsubject);	   
 		}
 		else
-		    $subject = localize('_ORDERSUBJECT',getlocal()) . $this->transaction_id;
+		    $subject = localize('_ORDERSUBJECT',$this->lan) . $this->transaction_id;
 			
 		//MAIL THE ORDER TO HOST
  		$this->mailerror = $this->cart_mailto(null,$subject,$mailout);
@@ -1892,7 +1891,6 @@ EOF;
 	//as post come from guest details form
 	public function guestRegistration() {
 		$db = GetGlobal('db');	
-		$lan = getlocal();	
 		$email = GetParam('email');
 		$name = GetParam('name');
 		$address = GetParam('address');
@@ -1901,21 +1899,19 @@ EOF;
 		$tel = str_replace('+','00', GetParam('tel'));
 		
 		//register and login (save customer details or deliv address of existing user)
-		if (defined('SHLOGIN_DPC'))
-			$loggedin = _m("shlogin.do_guest_login use $email+$name+$address+$postcode+$country+$tel");
-		else	
-			$loggedin = _m("cmslogin.do_guest_login use $email+$name+$address+$postcode+$country+$tel");
+		$loggedin = (defined('SHLOGIN_DPC')) ?
+					_m("shlogin.do_guest_login use $email+$name+$address+$postcode+$country+$tel") :
+					_m("cmslogin.do_guest_login use $email+$name+$address+$postcode+$country+$tel");
 		
-		if ($loggedin) { 	
-			
+		if ($loggedin) { 		
 			if ($template = _m('cmsrt.select_template use shcartguestprocced')) {
-				
 				$tokens = array($email, $name, $address, $postcode, $country, $tel);
 				return $this->combine_tokens($template, $tokens, true);
 			}
 			else
 				return "Message: Guest user registration form missing";					
 		}
+		
 		return false; //"Guest user registration failed";
 	}	
 	
@@ -1929,7 +1925,7 @@ EOF;
 		   		   
 		foreach ($pways as $i=>$w) {
 		    $lans_titles = explode('/',$w);
-			$choice = $lans_titles[getlocal()];
+			$choice = $lans_titles[$this->lan];
 			$choices[] = $choice;
 			 
 			if (strcmp($choice,$payway)==0) 
@@ -1952,7 +1948,7 @@ EOF;
 		     case 2 :	//$mypway = GetParam("payway")?GetParam("payway"):GetSessionParam("payway");
 						//hold param
 						SetSessionParam('payway', $payway); //$mypway);	
-						$subtokens[] = localize($mypway, getlocal());
+						$subtokens[] = localize($mypway, $this->lan);
 						$s1 = $this->get_selection_text('payway',$subtokens);
 						$tokens[] = $s1 ? $s1 :$subtokens;						 				 
 						break;
@@ -1964,8 +1960,7 @@ EOF;
 	}
 
 	public function payway2() {
-		$db = GetGlobal('db');	
-		$lan = getlocal();		
+		$db = GetGlobal('db');			
 
         switch ($this->status) {
 			 case 1 :	$template = _m('cmsrt.select_template use ppay');
@@ -1981,7 +1976,7 @@ EOF;
 						$res = $db->Execute($sSQL);	
 						//return $sSQL;
 						foreach ($res as $i=>$rec) {
-							$title = $rec['lantitle'] ? localize($rec['lantitle'], $lan) : $rec['title'];
+							$title = $rec['lantitle'] ? localize($rec['lantitle'], $this->lan) : $rec['title'];
 							$tokens = array($rec['code'], $title, $rec['notes']);
 							$options[] = $this->combine_tokens($subtemplate, $tokens, true);
 							unset ($tokens);
@@ -1995,7 +1990,7 @@ EOF;
 	         case 3 :
 		     case 2 :	$payway = $this->getDetailSelection('payway');
 						SetSessionParam('payway',$payway);
-						return (localize($payway, $lan));
+						return (localize($payway, $this->lan));
 	 							 					 
 						break;
 
@@ -2005,7 +2000,6 @@ EOF;
 	
 	public function payDetails() {
 		$db = GetGlobal('db');	
-		$lan = getlocal();
 		
 		$payway = $this->getDetailSelection('payway');
 		$code = GetReq('payway') ? GetReq('payway') : $payway;		
@@ -2039,7 +2033,7 @@ EOF;
 		
 		foreach ($ways as $i=>$w) {
 		    $lans_titles = explode('/',$w);
-		    $choices2[] = $lans_titles[getlocal()];
+		    $choices2[] = $lans_titles[$this->lan];
 		}
 
 	    $params = implode(',',$choices2);
@@ -2051,7 +2045,7 @@ EOF;
 					 
 						$subtokens[] = $radios;
 						if ($message = remote_arrayload('SHCART','roadwaystext',$this->path)) 
-							$subtokens[] = $message[getlocal()];
+							$subtokens[] = $message[$this->lan];
 						else
 							$subtokens[] = '&nbsp;';
 					   
@@ -2068,7 +2062,7 @@ EOF;
 						//hold param
 						SetSessionParam('roadway',$myrway);
 					 
-						$subtokens[] = localize($myrway, getlocal());
+						$subtokens[] = localize($myrway, $this->lan);
 						$subtokens[] = '&nbsp;';
 						$s1 = $this->get_selection_text('roadway',$subtokens);
 						if ($s1) { 
@@ -2088,7 +2082,6 @@ EOF;
 	
 	public function roadway2($customer_address_array=null) {
 		$db = GetGlobal('db');	
-		$lan = getlocal();
 
         switch ($this->status) {
 			 case 1 :	$template = _m('cmsrt.select_template use ptrans');
@@ -2104,7 +2097,7 @@ EOF;
 							if ($i==0) //save 1st when address selected
 								SetGlobal('roadway', $rec['code']); 
 							
-							$title = $rec['lantitle'] ? localize($rec['lantitle'], $lan) : $rec['title'];
+							$title = $rec['lantitle'] ? localize($rec['lantitle'], $this->lan) : $rec['title'];
 							$tokens = array($rec['code'], $title, $rec['notes']);
 							$options[] = $this->combine_tokens($subtemplate, $tokens, true);
 							unset ($tokens);
@@ -2118,7 +2111,7 @@ EOF;
 	         case 3 :
 		     case 2 :	$roadway = $this->getDetailSelection('roadway');
 						SetSessionParam('roadway',$myrway);
-						return (localize($roadway, $lan));
+						return (localize($roadway, $this->lan));
 	 							 					 
 						break;
 
@@ -2128,7 +2121,6 @@ EOF;
 	
 	public function roadDetails() {
 		$db = GetGlobal('db');	
-		$lan = getlocal();
 		$roadway = $this->getDetailSelection('roadway');
 		$code = GetReq('roadway') ? GetReq('roadway') : 
 					($roadway ? $roadway : GetGlobal('roadway'));
@@ -2224,7 +2216,7 @@ EOF;
 
 		foreach ($ways as $i=>$w) {
 			$lans_titles = explode('/',$w);
-			$choices2[] = $lans_titles[getlocal()];
+			$choices2[] = $lans_titles[$this->lan];
 		}
 
 		$params = implode(',',$choices2);		   
@@ -2252,7 +2244,7 @@ EOF;
 		     case 2 :	$myiway = GetParam("invway")?GetParam("invway"):GetSessionParam("invway");
 						SetSessionParam('invway',$myiway);
 					 
-						$subtokens[] = localize($myiway, getlocal());
+						$subtokens[] = localize($myiway, $this->lan);
 						$subtokens[] = '&nbsp;';
 					 
 						$s1 = $this->get_selection_text('invoiceway',$subtokens);	
@@ -2275,7 +2267,6 @@ EOF;
 		//$ways = remote_arrayload('SHCART','invways',$this->path);
 		$defway = remote_paramload('SHCART','invway_default',$this->path); 	
 		$invtype = $defway ? $defway : 0;//override customers default invoice ??
-        $lan = getlocal();
  
 		switch ($this->status) {
 			case 1 : 	$template = _m('cmsrt.select_template use pinv');
@@ -2290,10 +2281,10 @@ EOF;
 						}  
 						//echo $this->is_reseller,'>';		
 						if ($this->is_reseller)
-							$dtypes = array(localize('_INVOICE',$lan), localize('_APODEIXI',$lan));
+							$dtypes = array(localize('_INVOICE',$this->lan), localize('_APODEIXI',$this->lan));
 						else 
-							$dtypes = ($invtype) ?  array(localize('_INVOICE',$lan), localize('_APODEIXI',$lan)):
-													array(localize('_APODEIXI',$lan), localize('_INVOICE',$lan));
+							$dtypes = ($invtype) ?  array(localize('_INVOICE',$this->lan), localize('_APODEIXI',$this->lan)):
+													array(localize('_APODEIXI',$this->lan), localize('_INVOICE',$this->lan));
 
 						foreach ($dtypes as $i=>$doctype) {
 							$selected = ($doctype==$invoiceway) ? 'selected' : '';
@@ -2480,7 +2471,7 @@ EOF;
 						else
 						  $subtokens[] = '&nbsp;';
 						  
-						$s1 = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',getlocal()),true);	
+						$s1 = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',$this->lan),true);	
 						if ($s1) { 
 							$tokens[] = $s1;
 							$tokens[] = '&nbsp;';//dummy
@@ -2499,7 +2490,7 @@ EOF;
 					 $subtokens[] = '&nbsp;';
 					 $subtokens[] = '&nbsp;';
 					 
-					 $s1 = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',getlocal()),true);	
+					 $s1 = $this->get_selection_text('customerway',$subtokens,1,localize('_CUSTOMERSLIST',$this->lan),true);	
 					 if ($s1) { 
 						$tokens[] = $s1;
 						$tokens[] = '&nbsp;';//dummy
@@ -2625,7 +2616,6 @@ EOF;
 	//standart roadway, payway costs
 	protected function calcShipping() {
 		$db = GetGlobal('db');	
-		$lan = getlocal();
 
 		if ($code = $this->getDetailSelection('roadway')) {
 			$sSQL = "select cost from ptransports where ";
@@ -2660,7 +2650,7 @@ EOF;
 		$w = explode('/',$wp);
 		$roadway = array_pop($w);
 		$shipway = GetParam("roadway") ? //no table in greek
-						(getlocal() ? //if in greek, get the english descr
+						($this->lan ? //if in greek, get the english descr
 								str_replace('/'.GetParam("roadway"),'',$ways[0]) ://standart english descr 0array ??? 
 								GetParam("roadway")
 						) :
@@ -2762,15 +2752,15 @@ EOF;
     protected function print_button() {
 	    $aftersubmitgoto = remote_paramload('SHCART','aftersubmitgoto',$this->path);
 	
-	    $title = localize('_TRANSPRINT',getlocal());
+	    $title = localize('_TRANSPRINT',$this->lan);
 		$translink = 'printcart/';
-		$ret = $this->myf_button(localize('_TRANSPRINT',getlocal()),$translink,'_TRANSPRINT');
+		$ret = $this->myf_button(localize('_TRANSPRINT',$this->lan),$translink,'_TRANSPRINT');
 	    
 	    //VIEW TRANSACTIONS
 		if ((defined('SHTRANSACTIONS_DPC'))) {
 			//$out .= _m('shtransactions.viewTransactions');
 			$lnk1 = _m('cmsrt.url use t=transview'); 
-			$trans_button = '&nbsp;'.$this->myf_button(localize('_TRANSLIST',getlocal()),$lnk1);
+			$trans_button = '&nbsp;'.$this->myf_button(localize('_TRANSLIST',$this->lan),$lnk1);
 		} 			
 			
 		return ($ret . $trans_button);
@@ -2796,8 +2786,8 @@ EOF;
 
 		$myst = remote_paramload('SHCART','onsuccessgototitle',$this->path);
         $onsuccess = explode('/',$myst); 
-		$onsuccesstitle = $onsuccess[getlocal()];
-		$goto_title = $onsuccesstitle ? $onsuccesstitle : localize('_HOME',getlocal());
+		$onsuccesstitle = $onsuccess[$this->lan];
+		$goto_title = $onsuccesstitle ? $onsuccesstitle : localize('_HOME',$this->lan);
 
 		$gobutton =  _m('cmsrt.url use t=' . $goto . '+' . $goto_title); 
 				
@@ -2828,8 +2818,8 @@ EOF;
 
 		if (!$this->transaction_id) 
 			$error .= "/Invalid transaction id.";
-
-		$msg = localize('_TRANSERROR',getlocal()) . "&nbsp;" . "<a href='contact.php'>$this->carterror_mail</a>";					 
+		
+		$msg = localize('_TRANSERROR',$this->lan) . "&nbsp;" . "<a href='contact.php'>$this->carterror_mail</a>";					 
 
 		$tokens[] = $msg; 			
 		$tokens[] = $error;
@@ -2861,8 +2851,7 @@ EOF;
 		$db = GetGlobal('db');		
 		if (!$this->loyalty) return 0;	
 	    $reseller = GetSessionParam('RESELLER');
-		$id = decode(GetSessionParam('UserID'));
-		$lan = getlocal();		
+		$id = decode(GetSessionParam('UserID'));	
 
 		if ($id) { 
 		
@@ -2879,13 +2868,13 @@ EOF;
 					SetSessionParam('cdiscount', $cdiscount);
 					$this->isValidCoupon = true;
 					
-					$this->jsDialog(localize('_couponvalid', $lan), 
-									localize('_discount', $lan) . ': '. $cdiscount . '%');	
+					$this->jsDialog(localize('_couponvalid', $this->lan), 
+									localize('_discount', $this->lan) . ': '. $cdiscount . '%');	
 					$ret = $cdiscount;
 				}
 				else
-					$this->jsDialog(localize('_couponinvalid', $lan),
-									localize('_coupon', $lan) . ': '. $coupon);	
+					$this->jsDialog(localize('_couponinvalid', $this->lan),
+									localize('_coupon', $this->lan) . ': '. $coupon);	
 			}
 		    else { 
 			    //user defined multiple price policy rows 
@@ -2898,10 +2887,10 @@ EOF;
 					SetSessionParam('points', $result->fields[1]);
 					//SetSessionParam('pdiscount', $pdiscount);	//do not save (default ppolicy)
 					/*
-					$this->jsDialog(localize('_pointsused', $lan),
-									localize('_discount', $lan) . ': '. $pdiscount . '%');
+					$this->jsDialog(localize('_pointsused', $this->lan),
+									localize('_discount', $this->lan) . ': '. $pdiscount . '%');
 					*/					
-					$dline[] = localize('_usedpointsdiscount', $lan) . ': '. $pdiscount . '%';
+					$dline[] = localize('_usedpointsdiscount', $this->lan) . ': '. $pdiscount . '%';
 					$ret = $pdiscount;
 				}
 
@@ -2913,11 +2902,11 @@ EOF;
 				$result = $db->Execute($sSQL);		
 				if ($cartdiscount = $result->fields[0]) {
 					//echo 'cart discount';
-					/*$this->jsDialog(localize('_pointstoset', $lan),
-									localize('_points', $lan) . ': '. $result->fields[1]);			
+					/*$this->jsDialog(localize('_pointstoset', $this->lan),
+									localize('_points', $this->lan) . ': '. $result->fields[1]);			
 					*/		
-					$dline[] = localize('_totalcartdiscount', $lan) . ': '. $cartdiscount . '%';
-					$dline[] = localize('_pointstoset', $lan) . ': '. $result->fields[1];
+					$dline[] = localize('_totalcartdiscount', $this->lan) . ': '. $cartdiscount . '%';
+					$dline[] = localize('_pointstoset', $this->lan) . ': '. $result->fields[1];
 					
 					$ret += $cartdiscount;	//plus !!!!
 				}
@@ -2925,7 +2914,7 @@ EOF;
 				//dlines total messages dialog
 				if (!empty($dline)) {
 					$this->ppolicynotes = implode('<br/>',$dline);
-					$this->jsDialog($this->ppolicynotes , localize('_discount', $lan));				
+					$this->jsDialog($this->ppolicynotes , localize('_discount', $this->lan));				
 					//SetSessionParam('ppolicytext', $dtext); //used by html dac pages
 				}	
 			}			
@@ -2943,13 +2932,13 @@ EOF;
 					SetSessionParam('cdiscount', $cdiscount);
 					$this->isValidCoupon = true;
 					
-					$this->jsDialog(localize('_couponexist', $lan), 
-									localize('_discount', $lan) . ': '. $cdiscount . '%');	
+					$this->jsDialog(localize('_couponexist', $this->lan), 
+									localize('_discount', $this->lan) . ': '. $cdiscount . '%');	
 					$ret = $cdiscount;
 				}
 				else
-					$this->jsDialog(localize('_couponnotexist', $lan),
-									localize('_coupon', $lan) . ': '. $coupon);	
+					$this->jsDialog(localize('_couponnotexist', $this->lan),
+									localize('_coupon', $this->lan) . ': '. $coupon);	
 			}		   
 	    }
 		
@@ -3310,7 +3299,7 @@ EOF;
 			/*
 			if ($this->supershipping) {//link
 		     //echo 'ss:',$this->supershipping;
-             $data2[] = "<B>" . seturl('t=sship',localize('_SHIPCOST',getlocal())) . " :</B>";		   
+             $data2[] = "<B>" . seturl('t=sship',localize('_SHIPCOST',$this->lan)) . " :</B>";		   
 		    */
 	    }
         else
@@ -3493,7 +3482,7 @@ EOF;
 
 	        if (stristr($v,'/')) {
 			  $vv = explode('/',$v);
-			  $title = $vv[getlocal()];
+			  $title = $vv[$this->lan];
 			  $methods .= "<option value=\"$vv[0]\"".($vv[0] == $cservice ? " selected" : "").">$title</option>";
 			}
 			else
@@ -3502,11 +3491,11 @@ EOF;
 		$methods .= "</select>";				   
 				   
 		$out .= '<span>'.
-	           localize('_SHIPWEIGHT',getlocal()) . 
+	           localize('_SHIPWEIGHT',$this->lan) . 
 			   '&nbsp;:&nbsp;'.
-			   $weight.localize('_KG',getlocal()).
+			   $weight.localize('_KG',$this->lan).
 			   '&nbsp;|&nbsp;'.
-			   localize('_SHIPZONE',getlocal()).
+			   localize('_SHIPZONE',$this->lan).
 			   '&nbsp;:&nbsp;'. 
 			   $countries .
 			   '&nbsp;&nbsp;'.
@@ -3529,12 +3518,12 @@ EOF;
 				$out .= $rec['weight'].'|'.$rec['cost'];
 			}
 			$out .= '<hr>';*/
-			$field[] = /*($n+1) .*/ "1&nbsp;" . localize('_PARCELOF',getlocal());
+			$field[] = /*($n+1) .*/ "1&nbsp;" . localize('_PARCELOF',$this->lan);
 			$attr[] = 'left;40%';
 		 
 			$sweight = number_format(floatval($rec['weight']),$this->dec_num,',','.');
 		 
-			$field[] = $sweight . "&nbsp;" . localize('_KG',getlocal());
+			$field[] = $sweight . "&nbsp;" . localize('_KG',$this->lan);
 			$attr[] = 'right;30%';	
 
 			$scost = number_format(floatval($rec['cost']),$this->dec_num,',','.');
@@ -3755,10 +3744,16 @@ EOF;
 	protected function cart_mailto($to=null,$subject=null,$body=null) {
 	    $from = $this->cartsend_mail;
 	    $to = $to ? $to : $this->cartreceive_mail;
-		  
+		
+		$body = str_replace('+','<SYN/>',$body); 
+		$mailerr = _m("cmsrt.cmsMail use $from+$to+$subject+$body+{$this->transaction_id}+cart");
+
+		return ($mailerr);
+		/*
+		
 	    if (defined('SMTPMAIL_DPC')) {
 			
-			$trackid = $this->get_trackid($from,$to);
+			$trackid = $this->get_trackid($this->transaction_id); 
 			$mbody = $this->add_tracker_to_mailbody($body,$trackid,$to,1);				
 				 
 	        $smtpm = new smtpmail;
@@ -3777,18 +3772,18 @@ EOF;
 	    else
 	        echo "Mail not send! (smtp not loaded)";		
 		  
-		  return ($mailerror);	   	
+		return ($mailerror);	*/   	
 	}
 	
 	//send mail to db queue
-	protected function save_outbox($from,$to,$subject,$body=null, $trackid=null) {
+	/*protected function save_outbox($from,$to,$subject,$body=null, $trackid=null) {
 		$db = GetGlobal('db');		
 		$ishtml = 1;
 		$origin = 'cart'; 
 		$datetime = date('Y-m-d h:s:m');
 		$active = 0; 		
 		
-		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,cid) ";
+		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,trackid,cid) ";
 		$sSQL .=  "values (" .
 			 $db->qstr($datetime) . "," . 
 			 $db->qstr($datetime) . "," . 
@@ -3798,31 +3793,25 @@ EOF;
 		     $db->qstr($subject) . "," . 
 			 $db->qstr($body) . "," .
 			 $db->qstr($origin) . "," .				 
+			 $db->qstr($trackid) . ",".
 			 $db->qstr($trackid) . ")";
 			 		
 		$result = $db->Execute($sSQL,1);			 
 
 		return (true);			 
 	}	
-
-	protected function get_trackid($from,$to) {
-	
-		$i = rand(100000,999999);//++$m;	 
-		$tid = date('YmdHms') .  $i . '@' . $this->appname;
-		 
-		return ($tid);	
-	}	
 	
 	protected function add_tracker_to_mailbody($mailbody=null,$id=null,$receiver=null,$is_html=false) {
 		if (!$id) return;
 		$i = $id;
 	
-		if ($receiver) {
-			$r = $receiver;
-			$ret = "<img src=\"{$this->mtrackimg}?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"1\"/>";
+		if ($r = $receiver) {
+			//$ret = "<img src=\"{$this->mtrackimg}?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"1\"/>";
+			$ret = "<img src=\"{$this->mtrackimg}$i/$r/\" border=\"0\" width=\"1\" height=\"1\"/>";
 		}
 		else
-			$ret = "<img src=\"{$this->mtrackimg}?i=$i\" border=\"0\" width=\"1\" height=\"1\"/>";
+			//$ret = "<img src=\"{$this->mtrackimg}?i=$i\" border=\"0\" width=\"1\" height=\"1\"/>";
+			$ret = "<img src=\"{$this->mtrackimg}$i/\" border=\"0\" width=\"1\" height=\"1\"/>";
 		 
 		if (($is_html) && (stristr($mailbody,'</BODY>'))) {
 			if (strstr($mailbody,'</BODY>'))
@@ -3834,7 +3823,34 @@ EOF;
 			$out = $mailbody . $ret;	 	 
 		 
 		return ($out);	 
+	}	*/
+	
+	//called by twig invoice html as func add link tracker
+	public function addTracker($returl=false) { 
+	    $mtrack = _m('cms.paramload use CMS+mtrack');
+	    //mtrack = $mtrack ? $mtrack : "http://www.stereobit.gr/mtrack/";	//.php		
+			
+		$u = GetGlobal('UserName');
+		$r = decode($u);
+
+		$i = $this->get_trackid($this->transaction_id);
+		//$rurl = $mtrack . "?i=$i&r=$r";
+		$rurl = $mtrack . "$i/$r/";
+	
+		$ret = $returl ? $rurl : "<img src='$rurl' border='0' width='1' height='1'/>";	 	  
+				
+		return ($ret);	 
 	}	
+	
+	protected function get_trackid($id=null) {
+		//$appname = paramload('ID','instancename');
+		$appname = _v('cmsrt.appname'); 
+		
+		$i = $id ? $id : rand(100000,999999);	 
+		$tid = date('YmdHms') .  $i . '@' . $appname;
+		 
+		return ($tid);	
+	}		
 
 	protected function update_statistics($id, $user=null) {
 		if ($this->userLevelID >= 5) return false;
@@ -3911,7 +3927,7 @@ EOF;
 		
 		$referer = $_SESSION['http_referer']; //as saved by vstats
 		
-		$rstr = $this->paramload('ESHOP', 'refererAnalytics');
+		$rstr = _m('cms.paramload use ESHOP+refererAnalytics');
 		$refs = $rstr ? str_replace(',','|',strtolower($mstr)) : "skroutz|bestprice|google";
 		
 		//create analytics script if referer
@@ -3923,9 +3939,7 @@ EOF;
 			$js->load_js($code,"",1);			   
 			unset ($js);
 		}			   	   	     
-	}	
-	
-	
+	}		
 	
 	
 	public static function myf_button($title,$link=null,$image=null) {

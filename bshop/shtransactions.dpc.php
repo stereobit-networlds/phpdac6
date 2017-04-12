@@ -7,19 +7,9 @@ define("SHTRANSACTIONS_DPC",true);
 
 $__DPC['SHTRANSACTIONS_DPC'] = 'shtransactions';
 
-$a = GetGlobal('controller')->require_dpc('bshop/transactions.dpc.php');
-require_once($a);
+require_once(_r('libs/browser2.lib.php'));
+require_once(_r('bshop/transactions.dpc.php'));
 
-//in case of page cntrl pxml not exist so load
-$b = GetGlobal('controller')->require_dpc('libs/browser2.lib.php');
-require_once($b);
-
-//in case of page cntrl pxml not exist so load
-$c = GetGlobal('controller')->require_dpc('shell/pxml.lib.php');
-require_once($c);
-
-//this transfer all actions,commands,attr from parent to child and parent disabled(=null)
-//it is important for inherit to still procced the commands of parent
 GetGlobal('controller')->get_parent('TRANSACTIONS_DPC','SHTRANSACTIONS_DPC');
 
 $__EVENTS['SHTRANSACTIONS_DPC'][6]='transviewhtml';
@@ -396,6 +386,7 @@ class shtransactions extends transactions {
 			// MAIL THE ORDER TO HOST
 			$host = _v('shcart.cartreceive_mail');
 			$this->mailto($host,$s,$b);
+			
 			//TO CUSTOMER
 		    $this->mailto(null,$s,$b);
 		
@@ -437,9 +428,11 @@ class shtransactions extends transactions {
 		$mailsubject = $subject ? $subject : localize('_mailcancelsubject', getlocal());
 		
 		$from = _v('shusers.usemail2send');
-	    $ret = _m('shusers.mailto use '.$from.'+'.$to.'+'.$mailsubject.'+'.$mailbody);
+	    //$ret = _m('shusers.mailto use '.$from.'+'.$to.'+'.$mailsubject.'+'.$mailbody);
+		$body = str_replace('+','<SYN/>',$mailbody); 
+		$mailerr = _m("cmsrt.cmsMail use $from+$to+$mailsubject+$body");	
 		
-		return ($ret);
+		return ($mailerr);
 	} 	
 	
 	public function getTransactionsList() {

@@ -7,7 +7,7 @@ class storebuffer {
 	var $buffer = array();
 	var $name;
 
-	function storebuffer($sesname='storebuffer') {
+	function __construct($sesname='storebuffer') {
 
 		$this->name = $sesname;
 		$this->buffer= (array)$this->getStore();

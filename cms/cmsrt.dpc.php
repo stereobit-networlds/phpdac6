@@ -35,15 +35,8 @@ $__DPCATTR['CMSRT_DPC']['setlanguage'] = 'setlanguage,0,0,0,0,0,0,0,0,0,0,0';
 $__LOCALE['CMSRT_DPC'][0]='SHLANGS_DPC;Languanges;Γλώσσα';
 $__LOCALE['CMSRT_DPC'][1]='_HOME;Home;Αρχική';
 
-$a = GetGlobal('controller')->require_dpc('cms/pxml.lib.php');
-require_once($a);
-
-$b = GetGlobal('controller')->require_dpc('libs/scaptcha.lib.php');
-require_once($b);
-
-$c = GetGlobal('controller')->require_dpc('cms/cms.dpc.php');
-require_once($c);
-
+$a = GetGlobal('controller')->require_dpc('cms/cms.dpc.php');
+require_once($a); //_r('cms/cms.dpc.php')); not loaded yet
 
 class cmsrt extends cms  {
 	
@@ -57,8 +50,7 @@ class cmsrt extends cms  {
 	var $lan, $itmname, $itmdescr, $itmeter;
 	var $picbg, $picmd, $picsm, $home, $cat_result, $isCAttach;
 	var $ogTags, $twigTags, $siteTitle, $siteTwiter, $siteFb, $httpurl;	
-	
-	var $scrollid, $load_mode;
+	var $mtrack, $mbody, $scrollid, $load_mode;
 	
 	public function __construct() {
 	
@@ -134,8 +126,12 @@ class cmsrt extends cms  {
 							"price0,price1,cat0,cat1,cat2,cat3,cat4,itmdescr,itmfdescr,itmremark,ypoloipo1,resources,".
 							$this->fcode . ',' . $this->lastprice . ",weight,volume,dimensions,size,color,manufacturer,orderid,YEAR(sysins) as year,MONTH(sysins) as month,DAY(sysins) as day, DATE_FORMAT(sysins, '%h:%i') as time, DATE_FORMAT(sysins, '%b') as monthname," .
 							"template,owner,itmactive,p1,p2,p3,p4,p5,code2,code3 from products ";	
-		$this->itmplpath = 'templates/';					
-
+		$this->itmplpath = 'templates/';	
+		
+	    $track = $this->paramload('CMS', 'mtrack');
+	    $this->mtrack = $track ? $track : "http://www.stereobit.gr/mtrack/";		
+		$this->mbody = null; //use for load body as var		
+				
 	    $this->scrollid = 0;//javascript scroll call meter
 		$this->load_mode = 1;		
 
@@ -1730,6 +1726,93 @@ EOF;
 		
 		return false;	
 	}
+	
+	
+	
+	//send mail
+	public function cmsMail($from=null,$to=null,$subject=null,$body=null,$tid=null,$origin=null) {
+	    $from = ($this->validMail($from)) ? $from : $this->paramload('INDEX','e-mail');
+		  
+	    if (($this->validMail($to)) && (defined('SMTPMAIL_DPC'))) {
+						
+			$mailbody = $body ? str_replace('<SYN/>','+',$body) : $this->body; //preload as _v(cmsrt.mbody use text)
+			$trackid = $this->addTracker($mailbody, $tid, $to);				
+				 
+	        $smtpm = new smtpmail;
+		   
+		    $smtpm->to($to); 
+		    $smtpm->from($from); 
+		    $smtpm->subject($subject);
+		    $smtpm->body($mailbody);			   
+
+			$mailerror = $smtpm->smtpsend();
+			
+			$this->saveMail($from, $to, $subject, $body, $trackid, $origin);
+
+			unset($smtpm);
+		}
+	    else
+	        echo "Mail not send! (smtp not loaded)";		
+		  
+		return ($mailerror);	   	
+	}
+	
+	public function setMailBody($text=null) {
+		
+		return str_replace('+','<SYN/>',$text);
+	}
+	
+	//save mail to db queue
+	protected function saveMail($from,$to,$subject,$body=null,$trackid=null,$orig=null) {
+		$db = GetGlobal('db');		
+		$ishtml = 1;
+		$origin = $orig ? $orig : 'cmsMail'; 
+		$datetime = date('Y-m-d h:s:m');
+		$active = 0; 
+		$cid = ''; //$trackid;	
+		
+		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,trackid,cid) ";
+		$sSQL .=  "values (" .
+			 $db->qstr($datetime) . "," . 
+			 $db->qstr($datetime) . "," . 
+			 $active . "," .
+		     $db->qstr(strtolower($from)) . "," . 
+			 $db->qstr(strtolower($to)) . "," .
+		     $db->qstr($subject) . "," . 
+			 $db->qstr($body) . "," .
+			 $db->qstr($origin) . "," .
+			 $db->qstr($trackid) . ",".
+			 $db->qstr($cid) . ")";
+			 		
+		$result = $db->Execute($sSQL,1);			 
+
+		return (true);			 
+	}	
+
+	protected function getTrackId($id=null) {
+	
+		$i = $id ? $id : rand(100000,999999);	 
+		$tid = date('YmdHms') .  $i . '@' . $this->appname;
+		 
+		return ($tid);	
+	}	
+	
+	protected function addTracker(&$mailbody,$tid=null,$to=null) {
+		
+		$i = $this->getTrackId($tid); 
+		
+		if ($mailbody) {
+	
+			$ret = ($to) ?	"<img src=\"{$this->mtrack}$i/$to/\" border=\"0\" width=\"1\" height=\"1\"/>":
+							"<img src=\"{$this->mtrack}$i/\" border=\"0\" width=\"1\" height=\"1\"/>";
+		 
+			$mailbody = (strstr($mailbody,'</BODY>')) ?
+					str_replace('</BODY>',$ret.'</BODY>',$mailbody):
+					str_replace('</body>',$ret.'</body>',$mailbody);
+		}
+		
+		return ($i);	 
+	}	
 
 
 	
@@ -1754,6 +1837,7 @@ EOF;
 		
 		return false;
 	}	
+	
 	
 	
 	//override

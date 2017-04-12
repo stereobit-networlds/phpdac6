@@ -894,9 +894,11 @@ window.onload=function(){
 					
 					$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
-					$from = $this->it_sendfrom?$this->it_sendfrom:$email;
+					$from = $this->it_sendfrom ? $this->it_sendfrom : $email;
 					$subject = localize('CustomerRegistration',getlocal());
-					$this->mailto($from,$this->tellit,$subject,$mailbody);
+					//$this->mailto($from,$this->tellit,$subject,$mailbody);
+					$body = str_replace('+','<SYN/>',$mailbody); 
+					$mailerr = _m("cmsrt.cmsMail use $from+{$this->tellit}+$subject+$body");
 				}				 
 		   }
 			 	 
@@ -976,10 +978,11 @@ window.onload=function(){
 			
 				$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
-				$from = $this->it_sendfrom?$this->it_sendfrom:$email;
+				$from = $this->it_sendfrom ? $this->it_sendfrom : $email;
 				$subject = localize('CustomerRegistration',getlocal());
-				//$this->tellit = 'b.alexiou@stereobit.gr'; //test
-				$this->mailto($from,$this->tellit,$subject,$mailbody);
+				//$this->mailto($from,$this->tellit,$subject,$mailbody);
+				$body = str_replace('+','<SYN/>',$mailbody); 
+				$mailerr = _m("cmsrt.cmsMail use $from+{$this->tellit}+$subject+$body");
 			}			
 		 
 			return true;	 
@@ -1091,7 +1094,9 @@ window.onload=function(){
 
 				$from = $this->it_sendfrom ? $this->it_sendfrom : $email;
 				$subject = localize('CustomerRegistration',getlocal());
-				$this->mailto($from,$this->tellit,$subject,$mailbody);
+				//$this->mailto($from,$this->tellit,$subject,$mailbody);
+				$body = str_replace('+','<SYN/>',$mailbody); 
+				$mailerr = _m("cmsrt.cmsMail use $from+{$this->tellit}+$subject+$body");
 			}		 
 		}
 		else 
@@ -1185,10 +1190,11 @@ window.onload=function(){
 			
 				$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
-				$from = $this->it_sendfrom?$this->it_sendfrom:$email;
+				$from = $this->it_sendfrom ? $this->it_sendfrom : $email;
 				$subject = localize('CustomerUpdData',getlocal());
-				//$this->tellit = 'b.alexiou@stereobit.gr'; //test
-				$this->mailto($from,$this->tellit,$subject,$mailbody);
+				//$this->mailto($from,$this->tellit,$subject,$mailbody);
+				$body = str_replace('+','<SYN/>',$mailbody); 
+				$mailerr = _m("cmsrt.cmsMail use $from+{$this->tellit}+$subject+$body");
 			}
 		
 			SetGlobal('sFormErr',"ok");
@@ -1969,10 +1975,11 @@ window.onload=function(){
 			
 					$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
-					$from = $this->it_sendfrom?$this->it_sendfrom:$email;
+					$from = $this->it_sendfrom ? $this->it_sendfrom : $email;
 					$subject = localize('CustomerInsData',getlocal());
-					//$this->tellit = 'b.alexiou@stereobit.gr'; //test
-					$this->mailto($from,$this->tellit,$subject,$mailbody);
+					//$this->mailto($from,$this->tellit,$subject,$mailbody);
+					$body = str_replace('+','<SYN/>',$mailbody); 
+					$mailerr = _m("cmsrt.cmsMail use $from+{$this->tellit}+$subject+$body");
 				}					
 				
 				return true;			   	   	 
@@ -2145,11 +2152,7 @@ window.onload=function(){
 	
 	public function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 
-	    /*if ((defined('RCSSYSTEM_DPC')) && (!$instant)) { //no queue when no instant
-		  $ret = _m("rcssystem.sendit use $from+$to+$subject+$body++$ishtml");
-        }
-		else {*/
-		    if (defined('SMTPMAIL_DPC')) {
+		if (defined('SMTPMAIL_DPC')) {
 				
 				$trackid = $this->get_trackid($from,$to);
 				$mbody = $this->add_tracker_to_mailbody($body,$trackid,$to,1);				
@@ -2166,10 +2169,9 @@ window.onload=function(){
 				$this->save_outbox($from, $to, $subject, $body, $trackid);
 
 				return ($mailerror);				
-			}
-			else
-				die('SMTP ERROR!');
-		//}	 
+		}
+		else
+			die('SMTP ERROR!');
 	}
 
 	//send mail to db queue

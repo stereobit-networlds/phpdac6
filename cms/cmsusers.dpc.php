@@ -533,26 +533,28 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
     //mail registration info to the company
 	protected function mailtohost($username=null,$password=null,$fname=null,$lname=null,$tell=false) {
 		
-	  $tellit =	$tell ? $tell : $this->tell_it;
+		$tellit =	$tell ? $tell : $this->tell_it;
 		
-	  if ($tellit) {
+		if ($tellit) {
 		  
-  	    $mytemplate = _m('cmsrt.select_template use userinserttell');
+			$mytemplate = _m('cmsrt.select_template use userinserttell');
 		
-		$tokens = array(); //reset		
-		$tokens[] = $username;	
-		$tokens[] = $password;	
-		$tokens[] = $fname;	
-		$tokens[] = $lname;			  					
+			$tokens = array(); //reset		
+			$tokens[] = $username;	
+			$tokens[] = $password;	
+			$tokens[] = $fname;	
+			$tokens[] = $lname;			  					
 			
-		$mailbody = $this->combine_tokens($mytemplate,$tokens);
+			$mailbody = $this->combine_tokens($mytemplate,$tokens);
 
-		$ss = $this->tell_subject;
-		$subject = localize($ss, getlocal());
-		$mysubject = $subject ? $subject : localize('_UMAILSUBC',getlocal());
+			$ss = $this->tell_subject;
+			$subject = localize($ss, getlocal());
+			$mysubject = $subject ? $subject : localize('_UMAILSUBC',getlocal());
 		
-	    $this->mailto($this->usemail2send,$this->tell_it,$mysubject,$mailbody);//,1,1);
-	  }	
+			//$this->mailto($this->usemail2send,$this->tell_it,$mysubject,$mailbody);
+			$body = str_replace('+','<SYN/>',$mailbody); 
+			$mailerr = _m("cmsrt.cmsMail use {$this->usemail2send}+{$this->tell_it}+$mysubject+$body");
+		}	
 	} 
 
 	//send username/password to user
@@ -577,10 +579,17 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 			$subject = localize($ss, getlocal());
 			$mysubject = $subject ? $subject : localize('_UMAILSUBC',getlocal());
 
-			if ($this->usemailasusername) 
-				$this->mailto($this->it_sendfrom,$username,$mysubject,$mailbody);//,1,1);	   
-			else 
-				$this->mailto($this->it_sendfrom,GetParam('eml'),$mysubject,$mailbody);//,1,1);	 
+			$body = str_replace('+','<SYN/>',$mailbody); 
+			
+			if ($this->usemailasusername) { 
+				//$this->mailto($this->it_sendfrom,$username,$mysubject,$mailbody);
+				$mailerr = _m("cmsrt.cmsMail use {$this->it_sendfrom}+$username+$mysubject+$body");
+			}	
+			else {
+				$mail = GetParam('eml');
+				//$this->mailto($this->it_sendfrom,$mail,$mysubject,$mailbody);
+				$mailerr = _m("cmsrt.cmsMail use {$this->it_sendfrom}+$mail+$mysubject+$body");
+			}	
 			
 			return true;
 		}
