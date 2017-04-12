@@ -154,7 +154,7 @@ class shpiraeus  {
 								$this->handle_Transaction('success');
 								if (defined('SHCART_DPC')) {
 									$tid = $this->piraeus_get_post_params(1);
-									_m("shcart.goto_mailer use ".$tid);
+									_m("shcart.submitCartOrder use ".$tid);
 								}
 							}
 							else 
@@ -163,7 +163,7 @@ class shpiraeus  {
        case 'paycancel' :	//$this->savelog("PIRAEUS PAYMENT:CANCELED");	
 							$this->handle_Transaction('cancel');
 							if (defined('SHCART_DPC')) {
-								_m("shcart.cancel_order");
+								_m("shcart.cancelCartOrder");
 							}
 							break;
        case 'payticket' : 	//not used ...procedure executes on process/default                 

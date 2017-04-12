@@ -96,7 +96,7 @@ class shpaypal extends paypal {
 								// Order was successful...
 								$this->handle_Transaction('success');
 								if (defined('SHCART_DPC')) {
-									_m("shcart.goto_mailer use " . GetReq('tid') .'++invoice.htm');
+									_m("shcart.submitCartOrder use " . GetReq('tid'));
 								}						   
 							}
 							else   
@@ -105,7 +105,7 @@ class shpaypal extends paypal {
        case 'paycancel' : 	//$this->savelog("PAYPAL PAYMENT:CANCELED");	
 							$this->handle_Transaction('cancel');
 							if (defined('SHCART_DPC')) {
-								_m("shcart.cancel_order");
+								_m("shcart.cancelCartOrder");
 							}	 
 							break;
        case 'payipn'    : 	// Paypal is calling page for IPN validation...	

@@ -192,17 +192,17 @@ $__DPCEXT['SHCART_DPC']='showsymbol';
 class shcart extends storebuffer {
 
 	var $uniname2, $status, $qtytotal, $lan;
-	var $liveupdate, $moneysymbol, $maxcart;
-	var $allowqtyover, $mailerror, $sxolia, $continue_button;
+	var $liveupdate, $moneysymbol, $maxcart, $test2pay;
+	var $allowqtyover, $mailerror, $submiterror, $sxolia, $continue_button;
     var $rejectqty, $checkout, $order, $submit, $cancel, $recalc;
 	var $detailqty, $stock_msg, $overitem, $ignoreqtyzero, $qtytototal,$total;
 	var $path,$autopay, $mydiscount, $mytaxcost, $myfinalcost, $myshippingcost, $discount;
 
-	var $urlpath, $inpath;
+	var $urlpath, $user, $aftersubmitgoto, $aftercancelgoto;
 	var $todo, $quicktax,$showtaxretail,$is_reseller, $cartlinedetails, $notallowremove;
 	var $cartloopdata, $looptotals, $shipcalcmethod, $s_enc, $t_enc, $itemclick, $imagex, $imagey;
 	var $cartprintwin, $itemscount, $supershipping, $shipzone, $shipmethods, $parcelunit, $parcelweight;
-    var $submit2, $url, $printout, $print_title, $cartsumitems;
+    var $submit2, $url, $printout, $print_title, $cartsumitems, $ordermailsubject;
 	
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
     var $twig_invoice_template_name;//, $appname, $mtrackimg; 
@@ -215,6 +215,7 @@ class shcart extends storebuffer {
 		$UserName = GetGlobal('UserName');
 		$UserSecID = GetGlobal('UserSecID');	
 		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);		
+		$this->user = decode($UserName);
 		
 		storebuffer::__construct('cart');
 		
@@ -224,8 +225,7 @@ class shcart extends storebuffer {
 		self::$staticpath = paramload('SHELL','urlpath');
 		$this->path = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');
-		$this->inpath = paramload('ID','hostinpath');
-		
+
 		//$this->baseurl = paramload('SHELL','urlbase');
 		$this->baseurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
 		$this->baseurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];
@@ -262,6 +262,10 @@ class shcart extends storebuffer {
 		$this->bypass_qty = (remote_paramload('SHCART','showqty',$this->path)>0) ? true : false;
 		$this->readonly = remote_paramload('SHCART','qtyreadonly',$this->path);
 		$this->continue_shopping_goto_cmd = remote_paramload('SHCART','continuegoto', $this->path); 
+		$this->ordermailsubject = remote_paramload('SHCART','ordermailsubject',$this->path);
+		$this->aftersubmitgoto = remote_paramload('SHCART','aftersubmitgoto',$this->path);
+		$this->aftercancelgoto = remote_paramload('SHCART','cancelgoto',$this->path);
+		$this->test2pay = remote_paramload('SHCART','test2pay',$this->path);
 		
 		$rw = remote_paramload('SHCART','rewrite',$this->path);
 		$this->rewrite = $rw ? 1 : 0;		
@@ -304,6 +308,7 @@ class shcart extends storebuffer {
         $this->moneysymbol = "&" . paramload('CART','cursymbol') . ";";  
 		$this->maxcart = paramload('CART','maxcart');	
 		$this->mailerror = 0;
+		$this->submiterror = null;
 		$this->sxolia = null;	
 		$this->stock_msg = null;
 		$this->overitem = null;
@@ -435,15 +440,15 @@ class shcart extends storebuffer {
 								 
 			case $this->cancel   : 	SetSessionParam('cartstatus',0); 
 									$this->status = 0; 
-									$this->cancel_order(); 
+									//$this->cancel_order(); used by pay engines
 								 
-									if ($oncancel = remote_paramload('SHCART','cancelgoto',$this->path)) {
-										$goto = $oncancel;
+									if ($goto = $this->aftercancelgoto) {
 										header("Location: http://".$goto); 
 										exit;
 									}
 
-									$this->jsBrowser();		
+									$this->jsBrowser();	
+									$this->fbjs();	
 									break;								 
 						
 			case _lc('shcart',27,1):
@@ -848,19 +853,17 @@ function addtocart(id,cartdetails)
 	}	
 	
 	protected function dispatch_pay_engines() {
-		$payway = strtoupper(trim(GetSessionParam('payway')));//override 	
+		$payway = strtoupper(trim(GetSessionParam('payway')));
+		$finalCost = ($this->test2pay>0) ? $this->test2pay : $this->myfinalcost;
 	  
 		if (strcmp($payway,'PAYPAL')==0) {
 
 			if (($this->status==3) && ($this->autopay>0)) {
-				$this->submit_order(null, $this->twig_invoice_template_name);		  		  
-
+				
+				$this->submit_order();	
+				
 				SetSessionParam('paypalID',$this->transaction_id);
-		  
-				if ($test2pay=remote_paramload('SHCART','test2pay',$this->path))//!!!!!TEST PAY FOR PAYPAL ETC..
-					SetSessionParam('amount',$test2pay);
-				else
-					SetSessionParam('amount',$this->myfinalcost);
+				SetSessionParam('amount',$finalCost);
 
 				//reset global params
 				SetSessionParam('TransactionID',0);
@@ -875,14 +878,9 @@ function addtocart(id,cartdetails)
 
 			if (($this->status==3) && ($this->autopay>0)) {
 
-				$this->submit_order(null, $this->twig_invoice_template_name);		  
-
+				$this->submit_order();		  
 				SetSessionParam('piraeusID',$this->transaction_id);
-		  
-				if ($test2pay=remote_paramload('SHCART','test2pay',$this->path))//!!!!!TEST PAY FOR PAYPAL ETC..
-					SetSessionParam('amount',$test2pay);
-				else
-					SetSessionParam('amount',$this->myfinalcost);
+				SetSessionParam('amount',$finalCost);
 
 				//reset global params
 				SetSessionParam('TransactionID',0);
@@ -897,15 +895,10 @@ function addtocart(id,cartdetails)
 			
 			if (($this->status==3) && ($this->autopay>0))  {
 
-				$this->submit_order(null, $this->twig_invoice_template_name);		  
-
+				$this->submit_order();		  
 				SetSessionParam('eurobankID',$this->transaction_id);
-		  
-				if ($test2pay=remote_paramload('SHCART','test2pay',$this->path))//!!!!!TEST PAY FOR PAYPAL ETC..
-					SetSessionParam('amount',$test2pay);
-				else
-					SetSessionParam('amount',$this->myfinalcost);
-
+				SetSessionParam('amount',$finalCost);
+				
 				//reset global params
 				SetSessionParam('TransactionID',0);
 				SetSessionParam('cartstatus',0); 
@@ -918,7 +911,7 @@ function addtocart(id,cartdetails)
 		}	  
 		else { //simple order
 	  
-			$this->submit_order(1, $this->twig_invoice_template_name); 
+			$this->submit_order(true); 
 	  
 			SetSessionParam('amount',null);					 								 
 			SetSessionParam('subtotal',0);
@@ -1013,7 +1006,7 @@ function addtocart(id,cartdetails)
 				SetSessionParam('cartstatus',0);
 				$this->status = 0;
 
-				if ($user = decode(GetGlobal('UserName')))
+				if ($user = $this->user)
 					$this->update_statistics('cart-add', $user);
 			}
 			else
@@ -1046,7 +1039,7 @@ function addtocart(id,cartdetails)
         }                    
 		$this->setStore();
 		
-		if ($user = decode(GetGlobal('UserName')))
+		if ($user = $this->user)
 			$this->update_statistics('cart-remove', $user);
 		
  	    $this->quick_recalculate();	//re-update prices and totals	
@@ -1064,15 +1057,14 @@ function addtocart(id,cartdetails)
         return false;
     } 	
 	
-    public function submit_order($sendordermail=null, $invoice_template=null) {
-		$myuser = GetGlobal('UserID');	
-		$user = decode($myuser);
+    public function submit_order($doSubmit=false) {
 		$payway = $this->getDetailSelection('payway');
 		$roadway = $this->getDetailSelection('roadway');
 		$invway = $this->getDetailSelection('invway');	
 		$sxolia = $this->getDetailSelection('sxolia');
 		$customer = $this->getDetailSelection('customerway');		
 		$fkey = 'id';
+		$user = $this->user;		
 
 		$this->quick_recalculate();
 	   	   
@@ -1080,94 +1072,198 @@ function addtocart(id,cartdetails)
 		$cost = str_replace(',','.',$this->total);//getcartTotal());
 		$costpt = str_replace(',','.',$this->myfinalcost);//getcartSubtotal());
 		//echo $this->qtytotal,'-',$this->total;
+		
+		try {
 
-		if (defined('SHTRANSACTIONS_DPC'))  {
-			$this->transaction_id = _m('shtransactions.saveTransaction use '.serialize($this->buffer)."+$user+$payway+$roadway+$qty+$cost+$costpt");
+			if (defined('SHTRANSACTIONS_DPC'))  {
+				//set this trid	
+				$this->transaction_id = _m('shtransactions.saveTransaction use '.serialize($this->buffer)."+$user+$payway+$roadway+$qty+$cost+$costpt");
          
-			if ($invoice_template) {
+				if ($invoiceTemplate = $this->twig_invoice_template_name) {
 			
-				$date = date('d.m.y');			
-				//$invoice_tokens['invoice'] = $invway .' '.$this->transaction_id;
-				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',$this->lan).' '.$this->transaction_id;
-				$invoice_tokens['mynotes'] = $sxolia . "<br/>" . $this->ppolicynotes;
-				$invoice_tokens['mydate'] = $date;	
-				$invoice_tokens['payway'] = localize($payway, $this->lan); 			
-				$invoice_tokens['roadway'] = localize($roadway, $this->lan);
-				$invoice_tokens['invway'] = localize($invway, $this->lan);
+					$date = date('d.m.y');			
+					$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',$this->lan).' '.$this->transaction_id;
+					$invoice_tokens['mynotes'] = $sxolia . "<br/>" . $this->ppolicynotes;
+					$invoice_tokens['mydate'] = $date;	
+					$invoice_tokens['payway'] = localize($payway, $this->lan); 			
+					$invoice_tokens['roadway'] = localize($roadway, $this->lan);
+					$invoice_tokens['invway'] = localize($invway, $this->lan);
 			  
-				$tokens = serialize($invoice_tokens);
-				//do it inside transaction func
-				//$htmlout = _m('twigengine.render use '.$invoice_template.'++'.$tokens);
-				_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.$tokens.'+'.$invoice_template."+$customer+$fkey");	
-				
-				//save trid as printout var for print purposes
-				$this->printout = $this->transaction_id;
-				SetSessionParam('printout',$this->printout);			
+					$tokens = serialize($invoice_tokens);
+
+					_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.$tokens.'+'.$invoiceTemplate."+$customer+$fkey");	
+					
+					//save trid as printout var for print purposes
+					$this->printout = $this->transaction_id;
+					SetSessionParam('printout',$this->printout);			
+				}
+				else { //standart template
+					$tokens[] = $this->transaction_id;
+					$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');
+					$tokens[] = GetSessionParam('orderdetails');
+					$tokens[] = GetSessionParam('ordercart');
+					
+					_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.serialize($tokens).'+shcartprint.htm'."+$customer+$fkey");								 							 
+				}			 
 			}
-			else {
-				$tokens[] = $this->transaction_id;
-				$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');
-				$tokens[] = GetSessionParam('orderdetails');
-				$tokens[] = GetSessionParam('ordercart');
-				_m('shtransactions.saveTransactionHtml use '.$this->transaction_id.'+'.serialize($tokens).'+shcartprint.htm'."+$customer+$fkey");								 							 
-			}		 
-		}
-		else
-			$this->transaction_id = '1111';//dummy
+			else
+				$this->transaction_id = '1111';//dummy
 
-		SetSessionParam('TransactionID',$this->transaction_id);
+			if (isset($this->transaction_id)) {
+				//save in session
+				SetSessionParam('TransactionID',$this->transaction_id);
 
-		if (($sendordermail) && ($this->transaction_id)) {
-
-			$error = $this->goto_mailer($this->transaction_id, $this->twig_invoice_template_name);
-
-			if (!$error) { 
+				if ($doSubmit==true) {
+					/*
+					if (!$error = $this->goto_mailer($this->transaction_id, $this->twig_invoice_template_name)) { 
 			
-			    $this->analytics();
-				$this->logcart();
-				$this->savePoints($user ,$this->transaction_id);
-				$this->clear();
+					$this->analytics();
+					$this->logcart();
+					$this->savePoints($user ,$this->transaction_id);
+					$this->clear();
 
-				$this->update_statistics('cart-submit', $user);
+					$this->update_statistics('cart-submit', $user);
 				
-				//transport save
-				if (defined('TRANSPORT_DPC')) 
-					_m('transport.finalize use '.$this->transaction_id.'+'.$this->shippingcost);			
-			}
-			//else
-				//die($error);
+					//transport save
+					if (defined('TRANSPORT_DPC')) 
+						_m('transport.finalize use '.$this->transaction_id.'+'.$this->shippingcost);			
+					}*/
+					$this->submitCartOrder($this->transaction_id);
+				}
+				//else called by payengines when end of procedure
+			}	
+			else {
+				$this->submiterror = 'Invalid transaction ID.';
+				$this->update_statistics('cart-error-' . $this->submiterror, $this->user);		
+			}	
 		}
+		catch(Exception $e){
+			
+			//http://stackoverflow.com/questions/1214043/find-out-which-class-called-a-method-in-another-class	
+			//list($childClass, $caller) = debug_backtrace(false, 2);				
+			echo "[$caller -> $childClass]:";
+			
+			echo $e->getMessage(); 
+			throw $e;
+		}		
     }
 	
+	//used by pay engines
 	public function cancel_order() {
+		SetSessionParam('cartstatus',0); 
+		$this->status = 0; 
 
-	}	
-
-    protected function setuniname($id,$uni,$uA=null,$uB=null) {
-		$uniname = $id ;
-		$selecteduni = GetParam($uniname);
-		if (!$selecteduni) $selecteduni = $uni;
-		//print $id.">".$selectedqty."()";
-
-		if (!$this->status) {	//only if status=0 else when cart status > 0 uniname change
-			$out = "<SELECT class=\"myf_select_small\" name=\"$uniname\">";
-
-			if ($selecteduni==$uA)
-				$out .= "<OPTION selected>$uA";
-			else
-				$out .= "<OPTION>$uA";
-
-			if ($selecteduni==$uB)
-				$out .= "<OPTION selected>$uB";
-			else
-				$out .= "<OPTION>$uB";
-
-			$out .= "</OPTION></SELECT>";
-		}
-		return ($out);
+		$this->jsBrowser();	
+		$this->fbjs();	
 	}
+	//alias, used by pay engines
+	public function cancelCartOrder() {
+		$this->cancel_order();
+	}	
 	
-    public function printorder($data=null,$invoice_template=null) {
+	//used by pay engines when comeback
+	public function submitCartOrder($trid=null,$subject=null) {
+		//when come back from pay engines with trid my the trid != this.trid
+		if ((!$trid) || ($trid != $this->transaction_id)) {
+			//send suspicious mail
+		}			
+		
+		//$_trid = $trid ? $trid : $this->transaction_id;	
+			
+		if (!$error = $this->goto_mailer($trid, $subject)) { 
+			
+			$this->analytics();
+			$this->logcart();
+			$this->savePoints($this->user ,$trid);
+			$this->clear();
+
+			$this->update_statistics('cart-submit', $this->user);
+				
+			//transport save
+			if (defined('TRANSPORT_DPC')) 
+				_m("transport.finalize use $trid+" . $this->shippingcost);			
+			
+			return true;
+		}
+
+		$this->mailerror = $error; //set mail error
+		$this->update_statistics('cart-error-' . $this->mailerror, $this->user);		
+		
+		return false;	
+	}
+
+	protected function goto_mailer($trid=null, $subject=null) {
+	
+		//$this->transaction_id = $trid ? $trid : $this->transaction_id;		
+	
+	    if ($mytrid = $this->printout) {
+			//fetch saved transaction html body
+			$mailout = _m('shtransactions.getTransactionHtml use '.$mytrid);
+		}
+        else {		
+			$details  = '<br/>'.localize('_PWAY',$this->lan) .':'. GetSessionParam('payway');
+			$details .= '<br/>'.localize('_RWAY',$this->lan) .':'. GetSessionParam('roadway');
+			$details .= '<br/>'.localize('_IWAY',$this->lan) .':'. GetSessionParam('invway');	   
+			$details .= '<br/>'.localize('_DELIVADDRESS',$this->lan) .':'. GetSessionParam('addressway');	   
+			$details .= '<br/>'.localize('_SXOLIA',$this->lan) .':'. GetSessionParam('sxolia');		   	  
+
+			if ($invoiceTemplate = $this->twig_invoice_template_name) {
+				//init tokens
+				$invoice_tokens = array();
+				$invoice_tokens['trid']       = $trid;
+				$invoice_tokens['payway']     = localize(GetSessionParam('payway'), $this->lan);
+				$invoice_tokens['roadway']    = localize(GetSessionParam('roadway'), $this->lan);
+				$invoice_tokens['invway']     = localize(GetSessionParam('invway'), $this->lan);
+				$invoice_tokens['addressway'] = GetSessionParam('addressway');
+				$invoice_tokens['sxolia']     = GetSessionParam('sxolia');		   
+				$invoice_tokens['cusdata']    = (array) _m('shcustomers.showcustomerdata use +++1');//array();	  
+				$invoice_tokens['cartdata']   = (array) $this->quickview(true); //array of array lines		   
+		    
+				$x = 'notes123';//.var_export($invoice_tokens, true);
+				$date = date('d.m.y');			
+				//$invoice_tokens['invoice'] = GetSessionParam('invway') .' '. $trid;
+				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',$this->lan) .' '. $trid; 
+				$invoice_tokens['mynotes'] = GetSessionParam('sxolia');//$x;
+				$invoice_tokens['mydate'] = $date;
+				if (defined('TWIGENGINE_DPC')) {
+					$t = array('invoice'=>GetSessionParam('invway') .' '. $trid,
+								'mynotes'=>$x,
+								'mydate'=>$date);
+					$tokens = serialize($invoice_tokens);
+					$mailout = _m("twigengine.render use $invoiceTemplate_name++$tokens");
+				}
+				else { //standart template
+					$mycarttemplate = _m("cmsrt.select_template use shcartmail");		  
+					$mailout .= $this->combine_tokens($mycarttemplate,$tokens,true);		
+					$mailout .= '<!--end of document-->';	
+				}
+			} //standart template		  
+			else {
+				$tokens = array();
+				$mycarttemplate = _m("cmsrt.select_template use shcartmail");
+				$tokens[] = $trid;
+				$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');			
+				$tokens[] = $details;
+				$tokens[] = $this->quickview(); //no need to call session param ordercart
+				$mailout = $this->combine_tokens($mycarttemplate,$tokens,true);		
+				$mailout .= '<!--end of document-->';
+			}
+        }//printout		  
+	   
+	    //MAIL SUBJECT
+	    $mailSubject = $subject ? $subject : 
+						(($this->ordermailsubject) ? str_replace('@', $trid, $this->ordermailsubject) :	localize('_ORDERSUBJECT',$this->lan) . $trid);			
+		//MAIL THE ORDER TO HOST
+ 		$err1 = $this->cart_mailto($this->cartreceive_mail,$mailSubject,$mailout);
+		
+		//TO CUSTOMER
+ 		$err2 = $this->cart_mailto($this->user, $mailSubject, $mailout);		    			  
+		  
+		//null for true  
+		return ($err1 ? $err1 : ($err2 ? $err2 : null));
+	}	
+	
+    public function printorder() {
 
 	    //DO NOT RE-RENDER PRINT OUT..
 	    if ($trid = $this->printout) {
@@ -1177,7 +1273,8 @@ function addtocart(id,cartdetails)
 		}
 		
 	    $headtitle = paramload('SHELL','urltitle');	
-		$this->transaction_id = $this->transaction_id?$this->transaction_id:GetReq('trid');
+		$this->transaction_id = $this->transaction_id ? 
+								$this->transaction_id : GetReq('trid');
 				
 	
 		if (!$mystyle = remote_paramload('SHCART','printstyle',$this->path))
@@ -1195,7 +1292,7 @@ function addtocart(id,cartdetails)
 	    $bprint = _m('javascript.JS_function use js_printwin+'.localize('_PRINT',$this->lan));
         $tokens[] =  $bprint;			
 
-        if ($invoice_template) { // && (is_readable($t))) {
+        if ($invoiceTemplate = $this->twig_invoice_template_name) { 
 		
 			//init-reset tokens
 			$invoice_tokens = array();
@@ -1219,21 +1316,18 @@ function addtocart(id,cartdetails)
 				           'mynotes'=>$x,
 						   'mydate'=>$date);
 			    $tokens = serialize($t);
-			    echo _m('twigengine.render use '.$invoice_template.'++'.$tokens);
+			    echo _m("twigengine.render use $invoiceTemplate++$tokens");
 				//echo 'z';
 				die();
 		    }
 			else {
 				$myprintcarttemplate = 	_m('cmsrt.select_template use shcartprint');	
-			
 				$out = $this->combine_tokens($myprintcarttemplate,$tokens,true);		
 				$out .= '<!--end of document-->';		
 			}
         }  		
 	    else { 
-
 			$myprintcarttemplate = _m('cmsrt.select_template use shcartprint');
-		  
 			$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');
 			$tokens[] = GetSessionParam('orderdetails');
 			$tokens[] = GetSessionParam('ordercart');					  
@@ -1517,7 +1611,7 @@ function addtocart(id,cartdetails)
 			if (defined('SHCUSTOMERS_DPC')) 
 				$ret = _m('shcustomers.showcustomerdata');
 		  
-			if (($this->transaction_id) && (!$this->mailerror)) {	 
+			if ((!$this->submiterror) && (!$this->mailerror)) {	 
 		 
 			    $tokens[] = $this->finalize_cart_success();
 				
@@ -1655,6 +1749,30 @@ function addtocart(id,cartdetails)
 	    return ($loopout);  	 	
 	}
 	
+    protected function setuniname($id,$uni,$uA=null,$uB=null) {
+		$uniname = $id ;
+		$selecteduni = GetParam($uniname);
+		if (!$selecteduni) $selecteduni = $uni;
+		//print $id.">".$selectedqty."()";
+
+		if (!$this->status) {	//only if status=0 else when cart status > 0 uniname change
+			$out = "<SELECT class=\"myf_select_small\" name=\"$uniname\">";
+
+			if ($selecteduni==$uA)
+				$out .= "<OPTION selected>$uA";
+			else
+				$out .= "<OPTION>$uA";
+
+			if ($selecteduni==$uB)
+				$out .= "<OPTION selected>$uB";
+			else
+				$out .= "<OPTION>$uB";
+
+			$out .= "</OPTION></SELECT>";
+		}
+		return ($out);
+	}	
+	
     public function settotal($id,$price,$qty) {	
 
 		if (!$qty) $qty = 1;
@@ -1775,95 +1893,7 @@ function addtocart(id,cartdetails)
 	   	   
 	    return ($loopout);  	 	
 	}	
-
-	public function goto_mailer($trid=null, $invoice_template=null, $invoice_subject=null) {
-		
-		$this->transaction_id = $trid ? $trid : $this->transaction_id;		
 	
-	    if ($mytrid = $this->printout) {
-			$mailout = _m('shtransactions.getTransactionHtml use '.$mytrid);
-		}
-        else {		
-
-			$template = $invoice_template ? str_replace('.htm', '', $invoice_template) : "shcartmail";
-		  	
-			$details  = '<br/>'.localize('_PWAY',$this->lan) .':'. GetSessionParam('payway');
-			$details .= '<br/>'.localize('_RWAY',$this->lan) .':'. GetSessionParam('roadway');
-			$details .= '<br/>'.localize('_IWAY',$this->lan) .':'. GetSessionParam('invway');	   
-			$details .= '<br/>'.localize('_DELIVADDRESS',$this->lan) .':'. GetSessionParam('addressway');	   
-			$details .= '<br/>'.localize('_SXOLIA',$this->lan) .':'. GetSessionParam('sxolia');		   	  
-
-			if ($invoice_template) {
-				//init tokens
-				$invoice_tokens = array();
-				$invoice_tokens['trid']       = $this->transaction_id;
-				$invoice_tokens['payway']     = localize(GetSessionParam('payway'), $this->lan);
-				$invoice_tokens['roadway']    = localize(GetSessionParam('roadway'), $this->lan);
-				$invoice_tokens['invway']     = localize(GetSessionParam('invway'), $this->lan);
-				$invoice_tokens['addressway'] = GetSessionParam('addressway');
-				$invoice_tokens['sxolia']     = GetSessionParam('sxolia');		   
-				$invoice_tokens['cusdata']    = (array) _m('shcustomers.showcustomerdata use +++1');//array();	  
-				$invoice_tokens['cartdata']   = (array) $this->quickview(true); //array of array lines		   
-		    
-				$x = 'notes123';//.var_export($invoice_tokens, true);
-				$date = date('d.m.y');			
-				//$invoice_tokens['invoice'] = GetSessionParam('invway') .' '.$this->transaction_id;
-				$invoice_tokens['invoice'] = localize('_ORDERSUBJECT',$this->lan).' '.$this->transaction_id;
-				$invoice_tokens['mynotes'] = GetSessionParam('sxolia');//$x;
-				$invoice_tokens['mydate'] = $date;
-				if (defined('TWIGENGINE_DPC')) {
-			  
-					$t = array('invoice'=>GetSessionParam('invway') .' '.$this->transaction_id,
-								'mynotes'=>$x,
-								'mydate'=>$date);
-					$tokens = serialize($invoice_tokens);//$t);
-					$mailout = _m('twigengine.render use '.$invoice_template.'++'.$tokens);
-				}
-				else {
-	            
-					$mycarttemplate = _m('cmsrt.select_template use ' . $template);		  
-			
-					$mailout .= $this->combine_tokens($mycarttemplate,$tokens,true);		
-					$mailout .= '<!--end of document-->';	
-				}
-			}		  
-			else {
-				$tokens = array();
-				$mycarttemplate = _m('cmsrt.select_template use ' . $template);
-			
-				//$tokens[] = $orderdataprint;	
-				$tokens[] = $this->transaction_id;
-				$tokens[] = _m('shcustomers.showcustomerdata use ++cusdetails');			
-				$tokens[] = $details;
-				$tokens[] = $this->quickview(); //no need to call session param ordercart
-
-				$mailout = $this->combine_tokens($mycarttemplate,$tokens,true);		
-				$mailout .= '<!--end of document-->';
-			}
-        }//printout		  
-	   
-	    if ($invoice_subject!=null) {
-			$subject = $invoice_subject;
-		}	
-	    elseif ($ordermailsubject = remote_paramload('SHCART','ordermailsubject',$this->path)) {
-	        $subject = str_replace('@',$this->transaction_id,$ordermailsubject);	   
-		}
-		else
-		    $subject = localize('_ORDERSUBJECT',$this->lan) . $this->transaction_id;
-			
-		//MAIL THE ORDER TO HOST
- 		$this->mailerror = $this->cart_mailto(null,$subject,$mailout);
-		//TO CUSTOMER
-		$usermail = decode(GetGlobal('UserID'));
- 		$this->mailerror = $this->cart_mailto($usermail,$subject,$mailout);		    			  
-		  
-		return ($this->mailerror);
-	}
-	
-	
-	
-	
-
 	public function getDetailSelection($selection=null) {
 		if (!$selection) return null;
 		
@@ -2750,8 +2780,6 @@ function addtocart(id,cartdetails)
     }
 
     protected function print_button() {
-	    $aftersubmitgoto = remote_paramload('SHCART','aftersubmitgoto',$this->path);
-	
 	    $title = localize('_TRANSPRINT',$this->lan);
 		$translink = 'printcart/';
 		$ret = $this->myf_button(localize('_TRANSPRINT',$this->lan),$translink,'_TRANSPRINT');
@@ -2766,17 +2794,13 @@ function addtocart(id,cartdetails)
 		return ($ret . $trans_button);
     }
 	
-	protected function finalize_cart_success($transno=null) {
-		$UserName = decode(GetGlobal('UserName'));		
-	
-		$this->update_statistics('cart-purchase', $UserName);	
+	protected function finalize_cart_success() {
+        $goto = $this->aftersubmitgoto ?
+				$this->aftersubmitgoto : GetSessionParam('aftersubmitgoto');
+				
+		$tokens[] = $this->transaction_id;					
 		
-	    $aftersubmitgoto = remote_paramload('SHCART','aftersubmitgoto',$this->path);
-        $goto = $aftersubmitgoto?$aftersubmitgoto:GetSessionParam('aftersubmitgoto');
-		
-	    //in case of paypal return
-	    $tr_id = $this->transaction_id ? $this->transaction_id : $transno;
-		$tokens[] = $tr_id; 	
+		$this->update_statistics('cart-final-purchase', $this->user);			
 
 		$payway = $this->getDetailSelection('payway');
 		$roadway = $this->getDetailSelection('roadway');	   
@@ -2800,28 +2824,28 @@ function addtocart(id,cartdetails)
 		return ($out);
 	}
 
-	protected function finalize_cart_error($transno=null) {
-		$UserName = decode(GetGlobal('UserName'));		
-	
-		$this->update_statistics('cart-error', $UserName);		
+	protected function finalize_cart_error() {
 
-	    //in case of paypal return
-	    $tr_id = $this->transaction_id ? $this->transaction_id : $transno;
+		$this->update_statistics('cart-final-error', $this->user);		
 
-		if ($this->mailerror) {
+		if ($err1 = $this->mailerror) {
 			//change status of transaction
             if (defined('SHTRANSACTIONS_DPC')) 
 		        _m('shtransactions.setTransactionStatus use '.$this->transaction_id."+3");
 			
-			$error = $this->mailerror;//echo $error;
+			$error = $err1;//echo $error;
 		}
-
-		if (!$this->transaction_id) 
-			$error .= "/Invalid transaction id.";
 		
-		$msg = localize('_TRANSERROR',$this->lan) . "&nbsp;" . "<a href='contact.php'>$this->carterror_mail</a>";					 
-
-		$tokens[] = $msg; 			
+		if ($err2 = $this->submiterror) { 
+			//change status of transaction ?!
+            if (defined('SHTRANSACTIONS_DPC')) 
+		        _m('shtransactions.setTransactionStatus use '.$this->transaction_id."+3");
+						
+			$error .= $err2; //"/Invalid transaction id.";
+		}	
+							 		
+		$msg = localize('_TRANSERROR',$this->lan) . "&nbsp;" . "<a href='contact.php'>{$this->carterror_mail}</a>";
+		$tokens[] = localize('_TRANSERROR',$this->lan);//$msg; 			
 		$tokens[] = $error;
 		
 		$mycarttemplate = _m('cmsrt.select_template use shcarterror');
@@ -2832,8 +2856,7 @@ function addtocart(id,cartdetails)
 	
 	
 	
-	
-	
+
 	public function read_policy() {
 		
         /*posted coupon discount or points policy discount*/
@@ -2849,11 +2872,12 @@ function addtocart(id,cartdetails)
 	/*...*/
 	protected function get_user_price_policy() {
 		$db = GetGlobal('db');		
-		if (!$this->loyalty) return 0;	
+		if (!$this->loyalty) return 0;
+		
 	    $reseller = GetSessionParam('RESELLER');
-		$id = decode(GetSessionParam('UserID'));	
+		//$id = decode(GetSessionParam('UserID'));	
 
-		if ($id) { 
+		if ($id = $this->user) { 
 		
 			if ($coupon = GetParam('coupon')) { //one record named coupon price policy
 				$sSQL = "select discount as disc from ppolicy where active=1 and code1=" .  $db->qstr($coupon);
@@ -3743,7 +3767,6 @@ function addtocart(id,cartdetails)
 	
 	protected function cart_mailto($to=null,$subject=null,$body=null) {
 	    $from = $this->cartsend_mail;
-	    $to = $to ? $to : $this->cartreceive_mail;
 		
 		$body = str_replace('+','<SYN/>',$body); 
 		$mailerr = _m("cmsrt.cmsMail use $from+$to+$subject+$body+{$this->transaction_id}+cart");
@@ -3830,10 +3853,9 @@ function addtocart(id,cartdetails)
 	    $mtrack = _m('cms.paramload use CMS+mtrack');
 	    //mtrack = $mtrack ? $mtrack : "http://www.stereobit.gr/mtrack/";	//.php		
 			
-		$u = GetGlobal('UserName');
-		$r = decode($u);
-
+		$r = $this->user;
 		$i = $this->get_trackid($this->transaction_id);
+		
 		//$rurl = $mtrack . "?i=$i&r=$r";
 		$rurl = $mtrack . "$i/$r/";
 	

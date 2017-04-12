@@ -120,8 +120,7 @@ class sheurobank  {
 							   
 									$tid = $this->eurobank_get_post_params('orderid');
 									$subject = localize('_mailSubject', getlocal()) . $tid;
-							 
-									_m("shcart.goto_mailer use $tid++invoice.htm+".$subject);
+									_m("shcart.submitCartOrder use $tid+$subject");//++invoice.htm+".$subject);
 								}
 							}
 							else 
@@ -133,7 +132,7 @@ class sheurobank  {
 							$this->handle_Transaction('cancel');
 					   
 							if (defined('SHCART_DPC')) 
-								_m("shcart.cancel_order");
+								_m("shcart.cancelCartOrder");
 					   
 							break;
 					   
