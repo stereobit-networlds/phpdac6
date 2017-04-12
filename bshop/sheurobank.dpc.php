@@ -419,7 +419,6 @@ class sheurobank  {
    
     protected function tell_by_mail($subject,$from,$to,$body) {
          
-
         $smtpm = new smtpmail;
         $smtpm->to = $to; 
         $smtpm->from = $from; 
@@ -428,7 +427,9 @@ class sheurobank  {
         $mailerror = $smtpm->smtpsend();
         unset($smtpm);	
 		 
-		if ($mailerror) echo "Error sending mail:",$mailerror;
+		if ($mailerror) 
+			echo "Error sending mail:",$mailerror;
+		
 		return ($mailerror);   
     }  
    

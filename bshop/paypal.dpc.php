@@ -190,7 +190,8 @@ class paypal {
 	    $this->error = 'Error during ipn.';
 	  } 
       break;
-     }     
+	  
+		}     
 	}
    
 	public function action($action=null) {
@@ -215,14 +216,14 @@ class paypal {
    
 		switch (strtolower($this->p->ipn_data['payment_status'])) {
 	 
-	   case 'completed' : $this->savetransaction($this->p->ipn_data);//ok...
-	                      break;
-	   case 'pending'   : $this->savetransaction($this->p->ipn_data);//pending...
-	                      break;
-	   case 'failed'    : //nothing
-	                      break;
-	   default          : //nothing
-	                      break;						  						  						  
+			case 'completed' : $this->savetransaction($this->p->ipn_data);//ok...
+								break;
+			case 'pending'   : $this->savetransaction($this->p->ipn_data);//pending...
+								break;
+			case 'failed'    : //nothing
+								break;
+			default          : //nothing
+								break;						  						  						  
 		}
 	}
    
@@ -231,15 +232,15 @@ class paypal {
 		//echo strtolower($this->paypal_post['payment_status']),">>>>";
 		switch (strtolower($this->paypal_post['payment_status'])) {
 	 
-	   case 'completed' :   
+		case 'completed' :   
 	    $errorcode = null; 
 		$this->savelog("PAYPAL PAYMENT:SUCCESS");
 	    $ret = $this->set_message('success');
         $ret .= $this->sell();   
-	   break;
+		break;
 	   
-	   //pending is my paypal problem not my customer
-	   case 'pending'   : 
+		//pending is my paypal problem not my customer
+		case 'pending'   : 
 	     $errorcode = "Pending:".$this->paypal_post['pending_reason'];	 
 	     $this->savelog("PAYPAL PAYMENT:PENDING");
 		 $ret = $this->set_message('success');//,$errorcode);//hide errorcode from customer
@@ -250,12 +251,12 @@ class paypal {
 			 				 $this->inform_ipn_mail,
 							 implode("\n",$this->paypal_post)); 
 							 		 
-	   break; 	
+		break; 	
 	      
-	   //failed or other is my customer problem
-	   case 'failed'    : 
+		//failed or other is my customer problem
+		case 'failed'    : 
 	     $errorcode = "Failed";
-	   default          : 
+		default          : 
 	     $this->savelog("PAYPAL PAYMENT:ERROR!!!");
 	 	 $ret = $this->set_message('error');//,$errorcode);//hide errorcode from customer
 		  
@@ -270,81 +271,79 @@ class paypal {
    
 	function set_product_info($product=null) {
    
-      $selected_product = $product ? $product : GetReq('g');
+		$selected_product = $product ? $product : GetReq('g');
 	  
-	  //read the attributes
-      $actfile = paramload('SHELL','prpath') . "product_details" . ".ini";							
-	  //echo $actfile;
+		//read the attributes
+		$actfile = paramload('SHELL','prpath') . "product_details" . ".ini";							
+		//echo $actfile;
 	 
-      if ($pdetails=@parse_ini_file($actfile,1)) {
+		if ($pdetails=@parse_ini_file($actfile,1)) {
          
-		 //print_r($pdetails);
+			//print_r($pdetails);
 		 
-		 $myproduct = $pdetails[$selected_product];
+			$myproduct = $pdetails[$selected_product];
 		 
-		 if ((is_array($myproduct)) && 
-		     (isset($myproduct['name'])) && (isset($myproduct['price'])) ) {
+			if ((is_array($myproduct)) && 
+				(isset($myproduct['name'])) && (isset($myproduct['price'])) ) {
 		 
-           $this->p->add_field('item_name', $myproduct['name']);
-           $this->p->add_field('amount', $myproduct['price']);   		 
-		   return true;
-		 }
-      }
+				$this->p->add_field('item_name', $myproduct['name']);
+				$this->p->add_field('amount', $myproduct['price']);   		 
+				return true;
+			}
+		}
 	  
-      return false;	  
+		return false;	  
 	}
    
 	function get_paypal_posts() {
    
-     foreach ($_POST as $key => $value) { 
-	   echo "$key: $value<br>"; 
-	   
-	   $this->paypal_post[$key] = $value;
-	 }   
+		foreach ($_POST as $key => $value) { 
+			echo "$key: $value<br>"; 
+			$this->paypal_post[$key] = $value;
+		}   
 	}   
    
 	function savelog($data) {
    
-     $newdata = date("F j, Y, g:i a") . " " . $data;
+		$newdata = date("F j, Y, g:i a") . " " . $data;
    
-     $actfile = paramload('SHELL','prpath') . "paypal" . ".txt";							
-	 //echo $actfile;
-	 if ((is_file($actfile)) && (is_writable($actfile))) 
-	   $mode='a+';
-	 else 
-	   $mode='w';
+		$actfile = paramload('SHELL','prpath') . "paypal" . ".txt";							
+		//echo $actfile;
+		if ((is_file($actfile)) && (is_writable($actfile))) 
+			$mode='a+';
+		else 
+			$mode='w';
 	 
-     if ($fp = @fopen ($actfile , $mode)) {
-                 fwrite ($fp, $newdata."\n");
-                 fclose ($fp);
-     }
-     else {
-         $this->msg = "File creation error !\n";
-		 echo "File creation error!";
-         //setInfo("File creation error !");
-     }   
+		if ($fp = @fopen ($actfile , $mode)) {
+            fwrite ($fp, $newdata."\n");
+            fclose ($fp);
+		}
+		else {
+			$this->msg = "File creation error !\n";
+			echo "File creation error!";
+			//setInfo("File creation error !");
+		}   
 	}
    
 	function savetransaction($data) {
    
-     $actfile = paramload('SHELL','prpath') . "transactions" . ".txt";							
-	 //echo $actfile;
-	 if ((is_file($actfile)) && (is_writable($actfile))) 
-	   $mode='a+';
-	 else 
-	   $mode='w';
+		$actfile = paramload('SHELL','prpath') . "transactions" . ".txt";							
+		//echo $actfile;
+		if ((is_file($actfile)) && (is_writable($actfile))) 
+			$mode='a+';
+		else 
+			$mode='w';
 	 
-     if ($fp = @fopen ($actfile , $mode)) {
-                 fwrite ($fp, implode(";",$data)."\n");
-                 fclose ($fp);
-     }
-     else {
-         $this->msg = "File creation error !\n";
-		 echo "File creation error!";
-         //setInfo("File creation error !");
-     }   
+		if ($fp = @fopen ($actfile , $mode)) {
+            fwrite ($fp, implode(";",$data)."\n");
+            fclose ($fp);
+		}
+		else {
+			$this->msg = "File creation error !\n";
+			echo "File creation error!";
+			//setInfo("File creation error !");
+		}   
 	} 
-   
    
 	function set_message($case,$errorcode=null) {
    
@@ -364,17 +363,18 @@ class paypal {
    
 	function tell_by_mail($subject,$from,$to,$body) {
          
-
-         $smtpm = new smtpmail;
-         $smtpm->to = $to; 
-         $smtpm->from = $from;
-         $smtpm->subject = $subject;
-         $smtpm->body = $body;
-         $mailerror = $smtpm->smtpsend();
-         unset($smtpm);	
+        $smtpm = new smtpmail;
+        $smtpm->to = $to; 
+        $smtpm->from = $from;
+        $smtpm->subject = $subject;
+        $smtpm->body = $body;
+        $mailerror = $smtpm->smtpsend();
+        unset($smtpm);	
 		 
-		 if ($mailerror) echo "$subject,$from,$to : Error sending mail:",$mailerror;
-		 return ($mailerror);   
+		if ($mailerror) 
+			echo "$subject,$from,$to : Error sending mail:",$mailerror;
+		
+		return ($mailerror);   
 	} 
    
 	function sell() {

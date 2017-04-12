@@ -775,7 +775,9 @@ class shpiraeus  {
         $mailerror = $smtpm->smtpsend();
         unset($smtpm);	
 		 
-		if ($mailerror) echo "Error sending mail:",$mailerror;
+		if ($mailerror) 
+			echo "Error sending mail:",$mailerror;
+		
 		return ($mailerror);   
 	}  
    

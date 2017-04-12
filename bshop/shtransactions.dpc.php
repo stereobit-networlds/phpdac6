@@ -664,10 +664,8 @@ class shtransactions extends transactions {
 		$path = self::$staticpath;//$this->urlpath;//
 		$bc = self::$myf_button_class;
 	   
-		if (($image) && (is_readable($path."/images/".$image.".png"))) {
-			//echo 'a';
+		if (($image) && (is_readable($path."/images/".$image.".png"))) 
 			$imglink = "<a href=\"$link\" title='$title'><img src='images/".$image.".png'/></a>";
-		}
 	   
 		if (preg_match('/MSIE/i',$_SERVER['HTTP_USER_AGENT'])) { 
 			//echo 'ie';

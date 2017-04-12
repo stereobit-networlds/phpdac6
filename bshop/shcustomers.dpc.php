@@ -112,22 +112,17 @@ class shcustomers {
 	var $mailkey; //mail key
 	var $tellit, $it_sendfrom, $usemailasusername;
 	var $urlpath, $inpath;
-	var $cusform, $cusform2;
-	var $unknown_customer_msg, $atok;
+	var $cusform, $cusform2, $unknown_customer_msg, $atok;
 	var $invtype, $allow_inv_selection;
 	var $mydelivery_address, $delivery_fields, $delivery_goto_url, $adddelivgoto, $delivok;
-	var $is_reseller;
-	var $error;
-	var $checkuseasterisk,$asterisk;
-	var $cusok, $addcusgoto;
-	var $reseller, $reseller_attr;
-	
+	var $is_reseller, $error, $checkuseasterisk,$asterisk;
+	var $cusok, $addcusgoto, $reseller, $reseller_attr;
 	var $check_exist, $customer_exist_id;
+	var $rewrite; 
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
-	var $appname, $mtrackimg;
-    var $rewrite; 	
+	//var $appname, $mtrackimg;	
 
 	public function __construct() {
 		$UserSecID = GetGlobal('UserSecID');
@@ -219,11 +214,11 @@ class shcustomers {
 		self::$myf_button_class = $myf_button ? $myf_button : 'myf_button';
 		$myf_submit = remote_paramload('SHCUSTOMERS','buttonclasssubmit',$this->path);
 		self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';
-	   	   
+	   	/*   
 		$this->appname = paramload('ID','instancename');
 		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
 		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	   
-		   
+		*/   
 		$this->rewrite = 1;	   
 	}
 
@@ -2149,7 +2144,7 @@ window.onload=function(){
 		
 		return false;	   	
 	}	
-	
+	/*
 	public function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 
 		if (defined('SMTPMAIL_DPC')) {
@@ -2229,7 +2224,7 @@ window.onload=function(){
 		 
 		return ($out);	 
 	}	
-
+	*/
 	protected function update_statistics($id, $user=null) {
         if (defined('CMSVSTATS_DPC'))	
 			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
