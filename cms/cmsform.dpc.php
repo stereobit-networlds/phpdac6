@@ -285,25 +285,6 @@ class cmsform {
 		return ($ret);												
 									 
     }  
-	 
-	protected function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
-	
-		if (defined('SMTPMAIL_DPC'))  {
-				 
-			$smtpm = new smtpmail;
-			   
-			$smtpm->to($to); 
-			$smtpm->from($from); 
-			$smtpm->subject($subject);
-			$smtpm->body($body);			   
-
-			$mailerror = $smtpm->smtpsend();
-			unset($smtpm);
-			return ($mailerror);
-		}
-		else
-			die('SMTP ERROR');
-	}
 
 	protected function update_statistics($id, $user=null) {
         if (defined('CMSVSTATS_DPC'))	
