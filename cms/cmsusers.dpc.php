@@ -87,7 +87,7 @@ class cmsusers  {
 	var $new_user_id, $usemail2send, $usemailasusername;
 	var $usrform, $usrformtitles, $checkuseasterisk;
     var $deny_multiple_users, $inactive_on_register, $stay_inactive;	
-	var $appname, $mtrackimg;	
+	//var $appname, $mtrackimg;	
 
 	public function __construct() {
 
@@ -124,10 +124,11 @@ class cmsusers  {
 		$this->job_id = 0;
 		$this->pagenum = 30;		
 		$this->msg = $sFormErr;			
-		
+		/*
 		$this->appname = paramload('ID','instancename');	
 		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
 		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	   
+		*/
 	}
 
     public function event($sAction) {
@@ -837,7 +838,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		return false;
 	}
 
-
+	/*
 	public function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 	
 	    if (defined('SMTPMAIL_DPC')) {
@@ -917,7 +918,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 		 
 		return ($out);	 
 	}		
-	
+	*/
 	protected function update_statistics($id, $user=null) {
 		
         if (defined('CMSVSTATS_DPC'))	

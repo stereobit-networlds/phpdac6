@@ -288,28 +288,7 @@ class cmssubscribe {
 	   $out = implode(',',$ret);
 
 	   return $out;	
-	}
-	
-	protected function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
-	
-	    if (defined('SMTPMAIL_DPC'))  {
-		       $smtpm = new smtpmail;
-			   
-		       $smtpm->to($to); 
-		       $smtpm->from($from); 
-		       $smtpm->subject($subject);
-		       $smtpm->body($body);			   
-
-			   $mailerror = $smtpm->smtpsend();
-			   unset($smtpm);
-			   
-			   if (!$mailerror) return (true);
-		}
-		else
-			die('SMTP ERROR!');		
-		
-	    return (false);  			 
-	}							
+	}						
 
 };
 }
