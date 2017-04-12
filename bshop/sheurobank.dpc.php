@@ -35,128 +35,123 @@ $__LOCALE['SHEUROBANK_DPC'][6]='_mailSubject;Transaction No ;Παραστατι�
  
 class sheurobank  {
 
-   var $title;
-   var $transaction, $amount;
-   var $error;
-   var $path, $title2show;
-   var $fields;   
-   var $eurobank_url, $eurobank_payment;   
+	var $title;
+	var $transaction, $amount;
+	var $error;
+	var $path, $title2show;
+	var $fields;   
+	var $eurobank_url, $eurobank_payment;   
    
-   //pay form
-   var $merchantid, $eurobank_user, $eurobank_pass, $lancode, $parambacklink;   
-   var $return_post_args;
+	//pay form
+	var $merchantid, $eurobank_user, $eurobank_pass, $lancode, $parambacklink;   
+	var $return_post_args;
    
-   var $msg, $debug, $debug_return;
-   var $tmpl_path, $tmpl_name;   
-   
+	var $msg, $debug, $debug_return;
+  
+  
+	public function __construct() {
+		$UserSecID = GetGlobal('UserSecID');
+		$UserName = GetGlobal('UserName');
+		$UserID = GetGlobal('UserID');
 
-   function __construct() {
-	  $UserSecID = GetGlobal('UserSecID');
-	  $UserName = GetGlobal('UserName');
-	  $UserID = GetGlobal('UserID');
-
-      $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
-	  $this->username = decode($UserName);
-	  $this->userid = decode($UserID);   
+		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);
+		$this->username = decode($UserName);
+		$this->userid = decode($UserID);   
 	 
-	  $this->path = paramload('SHELL','prpath'); 
-	  $inpath = paramload('ID','hostinpath');	 	 
- 	  $this->title = localize('SHEUROBANK_DPC',getlocal());
+		$this->path = paramload('SHELL','prpath'); 
+		$inpath = paramload('ID','hostinpath');	 	 
+		$this->title = localize('SHEUROBANK_DPC',getlocal());
 	  
-      $this->msg = null;
-      $this->debug = 0;//1;	  
-      $this->debug_return = 0;//1;	  		  
+		$this->msg = null;
+		$this->debug = 0;//1;	  
+		$this->debug_return = 0;//1;	  		  
 	  
-      $this->title2show =  remote_paramload('SHEUROBANK','title',$this->path);	  
-	  //$this->amount = GetSessionParam('amount') ? GetSessionParam('amount') : 0.10;	//cart value
-      $pay = GetSessionParam('amount') ? GetSessionParam('amount') : 0.10;	//cart value
-	  //echo $pay;
-      $this->amount = strval(number_format($pay,2,',','.'));	  
+		$this->title2show =  remote_paramload('SHEUROBANK','title',$this->path);	  
+		//$this->amount = GetSessionParam('amount') ? GetSessionParam('amount') : 0.10;	//cart value
+		$pay = GetSessionParam('amount') ? GetSessionParam('amount') : 0.10;	//cart value
+		//echo $pay;
+		$this->amount = strval(number_format($pay,2,',','.'));	  
 	  
-	  /*if (($this->debug) || ($this->debug_return))
+		/*if (($this->debug) || ($this->debug_return))
 	       //test transaction (already in trnas table)
 	    $this->transaction = 1073;
-	  else*/ //normal cart process
+		else*/ //normal cart process
 	  	$this->transaction = GetSessionParam('eurobankID') ? GetSessionParam('eurobankID') : GetReq('tid');	 
 
 	  
-	  $sandbox = remote_paramload('SHEUROBANK','sandbox',$this->path);
-	  //echo '>',$sandbox;
-	  if ($sandbox)
-       $this->eurobank_url = "https://euro.test.modirum.com/vpos/shophandlermpi";
-	  else  
-       $this->eurobank_url = "https://vpos.eurocommerce.gr/vpos/shophandlermpi"; //"https://euro.test.modirum.com/vpos/shophandlermpi";
+		$sandbox = remote_paramload('SHEUROBANK','sandbox',$this->path);
+		//echo '>',$sandbox;
+		if ($sandbox)
+			$this->eurobank_url = "https://euro.test.modirum.com/vpos/shophandlermpi";
+		else  
+			$this->eurobank_url = "https://vpos.eurocommerce.gr/vpos/shophandlermpi"; //"https://euro.test.modirum.com/vpos/shophandlermpi";
            
-      $this->eurobank_payment = false; //init	   
-	  $this->fields = array();//empty data to send
+		$this->eurobank_payment = false; //init	   
+		$this->fields = array();//empty data to send
 	  	
-      $this->merchantid =  remote_paramload('SHEUROBANK','merchantid',$this->path);		
-      $this->eurobank_user =  null;//remote_paramload('SHEUROBANK','user',$this->path);	
-      $this->eurobank_pass =  remote_paramload('SHEUROBANK','pass',$this->path);		  	
+		$this->merchantid =  remote_paramload('SHEUROBANK','merchantid',$this->path);		
+		$this->eurobank_user =  null;//remote_paramload('SHEUROBANK','user',$this->path);	
+		$this->eurobank_pass =  remote_paramload('SHEUROBANK','pass',$this->path);		  	
 	  	  
-	  switch (getlocal()) {
-        case 1  : $this->lancode =  'el_GR'; break;
-		case 0  : 
-		default : $this->lancode =  'en_US'; 
-	  } 	  		  
+		switch (getlocal()) {
+			case 1  : $this->lancode =  'el_GR'; break;
+			case 0  : 
+			default : $this->lancode =  'en_US'; 
+		} 	  		  
 	  
-      $this->parambacklink = 't=paycancel&tid='.$this->transaction;//remote_paramload('SHEUROBANK','parambacklink',$this->path);       
-	  $this->return_post_args = array('mid','orderid','status','orderAmount','currency','paymentTotal','message','riskScore','payMethod','txId','paymentRef','digest');
+		$this->parambacklink = 't=paycancel&tid='.$this->transaction;//remote_paramload('SHEUROBANK','parambacklink',$this->path);       
+		$this->return_post_args = array('mid','orderid','status','orderAmount','currency','paymentTotal','message','riskScore','payMethod','txId','paymentRef','digest');
 	  
       //$page = $this->parambacklink?$this->parambacklink:$_SERVER['PHP_SELF'].'?t=paycancel&tid='.$this->transaction;
-      //$this->this_script = 'http://'.$_SERVER['HTTP_HOST'].$inpath.'/'.$page;	  	
-	  
-	  $this->tmpl_path = remote_paramload('FRONTHTMLPAGE','path',$this->path);
-	  $this->tmpl_name = remote_paramload('FRONTHTMLPAGE','template',$this->path);	   	   
-	  		
-   }
+      //$this->this_script = 'http://'.$_SERVER['HTTP_HOST'].$inpath.'/'.$page;	  			
+	}
    
-   function event($event=null) {
+	public function event($event=null) {
    
-     switch ($event) {  
+		switch ($event) {  
 	 
-       case 'payreturn':$this->eurobank_payment = $this->eurobank_receive_post(); 
+		case 'payreturn' :	$this->eurobank_payment = $this->eurobank_receive_post(); 
 	   
-	                    if ($this->eurobank_payment) {
-	                       // Order was successful...
-	                       $this->handle_Transaction('success');
+							if ($this->eurobank_payment) {
+								// Order was successful...
+								$this->handle_Transaction('success');
 						   
-						   if (defined('SHCART_DPC')) {
+								if (defined('SHCART_DPC')) {
 							   
-						     $tid = $this->eurobank_get_post_params('orderid');
-							 $subject = localize('_mailSubject', getlocal()) . $tid;
+									$tid = $this->eurobank_get_post_params('orderid');
+									$subject = localize('_mailSubject', getlocal()) . $tid;
 							 
-					         _m("shcart.goto_mailer use $tid++invoice.htm+".$subject);
-					       }
-						}
-						else 
-						   $this->handle_Transaction('error');
+									_m("shcart.goto_mailer use $tid++invoice.htm+".$subject);
+								}
+							}
+							else 
+								$this->handle_Transaction('error');
 					   
-	                     break;
+							break;
 						 
-       case 'paycancel' : //$this->savelog("PIRAEUS PAYMENT:CANCELED");	
-	     	           $this->handle_Transaction('cancel');
+		case 'paycancel' : 	//$this->savelog("PIRAEUS PAYMENT:CANCELED");	
+							$this->handle_Transaction('cancel');
 					   
-					   if (defined('SHCART_DPC')) 
-					     _m("shcart.cancel_order");
+							if (defined('SHCART_DPC')) 
+								_m("shcart.cancel_order");
 					   
-	                   break;
+							break;
 					   
-       case 'payticket' : //not used ...procedure executes on process/default                 
-	                   break;
+		case 'payticket' : 	//not used ...procedure executes on process/default                 
+							break;
 					   
-	   case 'eurobank':
-	   case 'process' :
-       default        : if ($this->amount>0) {	
-						    $this->eurobank_create_payment();	 
-                            die();
-					    }   
-	 }
-   }
+		case 'eurobank':
+		case 'process' :
+		default        :	if ($this->amount>0) {	
+								$this->eurobank_create_payment();	 
+								die();
+							}   
+		}
+	}
    
-   function action($action=null) {
+	public function action($action=null) {
    
-     switch ($action) {
+		switch ($action) {
 		case 'payreturn' : if ($this->eurobank_payment) {
 			
 			                 $tid = $this->eurobank_get_post_params('orderid');
@@ -186,129 +181,123 @@ class sheurobank  {
 				             if (_v("shcart.qtytotal")>0)			 
 		                       $ret .= _m("shcart.cartview use ".GetReq('tid'));
 						 }	 
-	 }
+		}
 	 
-	 return ($ret);
-   }
+		return ($ret);
+	}
 
-   protected function eurobank_create_payment() {
+	protected function eurobank_create_payment() {
 	  
-	  $confirmUrl = 't=payreturn&tid='.$this->transaction;
-	  $cancelUrl = 't=paycancel&tid='.$this->transaction;
-	  $description = localize('_mailSubject', getlocal()) . $this->transaction;
+		$confirmUrl = 't=payreturn&tid='.$this->transaction;
+		$cancelUrl = 't=paycancel&tid='.$this->transaction;
+		$description = localize('_mailSubject', getlocal()) . $this->transaction;
 	  
-	  $this->add_field('mid', $this->merchantid);
-	  $this->add_field('orderid', $this->transaction);
-	  $this->add_field('orderDesc', $description); //$this->title2show);
-	  $this->add_field('orderAmount', $this->amount);
-	  $this->add_field('currency', 'EUR');
-	  $this->add_field('payerEmail', $this->username);
-	  $this->add_field('confirmUrl', setUrl($confirmUrl));
-	  $this->add_field('cancelUrl', setUrl($cancelUrl));
+		$this->add_field('mid', $this->merchantid);
+		$this->add_field('orderid', $this->transaction);
+		$this->add_field('orderDesc', $description); //$this->title2show);
+		$this->add_field('orderAmount', $this->amount);
+		$this->add_field('currency', 'EUR');
+		$this->add_field('payerEmail', $this->username);
+		$this->add_field('confirmUrl', setUrl($confirmUrl));
+		$this->add_field('cancelUrl', setUrl($cancelUrl));
 	  
-	  $form_data = implode("", $this->fields) . $this->eurobank_pass;
-	  $digest = base64_encode(sha1($form_data, true));
-	  $this->add_field('digest', $digest);
+		$form_data = implode("", $this->fields) . $this->eurobank_pass;
+		$digest = base64_encode(sha1($form_data, true));
+		$this->add_field('digest', $digest);
 	  
-	  //echo $form_data . "<br/>" . $digest;
-	  //die();
+		//echo $form_data . "<br/>" . $digest;
+		//die();
 	  
-      $this->submit_data(); // submit the payment fields to piraeus		  	   
-   }
+		$this->submit_data(); // submit the payment fields to piraeus		  	   
+	}
    
-   protected function eurobank_receive_post() {
-      $ret = false;
+	protected function eurobank_receive_post() {
+		$ret = false;
 	  
-	  if ($this->debug_return)
-	    print_r($_POST);
+		if ($this->debug_return)
+			print_r($_POST);
 	
-	  $post = array();
-	  foreach ($this->return_post_args as $arg) {	  
-		${$arg} = $_POST[$arg];
-        if ($arg!='digest') //exclude digest param from post array (exist as $(arg))
-			$post[$arg] = $_POST[$arg]; 		
-	  }  
+		$post = array();
+		foreach ($this->return_post_args as $arg) {	  
+			${$arg} = $_POST[$arg];
+			if ($arg!='digest') //exclude digest param from post array (exist as $(arg))
+				$post[$arg] = $_POST[$arg]; 		
+		}  
 	  
-	  if ($this->verify_eurobank_payment($post, $digest)) {	
+		if ($this->verify_eurobank_payment($post, $digest)) {	
 
-	    //save post to file
-        if ($f = fopen($this->path."eurobank_last_pay.txt",'a+')) {
+			//save post to file
+			if ($f = fopen($this->path."eurobank_last_pay.txt",'a+')) {
 		  	    
-	        foreach ($_POST as $id=>$val)
-				$pstr .= "[".$id."]=".$val."\r";
-	        fwrite($f,$pstr,strlen($pstr));
-	        fclose($f);	  
-	    }	  
+				foreach ($_POST as $id=>$val)
+					$pstr .= "[".$id."]=".$val."\r";
+				fwrite($f,$pstr,strlen($pstr));
+				fclose($f);	  
+			}	  
 
-	    if ((strcmp($post['status'], 'AUTHORIZED')==0) || (strcmp($post['status'], 'CAPTURED')==0)) {
-			
-			$ret = true;						   					      	   	 
-	    }
-	    elseif (strcmp($post['status'], 'CANCELED')==0) 
-			$ret = false;
-	    elseif (strcmp($post['status'], 'REFUSED')==0) 
-			$ret = false;
-	    elseif (strcmp($post['status'], 'ERROR')==0) 
-			$ret = false;
-	    else //unknown error
-			$ret = false;
+			if ((strcmp($post['status'], 'AUTHORIZED')==0) || (strcmp($post['status'], 'CAPTURED')==0)) 
+				$ret = true;						   					      	   	 
+			elseif (strcmp($post['status'], 'CANCELED')==0) 
+				$ret = false;
+			elseif (strcmp($post['status'], 'REFUSED')==0) 
+				$ret = false;
+			elseif (strcmp($post['status'], 'ERROR')==0) 
+				$ret = false;
+			else //unknown error
+				$ret = false;
 	    
 		
-      }//verify_eurobank_payment		
-	  
-	  return ($ret);				   
-     
-   }
+		}//verify_eurobank_payment		
+		return ($ret);				    
+	}
    
-   //check the posted data digest param by replicate it
-   protected function verify_eurobank_payment($post_data=null, $post_digest=null) {
-     //echo 'Verify:';
-     if (is_array($post_data) && ($post_digest)) { 
+	//check the posted data digest param by replicate it
+	protected function verify_eurobank_payment($post_data=null, $post_digest=null) {
+		//echo 'Verify:';
+		if (is_array($post_data) && ($post_digest)) { 
 	   
-	   $form_data = implode("",$post_data) . $this->eurobank_pass;  
-	   $digest = base64_encode(sha1($form_data, true));
-	   //echo '>',$digest,'-',$post_digest;
-	   if (strcmp($digest, $post_digest)==0) {
+			$form_data = implode("",$post_data) . $this->eurobank_pass;  
+			$digest = base64_encode(sha1($form_data, true));
+			//echo '>',$digest,'-',$post_digest;
+			if (strcmp($digest, $post_digest)==0) {
 		 
-	       $this->savetransaction($post_data);
+				$this->savetransaction($post_data);
 		   
-		   if ($this->debug_return)
-	         echo '<br>Message:'.$post_data['message'];
+				if ($this->debug_return)
+					echo '<br>Message:'.$post_data['message'];
 			 		   		 
-	       return true;	  
-	   }	 
-	 }
+				return true;	  
+			}	 
+		}
 	 
-	 if ($this->debug_return)
-	   echo '<br>Message:'.$post_data['message'];
+		if ($this->debug_return)
+			echo '<br>Message:'.$post_data['message'];
    
-	 return false;
-   } 
+		return false;
+	} 
    
+	protected function mybin2hex($str) { 
    
-   protected function mybin2hex($str) { 
-   
-     $strl = strlen($str); 
-     $fin = ''; 
-     for($i =0; $i < $strl; $i++) {
+		$strl = strlen($str); 
+		$fin = ''; 
+		for($i =0; $i < $strl; $i++) {
 		 
-         $fin .= dechex(ord($str[$i])); 
+			$fin .= dechex(ord($str[$i])); 
 		 
-         if ($this->debug_return) {
-		   echo '<br>'.$str[$i].'<<<>>>'.ord($str[$i]).'<<<>>>'.dechex(ord($str[$i])); 
-		 }
-     } 
-     return $fin; 
-     
-   }  
+			if ($this->debug_return) {
+				echo '<br>'.$str[$i].'<<<>>>'.ord($str[$i]).'<<<>>>'.dechex(ord($str[$i])); 
+			}
+		} 
+		return $fin;    
+	}  
 
-   protected function eurobank_get_post_params($field=null) {
-      if ($field==null) return null;
+	protected function eurobank_get_post_params($field=null) {
+		if ($field==null) return null;
 	  
-	  return ($_POST[$field]);
-   }     
+		return ($_POST[$field]);
+	}     
    
-   protected function handle_Transaction($status,$ticket=null) {
+	protected function handle_Transaction($status,$ticket=null) {
 
         if ( (defined('SHTRANSACTIONS_DPC')) && (seclevel('SHTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
                 
@@ -325,72 +314,69 @@ class sheurobank  {
                                 break;									
             }
         }
-   }    
+	}    
    
-   protected function add_field($field, $value) {
+	protected function add_field($field, $value) {
       
       // adds a key=>value pair to the fields array, which is what will be 
       // sent to paypal as POST variables.  If the value is already in the 
       // array, it will be overwritten.
       
       $this->fields["$field"] = $value;
-   }
+	}
    
-   protected function submit_data() {
+	protected function submit_data() {
  
-      // this function actually generates an entire HTML page consisting of
-      // a form with hidden elements which is submitted to paypal via the 
-      // BODY element's onLoad attribute.  We do this so that you can validate
-      // any POST vars from you custom form before submitting to paypal.  So 
-      // basically, you'll have your own form which is submitted to your script
-      // to validate the data, which in turn calls this function to create
-      // another hidden form and submit to paypal.
+		// this function actually generates an entire HTML page consisting of
+		// a form with hidden elements which is submitted to paypal via the 
+		// BODY element's onLoad attribute.  We do this so that you can validate
+		// any POST vars from you custom form before submitting to paypal.  So 
+		// basically, you'll have your own form which is submitted to your script
+		// to validate the data, which in turn calls this function to create
+		// another hidden form and submit to paypal.
  
-      // The user will briefly see a message on the screen that reads:
-      // "Please wait, your order is being processed..." and then immediately
-      // is redirected to paypal.
+		// The user will briefly see a message on the screen that reads:
+		// "Please wait, your order is being processed..." and then immediately
+		// is redirected to paypal.
 	  
 
-      echo "<html>";
-      echo "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">";
-	  echo "<title>Processing Payment...</title>";
-	  echo "<script type=\"text/javascript\">
+		echo "<html>";
+		echo "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">";
+		echo "<title>Processing Payment...</title>";
+		echo "<script type=\"text/javascript\">
 		function send_tran() {
 			var frm = document.getElementById('form');
 			frm.style.visibility=\"hidden\";
 			frm.submit();
 		}
 		</script>";
-	  echo "</head>";
-	  if ($this->debug) {//dont send the request just print form
-	    echo "<body>";
-		echo '<br>' . $this->eurobank_url;
-	  }
-	  else //goto bank  	  
-		echo "<body onLoad=\"send_tran();\">";
+		echo "</head>";
+		if ($this->debug) {//dont send the request just print form
+			echo "<body>";
+			echo '<br>' . $this->eurobank_url;
+		}
+		else //goto bank  	  
+			echo "<body onLoad=\"send_tran();\">";
 	  
-      echo "<center><h3>".localize('_PLEASEWAIT',getlocal())."</h3></center>";
-      echo "<form method=\"post\" id=\"form\" name=\"form\" action=\"".$this->eurobank_url."\" accept-charset=\"UTF-8\">";
+		echo "<center><h3>".localize('_PLEASEWAIT',getlocal())."</h3></center>";
+		echo "<form method=\"post\" id=\"form\" name=\"form\" action=\"".$this->eurobank_url."\" accept-charset=\"UTF-8\">";
 
-      foreach ($this->fields as $name => $value) {
-         echo "<input type=\"hidden\" name=\"$name\" value=\"$value\">";
- 	     if ($this->debug) {
-		   echo '<br>'. $name . '=>'.$value;
-		 }
-      }
- 
-      echo "</form>";
-      echo "</body></html>";
-    
+		foreach ($this->fields as $name => $value) {
+			echo "<input type=\"hidden\" name=\"$name\" value=\"$value\">";
+			if ($this->debug) {
+				echo '<br>'. $name . '=>'.$value;
+			}
+		}
+		echo "</form>";
+		echo "</body></html>"; 
    } 
    
    protected function set_message($case,$errorcode=null) {
 
 	    $template = remote_paramload('SHEUROBANK',$case,$this->path) . '.htm'; 
-	    $t = $this->path . $this->tmpl_path .'/'. $this->tmpl_name .'/'. str_replace('.',getlocal().'.',$template) ;
 
-	    if (is_readable($t)) 
-		  $ret = file_get_contents($t);
+	    if ($t = _m("cmsrt.select_template use $template")) 
+		  $ret = @file_get_contents($t);
 	    else
 	      $ret = $m ? $m : localize($errorcode,getlocal()); //plain text	
 		  
@@ -429,54 +415,54 @@ class sheurobank  {
 		$ret .= "</h2>";    
 		  
 		return ($ret);    	   
-   }
+    }
    
-   protected function tell_by_mail($subject,$from,$to,$body) {
+    protected function tell_by_mail($subject,$from,$to,$body) {
          
 
-         $smtpm = new smtpmail;
-         $smtpm->to = $to; 
-         $smtpm->from = $from; 
-         $smtpm->subject = $subject;
-         $smtpm->body = $body;
-         $mailerror = $smtpm->smtpsend();
-         unset($smtpm);	
+        $smtpm = new smtpmail;
+        $smtpm->to = $to; 
+        $smtpm->from = $from; 
+        $smtpm->subject = $subject;
+        $smtpm->body = $body;
+        $mailerror = $smtpm->smtpsend();
+        unset($smtpm);	
 		 
-		 if ($mailerror) echo "Error sending mail:",$mailerror;
-		 return ($mailerror);   
-   }  
+		if ($mailerror) echo "Error sending mail:",$mailerror;
+		return ($mailerror);   
+    }  
    
-   protected function savetransaction($status) {
+    protected function savetransaction($status) {
    
-     $actfile = paramload('SHELL','prpath') . "transactions" . ".txt";							
-	 //echo $actfile;
-	 if ((is_file($actfile)) && (is_writable($actfile))) 
-	   $mode='a+';
-	 else 
-	   $mode='w';
+		$actfile = paramload('SHELL','prpath') . "transactions" . ".txt";							
+		//echo $actfile;
+		if ((is_file($actfile)) && (is_writable($actfile))) 
+			$mode='a+';
+		else 
+			$mode='w';
 	 
-	 switch ($status) {
-	   case 'RESULTCODE' : $data = implode(",", $status); break;
-	   case 'STATUSFLAG' : $data = implode(",", $status); break;
-       case 'REPAY'      : $data = implode(",", $status); break;   
-       case 'SUCCESS'    : $data = implode(",", $status); break;
-	   default           : $data = implode(",", $status);
-	 }
+		switch ($status) {
+			case 'RESULTCODE' : $data = implode(",", $status); break;
+			case 'STATUSFLAG' : $data = implode(",", $status); break;
+			case 'REPAY'      : $data = implode(",", $status); break;   
+			case 'SUCCESS'    : $data = implode(",", $status); break;
+			default           : $data = implode(",", $status);
+		}
 	   
-     $record = date('Y-m-d h:m:s') .','. $data."\n";
+		$record = date('Y-m-d h:m:s') .','. $data."\n";
 	 
-	 //save in db
-	 $id = $this->transaction ? $this->transaction : $status['orderid']; 
-	 _m("shtransactions.setTransactionStoreData use $id+type1+".$status['txId']);
-     _m("shtransactions.setTransactionStoreData use $id+type2+".$record);	 	
+		//save in db
+		$id = $this->transaction ? $this->transaction : $status['orderid']; 
+		_m("shtransactions.setTransactionStoreData use $id+type1+".$status['txId']);
+		_m("shtransactions.setTransactionStoreData use $id+type2+".$record);	 	
 				 	 
-     if ($fp = @fopen ($actfile , $mode)) {	 
-                 fwrite ($fp,$record);
-                 fclose ($fp);
-     }
-     else 
-		 echo "File creation error!(".$record.')';
-   }              
+		if ($fp = @fopen ($actfile , $mode)) {	 
+            fwrite ($fp,$record);
+            fclose ($fp);
+		}
+		else 
+			echo "File creation error!(".$record.')';
+	}              
       	
 }; 
 } 
