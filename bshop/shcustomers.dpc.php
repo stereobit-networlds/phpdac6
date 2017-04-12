@@ -214,11 +214,7 @@ class shcustomers {
 		self::$myf_button_class = $myf_button ? $myf_button : 'myf_button';
 		$myf_submit = remote_paramload('SHCUSTOMERS','buttonclasssubmit',$this->path);
 		self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';
-	   	/*   
-		$this->appname = paramload('ID','instancename');
-		$tcode = remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
-		$this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack.php";	   
-		*/   
+  
 		$this->rewrite = 1;	   
 	}
 
@@ -2144,87 +2140,7 @@ window.onload=function(){
 		
 		return false;	   	
 	}	
-	/*
-	public function mailto($from,$to,$subject=null,$body=null,$ishtml=false,$instant=false) {
 
-		if (defined('SMTPMAIL_DPC')) {
-				
-				$trackid = $this->get_trackid($from,$to);
-				$mbody = $this->add_tracker_to_mailbody($body,$trackid,$to,1);				
-				
-				$smtpm = new smtpmail;
-			   
-				$smtpm->to($to); 
-				$smtpm->from($from); 
-				$smtpm->subject($subject);
-				$smtpm->body($mbody);			   
-				$mailerror = $smtpm->smtpsend();
-				unset($smtpm);
-				
-				$this->save_outbox($from, $to, $subject, $body, $trackid);
-
-				return ($mailerror);				
-		}
-		else
-			die('SMTP ERROR!');
-	}
-
-	//send mail to db queue
-	protected function save_outbox($from,$to,$subject,$body=null, $trackid=null) {
-		$db = GetGlobal('db');		
-		$ishtml = 1;
-		$origin = 'customers'; 
-		$datetime = date('Y-m-d h:s:m');
-		$active = 0; 		
-		
-		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,cid) ";
-		$sSQL .=  "values (" .
-			 $db->qstr($datetime) . "," . 
-			 $db->qstr($datetime) . "," . 
-			 $active . "," .
-		     $db->qstr(strtolower($from)) . "," . 
-			 $db->qstr(strtolower($to)) . "," .
-		     $db->qstr($subject) . "," . 
-			 $db->qstr($body) . "," .
-			 $db->qstr($origin) . "," .				 
-			 $db->qstr($trackid) . ")";
-			 		
-		$result = $db->Execute($sSQL,1);			 
-
-		return (true);			 
-	}	
-
-	protected function get_trackid($from,$to) {
-	
-		$i = rand(100000,999999);//++$m;	 
-		$tid = date('YmdHms') .  $i . '@' . $this->appname;
-		 
-		return ($tid);	
-	}	
-	
-	protected function add_tracker_to_mailbody($mailbody=null,$id=null,$receiver=null,$is_html=false) {
-		if (!$id) return;
-		$i = $id;
-	
-		if ($receiver) {
-			$r = $receiver;
-			$ret = "<img src=\"{$this->mtrackimg}?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"1\"/>";
-		}
-		else
-			$ret = "<img src=\"{$this->mtrackimg}?i=$i\" border=\"0\" width=\"1\" height=\"1\"/>";
-		 
-		if (($is_html) && (stristr($mailbody,'</BODY>'))) {
-			if (strstr($mailbody,'</BODY>'))
-				$out = str_replace('</BODY>',$ret.'</BODY>',$mailbody);
-			else  
-				$out = str_replace('</body>',$ret.'</body>',$mailbody);
-		}	 
-		else
-			$out = $mailbody . $ret;	 	 
-		 
-		return ($out);	 
-	}	
-	*/
 	protected function update_statistics($id, $user=null) {
         if (defined('CMSVSTATS_DPC'))	
 			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			

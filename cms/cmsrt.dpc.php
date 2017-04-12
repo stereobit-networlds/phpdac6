@@ -1769,7 +1769,7 @@ EOF;
 		$origin = $orig ? $orig : 'cmsMail'; 
 		$datetime = date('Y-m-d h:s:m');
 		$active = 0; 
-		$cid = ''; //$trackid;	
+		$cid = $trackid; //cid=trackid	
 		
 		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,trackid,cid) ";
 		$sSQL .=  "values (" .

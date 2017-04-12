@@ -339,11 +339,7 @@ class shcart extends storebuffer {
 	   
 		$myf_submit = remote_paramload('SHCART','buttonclasssubmit',$this->path);
 		self::$myf_button_submit_class = $myf_submit ? $myf_submit : 'myf_button';		  
-		/*
-	    $this->appname = paramload('ID','instancename');	
-	    $tcode = _m('cms.paramload use CMS+mtrack');//remote_paramload('RCBULKMAIL','trackurl', $this->prpath);
-	    $this->mtrackimg = $tcode ? $tcode : "http://www.stereobit.gr/mtrack/";	//.php		
-		*/
+
 		$this->loyalty = _m('cms.paramload use ESHOP+loyalty'); 		
 	  
 		if ($this->maxqty<0) // || ($this->readonly)) { //free style
@@ -1163,9 +1159,15 @@ function addtocart(id,cartdetails)
 	
 	//used by pay engines when comeback
 	public function submitCartOrder($trid=null,$subject=null) {
+		
 		//when come back from pay engines with trid my the trid != this.trid
 		if ((!$trid) || ($trid != $this->transaction_id)) {
+			
 			//send suspicious mail
+			$from = $this->cartsend_mail;
+			$subject = "Suspicious transaction $trid > " . $this->transaction_id;
+			$body = str_replace('+','<SYN/>','Please check this transaction id!'); 
+			_m("cmsrt.cmsMail use $from+{$this->cartreceive_mail}+$subject+$body");
 		}			
 		
 		//$_trid = $trid ? $trid : $this->transaction_id;	
@@ -3771,82 +3773,8 @@ function addtocart(id,cartdetails)
 		$body = str_replace('+','<SYN/>',$body); 
 		$mailerr = _m("cmsrt.cmsMail use $from+$to+$subject+$body+{$this->transaction_id}+cart");
 
-		return ($mailerr);
-		/*
-		
-	    if (defined('SMTPMAIL_DPC')) {
-			
-			$trackid = $this->get_trackid($this->transaction_id); 
-			$mbody = $this->add_tracker_to_mailbody($body,$trackid,$to,1);				
-				 
-	        $smtpm = new smtpmail;
-		   
-		    $smtpm->to($to); 
-		    $smtpm->from($from); 
-		    $smtpm->subject($subject);
-		    $smtpm->body($mbody);			   
-
-			$mailerror = $smtpm->smtpsend();
-			
-			$this->save_outbox($from, $to, $subject, $body, $trackid);
-
-			unset($smtpm);
-		}
-	    else
-	        echo "Mail not send! (smtp not loaded)";		
-		  
-		return ($mailerror);	*/   	
+		return ($mailerr); 	
 	}
-	
-	//send mail to db queue
-	/*protected function save_outbox($from,$to,$subject,$body=null, $trackid=null) {
-		$db = GetGlobal('db');		
-		$ishtml = 1;
-		$origin = 'cart'; 
-		$datetime = date('Y-m-d h:s:m');
-		$active = 0; 		
-		
-		$sSQL = "insert into mailqueue (timein,timeout,active,sender,receiver,subject,body,origin,trackid,cid) ";
-		$sSQL .=  "values (" .
-			 $db->qstr($datetime) . "," . 
-			 $db->qstr($datetime) . "," . 
-			 $active . "," .
-		     $db->qstr(strtolower($from)) . "," . 
-			 $db->qstr(strtolower($to)) . "," .
-		     $db->qstr($subject) . "," . 
-			 $db->qstr($body) . "," .
-			 $db->qstr($origin) . "," .				 
-			 $db->qstr($trackid) . ",".
-			 $db->qstr($trackid) . ")";
-			 		
-		$result = $db->Execute($sSQL,1);			 
-
-		return (true);			 
-	}	
-	
-	protected function add_tracker_to_mailbody($mailbody=null,$id=null,$receiver=null,$is_html=false) {
-		if (!$id) return;
-		$i = $id;
-	
-		if ($r = $receiver) {
-			//$ret = "<img src=\"{$this->mtrackimg}?i=$i&r=$r\" border=\"0\" width=\"1\" height=\"1\"/>";
-			$ret = "<img src=\"{$this->mtrackimg}$i/$r/\" border=\"0\" width=\"1\" height=\"1\"/>";
-		}
-		else
-			//$ret = "<img src=\"{$this->mtrackimg}?i=$i\" border=\"0\" width=\"1\" height=\"1\"/>";
-			$ret = "<img src=\"{$this->mtrackimg}$i/\" border=\"0\" width=\"1\" height=\"1\"/>";
-		 
-		if (($is_html) && (stristr($mailbody,'</BODY>'))) {
-			if (strstr($mailbody,'</BODY>'))
-				$out = str_replace('</BODY>',$ret.'</BODY>',$mailbody);
-			else  
-				$out = str_replace('</body>',$ret.'</body>',$mailbody);
-		}	 
-		else
-			$out = $mailbody . $ret;	 	 
-		 
-		return ($out);	 
-	}	*/
 	
 	//called by twig invoice html as func add link tracker
 	public function addTracker($returl=false) { 
