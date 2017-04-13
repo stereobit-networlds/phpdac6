@@ -3,13 +3,7 @@ if (!defined("CONTROLLER_DPC")) {
 define("CONTROLLER_DPC",true);
 
 require_once("sysdpc.lib.php");
-
-//REGISTER PHPDAC protocol...
-/*require_once("dacstream.lib.php");
-$phpdac = stream_wrapper_register("phpdac","dacstream");
-if (!$phpdac) _echo('CLI','Protocol failed to registered!');
-         else _echo('CLI','Protocol registered!');
-*/		
+		
 class controller extends sysdpc {
 
    var $server;
@@ -157,12 +151,7 @@ class controller extends sysdpc {
 			   $i+=1; 
 	   }//foreach		
 	   return ($dpcmods); //return the array of included dpcs 
-/*		 }
-	     else
-		   raise_error(3,'EXIT');
-	   }
-	   else
-	     raise_error(0,'EXIT',"File '$projectfile' not exist\n"); */
+
 	 }//if iniload
 	 else
 	   raise_error(1,'EXIT');   
@@ -178,64 +167,16 @@ class controller extends sysdpc {
       $modules = $this->compile($accelerated); //include and load project file's dpc lib,ext,dpc'  
 	  $t->stop('compile');
 	  echo "compile " , $t->value('compile');	  
-	
-	  if ($this->dacpost)
-        $this->read_post_code(); //get batch readed post code as array to call after...
-	  
+
 	  //INCLUDE FIRST
 	  $t->start('include');		  
 	  foreach  ($modules as $id=>$dpc) {	  
 	     //echo $dpc."<br>";
 		 //$this->set_include($dpc,'dpc'); //MOVED TO SWITCH OF COMPILE 
-		 
-		 //post construct code
-	     if (is_array(GetGlobal('__POSTCODE'))) {
-		   $construct_function = create_function('$dpc',$this->get_code_of('construct',$dpc));
-		   $construct_function($dpc);		    
-		 }  
 	  }
 	  $t->stop('include');
-	  echo "include " , $t->value('include');	  	    	 	  
-   
-       //ACCELERATE attributes reading...
-	  /*$t->start('attr');	  
-	  $this->load_attributes($accelerated); //overwrite build in attributes with db attr or file attr	   	 
-	  $t->stop('attr');
-	  echo "attr " , $t->value('attr');	  
-	  */
-	  //INSTANCE CASE
-	  $is_instance = paramload('ID','isinstance');
-	  if ($is_instance) //must be include the clientdpc module
- 	    $cdpc = new clientdpc;		  
-			  	  
-	  //SOME DPCS MUST EXECUTE THEIR COMMANDS BEFORE OTHER DPCS CONSTRUCTION
-	  //(update vals at construct of these)
-	  //so give a priorty to a dpc to be newed and execute their event(?) before new of others 	  
-	  $action = GetGlobal('dispatcher')->get_command(1);//unofficial!!!!!
-	  //echo ">>>>>",$action;	    
-	  /*
-	  foreach ($modules as $id=>$dpc) {
-
-	    if ($this->get_attribute($dpc,$action,11)) {
-		   //new it
-		   //$this->_new($dpc,'dpc');
-		   if (is_object($cdpc)) {
-		       
-		     if ($cdpc->is_client_dpc($dpc))
-		       $this->_new($dpc,'dpc');   
-		     else
-		       die("$dpc not supported!");
-		   }
-		   else
-		     $this->_new($dpc,'dpc'); 
-		   
-		   $this->event($action,$dpc);
-		   $norenewdpc = $dpc;//used to overpass this dpc
-		   //echo '()()))())(';
-		}
-	    //echo '.';
-	  }
-	*/		
+	  echo "include " , $t->value('include');	  	    	 	  		      
+	
 	  //NEW AFTER (one by one as it writed in script)	 
 	  //print_r($modules);
 	  foreach  ($modules as $id=>$dpc) {
@@ -551,13 +492,7 @@ class controller extends sysdpc {
 	      if ((defined($dpc)) &&
 	          (is_object($__DPCMEM[$dpc])) &&
 	          (method_exists($__DPCMEM[$dpc],'free'))) {
-			  
-		    //post? pre destruction code
-		    if (is_array(GetGlobal('__POSTCODE'))) {
-		      $destruct_function = create_function('$dpc',$this->get_code_of('destruct',$__DPCID[$dpc]));
-		      $destruct_function($__DPCID[$dpc]);				  
-			}  
-			    
+			 	    
 		    $__DPCMEM[$dpc]->free();	
           }				  
 					  
@@ -573,18 +508,7 @@ class controller extends sysdpc {
 	  } 
 	  }
     } 	 
-/*	
-    //used at pcli 
-	public function reset($action) { 	
-	  $activeDPC = GetGlobal('activeDPC');	  
-	  
-      if ($this->get_attribute($activeDPC,$action,4)) {		
-	        //echo $activeDPC;
-		    $this->free();		   
-		    $this->init();		
-	  }
-	}
-*/
+
 	//if dpc_init is set then dpc has priority and executed before new of others 
     protected function event($action,$dpc_init=null) {   
 	   $__DPCMEM = GetGlobal('__DPCMEM');
@@ -631,15 +555,7 @@ class controller extends sysdpc {
 					 $EVENT_QUEUE[$q+$step] = $dpc_name;				   
 				   }  
 				   else				   
-				     $EVENT_QUEUE[$q] = $dpc_name;				   
-				   
-				   //one event or last event 
-				   //if (!getdpc_attribute($dpc_name,$action,9)) break 1; //?????(no serial implementation in prj file)
-				   
-				   //event dac preset------------------------------------
-				   //if (isset($this->dac))
-				     //$this->dac_event($action,$__DPCID[$dpc_name],$__DPC[$dpc_name]);				   
-				   	 			  
+				     $EVENT_QUEUE[$q] = $dpc_name;			   	 			  
 				 } 		 	 
 		       }
 			 }  
@@ -653,74 +569,13 @@ class controller extends sysdpc {
 		   ksort($EVENT_QUEUE);	//print_r($EVENT_QUEUE);   
 		   foreach ($EVENT_QUEUE as $priority=>$dpc_name) { 
 			 //echo $dpc_name,$action,"<br>"; 		   
-		     $__DPCMEM[$dpc_name]->event($action);
-			 
-			 //post event code
-		     if (is_array(GetGlobal('__POSTCODE'))) {
-			   $action_function = create_function('$dpc,$event',$this->get_code_of('event',$__DPCID[$dpc_name]));
-			   $action_function($__DPCID[$dpc_name],$action);			 
-			 }  
-			 
+		     $__DPCMEM[$dpc_name]->event($action); 
 		   }	
 		}	 
 		return 0;   
 	  }
     }
-/*	
-	private function dac_event($event,$dpcname,$environment) {
-	  //echo 'EV:'.$event;	
-	  //PRIVATE=PROJECT SAVED file = has priority
-	  $path = paramload('SHELL','prpath'); //echo $path;
-      $module_dac_file = $path . $dpcname;
-	  //echo $module_dac_file;
-	  //DEFAULT DPC SAVED file
-      $path = paramload('DIRECTIVES','dpc_type');	  
-	  $dpc_module_dac_file = $path . "/" . str_replace(".","/",$dpcname); 	  
-
-	  //select extension per agent
-	  switch (GetGlobal('__USERAGENT')) {
-	    case 'HDML' : //same as html
-	    case 'HTML' : $module_dac_file .= ".php-html"; 
-		              $dpc_module_dac_file .= ".php-html";
-		              break;
-		case 'SH'   : //same as cli
-		case 'TEXT' : //same as cli
-	    case 'CLI'  : $module_dac_file .= ".php-cli"; 
-		              $dpc_module_dac_file .= ".php-cli"; 
-		              break;
-		case 'SHGTK': //same as gtk
-	    case 'GTK'  : $module_dac_file .= ".php-dac";//-gtk=stand alone apps	
-		              $dpc_module_dac_file .= ".php-dac"; 
-					  break;
-					
-		default     : //$module_dac_file .= ".php-html";
-	  }
-	  
-	  $loaded=0;
-	  if (is_file($module_dac_file)) {
-  	        //echo $module_dac_file;
-		    require_once($module_dac_file);
-			$loaded=1;
-	  }
-	  elseif (is_file($dpc_module_dac_file)) {
-  	        //echo $dpc_module_dac_file;
-		    require_once($dpc_module_dac_file);
-			$loaded=1;	  
-	  }
-	  if ($loaded) {		
-			$classname = str_replace(".","_",$dpcname);
-		    $this->module_dac = new $classname($environment);
-			//print_r(get_class_methods($this->module_dac));
-			
-			//$ver = explode(".",phpversion());
-			//if (($ver[0]<5) && (method_exists($module_dac,'action'))) 
-			if (method_exists($this->module_dac,'event')) {
-			  //echo 'event:',$event;
-			  $this->module_dac->event($event);
-			}  
-	  }	      
-	}	
-*/    	  
+ 	  
     protected function action($action) {  
 	       $__DPCMEM = GetGlobal('__DPCMEM');
 	       $__DPC = GetGlobal('__DPC');		 
@@ -744,12 +599,6 @@ class controller extends sysdpc {
    		       							   
 		           if (class_exists($__DPC[$dpc_name])) { //check if dpc has initialized
 
-	   	             //$ret .= $__DPCMEM[$dpc_name]->action($action); //the above not work for all objects ??
-					 //OLD METHOD TO CONTINUE
-				     //if (!calldpc_var(strtolower(str_replace("_DPC","",$dpc_name))."._CONTINUE")) return ($ret);	 //one action	
-					 //NEW METHOD
-					 //if (!getdpc_attribute($dpc_name,$action,9)) return ($ret);	 //one action	
-					 
 					 $p = $__DPCPROC[$dpc_name];
                      $q = (($p ?  $p : $i++)) * 1000; //priority 1000=start
 					 
@@ -759,14 +608,6 @@ class controller extends sysdpc {
 					 }  
 					 else  
 				       $ACTION_QUEUE[$q] = $dpc_name;				   
-				   
-				     //one action or last action
-				     //if (!getdpc_attribute($dpc_name,$action,9)) break 1;	//?????(no serial implementation in prj file)		 
-					 
-					 //action dac preset------------------------------------
-					 //if (isset($this->dac))
-					   //$ret .= $this->dac_action($action,$__DPCID[$dpc_name],$__DPC[$dpc_name]);
-					 
 				   }	 	    
 		         }
 			   } 
@@ -782,14 +623,6 @@ class controller extends sysdpc {
 			   //echo $dpc_name,$action,"<br>"; 
 		       $ret .= $__DPCMEM[$dpc_name]->action($action);	
 			   
-			   //post action code
-			   if (is_array(GetGlobal('__POSTCODE'))) {
-			     $action_function = create_function('$dpc,$action',$this->get_code_of('action',$__DPCID[$dpc_name]));
-			     $ret .= $action_function($__DPCID[$dpc_name],$action);
-			   }
-			   
-			   //remote log
-			   //$this->remote_log($dpc_name,'hermes',82);//MOVED TO SHELL
 			 }  	 
 			   
 			 return ($ret); 
@@ -797,74 +630,7 @@ class controller extends sysdpc {
 		   
 		   return null;		   	      
     }	
-/*	
-	private function dac_action($action,$dpcname,$environment) {
-	  
-	  //if object has alredy newed at event... 
-	  if ((is_object($this->module_dac) && 
-	      (method_exists($this->module_dac,'action')))) {
-		//echo 'action:',$action;  
-	   	$ret = $this->module_dac->action($action);
-		unset($this->module_dac);//destruct it
-	  }	
-	  else {//create it...
-	    //PRIVATE=PROJECT SAVED file = has priority
-	    $path = paramload('SHELL','prpath'); //echo $path;
-        $module_dac_file = $path . $dpcname;
-	    //echo $module_dac_file;
-	    //DEFAULT DPC SAVED file
-        $path = paramload('DIRECTIVES','dpc_type');	  
-	    $dpc_module_dac_file = $path . "/" . str_replace(".","/",$dpcname); 	
 
-	    //select extension per agent
-	    switch (GetGlobal('__USERAGENT')) {
-	      case 'HDML' : //same as html
-	      case 'HTML' : $module_dac_file .= ".php-html"; 
-		                $dpc_module_dac_file .= ".php-html";
-		                break;
-		  case 'SH'   : //same as cli
-		  case 'TEXT' : //same as cli
-	      case 'CLI'  : $module_dac_file .= ".php-cli"; 
-		                $dpc_module_dac_file .= ".php-cli"; 
-		                break;
-		  case 'SHGTK': //same as gtk
-	      case 'GTK'  : $module_dac_file .= ".php-dac";//-gtk=stand alone apps	
-		                $dpc_module_dac_file .= ".php-dac"; 
-			  		    break;
-					
-		  default     : //$module_dac_file .= ".php-html";
-	    }
-	  
-	    $loaded=0;
-	    if (is_file($module_dac_file)) {
-  	        //echo $module_dac_file;
-		    require_once($module_dac_file);
-			$loaded=1;
-	    }
-	    elseif (is_file($dpc_module_dac_file)) {
-  	        //echo $dpc_module_dac_file;
-		    require_once($dpc_module_dac_file);
-			$loaded=1;	  
-	    }
-	    if ($loaded) {	
-			
-			$classname = str_replace(".","_",$dpcname);
-		    $this->module_dac = new $classname($environment);
-			
-			//$ver = explode(".",phpversion());
-			//if (($ver[0]<5) && (method_exists($module_dac,'action'))) 
-			if (method_exists($this->module_dac,'action')) {
-		      //echo 'action:',$action;  
-	   	      $ret = $this->module_dac->action($action);
-		      unset($this->module_dac);//destruct it
-			}  
-	    }	 	  
-	  }
-	  
- 	  return ($ret);
-	}	    
-	
-*/
 	//find dpc name based on current action
 	//function calldpc_active($action) {  	
 	public function active($action) {   
@@ -914,160 +680,6 @@ class controller extends sysdpc {
 	  $dpc = $this->active($action); 
 	  $dpcactions = GetGlobal('__ACTIONS');
 	  return ($dpcactions[$dpc]);
-	}	
-	
-	//get dpc command (execusion,appearance) attributes (ssl,fullscreen,etc)
-	//0 = command name
-	//1 = SSL support
-	//2 = fullscreen
-	//3 = frontapage fullscreen
-	//4 = reset dpc
-	//5 = reset shell
-	//6 = exclude command
-	//7 = supercache
-	//8 = action in window
-	//9 = continue ...
-	//10= webservice
-	//11= new and execute before others new at init
-	//12= page cntl logic enabled = path
-	/*protected function get_attribute($dpc,$cmd,$what=0) {
-	  $__DPCATTR = GetGlobal('__DPCATTR');
-	  $__DPCID = GetGlobal('__DPCID');	//print_r($__DPCID);?????  
-	  
-	  //DPC name COMPLIANCE
-	  if (strstr($dpc,".")) {//. appeared name (new type compliance)
-		  //dpcid has old dpc as key .. i want the opposite
-		  //for now..
-		  $p = explode('.',$dpc);
-		  $dpc = strtoupper($p[1]).'_DPC';
-	  }	  	  
-	  
-	  //if (is_array($__DPCATTR[$dpc])) {	  
-	  if (isset($__DPCATTR[$dpc][$cmd])) {
-	    //print_r($__DPCATTR[$dpc]);
-	    $element = $__DPCATTR[$dpc][$cmd];  
-		//echo $element;
-	    $attr = explode(",",$element);
-	    //print_r($attr); echo "<br>";
-	   
-	    return $attr[$what];
-	  }	
-	  
-	  return null;
-	}*/		
-	
-	
-	//function for post code batch read at init...
-	function read_post_code($dpc=null) {
-	
-	   $path = paramload('SHELL','prpath');
-	   
-	   if (is_dir($path)) {
-          $mydir = dir($path);
-		 
-          while ($fileread = $mydir->read ()) {	
-		  
-		    if (strstr($fileread,".cnn")) { //all cnn files
-			//if (strstr($fileread,"@".$dpc)) {  //only current action files
-			
-			  $parts = explode('@',$fileread); $method = $parts[0];
-			  $idpcs = explode("^",$parts[1]); $cdpc = $idpcs[0];
-			  
-			  $postcode[$method][$cdpc][] = file_get_contents($path.$fileread);  
-			} 
-		  }
-		  
-		  //print_r($postcode);
-		  $mydir->close();
-		  
-          SetGlobal('__POSTCODE',$postcode);		  
-	   }	 
-	}
-	
-	function get_code_of($method,$dpc) {
-	  $postcode = GetGlobal('__POSTCODE');
-	  
-	  //echo $method,'@',$dpc;
-	  //print_r($postcode);
-	
-	  //$file = paramload('SHELL','prpath') . $method . "@" . $dpc . "^";
-	  //echo $file,"\n";
-	  //if (is_file($code)) {
-      //if (seclevel($dpc_name,decode(GetSessionParam('UserSecID')))) {//check if allowed	  
-	  //}
-	  
-	  $ff = $postcode[$method][$dpc][0];
-	  //print_r($postcode[$method][$dpc]);
-	  if ($ff) echo $dpc,'->',$method,":",$ff,"<br>";
-	  
-	  return ($ff); 
-	}
-	
-	//experimental
-	function interpret_post_code($dpc,$code) {
-	  $scope = GetGlobal('__SCOPE'); 
-	  
-	  $tokens = explode(";",$code);
-	  
-	  foreach ($tokens as $id=>$token) {
-	  
-	    $prev_token = $tokens[$id-1];
-		$next_token = $tokens[$id+1];
-		$curr_token = $token;
-		
-		if (substr($curr_token,0,1)=='$') {
-		
-		  $part = explode('=',$curr_token);  
-		
-		  switch ($prev_token) {
-		    
-			case 'local'   : break;
-			case 'global'  : SetGlobal($part[0],$part[0]); break;
-			case 'property': $scope[$dpc][$part[0]] = $part[1]; break;
-			default   :  
-		  }
-		}
-	  }
-	  
-	  SetGlobal('__SCOPE',$scope);
-	  print_r($scope);
-	}
-	
-	//remote dpc log (called by shell)
-	function remote_log($dpc,$host,$port,$pxhost=null,$pxport=null) {
-	
-	  if ((defined("_HTTPCL_")) && ($dpc)) {
-	  
-	    //$t_remotelog = new ktimer;
-	    //$t_remotelog->start('remotelog');	
-	 	  
-	    //echo 'remote log:',$dpc;
-        $server_http_connection = new http_class;	    
-        $error = $server_http_connection->Open(array("HostName"=>$host,
-	                                                 "HostPort"=>$port,
-													 "ProxyHostName"=>$pxhost,
-													 "ProxyHostPort"=>$pxport));
-        if (!$error) {
-         $ret = $server_http_connection->SendRequest(array(
-                                                          "RequestURI"=>"/?t=slog&dpc=$dpc",
-                                                          "Headers"=>array(
-                                                          "Host"=>"$host:$port",
-                                                          "User-Agent"=>"phpdac",
-                                                          "Pragma"=>"no-cache"
-														 ))); 	
-		}												 
-        else {
-		  echo $error;														 
-		}  
-		$server_http_connection->Close();												 
-														 
- 	    //$server_http_connection = new httpcl;	
-		//$ret = $server_http_connection->request_get('phpdac','hermes:82',"t=slog&dpc=$dpc",0,0,82,1);    													   	  
-		
-	    //$t_remotelog->stop('remotelog');
-   	    //if (seclevel('_TIMERS',$this->userLevelID))
-		//echo "remotelog " , $t_remotelog->value('remotelog'); 			
-	  }													 
 	}	
 	
 	function __destruct() {

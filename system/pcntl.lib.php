@@ -154,10 +154,10 @@ class pcntl extends controller {
 				$modules_to_start[] = $dpc;
 
 				//post construct code
-				if (is_array(GetGlobal('__POSTCODE'))) {		 
+				/*if (is_array(GetGlobal('__POSTCODE'))) {		 
 					$construct_function = create_function("$dpc",$this->get_code_of('construct',$dpc));
 					$construct_function($dpc);		    
-				}
+				}*/
 			}   
 		}
 		}//empty
@@ -672,8 +672,8 @@ class pcntl extends controller {
 
 
 	//override
-    protected function event($action,$dpc_init=null) {  
-		if (!$action) return null;
+    protected function event($event,$dpc_init=null) {  
+		if (!$event) return null;
 		$__DPCMEM = GetGlobal('__DPCMEM');
 		$__DPC = GetGlobal('__DPC');		 
 		$__EVENTS = GetGlobal('__EVENTS');		    
@@ -683,56 +683,71 @@ class pcntl extends controller {
 		if (empty($__EVENTS)) return null;
 		reset($__EVENTS); //print_r($__EVENTS);		
 	   
-		$i = 1;
-		$step = 0;
-		$EVENT_QUEUE = array(); //holds multiple commands	      
+		//$i = 1;
+		//$step = 0;
+		//$EVENT_QUEUE = array(); //holds multiple commands	      
 	     	 
 		foreach ($__EVENTS as $dpc_name => $command) {
 			//check if allowed
-		    if (seclevel($dpc_name,decode(GetSessionParam('UserSecID')))) {	
+		    if ((class_exists($__DPC[$dpc_name])) &&
+				(seclevel($dpc_name, decode(GetSessionParam('UserSecID'))))) {	
 				//check if action included in current dpc	
-				if ((is_array($command)) && (in_array($action,$command))) {  
-					//check if dpc has initialized 
-					if (class_exists($__DPC[$dpc_name])) {  		     
-				 
-						$p = $__DPCPROC[$dpc_name];
-						$q = (($p ?  $p : $i++)) * 1000; //priority 1000 = start
-						if (array_key_exists($q,$EVENT_QUEUE)) {
-							$step+=1;
-							$EVENT_QUEUE[$q+$step] = $dpc_name;				   
-						}  
-						else				   
-							$EVENT_QUEUE[$q] = $dpc_name;				   
-				   		  
-					} 		 	 
+				if ((is_array($command)) && (in_array($event,$command))) {  
+					//echo $dpc_name,$event,"<br>"; 		   
+					$__DPCMEM[$dpc_name]->event($event);
+
+					//post event code
+			
+					//if (defined('PROCESS_DPC'))
+					//if (method_exists($__DPC[$dpc_name],'processEvent'))
+					//if (is_a($this->process, 'process'))
+					//if ($__DPCMEM[$dpc_name]->process instanceof process) 
+					//try {	
+					if (method_exists($__DPCMEM[$dpc_name],'processEvent')) {
+						$__DPCMEM[$dpc_name]->processEvent($event);
+						//echo $dpc_name ." has  processEvent method<br/>";
+					}
+					//else echo $dpc_name ." has no  processEvent method<br/>";
+					/*catch(Exception $e){
+						echo $e->getMessage();
+						throw $e;
+					}*/					
+						//echo 'z';
+						//$this->process->isFinished($event);					
 		        }
 			}  
 		}
-		//break =  end of multiple events or end of loop
-		   
-		//start event queue
-		reset($EVENT_QUEUE); 
-		//execute by priority	
-		ksort($EVENT_QUEUE);	//print_r($EVENT_QUEUE);   
-		foreach ($EVENT_QUEUE as $priority=>$dpc_name) { 
-			//echo $dpc_name,$action,"<br>"; 		   
-		    $__DPCMEM[$dpc_name]->event($action);
-			 
-			//post event code
-		    /*if (is_array(GetGlobal('__POSTCODE'))) {
-			   $action_function = create_function('$dpc,$event',$this->get_code_of('event',$__DPCID[$dpc_name]));
-			   $action_function($__DPCID[$dpc_name],$action);			 
-			} */ 
-			
-			if ((defined('PROCESS_DPC'))
-			//if (is_a($this->process, 'process'))
-			//if ($__DPCMEM[$dpc_name]->process instanceof process) 
-				echo 'z';
-				//$this->process->isFinished($event);			
-		}	
-	 
+
 		return 0;   
     }	
+	
+	//override
+    protected function action($action) {  
+		if (!$action) return null;
+	    $__DPCMEM = GetGlobal('__DPCMEM');
+	    $__DPC = GetGlobal('__DPC');		 
+        $__DPCPROC = GetGlobal('__DPCPROC');		    
+        $__ACTIONS = GetGlobal('__ACTIONS');	
+        $__DPCID = GetGlobal('__DPCID');			   	   		   	
+
+		if (empty($__ACTIONS)) return null;
+		reset($__ACTIONS);
+		$ret = null;
+		
+		foreach ($__ACTIONS as $dpc_name => $command) {		
+			//check if allowed
+			if ((class_exists($__DPC[$dpc_name])) &&
+			    (seclevel($dpc_name,decode(GetSessionParam('UserSecID'))))) {
+				//check if action included in current dpc
+				if ((is_array($command)) && (in_array($action,$command))) { 
+   		       		//echo $dpc_name,$action,"<br>"; 
+					$ret .= $__DPCMEM[$dpc_name]->action($action);  	 	    
+				}
+			} 
+	    }	 
+			   
+		return ($ret); 	   	      
+    }		
 	
 	
 	//override
