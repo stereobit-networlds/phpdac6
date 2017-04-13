@@ -682,7 +682,7 @@ class controller extends sysdpc {
 	}
 
 	//if dpc_init is set then dpc has priority and executed before new of others 
-    public function event($action,$dpc_init=null) {   
+    protected function event($action,$dpc_init=null) {   
 	   $__DPCMEM = GetGlobal('__DPCMEM');
 	   $__DPC = GetGlobal('__DPC');		 
        $__EVENTS = GetGlobal('__EVENTS');		    
@@ -733,8 +733,8 @@ class controller extends sysdpc {
 				   //if (!getdpc_attribute($dpc_name,$action,9)) break 1; //?????(no serial implementation in prj file)
 				   
 				   //event dac preset------------------------------------
-				   if (isset($this->dac))
-				     $this->dac_event($event,$__DPCID[$dpc_name],$__DPC[$dpc_name]);				   
+				   //if (isset($this->dac))
+				     //$this->dac_event($action,$__DPCID[$dpc_name],$__DPC[$dpc_name]);				   
 				   	 			  
 				 } 		 	 
 		       }
@@ -762,9 +762,9 @@ class controller extends sysdpc {
 		return 0;   
 	  }
     }
-	
+/*	
 	private function dac_event($event,$dpcname,$environment) {
-	  	
+	  //echo 'EV:'.$event;	
 	  //PRIVATE=PROJECT SAVED file = has priority
 	  $path = paramload('SHELL','prpath'); //echo $path;
       $module_dac_file = $path . $dpcname;
@@ -816,8 +816,8 @@ class controller extends sysdpc {
 			}  
 	  }	      
 	}	
-    	  
-    public function action($action) {  
+*/    	  
+    protected function action($action) {  
 	       $__DPCMEM = GetGlobal('__DPCMEM');
 	       $__DPC = GetGlobal('__DPC');		 
            $__DPCPROC = GetGlobal('__DPCPROC');		    
@@ -860,8 +860,8 @@ class controller extends sysdpc {
 				     //if (!getdpc_attribute($dpc_name,$action,9)) break 1;	//?????(no serial implementation in prj file)		 
 					 
 					 //action dac preset------------------------------------
-					 if (isset($this->dac))
-					   $ret .= $this->dac_action($action,$__DPCID[$dpc_name],$__DPC[$dpc_name]);
+					 //if (isset($this->dac))
+					   //$ret .= $this->dac_action($action,$__DPCID[$dpc_name],$__DPC[$dpc_name]);
 					 
 				   }	 	    
 		         }
@@ -893,7 +893,7 @@ class controller extends sysdpc {
 		   
 		   return null;		   	      
     }	
-	
+/*	
 	private function dac_action($action,$dpcname,$environment) {
 	  
 	  //if object has alredy newed at event... 
@@ -960,7 +960,7 @@ class controller extends sysdpc {
  	  return ($ret);
 	}	    
 	
-
+*/
 	//find dpc name based on current action
 	//function calldpc_active($action) {  	
 	public function active($action) {   

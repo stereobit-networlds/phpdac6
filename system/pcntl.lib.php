@@ -26,18 +26,10 @@ $__DPCSEC['_PCNTLADMIN']='9;1;1;1;1;1;1;9;9;9;9';
 
 class pcntl extends controller {
 
-	var $mytime;
-	var $myaction;
-	var $languange;
-	var $code;
-	var $myactive;
-	var $file_name,$file_path,$file_extension;
-	var $data,$fpdata;
-	var $root_page; 
-	var $debug;
-	var $fp,$lan,$cl;
-	var $sysauth;
-	var $local_security;
+	var $mytime, $myaction, $languange, $code, $myactive;
+	var $file_name, $file_path, $file_extension;
+	var $data, $fpdata, $root_page, $debug, $sysauth;
+	var $fp, $lan, $cl, $local_security, $startProcess;
 	var $preprocessor, $preprocess;   
 
 	public function __construct($code=null,$preprocess=null,$locales=null) { 
@@ -74,6 +66,7 @@ class pcntl extends controller {
 		//CCPP preprocessor
 		$this->preprocess = $preprocess;   	  
 	 
+	    $this->startProcess = array();
 		$this->local_security = array();
 		$this->code = $code;		  
 		$this->myaction = null;
@@ -244,97 +237,121 @@ class pcntl extends controller {
 			//then...read tokens  			
 			foreach ($token as $tid=>$tcmd) {
 			  
-			   $part = explode(' ',$tcmd);
-			   switch ($part[0]) {
-			     case 'system': //include and load a set of system lib dpc
-				                $syslibs = explode(",",$part[1]);
-						        //print_r($syslibs);
-								foreach ($syslibs as $lid=>$lib) {
-								  if (strstr($lib,'.')) 
-								    $this->calldpc($lib,'lib');//if . exist select from a spec dir
-								  else 
-								    $this->calldpc("system.$lib",'lib'); //else libs dir = default
-								}		 
-				                break;			   
+			    $part = explode(' ',$tcmd);
+			    switch ($part[0]) {
+			     case 'system'	: 	//include and load a set of system lib dpc
+									$syslibs = explode(",",$part[1]);
+									//print_r($syslibs);
+									foreach ($syslibs as $lid=>$lib) {
+										if (strstr($lib,'.')) 
+											$this->calldpc($lib,'lib');//if . exist select from a spec dir
+										else 
+											$this->calldpc("system.$lib",'lib'); //else libs dir = default
+									}		 
+									break;			   
 			   
-			     case 'use'   : //include and load a set of lib dpc
-				                $libs = explode(",",$part[1]);
-						        //print_r($libs);
-								foreach ($libs as $lid=>$lib) {
-								  if (strstr($lib,'.')) 
-								    $this->calldpc($lib,'lib');//if . exist select from a spec dir
-								  else 
-								    $this->calldpc("libs.$lib",'lib'); //else libs dir = default
-								}		 
-				                break;
+			     case 'use'   	: 	//include and load a set of lib dpc
+									$libs = explode(",",$part[1]);
+									//print_r($libs);
+									foreach ($libs as $lid=>$lib) {
+										if (strstr($lib,'.')) 
+											$this->calldpc($lib,'lib');//if . exist select from a spec dir
+										else 
+											$this->calldpc("libs.$lib",'lib'); //else libs dir = default
+									}		 
+									break;
 				
-				 case 'super' :	//include and load a set of dpc		
-				                $dpcs = explode(",",$part[1]);
-						        //print_r($dpcs);
-								foreach ($dpcs as $did=>$dpc) {
-								  if (strstr($dpc,'.')) $this->calldpc($dpc,'dpc');
-								                   else $this->calldpc("$dpc.$dpc",'dpc');//same name for dir + class
-								}		 
-				                break;		
+				 case 'super' 	:	//include and load a set of dpc		
+									$dpcs = explode(",",$part[1]);
+									//print_r($dpcs);
+									foreach ($dpcs as $did=>$dpc) {
+										if (strstr($dpc,'.')) 
+											$this->calldpc($dpc,'dpc');
+								        else 
+											$this->calldpc("$dpc.$dpc",'dpc');//same name for dir + class
+									}		 
+									break;		
 								
-				 case 'include' ://include NOT load a set of dpc		
-				                $dpcs = explode(",",$part[1]);
-						        //print_r($dpcs);
-								foreach ($dpcs as $did=>$dpc) {
-								  if (strstr($dpc,'.')) $this->set_include($dpc,'dpc');
-								                   else $this->set_include("$dpc.$dpc",'dpc');//same name for dir + class
-								}		 
-				                break;	
+				 case 'include' :	//include NOT load a set of dpc		
+									$dpcs = explode(",",$part[1]);
+									//print_r($dpcs);
+									foreach ($dpcs as $did=>$dpc) {
+										if (strstr($dpc,'.')) 
+											$this->set_include($dpc,'dpc');
+								        else 
+											$this->set_include("$dpc.$dpc",'dpc');//same name for dir + class
+									}		 
+									break;	
 								
-				 case 'instance':if (strstr(trim($part[3]),'.'))		
-				                   $this->set_instance($part[3],$part[1],$part[5]);
-                                 else //. not exist				 
-				                   $this->set_instance(trim($part[3]).".".trim($part[3]),$part[1],$part[5]);													 	
-							     break;
+				 case 'instance':	if (strstr(trim($part[3]),'.'))		
+										$this->set_instance($part[3],$part[1],$part[5]);
+									else //. not exist				 
+										$this->set_instance(trim($part[3]).".".trim($part[3]),$part[1],$part[5]);													 	
+									break;
 								 
 			     case 'load_extension' : //include only NOT load a set of extensions dpc
-								if (strstr(trim($part[1]),'.')) 
-								  $this->set_extension(trim($part[1]),trim($part[3]),1);
-								else //. not exist				 
-				                  $this->set_extension(trim($part[1]).".".trim($part[1]),trim($part[3]),1);
-				                break;	
+									if (strstr(trim($part[1]),'.')) 
+										$this->set_extension(trim($part[1]),trim($part[3]),1);
+									else //. not exist				 
+										$this->set_extension(trim($part[1]).".".trim($part[1]),trim($part[3]),1);
+									break;	
 								
-				 case 'security': 
-				                  $this->setlevel($part[1],$part[2],str_replace(':',';',$part[3]));
-				                  break;									
+				 case 'security':	$this->setlevel($part[1],$part[2],str_replace(':',';',$part[3]));
+									break;									
 								
-				 case 'member': $dpcmods[] = $part[1];
-				                break;		
+				 case 'member'	: 	$dpcmods[] = $part[1];
+									break;		
 								
-				 case 'dpccode'  : echo $this->execute_dpc_code($part[1]);	break;																	  
-				 case 'phpcode'  : echo $this->execute_php_code($part[1]);	break;		
+				 case 'dpccode' : 	echo $this->execute_dpc_code($part[1]);	break;																	  
+				 case 'phpcode' : 	echo $this->execute_php_code($part[1]);	break;		
 				 
-				 case 'private'  ://loads dpc from private dir
-				                  $this->set_include($part[1],'dpc',$part[2]);
-				                  $dpcmods[] = $part[1];
-				                  break; 		 
+				 case 'private' :	//loads dpc from private dir
+									if ($m = $part[1]) {
+										if (strstr($m,'->')) {
+											$mp = explode('->',$m);
+											$privateDpc = array_shift($mp);
+											$this->set_include($privateDpc,'dpc',$part[2]);
+											$dpcmods[] = $privateDpc;
+											
+											foreach ($mp as $process)
+												$this->startProcess[$process] = $privateDpc;		
+										}  
+										else {
+											$this->set_include($part[1],'dpc',$part[2]);
+											$dpcmods[] = $part[1];
+										}	
+									}	
+									break; 		 
 							  
-				 case 'public'   : //only include and save dpc modules to load th objects by shell			  
-			  		              if ($part[1]) {
-								    $this->set_include($part[1],'dpc');
-								    //  calldpc_include($part[0],'dpc');	
-					                $dpcmods[] = $part[1]; //hold dpc names												 
-								  } 
-								  break;
+				 case 'public'  : 	if ($m = $part[1]) {
+										if (strstr($m,'->')) {
+											$mp = explode('->',$m); 
+											$publicDpc = array_shift($mp);
+											$this->set_include($publicDpc,'dpc'); 
+											$dpcmods[] = $publicDpc;
+											
+											foreach ($mp as $process)
+												$this->startProcess[$process] = $publicDpc;		
+										}  
+										else {
+											$this->set_include($part[1],'dpc');	
+											$dpcmods[] = $part[1]; 												 
+										}	
+									} 
+									break;
 								  
-				 default         : if ($part[0]) { 
-				                     if (substr($part[0], -1)==';') {
-									    eval('?><?php;'.$tcmd.'?><?php ');
-										//echo '<br/>EVAL:'.$tcmd;	
-									  }	
-									  else {
-										eval('?><?php;'.$tcmd.'; ?><?php ');
-									    //echo '<br/>EVAL:'.$tcmd.";";	
-									  }	
-                                   }
+				 default        : 	if ($part[0]) { 
+										if (substr($part[0], -1)==';') {
+											eval('?><?php;'.$tcmd.'?><?php ');	
+										}	
+										else {
+											eval('?><?php;'.$tcmd.'; ?><?php ');	
+										}	
+										//echo '<br/>EVAL:'.$tcmd.";";
+									}
 				                
-			   }//switch
-			   $i+=1; 
+			    }//switch
+			    $i+=1; 
 			}//foreach
 	   
 	    }
@@ -638,7 +655,7 @@ class pcntl extends controller {
 
 		global $activeDPC,$info,$xerror,$GRX,$argdpc; 	 
 	
-		//echo $dpc,"\n";
+		//echo $dpc,"<br/>";
 		$argdpc = _DPCPATH_;//paramload('DIRECTIVES','dpc_type');
 	  	 
 		if ($this->shm) {
@@ -648,11 +665,11 @@ class pcntl extends controller {
 				$includer = "phpdac://" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";  
 		}	
 		else {
-			$_argdpc = $myargdpc?paramload('SHELL','urlpath').$myargdpc:$argdpc;
+			$_argdpc = $myargdpc ? paramload('SHELL','urlpath').$myargdpc : $argdpc;
 			//echo $_argdpc,'<>';
 			$includer = $_argdpc . "/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
 		}	
-	  
+	
 		try {
 			require($includer);	//REQUIRE NOT REQUIRE ONCE DUE TO RE-INIT DPC	
 		}
@@ -681,7 +698,55 @@ class pcntl extends controller {
 		}	
 		
 		return $ret;	
-	} 	
+	} 
+
+	//override
+	public function _new($dpc,$type) {
+		global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
+				$__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
+		global $activeDPC,$info,$xerror,$GRX,$argdpc; //IMPORTANT GLOBALS!!!
+		global $__DPCOBJ; 
+		global $__DPCID; 
+	  
+		$__DPCMEM = GetGlobal('__DPCMEM');
+		$__DPC = GetGlobal('__DPC');
+	  
+		//START THE OBJECT
+		$parts = explode(".",trim($dpc)); 
+		$class = strtoupper($parts[1]).'_DPC';
+	  
+		//update local table
+		$this->make_local_table($class);
+		
+		//print_r($this->startProcess);
+		
+		if ((defined($class)) && (class_exists($__DPC[$class])) ) {
+			
+			//echo '<br/>>>>',strtoupper($parts[1]),'_DPC','=',$__DPC[strtoupper($parts[1]).'_DPC'];
+			//print_r($this->startProcess);
+			
+			$processChain = array();
+			foreach ($this->startProcess as $process=>$inDpc) {
+				if ($inDpc==$dpc) 
+					$processChain[] = $process;	
+			}	
+			//print_r($processChain);
+			if (!empty($processChain))
+				$pchain = implode(',',$processChain);
+
+			//echo '<br/>' . $dpc . ':' . $pchain;
+			
+			$__DPCMEM[$class] =  & new $__DPC[$class]($pchain);
+			$__DPCOBJ[$dpc] =  & $__DPCMEM[$class];//alias of new name object array
+			$__DPCID[$class] = $dpc; //new name index array		 
+		
+			SetGlobal("_DPCMEM",$__DPCMEM);
+		
+			return true;
+		}	  
+	
+		return false; 	  		
+	}		
     
    
 	public function __destruct() {		  
