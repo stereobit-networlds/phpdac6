@@ -1,44 +1,38 @@
 <?php
 if (!defined("CONTROLLER_DPC")) {
 define("CONTROLLER_DPC",true);
-
-require_once("sysdpc.lib.php");
 		
-class controller extends sysdpc {
+class controller  {
 
-   var $server;
-   var $shm;
-   var $shm_id;
-   var $shm_addr;
-   var $shm_length;
+    private $_actions;
+	private $_events;
+	private $_attr;
+	private $_security;
+    private $systemdb;
+	
+    public function __construct($dac=null,$dacpost=null) {
+
+		$this->_events  = array();	  	
+		$this->_actions = array();
+		$this->_attr    = array();
+		$this->_security= array();		  
+    }
    
-   var $dac; //handles dac events,actions
-   var $dacpost; //handles post routines
-
-   public function __construct($dac=null,$dacpost=null) {
-
-      $this->dac = $dac;
-	  $this->dacpost = $dacpost;
-    
-	  sysdpc::__construct();
-	  
-   }
-   
-   public function include_dpc($dpc) {
+    public function include_dpc($dpc) {
 
 	    require_once(_DPCPATH_."/".$dpc);
-   }
+    }
    
-   //return the file name or stream
-   public function require_dpc($dpc, $cgipath=null) {
+	//return the file name or stream
+	public function require_dpc($dpc, $cgipath=null) {
 
-	  $ret = _DPCPATH_."/".$dpc;
-	  //echo '>',$ret,'<br>';	
-	  return $ret;	
-   }   
+		$ret = _DPCPATH_."/".$dpc;
+		//echo '>',$ret,'<br>';	
+		return $ret;	
+	}   
    
-   //read project file ...
-   private function compile($accelerated=0) { 
+	//read project file ...
+	private function compile($accelerated=0) { 
 	  
      if (iniload('ID')) {
 	 
@@ -155,10 +149,10 @@ class controller extends sysdpc {
 	 }//if iniload
 	 else
 	   raise_error(1,'EXIT');   
-   }
+	}
    
-   //function calldpc_init() {
-   public function init($code) { //$accelerated=0) {        
+	//function calldpc_init() {
+	public function init($code) { //$accelerated=0) {        
       $accelerated=0; //php strict standart
 	  
       //ACCELERATE modules reading...
@@ -195,7 +189,7 @@ class controller extends sysdpc {
 		 //echo '>',$id,'=',$dpc;    
 	  }		   
 	 	  
-   }
+	}
 
 
     //PUBLIC (replace require (see eventsrv.dpc))
@@ -239,7 +233,7 @@ class controller extends sysdpc {
 	}
 		
 	//alias of _new(parent).....init_object,,,......(mode:one by one)
-	function calldpc($dpcexpression,$type='dpc') {
+	public function calldpc($dpcexpression,$type='dpc') {
 	   //echo $dpcexpression,"\n";
        return $this->init_object($dpcexpression,$type);
        //return $this->_new($dpcexpression,$type);	   
@@ -247,7 +241,7 @@ class controller extends sysdpc {
 	
 	
 	//call a dpc method using params as use a+b+c
-	function calldpc_method($dpcmethodequalvars,$noerror=null) {
+	public function calldpc_method($dpcmethodequalvars,$noerror=null) {
 	  $__DPCMEM = GetGlobal('__DPCMEM');
 	  $__DPC = GetGlobal('__DPC');
 	  $__ACTIONS = GetGlobal('__ACTIONS');		  
@@ -287,7 +281,7 @@ class controller extends sysdpc {
 			
 	
 	//call a dpc method using vars as array of pointers
-	function calldpc_method_use_pointers($dpcmethod,$par,$noerror=null) {
+	public function calldpc_method_use_pointers($dpcmethod,$par,$noerror=null) {
 	  $__DPCMEM = GetGlobal('__DPCMEM');
 	  $__DPC = GetGlobal('__DPC');		  
 	  
@@ -322,7 +316,7 @@ class controller extends sysdpc {
 	}		
 	
 	//return a dpc var
-	function calldpc_var($dpcvar,$value=null) {
+	public function calldpc_var($dpcvar,$value=null) {
 	  $__DPCMEM = GetGlobal('__DPCMEM');	  
 	  
 	  $part = explode(".",$dpcvar);
@@ -371,7 +365,7 @@ class controller extends sysdpc {
 	//TRY TO FIND METHOD CALLS IN CODE like (inheritedclass.viewcart) THAT INHERIT FROM PARENTS CLASS (like parentclass.viewcart)
 	//BUT STILL CALLED FROM RUNTIME CODE AS PARENTS COMMANDS...
 	//THIS FUNCTION ON ERROR FIND THE INHERITED CLASS AUTOMATICALLY AND REPLACE CURRENT DPC COMMAND TO inheritedclass.viewcart
-	function find_child_method($method,$dpcarray) {
+	protected function find_child_method($method,$dpcarray) {
 	
 	  foreach ($dpcarray as $class) {
 	    if ((is_object($class)) && (method_exists($class,$method)))
@@ -544,10 +538,6 @@ class controller extends sysdpc {
 				 
 	             if (class_exists($__DPC[$dpc_name])) {  //check if dpc has initialized 		     
 				 
-	   	           //$__DPCMEM[$dpc_name]->event($action);
-				   //if (!calldpc_var(strtolower(str_replace("_DPC","",$dpc_name))."._CONTINUE")) return 0;	//one event		
-				   //if (!getdpc_attribute($dpc_name,$action,9)) return 0;	 //one action
-				    
 				   $p = $__DPCPROC[$dpc_name];
                    $q = (($p ?  $p : $i++)) * 1000; //priority 1000 = start
 				   if (array_key_exists($q,$EVENT_QUEUE)) {
@@ -682,10 +672,131 @@ class controller extends sysdpc {
 	  return ($dpcactions[$dpc]);
 	}	
 	
+	//create a new dpc object instance based on a dpc as is
+	protected function _newinstance($instname,$dpc,$type) {
+      global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
+             $__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
+
+	  global $activeDPC,$info,$xerror,$GRX,$argdpc; //IMPORTANT GLOBALS!!!
+	  
+	  global $__DPCOBJ; //holds objects of new approach of name of type xxx.yyy
+	  global $__DPCID; //array of new name alias	  
+	  
+	  $__DPCMEM = GetGlobal('__DPCMEM');
+	  $__DPC = GetGlobal('__DPC');
+	  
+	  //START THE OBJECT
+      $parts = explode(".",trim($dpc)); 
+	  $class = strtoupper($parts[1]).'_DPC';
+	  
+	  $idpc = $parts[0].".".$instname;
+	  $iclass = strtoupper($instname).'_DPC';
+	  
+	  //update local table
+      //$this->make_local_table($class);		  
+	  
+	  if ((defined($class)) &&
+	      (is_object($__DPCMEM[$class])) ) {
+		  
+		//echo '>>>',strtoupper($parts[1]),'_DPC','=',$__DPC[strtoupper($parts[1]).'_DPC'];
+		//echo " ",$iclass,">>>",$idpc;
+	    if ((!defined($iclass)) &&
+	        (!isset($__DPCMEM[$iclass])) ) {		
+		  
+		  define($iclass,true); //define instance
+		
+	      $__DPCMEM[$iclass] =  & new $__DPC[$class];
+		  $__DPCOBJ[$idpc] =  & $__DPCMEM[$iclass];//alias of new name object array
+		  $__DPCID[$iclass] = $idpc; //new name index array		 
+		
+		  SetGlobal("_DPCMEM",$__DPCMEM);
+		
+		  return TRUE;
+		}
+		else
+		  die("Instance error! Name conflicts,");  
+	  }	  
+	
+	  return FALSE; 	  		
+	}	
+	
+	//create a new dpc object instance based on a subclass of a dpc where construct diferrent	
+	protected function _newinstance2($instname) {
+      global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
+             $__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
+
+	  global $activeDPC,$info,$xerror,$GRX,$argdpc; //IMPORTANT GLOBALS!!!
+	  
+	  global $__DPCOBJ; //holds objects of new approach of name of type xxx.yyy
+	  global $__DPCID; //array of new name alias		
+	
+	  $idpc = $parts[0].".".$instname;
+	  $iclass = strtoupper($instname).'_DPC';	
+	
+	  if ((!defined($iclass)) &&
+	      (!isset($__DPCMEM[$iclass])) ) {		
+		  
+		  define($iclass,true); //define instance
+		
+	      $__DPCMEM[$iclass] =  & new $instname;
+		  $__DPCOBJ[$idpc] =  & $__DPCMEM[$iclass];//alias of new name object array
+		  $__DPCID[$iclass] = $idpc; //new name index array		 
+		
+		  SetGlobal("_DPCMEM",$__DPCMEM);
+		  //echo "OK";
+		  return TRUE;
+	  }
+      else
+		  die("Instance error! Name conflicts,"); 	 	
+	}	
+   	
+	//transfer events,action,attributes,locales from parent to child
+	//it used when a dpc inherit from other dpc and
+	//parent dpc just included where child dpc loaded by script 
+	public function get_parent($parent,$child) {
+	  
+	  $GLOBALS["__EVENTS"][$child] = $GLOBALS["__EVENTS"][$parent];
+	  $GLOBALS["__EVENTS"][$parent] = array();
+	  $GLOBALS["__ACTIONS"][$child] = $GLOBALS["__ACTIONS"][$parent];
+	  $GLOBALS["__ACTIONS"][$parent] = array();
+	  $GLOBALS["__DPCATTR"][$child] = $GLOBALS["__DPCATTR"][$parent];
+	  $GLOBALS["__DPCATTR"][$parent] = array();	  
+	  
+	  //compatibility for script parser commands
+	  $GLOBALS["__PARSECOM"][$child] = $GLOBALS["__PARSECOM"][$parent];
+	  $GLOBALS["__PARSECOM"][$parent] = array();	  
+	    
+	  
+	  //PARENT LOCALES TO MEMORY	  
+	  $this->make_local_table($parent);
+	}	
+	
+    //special fun to make all entries in locales root enabled
+    protected function make_local_table($dpc=null,$debug=null) {
+        $loc = GetGlobal('__LOCALE');
+        $lr = GetGlobal('__DPCLOCALE');
+   
+	    //echo $dpc,">>><br>";
+	    if (is_array($loc[$dpc])) {
+		
+	        foreach ($loc[$dpc] as $id=>$explain) {
+	         $parts = explode(";",$explain);
+		     $lr[$parts[0]] = $parts[1].";".$parts[2].";".$parts[3];
+	        }		 
+			
+			if ($debug) {
+	          echo $dpc,'<br>';
+		      print_r($lr);
+		      echo '<br>';
+			}			
+	    }
+	 
+	    SetGlobal('__DPCLOCALE',$lr);
+    }	
+	
 	function __destruct() {
 		
 		//$this->free();
-		sysdpc::__destruct();
 	}
 };
 }
