@@ -2,8 +2,6 @@
 if (!defined("SYSDPC_DPC")) {
 define("SYSDPC_DPC",true);
 
-//require_once("socketconnector.lib.php");
-
 class sysdpc {
 
     private $_actions;
@@ -12,19 +10,16 @@ class sysdpc {
 	private $_security;
     private $systemdb;
 
-    function __construct() {
+    public function __construct() {
 	
-	  $this->_events  = array();	  	
-	  $this->_actions = array();
-	  $this->_attr    = array();
-	  $this->_security= array();	  
-	
-	  //$this->systemdb = GetGlobal('db');
-	  //var_dump($this->systemdb); echo 'ZZZZZ'; //????????????
+		$this->_events  = array();	  	
+		$this->_actions = array();
+		$this->_attr    = array();
+		$this->_security= array();	  
     }
 	
 	//create a new dpc object (mode:batch)
-	public function _new($dpc,$type) {
+	protected function _new($dpc,$type) {
       global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
              $__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
 
@@ -59,7 +54,7 @@ class sysdpc {
 	}	
 	
 	//create a new dpc object instance based on a dpc as is
-	public function _newinstance($instname,$dpc,$type) {
+	protected function _newinstance($instname,$dpc,$type) {
       global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
              $__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
 
@@ -107,7 +102,7 @@ class sysdpc {
 	}	
 	
 	//create a new dpc object instance based on a subclass of a dpc where construct diferrent	
-	function _newinstance2($instname) {
+	protected function _newinstance2($instname) {
       global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
              $__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
 
@@ -135,50 +130,11 @@ class sysdpc {
       else
 		  die("Instance error! Name conflicts,"); 	 	
 	}	
-   
-	//under construction ??????????
-	public function set_proccess($dpc,$proc) {
-	  $__DPCPROC = GetGlobal('__DPCPROC');
-	  $__DPC = GetGlobal('__DPC');	  
-	  
-	 /* $rest_array = array();
-	  $priority_array = array();
-	  
-      while (list ($dpc,$classname) = each ($__DPC)) {
-	     if (isset($__PRIORITY[$dpc])) $priority_array[$dpc] = $classname; 
-		                          else $rest_array[$dpc] = $classname;
-	  }
-	  $final = array_merge($priority_array,$rest_array);
-	  //print_r($final);
-	  return ($final);*/
-	  
-	  if (class_exists($__DPC[$dpc])) {
-	     $__DPCPROC[$dpc] = $proc;
-		 return 1;
-	  }
-	  else
-	    return 0;
-	  
-	}
-	
-	public function get_proccess($dpc) {
-	  $__DPCPROC = GetGlobal('__DPCPROC');
-	  $__DPC = GetGlobal('__DPC');		
-	
-	  if (class_exists($__DPC[$dpc])) {
-	     $ret = $__DPCPROC[$dpc];
-		 
-		 if ($ret) return ($ret);
-		      else return 0;
-	  }
-	  else
-	    return -1;	
-	}	
-	
+   	
 	//transfer events,action,attributes,locales from parent to child
 	//it used when a dpc inherit from other dpc and
 	//parent dpc just included where child dpc loaded by script 
-	function get_parent($parent,$child) {
+	public function get_parent($parent,$child) {
 	  
 	  
 	  $GLOBALS["__EVENTS"][$child] = $GLOBALS["__EVENTS"][$parent];
@@ -196,8 +152,8 @@ class sysdpc {
 	  //PARENT LOCALES TO MEMORY	  
 	  $this->make_local_table($parent);
 	}	
-	
-    function get_attribute($modulename,$modulecmd,$param=0) {
+/*	
+    protected function get_attribute($modulename,$modulecmd,$param=0) {
 
        $db = GetGlobal('db');	   
 	   
@@ -257,7 +213,7 @@ class sysdpc {
    }	
 	
    //load all dpc's attributes over system (build-in) attributes
-   function load_attributes($accelerated=0) {
+   protected function load_attributes($accelerated=0) {
       $__DPCATTR = GetGlobal('__DPCATTR'); //get global
 	  
 	  //what if login.....
@@ -337,7 +293,7 @@ class sysdpc {
 		$this->_attr['system'][$action] = $action . "," . $attr;
 	  }		
 	}
-	
+
 	public function set_event($event,$dpc=null) {
       $__EVENTS = GetGlobal('__EVENTS');	
 	
@@ -412,9 +368,9 @@ class sysdpc {
 	  }	
 	}	
 	
-	
+*/	
     //special fun to make all entries in locales root enabled
-    function make_local_table($dpc=null,$debug=null) {
+    protected function make_local_table($dpc=null,$debug=null) {
         $loc = GetGlobal('__LOCALE');
         $lr = GetGlobal('__DPCLOCALE');
    
@@ -435,166 +391,6 @@ class sysdpc {
 	 
 	    SetGlobal('__DPCLOCALE',$lr);
     }
-	
-	/////////////////////////////////////////////////// REMOTE & SHARED MEM
-	
-	function exist_dpc_server($address,$port) {
-	
-	/*  $scon = new socket_connector;
-	  if (!$scon->opensocket($address,$port)) {
-	    echo 'Socket Error!';
-        return false;
-	  }
-	  else {
-	    echo "Socket Ok!";    
-	    $scon->writetosocket("quit\0");
-        //echo $scon->ReadAll();	
-		echo $scon->ReadFromSocket(64),'>>>>>+++';
-	    $scon->closesocket();
-	    unset($scon);
-		return true;			  
-	  }	*/
-	  
-	  
-      $fp = @stream_socket_client("tcp://$address:$port", $errno, $errstr, 30);
-	  
-      if (!$fp) {
-	  
-        //echo "$errstr ($errno)<br />\n";
-        return false;
-      } 
-	  else {
-        //stream_set_timeout($fp,1);
-		//stream_set_blocking($fp,false);	
-		//stream_set_write_buffer($fp,0); //unbuffered
-		  
-        //fwrite($fp, "helo\n");
-        /*while (!feof($fp)) {
-          var_dump(fgets($fp, 1024));
-        }*/
-        $ret = fgets($fp,7);
-        //echo $ret;
-        fclose($fp);
-		
-        if (stristr('phpdac5',$ret)) 
-		  return true;
-		else 
-		  return false;
-		//return true;  
-      }
-	   
-		
-	/*	echo '0';
-		$socket = socket_create (AF_INET, SOCK_STREAM, SOL_TCP);
-		echo '1';
-		socket_connect($socket, $address, $port);
-		echo '2';
-        $string = "ver\0"; 
-		echo '3';
-        socket_write($socket, $string);
-        echo '4';
-        //now you can read from...
-        $line = trim(socket_read($socket, 7));
-		echo '5';
-		socket_close($socket);
-		echo '6';
-		echo $line;*/
-		
-		
-		
-/*$fp = fsockopen($address, $port, $errno, $errstr, 30);
-
-if (!$fp) {
-   echo "$errstr ($errno)<br />\n";
-} else {
-
-   stream_set_timeout($fp,1);
-
-   $out = "GET / HTTP/1.1\r\n";
-   $out .= "Host: www.example.com\r\n";
-   $out .= "Connection: Close\r\n\r\n";
-   echo 'write:';
-   fwrite($fp, $out);
-   echo 'read:';
-   while (!feof($fp)) {
-       echo fgets($fp, 128);
-   }
-   //$a =  fread($fp,1);
-   echo $a;
-   fclose($fp);
-}*/
-		    
-	}
-	
-	function query_dpc_server($query,$address,$port,$feedback=7,$blocking=true) {
-	  
-      if (!$fp=@stream_socket_client("tcp://$address:$port", $errno, $errstr, 30)) {
-        return false;
-      } 
-	  else {
-        //stream_set_timeout($fp,1);
-		//stream_set_write_buffer($fp,0); //unbuffered	  
-	  
-	  	if ($blocking) stream_set_blocking($fp,$blocking);	
-		
-        fwrite($fp, $query."\n");
-        $ret = fgets($fp,$feedback);
-        //echo $ret;
-        fclose($fp);
-		
-        return $ret; 
-      }	
-	}
-	
-	function load_tcp_dpc($dpc,$address,$port) {
-	
-	}
-	
-	function exist_shm() {	  
-	  
-	  return (is_file(_DPCPATH_."/shm.id"));
-	}
-	
-	function load_shm_id() {
-	
-		$data = @file_get_contents(_DPCPATH_."/shm.id");
-		$parts = explode("^",$data);
-				
-		return ($parts[0]);
-	}
-	
-	function load_shm_addr() {
-	
-		$data = @file_get_contents(_DPCPATH_."/shm.id");
-		$parts = explode("^",$data);
-
-		return (unserialize($parts[1]));	
-	}
-	
-	function load_shm_length() {
-	
-		$data = @file_get_contents(_DPCPATH_."/shm.id");
-		$parts = explode("^",$data);
-		
-		return (unserialize($parts[2]));	
-	}
-	
-	//cgi do it ...iis ?????
-	function load_shm_dpc($dpc,$shm_max,$dpc_addr,$dpc_length) {
-	    
-      if (isset($dpc_addr[$dpc])) {
-
-	    $shm_id = $this->dpc_shm_id = shmop_open(0xfff, "a",0,0);//, 0644, $shm_max);
-   
-        if ($shm_id) 
-		  $ret = shmop_read($shm_id,$dpc_addr[$dpc],$dpc_length[$dpc]);
-		//echo $dpc,'>',$dpc_addr[$dpc],':',$dpc_length[$dpc],"\n";
-	  }
-	  else
-	    $ret = null;
-			
-	  return ($ret);		           
-	}	
 	
 	function __destruct() {
 	}

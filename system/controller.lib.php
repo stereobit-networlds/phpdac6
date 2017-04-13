@@ -21,90 +21,30 @@ class controller extends sysdpc {
    var $dac; //handles dac events,actions
    var $dacpost; //handles post routines
 
-   function __construct($dac=null,$dacpost=null) {
+   public function __construct($dac=null,$dacpost=null) {
 
       $this->dac = $dac;
 	  $this->dacpost = $dacpost;
     
 	  sysdpc::__construct();
 	  
-	  //$this->server = $this->exist_dpc_server('127.0.0.1',19123);	  
-	  $this->shm = $this->exist_shm();
-	  if ($this->shm) {
-	    $this->shm_id = $this->load_shm_id();	 //echo $this->shm_id; 
-	    $this->shm_addr = $this->load_shm_addr();	
-	    $this->shm_length = $this->load_shm_length();	
-			
-		//REGISTER PHPDAC (server side) protocol...
-        require_once("dacstream.lib.php");			
-		$phpdac_s = stream_wrapper_register("phpdac","dacstream");
-		if (!$phpdac_s) _echo('CLI',"Server protocol failed to registered!\n");
-		           else _echo('CLI',"Server protocol registered!\n");
-  
- 		//REGISTER PHPDAC (client side)protocol...(used by webserver due to shm error!!!)
-        require_once("dacstreamc.lib.php");			
-		$phpdac_c = stream_wrapper_register("phpdac5","c_dacstream");
-		if (!$phpdac_c) _echo('CLI',"Client protocol failed to registered!\n");
-		           else _echo('CLI',"Client protocol registered!\n"); 
-	  }
    }
    
-   //special include/require selectable from filesystem of shm mem stream
-   //server side
-   //WARNING:SYSTEM(PHP) PATH NOT WORKING ..IT REQUIRES FULL PATH(filesystem ver)
    public function include_dpc($dpc) {
 
-      //problem with scope....called as controller->include_dpc($dpc)
-   
-      if ($this->shm) {
-	    if (GetGlobal('__USERAGENT')=='HTML')
-	      require_once("phpdac5://127.0.0.1:19123/".$dpc);
-		else	  
-	      require_once("phpdac://".$dpc);
-	  }	
-	  else
 	    require_once(_DPCPATH_."/".$dpc);
    }
    
    //return the file name or stream
    public function require_dpc($dpc, $cgipath=null) {
 
-      //NO problem with scope....called as require_once(controler->require_dpc($dpc))
-	  //problem calling directly as above
-	  //no problem with call of type $x = controller->require(..)/require_once(x)
-   
-      if ($this->shm) {
-	    if (GetGlobal('__USERAGENT')=='HTML')
-	      $ret = "phpdac5://127.0.0.1:19123/".$dpc;
-		else	  
-	      $ret = "phpdac://".$dpc;
-	  }	
-	  else
-	    $ret = _DPCPATH_."/".$dpc;
-		
+	  $ret = _DPCPATH_."/".$dpc;
 	  //echo '>',$ret,'<br>';	
 	  return $ret;	
    }   
    
    //read project file ...
    private function compile($accelerated=0) { 
-   
-     //CAN ACCELERATE ??....
-	 //tokens reding ..ok  
-   	  
-	 //if ($this->server) _echo('CLI','server live');
-	 //else _echo('CLI','server down');
-	 
-	 if ($this->shm) {
-	   _echo('CLI',"Shm live!\n"); 
-	   //$rdpc = $this->load_shm_dpc('examples/example1.dpc.php',$this->shm_id,$this->shm_addr,$this->shm_length);
-	   //$fp = fopen("phpdac://examples/example1.dpc.php", "r");  
-	   //$rdpc = fread($fp,8500); 
-	   //fclose($fp);
-	   //echo $rdpc;
-	 }	  
-	 else 
-	   _echo('CLI','shm down');	 
 	  
      if (iniload('ID')) {
 	 
@@ -258,11 +198,11 @@ class controller extends sysdpc {
 	  echo "include " , $t->value('include');	  	    	 	  
    
        //ACCELERATE attributes reading...
-	  $t->start('attr');	  
+	  /*$t->start('attr');	  
 	  $this->load_attributes($accelerated); //overwrite build in attributes with db attr or file attr	   	 
 	  $t->stop('attr');
 	  echo "attr " , $t->value('attr');	  
-	  
+	  */
 	  //INSTANCE CASE
 	  $is_instance = paramload('ID','isinstance');
 	  if ($is_instance) //must be include the clientdpc module
@@ -273,7 +213,7 @@ class controller extends sysdpc {
 	  //so give a priorty to a dpc to be newed and execute their event(?) before new of others 	  
 	  $action = GetGlobal('dispatcher')->get_command(1);//unofficial!!!!!
 	  //echo ">>>>>",$action;	    
-	  
+	  /*
 	  foreach ($modules as $id=>$dpc) {
 
 	    if ($this->get_attribute($dpc,$action,11)) {
@@ -295,7 +235,7 @@ class controller extends sysdpc {
 		}
 	    //echo '.';
 	  }
-		 
+	*/		
 	  //NEW AFTER (one by one as it writed in script)	 
 	  //print_r($modules);
 	  foreach  ($modules as $id=>$dpc) {
@@ -329,25 +269,11 @@ class controller extends sysdpc {
 	  global $activeDPC,$info,$xerror,$GRX,$argdpc;  //IMPORTANT GLOBALS!!!
 	  
 	  global $__DPCOBJ; //holds objects of new approach of name of type xxx.yyy
-	  global $__DPCID; //array of new name alias  	  	    	  	  
-
-	  //SHARED MEM
-	  /*if ($this->shm) {
-	    $shm_text = $this->load_shm_dpc(str_replace(".","/",$dpc).".$type.php",$this->shm_id,$this->shm_addr,$this->shm_length);	  
-		//echo $shm_text;
-	  }	*/
-      //echo $dpc,"\n";  
+	  global $__DPCID; //array of new name alias  	  	    	  	   
 
       $argdpc = _DPCPATH_;// paramload('DIRECTIVES','dpc_type');	  
-	  //echo $argdpc,'>';
-	  if ($this->shm) {//SHARED MEM 
-	    if (GetGlobal('__USERAGENT')=='HTML')
-	      $includer = "phpdac5://127.0.0.1:19123/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
-		else	  
-	      $includer = "phpdac://" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
-	  }	
-	  else	  
-	    $includer = $argdpc . "/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
+	  //echo $argdpc,'>'; 
+	  $includer = $argdpc . "/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
 	  //echo $includer,'|',$argdpc,'|',_DPCPATH_,'<br>';	
 	  require($includer);	//REQUIRE NOT REQUIRE ONCE DUE TO RE-INIT DPC
 	  	  
@@ -521,23 +447,8 @@ class controller extends sysdpc {
 	 
 	   define($defname,'true');
 
-	   /*if ($this->shm)	   //SHARED MEM ........PROBLEM WITH ADODB
-	     $includer = "phpdac://" . "system/extensions/" . str_replace(".","/",$extension) . ".ext.php";
-	   else*/ 		
-	   	 //replaced below 	   
-	     //$includer = "extensions/" . str_replace(".","/",$extension) . ".ext.php";	   
-	   
-        $argdpc = _DPCPATH_; //paramload('DIRECTIVES','dpc_type');
-	  	 
-	    if ($this->shm) {
-	      if (GetGlobal('__USERAGENT')=='HTML')
-	        $includer = "phpdac5://127.0.0.1:19123/" . str_replace(".","/",trim($extension)) .  ".ext.php";
-		  else
-		    $includer = "phpdac://" . str_replace(".","/",trim($extension)) . ".ext.php";  
-	    }	
-	    else 
-	      $includer = $argdpc . "/system/extensions/" . str_replace(".","/",trim($extension)) . ".ext.php";	
-		
+       $argdpc = _DPCPATH_; //paramload('DIRECTIVES','dpc_type');
+	   $includer = $argdpc . "/system/extensions/" . str_replace(".","/",trim($extension)) . ".ext.php";	
 	   //echo $defname;           
 	   //echo $includer; 		
 	   require_once($includer);	  		   
@@ -560,14 +471,7 @@ class controller extends sysdpc {
 	  //echo $dpc,"\n";
       $argdpc = _DPCPATH_; //paramload('DIRECTIVES','dpc_type');
 	  	 
-	  if ($this->shm) {
-	    if (GetGlobal('__USERAGENT')=='HTML')
-	      $includer = "phpdac5://127.0.0.1:19123/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
-		else
-		  $includer = "phpdac://" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";  
-	  }	
-	  else 
-	    $includer = $argdpc . "/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
+	  $includer = $argdpc . "/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
 
 	  require($includer);	//REQUIRE NOT REQUIRE ONCE DUE TO RE-INIT DPC	
 	  
@@ -632,7 +536,7 @@ class controller extends sysdpc {
 	
     //free dpc resources
     //function calldpc_free() {	
-    public function free() {	
+    protected function free() {	
 	  $__DPCMEM = GetGlobal('__DPCMEM');
 	  $__DPCATTR = GetGlobal('__DPCATTR');		    
 	  $__DPC = GetGlobal('__DPC');	  
@@ -669,7 +573,7 @@ class controller extends sysdpc {
 	  } 
 	  }
     } 	 
-	
+/*	
     //used at pcli 
 	public function reset($action) { 	
 	  $activeDPC = GetGlobal('activeDPC');	  
@@ -680,7 +584,7 @@ class controller extends sysdpc {
 		    $this->init();		
 	  }
 	}
-
+*/
 	//if dpc_init is set then dpc has priority and executed before new of others 
     protected function event($action,$dpc_init=null) {   
 	   $__DPCMEM = GetGlobal('__DPCMEM');
@@ -1026,7 +930,7 @@ class controller extends sysdpc {
 	//10= webservice
 	//11= new and execute before others new at init
 	//12= page cntl logic enabled = path
-	function get_attribute($dpc,$cmd,$what=0) {
+	/*protected function get_attribute($dpc,$cmd,$what=0) {
 	  $__DPCATTR = GetGlobal('__DPCATTR');
 	  $__DPCID = GetGlobal('__DPCID');	//print_r($__DPCID);?????  
 	  
@@ -1050,7 +954,7 @@ class controller extends sysdpc {
 	  }	
 	  
 	  return null;
-	}			
+	}*/		
 	
 	
 	//function for post code batch read at init...
@@ -1167,8 +1071,9 @@ class controller extends sysdpc {
 	}	
 	
 	function __destruct() {
-	
-	  sysdpc::__destruct();
+		
+		//$this->free();
+		sysdpc::__destruct();
 	}
 };
 }

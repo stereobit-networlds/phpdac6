@@ -164,34 +164,18 @@ class pcntl extends controller {
 		$t->stop('include');
 		if ($this->debug) 
 			echo "<!-- include " . $t->value('include') . ' sec -->'; 	   	 
-   
-		//INSTANCE PROJECT CASE
-		/*$is_instance = paramload('ID','isinstance');
-		if ($is_instance) //must be include the clientdpc module
-			$cdpc = new clientdpc;	*/	  
+     
 
 		//dispacth or redirect...
 		$this->myaction = $this->_getqueue(); 	
 		
 		if (is_array($modules_to_start)) {
+			
 			$t->start('new');			  
-			foreach  ($modules_to_start as $id=>$dpc) {
-
-				/*if (is_object($cdpc)) {
-		   
-					if ($cdpc->is_client_dpc($dpc))
-						$this->_new($dpc,'dpc');   
-					else {
-						session_start();
-						session_unset();
-						session_destroy();//kill the session
-						die("$dpc not supported or expired!");
-					}  
-				}
-				else*/
-					$this->_new($dpc,'dpc');     
-			}	 	 
+			foreach  ($modules_to_start as $id=>$dpc) 
+				$this->_new($dpc,'dpc');     
 			$t->stop('new');
+			
 			if ($this->debug) 
 				echo "<!-- initialize (new) " . $t->value('new') . ' sec -->';	
 	    }  	    	
@@ -434,12 +418,12 @@ class pcntl extends controller {
 			//if action NOT in executed dpc redirect
 			//if is an excluded cmd return basic cmd = page name
 			//cmd is the execuded from some dpc not the default
-			if ($this->get_attribute($this->active($ret),$ret,6)){//exclude cmd
+			/*if ($this->get_attribute($this->active($ret),$ret,6)){//exclude cmd
 				//echo "EXCLUDE.....<br>";
 				$this->my_excluded_action = $ret;//backup cmd
 				$ret = $this->file_name;//default dpc cmd (never exclude main file cmd)
 				return ($ret);
-			}
+			}*/
 		  
 			//get the active dpc = this name default
 			$this->myactive = $this->active($this->file_name);	  		  
@@ -493,8 +477,8 @@ class pcntl extends controller {
 	protected function pre_render($theme=null,$lan=null,$cl=null,$fp=null) {
       
 		if ($this->sysauth) {
-			if (($realm = GetParam('AUTHENTICATE')) || ($realm = GetReq('auth')) ||
-				($this->get_attribute($this->myactive,$this->myaction,13))) {  
+			if (($realm = GetParam('AUTHENTICATE')) || ($realm = GetReq('auth'))/* ||
+				($this->get_attribute($this->myactive,$this->myaction,13))*/) {  
 		  
 				if (!$realm) 
 					$realm = "Generic authendication";  
@@ -502,15 +486,15 @@ class pcntl extends controller {
 			}	
 		}
    
-		//change languange
+		//change languange !!!! gr/ en/ subdir to implement
 		if (isset($lan)) 
 			setlocal($lan);
 				
-		if ($this->get_attribute($this->myactive,$this->myaction,4)) {			   
+		/*if ($this->get_attribute($this->myactive,$this->myaction,4)) {			   
 		    $this->init();	
 			if ($this->debug) 
 				echo '<!-- ......re-init..... -->';
-		}			  	
+		}*/			  	
 	  
 		//get action
 		$this->data = $this->action($this->myaction);     
@@ -658,18 +642,10 @@ class pcntl extends controller {
 		//echo $dpc,"<br/>";
 		$argdpc = _DPCPATH_;//paramload('DIRECTIVES','dpc_type');
 	  	 
-		if ($this->shm) {
-			if (GetGlobal('__USERAGENT')=='HTML')
-				$includer = "phpdac5://127.0.0.1:19123/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
-			else
-				$includer = "phpdac://" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";  
-		}	
-		else {
-			$_argdpc = $myargdpc ? paramload('SHELL','urlpath').$myargdpc : $argdpc;
-			//echo $_argdpc,'<>';
-			$includer = $_argdpc . "/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
-		}	
-	
+		$_argdpc = $myargdpc ? paramload('SHELL','urlpath').$myargdpc : $argdpc;
+		//echo $_argdpc,'<>';
+		$includer = $_argdpc . "/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
+
 		try {
 			require($includer);	//REQUIRE NOT REQUIRE ONCE DUE TO RE-INIT DPC	
 		}
@@ -686,22 +662,81 @@ class pcntl extends controller {
 	//override
 	public function require_dpc($dpc, $cgipath=null) {
 
-		if ($this->shm) {
-			if (GetGlobal('__USERAGENT')=='HTML')
-				$ret = "phpdac5://127.0.0.1:19123/".$dpc;
-			else	  
-				$ret = "phpdac://".$dpc;
-		}	
-		else {
-			$path = $cgipath ? $cgipath : _DPCPATH_;  
-			$ret = $path . "/" . $dpc;
-		}	
+		$path = $cgipath ? $cgipath : _DPCPATH_;  
+		$ret = $path . "/" . $dpc;
 		
 		return $ret;	
 	} 
 
+	
+
+
 	//override
-	public function _new($dpc,$type) {
+    protected function event($action,$dpc_init=null) {  
+		if (!$action) return null;
+		$__DPCMEM = GetGlobal('__DPCMEM');
+		$__DPC = GetGlobal('__DPC');		 
+		$__EVENTS = GetGlobal('__EVENTS');		    
+		$__DPCPROC = GetGlobal('__DPCPROC');	
+		$__DPCID = GetGlobal('__DPCID');	
+		
+		if (empty($__EVENTS)) return null;
+		reset($__EVENTS); //print_r($__EVENTS);		
+	   
+		$i = 1;
+		$step = 0;
+		$EVENT_QUEUE = array(); //holds multiple commands	      
+	     	 
+		foreach ($__EVENTS as $dpc_name => $command) {
+			//check if allowed
+		    if (seclevel($dpc_name,decode(GetSessionParam('UserSecID')))) {	
+				//check if action included in current dpc	
+				if ((is_array($command)) && (in_array($action,$command))) {  
+					//check if dpc has initialized 
+					if (class_exists($__DPC[$dpc_name])) {  		     
+				 
+						$p = $__DPCPROC[$dpc_name];
+						$q = (($p ?  $p : $i++)) * 1000; //priority 1000 = start
+						if (array_key_exists($q,$EVENT_QUEUE)) {
+							$step+=1;
+							$EVENT_QUEUE[$q+$step] = $dpc_name;				   
+						}  
+						else				   
+							$EVENT_QUEUE[$q] = $dpc_name;				   
+				   		  
+					} 		 	 
+		        }
+			}  
+		}
+		//break =  end of multiple events or end of loop
+		   
+		//start event queue
+		reset($EVENT_QUEUE); 
+		//execute by priority	
+		ksort($EVENT_QUEUE);	//print_r($EVENT_QUEUE);   
+		foreach ($EVENT_QUEUE as $priority=>$dpc_name) { 
+			//echo $dpc_name,$action,"<br>"; 		   
+		    $__DPCMEM[$dpc_name]->event($action);
+			 
+			//post event code
+		    /*if (is_array(GetGlobal('__POSTCODE'))) {
+			   $action_function = create_function('$dpc,$event',$this->get_code_of('event',$__DPCID[$dpc_name]));
+			   $action_function($__DPCID[$dpc_name],$action);			 
+			} */ 
+			
+			if ((defined('PROCESS_DPC'))
+			//if (is_a($this->process, 'process'))
+			//if ($__DPCMEM[$dpc_name]->process instanceof process) 
+				echo 'z';
+				//$this->process->isFinished($event);			
+		}	
+	 
+		return 0;   
+    }	
+	
+	
+	//override
+	protected function _new($dpc,$type) {
 		global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
 				$__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
 		global $activeDPC,$info,$xerror,$GRX,$argdpc; //IMPORTANT GLOBALS!!!
