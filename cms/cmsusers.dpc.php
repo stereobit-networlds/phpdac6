@@ -554,7 +554,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 	} 
 
 	//send username/password to user
-	protected function mailtoclient($username=null,$password=null,$fname=null,$lname=null) {
+	public function mailtoclient($username=null,$password=null,$fname=null,$lname=null) {
 		
 		if ($this->it_sendfrom) {
 
@@ -673,9 +673,9 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 				$gender = GetParam("gender")?GetParam("gender"):0;
 				$tmz = GetParam("timezone")?GetParam("timezone"):0;
 		  
-				$active = $this->inactive_on_register ? 'DELETED' : 'ACTIVE';
+				$notes = '';
 		  
-				$sSQL .= $country . "," . $language . "," . $age . "," . $gender . "," . $db->qstr($tmz) . "," .	$db->qstr($active) . ",0"; 
+				$sSQL .= $country . "," . $language . "," . $age . "," . $gender . "," . $db->qstr($tmz) . "," .	$db->qstr($notes) . ",0"; 
 
 				if (seclevel('USERSMNG_',$this->userLevelID)) {
 					$sSQL .= "," .
@@ -1040,15 +1040,12 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 	   return ($existed_username);
 	}	
 	
-	public function user_exists($username=null, $excludesubscriber=null) {
+	public function user_exists($username=null) {
 		$db = GetGlobal('db');	
 		if (!$username) return false;
 	  
 		$sSQL = "select username from users";
 		$sSQL .= " WHERE username=" . $db->qstr($username);
-	   
-		if ($excludesubscriber)
-			$sSQL .= " and lname <> 'SUBSCRIBER'";
 	   
 		$result = $db->Execute($sSQL,2);   	
 		$res = $result->fields['username'];	  

@@ -444,7 +444,7 @@ window.onload=function(){
 			//$msg = setError(localize('_MSG10',getlocal()));
 			//$out .= $this->after_registration_goto();
 		   
-			$myaction = GetGlobal('dispatcher')->getqueue(); //echo $myaction,"<><><><";
+			$myaction = GetGlobal('controller')->getqueue(); //echo $myaction,"<><><><";
 		   
 			switch ($myaction) {
 
@@ -1540,7 +1540,8 @@ window.onload=function(){
 	    $user = $uid ? $uid : decode($UserName);
 		if (!$UserName) return null;
 			
-		if ($id) { //alternatives
+		//alternatives OR _DEFDELIVADDRESS in case of old method	
+		if (($id) && ($id != localize('_DEFDELIVADDRESS', getlocal()))) { 
 			$sSQL = "select id,address,area,zip,country,voice1,voice2,fax from custaddress";
 			$sSQL.= " where id=$id and ccode=". $db->qstr($user);	   
 		}		

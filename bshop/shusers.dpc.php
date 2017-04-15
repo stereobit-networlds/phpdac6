@@ -237,9 +237,9 @@ class shusers extends cmsusers {
 				$gender = GetParam("gender")?GetParam("gender"):0;
 				$tmz = GetParam("timezone")?GetParam("timezone"):0;
 		  
-				$active = $this->inactive_on_register ? 'DELETED' : 'ACTIVE';
+				$notes = '';
 		  
-				$sSQL .= $country . "," . $language . "," . $age . "," . $gender . "," . $db->qstr($tmz) . "," .	$db->qstr($active) . ",0"; 
+				$sSQL .= $country . "," . $language . "," . $age . "," . $gender . "," . $db->qstr($tmz) . "," .	$db->qstr($notes) . ",0"; 
 
 				if (seclevel('USERSMNG_',$this->userLevelID)) {
 					$sSQL .= "," .
@@ -347,14 +347,14 @@ class shusers extends cmsusers {
 				else
 					$sSQL .= "'" . addslashes(GetParam("eml")) . "',";
 				
-				$active = $this->inactive_on_register ? 'DELETED ': 'ACTIVE';	
+				$notes = '';
 
 				$sSQL .= GetParam("country_id")  ? (GetParam("country_id") . ",") : "0,";
 				$sSQL .= GetParam("language_id") ? (GetParam("language_id") . ",") : "0,";
 				$sSQL .= GetParam("age")         ? (GetParam("age") . ",") : "0,";
 				$sSQL .= GetParam("gender")      ? (GetParam("gender") . ",") : "0,";
 				$sSQL .= GetParam("timezone")    ? ($db->qstr(GetParam("timezone"))) : "'',";				
-				$sSQL .= "'$active',0"; //default active
+				$sSQL .= "'$notes',0";
 
 				if (seclevel('USERSMNG_',$this->userLevelID)) {
 					$sSQL .= ",";
@@ -415,7 +415,7 @@ class shusers extends cmsusers {
 
 			SetGlobal('sFormErr',"");
 
-			$myaction = GetGlobal('dispatcher')->getqueue(); //echo $myaction,"<><><><";
+			$myaction = GetGlobal('controller')->getqueue(); //echo $myaction,"<><><><";
 			switch ($myaction) {
 
 				case "insert":  $out = $this->after_registration_goto(); break;

@@ -211,7 +211,9 @@ class shcart extends storebuffer {
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
-    public function __construct() {
+	var $process;
+	
+    public function __construct($p=null) {
 		$UserName = GetGlobal('UserName');
 		$UserSecID = GetGlobal('UserSecID');	
 		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);		
@@ -345,7 +347,23 @@ class shcart extends storebuffer {
 	  
 		if ($this->maxqty<0) // || ($this->readonly)) { //free style
 			$this->javascript(); //ONLY WHEN DEFAULT VIEW EVENT ??		
+		
+		if ((defined('PROCESS_DPC')) && ($p))	{
+			//echo $p;
+			$this->process = new Process\process($this, $p, GetReq('t'));	
+		}	
     }
+	
+	//called by controller after event
+	public function processEvent($event=null) { 
+		//echo 'Event:',$event;
+		if ((defined('PROCESS_DPC')) &&
+		    /*(is_object($this->process))*/
+		    ($this->process instanceof Process\process)) { 
+			//echo 'z';
+			$this->process->isFinished($event);
+		}	
+	}	
 
     public function event($event) {
 
@@ -506,7 +524,8 @@ class shcart extends storebuffer {
 									
 									$this->jsBrowser();
 									$this->fbjs();
-		}     
+		}  
+		
     }
 
     public function action($act=null) {	
@@ -1513,7 +1532,7 @@ function addtocart(id,cartdetails)
 					$mr = "remcart/$ar/$gr/$page/";
 
 					$out = $this->removeitemclass ? 
-							"<a class='$this->removeitemclass' href='$mr'></a>" :
+							"<a class='{$this->removeitemclass}' href='$mr'></a>" :
 							$this->myf_button(localize('_REMCARTITEM',$this->lan),$mr,'_REMCARTITEM');    
 				}	 
 			}
@@ -1528,7 +1547,7 @@ function addtocart(id,cartdetails)
 				$mr = "remcart/$ar/$gr/$page/";
 
 				$out .= $this->removeitemclass ? 
-						"<a class='$this->removeitemclass' href='$mr'></a>" :
+						"<a class='{$this->removeitemclass}' href='$mr'></a>" :
 						$this->myf_button(localize('_REMCARTITEM',$this->lan),$mr,'_REMCARTITEM');		
 			}		
 		}	
@@ -2778,228 +2797,6 @@ function addtocart(id,cartdetails)
 		return ($out);
 	}
 	
-	
-	
-
-	public function read_policy() {
-		
-        /*posted coupon discount or points policy discount*/
-		$this->discount = GetSessionParam('cdiscount') ? 
-							GetSessionParam('cdiscount') : $this->get_user_price_policy();
-							
-		//echo $this->discount ,'-';					
-		//echo GetSessionParam('cdiscount'),':', GetSessionParam('pdiscount'),'-';
-		//echo $_SESSION['coupon'],':',$_SESSION['points'];
-		return ($this->discount);
-	}
-
-	/*...*/
-	protected function get_user_price_policy() {
-		$db = GetGlobal('db');		
-		if (!$this->loyalty) return 0;
-		
-	    $reseller = GetSessionParam('RESELLER');	
-
-		if ($id = $this->user) { 
-		
-			if ($coupon = GetParam('coupon')) { //one record named coupon price policy
-				$sSQL = "select discount as disc from ppolicy where active=1 and code1=" .  $db->qstr($coupon);
-				//$sSQL.= " and name=" .  $db->qstr($id) ; // (named coupon)
-				//echo $sSQL;
-				$result = $db->Execute($sSQL);
-				
-				//save used coupon (and disable after order submit)		
-				if ($cdiscount = $result->fields[0]) {
-					
-					SetSessionParam('coupon', $coupon);
-					SetSessionParam('cdiscount', $cdiscount);
-					$this->isValidCoupon = true;
-					
-					$this->jsDialog(localize('_couponvalid', $this->lan), 
-									localize('_discount', $this->lan) . ': '. $cdiscount . '%');	
-					$ret = $cdiscount;
-				}
-				else
-					$this->jsDialog(localize('_couponinvalid', $this->lan),
-									localize('_coupon', $this->lan) . ': '. $coupon);	
-			}
-		    else { 
-			    //user defined multiple price policy rows 
-				$sSQL = "select sum(discount) as disc, sum(points) as pnt from ppolicy where code1=" .  $db->qstr($id) ;
-				$sSQL.= " and active=1 group by code1";
-				//echo $sSQL;
-				$result = $db->Execute($sSQL);
-				if ($pdiscount = $result->fields[0]) {
-					
-					SetSessionParam('points', $result->fields[1]);
-					//SetSessionParam('pdiscount', $pdiscount);	//do not save (default ppolicy)
-					/*
-					$this->jsDialog(localize('_pointsused', $this->lan),
-									localize('_discount', $this->lan) . ': '. $pdiscount . '%');
-					*/					
-					$dline[] = localize('_usedpointsdiscount', $this->lan) . ': '. $pdiscount . '%';
-					$ret = $pdiscount;
-				}
-
-				//cart total price policy (valid only when not a coupon)
-				$sSQL = "select discount,points from ppolicy where active=1 and code1 is NULL and code2 is NULL";
-				$sSQL.= " and price <= " . $this->total;
-				$sSQL.= " order by price desc LIMIT 1";
-				//echo $sSQL;
-				$result = $db->Execute($sSQL);		
-				if ($cartdiscount = $result->fields[0]) {
-					//echo 'cart discount';
-					/*$this->jsDialog(localize('_pointstoset', $this->lan),
-									localize('_points', $this->lan) . ': '. $result->fields[1]);			
-					*/		
-					$dline[] = localize('_totalcartdiscount', $this->lan) . ': '. $cartdiscount . '%';
-					$dline[] = localize('_pointstoset', $this->lan) . ': '. $result->fields[1];
-					
-					$ret += $cartdiscount;	//plus !!!!
-				}
-				
-				//dlines total messages dialog
-				if (!empty($dline)) {
-					$this->ppolicynotes = implode('<br/>',$dline);
-					$this->jsDialog($this->ppolicynotes , localize('_discount', $this->lan));				
-					//SetSessionParam('ppolicytext', $dtext); //used by html dac pages
-				}	
-			}			
-	    }
-	    else { //anonymous coupon
-		
-			if ($coupon = GetParam('coupon')) { //one record coupon price policy
-				$sSQL = "select discount as disc from ppolicy where active=1 and code1=" .  $db->qstr($coupon);
-				//echo $sSQL;
-				$result = $db->Execute($sSQL);
-				//save used coupon (and disable after order submit)		
-				if ($cdiscount = $result->fields[0]) {
-					
-					SetSessionParam('coupon', $coupon);
-					SetSessionParam('cdiscount', $cdiscount);
-					$this->isValidCoupon = true;
-					
-					$this->jsDialog(localize('_couponexist', $this->lan), 
-									localize('_discount', $this->lan) . ': '. $cdiscount . '%');	
-					$ret = $cdiscount;
-				}
-				else
-					$this->jsDialog(localize('_couponnotexist', $this->lan),
-									localize('_coupon', $this->lan) . ': '. $coupon);	
-			}		   
-	    }
-		
-	    return ($ret ? $ret : 0);
-	}
-
-	public function validCoupon() {
-		return $this->isValidCoupon;
-	}	
-	
-	protected function savePoints($user, $trid) {
-		$db = GetGlobal('db');		
-		if (!$this->loyalty) return null;
-		$sumofpoints = 0;
-		
-		if ($this->notempty()) {
-			foreach ($this->buffer as $prod_id => $product) {
-				if (($product) && ($product!='x')) {
-					
-					$toks = array();//reset line
-			 
-					$aa+=1;
-					$param = explode(";",$product);
-					$cat = $param[4];
-					$itemdescr = $this->replace_cartchars($param[1], true);
-					$id = $param[0];
-
-					$points = _m("shkatalogmedia.read_point_policy use ". $id); 
-		            if (!$points) continue;					
-					
-					$sSQL = "insert into custpoints (active,ccode,item,source,notes,points) values (1,'$user','$id','$trid','$itemdescr',$points)";					
-					$res = $db->Execute($sSQL);
-					
-					$sum = ($points * $param[9]);
-					$sumofpoints += $sum;
-				}  
-			}
-
-			//sum of points !!!??? 
-			if ($sumofpoints>0) {
-				$sSQL = "insert into ppolicy (active,code1,code2,name,descr,points) values (1,'$user','$user','$trid','$trid',$sumofpoints)";
-				$res = $db->Execute($sSQL);	
-			}
-
-            //disable point records or used coupon
-			//if ($usedpoints = GetSessionParams('points')) {
-			if ($coupon = GetSessionParams('coupon')) {	
-				$sSQL = "update ppolicy set active=0 where active=1 and code1=" .  $db->qstr($coupon);
-				//echo $sSQL;
-				/*$result = $db->Execute($sSQL);
-				
-				//reset coupon
-				SetSessionParam('coupon', '');
-				SetSessionParam('cdiscount', 0);*/
-			}		
-		}				 
-
-		return ($sumofpoints);		
-	}	
-	
-	public function pointsview($ret_tokens=false, $template1=null, $template2=null) {
-		if (!$this->loyalty) return null;
-		
-		if ($this->notempty()) {
-			
-			$template = $template1 ? $template1 : 'fpcartpoints';	
-			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
-		
-			$template2 = $template2 ? $template2 : 'fpcartpoints-alt';
-			$mytemplate2 = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template2));
-	  
-			$ret = '';
-			foreach ($this->buffer as $prod_id => $product) {
-
-				if (($product) && ($product!='x')) {
-					
-					$toks = array();//reset line
-			 
-					$aa+=1;
-					$param = explode(";",$product);
-					$cat = $param[4];
-					$itemdescr = $this->replace_cartchars($param[1], true);
-					$id = $param[0];
-
-					$points = _m("shkatalogmedia.read_point_policy use ". $id); 
-		            if (!$points) continue;					
-					
-					$toks[] = $prod_id+1;
-					$toks[] = $id;
-					$toks[] = _m("cmsrt.url use t=kshow&cat=$cat&id=$id+" . $itemdescr); 
-					$toks[] = $points;
-					$toks[] = $param[9];
-					
-					$sum = ($points * $param[9]);
-					$toks[] = $sum;
-					
-					$toks[] = _m("shkatalogmedia.get_photo_url use ".$id.'+1');
-			   
-					if ($ret_tokens) 
-						return $toks;	 
-					else	
-						$ret .= $this->combine_tokens($mytemplate,$toks,true);
-				}  
-			}			
-		}				 
-
-		$out = $this->combine_tokens($mytemplate2, array(0=>$ret, 1=>$this->myquickcartfoot()));
-
-		return ($out);		
-	}	
-
-
-	
-	
 	public function quickview($ret_tokens=false, $template1=null, $template2=null) {		
 		 
 		if ($this->notempty()) {
@@ -3373,6 +3170,226 @@ function addtocart(id,cartdetails)
 	}
 	
 	
+	/****************** user discount policy - coupons - points ****/
+	
+	public function read_policy() {
+		
+        /*posted coupon discount or points policy discount*/
+		$this->discount = GetSessionParam('cdiscount') ? 
+							GetSessionParam('cdiscount') : $this->get_user_price_policy();
+							
+		//echo $this->discount ,'-';					
+		//echo GetSessionParam('cdiscount'),':', GetSessionParam('pdiscount'),'-';
+		//echo $_SESSION['coupon'],':',$_SESSION['points'];
+		return ($this->discount);
+	}
+
+	/*...*/
+	protected function get_user_price_policy() {
+		$db = GetGlobal('db');		
+		if (!$this->loyalty) return 0;
+		
+	    $reseller = GetSessionParam('RESELLER');	
+
+		if ($id = $this->user) { 
+		
+			if ($coupon = GetParam('coupon')) { //one record named coupon price policy
+				$sSQL = "select discount as disc from ppolicy where active=1 and code1=" .  $db->qstr($coupon);
+				//$sSQL.= " and name=" .  $db->qstr($id) ; // (named coupon)
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);
+				
+				//save used coupon (and disable after order submit)		
+				if ($cdiscount = $result->fields[0]) {
+					
+					SetSessionParam('coupon', $coupon);
+					SetSessionParam('cdiscount', $cdiscount);
+					$this->isValidCoupon = true;
+					
+					$this->jsDialog(localize('_couponvalid', $this->lan), 
+									localize('_discount', $this->lan) . ': '. $cdiscount . '%');	
+					$ret = $cdiscount;
+				}
+				else
+					$this->jsDialog(localize('_couponinvalid', $this->lan),
+									localize('_coupon', $this->lan) . ': '. $coupon);	
+			}
+		    else { 
+			    //user defined multiple price policy rows 
+				$sSQL = "select sum(discount) as disc, sum(points) as pnt from ppolicy where code1=" .  $db->qstr($id) ;
+				$sSQL.= " and active=1 group by code1";
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);
+				if ($pdiscount = $result->fields[0]) {
+					
+					SetSessionParam('points', $result->fields[1]);
+					//SetSessionParam('pdiscount', $pdiscount);	//do not save (default ppolicy)
+					/*
+					$this->jsDialog(localize('_pointsused', $this->lan),
+									localize('_discount', $this->lan) . ': '. $pdiscount . '%');
+					*/					
+					$dline[] = localize('_usedpointsdiscount', $this->lan) . ': '. $pdiscount . '%';
+					$ret = $pdiscount;
+				}
+
+				//cart total price policy (valid only when not a coupon)
+				$sSQL = "select discount,points from ppolicy where active=1 and code1 is NULL and code2 is NULL";
+				$sSQL.= " and price <= " . $this->total;
+				$sSQL.= " order by price desc LIMIT 1";
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);		
+				if ($cartdiscount = $result->fields[0]) {
+					//echo 'cart discount';
+					/*$this->jsDialog(localize('_pointstoset', $this->lan),
+									localize('_points', $this->lan) . ': '. $result->fields[1]);			
+					*/		
+					$dline[] = localize('_totalcartdiscount', $this->lan) . ': '. $cartdiscount . '%';
+					$dline[] = localize('_pointstoset', $this->lan) . ': '. $result->fields[1];
+					
+					$ret += $cartdiscount;	//plus !!!!
+				}
+				
+				//dlines total messages dialog
+				if (!empty($dline)) {
+					$this->ppolicynotes = implode('<br/>',$dline);
+					$this->jsDialog($this->ppolicynotes , localize('_discount', $this->lan));				
+					//SetSessionParam('ppolicytext', $dtext); //used by html dac pages
+				}	
+			}			
+	    }
+	    else { //anonymous coupon
+		
+			if ($coupon = GetParam('coupon')) { //one record coupon price policy
+				$sSQL = "select discount as disc from ppolicy where active=1 and code1=" .  $db->qstr($coupon);
+				//echo $sSQL;
+				$result = $db->Execute($sSQL);
+				//save used coupon (and disable after order submit)		
+				if ($cdiscount = $result->fields[0]) {
+					
+					SetSessionParam('coupon', $coupon);
+					SetSessionParam('cdiscount', $cdiscount);
+					$this->isValidCoupon = true;
+					
+					$this->jsDialog(localize('_couponexist', $this->lan), 
+									localize('_discount', $this->lan) . ': '. $cdiscount . '%');	
+					$ret = $cdiscount;
+				}
+				else
+					$this->jsDialog(localize('_couponnotexist', $this->lan),
+									localize('_coupon', $this->lan) . ': '. $coupon);	
+			}		   
+	    }
+		
+	    return ($ret ? $ret : 0);
+	}
+
+	public function validCoupon() {
+		return $this->isValidCoupon;
+	}	
+	
+	protected function savePoints($user, $trid) {
+		$db = GetGlobal('db');		
+		if (!$this->loyalty) return null;
+		$sumofpoints = 0;
+		
+		if ($this->notempty()) {
+			foreach ($this->buffer as $prod_id => $product) {
+				if (($product) && ($product!='x')) {
+					
+					$toks = array();//reset line
+			 
+					$aa+=1;
+					$param = explode(";",$product);
+					$cat = $param[4];
+					$itemdescr = $this->replace_cartchars($param[1], true);
+					$id = $param[0];
+
+					$points = _m("shkatalogmedia.read_point_policy use ". $id); 
+		            if (!$points) continue;					
+					
+					$sSQL = "insert into custpoints (active,ccode,item,source,notes,points) values (1,'$user','$id','$trid','$itemdescr',$points)";					
+					$res = $db->Execute($sSQL);
+					
+					$sum = ($points * $param[9]);
+					$sumofpoints += $sum;
+				}  
+			}
+
+			//sum of points !!!??? 
+			if ($sumofpoints>0) {
+				$sSQL = "insert into ppolicy (active,code1,code2,name,descr,points) values (1,'$user','$user','$trid','$trid',$sumofpoints)";
+				$res = $db->Execute($sSQL);	
+			}
+
+            //disable point records or used coupon
+			//if ($usedpoints = GetSessionParams('points')) {
+			if ($coupon = GetSessionParams('coupon')) {	
+				$sSQL = "update ppolicy set active=0 where active=1 and code1=" .  $db->qstr($coupon);
+				//echo $sSQL;
+				/*$result = $db->Execute($sSQL);
+				
+				//reset coupon
+				SetSessionParam('coupon', '');
+				SetSessionParam('cdiscount', 0);*/
+			}		
+		}				 
+
+		return ($sumofpoints);		
+	}	
+	
+	public function pointsview($ret_tokens=false, $template1=null, $template2=null) {
+		if (!$this->loyalty) return null;
+		
+		if ($this->notempty()) {
+			
+			$template = $template1 ? $template1 : 'fpcartpoints';	
+			$mytemplate = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template));
+		
+			$template2 = $template2 ? $template2 : 'fpcartpoints-alt';
+			$mytemplate2 = _m('cmsrt.select_template use ' . str_replace('.htm', '', $template2));
+	  
+			$ret = '';
+			foreach ($this->buffer as $prod_id => $product) {
+
+				if (($product) && ($product!='x')) {
+					
+					$toks = array();//reset line
+			 
+					$aa+=1;
+					$param = explode(";",$product);
+					$cat = $param[4];
+					$itemdescr = $this->replace_cartchars($param[1], true);
+					$id = $param[0];
+
+					$points = _m("shkatalogmedia.read_point_policy use ". $id); 
+		            if (!$points) continue;					
+					
+					$toks[] = $prod_id+1;
+					$toks[] = $id;
+					$toks[] = _m("cmsrt.url use t=kshow&cat=$cat&id=$id+" . $itemdescr); 
+					$toks[] = $points;
+					$toks[] = $param[9];
+					
+					$sum = ($points * $param[9]);
+					$toks[] = $sum;
+					
+					$toks[] = _m("shkatalogmedia.get_photo_url use ".$id.'+1');
+			   
+					if ($ret_tokens) 
+						return $toks;	 
+					else	
+						$ret .= $this->combine_tokens($mytemplate,$toks,true);
+				}  
+			}			
+		}				 
+
+		$out = $this->combine_tokens($mytemplate2, array(0=>$ret, 1=>$this->myquickcartfoot()));
+
+		return ($out);		
+	}		
+	
+	
+	/****************** shipping  *******************************/
 	
 	//standart roadway, payway costs
 	protected function calcShipping() {
@@ -3399,22 +3416,7 @@ function addtocart(id,cartdetails)
 		SetSessionParam('shipcost', $this->shippingcost);
 		
 		return ($result);			
-	}	
-	
-	protected function get_country_shipzone($cid) {
-		$db = GetGlobal('db');	
-	  
-		if ($cid>=0) {
-			$id = $cid+1;//plus 1 to find rec	   
-			$sSQL = "select zone from pcountry where id=".$id;
-			$resultset = $db->Execute($sSQL,2);	
-			$result = $resultset;	
-          
-			$ret = $resultset->fields[0];
-			//echo $sSQL,$ret;
-			return ($ret);		  
-		}
-	}	
+	}		
 	
 	/* disabled */
 	protected function calculate_shipping() {
@@ -3733,83 +3735,23 @@ function addtocart(id,cartdetails)
 		return null; 
 	}	
 	
-	
-	
-    public function price_with_tax($price=null) {
-		if (!$price) return '0,00';
-		$myprice = floatval(str_replace(array('.',','),array('','.'),$price));
-		
-		//echo $price,':',$myprice,'*',$this->tax,'/100<br/>';
-		$vat = ((($myprice)*$this->tax)/100);
-		$vatprice = $myprice + $vat;
-		
-		$value = number_format(floatval($vatprice),$this->dec_num,',','.');
-		$ret = $value . $this->moneysymbol;
-        return ($ret);	
-    }
-
-	/*ver 2 as shkatalogmedia */
-	public function pricewithtax($price,$tax=null) {
-	
-		if ($tax) {
-			$mytax = ((floatval($price) * $tax)/100);	
-			$value = (floatval($price) + $mytax);		  
+	protected function get_country_shipzone($cid) {
+		$db = GetGlobal('db');	
+	  
+		if ($cid>=0) {
+			$id = $cid+1;//plus 1 to find rec	   
+			$sSQL = "select zone from pcountry where id=".$id;
+			$resultset = $db->Execute($sSQL,2);	
+			$result = $resultset;	
+          
+			$ret = $resultset->fields[0];
+			//echo $sSQL,$ret;
+			return ($ret);		  
 		}
-		elseif ($tax = $this->tax) {
-			$mytax = ((floatval($price) * $tax)/100);	
-			$value = (floatval($price) + $mytax);		  
-		}		
-		else
-			$value = floatval($price);
-	
-		return ($value);
-	}		
-	
-	protected function cart_mailto($to=null,$subject=null,$body=null) {
-	    $from = $this->cartsend_mail;
-		
-		$body = str_replace('+','<SYN/>',$body); 
-		$mailerr = _m("cmsrt.cmsMail use $from+$to+$subject+$body+{$this->transaction_id}+cart");
-
-		return ($mailerr); 	
-	}
-	
-	//called by twig invoice html as func add link tracker
-	public function addTracker($returl=false) { 
-	    $mtrack = _m('cms.paramload use CMS+mtrack');
-	    //mtrack = $mtrack ? $mtrack : "http://www.stereobit.gr/mtrack/";	//.php		
-			
-		$r = $this->user;
-		$i = $this->get_trackid($this->transaction_id);
-		
-		//$rurl = $mtrack . "?i=$i&r=$r";
-		$rurl = $mtrack . "$i/$r/";
-	
-		$ret = $returl ? $rurl : "<img src='$rurl' border='0' width='1' height='1'/>";	 	  
-				
-		return ($ret);	 
 	}	
+				
 	
-	protected function get_trackid($id=null) {
-		//$appname = paramload('ID','instancename');
-		$appname = _v('cmsrt.appname'); 
-		
-		$i = $id ? $id : rand(100000,999999);	 
-		$tid = date('YmdHms') .  $i . '@' . $appname;
-		 
-		return ($tid);	
-	}		
-
-	protected function update_statistics($id, $user=null) {
-		if ($this->userLevelID >= 5) return false;
-		
-        if (defined('CMSVSTATS_DPC'))	
-			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
-		
-		return false;
-	}			
-	
-		
+	/****************** referer js analytics scripts ********/	
 
 	/*call from shcartsuccess tmpl for analytics*/
 	public function postSubmitScript() {
@@ -3890,6 +3832,91 @@ function addtocart(id,cartdetails)
 	}		
 	
 	
+	/****************** funcs ***********************************/	
+	
+    public function price_with_tax($price=null) {
+		if (!$price) return '0,00';
+		$myprice = floatval(str_replace(array('.',','),array('','.'),$price));
+		
+		//echo $price,':',$myprice,'*',$this->tax,'/100<br/>';
+		$vat = ((($myprice)*$this->tax)/100);
+		$vatprice = $myprice + $vat;
+		
+		$value = number_format(floatval($vatprice),$this->dec_num,',','.');
+		$ret = $value . $this->moneysymbol;
+        return ($ret);	
+    }
+
+	/*ver 2 as shkatalogmedia */
+	public function pricewithtax($price,$tax=null) {
+	
+		if ($tax) {
+			$mytax = ((floatval($price) * $tax)/100);	
+			$value = (floatval($price) + $mytax);		  
+		}
+		elseif ($tax = $this->tax) {
+			$mytax = ((floatval($price) * $tax)/100);	
+			$value = (floatval($price) + $mytax);		  
+		}		
+		else
+			$value = floatval($price);
+	
+		return ($value);
+	}		
+	
+	protected function cart_mailto($to=null,$subject=null,$body=null) {
+	    $from = $this->cartsend_mail;
+		
+		$body = str_replace('+','<SYN/>',$body); 
+		$mailerr = _m("cmsrt.cmsMail use $from+$to+$subject+$body+{$this->transaction_id}+cart");
+
+		return ($mailerr); 	
+	}
+	
+	//called by twig invoice html as func add link tracker
+	public function addTracker($returl=false) { 
+	    $mtrack = _m('cms.paramload use CMS+mtrack');
+	    //mtrack = $mtrack ? $mtrack : "http://www.stereobit.gr/mtrack/";	//.php		
+			
+		$r = $this->user;
+		$i = $this->get_trackid($this->transaction_id);
+		
+		//$rurl = $mtrack . "?i=$i&r=$r";
+		$rurl = $mtrack . "$i/$r/";
+	
+		$ret = $returl ? $rurl : "<img src='$rurl' border='0' width='1' height='1'/>";	 	  
+				
+		return ($ret);	 
+	}	
+	
+	protected function get_trackid($id=null) {
+		//$appname = paramload('ID','instancename');
+		$appname = _v('cmsrt.appname'); 
+		
+		$i = $id ? $id : rand(100000,999999);	 
+		$tid = date('YmdHms') .  $i . '@' . $appname;
+		 
+		return ($tid);	
+	}		
+
+	protected function update_statistics($id, $user=null) {
+		if ($this->userLevelID >= 5) return false;
+		
+        if (defined('CMSVSTATS_DPC'))	
+			return _m('cmsvstats.update_event_statistics use '.$id.'+'.$user);			
+		
+		return false;
+	}	
+	
+	protected function replace_cartchars($string, $reverse=false) {
+		if (!$string) return null;
+
+		$g1 = array("'",',','"','+','/',' ','-&-');
+		$g2 = array('_','~',"*","plus",":",'-','-n-');		
+	  
+		return $reverse ? str_replace($g2,$g1,$string) : str_replace($g1,$g2,$string);
+	}	
+	
 	public static function myf_button($title,$link=null,$image=null) {
 
 	    $path = self::$staticpath;
@@ -3911,15 +3938,6 @@ function addtocart(id,cartdetails)
 		//else button	
 		$ret = "<a class=\"$bc\" href=\"$link\">" . $title . "</a>";
 		return ($ret);
-	}
-	
-	protected function replace_cartchars($string, $reverse=false) {
-		if (!$string) return null;
-
-		$g1 = array("'",',','"','+','/',' ','-&-');
-		$g2 = array('_','~',"*","plus",":",'-','-n-');		
-	  
-		return $reverse ? str_replace($g2,$g1,$string) : str_replace($g1,$g2,$string);
 	}	
 	
 	protected function combine_tokens(&$template_contents, $tokens, $execafter=null) {

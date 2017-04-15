@@ -1,25 +1,49 @@
 <?php
 
 class processTest2 extends processInst {
-
-    private $caller;
-	
-	public function __construct(& $caller) {
-		echo 'hello process 2';
 		
-		$this->caller = $caller;
-		//echo $this->caller->checkout;
+	public function __construct(& $caller, $callerName, $stack=null) {
+
+		parent::__construct($caller, $callerName, $stack);
+		$this->processStepName = __CLASS__;
+		
+		//echo 'process 2:',$this->caller->status;
 	}
  
-	//override 
-	public function nextStep() {
-		
+	//override
+	public function nextStep($event=null) {
+		return parent::nextStep($event);
 	}
 	
 	//override
-	public function isFinished() {
-
-		return ($this->caller->status>1) ? true : false;
+	public function prevStep($event=null) {
+		return parent::prevStep($event);
+	}	
+	
+	//override
+	public function isFinished($event=null) {
+		
+		parent::isFinished($event);
+		
+		//echo 'Process 2:',$event;
+		//return ($this->caller->status>1) ? true : false;
+		
+		if ($this->caller->status>=1) {
+			if ($this->caller->status==1) {
+				if ($this->debug) {
+				echo ($ps = $this->prevStep($event)) ? '<br/>Prev step:' . $ps : null;
+				echo '<br/>Step:' . $this->step($event);
+				echo ($ns = $this->nextStep($event)) ? '<br/>Next step:' . $ns : null ;
+		
+				echo '<pre>';
+				print_r($this->getProcessStepInfo());
+				echo '</pre>';	
+				}
+			}
+			return true;
+		}		
+			
+		return false;
 	}	
  
 }

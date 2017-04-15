@@ -1,7 +1,9 @@
 <?php
 $__DPCSEC['CMS_DPC']='1;1;1;1;1;1;1;1;1;1;1';
 
-//namespace cms;
+function _l($value=null) {
+	return (localize($value, getlocal()));
+}
 
 function _r($r=null) {
 	return $r ? GetGlobal('controller')->require_dpc($r) : null;
@@ -35,19 +37,24 @@ require_once(_r('cms/fronthtmlpage.dpc.php'));
 class cms extends fronthtmlpage {
 
     var $appname, $httpurl, $tpath;
-	var $seclevid, $userDemoIds, $useragent, $mobile;
+	var $user, $seclevid, $userDemoIds, $useragent, $mobile;
 	var $session_use_cookie, $protocol, $secprotocol, $sslpath;
 	var $activeSSL, $encURLparam, $shellfn, $aliasExt, $aliasID, $aliasUrl;
 		
 	public function __construct() {
+		$UserName = GetGlobal('UserName');		
+		$UserSecID = GetGlobal('UserSecID');
+		$this->user = decode($UserName);			
+		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : 
+							($_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] :
+								(((decode($UserSecID))) ? (decode($UserSecID)) : 0));		
 		
 		fronthtmlpage::__construct();
 		
-		$this->appname = paramload('ID','instancename');		
-	  
-		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : $_SESSION['ADMINSecID'];
-		$this->userDemoIds = array(5,6,7,8); //8 
+		$language = getlocal();
+	    $this->lan = $language ? $language : '0';
 		
+		$this->appname = paramload('ID','instancename');
 		$this->tpath = $this->htmlpage; //fronthtmlpage
 		
 		//$this->httpurl = paramload('SHELL','protocol') . $this->url;	
@@ -70,7 +77,8 @@ class cms extends fronthtmlpage {
 		$this->aliasUrl = $this->paramload('CMS', 'aliasUrl'); //1
 		$this->aliasExt = $this->paramload('CMS', 'aliasExt'); //.html		
 		$this->aliasID = $this->paramload('CMS', 'aliasID'); //p5		
-
+		
+		$this->userDemoIds = array(5,6,7,8); //8 
 	}
 	
 	public function isDemoUser() {
@@ -78,7 +86,7 @@ class cms extends fronthtmlpage {
 	}	
 
 	public function isLevelUser($level=6) {
-		return ($this->seclevid>=$level ? true : false);
+		return ($this->seclevid >= $level) ? true : false;
 	}
 
     public function paramload($section,$param) {
@@ -355,9 +363,7 @@ class cms extends fronthtmlpage {
 			//echo $oddday,$sSQL;
 			
 			if ($res->fields['islocale']) {
-				$varvalue = $res->fields['isvar'] ?
-								localize($this->paramload($sec, $value), getlocal()) :				
-								localize($value, getlocal());
+				$varvalue = $res->fields['isvar'] ?	_l($this->paramload($sec, $value)) : _l($value);
 				return ($varvalue);
 			}	
 			else {

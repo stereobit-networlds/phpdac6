@@ -445,7 +445,7 @@ class controller  {
 	
         $x  = "class $instname extends $idpc" . ' {';
 	    $x .= 'function __construct() {';
-	    $x .= $parts[1]."::".$parts[1]."();";
+	    $x .= $parts[1]."::__construct();";
 	    //now we must pass the init params
 		if (isset($params)) {
 	      $params_array = explode(",",$params);
@@ -730,7 +730,7 @@ class controller  {
 	  global $__DPCOBJ; //holds objects of new approach of name of type xxx.yyy
 	  global $__DPCID; //array of new name alias		
 	
-	  $idpc = $parts[0].".".$instname;
+	  $idpc = $instname; //$parts[0].".".$instname;
 	  $iclass = strtoupper($instname).'_DPC';	
 	
 	  if ((!defined($iclass)) &&
@@ -793,6 +793,41 @@ class controller  {
 	 
 	    SetGlobal('__DPCLOCALE',$lr);
     }	
+	
+	//create a new dpc object (mode:batch)
+	protected function _new($dpc,$type) {
+      global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
+             $__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
+
+	  global $activeDPC,$info,$xerror,$GRX,$argdpc; //IMPORTANT GLOBALS!!!
+	  
+	  global $__DPCOBJ; //holds objects of new approach of name of type xxx.yyy
+	  global $__DPCID; //array of new name alias	  
+	  
+	  $__DPCMEM = GetGlobal('__DPCMEM');
+	  $__DPC = GetGlobal('__DPC');
+	  
+	  //START THE OBJECT
+      $parts = explode(".",trim($dpc)); 
+	  $class = strtoupper($parts[1]).'_DPC';
+	  
+	  //update local table
+      $this->make_local_table($class);		  
+	  
+	  if ((defined($class)) &&
+	      (class_exists($__DPC[$class])) ) {
+		//echo '>>>',strtoupper($parts[1]),'_DPC','=',$__DPC[strtoupper($parts[1]).'_DPC'];
+	    $__DPCMEM[$class] =  & new $__DPC[$class];
+		$__DPCOBJ[$dpc] =  & $__DPCMEM[$class];//alias of new name object array
+		$__DPCID[$class] = $dpc; //new name index array		 
+		
+		SetGlobal("_DPCMEM",$__DPCMEM);
+		
+		return TRUE;
+	  }	  
+	
+	  return FALSE; 	  		
+	}		
 	
 	function __destruct() {
 		

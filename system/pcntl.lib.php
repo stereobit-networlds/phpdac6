@@ -29,8 +29,8 @@ class pcntl extends controller {
 	var $mytime, $myaction, $languange, $code, $myactive;
 	var $file_name, $file_path, $file_extension;
 	var $data, $fpdata, $root_page, $debug, $sysauth;
-	var $fp, $lan, $cl, $local_security, $startProcess;
-	var $preprocessor, $preprocess;   
+	var $fp, $lan, $cl, $local_security;
+	var $preprocessor, $preprocess, $startProcess, $processStack;	
 
 	public function __construct($code=null,$preprocess=null,$locales=null) { 
 
@@ -39,12 +39,13 @@ class pcntl extends controller {
 		$xtime = $this->getthemicrotime(); 		
 		date_default_timezone_set('Europe/Athens');
 		
-		$this->root_page = paramload('SHELL','filename');		
-		$this->debug = paramload('SHELL','debug');			
-   
+		controller::__construct();		
+		
 		$this->_loadinifiles(); 
-	  
-		controller::__construct('ON');//yes dac,no dacpost...
+		
+		$this->root_page = 'index.php';//paramload('SHELL','filename');		
+		$this->debug = false;// paramload('SHELL','debug');			
+		//echo $this->root_page,'>',$this->debug;		
 	  
 		//register this
 		$__DPCMEM = GetGlobal('__DPCMEM');		    	 
@@ -66,7 +67,10 @@ class pcntl extends controller {
 		//CCPP preprocessor
 		$this->preprocess = $preprocess;   	  
 	 
+	    //process vars
+		$this->processStack = array();
 	    $this->startProcess = array();
+		
 		$this->local_security = array();
 		$this->code = $code;		  
 		$this->myaction = null;
@@ -74,7 +78,7 @@ class pcntl extends controller {
 		
 		//register self as global controller and dispatcher
 		SetGlobal('controller',$this);
-		SetGlobal('dispatcher',$this);			
+		//SetGlobal('dispatcher',$this);			
 		
 		$this->_loadapp();
 		
@@ -104,8 +108,8 @@ class pcntl extends controller {
 			$config = array_merge($config, $myconfig); 			
 		
 		SetGlobal('config',$config);   
-	  
-		$this->preprocessor = new CCPP($config);
+	  	  
+		//$this->preprocessor = new CCPP($config);
 	}  	
    
 	protected function _loadapp() {
@@ -137,12 +141,6 @@ class pcntl extends controller {
 		$t->stop('compile');
 		if ($this->debug) 
 			echo "<!-- compile " . $t->value('compile') . ' sec -->';  	  
-	
-		//NO NEED POST CODE...
-		/*$t->start('postcode',1);	  
-		$this->read_post_code(); //get batch readed post code as array to call after...
-		$t->stop('postcode');	  
-		echo "postcode " , $t->value('postcode');	  */
 	  
 		//INCLUDE FIRST
 		$t->start('include');	
@@ -152,12 +150,7 @@ class pcntl extends controller {
 			if ( (!defined($dpc)) && ($this->seclevel($dpc)) ) {
 				define($dpc,true);
 				$modules_to_start[] = $dpc;
-
-				//post construct code
-				/*if (is_array(GetGlobal('__POSTCODE'))) {		 
-					$construct_function = create_function("$dpc",$this->get_code_of('construct',$dpc));
-					$construct_function($dpc);		    
-				}*/
+				//echo $dpc,'<br/>';
 			}   
 		}
 		}//empty
@@ -172,24 +165,39 @@ class pcntl extends controller {
 		if (is_array($modules_to_start)) {
 			
 			$t->start('new');			  
-			foreach  ($modules_to_start as $id=>$dpc) 
+			foreach  ($modules_to_start as $id=>$dpc) { 
 				$this->_new($dpc,'dpc');     
+				//echo $dpc ,'<br/>';
+			}	
 			$t->stop('new');
 			
 			if ($this->debug) 
 				echo "<!-- initialize (new) " . $t->value('new') . ' sec -->';	
 	    }  	    	
     }
+	
+	private function processStack($dpc, $processes) {
+	
+		$this->processStack[$dpc] = $processes;
+											
+		foreach ($processes as $process)
+			$this->startProcess[$dpc][] = $process;		
+			
+		return true;	
+	}
+	
+	public function getProcessStack() {
+		return (array) $this->processStack;
+	}
 
     //overwrite..
     private function compile($code='', $preprocess=0) {   
 
         if ($this->preprocess==true) {
-
+			
+            $this->preprocessor = new CCPP(GetGlobal('config'));
 			$code = $this->preprocessor->execute($this->code, 0, true);
-			//echo $code;
-			/*eval('?><?php;'.$mcode.'?><?php ');// . '----<br/>';	*/
-			//echo 'CCPP';
+			
 			if ($file = explode(PHP_EOL,$code)) { 
 				//clean php tags
 				array_pop($file);//last line
@@ -267,10 +275,21 @@ class pcntl extends controller {
 									}		 
 									break;	
 								
-				 case 'instance':	if (strstr(trim($part[3]),'.'))		
-										$this->set_instance($part[3],$part[1],$part[5]);
-									else //. not exist				 
-										$this->set_instance(trim($part[3]).".".trim($part[3]),$part[1],$part[5]);													 	
+				 case 'instance':	if ($m = $part[1]) {
+										if (strstr($m,'->')) {
+											$mp = explode('->',$m);
+											$instanceDpc = array_shift($mp);
+											if ($this->set_instance(trim($part[3]), $instanceDpc, implode(',',$mp))) {
+												$idotDpc = (strstr($instanceDpc, '.')) ? $instanceDpc : 'instance.' . $instanceDpc;
+												$dpcmods[] = $idotDpc;
+												$this->processStack($idotDpc, $mp);			
+											}
+										}  
+										else {
+											if ($this->set_instance(trim($part[3]), trim($part[1]), null))
+												$dpcmods[] = 'instance.' . $part[1];
+										}
+									}	
 									break;
 								 
 			     case 'load_extension' : //include only NOT load a set of extensions dpc
@@ -296,9 +315,8 @@ class pcntl extends controller {
 											$privateDpc = array_shift($mp);
 											$this->set_include($privateDpc,'dpc',$part[2]);
 											$dpcmods[] = $privateDpc;
-											
-											foreach ($mp as $process)
-												$this->startProcess[$process] = $privateDpc;		
+
+											$this->processStack($privateDpc, $mp);			
 										}  
 										else {
 											$this->set_include($part[1],'dpc',$part[2]);
@@ -314,8 +332,7 @@ class pcntl extends controller {
 											$this->set_include($publicDpc,'dpc'); 
 											$dpcmods[] = $publicDpc;
 											
-											foreach ($mp as $process)
-												$this->startProcess[$process] = $publicDpc;		
+											$this->processStack($publicDpc, $mp);			
 										}  
 										else {
 											$this->set_include($part[1],'dpc');	
@@ -340,9 +357,10 @@ class pcntl extends controller {
 	   
 	    }
 	    catch (Exception $e) {
-			echo 'Caught exception: ',  $e->getMessage(), PHP_EOL;
+			echo 'Caught exception: ',  $e->getMessage() . PHP_EOL;
+			throw $e;
 		}
-		
+		//print_r($dpcmods);
 	    return ($dpcmods); //return the array of included dpcs 
     }    
    
@@ -350,7 +368,7 @@ class pcntl extends controller {
    
 		$code_cmds = explode(';',$code);
 		foreach ($code_cmds as $line=>$cmd) 
-			$ret .= GetGlobal('controller')->calldpc_method($cmd,1);//1=no error			
+			$ret .= $this->calldpc_method($cmd,1);//1=no error			
 	  
 		return ($ret);
     }
@@ -367,19 +385,7 @@ class pcntl extends controller {
 	//private (called by init after include dpcs)
 	protected function _getqueue() {		   
 		 
-	    if ((is_array($_SESSION['dacpost'])) && 
-		    (array_key_exists('FormAction',$_SESSION['dacpost']))) {//POST:formaction by other page redirection
-			$ret = $_SESSION['dacpost']['FormAction'];
-			//in next post if dacpost->Formaction not exist go to real post above..
-			unset($_SESSION['dacpost']['FormAction']);		 
-			//update post 
-			$_POST = array_merge($_POST,$_SESSION['dacpost']);
-			//update request
-			$_REQUEST = array_merge($_REQUEST,$_SESSION['dacpost']);
-			//free session post
-			unset($_SESSION['dacpost']);	  
-		}	   
-	    elseif (array_key_exists('FormAction',$_POST)) {//POST:formaction
+		if (array_key_exists('FormAction',$_POST)) {//POST:formaction
 			//if post has & query cut it from post
 			$postq = explode('&',$_POST['FormAction']);
 			$ret = $postq[0];// $_POST['FormAction'];
@@ -395,7 +401,7 @@ class pcntl extends controller {
 				$current_page = pathinfo($_SERVER['PHP_SELF']);
 				//echo $current_page['dirname'],">>>>",$this->file_path;
 				//if is not the root-page-controller
-				if ($this->root_page!=$current_page['basename']) {
+				if ($this->root_page != $current_page['basename']) {
 
 					$page = str_replace($this->file_path."/".$current_page['basename'],
 			                      "/".$this->root_page,
@@ -405,7 +411,7 @@ class pcntl extends controller {
 					$mypage = substr($page,0,strlen($this->root_page)+1);//echo $mypage; die();
 					unset($_GET['t']);			
 			  	  
-					$this->redirect($_SERVER['HTTP_HOST'] . $this->inpath . $mypage);				  
+					$this->redirect($_SERVER['HTTP_HOST'] . $mypage);				  
 				}
 				else 
 					$ret = 'index';
@@ -415,15 +421,6 @@ class pcntl extends controller {
 			$ret = $this->file_name;
 
 		if ($ret) {
-			//if action NOT in executed dpc redirect
-			//if is an excluded cmd return basic cmd = page name
-			//cmd is the execuded from some dpc not the default
-			/*if ($this->get_attribute($this->active($ret),$ret,6)){//exclude cmd
-				//echo "EXCLUDE.....<br>";
-				$this->my_excluded_action = $ret;//backup cmd
-				$ret = $this->file_name;//default dpc cmd (never exclude main file cmd)
-				return ($ret);
-			}*/
 		  
 			//get the active dpc = this name default
 			$this->myactive = $this->active($this->file_name);	  		  
@@ -445,7 +442,7 @@ class pcntl extends controller {
         }
 		else { //goto root page
 			$page = str_replace($this->file_info,$this->root_page,$this->get_server_url());
-			$this->redirect($_SERVER['HTTP_HOST'] . $this->inpath . $page);		  
+			$this->redirect($_SERVER['HTTP_HOST'] . $page);		  
 		} 
 		
 		return ($ret); //final return ret
@@ -595,7 +592,7 @@ class pcntl extends controller {
 	   
 			if (!ereg("Microsoft", $_SERVER["SERVER_SOFTWARE"])) {
 				$auth_method = 'HTACCESS';
-				$authenticated = GetGlobal('controller')->calldpc_method('rchtaccess.verify_user use '.$_SERVER["AUTH_USER"].'+'.$_SERVER["AUTH_PASSWORD"]);		 
+				$authenticated = $this->calldpc_method('rchtaccess.verify_user use '.$_SERVER["AUTH_USER"].'+'.$_SERVER["AUTH_PASSWORD"]);		 
 			}	 
 			else {
 				$auth_method = 'NTLM'; 
@@ -769,35 +766,95 @@ class pcntl extends controller {
 		$this->make_local_table($class);
 		
 		//print_r($this->startProcess);
-		
-		if ((defined($class)) && (class_exists($__DPC[$class])) ) {
+		//echo $dpc,'>',$class;
+		if (defined($class)) {
 			
 			//echo '<br/>>>>',strtoupper($parts[1]),'_DPC','=',$__DPC[strtoupper($parts[1]).'_DPC'];
 			//print_r($this->startProcess);
 			
 			$processChain = array();
-			foreach ($this->startProcess as $process=>$inDpc) {
-				if ($inDpc==$dpc) 
-					$processChain[] = $process;	
+			foreach ($this->startProcess as $inDpc=>$processArray) {
+				if ($inDpc==$dpc) {
+					foreach ($processArray as $process)
+						$processChain[] = $process;	
+				}	
 			}	
 			//print_r($processChain);
 			if (!empty($processChain))
 				$pchain = implode(',',$processChain);
 
 			//echo '<br/>' . $dpc . ':' . $pchain;
-			
-			$__DPCMEM[$class] =  & new $__DPC[$class]($pchain);
-			$__DPCOBJ[$dpc] =  & $__DPCMEM[$class];//alias of new name object array
-			$__DPCID[$class] = $dpc; //new name index array		 
-		
-			SetGlobal("_DPCMEM",$__DPCMEM);
-		
-			return true;
+			if (class_exists($__DPC[$class])) {
+				$__DPCMEM[$class] =  & new $__DPC[$class]($pchain);
+				$__DPCOBJ[$dpc] =  & $__DPCMEM[$class];//alias of new name object array
+				$__DPCID[$class] = $dpc; //new name index array		 
+				SetGlobal("_DPCMEM",$__DPCMEM);
+				return true;
+			}
+			elseif (is_string($__DPCMEM[$class])) {  //string class , instance
+				//echo '<br/>>>>',strtoupper($parts[1]),'_DPC','=',$__DPC[strtoupper($parts[1]).'_DPC'];
+				//echo $__DPCMEM[$class];
+				@eval($__DPCMEM[$class]);
+				
+				$__DPCMEM[$class] =  & new $__DPC[$class]($pchain);
+				$__DPCOBJ[$dpc] =  & $__DPCMEM[$class];//alias of new name object array
+				$__DPCID[$class] = $dpc; //new name index array		 
+				SetGlobal("_DPCMEM",$__DPCMEM);
+				return true;
+			}
+			else {}
 		}	  
 	
 		return false; 	  		
-	}		
-    
+	}	
+
+	//override
+	protected function set_instance($dpc,$instname,$p=null) {
+		global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
+				$__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	  
+
+		global $activeDPC,$info,$xerror,$GRX,$argdpc; 	
+	  
+		$__DPC = GetGlobal('__DPC');	  
+	  
+		$parts = explode(".",trim($dpc)); 
+		$parentclass = strtoupper($parts[1]).'_DPC';	 
+		$idpc =  $__DPC[$parentclass];	
+	  
+		//if parent class not exist load it!
+		if (!class_exists($idpc)) {
+			$this->calldpc($dpc,'dpc');
+			//$__DPC = GetGlobal('__DPC');//re-loadit afer include	
+			//$idpc =  $__DPC[$parentclass];	  
+		}		
+	  
+		if (class_exists($idpc)) {
+	        //create instance as string extending a defined class 
+			$x  = "class $instname extends $idpc" . ' {';
+			$x .= "function __construct(\$p=null) {";
+			$x .= "parent::__construct(\$p);";  	
+			$x .= '}';
+			$x .= '};';
+	  
+			//echo $x;
+			//@eval($x); //moved at _new
+			
+			$iclass = strtoupper($instname).'_DPC';
+			define($iclass,true); //define instance
+			
+			$__DPCMEM[$iclass] = $x;
+			$__DPCID[$iclass] = $instname;				
+			$__DPC[$iclass] = $instname;
+			
+			//$i = new $instname($p); //moved at _new
+	
+			return true;
+		}
+		//else
+			//die("Error: There is not [$dpc] class to extend!");    	  
+		
+		return false;
+	}	
    
 	public function __destruct() {		  
 	  

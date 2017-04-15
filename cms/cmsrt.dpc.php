@@ -105,7 +105,7 @@ class cmsrt extends cms  {
 		$this->lan_set = arrayload('SHELL','languages');
 		$this->message = remote_paramload('SHLANGS','message',$this->path);	
 		
-		$this->home = localize(paramload('SHELL','rootalias'),getlocal());
+		$this->home = localize(paramload('SHELL','rootalias'),$this->lan);
 		$this->cat_result = null;
 		
 		$this->siteTitle = remote_paramload('SHELL','urltitle',$this->path);	
@@ -116,7 +116,7 @@ class cmsrt extends cms  {
 		
 		$this->itmeter = 0;
 		$this->isCAttach = false;
-		$this->lan = getlocal() ? getlocal() : '0';
+
 		$this->itmname = $this->lan ? 'itmname' : 'itmfname';
 		$this->itmdescr = $this->lan ? 'itmdescr' : 'itmfdescr';			
 		$this->pager = GetReq('pager') ? GetReq('pager') : (GetSessionParam('pager') ? GetSessionParam('pager') : remote_paramload('SHKATALOG','pager',$this->prpath));		
@@ -1789,17 +1789,17 @@ EOF;
 		return (true);			 
 	}	
 
-	protected function getTrackId($id=null) {
-	
-		$i = $id ? $id : rand(100000,999999);	 
+	protected function getTrackId($id=null, $salt=null) {
+		
+		$i = $id ? ($id . $salt) : ($salt ? $salt : rand(100000,999999));	 
 		$tid = date('YmdHms') .  $i . '@' . $this->appname;
 		 
 		return ($tid);	
 	}	
 	
 	protected function addTracker(&$mailbody,$tid=null,$to=null) {
-		
-		$i = $this->getTrackId($tid); 
+		$salt = $to ? crc32($to) : null;
+		$i = $this->getTrackId($tid, $salt); 
 		
 		if ($mailbody) {
 	

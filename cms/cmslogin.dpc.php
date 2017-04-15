@@ -46,7 +46,7 @@ $__LOCALE['CMSLOGIN_DPC'][4]='_USERNAME;Username;Χρήστης';
 $__LOCALE['CMSLOGIN_DPC'][5]='_PASSWORD;Password;Κωδικός';
 $__LOCALE['CMSLOGIN_DPC'][6]='_WELLCOME;Welcome;Καλωσήρθες';
 $__LOCALE['CMSLOGIN_DPC'][7]='_SEEYOU;See you next time;Τα λέμε';
-$__LOCALE['CMSLOGIN_DPC'][8]='_MSG1;Incorrect data!;Λάθος στοιχεία!';
+$__LOCALE['CMSLOGIN_DPC'][8]='_MSG1;Incorrect data!;Λανθασμένα στοιχεία!';
 $__LOCALE['CMSLOGIN_DPC'][9]='_VERPASS;Verify password;Επαληθευση κωδικου';
 $__LOCALE['CMSLOGIN_DPC'][10]='_PASSREMINDER;Please change your password!;Παρακαλω αλλαξτε τον κωδικό σας!';
 $__LOCALE['CMSLOGIN_DPC'][11]='_VERPASSUCCESS;Password changed!;Επιτυχης αλλαγη κωδικου';
@@ -62,7 +62,7 @@ $__LOCALE['CMSLOGIN_DPC'][20]='_RESET;Reset;Αλλαγή';
 $__LOCALE['CMSLOGIN_DPC'][21]='_RESETPASS;Reset password;Αλλαγή κωδικού';
 $__LOCALE['CMSLOGIN_DPC'][22]="_MSG21;Password and verify password doesn't match!;Η επιβαιβαιωση κωδικου δεν συμφωνει με τον κωδικο σας.";
 $__LOCALE['CMSLOGIN_DPC'][23]='_MSGPWD;Invalid password length, 8 characters required;Μη αποδεκτός κωδικός, 8 χαρακτήρες τουλάχιστον είναι απαραίτητοι';
-$__LOCALE['CMSLOGIN_DPC'][24]='ok;A message sent to you. Please use the link to activate your account;Ένα μήνυμα στάλθηκε στο e-mail που δηλώσατε. Παρακαλώ ενεργοποιήστε τον λογαριασμό σας';
+$__LOCALE['CMSLOGIN_DPC'][24]='ok;A message sent to your e-mail. Please use the link to activate your account;Ένα μήνυμα στάλθηκε στο e-mail που δηλώσατε. Παρακαλώ ενεργοποιήστε τον λογαριασμό σας';
 $__LOCALE['CMSLOGIN_DPC'][25]='_ok;Submit;Αποστολή';
 $__LOCALE['CMSLOGIN_DPC'][26]='ok2;Password changed;Ο κωδικός άλλαξε';
 $__LOCALE['CMSLOGIN_DPC'][27]='_ERRSECTOKEN;Invalid token;Λάνθασμένο στοιχείο';
@@ -73,7 +73,8 @@ $__LOCALE['CMSLOGIN_DPC'][31]='_back;Back;Επιστροφή';
 $__LOCALE['CMSLOGIN_DPC'][32]='SHLOGIN_DPC;Login;Εισαγωγή';
 $__LOCALE['CMSLOGIN_DPC'][33]='_FBLOGIN;Login with Facebook;Σύνδεση με Facebook';
 $__LOCALE['CMSLOGIN_DPC'][34]='_mailmxerr;Wrong e-mail;Λανθασμένο e-mail';
-
+$__LOCALE['CMSLOGIN_DPC'][35]='_MSGDISABLEDUSER;Disabled user account;Απενεργοποιημένος λογαριασμός χρήστη';
+$__LOCALE['CMSLOGIN_DPC'][36]='_MSGRESENDACTIVE;A message sent to your e-mail. Please use the link to activate your account;Ένα μήνυμα στάλθηκε στο e-mail που δηλώσατε. Παρακαλώ ενεργοποιήστε τον λογαριασμό σας';
 
 class cmslogin {
 
@@ -176,16 +177,24 @@ class cmslogin {
 										$this->login_successfull = $this->do_login();
 									else //fb etc login	
 										$this->login_successfull = $this->is_fb_logged_in() ? $this->do_facebook_login() : $this->do_login();
-							        /* 
-									if (defined('SHCART_DPC')) 
-										$cartnotempty = _m('shcart.notempty');
+							        
+									if ($this->login_successfull) {
+										/* 
+										if (defined('SHCART_DPC')) 
+											$cartnotempty = _m('shcart.notempty');
 											
-									//goto after login...	
-									$this->login_goto = ($cartnotempty) ? $this->login_goto : '/';//'signup/';
-							        */
-                                    if (($this->login_goto) && ($this->login_successfull)) {
-							            if (!$this->dpc_after_goto)// inside code command
-											$this->refresh_page_js($this->login_goto);	
+										//goto after login...	
+										$this->login_goto = ($cartnotempty) ? $this->login_goto : '/';//'signup/';
+										*/
+										
+										if (($this->login_goto) && ($this->login_successfull)) {
+											if (!$this->dpc_after_goto)// inside code command
+												$this->refresh_page_js($this->login_goto);	
+										}										
+									}	
+									else {
+										if ($this->fbmode==1)
+											$this->login_javascript(); 
 									}	
 									break;
 
@@ -237,10 +246,6 @@ class cmslogin {
             case "dologin"      : 	if ($this->login_successfull) {
 										
 										//echo 'cmslogin:',$this->dpc_after_goto,'>';
-										//$mydpc = explode('.',$this->dpc_after_goto);//check security
-										//$mydpcname = strtoupper($mydpc[0]).'_DPC';				 
-										//if (seclevel($mydpcname,$this->userLevelID)) 
-											
 										if ($this->dpc_after_goto) {
 											$out = _m($this->dpc_after_goto); 
 											
@@ -629,12 +634,17 @@ window.setTimeout('neu()',10);
 					$tokens[] = $reset_url;			  
 				
 					$mailbody = _m('cmsrt._ct use userremind+' . serialize($tokens) . '+1');
-			   
+					$body = str_replace('+','<SYN/>',$mailbody); 
 					$from = $this->accountmailfrom;
-					$this->mailto($from,$m,localize('_UMAILREMSUBC',getlocal()),$mailbody);
+					$subject = localize('_UMAILREMSUBC',getlocal());
+					//$this->mailto($from,$m,localize('_UMAILREMSUBC',getlocal()),$mailbody);
+					$mailerr = _m("cmsrt.cmsMail use $from+$m+$subject+$body");
 					
 					$this->formerror = localize("ok", getlocal());
 					$this->update_login_statistics('login-renew', $u);
+					
+					//reset fails at login after successful submit
+					SetSessionParam('failedLogin', null); 
 					
 					$this->resetPass = true;
 					return true;
@@ -648,11 +658,12 @@ window.setTimeout('neu()',10);
 			if ($this->formerror!='ok') 
 				SetGlobal('sFormErr',$this->formerror);		   
 			else 
-				SetGlobal('sFormErr',"OKREMINDER");////$msg);
+				SetGlobal('sFormErr',"OKREMINDER");
 		 
 	    }//recaptcha
 
-		SetSessionParam('failedLogin', null); //reset fails at login		
+		//reset fails at login even when not a correct remember submit
+		SetSessionParam('failedLogin', null); 		
 		$this->resetPass = false;
 
 		return false;	
@@ -676,11 +687,11 @@ window.setTimeout('neu()',10);
 
 	        $sSQL = "SELECT username, sesid, active, seclevid, clogon FROM users" . " WHERE username ='" .
 			   	    addslashes($sUsername) . "' AND password='" . md5(addslashes($sPassword)) . "'";	
- 		  
+			//echo $sSQL;
             $result = $db->Execute($sSQL,2);
 
-			if (($result->fields['username']) && ($result->fields['active']=1)) {
-		  
+			if (($result->fields['username']) && ($result->fields['active']>0)) {
+				//echo 'ACTIVE:'.$result->fields['active'];
 		        if (intval($result->fields['seclevid'])>=5) { 
 					$GLOBALS['LOGIN'] = 'yes';					
 		            SetSessionParam('LOGIN','yes');	
@@ -722,11 +733,26 @@ window.setTimeout('neu()',10);
 				return true;
             }
             else { 
-				//echo $failedtimes . '>';
-				SetSessionParam('failedLogin', $failedtimes+1);
-				
-				$this->update_login_statistics('login-failed', $sUsername);
-				SetGlobal('sFormErr',localize('_MSG1',getlocal()));
+				if (($result->fields['username']) && (!$result->fields['active'])) {
+					$this->update_login_statistics('login-disabled', $sUsername);
+					//echo 'disabled>';
+					SetGlobal('sFormErr',localize('_MSGDISABLEDUSER',getlocal()));
+					
+					//send enable message...
+					$user = $result->fields['username'];
+					if (defined('SHUSERS_DPC'))  
+						_m("shusers.mailtoclient use $user");
+					else	
+						_m("cmsusers.mailtoclient use $user");
+					
+					SetGlobal('sFormErr',localize('_MSGRESENDACTIVE',getlocal()));
+				}
+				else {
+					//echo $failedtimes . '>';
+					SetSessionParam('failedLogin', $failedtimes+1);
+					$this->update_login_statistics('login-failed', $sUsername);
+					SetGlobal('sFormErr',localize('_MSG1',getlocal()));
+				}
 				
 				return false;
             }
@@ -1083,7 +1109,7 @@ window.setTimeout('neu()',10);
 		    else
                 $sSQL .= $db->qstr(addslashes($uname)) . ",";
 			
-			$notes = ''; //$this->inactive_on_register ? 'DELETED' : 'ACTIVE';
+			$notes = ''; 
 			
 			$sSQL .= $db->qstr($notes) . "," . $seclevid;
 	        $sSQL .= ")";
@@ -1125,11 +1151,12 @@ window.setTimeout('neu()',10);
 			$tokens[] = $lname;			  					
 
 			$mailbody = _m('cmsrt._ct use userinserttell+' . serialize($tokens));
-
+			$body = str_replace('+','<SYN/>',$mailbody); 
 			$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
 			$subject = localize($ss, getlocal());
 			$mysubject = $subject ? $subject : localize('_UMAILSUBC',getlocal());
-			$this->mailto($this->usemail2send,$this->tell_it,$mysubject,$mailbody);
+			//$this->mailto($this->usemail2send,$this->tell_it,$mysubject,$mailbody);
+			$mailerr = _m("cmsrt.cmsMail use {$this->usemail2send}+{$this->tell_it}+$mysubject+$body");
 		}	
 	  
 		//send username/password to user
@@ -1146,10 +1173,11 @@ window.setTimeout('neu()',10);
 			$tokens[] = $account_enable_link;		  
 
 			$mailbody = _m('cmsrt._ct use userinsert+' . serialize($tokens));
-		
+			$body = str_replace('+','<SYN/>',$mailbody); 
 			$ss = remote_paramload('SHUSERS','tellsubject',$this->path);
 			$subject = localize($ss, getlocal());
-			$this->mailto($this->it_sendfrom,$username,$subject,$mailbody);	  	
+			//$this->mailto($this->it_sendfrom,$username,$subject,$mailbody);	  	
+			$mailerr = _m("cmsrt.cmsMail use {$this->it_sendfrom}+$username+$subject+$body");
 	    }
 	  
 		if (defined('CMSFORM_DPC'))
@@ -1208,7 +1236,7 @@ window.setTimeout('neu()',10);
 		list($user, $domain) = explode('@', $email);
 		return checkdnsrr($domain, $record);
 	} 		
-
+	/*
 	public function mailto($from,$to,$subject=null,$body=null) {
 
 		if (defined('SMTPMAIL_DPC')) {
@@ -1285,7 +1313,7 @@ window.setTimeout('neu()',10);
 		 
 		return ($tid);	
 	}	
-
+	*/
 	public function recaptcha() {
 		
 		if ((defined('RECAPTCHA_DPC')) && ($this->recaptcha==true)) {
