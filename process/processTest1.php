@@ -23,7 +23,7 @@ class processTest1 extends processInst {
 	//override
 	public function isFinished($event=null) {
 		
-		parent::isFinished($event);
+		if (parent::isFinished($event)) {
 		
 		//echo 'Process 1:',$event;
 		//return ($this->caller->status>0) ? true : false;
@@ -39,9 +39,13 @@ class processTest1 extends processInst {
 				print_r($this->getProcessStepInfo());
 				echo '</pre>';
 				}
+				
+				echo $this->loadForm($event);
 			}
 			return true;
-		}		
+		}	
+		}
+		
 		return false;		
 	}	
  	

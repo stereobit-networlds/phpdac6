@@ -8,14 +8,18 @@ $__DPC['SANDBOX_DPC'] = 'sandbox';
 
 $__EVENTS['SANDBOX_DPC'][0]= "sandbox";
 $__EVENTS['SANDBOX_DPC'][1]= "process";
+$__EVENTS['SANDBOX_DPC'][2]= "register";
 
 $__ACTIONS['SANDBOX_DPC'][0]= "sandbox";
 $__ACTIONS['SANDBOX_DPC'][1]= "process";
+$__ACTIONS['SANDBOX_DPC'][2]= "register";
 
-class sandbox {
+//included process dpc at page
+
+class sandbox extends Process\process {
 
 	protected $user, $seclevid; 
-	var $status; //test
+	var $status, $pid; //test
 
 	public function __construct($p=null) {
 		$UserName = GetGlobal('UserName');		
@@ -26,6 +30,7 @@ class sandbox {
 								(((decode($UserSecID))) ? (decode($UserSecID)) : 0));		
 		
 		$this->status = _v('shcart.status');
+		$this->pid = GetReq('pid');	
 		
 		if ((defined('PROCESS_DPC')) && ($p))	{
 			$this->process = new Process\process($this, $p, GetReq('t'));	
@@ -44,20 +49,52 @@ class sandbox {
 	public function event($event=null) {
 		switch ($event) {
 			
-			case 'register': break;
+			case 'register': 	break;
 			
 			case 'sandbox' :
-			default        : 
+			case 'process' :
+			default        : 	if (!$this->user) {
+									if (defined('CMSLOGIN_DPC'))
+										_m('cmslogin.event use cmslogin');
+								}	
+								else {
+									
+									//if invalid user in session
+									//...									
+									
+									//if post form
+									//...
+									
+									//echo '(' . $this->status . ')';
+								}
+								
 		}	
 	}
 	
 	public function action($action=null) {
 		switch ($action) {
 			
-			case 'register': $ret = null; break;
+			case 'register': 	$ret = null; 
+								break;
 			
 			case 'sandbox' :
-			default        : $ret = 'test'; 
+			case 'process' :
+			default        : 	if (!$this->user) {
+									//login page
+									//$ret = $this->loadLoginForm();
+									if (defined('CMSLOGIN_DPC'))
+										$ret = _m('cmslogin.action use cmslogin');
+								}	
+								else {
+									
+									//if invalid user in session
+									//...									
+									
+									//if post form
+									//...
+								
+									$ret = 'test'; 
+								}	
 		}
 
 		return ($ret);	

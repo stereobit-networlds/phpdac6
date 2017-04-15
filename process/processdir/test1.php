@@ -24,7 +24,7 @@ class processdir_test1 extends processInst {
 	//override
 	public function isFinished($event=null) {
 		
-		parent::isFinished($event);
+		if (parent::isFinished($event)) {
 		
 		//echo 'Process subdir test1:',$event;
 		//return ($this->caller->status>2) ? true : false;
@@ -43,7 +43,7 @@ class processdir_test1 extends processInst {
 			}			
 			return true;
 		}		
-		
+		}
 		return false;		
 	}	
  

@@ -23,7 +23,7 @@ class processTest2 extends processInst {
 	//override
 	public function isFinished($event=null) {
 		
-		parent::isFinished($event);
+		if (parent::isFinished($event)) {
 		
 		//echo 'Process 2:',$event;
 		//return ($this->caller->status>1) ? true : false;
@@ -42,7 +42,7 @@ class processTest2 extends processInst {
 			}
 			return true;
 		}		
-			
+		}	
 		return false;
 	}	
  

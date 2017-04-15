@@ -693,24 +693,16 @@ class pcntl extends controller {
 					//echo $dpc_name,$event,"<br>"; 		   
 					$__DPCMEM[$dpc_name]->event($event);
 
-					//post event code
-			
-					//if (defined('PROCESS_DPC'))
-					//if (method_exists($__DPC[$dpc_name],'processEvent'))
-					//if (is_a($this->process, 'process'))
-					//if ($__DPCMEM[$dpc_name]->process instanceof process) 
-					//try {	
 					if (method_exists($__DPCMEM[$dpc_name],'processEvent')) {
-						$__DPCMEM[$dpc_name]->processEvent($event);
-						//echo $dpc_name ." has  processEvent method<br/>";
-					}
-					//else echo $dpc_name ." has no  processEvent method<br/>";
-					/*catch(Exception $e){
-						echo $e->getMessage();
-						throw $e;
-					}*/					
-						//echo 'z';
-						//$this->process->isFinished($event);					
+						try {
+							$__DPCMEM[$dpc_name]->processEvent($event);
+							//echo $dpc_name ." has  processEvent method<br/>";
+						}	
+						catch(Exception $e){
+							echo 'Process Exception:' . $e->getMessage();
+							throw $e;
+						}
+					}				
 		        }
 			}  
 		}
