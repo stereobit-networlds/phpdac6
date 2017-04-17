@@ -28,36 +28,21 @@ define("PROCESS_DPC",true);
 
 $__DPC['PROCESS_DPC'] = 'process';
 
-//require_once(_r('process/processInst.lib.php')); //not when include this in dpc
+require_once(GetGlobal('controller')->require_dpc('process/pstack.lib.php'));
 require_once(GetGlobal('controller')->require_dpc('process/processInst.lib.php'));
 
 $__EVENTS['PROCESS_DPC'][0]= "process";
 
 $__ACTIONS['PROCESS_DPC'][0]= "process";
 
-class process {
+class process extends pstack {
 
-	private $caller, $callerName, $proccesChain;
-	protected $pid, $processName, $processStack;
-	protected $user, $seclevid;
+	protected $proccesChain, $processStack;
 
-	var $debug;	
+	public function __construct(& $caller, $p=null, $cmd=null) {
 
-	public function __construct(& $caller, $p, $cmd=null) {
-		$UserName = GetGlobal('UserName');		
-		$UserSecID = GetGlobal('UserSecID');
-		$this->user = decode($UserName);			
-		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : 
-							($_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] :
-								(((decode($UserSecID))) ? (decode($UserSecID)) : 0));		
+		parent::__construct($caller); //not a name or stack in this
 		
-		$this->debug = false;
-		
-		$this->caller = $caller; //obj
-		$this->callerName = get_class($caller);
-		$this->pid = GetReq('pid');	
-		$this->processName = 'process-' . $this->callerName;		
-
 		if (strstr($p,',')) //process chain
 			$this->proccesChain = explode(',', $p);
 		else	
@@ -100,12 +85,9 @@ class process {
 	}		
 	
 	public function isFinished($event=null) {
-		if (!$this->user) return false;
-		
+		if (!$this->user) return false;		
 		$stack =  GetGlobal('controller')->getProcessStack(); 
-		$processMethod = GetGlobal('processMethod');
-		//echo $processMethod;		
-		
+
 		if ($this->debug) {
 			echo '<br/>getEvent:' . $event;
 			echo '<br/>getCaller:' . $this->callerName;
@@ -114,7 +96,7 @@ class process {
 			print_r($stack);
 		}
 		
-		switch ($processMethod) {
+		switch ($this->pMethod) {
 			
 			case 'serialized' : //must be based on db data -> state
 			
@@ -125,8 +107,9 @@ class process {
 				
 				foreach ($this->proccesChain as $i=>$processInst) {
 					//echo "<br/>$i $processInst<br/>";
-					$c = new $processInst($this->caller, $this->callerName, $stack);
-					if (!$c->isFinished($event)) {
+					//$c = new $processInst($this->caller, $this->callerName, $stack);
+					//if (!$c->isFinished($event)) {
+					if (!$this->runInstance($processInst)) { 
 						SetSessionParam('pCallerName', $this->callerName);
 						return false;
 					}	
@@ -135,109 +118,63 @@ class process {
 				SetSessionParam('pCallerName', null); 
 				break;
 				
-			case 'puzzled'    :
-				$usClass = str_replace('-','_', $this->pid);
-				//fetch specific process based on pid
-				//echo 'puzzled:'.$event.':'.$this->pid;
-				//try {
-				if (class_exists($usClass)) {
-					$c = new $usClass($this->caller, $this->callerName, $stack);
-					if (!$c->isFinished($event)) return false;
+			case 'puzzled'    :	
+				//run specific process class
+			    if ($rid = $this->isRunningProcess()) {
+					$us = $this->clp; 
+					echo 'Running:' . $rid;
 				}	
-				//catch(Exception $e){
-				else {	
-					die('Invalid process object');
-					//echo 'Process Exception:' . $e->getMessage();
-					//throw $e;
-				}
+				else 
+					$us = $this->pid;
+				
+				$usClass = str_replace('-','_', $us);
+				$inChain = in_array($usClass, $this->getProcessChain());		
+				if ((class_exists($usClass)) && ($inChain)) {
+					/*try {
+						$c = new $usClass($this->caller, $this->callerName, $stack);
+						if (!$c->isFinished($event)) return false;
+					}	
+					catch(Exception $e){
+						//echo 'Process Exception:' . $e->getMessage();
+						throw $e;
+					}*/
+					if (!$this->runInstance($usClass)) 
+						return false;	
+				}	
 				break;
+				
 			case 'balanced'   :			
 			default           :
 			
 				foreach ($this->proccesChain as $i=>$processInst) {
 					//echo "<br/>$i $processInst<br/>";
-					$c = new $processInst($this->caller, $this->callerName, $stack);
-					if (!$c->isFinished($event)) return false;
+					//$c = new $processInst($this->caller, $this->callerName, $stack);
+					//if (!$c->isFinished($event)) return false;
+					if (!$this->runInstance($processInst)) 
+						return false;
 				}
 		}
 
 		return true;
 	}
 	
-	public function getProcessName() {
-		return $this->$processName;
-	}
-
-	//misc	
-	
-	protected function isLevelUser($level=1) {
-		return ($this->seclevid >= $level) ? true : false;
-	}	
-	
-	protected function validateUser($level=1) {
-		//sql validation
-		//...
-	}	
-	
-	protected function loadLoginForm($event=null) {
-
-		if (defined('CMSRT_DPC')) {
-			//$ret = 'Load form:login';
-			//$ret.= _m("cmsrt.select_template use login+1"); //cp path
-			$tokens[] = GetGlobal('sFormErr');
-			$ret.= _m('cmsrt._ct use qlogin+' . serialize($tokens));
-		}
-		else
-			$ret = 'CMS form required:' . $formName;
+	protected function runInstance($inst=null) {
+		if (!$inst) die('No instance to run!');		
+		$stack =  GetGlobal('controller')->getProcessStack();			
 		
-		return $ret;
-	}	
- 
-	public function _write($data=null) {
-   
-		if (!$length = strlen($data)) 
-			return false;
- 
-	
-		if ($fp = fopen($this->processName . '.txt.php', "w")) {	
-			$bytes = fwrite($fp, $data, $length);
-			fclose($fp);	   
-			return ($bytes);
+		try {
+			$c = new $inst($this->caller, $this->callerName, $stack);
+			if ($c->isFinished($event)) 
+				return true;
+		}	
+		catch(Exception $e){
+			//echo 'Process Exception:' . $e->getMessage();
+			throw $e;
 		}
 
-		return false; 
+		return false;	
 	}
  
-	public function _writeutf8($data=null) {
-   
-		if (!$length = strlen($data)) 
-			return false;
-	
-		if ($fp = fopen($this->processName . '.txt.php', "wb")) {	
-	
-			fwrite($fp, pack("CCC",0xef,0xbb,0xbf)); 
-			$bytes = fwrite($fp, $data, $length);
-			fclose($fp);	   
-			return ($bytes);
-		}
-
-		return false; 
-	} 
-
- 
-	public function write2disk($data=null) {
-
-        if ($fp = @fopen ($this->processName . '.txt.php', "a+")) {
-
-            fwrite ($fp, $data);
-            fclose ($fp);
-
-            return true;
-        }
-        
-        echo "File creation error ({$this->processName})!<br/>";
-        return false;
-	}  
 };
 }
 ?>

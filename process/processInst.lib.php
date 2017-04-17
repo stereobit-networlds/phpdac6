@@ -1,37 +1,20 @@
 <?php
 
-class processInst {
+class processInst extends Process\pstack {
 	
 	protected $processStepName, $processChain;
-	protected $caller, $callerName, $stack, $processName;
-	protected $user, $seclevid, $event; 
-
-	var $debug;	
+	protected $stack, $event; 
 	
-	public function __construct(& $caller, $callerName, $stack=null) {
-		$UserName = GetGlobal('UserName');		
-		$UserSecID = GetGlobal('UserSecID');
-		$this->user = decode($UserName);			
-		$this->seclevid = $GLOBALS['ADMINSecID'] ? $GLOBALS['ADMINSecID'] : 
-							($_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] :
-								(((decode($UserSecID))) ? (decode($UserSecID)) : 0));		
-								
-		$this->debug = true;//false;	
+	public function __construct(& $caller, $callerName=null, $stack=null) {
+				
+		parent::__construct($caller); //not a name or stack in this
 		
-		$this->caller = $caller;
-		$this->callerName = $callerName; 
-		$this->processName = 'process-' . $this->callerName;
-		//echo $this->callerName;
+		$this->debug = true;//override;	
+		
 		//$this->event = null;
-	
 		$this->stack = (array) $stack; //GetGlobal('controller')->getProcessStack();
 		//print_r($this->stack);	
 
-		//$k = array_keys($this->stack);
-		//$this->cName = $this->getCallerNameInStack($k[0]);
-		//echo $k[0] , '>' , $this->cName, '>';		
-		//echo $this->getStackId() ,'->', $this->getStackCount();
-		
 		//$this->processChain = $this->getProcessChain();	
 		//$this->processStepName = __CLASS__;	
 		//echo $this->processStepName ,'-', implode(',',$this->processChain);		
@@ -44,11 +27,8 @@ class processInst {
 		$this->event = $event;
 		return true;
 		
-		/*
-		$processMethod = GetGlobal('processMethod');
-		//echo $processMethod;		
-		
-		switch ($processMethod) {
+		/*		
+		switch ($this->pMethod) {
 			case 'puzzled'    :
 			
 			case 'serialized' :	if (!$this->isFinishedChain($event)) {
@@ -132,12 +112,16 @@ class processInst {
 		$isNextS = $this->isNextInStack();
 		
 		$smax = $this->getStackCount();		
-		$sid = $this->getStackId();	
+		$sid = $this->getStackId();
+
+		$pid = $this->isRunningProcess();	
 
 		$c = array( 'name'=>$this->processStepName,
 					'process'=>$this->processName,
 					'caller'=>$this->callerName,
-					'event'=>$this->event,					
+					'event'=>$this->event,	
+					'method'=>$this->pMethod,
+					'pid'=>$pid,
 					'cid'=>$cid,
 					'cmax'=>$cmax,
 		            'isLast'=>$isLast,
@@ -207,7 +191,7 @@ class processInst {
 		
 		return 0;
 	}	
-	
+	/*
 	protected function getProcessChain() {
 		//$stack = (array) GetGlobal('controller')->getProcessStack();
 		
@@ -223,7 +207,7 @@ class processInst {
 		
 		return null;
 	}	
-	
+	*/
 
 	//stack methods
 	protected function getNextInStack() {
@@ -298,15 +282,15 @@ class processInst {
 	}	
 
 	//get the .part of dpc name
- 	protected function getCallerNameInStack($stackElement=null) {
+ 	/*protected function getCallerNameInStack($stackElement=null) {
 		if (!$stackElement) return null;
 		
 		$n = explode('.', $stackElement);
 		return array_pop($n);
-	}
+	}*/
 	
 	
-	//misc
+	//misc	
 	
 	protected function isProcessUser($event=null, $level=1) {
 		$e = $event ? $event : $this->event;
@@ -317,10 +301,6 @@ class processInst {
 		
 		return (($this->user) && ($this->isLevelUser($level))) ? 
 			true : false;
-	}	
-	
-	protected function isLevelUser($level=1) {
-		return ($this->seclevid >= $level) ? true : false;
 	}			
 	
 	protected function loadForm($event=null) {
@@ -329,58 +309,20 @@ class processInst {
 
 		if (defined('CMSRT_DPC')) {
 			$ret = 'Load form:' . $formName;
-			$ret.= _m("cmsrt.select_template use $formName+1");
+			if (!$f = _m("cmsrt.select_template use $formName+1+p")) {
+				//generic form without caller name
+				$fn = explode('.', $formName);
+				$f = _m("cmsrt.select_template use ". $fn[1] ."+1+p");
+				$ret.= '/' . $fn[1];
+			}
+			$ret.= $f;
 		}
-		else
-			$ret = 'CMS form required:' . $formName;
+		//else
+			//$ret = 'CMS form required:' . $formName;
 		
 		return $ret;
 	}
- 
-	protected function _write($data=null) {
-   
-		if (!$length = strlen($data)) 
-			return false;
- 
-		if ($fp = fopen($this->processName . '.txt.php', "w")) {	
-			$bytes = fwrite($fp, $data, $length);
-			fclose($fp);	   
-			return ($bytes);
-		}
 
-		return false; 
-	}
- 
-	protected function _writeutf8($data=null) {
-   
-		if (!$length = strlen($data)) 
-			return false;
-	
-		if ($fp = fopen($this->processName . '.txt.php', "wb")) {	
-	
-			fwrite($fp, pack("CCC",0xef,0xbb,0xbf)); 
-			$bytes = fwrite($fp, $data, $length);
-			fclose($fp);	   
-			return ($bytes);
-		}
-
-		return false; 
-	} 
-
- 
-	protected function write2disk($data=null) {
-
-        if ($fp = @fopen ($this->processName . '.txt.php', "a+")) {
-
-            fwrite ($fp, $data);
-            fclose ($fp);
-
-            return true;
-        }
-        
-        echo "File creation error ({$this->processName})!<br/>";
-        return false;
-	} 
  
 }
 ?>
