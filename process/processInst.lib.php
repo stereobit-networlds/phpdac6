@@ -22,7 +22,9 @@ class processInst extends Process\pstack {
 	
 	
 	public function isFinished($event=null) {
-		if (!$this->isProcessUser($event)) return false;
+		//if (!$this->isProcessUser($event)) return false;
+		if (!$this->isProcessUser()) 
+			return false;
 		
 		$this->event = $event;
 		return true;
@@ -82,14 +84,14 @@ class processInst extends Process\pstack {
 		return $this->getProcessStepInfo('caller') .'.'. $this->getProcessStepInfo('name') .
 			   (($e = ($event ? $event : $this->event)) ? ' use ' . $e : null);	
 	}	
-	
+	/*
 	protected function getProcessStepName() {
 		return $this->processStepName;
 	}	
-	
+	*/
 	//alias
 	protected function getProcessChainName() {
-		return $this->processStepName;
+		return $this->getProcessStepName();
 	}
 
 	//caller.processname.event
@@ -115,12 +117,14 @@ class processInst extends Process\pstack {
 		$sid = $this->getStackId();
 
 		$pid = $this->isRunningProcess();	
+		$isclosed = $this->isClosedProcess();
 
 		$c = array( 'name'=>$this->processStepName,
 					'process'=>$this->processName,
 					'caller'=>$this->callerName,
 					'event'=>$this->event,	
 					'method'=>$this->pMethod,
+					'closed'=>$isclosed,
 					'pid'=>$pid,
 					'cid'=>$cid,
 					'cmax'=>$cmax,
@@ -289,9 +293,69 @@ class processInst extends Process\pstack {
 		return array_pop($n);
 	}*/
 	
+	//update running stack step
+	protected function stackRunStep($state=null) {	
+	
+		if ($this->isRunningProcess())  {
+			
+			$cid = $this->getChainId();
+			$sid = $this->getStackId();
+			$pstate = $state ? 1 : 0;	
+		
+			$ret = $this->stackRunSave($pstate, $cid, $sid);
+			return ($ret);
+		}	
+		
+		return true;
+	}
 	
 	//misc	
 	
+	//test
+	protected function runCode($status=0, $e=null) {
+		
+		$code = "<? 
+\$event = '$e'; 
+if (\$this->caller->status>=$status) { 
+	if (\$this->caller->status==$status) {
+		if (\$this->debug) {
+			echo (\$ps = \$this->prevStep(\$event)) ? '<br/>Prev step:' . \$ps : null;
+			echo '<br/>Step:' . \$this->step(\$event);
+			echo (\$ns = \$this->nextStep(\$event)) ? '<br/>Next step:' . \$ns : null ;
+		
+			echo '<pre>';
+			print_r(\$this->getProcessStepInfo());
+			echo '</pre>';
+		}
+				
+		echo \$this->loadForm(\$event);		
+		//\$this->setFormStack(\$event);
+				
+		\$this->stackRunStep(1);
+	}
+	return true; 
+}	
+return false; 
+?>";
+		$ret = $this->dCompile($code);
+
+		return ($ret);
+	}	
+	
+	protected function dCompile($data=null) {
+		if (!$data) return null;
+		
+		if (substr($data, -2) == '?>') {
+			$data = '?>' . $data . ((substr($data, -2) == '?>') ? '<?php ' : '');
+			return eval($data);				
+		}
+		elseif (substr($data, -8) == '/phpdac>') {
+			return _m(substr($data,8,-9));
+		}
+		else
+			return ($data);		
+	}	
+	/*
 	protected function isProcessUser($event=null, $level=1) {
 		$e = $event ? $event : $this->event;
 		$processName = str_replace(' use ', '.', $this->step($e));		
@@ -301,28 +365,7 @@ class processInst extends Process\pstack {
 		
 		return (($this->user) && ($this->isLevelUser($level))) ? 
 			true : false;
-	}			
-	
-	protected function loadForm($event=null) {
-		$e = $event ? $event : $this->event;
-		$formName = str_replace(' use ', '.', $this->step($e));
-
-		if (defined('CMSRT_DPC')) {
-			$ret = 'Load form:' . $formName;
-			if (!$f = _m("cmsrt.select_template use $formName+1+p")) {
-				//generic form without caller name
-				$fn = explode('.', $formName);
-				$f = _m("cmsrt.select_template use ". $fn[1] ."+1+p");
-				$ret.= '/' . $fn[1];
-			}
-			$ret.= $f;
-		}
-		//else
-			//$ret = 'CMS form required:' . $formName;
-		
-		return $ret;
-	}
-
+	}*/			
  
 }
 ?>

@@ -100,9 +100,15 @@ class sandbox extends Process\process {
 			case 'sandbox' :
 			case 'process' :
 			default        : 
-				if ($this->isRunningProcess()) {
+				if ($this->isClosedProcess()) {
+					//process closed
+					$ret = $this->getFormStack();
+					$ret.= $this->showProcess(null,99); //show prev steps
+				}		
+				elseif ($this->isRunningProcess()) {
 					//is running process
-					$ret = $this->showProcess();
+					$ret = $this->getFormStack();					
+					$ret.= $this->showProcess();
 					$ret.= $this->stackCalc();
 				}
 				else {
@@ -115,9 +121,12 @@ class sandbox extends Process\process {
 					case 'prun' :	$ret = ($rid = $this->stackRun()) ? 'Running:'.$rid : 'Started';
 									$ret.= $this->stackView();
 									break;				
+					case 'popn' :	$ret = $this->showOpenProcess();
+									break;										
+					case 'pcls' :	$ret = $this->showClosedProcess();
+									break;										
 					
-					default 	:	//$ret = 'test'; 
-									$ret = $this->stackView();
+					default 	:	$ret = $this->stackView();
 					}				
 				}
 			}		

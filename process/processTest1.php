@@ -23,12 +23,24 @@ class processTest1 extends processInst {
 	//override
 	public function isFinished($event=null) {
 		
+		if (!parent::isFinished($event)) {
+			$this->stackRunStep();
+			return false;
+		}	
+		
+		return $this->runCode(0, $event);
+		
+		
+		//...............................
+		
+		
 		if (parent::isFinished($event)) {
 		
 		//echo 'Process 1:',$event;
 		//return ($this->caller->status>0) ? true : false;
 		
-		if ($this->caller->status>=0) {
+		//if ($this->caller->status>=0) {
+		if ($this->runCode()) {	
 			if ($this->caller->status==0) {
 				if ($this->debug) {
 				echo ($ps = $this->prevStep($event)) ? '<br/>Prev step:' . $ps : null;
@@ -41,14 +53,25 @@ class processTest1 extends processInst {
 				}
 				
 				echo $this->loadForm($event);
+				
+				$this->stackRunStep(1);
 			}
 			return true;
 		}	
 		}
 		
+		$this->stackRunStep();
+		
 		return false;		
 	}	
- 	
- 
+/* 	
+	protected function runCode() {
+		
+		$code = "<? if (\$this->caller->status>=0) return true; else return false; ?>";
+		$ret = $this->dCompile($code);
+
+		return ($ret);
+	}
+*/	
 }
 ?>

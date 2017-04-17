@@ -98,31 +98,14 @@ class process extends pstack {
 		
 		switch ($this->pMethod) {
 			
-			case 'serialized' : //must be based on db data -> state
-			
-				//check execution state by saving the caller class name
-			    //echo $this->callerName,':',GetSessionParam('pCallerName');
-				if (($sCaller = GetSessionParam('pCallerName')) && ($this->callerName != $sCaller))
-					return false;
-				
-				foreach ($this->proccesChain as $i=>$processInst) {
-					//echo "<br/>$i $processInst<br/>";
-					//$c = new $processInst($this->caller, $this->callerName, $stack);
-					//if (!$c->isFinished($event)) {
-					if (!$this->runInstance($processInst)) { 
-						SetSessionParam('pCallerName', $this->callerName);
-						return false;
-					}	
-				}
-				//when true reset
-				SetSessionParam('pCallerName', null); 
-				break;
-				
 			case 'puzzled'    :	
 				//run specific process class
-			    if ($rid = $this->isRunningProcess()) {
+				if ($this->isClosedProcess()) {
+					break;
+				}
+			    elseif ($rid = $this->isRunningProcess()) {
 					$us = $this->clp; 
-					echo 'Running:' . $rid;
+					//echo 'Running:' . $rid;
 				}	
 				else 
 					$us = $this->pid;
@@ -138,9 +121,29 @@ class process extends pstack {
 						//echo 'Process Exception:' . $e->getMessage();
 						throw $e;
 					}*/
-					if (!$this->runInstance($usClass)) 
+					if (!$this->runInstance($usClass, $event)) 
 						return false;	
 				}	
+				break;			
+			
+			case 'serialized' : //must be based on db data -> state
+			
+				//check execution state by saving the caller class name
+			    //echo $this->callerName,':',GetSessionParam('pCallerName');
+				if (($sCaller = GetSessionParam('pCallerName')) && ($this->callerName != $sCaller))
+					return false;
+				
+				foreach ($this->proccesChain as $i=>$processInst) {
+					//echo "<br/>$i $processInst<br/>";
+					//$c = new $processInst($this->caller, $this->callerName, $stack);
+					//if (!$c->isFinished($event)) {
+					if (!$this->runInstance($processInst, $event)) { 
+						SetSessionParam('pCallerName', $this->callerName);
+						return false;
+					}	
+				}
+				//when true reset
+				SetSessionParam('pCallerName', null); 
 				break;
 				
 			case 'balanced'   :			
@@ -150,7 +153,7 @@ class process extends pstack {
 					//echo "<br/>$i $processInst<br/>";
 					//$c = new $processInst($this->caller, $this->callerName, $stack);
 					//if (!$c->isFinished($event)) return false;
-					if (!$this->runInstance($processInst)) 
+					if (!$this->runInstance($processInst, $event)) 
 						return false;
 				}
 		}
@@ -158,7 +161,7 @@ class process extends pstack {
 		return true;
 	}
 	
-	protected function runInstance($inst=null) {
+	protected function runInstance($inst=null, $event=null) {
 		if (!$inst) die('No instance to run!');		
 		$stack =  GetGlobal('controller')->getProcessStack();			
 		

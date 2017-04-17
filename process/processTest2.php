@@ -23,6 +23,18 @@ class processTest2 extends processInst {
 	//override
 	public function isFinished($event=null) {
 		
+		
+		if (!parent::isFinished($event)) {
+			$this->stackRunStep();
+			return false;
+		}	
+
+		return $this->runCode(1, $event);
+		
+		
+		//...............................		
+		
+		
 		if (parent::isFinished($event)) {
 		
 		//echo 'Process 2:',$event;
@@ -39,10 +51,15 @@ class processTest2 extends processInst {
 				print_r($this->getProcessStepInfo());
 				echo '</pre>';	
 				}
+				
+				echo $this->loadForm($event);
+				
+				$this->stackRunStep(1);
 			}
 			return true;
 		}		
 		}	
+		$this->stackRunStep();
 		return false;
 	}	
  
