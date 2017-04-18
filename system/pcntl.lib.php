@@ -28,24 +28,28 @@ class pcntl extends controller {
 
 	var $mytime, $myaction, $languange, $code, $myactive;
 	var $file_name, $file_path, $file_extension;
-	var $data, $fpdata, $root_page, $debug, $sysauth;
-	var $fp, $lan, $cl, $local_security;
+	var $root_page, $debug, $name, $noqueue; //$sysauth, $data;
+	var $fp, $lan, $cl, $local_security, $httpurl;
 	var $preprocessor, $preprocess, $startProcess, $processStack;	
 
-	public function __construct($code=null,$preprocess=null,$locales=null) { 
+	public function __construct($code=null,$preprocess=null,$noqueue=null) { 
 
 		session_start(); 
 		$this->mytime = $this->getthemicrotime();    
 		$xtime = $this->getthemicrotime(); 		
 		date_default_timezone_set('Europe/Athens');
 		
-		controller::__construct();		
+		controller::__construct();
+
+		$this->httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$this->httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
 		
 		$this->_loadinifiles(); 
 		
 		$this->root_page = 'index.php';//paramload('SHELL','filename');		
 		$this->debug = false;// paramload('SHELL','debug');			
 		//echo $this->root_page,'>',$this->debug;		
+		$this->name = null;
 	  
 		//register this
 		$__DPCMEM = GetGlobal('__DPCMEM');		    	 
@@ -53,8 +57,8 @@ class pcntl extends controller {
 		SetGlobal('__DPCMEM',$__DPCMEM);
 	  		  
 		$this->file_path = pathinfo($_SERVER['PHP_SELF'],PATHINFO_DIRNAME); 
-		if ($this->file_path=="\\") 
-			$this->file_path = null;   
+		//if ($this->file_path=="\\") 
+			//$this->file_path = null;   
 		$this->file_info = pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);
 
 		$p = explode (".",$this->file_info);		  
@@ -72,18 +76,34 @@ class pcntl extends controller {
 	    $this->startProcess = array();
 		
 		$this->local_security = array();
-		$this->code = $code;		  
+		$this->code = $code;
+		$this->noqueue = $noqueue;		
 		$this->myaction = null;
-		$this->my_excluded_action = null;
 		
-		//register self as global controller and dispatcher
 		SetGlobal('controller',$this);
 		//SetGlobal('dispatcher',$this);			
 		
-		$this->_loadapp();
+		//$this->_loadapp();
+		$this->init();
+		$this->event($this->myaction);
 		
 		if ($this->debug) 
 			echo "<!-- construct elapsed " . $this->getthemicrotime() - $xtime . " sec -->"; 	   	  		
+	}
+	
+	public function getName($localize=false) {
+		
+		if (strstr($this->file_name,'_')) {
+			$p = explode('_',$this->file_name);
+			$name = $p[1];
+		}
+		else  
+			$name = $this->name ? $this->name : $this->file_name;		
+		
+		if ($localize)
+			return (localize('_' . $name, getlocal()));
+		
+		return $name;
 	}
 	
 	protected function _loadinifiles() {
@@ -112,6 +132,7 @@ class pcntl extends controller {
 		//$this->preprocessor = new CCPP($config);
 	}  	
    
+	/*
 	protected function _loadapp() {
 		if (!isset($this->code)) return null;	
 		
@@ -120,17 +141,15 @@ class pcntl extends controller {
 		//pre-defined in page locales
 		if (isset($locales)) 
 			$this->localize($locales);	  
-
+		
 		$etime = $this->getthemicrotime();
-		if ($this->my_excluded_action)
-			$this->event($this->my_excluded_action);	 
-		else
-			$this->event($this->myaction);
+
+		$this->event($this->myaction);
 		
 		if ($this->debug) 
 			echo "<!-- event elapsed " . $this->getthemicrotime() - $etime . " sec -->"; 		 	  
     }
-	
+	*/
 	//overwrite
 	public function init($c=null) {      
    
@@ -159,8 +178,11 @@ class pcntl extends controller {
 			echo "<!-- include " . $t->value('include') . ' sec -->'; 	   	 
      
 
-		//dispacth or redirect...
-		$this->myaction = $this->_getqueue(); 	
+		if ($this->noqueue) {
+			//...no action
+		}
+		else //dispacth or redirect...
+			$this->myaction = $this->_getqueue(); 	
 		
 		if (is_array($modules_to_start)) {
 			
@@ -379,23 +401,19 @@ class pcntl extends controller {
 		return ($ret);
     }   
 	
-	//page controller :: DISPATCHER
-	//if event/action not in executed dpc search other page controller
-	//named as event/action or go to parent controller = shell
-	//private (called by init after include dpcs)
 	protected function _getqueue() {		   
 		 
-		if (array_key_exists('FormAction',$_POST)) {//POST:formaction
+		if (array_key_exists('FormAction',$_POST)) {
 			//if post has & query cut it from post
 			$postq = explode('&',$_POST['FormAction']);
 			$ret = $postq[0];// $_POST['FormAction'];
 		}  
-		elseif (array_key_exists('t',$_GET)) {//GET:t
-			//$ret = $cmd;
-			$t = $_GET['t']; //echo $t,'>';
-		  
-			if ($t!=null) {//get t
-				$ret = $_GET['t'];
+		elseif (array_key_exists('t',$_GET)) {
+			$ret = $_GET['t'];
+			
+			/*
+			if ($t = $_GET['t']) {
+				$ret = $t; 
 			}	
 			else {//redirect to root controller-page	  
 				$current_page = pathinfo($_SERVER['PHP_SELF']);
@@ -403,24 +421,34 @@ class pcntl extends controller {
 				//if is not the root-page-controller
 				if ($this->root_page != $current_page['basename']) {
 
-					$page = str_replace($this->file_path."/".$current_page['basename'],
-			                      "/".$this->root_page,
-								  $this->get_server_url());
+					$page = str_replace($this->file_path."/".$current_page['basename'], '/' . $this->root_page,	$this->get_server_url());
 					//echo $page;					  
 					//extract '?t=' due to re-queue recursive error 					  
-					$mypage = substr($page,0,strlen($this->root_page)+1);//echo $mypage; die();
-					unset($_GET['t']);			
-			  	  
-					$this->redirect($_SERVER['HTTP_HOST'] . $mypage);				  
+					$mypage = substr($page,0,strlen($current_page['basename'])+1);//echo $mypage; die();
+					//unset($_GET['t']);			
+					//echo $this->httpurl . $mypage;
+					$this->redirect($this->httpurl . $mypage);				  
 				}
 				else 
 					$ret = 'index';
-			}	
+			}*/	
 		}  
-		else //self name is the standart action 
-			$ret = $this->file_name;
-
-		if ($ret) {
+		else {
+			if (strstr($this->file_name,'_')) {
+				//extract alias string sep by _
+				//use:RewriteRule ^p/([^/]*)/$ /process_$1.php?t=process [L]
+				$p = explode('_',$this->file_name);
+				$ret = array_shift($p); //cmd is the first part
+			}
+			else //self name is the standart action 
+				$ret = $this->file_name;	
+		}	 	
+		
+		//save name
+		$this->name = $ret;
+		
+		//echo $ret,'>';
+		//if ($ret) {
 		  
 			//get the active dpc = this name default
 			$this->myactive = $this->active($this->file_name);	  		  
@@ -435,15 +463,15 @@ class pcntl extends controller {
 					$page = str_replace($this->file_name.".".$this->file_extension,
 										$ret.".".$this->file_extension,
 										$this->get_server_url());
-					$this->redirect($_SERVER['HTTP_HOST'] . $page);
+					$this->redirect($this->httpurl . $page);
 				}
 			}	
 			//echo $this->myactive,'>>>>';		  
-        }
+        /*}
 		else { //goto root page
 			$page = str_replace($this->file_info,$this->root_page,$this->get_server_url());
-			$this->redirect($_SERVER['HTTP_HOST'] . $page);		  
-		} 
+			$this->redirect($this->httpurl . $page);		  
+		}*/ 
 		
 		return ($ret); //final return ret
     }
@@ -459,10 +487,11 @@ class pcntl extends controller {
    
 		$atime = $this->getthemicrotime();  
 	  	  
-		$this->pre_render($theme,$lan,$cl,$fp);
+		//$this->pre_render($theme,$lan,$cl,$fp);
+		$data = $this->action($this->myaction);
 	  
-	    $hfp = new fronthtmlpage($fp,null,$appi);  
-	    $ret = $hfp->render($this->data);
+	    $hfp = new fronthtmlpage($fp);  
+	    $ret = $hfp->render($data); //this->data);
 	    unset($hfp);
 
 		if ($this->debug) 
@@ -470,12 +499,11 @@ class pcntl extends controller {
 	  
 		return ($ret); 	   
 	}
-   
+   /*
 	protected function pre_render($theme=null,$lan=null,$cl=null,$fp=null) {
       
 		if ($this->sysauth) {
-			if (($realm = GetParam('AUTHENTICATE')) || ($realm = GetReq('auth'))/* ||
-				($this->get_attribute($this->myactive,$this->myaction,13))*/) {  
+			if (($realm = GetParam('AUTHENTICATE')) || ($realm = GetReq('auth'))) {  
 		  
 				if (!$realm) 
 					$realm = "Generic authendication";  
@@ -484,19 +512,12 @@ class pcntl extends controller {
 		}
    
 		//change languange !!!! gr/ en/ subdir to implement
-		if (isset($lan)) 
-			setlocal($lan);
-				
-		/*if ($this->get_attribute($this->myactive,$this->myaction,4)) {			   
-		    $this->init();	
-			if ($this->debug) 
-				echo '<!-- ......re-init..... -->';
-		}*/			  	
+		if (isset($lan)) setlocal($lan);		  	
 	  
 		//get action
 		$this->data = $this->action($this->myaction);     
     }
-   
+   */
    
 	//set security level at runtime
 	public function setlevel($modulename,$plafon,$colonvals) {
@@ -574,7 +595,7 @@ class pcntl extends controller {
 	    return ($url);	 
     }
    
-     
+    /* 
 	protected function authenticate($realm,$action=null) {
 	 
 		if ($verified=GetSessionParam('authverify')==true) 
@@ -623,11 +644,11 @@ class pcntl extends controller {
 		}
 	 
 		if ($goto = GetReq('redirect'))
-			$this->redirect($_SERVER['HTTP_HOST'].'/'.$goto);
+			$this->redirect($this->httpurl .'/'. $goto);
 	   
 		return;   
 	}
-
+	*/
    
 	//override to load dpc from priv dirs
 	protected function set_include($dpc,$type,$myargdpc=null) {
@@ -664,9 +685,6 @@ class pcntl extends controller {
 		
 		return $ret;	
 	} 
-
-	
-
 
 	//override
     protected function event($event,$dpc_init=null) {  

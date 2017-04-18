@@ -191,40 +191,50 @@ class CCPP
 	protected function _varMacros()
 	{   
 	    //cookies
-	    foreach ($_COOKIE as $var=>$val) {
-			$variable = 'COOKIE_'.strtoupper($var);
-			$cookies_macros[$variable] = (is_array($val)) ? 1 : (is_numeric($val) ? $val : $this->_protector_quote($val));
-	    }
-		if (!empty($cookies_macros))
-			$this->macros += $cookies_macros;	
+		if (!empty($_COOKIE)) {
+			foreach ($_COOKIE as $var=>$val) {
+				$variable = 'COOKIE_'.strtoupper($var);
+				$cookies_macros[$variable] = (is_array($val)) ? 1 : (is_numeric($val) ? $val : $this->_protector_quote($val));
+			}
+			if (!empty($cookies_macros))
+				$this->macros += $cookies_macros;
+		}		
 	    //session
-	    foreach ($_SESSION as $var=>$val) {
-			$variable = 'SES_'.strtoupper($var);
-			$session_macros[$variable] = (is_array($val)) ? 1 : (is_numeric($val) ? $val : $this->_protector_quote($val));
-	    }
-		if (!empty($session_macros))
-			$this->macros += $session_macros;
+		if (!empty($_SESSION)) {
+			foreach ($_SESSION as $var=>$val) {
+				$variable = 'SES_'.strtoupper($var);
+				$session_macros[$variable] = (is_array($val)) ? 1 : (is_numeric($val) ? $val : $this->_protector_quote($val));
+			}
+			if (!empty($session_macros))
+				$this->macros += $session_macros;
+		}
         //globals
-	    foreach ($GLOBALS as $var=>$val) {
-			$variable = 'GLOBAL_'.strtoupper($var);
-			$globals_macros[$variable] = (is_array($val)) ? 1 : (is_numeric($val) ? $val : $this->_protector_quote($val));
-	    }
-		if (!empty($globals_macros))
-			$this->macros += $globals_macros;
+		if (!empty($_GLOBALS)) {
+			foreach ($GLOBALS as $var=>$val) {
+				$variable = 'GLOBAL_'.strtoupper($var);
+				$globals_macros[$variable] = (is_array($val)) ? 1 : (is_numeric($val) ? $val : $this->_protector_quote($val));
+			}
+			if (!empty($globals_macros))
+				$this->macros += $globals_macros;
+		}	
         //get
-	    foreach ($_GET as $var=>$val) {
-			$variable = 'GET_'.strtoupper($var);
-			$get_macros[$variable] = is_numeric($val) ? $val : $this->_protector_quote($val);
-	    }
-		if (!empty($get_macros))
-			$this->macros += $get_macros;			
+		if (!empty($_GET)) {
+			foreach ($_GET as $var=>$val) {
+				$variable = 'GET_'.strtoupper($var);
+				$get_macros[$variable] = is_numeric($val) ? $val : $this->_protector_quote($val);
+			}
+			if (!empty($get_macros))
+				$this->macros += $get_macros;	
+		}		
 	    //post
-	    foreach ($_POST as $var=>$val) {
-			$variable = 'POST_'.strtoupper($var);
-			$post_macros[$variable] = is_numeric($val) ? $val : $this->_protector_quote($val);
-	    }
-		if (!empty($post_macros))
-			$this->macros += $post_macros;		
+		if (!empty($_POST)) {
+			foreach ($_POST as $var=>$val) {
+				$variable = 'POST_'.strtoupper($var);
+				$post_macros[$variable] = is_numeric($val) ? $val : $this->_protector_quote($val);
+			}
+			if (!empty($post_macros))
+				$this->macros += $post_macros;		
+		}
 		
 	    //login (special vars)
 		if ($GLOBALS['UserName'] || $_SESSION['UserName'])

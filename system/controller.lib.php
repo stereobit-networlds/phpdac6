@@ -10,7 +10,7 @@ class controller  {
 	private $_security;
     private $systemdb;
 	
-    public function __construct($dac=null,$dacpost=null) {
+    public function __construct($code=null,$preprocess=null,$locales=null) {
 
 		$this->_events  = array();	  	
 		$this->_actions = array();
@@ -23,7 +23,6 @@ class controller  {
 	    require_once(_DPCPATH_."/".$dpc);
     }
    
-	//return the file name or stream
 	public function require_dpc($dpc, $cgipath=null) {
 
 		$ret = _DPCPATH_."/".$dpc;
@@ -191,12 +190,6 @@ class controller  {
 	 	  
 	}
 
-
-    //PUBLIC (replace require (see eventsrv.dpc))
-	//       include the file and make a new object 
-	//$dpc = name of dpc
-	//$type = type (lib or dpc)
-	//include and create a new dpc object (mode:one by one) 
 	public function init_object($dpc,$type) {
       global $__DPC,$__DPCSEC,$__DPCMEM,$__ACTIONS,$__EVENTS,$__LOCALE,$__PARSECOM,
              $__BROWSECOM,$__BROWSEACT,$__PRIORITY,$__QUEUE,$__DPCATTR,$__DPCPROC;	
@@ -234,9 +227,9 @@ class controller  {
 		
 	//alias of _new(parent).....init_object,,,......(mode:one by one)
 	public function calldpc($dpcexpression,$type='dpc') {
-	   //echo $dpcexpression,"\n";
-       return $this->init_object($dpcexpression,$type);
-       //return $this->_new($dpcexpression,$type);	   
+		//echo $dpcexpression,"\n";
+		return $this->init_object($dpcexpression,$type);
+		//return $this->_new($dpcexpression,$type);	   
 	}	
 	
 	
