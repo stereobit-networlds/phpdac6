@@ -31,32 +31,30 @@ $__DPC['PROCESS_DPC'] = 'process';
 require_once(GetGlobal('controller')->require_dpc('process/pstack.lib.php'));
 require_once(GetGlobal('controller')->require_dpc('process/processInst.lib.php'));
 
-$__EVENTS['PROCESS_DPC'][0]= "process";
+//$__EVENTS['PROCESS_DPC'][0]= "process";
 
-$__ACTIONS['PROCESS_DPC'][0]= "process";
+//$__ACTIONS['PROCESS_DPC'][0]= "process";
 
 class process extends pstack {
 
-	protected $proccesChain, $processStack;
+	protected $proccesChain;
 
-	public function __construct(& $caller, $p=null, $cmd=null) {
+	public function __construct(& $caller, $chain=null, $cmd=null) {
 
 		parent::__construct($caller); //not a name or stack in this
 		
-		if (strstr($p,',')) //process chain
-			$this->proccesChain = explode(',', $p);
+		if (strstr($chain,',')) //process chain
+			$this->proccesChain = explode(',', $chain);
 		else	
-			$this->proccesChain[0] = $p;
+			$this->proccesChain[0] = $chain;
 		
-		//print_r($this->proccesChain);
-		if ((!$cmd) || ($cmd=='process')) //when no getreq t check at construct else after event
+		//when no getreq t check at construct else after event
+		if ((!$cmd) || ($cmd=='process')) 
 			$this->isFinished();
 		
 		//echo 'construct: ' . $this->processName . '<br/>';
-		//is null
-		//$this->processStack = (array) GetGlobal('controller')->getProcessStack();
 	}
-	
+	/*
 	public function event($event=null) {
 		switch ($event) {
 			
@@ -83,9 +81,11 @@ class process extends pstack {
 
 		return ($ret);	
 	}		
-	
+	*/
 	public function isFinished($event=null) {
 		if (!$this->user) return false;		
+		if ($this->isClosedProcess()) return true;
+		
 		$stack =  GetGlobal('controller')->getProcessStack(); 
 
 		if ($this->debug) {
@@ -99,60 +99,61 @@ class process extends pstack {
 		switch ($this->pMethod) {
 			
 			case 'puzzled'    :	
-				//run specific process class
-				if ($this->isClosedProcess()) {
+				/*if ($this->isClosedProcess()) {
 					break;
-				}
-			    elseif ($rid = $this->isRunningProcess()) {
-					$us = $this->clp; 
-					//echo 'Running:' . $rid;
-				}	
-				else 
-					$us = $this->pid;
+				}*/
 				
+				//when running pid is the process run id
+			    $us = ($this->isRunningProcess()) ?	$this->clp : $this->pid;
+				
+				//run specific process class
 				$usClass = str_replace('-','_', $us);
 				$inChain = in_array($usClass, $this->getProcessChain());		
 				if ((class_exists($usClass)) && ($inChain)) {
-					/*try {
-						$c = new $usClass($this->caller, $this->callerName, $stack);
-						if (!$c->isFinished($event)) return false;
-					}	
-					catch(Exception $e){
-						//echo 'Process Exception:' . $e->getMessage();
-						throw $e;
-					}*/
 					if (!$this->runInstance($usClass, $event)) 
 						return false;	
 				}	
 				break;			
 			
-			case 'serialized' : //must be based on db data -> state
-			
-				//check execution state by saving the caller class name
-			    //echo $this->callerName,':',GetSessionParam('pCallerName');
-				if (($sCaller = GetSessionParam('pCallerName')) && ($this->callerName != $sCaller))
-					return false;
-				
-				foreach ($this->proccesChain as $i=>$processInst) {
-					//echo "<br/>$i $processInst<br/>";
-					//$c = new $processInst($this->caller, $this->callerName, $stack);
-					//if (!$c->isFinished($event)) {
-					if (!$this->runInstance($processInst, $event)) { 
-						SetSessionParam('pCallerName', $this->callerName);
-						return false;
-					}	
+			case 'serialized' : 
+				/*if ($this->isClosedProcess()) {
+					break;
 				}
-				//when true reset
-				SetSessionParam('pCallerName', null); 
+				*/
+			    if ($rid = $this->isRunningProcess()) {
+					echo 'Running:' . $rid;
+					//get next state call
+					//$stateClass = ...
+					//if (!$this->runInstance($stateClass, $event)) 
+						return false;
+				}	
+				else { //static run
+					//check execution state by saving the caller class name
+					//echo $this->callerName,':',GetSessionParam('pCallerName');
+					if (($sCaller = GetSessionParam('pCallerName')) && ($this->callerName != $sCaller))
+						return false;
+				
+					foreach ($this->proccesChain as $i=>$processInst) {
+						if (!$this->runInstance($processInst, $event)) { 
+							SetSessionParam('pCallerName', $this->callerName);
+							return false;
+						}	
+					}
+					//when true reset
+					SetSessionParam('pCallerName', null); 
+				}
 				break;
 				
 			case 'balanced'   :			
 			default           :
-			
+				/*if ($this->isClosedProcess()) {
+					break;
+				}
+				*/
+				if ($rid = $this->isRunningProcess()) 
+					echo 'Running:' . $rid;
+		
 				foreach ($this->proccesChain as $i=>$processInst) {
-					//echo "<br/>$i $processInst<br/>";
-					//$c = new $processInst($this->caller, $this->callerName, $stack);
-					//if (!$c->isFinished($event)) return false;
 					if (!$this->runInstance($processInst, $event)) 
 						return false;
 				}

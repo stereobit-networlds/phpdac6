@@ -22,37 +22,12 @@ class processInst extends Process\pstack {
 	
 	
 	public function isFinished($event=null) {
-		//if (!$this->isProcessUser($event)) return false;
 		if (!$this->isProcessUser()) 
 			return false;
 		
 		$this->event = $event;
 		return true;
-		
-		/*		
-		switch ($this->pMethod) {
-			case 'puzzled'    :
-			
-			case 'serialized' :	if (!$this->isFinishedChain($event)) {
-									echo 'serialized:halt ' . $this->caller;;
-									return false;
-								}	
-								break;
-			case 'balanced'   :			
-			default           :	return true;
-		}	
-		
-		return false;*/
-	}
-
-	/*public function isFinishedChain($event=null) {
-		$this->event = $event;
-
-		if ($this->getNextInChain())
-			return false;
-		
-		return true;//$this->isFinished($event);
-	}*/	
+	}	
 	
 	public function nextStep($event=null) {
 		if ($this->getProcessStepInfo('isNext')) {
@@ -84,11 +59,7 @@ class processInst extends Process\pstack {
 		return $this->getProcessStepInfo('caller') .'.'. $this->getProcessStepInfo('name') .
 			   (($e = ($event ? $event : $this->event)) ? ' use ' . $e : null);	
 	}	
-	/*
-	protected function getProcessStepName() {
-		return $this->processStepName;
-	}	
-	*/
+
 	//alias
 	protected function getProcessChainName() {
 		return $this->getProcessStepName();
@@ -311,6 +282,18 @@ class processInst extends Process\pstack {
 	
 	//misc	
 	
+	protected function debug() {
+		if ($this->debug) {
+			echo ($ps = $this->prevStep($event)) ? '<br/>Prev step:' . $ps : null;
+			echo '<br/>Step:' . $this->step($event);
+			echo ($ns = $this->nextStep($event)) ? '<br/>Next step:' . $ns : null ;
+							
+			echo '<pre>';
+			print_r($this->getProcessStepInfo());
+			echo '</pre>';
+		}		
+	}
+	
 	//test
 	protected function runCode($status=0, $e=null) {
 		
@@ -318,20 +301,8 @@ class processInst extends Process\pstack {
 \$event = '$e'; 
 if (\$this->caller->status>=$status) { 
 	if (\$this->caller->status==$status) {
-		if (\$this->debug) {
-			echo (\$ps = \$this->prevStep(\$event)) ? '<br/>Prev step:' . \$ps : null;
-			echo '<br/>Step:' . \$this->step(\$event);
-			echo (\$ns = \$this->nextStep(\$event)) ? '<br/>Next step:' . \$ns : null ;
 		
-			echo '<pre>';
-			print_r(\$this->getProcessStepInfo());
-			echo '</pre>';
-		}
-				
-		echo \$this->loadForm(\$event);		
-		//\$this->setFormStack(\$event);
-				
-		\$this->stackRunStep(1);
+		\$this->debug();
 	}
 	return true; 
 }	
@@ -354,18 +325,7 @@ return false;
 		}
 		else
 			return ($data);		
-	}	
-	/*
-	protected function isProcessUser($event=null, $level=1) {
-		$e = $event ? $event : $this->event;
-		$processName = str_replace(' use ', '.', $this->step($e));		
-		
-		//validate user of process 
-		//$this->validateUser($this->user, $processName);
-		
-		return (($this->user) && ($this->isLevelUser($level))) ? 
-			true : false;
-	}*/			
+	}			
  
 }
 ?>

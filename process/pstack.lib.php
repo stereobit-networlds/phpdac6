@@ -7,7 +7,7 @@ class pstack {
 	protected $caller, $callerName, $processName; 
 	protected $pid, $clp;
 	
-	var $formStack;
+	static $formStack;
 	
 	public function __construct(& $caller, $callerName=null, $stack=null) {
 		$UserName = GetGlobal('UserName');		
@@ -28,7 +28,7 @@ class pstack {
 		$this->clp = GetReq('clp');
 		//echo $this->pid,'-',$this->pMethod,'>';
 
-		$this->formStack = array();	
+		self::$formStack = array();	
 	}
 	
 	protected function stackCalc($stack=null) {
@@ -101,7 +101,9 @@ class pstack {
 		$db->Execute($sSQL);
 		
 		//sendmail
-		$this->mailto('sales@stereobit.gr','b.alexiou@stereobit.gr',$rid,"http://www.stereobit.gr/process/$rid/");		
+		$mailbody = $this->getPageLink($rid,false,$pname);
+		$subject = $pname. ':'. $rid;
+		$this->mailto('sales@stereobit.gr','b.alexiou@stereobit.gr',$subject,$mailbody);		
 
 		return ($rid); 
 	}
@@ -195,7 +197,9 @@ class pstack {
 			//fire-up another instance of stack (repeat)
 			if ($rid = $this->stackRun()) {
 				//sendmail
-				//$this->mailto('sales@stereobit.gr','b.alexiou@stereobit.gr',$rid,"http://www.stereobit.gr/process/$rid/");
+				//$mailbody = $this->getPageLink($rid, false,$pname);
+				//$subject = $pname. ':'. $rid;
+				//$this->mailto('sales@stereobit.gr','b.alexiou@stereobit.gr',$subject,$mailbody);
 			}
 			
 			return true;
@@ -234,7 +238,7 @@ class pstack {
 		$cSQL = "select rid from pstackend where rid='{$this->pid}' LIMIT 1";
 		$res = $db->Execute($cSQL);
 		if ($res->fields[0]) 
-			return true;
+			return ($res->fields[0]);
 
 		return false; 	
 	}		
@@ -248,13 +252,18 @@ class pstack {
 		$res = $db->Execute($pSQL);
 		
 		foreach ($res as $i=>$rec) {
-			$ret.= "date:" . date('d-m-Y h:i:s',strtotime($rec[0])) . '<br/>';
-			$ret.= "sid:" . $rec[1] . '<br/>';
-			$ret.= "sstep:" . $rec[2] . '<br/>';
-			$ret.= "pstep:" . $rec[3] . ' (' . $this->getProcessById($rec[2], $rec[3]) . ')<br/>';
-			$ret.= "pstate:" . $rec[4] . '<br/>';
-			$ret.= "pobj:" . $rec[5] . '<br/>';
-			$ret.= "puser:" . $rec[6] . '<br/><hr/>';
+			
+			if ($this->isProcessUser($rec[6])) {
+				$ret.= "date:" . date('d-m-Y h:i:s',strtotime($rec[0])) . '<br/>';
+				$ret.= "sid:" . $rec[1] . '<br/>';
+				$ret.= "sstep:" . $rec[2] . '<br/>';
+				$ret.= "pstep:" . $rec[3] . ' (' . $this->getProcessById($rec[2], $rec[3]) . ')<br/>';
+				$ret.= "pstate:" . $rec[4] . '<br/>';
+				$ret.= "pobj:" . $rec[5] . '<br/>';
+				$ret.= "puser:" . $rec[6] . '<br/><hr/>';
+			}
+			else
+				$ret.= "another user<br/><hr/>";
 		}	
 		
 		return ($ret); 		
@@ -262,20 +271,23 @@ class pstack {
 	
 	protected function showOpenProcess() {
 		$db = GetGlobal('db');	
-	
+			
 		//fetch open running process record
-		$pSQL = "select datein,sid,sstep,pstep,pstate,pobj,puser from pstackrun where rid NOT IN (select rid from pstackend) order by id DESC";
+		$pSQL = "select datein,rid,sid,sstep,pstep,pstate,pobj,puser from pstackrun ";
+		$pSQL.= "where rid NOT IN (select rid from pstackend) ";
+		$pSQL.= "AND puser='{$this->user}' order by id DESC";
 		$res = $db->Execute($pSQL);
 		//echo $pSQL;
 		
 		foreach ($res as $i=>$rec) {
 			$ret.= "date:" . date('d-m-Y h:i:s',strtotime($rec[0])) . '<br/>';
-			$ret.= "sid:" . $rec[1] . '<br/>';
-			$ret.= "sstep:" . $rec[2] . '<br/>';
-			$ret.= "pstep:" . $rec[3] . ' (' . $this->getProcessById($rec[2], $rec[3]) . ')<br/>';
-			$ret.= "pstate:" . $rec[4] . '<br/>';
-			$ret.= "pobj:" . $rec[5] . '<br/>';
-			$ret.= "puser:" . $rec[6] . '<br/><hr/>';
+			$ret.= "rid:" . $rec[1] . '<br/>';			
+			$ret.= "sid:" . $rec[2] . '<br/>';
+			/*$ret.= "sstep:" . $rec[3] . '<br/>';
+			$ret.= "pstep:" . $rec[4] . ' (' . $this->getProcessById($rec[2], $rec[3]) . ')<br/>';
+			$ret.= "pstate:" . $rec[5] . '<br/>';
+			$ret.= "pobj:" . $rec[6] . '<br/>';*/
+			$ret.= "puser:" . $rec[7] . '<br/><hr/>';
 		}	
 		
 		return ($ret); 		
@@ -285,18 +297,21 @@ class pstack {
 		$db = GetGlobal('db');	
 	
 		//fetch closed process record
-		$pSQL = "select datein,sid,sstep,pstep,pstate,pobj,puser from pstackrun where pobj IS NULL AND rid IN (select rid from pstackend) order by id DESC";
+		$pSQL = "select datein,rid,sid,sstep,pstep,pstate,pobj,puser from pstackrun ";
+		$pSQL.= "where pobj IS NULL AND rid IN (select rid from pstackend) ";
+		$pSQL.= "AND puser='{$this->user}' order by id DESC";
 		$res = $db->Execute($pSQL);
 		//echo $pSQL;
 		
 		foreach ($res as $i=>$rec) {
 			$ret.= "date:" . date('d-m-Y h:i:s',strtotime($rec[0])) . '<br/>';
-			$ret.= "sid:" . $rec[1] . '<br/>';
-			$ret.= "sstep:" . $rec[2] . '<br/>';
-			$ret.= "pstep:" . $rec[3] . ' (' . $this->getProcessById($rec[2], $rec[3]) . ')<br/>';
-			$ret.= "pstate:" . $rec[4] . '<br/>';
-			$ret.= "pobj:" . $rec[5] . '<br/>';
-			$ret.= "puser:" . $rec[6] . '<br/><hr/>';
+			$ret.= "rid:" . $rec[1] . '<br/>';			
+			$ret.= "sid:" . $rec[2] . '<br/>';
+			/*$ret.= "sstep:" . $rec[3] . '<br/>';
+			$ret.= "pstep:" . $rec[4] . ' (' . $this->getProcessById($rec[2], $rec[3]) . ')<br/>';
+			$ret.= "pstate:" . $rec[5] . '<br/>';
+			$ret.= "pobj:" . $rec[6] . '<br/>';*/
+			$ret.= "puser:" . $rec[7] . '<br/><hr/>';
 		}	
 		
 		return ($ret); 		
@@ -341,7 +356,7 @@ class pstack {
 	}			
 	
 	//get the fire-up user
-	public function getProcessOwner() {
+	protected function getProcessOwner() {
 		$db = GetGlobal('db');	
 
 		//check if there is startup running record
@@ -354,20 +369,20 @@ class pstack {
 	}	
 
 	//get the users included in ulist named as process step name
-	public function isProcessUser($user=null) {
+	protected function isProcessUser($user=null) {
 		$db = GetGlobal('db');	
-		
+		$u = $user ? $user : $this->user;
 		//test
 		return 'vasalex21@gmail.com';
 		
-		if (!filter_var($user, FILTER_VALIDATE_EMAIL))
+		if (!filter_var($u, FILTER_VALIDATE_EMAIL))
 			return false;
 
-		//check if there is startup running record
 		$cSQL = "select email from ulists where listname='{$this->processStepName}'";
 		$res = $db->Execute($cSQL);
+		
 		foreach ($res as $i=>$rec) {
-			if (strstr($user, $rec[0])==0)
+			if (strstr($u, $rec[0])==0)
 				return true;
 		}
 		
@@ -379,8 +394,8 @@ class pstack {
 		$db = GetGlobal('db');	
 		$rid = $this->pid;
 		$from = 'sales@stereobit.gr';
-		$subject = $subj ? $subj : $rid;
-		$mailbody = $body ? $body : "http://www.stereobit.gr/process/$rid/";
+		$mailbody = $body ? $body : $this->getPageLink($rid,false,$pname);		
+		$subject = $subj ? $subj : $pname .':'. $rid; 
 		
 		if ($to) {
 			if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
@@ -408,24 +423,35 @@ class pstack {
 		return ($this->seclevid >= $level) ? true : false;
 	}
 	
-	protected function setFormStack($event=null) {
+	protected static function setFormStack($form=null) {
+		//$this->formStack[] = $this->loadForm($event);
+		//self::$formStack[] = $form; //$this->callerName .'.'. $this->processStepName . ($event ? '.'.$event : null);
+		//$fs = GetGlobal('fs');
+		global $fs;
+		$fs[] = $form;
 
-		$this->formStack[] = $this->loadForm($event);
 		return true;
 	}
 	
-	protected function getFormStack($event=null) {
-		if (empty($this->formStack)) return null;
-		
-		foreach ($this->formStack as $form)
-			$ret .= $form;
+	protected static function getFormStack() {
+		//if (empty(self::$formStack)) return null;
+		//$fs = GetGlobal('fs');
+		global $fs;
+		if (empty($fs)) return null;
+		//echo 'FormStack:<br/>';
+		//foreach (self::$formStack as $form) {
+		foreach ($fs as $form) {	
+			//echo $form . '<br/>';
+			$ret .= self::loadForm($form);
+		}	
 			
 		return ($ret);
 	}	
 	
-	protected function loadForm($event=null) {
-		$e = $event ? $event : null;
-		$formName = str_replace(' use ', '.', $this->step($e));
+	protected static function loadForm($formName=null) {
+		if (!$formName) return null;
+		//$e = $event ? $event : null;
+		//$formName = $this->callerName .'.'. $this->processStepName . ($event ? '.'.$event : null);	
 
 		if (defined('CMSRT_DPC')) {
 			$ret = 'Load form:' . $formName;
@@ -439,8 +465,9 @@ class pstack {
 		}
 		//else
 			//$ret = 'CMS form required:' . $formName;
-		
+
 		return $ret;
+		//return $f;
 	}	
 	
 	protected function loadLoginForm($event=null) {
@@ -524,7 +551,40 @@ class pstack {
         
         echo "File creation error ({$this->processName})!<br/>";
         return false;
-	} 		
- 	
+	} 	
+
+	protected function getPageLink($rid=null, $url=false, &$processName=null) {
+		$httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		$httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
+		$u = $url ? $url : $httpurl;//"http://www.stereobit.gr/";
+		$n = pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);
+		$p = explode('.', $n);
+		
+		if (strstr($p[0],'_')) {
+			$pn = explode('_', $p[0]);
+			$processName = localize($pn[1], getlocal());
+			
+			$link = $u . '/p/'. $pn[1] .'/';
+			$link.= $rid ? $rid .'/' : null;
+			return $link;
+		}
+		
+		$processName = localize(array_shift($p), getlocal());
+		$link = $u . '/process/';
+		$link.= $rid ? $rid .'/' : null;		
+		
+		return ($link); 
+ 	}
+	
+	protected function getPageProcessName($rid=null, $url=false) {
+		$u = $url ? $url : "http://www.stereobit.gr/";
+		$n = pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);
+		$p = explode('.', $n);
+		
+		if (strstr($p[0],'_')) 
+			return localize($pn[1], getlocal());
+			
+		return localize(array_shift($p), getlocal());
+ 	}	
 }
 ?>

@@ -102,14 +102,16 @@ class sandbox extends Process\process {
 			default        : 
 				if ($this->isClosedProcess()) {
 					//process closed
-					$ret = $this->getFormStack();
-					$ret.= $this->showProcess(null,99); //show prev steps
+					$ret = $this->showProcess(null,99); //show prev steps
+					$ret.='<br/>';
+					$ret.= self::getFormStack(); //at last step
 				}		
 				elseif ($this->isRunningProcess()) {
-					//is running process
-					$ret = $this->getFormStack();					
-					$ret.= $this->showProcess();
+					//is running process					
+					$ret = $this->showProcess();
 					$ret.= $this->stackCalc();
+					$ret.='<br/>';
+					$ret.= self::getFormStack();
 				}
 				else {
 					//command action
@@ -131,7 +133,7 @@ class sandbox extends Process\process {
 				}
 			}		
 		}
-
+		
 		return ($ret);	
 	}
 		

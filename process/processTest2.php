@@ -29,37 +29,15 @@ class processTest2 extends processInst {
 			return false;
 		}	
 
-		return $this->runCode(1, $event);
-		
-		
-		//...............................		
-		
-		
-		if (parent::isFinished($event)) {
-		
-		//echo 'Process 2:',$event;
-		//return ($this->caller->status>1) ? true : false;
-		
-		if ($this->caller->status>=1) {
-			if ($this->caller->status==1) {
-				if ($this->debug) {
-				echo ($ps = $this->prevStep($event)) ? '<br/>Prev step:' . $ps : null;
-				echo '<br/>Step:' . $this->step($event);
-				echo ($ns = $this->nextStep($event)) ? '<br/>Next step:' . $ns : null ;
-		
-				echo '<pre>';
-				print_r($this->getProcessStepInfo());
-				echo '</pre>';	
-				}
-				
-				echo $this->loadForm($event);
-				
-				$this->stackRunStep(1);
-			}
+		if ($this->runCode(1, $event)) {
+			
+			$form = $this->callerName .'.'. $this->processStepName . ($event ? '.' . $event : null);			
+			self::setFormStack($form);
+			
+			$this->stackRunStep(1);
 			return true;
-		}		
-		}	
-		$this->stackRunStep();
+		};
+		
 		return false;
 	}	
  
