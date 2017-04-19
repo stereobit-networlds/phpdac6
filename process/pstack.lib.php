@@ -7,8 +7,6 @@ class pstack {
 	protected $caller, $callerName, $processName; 
 	protected $pid, $clp;
 	
-	static $formStack;
-	
 	public function __construct(& $caller, $callerName=null, $stack=null) {
 		$UserName = GetGlobal('UserName');		
 		$UserSecID = GetGlobal('UserSecID');
@@ -24,11 +22,9 @@ class pstack {
 		$this->caller = $caller; //obj
 		$this->callerName = get_class($caller);
 		$this->processName = 'process-' . $this->callerName;		
-		$this->pid = GetReq('pid');
-		$this->clp = GetReq('clp');
+		$this->pid = GetParam('pid');
+		$this->clp = GetParam('clp');
 		//echo $this->pid,'-',$this->pMethod,'>';
-
-		self::$formStack = array();	
 	}
 	
 	protected function stackCalc($stack=null) {
@@ -55,61 +51,70 @@ class pstack {
 		$stack =  GetGlobal('controller')->getProcessStack();
 		if (empty($stack)) return;
 		
-		$thisFile = $_SERVER['PHP_SELF'];	
+		if ($sid = $this->processRegister()) {
 		
-		$sid = md5(serialize($stack) .'|'. $this->pMethod);
+			//register stack with selected method		
+			$thisFile = $_SERVER['PHP_SELF'];	
+			$notes = $this->pMethod . $thisFile;			
+			$cid=0;
+			
+			foreach ($stack as $caller=>$chain)	{
+				$cid+=1; //start at 1
+				$cobj = $caller;
+				$cprocess = implode(',', $chain);
+				$sSQL = "insert into pstack (sid,cid,cobj,cprocess,cmethod,notes) values (";
+				$sSQL.= "'$sid',$cid,'$cobj','$cprocess','{$this->pMethod}','$notes')";
+				$db->Execute($sSQL);
+			}
+			return ($cid); //stack count
+		}
+		return false;	
+	}
+	
+	protected function stackIsRegistered($sid=null) {
+		if (!$sid) return false;
+		$db = GetGlobal('db');
 		
-		//check if stack exist
 		$cSQL = "select sid from pstack where sid='$sid' LIMIT 1";
 		$res = $db->Execute($cSQL);
-		if ($res->fields[0]) return -1; //stack exist
+		if ($res->fields[0]) 
+			return true;	
 		
-		//register stack with selected method
-		$cid=0;
-		foreach ($stack as $caller=>$chain)	{
-			$cid+=1; //start at 1
-			$cobj = $caller;
-			$cprocess = implode(',', $chain);
-			$sSQL = "insert into pstack (sid,cid,cobj,cprocess,cmethod,notes) values (";
-			$sSQL.= "'$sid',$cid,'$cobj','$cprocess','{$this->pMethod}','$thisFile')";
-			$db->Execute($sSQL);
-		}
-		return ($cid); //stack count
-	}
+		return false;
+	}	
 	
 	protected function stackRun() {
 		$db = GetGlobal('db');
 		$stack =  GetGlobal('controller')->getProcessStack();
-		if (empty($stack)) return;
-			
-		$rid = md5(serialize($stack) .'|'. $this->pMethod . '|' . time());			
+		if (empty($stack)) return false;
+						
 		$sid = md5(serialize($stack) .'|'. $this->pMethod);
 		
-		//check if stack is registered
-		$cSQL = "select sid from pstack where sid='$sid' LIMIT 1";
-		$res = $db->Execute($cSQL);
-		if (!$res->fields[0]) return false; 
+		if (($this->processisActive($sid)) && 
+			($this->stackIsRegistered($sid))) {
+				
+			//$rid = md5(serialize($stack) .'|'. $this->pMethod . '|' . time());
+			$rid = md5($sid . '|' . time());
+				
+			//put initial record indicates stack running id
+			$sSQL = "insert into pstackrun (rid,sid,puser) values (";
+			$sSQL.= "'$rid','$sid','{$this->user}')";
+			$db->Execute($sSQL);
+			//if ($db->Affected_Rows()) {	
 		
-		//check if stack is already running (sid)
-		/*$cSQL = "select sid from pstackrun where sid='$sid' LIMIT 1";
-		$res = $db->Execute($cSQL);
-		if ($res->fields[0]) return false; 		
-		*/
-		//put initial record indicates stack running id
-		$sSQL = "insert into pstackrun (rid,sid,puser) values (";
-		$sSQL.= "'$rid','$sid','{$this->user}')";
-		$db->Execute($sSQL);
-		
-		//sendmail
-		$mailbody = $this->getPageLink($rid,false,$pname);
-		$subject = $pname. ':'. $rid;
-		$this->mailto('sales@stereobit.gr','b.alexiou@stereobit.gr',$subject,$mailbody);		
+			//sendmail
+			$mailbody = $this->getPageLink($rid,false,$pname);
+			$subject = $pname. ':'. $rid;
+			$this->mailto('sales@stereobit.gr','b.alexiou@stereobit.gr',$subject,$mailbody);		
 
-		return ($rid); 
+			return ($rid);
+		}
+
+		return false;	
 	}
 	
 	//update running stack step
-	protected function stackRunSave($state, $chainid, $stackid) {
+	protected function stackRunSave($state, $stackid, $chainid) {
 		$db = GetGlobal('db');
 		$stack =  GetGlobal('controller')->getProcessStack();
 		if (empty($stack)) return false;
@@ -117,40 +122,51 @@ class pstack {
 		if (!$rid = $this->pid) return false; //not an run id
 		$sid = md5(serialize($stack) .'|'. $this->pMethod);		
 
-		//check if stack is registered
-		$cSQL = "select sid from pstack where sid='$sid' LIMIT 1";
-		$res = $db->Execute($cSQL);
-		if (!$res->fields[0]) return false; 
-		
-		//check if stack is running (rid)
-		$cSQL = "select rid from pstackrun where rid='$rid' LIMIT 1";
-		$res = $db->Execute($cSQL);
-		if (!$res->fields[0]) return false; 		
-		
-		//in case of puzzled method may need to not save (act as history)
-		if (!$this->stackRunIsSaved($state, $chainid, $stackid)) {
-			//put step record
-			$sSQL = "insert into pstackrun (rid,sid,sstep,pstep,pstate,pobj,puser) values (";
-			$sSQL.= "'$rid','$sid','$stackid','$chainid','$state','{$this->callerName}','{$this->user}')";
-			$db->Execute($sSQL);
-			//if affected rows return true
+		if ($this->isRunningProcess()) {
+					
+			//in case of puzzled method may need to not save (act as history)
+			if (!$this->stackRunIsSaved($state, $rid, $sid, $stackid, $chainid)) {				
+				
+				//put step record
+				$sSQL = "insert into pstackrun (rid,sid,sstep,pstep,pstate,pobj,puser) values (";
+				$sSQL.= "'$rid','$sid','$stackid','$chainid','$state','{$this->callerName}','{$this->user}')";
+				$db->Execute($sSQL);
+			}
 			
-			//check for closed stack after runsave
-			$ret = $this->isClosedStack();
+			//put post record			
+			$fn = $this->callerName .'.'. $this->getProcessById($stackid, $chainid);
+			if ($this->hasForm($fn)) {
+			  if ((!empty($_POST)) && ($_POST['pname'] == $fn)) {
+				
+				if (!$this->stackPostIsSaved($rid, $sid, $stackid, $chainid)) {
+				
+					//put post record 
+					$pdata = json_encode($_POST); //addslashes(json_encode($_POST));
+					$pSQL = "insert into pstackpoint (rid,sid,sstep,pstep,pstate,pobj,puser,pdata) values (";
+					$pSQL.= "'$rid','$sid','$stackid','$chainid','$state','{$this->callerName}','{$this->user}','$pdata')";
+					//echo $pSQL;
+					$db->Execute($pSQL);
+				}
+				
+				//when submit
+				//check for closed stack after runsave
+				$ret = $this->isClosedStack();				
+				return ($ret);
+			  }	
+			}	
+			else { //no form, no post
+				$ret = $this->isClosedStack(); 			
+				return ($ret);
+			}
+			//return false;
 		}
-		
-		return (true); 
+		return false;
 	}	
 	
 	//not to rewrite in db
-	protected function stackRunIsSaved($state, $chainid, $stackid) {
+	protected function stackRunIsSaved($state, $rid, $sid, $stackid, $chainid) {
 		$db = GetGlobal('db');		
-		$stack =  GetGlobal('controller')->getProcessStack();
-		if (empty($stack)) return false;
-		
-		if (!$rid = $this->pid) return false; //not an run id
-		$sid = md5(serialize($stack) .'|'. $this->pMethod);
-		
+
 		$sSQL = "select rid from pstackrun ";
 		$sSQL.= "where rid='$rid' and sid='$sid' and sstep=$stackid and pstep=$chainid ";
 		$sSQL.= "and pstate=$state and pobj='{$this->callerName}' and puser='{$this->user}'";
@@ -159,6 +175,38 @@ class pstack {
 		
 		return ($res->fields[0]) ? true : false;
 	}
+	
+	//not to rewrite in db
+	protected function stackPostIsSaved($rid, $sid, $stackid, $chainid) {
+		$db = GetGlobal('db');	
+		
+		$sSQL = "select rid from pstackpoint ";
+		$sSQL.= "where rid='$rid' and sid='$sid' and sstep=$stackid and pstep=$chainid ";
+		$sSQL.= "and pobj='{$this->callerName}' and puser='{$this->user}'";
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);		
+		
+		return ($res->fields[0]) ? true : false;
+	}	
+	
+	protected function stackViewPost() {
+		print_r($_POST);
+		return $this->stackView();
+	}
+
+	protected function stackPost($data=false, $chainid, $stackid) {
+		$db = GetGlobal('db');
+		$df = $data ? 'pdata' : 'rid';		
+
+		//return process post
+		$cSQL = "select $df from pstackpoint where rid='{$this->pid}' and sstep=$stackid and pstep=$chainid and pobj='{$this->callerName}' LIMIT 1";
+		$res = $db->Execute($cSQL);
+		//echo $cSQL .'>'. $res->fields[0];;
+		if ($res->fields[0]) 
+			return ($res->fields[0]);
+
+		return false; 				
+	}		
 	
 	//check all stack records
 	protected function isClosedStack() {
@@ -188,7 +236,7 @@ class pstack {
 			}
 			
 			//put end record
-			$sSQL = "insert into pstackend (rid,sid) values ('$rid','$sid')";
+			$sSQL = "update pstackrun set pstate=1 where pobj IS NULL AND rid='$rid' AND sid='$sid'";
 			$db->Execute($sSQL);
 			
 			//sendmail to process owner
@@ -208,6 +256,27 @@ class pstack {
 		return false;	
 	}	
 	
+	
+	protected function setFormStack($form=null) {
+		global $fs;
+		
+		$fs[] = $form;
+
+		return true;
+	}
+	
+	protected function getFormStack() {
+		global $fs;
+		if (empty($fs)) return null;
+
+		foreach ($fs as $form) {	
+			//echo $form . '<br/>';
+			$ret .= $this->loadForm($form);
+		}	
+			
+		return ($ret);
+	}	
+	
 	//process
 	
 	protected function getProcessName() {
@@ -217,12 +286,43 @@ class pstack {
 	protected function getProcessStepName() {
 		return $this->processStepName;
 	}		
+	
+	//return array of process,call object,user,state
+	protected function getProcessStep() {
+		$db = GetGlobal('db');	
+	
+		if ($this->isRunningProcess())  {
+			//fetch last run process record
+			$pSQL = "select sstep,pstep,pobj,puser,pstate from pstackrun where rid='{$this->pid}' order by id DESC LIMIT 1";
+			//and pobj='{$this->callerName}' 
+			$res = $db->Execute($pSQL);
+			if (($stackid = $res->fields[0]) && ($chainid = $res->fields[1])) {
+				echo 'a:',$stackid,':',$chainid;
+				$ret = array($this->getNextProcessById($stackid, $chainid),
+							 $this->getNextCallerById($stackid, $chainid),
+							 $res->fields[3],
+							 $res->fields[4]);	
+				return ($ret);
+			}	
+			//else rec field IS NULL but running 
+			//fetch first step
+			echo 'b:';
+			$ret = array($this->getProcessById(),
+						$this->getCallerById(),
+						null,
+						null);	
+			return ($ret);
+		}
+		//or not running (rec is not exist)
+		//echo 'c';
+		return array();//false; 		
+	}	
 
 	protected function isRunningProcess() {
 		$db = GetGlobal('db');	
 
 		//check if id is a running process
-		$cSQL = "select rid from pstackrun where rid='{$this->pid}' LIMIT 1";
+		$cSQL = "select rid from pstackrun where rid='{$this->pid}' and pobj IS NULL AND (pstate IS NULL OR pstate=0) LIMIT 1";
 		$res = $db->Execute($cSQL);
 		if ($res->fields[0]) 
 			return ($res->fields[0]);
@@ -230,12 +330,13 @@ class pstack {
 		return false; 			
 	}	
 
-	//check pstackend table
-	protected function isClosedProcess() {
+	protected function isClosedProcess($pid=null) {
 		$db = GetGlobal('db');	
+		$rid = $pid ? $pid : $this->pid;
 	
 		//check if id is an ended process
-		$cSQL = "select rid from pstackend where rid='{$this->pid}' LIMIT 1";
+		$cSQL = "select rid from pstackrun where pobj IS NULL AND pstate=1 AND rid='$rid' LIMIT 1";
+		
 		$res = $db->Execute($cSQL);
 		if ($res->fields[0]) 
 			return ($res->fields[0]);
@@ -274,7 +375,7 @@ class pstack {
 			
 		//fetch open running process record
 		$pSQL = "select datein,rid,sid,sstep,pstep,pstate,pobj,puser from pstackrun ";
-		$pSQL.= "where rid NOT IN (select rid from pstackend) ";
+		$pSQL.= "where pobj IS NULL AND (pstate IS NULL OR pstate=0) "; 
 		$pSQL.= "AND puser='{$this->user}' order by id DESC";
 		$res = $db->Execute($pSQL);
 		//echo $pSQL;
@@ -298,8 +399,8 @@ class pstack {
 	
 		//fetch closed process record
 		$pSQL = "select datein,rid,sid,sstep,pstep,pstate,pobj,puser from pstackrun ";
-		$pSQL.= "where pobj IS NULL AND rid IN (select rid from pstackend) ";
-		$pSQL.= "AND puser='{$this->user}' order by id DESC";
+		$pSQL.= "where pobj IS NULL AND pstate=1 ";	
+		$pSQL.= "AND puser='{$this->user}' order by datein DESC";
 		$res = $db->Execute($pSQL);
 		//echo $pSQL;
 		
@@ -317,6 +418,51 @@ class pstack {
 		return ($ret); 		
 	}	
 	
+	protected function processRegister() {
+		$db = GetGlobal('db');
+		$stack =  GetGlobal('controller')->getProcessStack();
+		if (empty($stack)) return false;
+		
+		$thisFile = $_SERVER['PHP_SELF'];	
+		$sid = md5(serialize($stack) .'|'. $this->pMethod);
+		
+		//check if process exist
+		$cSQL = "select sid from process where sid='$sid' LIMIT 1";
+		$res = $db->Execute($cSQL);
+		if ($res->fields[0]) return false; //process exist
+		
+		$sSQL = "insert into process (sid,active,method,notes) values (";
+		$sSQL.= "'$sid',1,'{$this->pMethod}','$thisFile')";
+		$db->Execute($sSQL);
+
+		return ($sid); 
+	}	
+	
+	protected function processExist($sid=null) {
+		if (!$sid) return false;
+		$db = GetGlobal('db');
+		
+		$cSQL = "select sid from process where sid='$sid' LIMIT 1";
+		$res = $db->Execute($cSQL);
+		if ($res->fields[0]) 
+			return true;	
+		
+		return false;
+	}	
+	
+	protected function processIsActive($sid=null) {
+		if (!$sid) return false;
+		$db = GetGlobal('db');
+		
+		$cSQL = "select sid from process where sid='$sid' and active=1";
+		$res = $db->Execute($cSQL);
+		if ($res->fields[0]) 
+			return true;	
+		
+		return false;
+	}	
+		
+	
 	protected function getProcessById($stackid=1, $chainid=1) {
 		$stack = (array) GetGlobal('controller')->getProcessStack();
 		$sid = 0;
@@ -332,8 +478,59 @@ class pstack {
 			$sid+=1;
 		}
 		
-		return $chainid;		
+		return false;		
 	}
+	
+	protected function getNextProcessById($stackid=1, $chainid=1) {
+		$stack = (array) GetGlobal('controller')->getProcessStack();
+		$sid = 0;
+		$cid = 0;
+		foreach ($stack as $stackName=>$processChain) {
+			if ($sid==$stackid-1) {
+				if ($ret = $processChain[$chainid]) //=+1 without -
+					return ($ret);		
+			}
+			elseif ($sid==$stackid) {
+				$ret = $processChain[0];
+				break;
+			}	
+			$sid+=1;
+		}
+		//break..
+		return $ret;		
+	}
+
+	protected function getNextCallerById($stackid=1, $chainid=1) {
+		$stack = (array) GetGlobal('controller')->getProcessStack();
+		$sid = 0;
+		$cid = 0;
+		foreach ($stack as $stackName=>$processChain) {
+			if ($sid==$stackid-1) { //same caller
+				if ($processChain[$chainid]) //=+1 without -
+					return ($this->getCallerNameInStack($stackName));		
+			}
+			elseif ($sid==$stackid) { //next stack caller
+				$ret = $this->getCallerNameInStack($stackName);
+				break;
+			}	
+			$sid+=1;
+		}
+		//break..
+		return $ret;		
+	}	
+	
+	protected function getCallerById($stackid=1) {
+		$stack = (array) GetGlobal('controller')->getProcessStack();
+		$sid = 0;
+		foreach ($stack as $stackName=>$processChain) {
+			if ($sid==$stackid-1) {
+				return $this->getCallerNameInStack($stackName);
+			}
+			$sid+=1;
+		}
+		
+		return false;		
+	}	
 		
 	protected function getProcessChain() {
 		$stack = (array) GetGlobal('controller')->getProcessStack();
@@ -422,38 +619,31 @@ class pstack {
 	protected function isLevelUser($level=1) {
 		return ($this->seclevid >= $level) ? true : false;
 	}
-	
-	protected static function setFormStack($form=null) {
-		//$this->formStack[] = $this->loadForm($event);
-		//self::$formStack[] = $form; //$this->callerName .'.'. $this->processStepName . ($event ? '.'.$event : null);
-		//$fs = GetGlobal('fs');
-		global $fs;
-		$fs[] = $form;
 
-		return true;
-	}
-	
-	protected static function getFormStack() {
-		//if (empty(self::$formStack)) return null;
-		//$fs = GetGlobal('fs');
-		global $fs;
-		if (empty($fs)) return null;
-		//echo 'FormStack:<br/>';
-		//foreach (self::$formStack as $form) {
-		foreach ($fs as $form) {	
-			//echo $form . '<br/>';
-			$ret .= self::loadForm($form);
-		}	
-			
-		return ($ret);
+	protected function hasForm($formName=null) {
+		$db = GetGlobal('db');		
+		if (!$formName) return null;
+
+		//if (defined('CRMFORMS_DPC')) {
+			$sSQL = "select code from crmforms where class='process' AND code=" . $db->qstr($formName);
+			//echo $sSQL;
+			$res = $db->Execute($sSQL);			
+			$ret = $res->fields[0];			
+		//}
+		return ($ret ? true : false);
 	}	
 	
-	protected static function loadForm($formName=null) {
+	protected function loadForm($formName=null) {
+		$db = GetGlobal('db');		
 		if (!$formName) return null;
-		//$e = $event ? $event : null;
-		//$formName = $this->callerName .'.'. $this->processStepName . ($event ? '.'.$event : null);	
 
-		if (defined('CMSRT_DPC')) {
+		//if (defined('CRMFORMS_DPC')) {
+			$sSQL = "select formdata from crmforms where class='process' AND code=" . $db->qstr($formName);
+			//echo $sSQL;
+			$res = $db->Execute($sSQL);			
+			$ret = base64_decode($res->fields['formdata']);			
+		/*}
+		elseif (defined('CMSRT_DPC')) {
 			$ret = 'Load form:' . $formName;
 			if (!$f = _m("cmsrt.select_template use $formName+1+p")) {
 				//generic form without caller name
@@ -462,11 +652,13 @@ class pstack {
 				$ret.= '/' . $fn[1];
 			}
 			$ret.= $f;
-		}
+		}*/
 		//else
 			//$ret = 'CMS form required:' . $formName;
 
-		return $ret;
+		return str_replace(array('__PID__', '__PROCESSNAME__'),
+						   array(GetParam('pid'), $formName), 
+							$ret);
 		//return $f;
 	}	
 	

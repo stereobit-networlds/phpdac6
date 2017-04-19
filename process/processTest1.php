@@ -30,8 +30,8 @@ class processTest1 extends processInst {
 		
 		if ($this->runCode(0, $event)) {
 			
-			$form = $this->callerName .'.'. $this->processStepName . ($event ? '.' . $event : null);			
-			self::setFormStack($form);
+			//$form = $this->callerName .'.'. $this->processStepName . ($event ? '.' . $event : null);			
+			//$this->setFormStack($form);
 			
 			$this->stackRunStep(1);
 			return true;

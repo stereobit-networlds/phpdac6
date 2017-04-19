@@ -99,10 +99,6 @@ class process extends pstack {
 		switch ($this->pMethod) {
 			
 			case 'puzzled'    :	
-				/*if ($this->isClosedProcess()) {
-					break;
-				}*/
-				
 				//when running pid is the process run id
 			    $us = ($this->isRunningProcess()) ?	$this->clp : $this->pid;
 				
@@ -116,16 +112,17 @@ class process extends pstack {
 				break;			
 			
 			case 'serialized' : 
-				/*if ($this->isClosedProcess()) {
-					break;
-				}
-				*/
 			    if ($rid = $this->isRunningProcess()) {
-					echo 'Running:' . $rid;
+					//echo 'Running:' . $rid;
 					//get next state call
-					//$stateClass = ...
-					//if (!$this->runInstance($stateClass, $event)) 
-						return false;
+					list($stateClass,$stateCaller,$stateUser, $stateStatus) = $this->getProcessStep();
+					echo 'class:' . $stateCaller .'/'.$stateClass .'/'.$this->callerName.'<br/>'; 
+					if (($stateClass) && ($stateCaller == $this->callerName)) { 
+						if (!$this->runInstance($stateClass, $event)) 
+							return false;
+					}
+					//else
+					break;
 				}	
 				else { //static run
 					//check execution state by saving the caller class name
@@ -146,12 +143,8 @@ class process extends pstack {
 				
 			case 'balanced'   :			
 			default           :
-				/*if ($this->isClosedProcess()) {
-					break;
-				}
-				*/
-				if ($rid = $this->isRunningProcess()) 
-					echo 'Running:' . $rid;
+				//if ($rid = $this->isRunningProcess()) 
+					//echo 'Running:' . $rid;
 		
 				foreach ($this->proccesChain as $i=>$processInst) {
 					if (!$this->runInstance($processInst, $event)) 

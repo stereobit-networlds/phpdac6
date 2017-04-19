@@ -8,15 +8,11 @@ $__DPC['SANDBOX_DPC'] = 'sandbox';
 
 $__EVENTS['SANDBOX_DPC'][0]= "sandbox";
 $__EVENTS['SANDBOX_DPC'][1]= "process";
-$__EVENTS['SANDBOX_DPC'][2]= "pregister";
-$__EVENTS['SANDBOX_DPC'][3]= "procpost";
 
 $__ACTIONS['SANDBOX_DPC'][0]= "sandbox";
 $__ACTIONS['SANDBOX_DPC'][1]= "process";
-$__ACTIONS['SANDBOX_DPC'][2]= "pregister"; //register a stack
-$__ACTIONS['SANDBOX_DPC'][3]= "procpost"; //handle forms post
 
-//included process dpc at page
+//include process dpc at page
 
 class sandbox extends Process\process {
 
@@ -34,7 +30,7 @@ class sandbox extends Process\process {
 								(((decode($UserSecID))) ? (decode($UserSecID)) : 0));		
 		
 
-		$this->pid = GetReq('pid');
+		$this->pid = GetParam('pid');
 		$this->pMethod = GetGlobal('processMethod');
 		$this->status = _v('shcart.status');
 		
@@ -60,19 +56,19 @@ class sandbox extends Process\process {
 		}	
 		else {		
 			switch ($event) {
-			
-			case 'procpost': 	break;
-			case 'pregister': 	break;
-			
-			case 'sandbox' :
+			case 'sandbox' : 
 			case 'process' :	
 			default        : 
 				if ($this->isRunningProcess()) {
 					//is running process
+					print_r($_POST);
+					$this->stackPost();
 				}
 				else {	
 					//command event
 					switch ($this->pid) {
+					case 'ppst' :			
+									break;	
 					case 'preg' :	//$this->stackView();
 									break;
 					
@@ -92,35 +88,32 @@ class sandbox extends Process\process {
 		}	
 		else {		
 			switch ($action) {
-			case 'procpost': 	$ret = $this->stackView(); 
-								break;
-			case 'pregister': 	$ret = $this->stackView();
-								break;
-			
 			case 'sandbox' :
 			case 'process' :
 			default        : 
 				if ($this->isClosedProcess()) {
 					//process closed
-					$ret = $this->showProcess(null,99); //show prev steps
-					$ret.='<br/>';
-					$ret.= self::getFormStack(); //at last step
+					if (!$ret = self::getFormStack()) { //at last step
+						$ret = $this->showProcess(null,99); //show prev steps
+					}
 				}		
 				elseif ($this->isRunningProcess()) {
-					//is running process					
-					$ret = $this->showProcess();
-					$ret.= $this->stackCalc();
-					$ret.='<br/>';
-					$ret.= self::getFormStack();
+					//is running process	
+					if (!$ret = $this->getFormStack()) {		
+						$ret = $this->showProcess();
+						$ret.= $this->stackCalc();
+					}
 				}
 				else {
 					//command action
 					switch ($this->pid) {
 					
-					case 'preg' :	$ret = ($this->stackRegister()>0) ? 'Registered' : 'Stack already registered';
+					case 'ppst' :	$ret.= $this->stackViewPost();		
+									break;
+					case 'preg' :	$ret = ($this->stackRegister()) ? 'Registered' : 'Already registered or unable to store';
 									$ret.= $this->stackView();
 									break;
-					case 'prun' :	$ret = ($rid = $this->stackRun()) ? 'Running:'.$rid : 'Started';
+					case 'prun' :	$ret = ($rid = $this->stackRun()) ? 'Running: ' . $rid : 'Started';
 									$ret.= $this->stackView();
 									break;				
 					case 'popn' :	$ret = $this->showOpenProcess();
@@ -128,7 +121,7 @@ class sandbox extends Process\process {
 					case 'pcls' :	$ret = $this->showClosedProcess();
 									break;										
 					
-					default 	:	$ret = $this->stackView();
+					default 	:	$ret = $this->stackView(); //static call
 					}				
 				}
 			}		

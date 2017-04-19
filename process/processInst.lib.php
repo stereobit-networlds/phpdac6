@@ -166,23 +166,6 @@ class processInst extends Process\pstack {
 		
 		return 0;
 	}	
-	/*
-	protected function getProcessChain() {
-		//$stack = (array) GetGlobal('controller')->getProcessStack();
-		
-		foreach ($this->stack as $stackName=>$processChain) {
-
-			$sName = $this->getCallerNameInStack($stackName);
-			//echo '<br/>',$stackName , '>' , $sName , '>', $this->callerName;
-			if ($sName == $this->callerName) {
-				//print_r($processChain);
-				return (array) $processChain;
-			}	
-		}
-		
-		return null;
-	}	
-	*/
 
 	//stack methods
 	protected function getNextInStack() {
@@ -255,14 +238,6 @@ class processInst extends Process\pstack {
 		
 		return 0;
 	}	
-
-	//get the .part of dpc name
- 	/*protected function getCallerNameInStack($stackElement=null) {
-		if (!$stackElement) return null;
-		
-		$n = explode('.', $stackElement);
-		return array_pop($n);
-	}*/
 	
 	//update running stack step
 	protected function stackRunStep($state=null) {	
@@ -273,16 +248,45 @@ class processInst extends Process\pstack {
 			$sid = $this->getStackId();
 			$pstate = $state ? 1 : 0;	
 		
-			$ret = $this->stackRunSave($pstate, $cid, $sid);
-			return ($ret);
+			$final = $this->stackRunSave($pstate, $sid, $cid);
+			if (!$final)		
+				$this->setFormStack();
+			
+			return true;//($ret);
 		}	
 		
-		return true;
+		return false;
 	}
+	
+	//return post data else rid
+	protected function stackPostStep($data=false) {
+
+		if ($this->isRunningProcess())  {		
+
+			$cid = $this->getChainId();
+			$sid = $this->getStackId();
+			//echo $cid . ':' . $sid;
+			
+			//check if process has post
+			$ret = $this->stackPost($data, $cid, $sid);
+			return ($ret);
+		}
+		return false; 				
+	}	
+	
+	//override
+	protected function setFormStack($form=null) {
+		$f = $form ? $form : $this->callerName .'.'. $this->processStepName;
+
+		if (!$this->stackPostStep()) 	
+			return parent::setFormStack($f);	
+
+		return false;
+	}	
 	
 	//misc	
 	
-	protected function debug() {
+	protected function debug($event=null) {
 		if ($this->debug) {
 			echo ($ps = $this->prevStep($event)) ? '<br/>Prev step:' . $ps : null;
 			echo '<br/>Step:' . $this->step($event);
@@ -295,19 +299,28 @@ class processInst extends Process\pstack {
 	}
 	
 	//test
-	protected function runCode($status=0, $e=null) {
+	protected function runCode($status=0, $event=null) {
+		$db = GetGlobal('db');
+		$formName = $this->callerName .'.'. $this->processStepName . ($event ? '.'.$event : null);
 		
-		$code = "<? 
-\$event = '$e'; 
+		//crm forms
+		$sSQL = "select codedata from crmforms where class='process' AND code=" . $db->qstr($formName);
+		//echo $sSQL;
+		$res = $db->Execute($sSQL);			
+		$_code = base64_decode($res->fields['codedata']);
+		//echo $_code;
+		
+		$code = $_code ? $_code : "<? 
 if (\$this->caller->status>=$status) { 
 	if (\$this->caller->status==$status) {
 		
-		\$this->debug();
+		\$this->debug('$event');
 	}
 	return true; 
 }	
 return false; 
 ?>";
+		//echo $code;
 		$ret = $this->dCompile($code);
 
 		return ($ret);
