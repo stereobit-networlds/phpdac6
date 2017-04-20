@@ -25,19 +25,17 @@ class processdir_test1 extends processInst {
 	public function isFinished($event=null) {
 		
 		if (!parent::isFinished($event)) {
-			$this->stackRunStep();
+			//$this->stackRunStep();
 			return false;
 		}	
 		
 		if ($this->runCode(2, $event)) {
 			
-			//$form = $this->callerName .'.'. $this->processStepName . ($event ? '.' . $event : null);			
-			//$this->setFormStack($form);
-			
 			$this->stackRunStep(1);
 			return true;
 		};
 		
+		//$this->stackRunStep();
 		return false;		
 	}	
  

@@ -62,7 +62,7 @@ class sandbox extends Process\process {
 				if ($this->isRunningProcess()) {
 					//is running process
 					print_r($_POST);
-					$this->stackPost();
+					//$this->stackPost();
 				}
 				else {	
 					//command event
@@ -102,6 +102,7 @@ class sandbox extends Process\process {
 					if (!$ret = $this->getFormStack()) {		
 						$ret = $this->showProcess();
 						$ret.= $this->stackCalc();
+						//$ret.= $this->stackPostData(); //submited form
 					}
 				}
 				else {
@@ -129,7 +130,22 @@ class sandbox extends Process\process {
 		
 		return ($ret);	
 	}
-		
+	
+	//return post data submited form
+	protected function stackPostData() {
+
+		if ($this->isRunningProcess())  {		
+
+			$cid = $this->getChainId();
+			$sid = $this->getStackId();
+			echo $cid . ':' . $sid;
+			$ret = $this->stackPost(true, $sid, $cid);
+			
+			return ($ret);
+		}
+		return false; 				
+	}
+	
 };
 }
 ?>	

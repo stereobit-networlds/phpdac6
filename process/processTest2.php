@@ -25,19 +25,17 @@ class processTest2 extends processInst {
 		
 		
 		if (!parent::isFinished($event)) {
-			$this->stackRunStep();
+			//$this->stackRunStep();
 			return false;
 		}	
 
 		if ($this->runCode(1, $event)) {
 			
-			//$form = $this->callerName .'.'. $this->processStepName . ($event ? '.' . $event : null);			
-			//$this->setFormStack($form);
-			
 			$this->stackRunStep(1);
 			return true;
 		};
 		
+		//$this->stackRunStep();
 		return false;
 	}	
  

@@ -76,37 +76,49 @@ class processInst extends Process\pstack {
 		$isPrev = $this->isPrevInChain();
 		$isNext = $this->isNextInChain();
 		
-		$cmax = $this->getChainCount();		
-		$cid = $this->getChainId();
+		$chainMax = $this->getChainCount();		
+		$chainId = $this->getChainId();
 		
 		//stack
 		$isLastS = $this->isLastInStack();
 		$isPrevS = $this->isPrevInStack();
 		$isNextS = $this->isNextInStack();
 		
-		$smax = $this->getStackCount();		
-		$sid = $this->getStackId();
+		$stackMax = $this->getStackCount();		
+		$stackId = $this->getStackId();
 
+		//process
 		$pid = $this->isRunningProcess();	
-		$isclosed = $this->isClosedProcess();
+		$isClosed = $this->isClosedProcess();
+		
+		$fn = $this->callerName .'.'. $this->processStepName;
+		$pForm = $this->hasForm($fn) ? $fn : null;		
+		$pData = $this->stackPost(true,$stackId,$chainId);
+		
+		$sid = md5(serialize($this->stack) .'|'. $this->pMethod);
+		$pRunStatus = $this->processStatus(1, $pid, $sid, $stackId, $chainId);
 
 		$c = array( 'name'=>$this->processStepName,
 					'process'=>$this->processName,
 					'caller'=>$this->callerName,
 					'event'=>$this->event,	
 					'method'=>$this->pMethod,
-					'closed'=>$isclosed,
+					'form'=>$pForm,
+					'data'=>$pData,
+			        'status'=>$pRunStatus,
+					'closed'=>$isClosed,
 					'pid'=>$pid,
-					'cid'=>$cid,
-					'cmax'=>$cmax,
+					'chainId'=>$chainId,
+					'chainMax'=>$chainMax,
 		            'isLast'=>$isLast,
 					'isPrev'=>$isPrev,
 					'isNext'=>$isNext,
-					'sid'=>$sid,
-					'smax'=>$smax,
+					'stackId'=>$stackId,
+					'stackMax'=>$stackMax,
 		            'isLastS'=>$isLastS,
 					'isPrevS'=>$isPrevS,
 					'isNextS'=>$isNextS,
+					'stackmd5'=>$sid,
 				);	
 				
 		return ($param) ? $c[$param] : $c;		
@@ -268,7 +280,7 @@ class processInst extends Process\pstack {
 			//echo $cid . ':' . $sid;
 			
 			//check if process has post
-			$ret = $this->stackPost($data, $cid, $sid);
+			$ret = $this->stackPost($data, $sid, $cid);
 			return ($ret);
 		}
 		return false; 				
