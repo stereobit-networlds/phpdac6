@@ -1530,11 +1530,12 @@ EOF;
 		return ($ret);
 	}	
 	
-	public function select_template($tfile=null, $iscp=false) {
+	public function select_template($tfile=null, $iscp=false, $theme=null) {
 		if (!$tfile) return;
+		$themePath = $this->prpath . $this->tpath .'/';
 	  
-	    $path = $iscp ? $this->prpath . $this->tpath .'/'. $this->cptemplate . '/' : 
-		                $this->prpath . $this->tpath .'/'. $this->template . '/' ; 
+	    $path = $iscp ? ($theme ? $theme . '/' : ($themePath . $this->cptemplate . '/')) : 
+		                ($theme ? $theme . '/' : ($themePath . $this->template . '/')) ; 
 	    
 		//big file to load in every page
 		/*if ($data = trim(@file_get_contents($path . 'template-parts.xml'))) {

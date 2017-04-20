@@ -406,7 +406,8 @@ class shusers extends cmsusers {
 	
 	//override
 	protected function register($myuser=null,$myfkey=null,$selectid=null,$cmd=null) {
-        $user = decode(GetGlobal('UserID'));
+		$UserName = GetGlobal('UserName');
+        $user = decode($UserName);
 	    $sFormErr = GetGlobal('sFormErr');
 	    $a = GetReq($selectid) ? GetReq($selectid) : GetReq('a');
 	    $mycmd_update = $cmd ? $cmd : 'update';	   
@@ -713,17 +714,33 @@ class shusers extends cmsusers {
 	
 	public function get_cus_name() {
         $db = GetGlobal('db');
-		$user = decode(GetGlobal('UserID'));
+		$UserName = GetGlobal('UserName');		
+		$user = decode($UserName);
 
 	    $sSQL = "select name,username from customers,users where users.code2=" . $db->qstr($user);
 		$sSQL .= " and active=1 and customers.code2=users.code2";
 		$res = $db->Execute($sSQL,2);
 		
 		//incase of no mapped customer get username
-		$name = $res->fields['name']?$res->fields['name']:$user;
+		$name = $res->fields['name'] ? $res->fields['name'] : $user;
 		
 		//$nk = seturl('t=signup');//addnewcus&select=1');
 		$ret = "<a href='signup/'>" . $name . "</a>";
+		return ($ret);		
+	}	
+	
+	//when no customer (fbuser) get fname_lname as fullname descr
+	public function getFullname($userid=null) {
+        $db = GetGlobal('db');
+		$UserName = GetGlobal('UserName');		
+		$user = $userid ? $userid : decode($UserName);
+
+	    $sSQL = "select fname,lname from users where username=" . $db->qstr($user);
+		//$sSQL .= " and active=1";
+		$res = $db->Execute($sSQL);
+		
+		$ret = $res->fields[0] . ' ' . $res->fields[1];
+		
 		return ($ret);		
 	}	
    

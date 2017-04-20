@@ -153,7 +153,7 @@ class rccrmplus extends rccrm  {
 	
 	
 	//override
-	protected function loadframe($ajaxdiv=null, $mode=null) {
+	protected function loadframe($ajaxdiv=null, $mode=null, $height=null) {
 		$id = GetParam('id');
 		$cmd = 'cpcrmshowgant&id='.$id ;//$mode not used
 		$bodyurl = seturl("t=$cmd&iframe=1");

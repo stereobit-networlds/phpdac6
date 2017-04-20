@@ -757,7 +757,7 @@ class rctreedescr {
 			$ret[] = "<option value='".$rec['id']."'>". $check . $rec[$code].'-'.$rec[$itmname]."</option>" ;
 		}
 		
-		return (implode('',$ret));				
+		return ((!empty($ret)) ? implode('',$ret) : null);				
 	}
 	
 	//include categories tree maps

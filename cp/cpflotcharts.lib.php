@@ -45,7 +45,7 @@ class cpflotcharts {
 				$charts[] = $this->callChart($g);
 		}	
 			
-		return implode(' , ', $charts);
+		return ((!empty($charts)) ? implode(' , ', $charts) : null);
 	}
 	
 	public function callChartGroupFirst($group=null, $param=null, $default='0') {

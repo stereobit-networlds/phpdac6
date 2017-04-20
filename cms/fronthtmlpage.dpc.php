@@ -12,21 +12,11 @@ $__LOCALE['FRONTHTMLPAGE_DPC'][3]='Greek;Greek;Ελληνικά';
 
 class fronthtmlpage {
 
-	var $t_fronthtmlpage;
-	var $userLevelID;
-
-	var $htmlfile, $htmlpage;
-	var $argument;
-	
-	var $infolder, $urlpath, $url, $urltitle;
-	var $modify; 
-
-	var $charset;
-	var $verbose;
-	var $editmode_point;
-
-	var $edithtml, $prpath;
-	var $htmlext;
+	var $t_fronthtmlpage, $userLevelID;
+	var $htmlfile, $htmlpage, $argument;
+	var $urlpath, $url, $urltitle;
+	var $modify, $charset, $verbose, $editmode_point;
+	var $edithtml, $prpath, $htmlext;
 	
 	static $staticpath;
 	
@@ -40,52 +30,45 @@ class fronthtmlpage {
 	public function __construct($file=null) { 
 	    $GRX = GetGlobal('GRX');
         $UserSecID = GetGlobal('UserSecID');			
-	 
+		$userSid = decode($UserSecID);
+		
 	    $this->t_fronthtmlpage = new ktimer;
 	    $this->t_fronthtmlpage->start('fronthtmlpage'); 						
-
-        $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);  
-		
+        $this->userLevelID = $userSid ? $userSid : 0;  
         $this->prpath = paramload('SHELL','prpath');		
-		
-		$this->htmlpage = paramload('FRONTHTMLPAGE','path') ? paramload('FRONTHTMLPAGE','path') : 'html'; 
 		$this->urlpath = paramload('SHELL','urlpath');			
-		$this->urltitle = paramload('SHELL','urltitle');					
-		/*
-		$murl = arrayload('SHELL','ip');
-        $this->url = (!empty($murl)) ? $murl[0] : paramload('SHELL','urlbase'); 			
-		*/
+		$this->urltitle = paramload('SHELL','urltitle');			
+		$this->session_use_cookie = paramload('SHELL','sessionusecookie');	
+				
 		$this->url = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
 		$this->url.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
-				
-		$this->infolder = paramload('ID','hostinpath');		
 		
+		$this->lan = getlocal() ? getlocal() : '0';		
+		$lans = arrayload('SHELL','languages');
+		$this->language = $lans[$this->lan];		
+		$isolans = arrayload('SHELL','isolangs');
+		$this->isolanguage = $isolans[$this->lan];
+		//echo $this->isolanguage,'>';		
+		
+		$fpath = paramload('FRONTHTMLPAGE','path');
+		$this->htmlpage = $fpath ? $fpath : 'html'; 
+				
 		//check if html file name based on action exist
-		$cmd = GetParam('FormAction')?GetParam('FormAction'):GetReq('t');
+		$cmd = GetParam('FormAction') ? GetParam('FormAction') : GetReq('t');
 		if ($cmd) {
 			$mylan = getlocal() ? getlocal() : '0';
-			$autofile = GetGlobal('UserID')? $cmd . '_in' . $mylan . '.html' : $cmd . $mylan . '.html';
+			$autofile = GetGlobal('UserID') ? $cmd . '_in' . $this->lan . '.html' : $cmd . $this->lan . '.html';
 		  
-			$htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $autofile;
+			$htmlfile = $this->urlpath . '/cp/' . $this->htmlpage . "/" . $autofile;
 			if (!is_readable($htmlfile)) //default
-				$htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file;
+				$htmlfile = $this->urlpath . '/cp/' . $this->htmlpage . "/" . $file;
 		}
 		else
-			$htmlfile = $this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file;
+			$htmlfile = $this->urlpath . '/cp/' . $this->htmlpage . "/" . $file;
 		//echo '>',$htmlfile;
 		
-		/*if (!is_readable($htmlfile)) {//check for parent file
-
-			$cphtmlpath = "/../cp/$this->htmlpage/";
-			$parentfile = $this->urlpath . $cphtmlpath . $file; 
-			if (is_readable($parentfile)) 
-				$this->htmlfile = $parentfile;
-		}
-		else {*/
-			$cphtmlpath = $this->infolder . '/cp/' . $this->htmlpage;		
-			$this->htmlfile = $htmlfile;//$this->urlpath . $this->infolder . '/cp/' . $this->htmlpage . "/" . $file; 
-		//}  
-		
+		//$cphtmlpath = '/cp/' . $this->htmlpage;		
+		$this->htmlfile = $htmlfile;
 		//echo '>',$this->htmlfile;
 
 		$p = explode(".",$file);
@@ -97,26 +80,19 @@ class fronthtmlpage {
 		$this->argument = strtoupper($pdotname); //the name with dots and without ext		
 		//echo $this->argument,'>';
 	
-		$this->session_use_cookie = paramload('SHELL','sessionusecookie');	
-		
 		$this->modify = urldecode(base64_decode(GetReq('modify')))=='stereobit' ? true : false;
 
         //choose encoding
-        $char_set  = arrayload('SHELL','char_set');	  
+        /*$char_set  = arrayload('SHELL','char_set');	  
         $charset  = paramload('SHELL','charset');	  		
 		if (($charset=='utf-8') || ($charset=='utf8'))
 		  $this->charset = 'utf-8';
 		else  
 	      $this->charset = $char_set[getlocal()]; 	  				
-		    
+		*/    
 		$this->verbose = remote_paramload('FRONTHTMLPAGE','verbose',$this->prpath); 
-		
-        if ($GRX)    
-         $this->editmode_point  = loadTheme('editmode','e-Enterprise');
-	    else
-	  	 $this->editmode_point  = '[Edit Mode]';
-		 
 		$this->edithtml = remote_paramload('FRONTHTMLPAGE','edithtml',$this->prpath); 
+	  	$this->editmode_point  = '[E]';		
 		
 		$htmlfile_extension = remote_paramload('FRONTHTMLPAGE','htmlext',$this->prpath);
         $this->htmlext = $htmlfile_extension ? $htmlfile_extension : '.htm'; 		
@@ -127,18 +103,11 @@ class fronthtmlpage {
 		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);		
 		
 		$this->BASE_URL = $this->baseURL();
-		//$this->MC_TEMPLATE = remote_paramload('FRONTHTMLPAGE','template',$this->prpath); 
 		$this->MC_TEMPLATE = strstr($_SERVER[REQUEST_URI], 'cp/') ? //is in cp
 							 $this->cptemplate : $this->template; 		
 		$this->MC_ROOT = $this->mcRoot($this->MC_TEMPLATE);
 		$this->MC_DEBUG = remote_paramload('FRONTHTMLPAGE','debug',$this->prpath);
-		$this->MC_CURRENT_PAGE = null;
-		
-		$lans = arrayload('SHELL','languages');
-		$this->language = $lans[getlocal()];		
-		$isolans = arrayload('SHELL','isolangs');
-		$this->isolanguage = $isolans[getlocal()];
-		//echo $this->isolanguage,'>';	
+		$this->MC_CURRENT_PAGE = null;	
 		
         $this->anel = remote_paramload('FRONTHTMLPAGE','anel',$this->prpath); 		
 		$this->anel_signin = remote_paramload('FRONTHTMLPAGE','anelsignin',$this->prpath); 		
@@ -275,8 +244,8 @@ class fronthtmlpage {
 			
 		$current_page = pathinfo($_SERVER['PHP_SELF']);//parse_url($_SERVER['PHP_SELF'],PHP_URL_PAGE);				
 		$target_url = urlencode(encode($current_page['basename'] . "?".$mynewquery));		
-        $admin_url = $this->infolder . "/".$current_page['basename'] . "?modify=".encode('stereobit')."&turl=".$target_url;		
-		$icon_file = $this->urlpath.'/'.$this->infolder.'/images/editpage.png';
+        $admin_url = '/' . $current_page['basename'] . "?modify=".encode('stereobit')."&turl=".$target_url;		
+		$icon_file = $this->urlpath . '/images/editpage.png';
 		
         SetSessionParam('authverify',1);		
 			
@@ -321,7 +290,6 @@ class fronthtmlpage {
 	}	
 
 	protected function anel_panel($query=null) {
-	    $encoding = $this->charset;
 		$is_oversized = $this->app_is_oversized();
 		$is_cpwizard = $this->app_cp_wizard();
 		$is_cropwiz = (GetSessionParam('LOGIN')=='yes') ? $this->app_crop_wizard() : null;
@@ -365,7 +333,6 @@ EOF;
 
 	//cpanel template iframe win
     protected function cpanel_iframe($query=null) {
-	    $encoding = $this->charset;
 		$is_oversized = $this->app_is_oversized();
 		$is_cpwizard = $this->app_cp_wizard();
 		$is_cropwiz = (GetSessionParam('LOGIN')=='yes') ? $this->app_crop_wizard() : null;
@@ -885,10 +852,9 @@ EOF;
 		
 	    if ($fname) {
 		    if ($uselans) {
-			    $lan = getlocal();
 			    $pathname = $tmplname ? 
-				            str_replace($tmplname, $tmplname.'/'.$lan, $tmpln) :
-				            str_replace($this->MC_TEMPLATE, $this->MC_TEMPLATE.'/'.$lan, $tmpln);
+				            str_replace($tmplname, $tmplname.'/'.$this->lan, $tmpln) :
+				            str_replace($this->MC_TEMPLATE, $this->MC_TEMPLATE.'/'.$this->lan, $tmpln);
 			}
 			else
 			    $pathname = $tmpln;
@@ -947,26 +913,16 @@ EOF;
 		
 	    if ($fname) {
 		    if ($uselans) {
-			    $lan = getlocal();
 			    $pathname = $tmplname ? 
-				            str_replace($tmplname, $tmplname.'/'.$lan, $tmpln) :
-				            str_replace($this->MC_TEMPLATE, $this->MC_TEMPLATE.'/'.$lan, $tmpln);
+				            str_replace($tmplname, $tmplname.'/'.$this->lan, $tmpln) :
+				            str_replace($this->MC_TEMPLATE, $this->MC_TEMPLATE.'/'.$this->lan, $tmpln);
 			}
 			else
 			    $pathname = $tmpln;
 				
 			//echo 'INCLUDE_PART:'.$pathname;
 			if ($contents = trim(@file_get_contents($pathname))) {	
-				/*	
-				if (substr($contents, -2) == '?>') {
-					$contents = '?>' . $contents . ((substr($contents, -2) == '?>') ? '<?php ' : '');
-					$contents = eval($contents);	
-				}
-				elseif (substr($contents, -8) == '/phpdac>') {
-					//one big cmd with other phpdac inside as raw text
-					$contents = _m(substr($contents,8,-9));
-				}
-				*/
+
 				$contents = $this->dCompile($contents);
 				
 				//replace content args

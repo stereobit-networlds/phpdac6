@@ -1173,17 +1173,20 @@ function addtocart(id,cartdetails)
 	
 	//used by pay engines when comeback
 	public function submitCartOrder($trid=null,$subject=null) {
-		
-		//when come back from pay engines with trid my the trid != this.trid
-		if ((!$trid) || ($trid != $this->transaction_id)) {
+
+		//when come back from pay engines with trid may the trid != this.trid		
+		//get transaction id from session when return
+		if ($ses_transaction_id = GetSessionParam('TransactionID')) {		
+			if ((!$trid) || ($trid != $ses_transaction_id)) {
+				//send suspicious mail
+				$from = $this->cartsend_mail;
+				$subj = "Suspicious transaction $trid : " . $this->transaction_id;
+				$body = str_replace('+','<SYN/>','Please check this transaction id!'); 
+				_m("cmsrt.cmsMail use $from+{$this->cartreceive_mail}+$subj+$body");
+			}			
+		}
+		//else trid= this->trid and trid in session is null (simple order)
 			
-			//send suspicious mail
-			$from = $this->cartsend_mail;
-			$subject = "Suspicious transaction $trid > " . $this->transaction_id;
-			$body = str_replace('+','<SYN/>','Please check this transaction id!'); 
-			_m("cmsrt.cmsMail use $from+{$this->cartreceive_mail}+$subject+$body");
-		}			
-		
 		$_trid = $trid ? $trid : $this->transaction_id;	
 			
 		if (!$error = $this->goto_mailer($_trid, $subject)) { 

@@ -484,7 +484,7 @@ window.setTimeout('neu()',10);
 
 		if (!$UserID) {
 			$tokens[] = $sFormErr;
-			$tpkens[] = $logonurl;
+			$tokens[] = $logonurl;
 			$tokens[] = $this->after_goto;
 			$ret = _m('cmsrt._ct use qlogin+' . serialize($tokens));
 			return ($ret);	

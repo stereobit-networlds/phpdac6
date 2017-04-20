@@ -332,20 +332,20 @@ class rcshop {
 	    $sSQL = "select tdata from transactions where " . $this->sqlDateRange('timein', true);
         $result = $db->Execute($sSQL,2);
 	    foreach ($result as $n=>$rec) {	
-         $tdata = $rec['tdata'];
+			$tdata = $rec['tdata'];
 		 
-		 if ($tdata) {
-		   $cdata = unserialize($tdata);
-		   if (is_array($cdata)) { 
-		     foreach ($cdata as $i=>$buffer_data) {
-		        $param = explode(";",$buffer_data);
-				if ($param[0]!='x') 
-					$ret[] = $param[0];  
-		     }	 
-		   }
-		 } 
+			if ($tdata) {
+				$cdata = unserialize($tdata);
+				if (is_array($cdata)) { 
+					foreach ($cdata as $i=>$buffer_data) {
+						$param = explode(";",$buffer_data);
+						if ($param[0]!='x') 
+							$ret[] = $param[0];  
+					}	 
+				}
+			} 
 	    }
-	    return implode('|',$ret);   	   	
+	    return ((!empty($ret)) ? implode('|', $ret) : null);	   	
 	}
 	
 	protected function solditems_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
@@ -563,7 +563,7 @@ class rcshop {
 		foreach ($oret as $i=>$rec)
 			$list[] = $rec[0];
 		
-		$ret = implode(",", $list);	
+		$ret = ((!empty($list)) ? implode(',', $list) : null);	
 		return ($ret);			
 	}		
 	
@@ -627,7 +627,7 @@ class rcshop {
 	    foreach ($result as $n=>$rec) {	
 			$ret[] = $rec[0]; 
 	    }
-	    return implode(',',$ret);   	   	
+	    return ((!empty($ret)) ? implode(',', $ret) : null);   	   	
 	}	
 	
 	protected function ipurchases_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {

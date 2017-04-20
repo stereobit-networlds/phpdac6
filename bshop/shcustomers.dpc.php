@@ -364,7 +364,6 @@ class shcustomers {
 		});	
 	}	
 ";
-		
 		return ($code);
 	}		
 	
@@ -437,13 +436,12 @@ window.onload=function(){
 
     public function register() {
 	    $sFormErr = GetGlobal('sFormErr');
+	    $UserName = GetGlobal('UserName');	   
+	    $user = decode($UserName);		
         $mycus = GetReq('a');
 
         if ($sFormErr=="ok") {
            
-			//$msg = setError(localize('_MSG10',getlocal()));
-			//$out .= $this->after_registration_goto();
-		   
 			$myaction = GetGlobal('controller')->getqueue(); //echo $myaction,"<><><><";
 		   
 			switch ($myaction) {
@@ -473,7 +471,12 @@ window.onload=function(){
 					$out .= localize('_ACCDENIED',getlocal());
 			}
 			elseif (seclevel('INSERTCUSTOMER_',$this->userLevelID)) {
-		        $out = $this->makeform();
+				
+				//get the user name if fb user is came in 
+				$userfname = _m("shusers.getFullname");
+				$record = $userfname . ';;;;;;;;;;' . $user;
+				
+		        $out = $this->makeform($record);
 			}
 			else
 		        $out .= localize('_ACCDENIED',getlocal());
@@ -654,20 +657,19 @@ window.onload=function(){
 	    if ($fields) { //get record param
 		    $myfields = explode(";",$fields);
 
-           foreach ($recfields as $recid => $rec) {
-                //btpass code by add +1
-		        $data[$recid] = ($myfields[$recid]?$myfields[$recid]:"&nbsp;");
-		    }
+            foreach ($recfields as $recid => $rec) 
+		        $data[$recid] = $myfields[$recid] ? $myfields[$recid] : null;//"&nbsp;");
+
 	    }
 	    else { //read form data
             foreach ($recfields as $fnum => $fname) {
-		       $data[$fnum] = ToHTML(GetParam(_with($fname)));
+		        $data[$fnum] = ToHTML(GetParam(_with($fname)));
 		    }
 	    }
 
         //$sFileName = seturl($goto,0,1);	   
 	    if ($sFormErr!="ok") 
-		   $err = $sFormErr;
+			$err = $sFormErr;
 
 	    //message at top
         $tokens[] = $err;     
@@ -675,9 +677,8 @@ window.onload=function(){
         //show data
         reset ($recfields);
 	    reset ($data);
-        foreach ($recfields as $field_num => $fieldname) {
+        foreach ($recfields as $field_num => $fieldname) 
 			$tokens[] = $data[$field_num];
-	    }
 
 		if ((($cid = GetParam('a')) && (seclevel('CUSTOMERSMNG_',$this->userLevelID))) || ($isupdate)) {	   
 
@@ -694,7 +695,7 @@ window.onload=function(){
 			}
 		}
 		else {
-			$dpccmd = $cmd?$cmd:'insert2';
+			$dpccmd = $cmd ? $cmd : 'insert2';
 			$out2 .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"" . localize('_SIGNUP',getlocal()) . "\" onclick=\"document.forms('Registration2').FormAction.value = '$dpccmd';\">";
 			$out2 .= "<input type=\"hidden\" value=\"$dpccmd\" name=\"FormAction\"/>";
 		}
@@ -729,37 +730,33 @@ window.onload=function(){
 	 
 	    reset($recfields);
 	   
-	   if ($fields) { //get record param
-		   $myfields = explode(";",$fields);
-           foreach ($recfields as $recid => $rec) {
-                                       //btpass code by add +1
-		       $data[$recid] = ($myfields[$recid]?$myfields[$recid]:"&nbsp;");
-		   }
-	   }
-	   else { //read form data
-        
-           foreach ($recfields as $fnum => $fname) {
-		       $data[$fnum] = ToHTML(GetParam(_with($fname)));
-		   }
-	   }
+	    if ($fields) { //get record param
+		    $myfields = explode(";",$fields);
+            foreach ($recfields as $recid => $rec) 
+		        $data[$recid] = $myfields[$recid] ? $myfields[$recid] : null;//"&nbsp;";
+	    }
+	    else { //read form data
+            foreach ($recfields as $fnum => $fname) 
+		        $data[$fnum] = ToHTML(GetParam(_with($fname)));
+	    }
 	   
-       //show data
-       reset ($recfields);
-	   reset ($data);
-       foreach ($recfields as $field_num => $fieldname) {  
-	   
-           $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"" . _with($fieldname) . "\" maxlength=\"" . $maxcharfields[$field_num] . "\" value=\"" .
-                       $data[$field_num] . "\" size=\"" . "25" . "\" >";
-
-	   }
+        //show data
+        reset ($recfields);
+	    reset ($data);
+        foreach ($recfields as $field_num => $fieldname) {  
+            $tokens[] = "<input type=\"text\" class=\"myf_input\" name=\"" . 
+						_with($fieldname) . "\" maxlength=\"" . $maxcharfields[$field_num] . 
+						"\" value=\"" . $data[$field_num] . 
+						"\" size=\"" . "25" . "\" >";
+	    }
 		   
-	   if ($this->mydelivery_address) {
-		     $extratokens = $this->makedelivsubform();
-			 $etokens = array_merge($tokens,$extratokens);
-			 return ($etokens);
-       }	 
-	   else
-	       return ($tokens);		   
+	    if ($this->mydelivery_address) {
+		    $extratokens = $this->makedelivsubform();
+			$etokens = array_merge($tokens,$extratokens);
+			return ($etokens);
+        }	 
+	    else
+	        return ($tokens);		   
 	   	   	
 	}
 	
@@ -901,9 +898,9 @@ window.onload=function(){
 
 	protected function insert($userid=null) {
 		$db = GetGlobal('db');
-	   
-		if ($error = $this->checkFields(null,$this->checkuseasterisk)) {
-			SetGlobal('sFormErr',$error);
+		$checkfields = null;//array('name','address','zip','voice1','mail');
+		if ($error = $this->checkFields(null, $this->checkuseasterisk, $checkfields)) {
+			//SetGlobal('sFormErr',$error);
 			$this->checkFieldsJs($error);
 			
 			return false;
@@ -918,13 +915,13 @@ window.onload=function(){
 		elseif ($userid = decode(GetSessionParam('UserID'))) {//has login already
 			$uid= $userid;
 		}	 
-		else {//never must happen
+		else {
 			SetGlobal('sFormErr','Invalid user key!');
-			return null;
+			return false;
 		}	 
 	     	  
-		$recfields = array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
-
+		//$recfields = array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail');
+		
 		$sSQL = "insert into customers (code2,active,name,afm,eforia,prfdescr,address,area,zip,country,voice1,voice2,fax,mail)";
 		$sSQL.= " values (" .
 	           $db->qstr($uid) . ',1,' .
@@ -944,9 +941,10 @@ window.onload=function(){
 
 		//echo $sSQL;
 		$result = $db->Execute($sSQL,1);
+		
 		if ($db->Affected_Rows()) {	   
+		
 			SetGlobal('sFormErr',"ok");
-		 
 			//$this->update_statistics('registration', GetParam('mail'));	
 			
 			if ($this->tellit) {
@@ -989,7 +987,7 @@ window.onload=function(){
 	public function subinsert($userid=null,$bypasscheck=null) {
 		$db = GetGlobal('db');
 	   
-		if ($error = $this->checkFields($bypasscheck,$this->checkuseasterisk)) {
+		if ($error = $this->checkFields($bypasscheck, $this->checkuseasterisk)) {
 			SetGlobal('sFormErr',$error);
 			return ($error);
 		}
@@ -1119,7 +1117,7 @@ window.onload=function(){
 	    $key = decode(GetGlobal('UserName'));//security..foreign to user
 
 	    if ($error = $this->checkFields(null,$this->checkuseasterisk)) {
-			SetGlobal('sFormErr',$error);
+			//SetGlobal('sFormErr',$error);
 			$this->checkFieldsJs($error);
 			
 			return false;//($error);
@@ -1222,8 +1220,9 @@ window.onload=function(){
 	    return ($result->fields[0]);
 	}		
 
-    public function checkFields($bypass=null,$checkasterisk=null) {
+    public function checkFields($bypass=null,$checkasterisk=null, $checkf=false) {
 		$sFormErr = GetGlobal('sFormErr');
+		$lan = getlocal();
 	
 		if ($bypass) 
 			return null;		
@@ -1232,14 +1231,25 @@ window.onload=function(){
 	
 		if ($checkasterisk) {
 			foreach ($recfields as $field_num => $fieldname) {
-				$titles = explode('/',remote_paramload('SHCUSTOMERS',$fieldname,$this->path));
-				$title = $titles[getlocal()];			
-				if (strstr($title,'*')) { //check by titile using *
-
-					if(!strlen(GetParam(_with($fieldname)))) {
-						$sFormErr .= localize('_MSG12',getlocal()) . " <font color=\"red\">" .
+				
+				if ((!empty($checkf)) && in_array($fieldname, $checkf)) {
+					if (!strlen(GetParam(_with($fieldname)))) {
+						$sFormErr .= localize('_MSG12',$lan) . " <font color=\"red\">" .
 									$title . "</font> " .
-									localize('_MSG11',getlocal()) . "<br>";		  			
+									localize('_MSG11',$lan) . "<br>";		  			
+					}
+				}
+				else {
+					$titles = explode('/',remote_paramload('SHCUSTOMERS',$fieldname,$this->path));
+					$title = $titles[$lan];			
+				
+					if (strstr($title,'*')) { //check by title using *
+
+						if (!strlen(GetParam(_with($fieldname)))) {
+							$sFormErr .= localize('_MSG12',$lan) . " <font color=\"red\">" .
+									$title . "</font> " .
+									localize('_MSG11',$lan) . "<br>";		  			
+						}
 					}
 				}
 			}		 
@@ -1247,9 +1257,9 @@ window.onload=function(){
 	    else {	   
 			foreach ($recfields as $field_num => $fieldname) {
 				if(!strlen(GetParam(_with($fieldname)))) {
-					$sFormErr .= localize('_MSG12',getlocal()) . " <font color=\"red\">" .
-								localize($recfields[$field_num],getlocal()) . "</font> " .
-								localize('_MSG11',getlocal()) . "<br>";
+					$sFormErr .= localize('_MSG12',$lan) . " <font color=\"red\">" .
+								localize($recfields[$field_num],$lan) . "</font> " .
+								localize('_MSG11',$lan) . "<br>";
 				}
 			}  
         }
@@ -1309,10 +1319,29 @@ window.onload=function(){
 	}	
 	
 	protected function get_cus_record($invtype=null,$default_records=null) {
-	
 	    $invtype = $invtype ? $invtype : $this->invtype;
-	   
-	    if (!$default_records) 	
+		
+		if ($default_records) {
+			if ($this->usemailasusername) {
+		 
+				if ($usermail = GetParam('uname')) 
+					$recfields = ($invtype==1) ? 
+								array('name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax') :
+								array('name','address','area','zip','voice1','voice2','fax');  
+				else 
+					$recfields = ($invtype==1) ? 
+								array('name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail') :
+								array('name','address','area','zip','voice1','voice2','fax','mail');  
+			}
+			else 	   
+				$recfields = ($invtype==1)	? 
+							array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail') :
+							array('code2','name','address','area','zip','voice1','voice2','fax','mail');			
+		}
+		else
+			$recfields = ($invtype==1) ? $this->cusform : $this->cusform2;
+		
+	    /*if (!$default_records) 	
 			$recfields = ($invtype==1) ? $this->cusform : $this->cusform2;	    
 	   
 		if (!$recfields) {
@@ -1326,9 +1355,9 @@ window.onload=function(){
 												 array('name','address','area','zip','voice1','voice2','fax','mail');  
 			}
 			else 	   
-	         $recfields = ($invtype==1)	? array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail') :
+				$recfields = ($invtype==1)	? array('code2','name','afm','eforia','prfdescr','address','area','zip','voice1','voice2','fax','mail') :
 										  array('code2','name','address','area','zip','voice1','voice2','fax','mail');
-        }
+        }*/
 	   
 	    return ($recfields);	
 	}	
@@ -1978,8 +2007,7 @@ window.onload=function(){
 		   }
 	    }
 		else {
-			//echo $db->ErrorMsg();
-			SetGlobal('sFormErr',$error);
+			//SetGlobal('sFormErr',$error);
 		   	$this->checkFieldsJs($error);
 		}
 		
