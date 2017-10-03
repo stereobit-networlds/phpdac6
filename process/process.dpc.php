@@ -31,10 +31,6 @@ $__DPC['PROCESS_DPC'] = 'process';
 require_once(GetGlobal('controller')->require_dpc('process/pstack.lib.php'));
 require_once(GetGlobal('controller')->require_dpc('process/processInst.lib.php'));
 
-//$__EVENTS['PROCESS_DPC'][0]= "process";
-
-//$__ACTIONS['PROCESS_DPC'][0]= "process";
-
 class process extends pstack {
 
 	protected $proccesChain;
@@ -54,34 +50,7 @@ class process extends pstack {
 		
 		//echo 'construct: ' . $this->processName . '<br/>';
 	}
-	/*
-	public function event($event=null) {
-		switch ($event) {
-			
-			case 'register': 	break;
-			
-			case 'process' :
-			default        : 	//is loaded as lib
-								//not executed (see sandbox)
-								echo 'process z';
-		}	
-	}
-	
-	public function action($action=null) {
-		switch ($action) {
-			
-			case 'register': 	$ret = null; 
-								break;
-			
-			case 'process' :
-			default        :	//is loaded as lib
-								//not executed (see sandbox)
-								$ret = 'process z';
-		}
 
-		return ($ret);	
-	}		
-	*/
 	public function isFinished($event=null) {
 		if (!$this->user) return false;		
 		if ($this->isClosedProcess()) return true;
@@ -170,6 +139,16 @@ class process extends pstack {
 		}
 
 		return false;	
+	}
+	
+	
+	//fire-up a running process instance from the calling object 
+	public function start() {
+		
+		if ($this->stackRun())
+			return true;
+		
+		return false;
 	}
  
 };

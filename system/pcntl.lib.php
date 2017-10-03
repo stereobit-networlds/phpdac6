@@ -105,24 +105,103 @@ class pcntl extends controller {
 		
 		return $name;
 	}
+/*	
+parse_ini_string_m is analog for a parse_ini_string function.
+
+had to code this function due to the lack of a php 5.3 on some hosting.
+
+parse_ini_string_m:
+- ignores commented lines that start with ";" or "#"
+- ignores broken lines that do not have "="
+- supports array values and array value keys
+*/
+    public function parse_ini_string_m($str) {
+    
+    if(empty($str)) return false;
+
+    $lines = explode("\n", $str);
+	//$lines = explode(PHP_EOL, $str);
+    $ret = Array();
+    $inside_section = false;
+
+    foreach($lines as $line) {
+        
+        $line = trim($line);
+
+        if(!$line || $line[0] == "#" || $line[0] == ";") continue;
+        
+        if($line[0] == "[" && $endIdx = strpos($line, "]")){
+            $inside_section = substr($line, 1, $endIdx-1);
+            continue;
+        }
+
+        if(!strpos($line, '=')) continue;
+
+        $tmp = explode("=", $line, 2);
+
+        if($inside_section) {
+            
+            $key = rtrim($tmp[0]);
+            $value = ltrim($tmp[1]);
+
+            if(preg_match("/^\".*\"$/", $value) || preg_match("/^'.*'$/", $value)) {
+                $value = mb_substr($value, 1, mb_strlen($value) - 2);
+            }
+
+            $t = preg_match("^\[(.*?)\]^", $key, $matches);
+            if(!empty($matches) && isset($matches[0])) {
+
+                $arr_name = preg_replace('#\[(.*?)\]#is', '', $key);
+
+                if(!isset($ret[$inside_section][$arr_name]) || !is_array($ret[$inside_section][$arr_name])) {
+                    $ret[$inside_section][$arr_name] = array();
+                }
+
+                if(isset($matches[1]) && !empty($matches[1])) {
+                    $ret[$inside_section][$arr_name][$matches[1]] = $value;
+                } else {
+                    $ret[$inside_section][$arr_name][] = $value;
+                }
+
+            } else {
+                $ret[$inside_section][trim($tmp[0])] = $value;
+            }            
+
+        } else {
+            
+            $ret[trim($tmp[0])] = ltrim($tmp[1]);
+
+        }
+    }
+    return $ret;
+    }	
 	
 	protected function _loadinifiles() {
-	  
+
 		if (is_readable("config.ini.php")) {//in root	  
 			include("config.ini.php");
-			$config = @parse_ini_string($conf, 1, INI_SCANNER_NORMAL); 
+			$config = @parse_ini_string($conf, 1, INI_SCANNER_RAW);//NORMAL); 
+			//$config = $this->parse_ini_string_m($conf);
 			include("myconfig.txt.php");
-			$myconfig = parse_ini_string($myconf, 1, INI_SCANNER_NORMAL);			
+			$myconfig = parse_ini_string($myconf, 1, INI_SCANNER_RAW);			
+			//$myconfig = $this->parse_ini_string_m($myconf);
 		}	
 		elseif (is_readable("cp/config.ini.php")) {//in cp
 			include("cp/config.ini.php");
-			$config = @parse_ini_string($conf, 1, INI_SCANNER_NORMAL);
+			$config = @parse_ini_string($conf, 1, INI_SCANNER_RAW);//NORMAL);
+			//$config = $this->parse_ini_string_m($conf);
 			include("cp/myconfig.txt.php");	
-			$myconfig = parse_ini_string($myconf, 1, INI_SCANNER_NORMAL);		
+			$myconfig = parse_ini_string($myconf, 1, INI_SCANNER_RAW);		
+			//$myconfig = $this->parse_ini_string_m($myconf);		
 		}		
 		else
 			die("Configuration error, config.ini not exist!");	
-
+		/*
+		echo '<pre>';
+		print_r($config);
+		echo '</pre>';		
+		echo nl2br($conf);
+		*/
 		//extra conf
 		if (!empty($myconfig))
 			$config = array_merge($config, $myconfig); 			
@@ -132,24 +211,6 @@ class pcntl extends controller {
 		//$this->preprocessor = new CCPP($config);
 	}  	
    
-	/*
-	protected function _loadapp() {
-		if (!isset($this->code)) return null;	
-		
-		$this->init();  
-	  
-		//pre-defined in page locales
-		if (isset($locales)) 
-			$this->localize($locales);	  
-		
-		$etime = $this->getthemicrotime();
-
-		$this->event($this->myaction);
-		
-		if ($this->debug) 
-			echo "<!-- event elapsed " . $this->getthemicrotime() - $etime . " sec -->"; 		 	  
-    }
-	*/
 	//overwrite
 	public function init($c=null) {      
    
@@ -490,7 +551,7 @@ class pcntl extends controller {
 		//$this->pre_render($theme,$lan,$cl,$fp);
 		$data = $this->action($this->myaction);
 	  
-	    $hfp = new fronthtmlpage($fp);  
+	    $hfp = new fronthtmlpage($fp, $theme);  
 	    $ret = $hfp->render($data); //this->data);
 	    unset($hfp);
 
@@ -499,25 +560,6 @@ class pcntl extends controller {
 	  
 		return ($ret); 	   
 	}
-   /*
-	protected function pre_render($theme=null,$lan=null,$cl=null,$fp=null) {
-      
-		if ($this->sysauth) {
-			if (($realm = GetParam('AUTHENTICATE')) || ($realm = GetReq('auth'))) {  
-		  
-				if (!$realm) 
-					$realm = "Generic authendication";  
-				$this->authenticate($realm,$this->myaction);
-			}	
-		}
-   
-		//change languange !!!! gr/ en/ subdir to implement
-		if (isset($lan)) setlocal($lan);		  	
-	  
-		//get action
-		$this->data = $this->action($this->myaction);     
-    }
-   */
    
 	//set security level at runtime
 	public function setlevel($modulename,$plafon,$colonvals) {
@@ -594,61 +636,6 @@ class pcntl extends controller {
 		 
 	    return ($url);	 
     }
-   
-    /* 
-	protected function authenticate($realm,$action=null) {
-	 
-		if ($verified=GetSessionParam('authverify')==true) 
-			return; //already verified!!!!
-	 	 
-		if ($_SERVER["AUTH_USER"] && $_SERVER["AUTH_PASSWORD"] && ereg("^Basic ", $_SERVER["HTTP_AUTHORIZATION"])) {
-			list($_SERVER["AUTH_USER"], $_SERVER["AUTH_PASSWORD"]) = explode(":", base64_decode(substr($_SERVER["HTTP_AUTHORIZATION"], 6)));
-		}
-		elseif ($_SERVER["AUTH_USER"] && $_SERVER["AUTH_PASSWORD"] && ereg("^NTLM ", $_SERVER["HTTP_AUTHORIZATION"])) {
-			list($_SERVER["AUTH_USER"], $_SERVER["AUTH_PASSWORD"]) = explode(":", base64_decode(substr($_SERVER["HTTP_AUTHORIZATION"], 6)));
-		}	 
-		$authenticated = false;
-	 
-		if ($_SERVER["AUTH_USER"] || $_SERVER["AUTH_PASSWORD"]) {
-	   
-			if (!ereg("Microsoft", $_SERVER["SERVER_SOFTWARE"])) {
-				$auth_method = 'HTACCESS';
-				$authenticated = $this->calldpc_method('rchtaccess.verify_user use '.$_SERVER["AUTH_USER"].'+'.$_SERVER["AUTH_PASSWORD"]);		 
-			}	 
-			else {
-				$auth_method = 'NTLM'; 
-				$authenticated = ($_SERVER["AUTH_USER"] == "test" && $_SERVER["AUTH_PASSWORD"] == "123");		 	 
-			}
-	   	 
-			SetSessionParam('authmethod',$auth_method);
-			SetSessionParam('authverify',$authenticated);	
-		}
-	 
-		if (!$authenticated) {
-	   
-			switch ($auth_method) {
-				case 'NTLM' : header("WWW-Authenticate: NTLM",false); break;
-				case 'HTACCESS':
-				default   :header("WWW-Authenticate: Basic realm=\"$realm\"");
-			}
-	   
-			$statico = 1;
-	   
-			if (ereg("Microsoft", $_SERVER["SERVER_SOFTWARE"])) {
-				header("Status: 401 Unauthorized");
-			} else {
-				header("HTTP/1.0 401 Unauthorized");
-				echo "Access denied";
-				exit;
-			}
-		}
-	 
-		if ($goto = GetReq('redirect'))
-			$this->redirect($this->httpurl .'/'. $goto);
-	   
-		return;   
-	}
-	*/
    
 	//override to load dpc from priv dirs
 	protected function set_include($dpc,$type,$myargdpc=null) {

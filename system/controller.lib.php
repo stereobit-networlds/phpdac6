@@ -203,6 +203,8 @@ class controller  {
 	  //echo $argdpc,'>'; 
 	  $includer = $argdpc . "/" . str_replace(".","/",trim($dpc)) . "." . $type . ".php";
 	  //echo $includer,'|',$argdpc,'|',_DPCPATH_,'<br>';	
+	  //try {
+	  //if (is_file($includer)) {
 	  require($includer);	//REQUIRE NOT REQUIRE ONCE DUE TO RE-INIT DPC
 	  	  
 	  //START THE OBJECT
@@ -221,8 +223,13 @@ class controller  {
 		$__DPCID[$class] = $dpc; //new name index array
 		return TRUE;
 	  }	  
-	
-	  return FALSE;  	  
+	  //}//is file
+	  return FALSE;  
+	  
+	  /*}//try
+	  catch (Exception $e) {
+		echo 'Caught exception: ',  $e->getMessage(), "\n";
+      } */	  
 	}
 		
 	//alias of _new(parent).....init_object,,,......(mode:one by one)

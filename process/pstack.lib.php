@@ -81,7 +81,22 @@ class pstack {
 			return true;	
 		
 		return false;
-	}	
+	}
+
+	//test
+	protected function findMethodFromStackId($sid=null) {
+		if (!$sid) return false;
+		$stack =  GetGlobal('controller')->getProcessStack();
+		if (empty($stack)) return false;		
+		
+		$methods = array('serialized','balanced','puzzled');
+		foreach ($method as $m) {
+			$testSid = md5(serialize($stack) .'|'. $m);
+			if ($testSid==$sid)
+				return $m;
+		}
+		return null;
+	}		
 	
 	protected function stackRun() {
 		$db = GetGlobal('db');
@@ -93,14 +108,9 @@ class pstack {
 		if (($this->processisActive($sid)) && 
 			($this->stackIsRegistered($sid))) {
 				
-			//$rid = md5(serialize($stack) .'|'. $this->pMethod . '|' . time());
 			$rid = md5($sid . '|' . time());
 				
 			//put initial record indicates stack running id
-			/*$sSQL = "insert into pstackrun (rid,sid,puser) values (";
-			$sSQL.= "'$rid','$sid','{$this->user}')";
-			$db->Execute($sSQL);
-			*/
 			if ($this->_stackInit($rid, $sid)) {
 		
 				//sendmail
@@ -130,12 +140,11 @@ class pstack {
 	//update running stack step
 	protected function stackRunSave($state, $stackid, $chainid) {
 		$db = GetGlobal('db');
+		$stack =  GetGlobal('controller')->getProcessStack();
+		if (empty($stack)) return false;		
 
 		if ($this->isRunningProcess()) {
-			
-			$stack =  GetGlobal('controller')->getProcessStack();
-			if (empty($stack)) return false;
-		
+					
 			if (!$rid = $this->pid) return false; //not an run id
 			$sid = md5(serialize($stack) .'|'. $this->pMethod);		
 				
@@ -143,51 +152,35 @@ class pstack {
 			$fn = $this->callerName .'.'. $this->getProcessById($stackid, $chainid);
 			if ($this->hasForm($fn)) {
 				
-			  echo '__FORM__' . $fn;	
-			  if ((!empty($_POST)) && ($_POST['pname'] == $fn)) {
+				//echo '__FORM__' . $fn;	
+				if ((!empty($_POST)) && ($_POST['pname'] == $fn)) {
 				  
-				//in case of puzzled method may need to not save (act as history)
-				if (!$this->_stackRunIsSaved($state, $rid, $sid, $stackid, $chainid)) {				
+					if (!$this->_stackRunIsSaved($state, $rid, $sid, $stackid, $chainid)) {				
+						//put step record
+						$this->_stackRunSave($state, $rid, $sid, $stackid, $chainid);
+					}				  
 				
-					//put step record
-					/*$sSQL = "insert into pstackrun (rid,sid,sstep,pstep,pstate,pobj,puser) values (";
-					$sSQL.= "'$rid','$sid','$stackid','$chainid','$state','{$this->callerName}','{$this->user}')";
-					$db->Execute($sSQL);*/
-					$this->_stackRunSave($state, $rid, $sid, $stackid, $chainid);
-				}				  
-				
-				if (!$this->_stackPostIsSaved($rid, $sid, $stackid, $chainid)) {
-				
-					//put post record 
-					/*$pdata = json_encode($_POST); //addslashes(json_encode($_POST));
-					$pSQL = "insert into pstackpoint (rid,sid,sstep,pstep,pstate,pobj,puser,pdata) values (";
-					$pSQL.= "'$rid','$sid','$stackid','$chainid','$state','{$this->callerName}','{$this->user}','$pdata')";
-					//echo $pSQL;
-					$db->Execute($pSQL);*/
-					$this->_stackPostSave($state, $rid, $sid, $stackid, $chainid);
+					if (!$this->_stackPostIsSaved($rid, $sid, $stackid, $chainid)) {
+						//put post record 
+						$this->_stackPostSave($state, $rid, $sid, $stackid, $chainid);
 					
-					//when submit
-					//check for closed stack after runsave
-					$ret = $this->isClosedStack();				
-					return ($ret);					
-				}
-				echo '__REPOST__';
-				return false;
-			  }	
+						//when submit check for closed stack after post
+						$ret = $this->isClosedStack();				
+						return ($ret);					
+					}
+					//echo '__REPOST__';
+					return false;
+				}	
 			}	
 			else { //no form, no post
-				//in case of puzzled method may need to not save (act as history)
+				
 				if (!$this->_stackRunIsSaved($state, $rid, $sid, $stackid, $chainid)) {				
 				
 					//put step record
-					/*$sSQL = "insert into pstackrun (rid,sid,sstep,pstep,pstate,pobj,puser) values (";
-					$sSQL.= "'$rid','$sid','$stackid','$chainid','$state','{$this->callerName}','{$this->user}')";
-					$db->Execute($sSQL);
-					*/
 					$this->_stackRunSave($state, $rid, $sid, $stackid, $chainid);
 				}				
 			
-				echo '__NOFORM__';
+				//echo '__NOFORM__';
 				$ret = $this->isClosedStack(); 	
 				
 				return ($ret);
@@ -246,11 +239,6 @@ class pstack {
 		
 		return ($res->fields[0]) ? true : false;
 	}	
-	
-	protected function stackViewPost() {
-		print_r($_POST);
-		return $this->stackView();
-	}
 
 	protected function stackPost($data=false, $stackid, $chainid, $caller=null) {
 		$db = GetGlobal('db');
@@ -279,18 +267,10 @@ class pstack {
 		if ($this->isRunningProcess())  {
 			$stackid = 1;
 			foreach ($stack as $caller=>$chain)	{
-				//$s[$caller] = $chain;
+
 				$sName = $this->getCallerNameInStack($caller);
-				//echo '<br/>',$caller,':',$sName;
 				foreach ($chain as $p=>$process) {
 					$chainid = $p+1; //inc by 1
-					//echo ':',$chainid,':',$process;
-					/*$sSQL = "select rid from pstackrun where rid='$rid' and sid='$sid' ";
-					$sSQL.= "and sstep=$stackid and pstep=$chainid and pstate=1 and pobj='$sName'";
-					//echo '<br/>',$sSQL;
-					$res = $db->Execute($sSQL);					
-					if (!$res->fields[0]) return false;
-					*/
 					if (!$this->_stackProcessFinished($rid, $sid, $stackid, $chainid, $sName)) 
 						return false;
 				}
@@ -298,9 +278,6 @@ class pstack {
 			}
 			
 			//put end record
-			/*$sSQL = "update pstackrun set pstate=1 where pobj IS NULL AND rid='$rid' AND sid='$sid'";
-			$db->Execute($sSQL);
-			*/
 			if ($this->_stackFinish($rid, $sid)) {
 			
 				//sendmail to process owner
@@ -664,6 +641,17 @@ class pstack {
 		
 		return false; 
 	}	
+	
+	protected function getProcessUsers() {
+		$db = GetGlobal('db');	
+		
+		$cSQL = "select email from ulist where listname='{$this->processStepName}'";
+		$res = $db->Execute($cSQL);
+		foreach ($res as $i=>$rec) 
+			$u[] = $rec[0];
+			
+		return (array) $u;	
+	}	
 
 	//get the users included in ulist named as process step name
 	protected function isProcessUser($user=null) {
@@ -688,7 +676,7 @@ class pstack {
 	
 	//ulist named as process mail send
 	protected function processMail($subj=null, $body=null, $to=false) {	
-		$db = GetGlobal('db');	
+		//$db = GetGlobal('db');	
 		$rid = $this->pid;
 		$from = 'sales@stereobit.gr';
 		$mailbody = $body ? $body : $this->getPageLink($rid,false,$pname);		
@@ -703,13 +691,17 @@ class pstack {
 				$err = $this->mailto($from,$to,$subject,$mailbody);
 		}
 		//else
+			
 		//check if mails exist for the process as ulist step name
-		$cSQL = "select email from ulist where listname='{$this->processStepName}'";
+		/*$cSQL = "select email from ulist where listname='{$this->processStepName}'";
 		$res = $db->Execute($cSQL);
+		
 		foreach ($res as $i=>$rec) {
 			//sendmail
 			$err.= $this->mailto($from,$rec[0],$subject,$mailbody);
-		}
+		}*/
+		foreach($this->getProcessUsers() as $u=>$puser)
+			$err.= $this->mailto($from,$puser,$subject,$mailbody);
 
 		return (!$err) ? true : false; 	
 	}	
