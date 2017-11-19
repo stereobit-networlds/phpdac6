@@ -25,10 +25,11 @@ class fronthtmlpage {
 	
 	var $anel, $anel_signin;
 	var $template, $cptemplate;
-	var $preprocess;	
+	var $preprocess;
+	
+	static  $cmsTemplates;	
 	 
-	public function __construct($file=null) { 
-	    $GRX = GetGlobal('GRX');
+	public function __construct($file=null, $theme=null) { 
         $UserSecID = GetGlobal('UserSecID');			
 		$userSid = decode($UserSecID);
 		
@@ -59,12 +60,12 @@ class fronthtmlpage {
 			$mylan = getlocal() ? getlocal() : '0';
 			$autofile = GetGlobal('UserID') ? $cmd . '_in' . $this->lan . '.html' : $cmd . $this->lan . '.html';
 		  
-			$htmlfile = $this->urlpath . '/cp/' . $this->htmlpage . "/" . $autofile;
+			$htmlfile = $this->prpath . $this->htmlpage . "/" . $autofile;
 			if (!is_readable($htmlfile)) //default
-				$htmlfile = $this->urlpath . '/cp/' . $this->htmlpage . "/" . $file;
+				$htmlfile = $file ? $this->prpath . $this->htmlpage . "/" . $file : null;
 		}
 		else
-			$htmlfile = $this->urlpath . '/cp/' . $this->htmlpage . "/" . $file;
+			$htmlfile = $file ? $this->prpath . $this->htmlpage . "/" . $file : null;
 		//echo '>',$htmlfile;
 		
 		//$cphtmlpath = '/cp/' . $this->htmlpage;		
@@ -81,15 +82,7 @@ class fronthtmlpage {
 		//echo $this->argument,'>';
 	
 		$this->modify = urldecode(base64_decode(GetReq('modify')))=='stereobit' ? true : false;
-
-        //choose encoding
-        /*$char_set  = arrayload('SHELL','char_set');	  
-        $charset  = paramload('SHELL','charset');	  		
-		if (($charset=='utf-8') || ($charset=='utf8'))
-		  $this->charset = 'utf-8';
-		else  
-	      $this->charset = $char_set[getlocal()]; 	  				
-		*/    
+   
 		$this->verbose = remote_paramload('FRONTHTMLPAGE','verbose',$this->prpath); 
 		$this->edithtml = remote_paramload('FRONTHTMLPAGE','edithtml',$this->prpath); 
 	  	$this->editmode_point  = '[E]';		
@@ -103,17 +96,30 @@ class fronthtmlpage {
 		$this->cptemplate = remote_paramload('FRONTHTMLPAGE','cptemplate',$this->prpath);		
 		
 		$this->BASE_URL = $this->baseURL();
-		$this->MC_TEMPLATE = strstr($_SERVER[REQUEST_URI], 'cp/') ? //is in cp
-							 $this->cptemplate : $this->template; 		
+		$this->MC_TEMPLATE = $theme ? $theme : 
+		                     (strstr($_SERVER[REQUEST_URI], 'cp/') ? //is in cp
+								$this->cptemplate : $this->template); 		
 		$this->MC_ROOT = $this->mcRoot($this->MC_TEMPLATE);
 		$this->MC_DEBUG = remote_paramload('FRONTHTMLPAGE','debug',$this->prpath);
 		$this->MC_CURRENT_PAGE = null;	
-		
+
         $this->anel = remote_paramload('FRONTHTMLPAGE','anel',$this->prpath); 		
 		$this->anel_signin = remote_paramload('FRONTHTMLPAGE','anelsignin',$this->prpath); 		
 		
 		//problem returning part (outside html body)
-		$this->preprocess = 0;//_v('pcntl.preprosess')		
+		$this->preprocess = 0;//_v('pcntl.preprosess')
+
+		//print_r(str_replace(';','<br/>',GetSessionParam('cmsTemplates')));		
+
+		//cmsTemplate stack - start/reset	
+		self::$cmsTemplates[$this->htmlfile] = 1;
+		/*if (isset($_GET['modify'])) {}
+		elseif (strpos($_SERVER[REQUEST_URI], 'cp/')) {}
+        else {		
+			echo '!!!sss';
+			SetSessionParam('cmsTemplates', self::$cmsTemplates);	//reset / start ehen not in cp	
+		}*/
+		//echo $_SERVER[REQUEST_URI];
 	}	
 	
     public function render($actiondata) { 	
@@ -141,7 +147,7 @@ class fronthtmlpage {
 			return ($htmldata);
 		}
 	  
-		if (is_file($this->htmlfile)) {
+		if ($this->htmlfile) {
 		
 			$htmdata = file_get_contents($this->htmlfile);
 			$this->process_javascript($htmdata, $pageout);		
@@ -564,6 +570,9 @@ EOF;
 			$pathname = $this->urlpath . '/cp/'.$name;
 
 			if (is_readable($pathname)) {
+				
+				self::stackTemplate($pathname);
+				
 				$contents = @file_get_contents($pathname);
 				$ret = $this->process_commands($contents);
 				return ($ret);
@@ -861,17 +870,9 @@ EOF;
 				
 			//echo 'INCLUDE_PART:'.$pathname;
 			if ($contents = trim(@file_get_contents($pathname))) {	
-				/*	
-				if (substr($contents, -2) == '?>') {
-					$contents = '?>' . $contents . ((substr($contents, -2) == '?>') ? '<?php ' : '');
-					$contents = eval($contents);
-				}
-				elseif (substr($contents, -8) == '/phpdac>') {
-					//one big cmd with other phpdac inside as raw text
-					$contents = _m(substr($contents,8,-9));
-				}
-				//else as is
-				*/
+			
+				self::stackTemplate($pathname);
+				
 				$contents = $this->dCompile($contents);
 				
 				//replace content args
@@ -923,6 +924,8 @@ EOF;
 			//echo 'INCLUDE_PART:'.$pathname;
 			if ($contents = trim(@file_get_contents($pathname))) {	
 
+			    self::stackTemplate($pathname);
+			
 				$contents = $this->dCompile($contents);
 				
 				//replace content args
@@ -1187,6 +1190,7 @@ EOF;
 		return ($name);
     }	
 	
+	
     protected function javascript_ajax()  {
    
       $jscript = <<<EOF
@@ -1229,7 +1233,34 @@ function cc(name,value,days) {
             $js->load_js($code,"",1);			   
 		    unset ($js);		
      	}	  
+	}
+	
+	//store templates used
+	protected static function stackTemplate($tmpl=null) {
+		if (!$tmpl) return false;
+		if (strstr($tmpl, 'metro/')) return false; //static
+		
+		self::$cmsTemplates[$tmpl] = 1;
+		//SetSessionParam('cmsTemplates', self::$cmsTemplates);
+		//$stackT = GetSessionParam('cmsTemplates') . $tmpl . ';';
+		//SetSessionParam('cmsTemplates', $stackT);
+		return true;
+	}
+
+	function __destruct() {
+		if (isset($_GET['modify'])) {
+			//echo 'modify:',$_SERVER[REQUEST_URI];	
+		}
+		elseif (strstr($_SERVER[REQUEST_URI], 'cp/')) {
+			//echo 'cp:', $_SERVER[REQUEST_URI];		
+		}
+        else {
+			//echo $_SERVER[REQUEST_URI];	
+			SetSessionParam('cmsTemplates', self::$cmsTemplates);
+			//print_r(GetSessionParam('cmsTemplates'));
+		}
 	}	
+
 };
 }
 ?>

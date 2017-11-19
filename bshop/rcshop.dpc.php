@@ -295,14 +295,15 @@ class rcshop {
         $width = $width ? $width : null; //wide	
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;	
-	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('_items',getlocal());
+	    $lan = getlocal();// ? getlocal() : 0;  
+		$title = localize('_items',$lan);
+		$iname = $lan ? 'itmname' : 'itmfname';
 	
 	    if (defined('MYGRID_DPC')) {	
 			
 			$code = _m("cmsrt.getmapf use code");
 			
-			$xsSQL2 = "SELECT * FROM (SELECT id,datein,$code,itmactive,active,itmname,sysins,cat0,cat1,cat2,cat3,cat4 FROM products) x";
+			$xsSQL2 = "SELECT * FROM (SELECT id,datein,$code,itmactive,active,$iname,sysins,cat0,cat1,cat2,cat3,cat4 FROM products) x";
 			//echo $xsSQL2;
 			_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");
 			_m("mygrid.column use grid1+datein|".localize('_date',getlocal()). "|5|0|");
@@ -310,7 +311,7 @@ class rcshop {
 		    _m("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");		
 			_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
 			_m("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");			
-			_m("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|10|0|");	
+			_m("mygrid.column use grid1+$iname|".localize('_title',getlocal())."|10|0|");	
 			_m("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|5|0|");	
 			_m("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|5|0|");	
 			_m("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|5|0|");	
@@ -354,8 +355,9 @@ class rcshop {
         $width = $width ? $width : null; //wide	
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;	
-	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('_solditems',getlocal());
+	    $lan = getlocal();// ? getlocal() : 0;  
+		$title = localize('_solditems',$lan);
+		$iname = $lan ? 'itmname' : 'itmfname';		
 	
 	    if (defined('MYGRID_DPC')) {	
 			
@@ -368,7 +370,7 @@ class rcshop {
 			else
 				$dSQL = " $code=0"; //dummy, null grid				
 			
-			$xsSQL2 = "SELECT * FROM (SELECT id,datein,$code,itmactive,active,itmname,sysins,cat0,cat1,cat2,cat3,cat4 FROM products where $dSQL) x";
+			$xsSQL2 = "SELECT * FROM (SELECT id,datein,$code,itmactive,active,$iname,sysins,cat0,cat1,cat2,cat3,cat4 FROM products where $dSQL) x";
 			//echo $xsSQL2;
 			_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");
 			_m("mygrid.column use grid1+datein|".localize('_date',getlocal()). "|5|0|");
@@ -376,7 +378,7 @@ class rcshop {
 		    _m("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");		
 			_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
 			_m("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");			
-			_m("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|10|0|");	
+			_m("mygrid.column use grid1+$iname|".localize('_title',getlocal())."|10|0|");	
 			_m("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|5|0|");	
 			_m("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|5|0|");	
 			_m("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|5|0|");	
@@ -397,8 +399,9 @@ class rcshop {
         $width = $width ? $width : null; //wide	
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;	
-	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('_catitems',getlocal());
+	    $lan = getlocal();// ? getlocal() : 0;  
+		$title = localize('_catitems',$lan);
+		$iname = $lan ? 'itmname' : 'itmfname';		
 	
 	    if (defined('MYGRID_DPC')) {	
 			
@@ -416,7 +419,7 @@ class rcshop {
 			else
 				$dSQL = " $code=0"; //dummy, null grid					
 			
-			$xsSQL2 = "SELECT * FROM (SELECT id,datein,$code,itmactive,active,itmname,sysins,cat0,cat1,cat2,cat3,cat4 FROM products where $dSQL) x";
+			$xsSQL2 = "SELECT * FROM (SELECT id,datein,$code,itmactive,active,$iname,sysins,cat0,cat1,cat2,cat3,cat4 FROM products where $dSQL) x";
 			//echo $xsSQL2;
 			_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|||1");
 			_m("mygrid.column use grid1+datein|".localize('_date',getlocal()). "|5|0|");
@@ -424,7 +427,7 @@ class rcshop {
 		    _m("mygrid.column use grid1+itmactive|".localize('_active',getlocal())."|2|0|");		
 			_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");
 			_m("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");			
-			_m("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|10|0|");	
+			_m("mygrid.column use grid1+$iname|".localize('_title',getlocal())."|10|0|");	
 			_m("mygrid.column use grid1+cat0|".localize('_cat0',getlocal())."|5|0|");	
 			_m("mygrid.column use grid1+cat1|".localize('_cat1',getlocal())."|5|0|");	
 			_m("mygrid.column use grid1+cat2|".localize('_cat2',getlocal())."|5|0|");	

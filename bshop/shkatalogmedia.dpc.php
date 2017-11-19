@@ -532,6 +532,17 @@ function jsShowPhoto(name) {
 			'title':  name});		
 	}	
 }
+function jsShowPhotoAdd(pic) {	
+	if (/{$mobileDevices}/i.test(navigator.userAgent)) {
+	}	
+	else {	
+		new $.Zebra_Dialog(
+			'<img src=\"'+pic+'\" />', {
+			'width': 800, 'height': 600,
+			'position' : ['top + 20','center'],
+			'title':  name});		
+	}	
+}
 		
 $(document).ready(function () {
 	if (/{$mobileDevices}/i.test(navigator.userAgent)) 
@@ -1246,7 +1257,9 @@ JSFILTER;
 		//$sSQL .= ($this->codetype=='string') ? $db->qstr($item) : $item; //DISABLED
 		//extra code (url alias)
 		$sSQL .= ($aliasID) ? " OR {$aliasID}=" . $db->qstr($this->stralias($item)) : null;
-		  
+		 
+		$sSQL .= " and itmactive>0 and active>0";
+		
 		if (($lock = $this->itemlockparam) && (!GetGlobal('UserID')))
 		    $sSQL .=  ' and ' . $lock . ' is null';		  	  
 	   
@@ -1713,8 +1726,12 @@ JSFILTER;
 			$tokens[] = _m("shtags.get_tags use " . $rec[$item_code]);	
 			 
 			//print_r($tokens);
-		 	if ($itmpl = $rec['template'])
-		 		$out = $this->_ct($this->itmplpath . $itmpl, serialize($tokens), true);
+		 	if ($itmpl = $rec['template']) {
+				//echo $this->itmplpath . $itmpl;
+			    //$out = _m("cmsrt._ct use " . $this->itmplpath . $itmpl . "+" . serialize($tokens) . "+1");
+				$this_item_template = _m('cmsrt.select_template use ' . $this->itmplpath . $itmpl);
+				$out = $this->combine_tokens($this_item_template, $tokens, true);
+			}	
 			else			 
 				$out = $this->combine_tokens($mytemplate, $tokens, true);
 			 
@@ -3527,7 +3544,7 @@ JSFILTER;
 			$r[] = $f . ':' . $t;
 		}	
 			
-		$ret = implode(', ', $r);
+		$ret = (empty($r)) ? null : implode(', ', $r);
 		return ($ret);
 	}	
 	
@@ -3569,7 +3586,7 @@ JSFILTER;
 		foreach ($categories as $i=>$cat)
 			if ($cat) $xc[] = str_replace($g1,$g2,$cat);
 			
-		$ret = implode($c, $xc);
+		$ret = (empty($xc)) ? null : implode($c, $xc);
 		return ($ret);
 	}
 	/* https://developers.facebook.com/docs/reference/opengraph/object-type/product/

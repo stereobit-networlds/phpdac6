@@ -75,10 +75,16 @@ class cpmhtmleditor {
 							null;
 
 		//ckeditor 4
+
 		//$ckeditor4 = GetReq('cke4') ? GetReq('cke4') : false;
-		$this->ckeditor4 = true;//((GetReq('cke4'))||($template)) ? /*true*/false : false; //<<<<
+		//$this->ckeditor4 = true;//((GetReq('cke4'))||($template)) ? /*true*/false : false; //<<<<
+		$this->ckeditor4 = remote_paramload('CKEDITOR','ckeditor4',$this->prpath);
 		$this->cke4_inline = $this->ckeditor4 ? true/*false*/ : false; 
-		$this->ckjs = $this->ckeditor4 ? "http://stereobit.gr/ckeditor4/ckeditor.js" : "http://stereobit.gr/ckeditor/ckeditor.js";
+
+		$ckeditorurl = remote_paramload('CKEDITOR','ckeditorurl',$this->prpath);		
+		$ckeditor4url = remote_paramload('CKEDITOR','ckeditor4url',$this->prpath);		
+		$this->ckjs = $this->ckeditor4 ? $ckeditor4url : $ckeditorurl;
+		//$this->ckjs = $this->ckeditor4 ? "http://stereobit.gr/ckeditor4/ckeditor.js" : "http://stereobit.gr/ckeditor/ckeditor.js";
 	
 		$this->encodeimageid = remote_paramload('RCITEMS','encodeimageid',$this->path);
 	    $this->photodb = remote_paramload('RCITEMS','photodb',$this->prpath);
@@ -247,7 +253,7 @@ class cpmhtmleditor {
 				$sSQL = "insert into products ({$this->activecode},itmname,itmfname,itmdescr,itmfdescr,sysins,active,itmactive,cat0,cat1,cat2,cat3,cat4,template) values (";
 				$sSQL .= $db->qstr($code).",".$db->qstr($title).",".$db->qstr($title).",".$db->qstr($descr).",".$db->qstr($descr).",".$db->qstr(date('Y-m-d h:m:s')).",$active,$itmactive,";			
 				$sSQL .= $db->qstr($cat[0]).",".$db->qstr($cat[1]).",".$db->qstr($cat[2]).",".$db->qstr($cat[3]).",".$db->qstr($cat[4]).",";			
-				$sSQL .= $db->qstr($template . '.php');
+				$sSQL .= $template ? $db->qstr($template . '.php') : $db->qstr('');
 				$sSQL .= ")"; 
 
 				$result = $db->Execute($sSQL);				
@@ -592,7 +598,12 @@ class cpmhtmleditor {
 	
 	//handle dropzone js form for pic uploading
 	protected function dropzone($accepted_filetypes=null) {
-	    $title = $_GET['title'] ? str_replace(' ','-',$_GET['title']) : 'title'; //posted item code
+		//$cpGet = _v('rcpmenu.cpGet');		
+		$realid = _m("cmsrt.getRealItemCode use " . $_GET['title']) ;//$cpGet['id']);		
+
+	    //$title = $_GET['title'] ? str_replace(' ','-',$_GET['title']) : 'title'; //posted item code
+		$title = $realid ? str_replace(' ','-',$realid) : 'title'; //real id
+		
 		$ds = DIRECTORY_SEPARATOR;  
 		//$storeFolder = 'uploads'; 
 

@@ -45,27 +45,32 @@ $__LOCALE['RCITEMSEXT_DPC'][28]='_color;Color;Χρώμα';
 $__LOCALE['RCITEMSEXT_DPC'][29]='_resources;Res;Συσχ.';
 $__LOCALE['RCITEMSEXT_DPC'][30]='_pricepc;Discount;Έκπτωση';
 $__LOCALE['RCITEMSEXT_DPC'][31]='_price2;Price 3;Αξία 3';
+$__LOCALE['RCITEMSEXT_DPC'][32]='_weight;Weight;Βάρος';
+$__LOCALE['RCITEMSEXT_DPC'][33]='_volume;Volume;Όγκος';
+$__LOCALE['RCITEMSEXT_DPC'][34]='_itmfname;Title;Τίτλος';
 
 class rcitemsext {
 
     var $prpath, $title, $select_fields, $editf;
-	var $cseparator, $restype;
+	var $cseparator, $restype, $lan;
 
     public function __construct() {
 	  
 		$this->title = localize('RCITEMSEXT_DPC',getlocal());	  
+		$this->lan = getlocal();
 		
 		$this->prpath = paramload('SHELL','prpath');
 		$this->urlpath = paramload('SHELL','urlpath');
 		
+		$iname = $this->lan ? 'itmname' : 'itmfname';
 		$this->select_fields = array('code5','cat0','cat1','cat2','cat3',/*'cat4',*/
-									 'itmactive','active','itmname','uniname1','xml',
+									 'itmactive','active',$iname,'uniname1','xml',
 									 'ypoloipo1','price0','price1','price2','pricepc',
-									 'manufacturer','size','dimensions','color','resources');
+									 'manufacturer','size','dimensions','color','weight','volume');
 	   	
-		$this->editf = array('itmactive','active','itmname','uniname1','xml',
+		$this->editf = array('itmactive','active',$iname,'uniname1','xml',
 							'ypoloipo1','price0','price1','price2','pricepc',
-							'manufacturer','size','color','dimensions','resources');
+							'manufacturer','size','color','dimensions','resources','weight','volume');
 	   
 		$csep = remote_paramload('RCITEMS','csep',$this->path); 
 		$this->cseparator = $csep ? $csep : '^';	 

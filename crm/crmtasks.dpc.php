@@ -152,7 +152,7 @@ class crmtasks extends crmmodule  {
 		
 		//return ("details:" . $data);
 		if (is_numeric($data)) //id for content preview
-			$bodyurl = 'cpbulkmail.php?t=cpmailbodyshow&id='.$data; 
+			$bodyurl = 'cpulists.php?t=cpmailbodyshow&id='.$data; 
 		elseif ($this->_checkmail($data)) //email for attr3
 			$bodyurl = 'cpcrm.php?t=cpcrmrun&mod=crmtasks.taskclicks&id='.$data; 
 		else //campaign id

@@ -1353,7 +1353,7 @@ EOF;
 		
 		//unsub link token 11 (0..9 token reserved frontpage.process_html_file)
 		if ($unsublink = GetParam('unsubscribelink')) {
-			$unlink = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/') ."\">".localize('_here',getlocal())."</a>";			
+			$unlink = "<a href=\"" . $this->encUrl($this->url . '/unsubscribe/_SUBSCRIBER_/') ."\">".localize('_here',getlocal())."</a>";			
 			
 			$text = str_replace(array('_UNSUBSCRIBE_','_MAILSENDER_'),array($unlink, $cc), GetParam('unsubscribetext'));			
 			$rtext = $this->add_remarks_to_hide($text);
@@ -2106,7 +2106,17 @@ This email and any files transmitted with it are confidential and intended solel
 
         $ret = $lan ? $text1 : $text0;	
 		return ($ret);
-    }		
+    }
+
+	public function weblink_text() {
+		$lan = getlocal() ? 1 : 0;
+		
+		$text0 = "Press _WEBLINK_ to see this newsletter as webpage.";
+		$text1 = "Πατήστε _WEBLINK_ για να δείτε το newsletter ως ιστοσελίδα.";
+		
+		$ret = $lan ? $text1 : $text0;	
+		return ($ret);
+	}	
 	
 	public function encUrl($url, $nohost=false) {
 		if ($url) {

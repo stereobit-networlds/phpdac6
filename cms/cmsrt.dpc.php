@@ -133,7 +133,7 @@ class cmsrt extends cms  {
 		$this->mbody = null; //use for load body as var		
 				
 	    $this->scrollid = 0;//javascript scroll call meter
-		$this->load_mode = 1;		
+		$this->load_mode = 1;	
 
 		$this->javascript();		
 	}
@@ -363,7 +363,7 @@ goBack();
 					$itemtitle  = $this->replace_cartchars($rec[$this->itmname]);
 					$itemdescr  = $this->replace_cartchars($rec[$this->itmdescr]);
 					$itemphoto  = $itemcode;
-					$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmeida.zeroprice_msg');					
+					$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmedia.zeroprice_msg');					
 					$itemunit   = $rec['uniname2'] ? localize($rec['uniname1'],$this->lan) .'/'. localize($rec['uniname2'],$this->lan) :
 											         localize($rec['uniname1'],$this->lan);					
 									
@@ -531,7 +531,7 @@ goBack();
 					$itemtitle  = $this->replace_cartchars($rec[$this->itmname]);
 					$itemdescr  = $this->replace_cartchars($rec[$this->itmdescr]);
 					$itemphoto  = $itemcode;
-					$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmeida.zeroprice_msg');					
+					$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmedia.zeroprice_msg');					
 					$itemunit   = $rec['uniname2'] ? localize($rec['uniname1'],$this->lan) .'/'. localize($rec['uniname2'],$this->lan) :
 											         localize($rec['uniname1'],$this->lan);					
 									
@@ -596,8 +596,11 @@ goBack();
                 $tokens[] = $rec['itmactive'];				
 			 
 				//print_r($tokens);
-				if ($itmpl = $rec['template'])
+				if ($itmpl = $rec['template']) {
 					$out = $this->_ct($this->itmplpath . $itmpl, serialize($tokens), true);
+					//$this_item_template = _m('cmsrt.select_template use ' . $this->itmplpath . $itmpl);
+					//$out = $this->combine_tokens($this_item_template, $tokens, true);
+				}	
 				else	
 					$out = $this->combine_tokens($mytemplate, serialize($tokens), true);
 			 
@@ -948,7 +951,7 @@ goBack();
 		foreach ($categories as $i=>$cat)
 			if ($cat) $xc[] = str_replace($g1,$g2,$cat);
 			
-		$ret = implode($c, $xc);
+		$ret = (empty($xc)) ? null : implode($c, $xc);
 		return ($ret);
 	}	
 	
@@ -1320,6 +1323,7 @@ EOF;
 			$tid =  implode("','", _m('cmsmenu.readMenuElements use ' . $usemenu, 1)); //override value
 			$sSQL .=  (strstr($tid, ',')) ?  " $uid in ('" . $tid . "')" : "$uid=" . $db->qstr($tid);
 			$sSQL .= " ORDER BY " . "FIELD($uid,'".  $tid ."')";  //orderid
+			//echo $sSQL;
 		}				
 		elseif (isset($tid)) {
 			if (strstr($tid, '.')) { //tree id
@@ -1383,7 +1387,7 @@ EOF;
 				$itemdescr  = $rec[$this->itmdescr]; 
 				$citemdescr = $this->replace_cartchars($rec[$this->itmdescr]);
 				$itemphoto  = $itemcode;
-				$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmeida.zeroprice_msg');					
+				$itemprice  = ($rec[$pp]>0) ? _m('shkatalogmedia.spt use ' . $rec[$pp],1) : _v('shkatalogmedia.zeroprice_msg');					
 				$itemunit   = $rec['uniname2'] ? localize($rec['uniname1'],$this->lan) .'/'. localize($rec['uniname2'],$this->lan) :
 											     localize($rec['uniname1'],$this->lan);
 				
@@ -1515,6 +1519,7 @@ EOF;
 			$ret = $this->process_commands($ret);		  			  		
 		
 		$tokens = $toks ? unserialize($toks) : array(); 
+		
 		$i=0;		
 		if (!empty($tokens)) {	
 			foreach ($tokens as $i=>$tok) 
@@ -1536,7 +1541,8 @@ EOF;
 	  
 	    $path = $iscp ? ($theme ? $theme . '/' : ($themePath . $this->cptemplate . '/')) : 
 		                ($theme ? $theme . '/' : ($themePath . $this->template . '/')) ; 
-	    
+
+		
 		//big file to load in every page
 		/*if ($data = trim(@file_get_contents($path . 'template-parts.xml'))) {
 			//echo '.xml';
@@ -1550,14 +1556,21 @@ EOF;
 		else*/
 		if (($this->mobile) && ($data = trim(@file_get_contents($path . 'mob@'.$tfile . '.php')))) {
 			//echo 'mobile ver .php';
+			//save cmsTemplates to be able to edit in cp
+			//self::stackTemplate($path . 'mob@'.$tfile . '.php');
+			
 			return $this->dCompile($data);
 		}
 		elseif ($data = trim(@file_get_contents($path . $tfile . '.php'))) {		
 			//echo '.php';
+			//self::stackTemplate($path . $tfile . '.php');
+			
 			return $this->dCompile($data);
 		}
 
-		//.htm files
+		//.htm files 
+		//self::stackTemplate($path . str_replace('.', $this->lan.'.', str_replace('.htm', '', $tfile) . '.htm'));
+					
 		//echo '.htm';
 		return @file_get_contents($path . str_replace('.', $this->lan.'.', str_replace('.htm', '', $tfile) . '.htm')); 
     }		
@@ -1887,6 +1900,10 @@ EOF;
 		}
 
 		$pathname = $this->prpath . $this->htmlpage . "/" . $this->MC_TEMPLATE . "/" . $param . '.php';
+		//echo $pathname;
+		
+		//self::stackTemplate($pathname);
+				
 		$contents = @file_get_contents($pathname);
 		$out = $this->process_commands($contents);
 		

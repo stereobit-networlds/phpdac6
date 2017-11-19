@@ -699,9 +699,9 @@ class rcmessages  {
 	public function getInactiveUsers() {
 		$db = GetGlobal('db');
 		$text = localize('_inactiveuser',getlocal());
-		$sSQL = "select username,timein from users where notes='DELETED' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
+		$sSQL = "select username,timein from users where active=0 and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 30 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
 		$result = $db->Execute($sSQL,2);
-		
+
 		foreach ($result as $i=>$rec) {
 			$saytime = _m('rccontrolpanel.timeSayWhen use ' . strtotime($rec[1]));
 			$msg = "warning|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];
@@ -714,9 +714,9 @@ class rcmessages  {
 	public function getActiveUsers() {
 		$db = GetGlobal('db');
 		$text = localize('_newactiveuser',getlocal());
-		$sSQL = "select username,timein from users where notes='ACTIVE' and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 10 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
+		$sSQL = "select username,timein from users where active=1 and DATE(timein) BETWEEN DATE( DATE_SUB( NOW() , INTERVAL 10 DAY ) ) AND DATE ( NOW() ) order by DATE(timein) desc";
 		$result = $db->Execute($sSQL,2);
-		
+
 		foreach ($result as $i=>$rec) {
 			$saytime = _m('rccontrolpanel.timeSayWhen use ' . strtotime($rec[1]));
 			$msg = "success|" . $text .' '. $rec[0] . "|$saytime|cpusers.php|".$rec[0];

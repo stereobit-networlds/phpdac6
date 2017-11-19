@@ -56,14 +56,14 @@ $__LOCALE['RCCUSTOMERS_DPC'][16]='_name;Name;Όνομα';
 $__LOCALE['RCCUSTOMERS_DPC'][17]='_afm;Vat ID;ΑΦΜ';
 $__LOCALE['RCCUSTOMERS_DPC'][18]='_area;Area;Περιοχή';
 $__LOCALE['RCCUSTOMERS_DPC'][19]='_prfdescr;Occupation;Επάγγελμα';
-$__LOCALE['RCCUSTOMERS_DPC'][20]='_doy;DOY.;ΔΟΥ.';
+$__LOCALE['RCCUSTOMERS_DPC'][20]='_doy;DOY;ΔΟΥ';
 $__LOCALE['RCCUSTOMERS_DPC'][21]='_street;Street;Οδός';
 $__LOCALE['RCCUSTOMERS_DPC'][22]='_number;No;Αριθμος';
 $__LOCALE['RCCUSTOMERS_DPC'][23]='_city;City;Πόλη';
-$__LOCALE['RCCUSTOMERS_DPC'][24]='_attr1;P1;P1';
-$__LOCALE['RCCUSTOMERS_DPC'][25]='_attr2;P2;P2';
-$__LOCALE['RCCUSTOMERS_DPC'][26]='_attr3;P3;P3';
-$__LOCALE['RCCUSTOMERS_DPC'][27]='_attr4;P4;P4';
+$__LOCALE['RCCUSTOMERS_DPC'][24]='_p1;P1;P1';
+$__LOCALE['RCCUSTOMERS_DPC'][25]='_p2;P2;P2';
+$__LOCALE['RCCUSTOMERS_DPC'][26]='_p3;P3;P3';
+$__LOCALE['RCCUSTOMERS_DPC'][27]='_p4;P4;P4';
 $__LOCALE['RCCUSTOMERS_DPC'][28]='_custaddress;Addresses;Διευθύνσεις';
 $__LOCALE['RCCUSTOMERS_DPC'][29]='_active;Active;Ενεργός';
 $__LOCALE['RCCUSTOMERS_DPC'][30]='_code2;Code;Κωδικός';
@@ -203,7 +203,7 @@ class rccustomers extends shcustomers {
 			_m("mygrid.column use grid2+id|".localize('id',getlocal())."|5|0|||1");
 			_m("mygrid.column use grid2+timein|".localize('_date',getlocal()). "|10|0|");
 			_m("mygrid.column use grid2+active|".localize('_active',getlocal())."|boolean|1|");	
-			_m("mygrid.column use grid2+code2|".localize('_code2',getlocal())."|10|0|");
+			_m("mygrid.column use grid2+code2|".localize('_code2',getlocal())."|10|1|");
 			_m("mygrid.column use grid2+name|".localize('_name',getlocal())."|link|30|".seturl('t=cptransactions&cusmail={code2}').'||');
 		    _m("mygrid.column use grid2+prfdescr|".localize('_prfdescr',getlocal())."|20|1|");			
 		    _m("mygrid.column use grid2+afm|".localize('_afm',getlocal())."|10|1|");
@@ -219,10 +219,10 @@ class rccustomers extends shcustomers {
 		    _m("mygrid.column use grid2+voice2|".localize('_tel',getlocal())."|10|1|");			
 			_m("mygrid.column use grid2+fax|".localize('_fax',getlocal())."|10|1|");			
 			_m("mygrid.column use grid2+mail|".localize('_mail',getlocal())."|20|1|");
-			_m("mygrid.column use grid2+attr1|".localize('_attr1',getlocal())."|5|1|");
-		    _m("mygrid.column use grid2+attr2|".localize('_attr2',getlocal())."|5|1|");							
-			_m("mygrid.column use grid2+attr3|".localize('_attr3',getlocal())."|5|1|");
-		    _m("mygrid.column use grid2+attr4|".localize('_attr4',getlocal())."|5|1|");			
+			_m("mygrid.column use grid2+attr1|".localize('_p1',getlocal())."|5|1|");
+		    _m("mygrid.column use grid2+attr2|".localize('_p2',getlocal())."|5|1|");							
+			_m("mygrid.column use grid2+attr3|".localize('_p3',getlocal())."|5|1|");
+		    _m("mygrid.column use grid2+attr4|".localize('_p4',getlocal())."|5|1|");			
 			$out .= _m("mygrid.grid use grid2+customers+$xsSQL2+d+".localize('RCCUSTOMERS_DPC',getlocal())."+id+0+1+25+600++0+1+1");
 
 	    }

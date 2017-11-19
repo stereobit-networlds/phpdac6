@@ -246,7 +246,10 @@ class rccontrolpanel {
 		
 		$this->gotourl = seturl('t=cp&group=' . GetReq('group'));		
 		$this->userDemoIds = array(6,7); 
-		$this->crmLevel = 9;
+		
+		$crmSecurityLevel = paramload('CRM','seclevel'); 
+		$this->crmLevel = $crmSecurityLevel ? $crmSecurityLevel : 9;
+		
 		$this->stats = array();
 		$this->cpStats = false;
 		$this->isCrm = false;	

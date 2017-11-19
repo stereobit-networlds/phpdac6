@@ -145,10 +145,14 @@ class cmsform {
 								//set session param that has contact
 								SetSessionParam("FORMSUBMITED",1);
 								//save user mail
-								SetSessionParam("FORMMAIL",$email); //use for something...	
+								SetSessionParam("FORMMAIL",$email); //use for something...
+								
+								$this->jsDialog('', localize('_RCAMTRUE', $this->lan));			
 							}
-							else 
+							else { 
 								$this->msg = $err;						
+								$this->jsDialog($err, localize('_RCAMFALSE', $this->lan));
+							}	
 							
 	                        break; 																											  						
 		}
@@ -169,7 +173,22 @@ class cmsform {
 		}
 	 
 		return ($out);
-    }  		  
+    }  	
+
+	protected function jsDialog($text=null, $title=null) {
+	
+       if (defined('JSDIALOGSTREAM_DPC')) {
+	   
+			if ($text)	
+				$code = _m("jsdialogstream.say use $text+$title++2000");
+			else
+				$code = _m('jsdialogstream.streamDialog use jsdtime');
+		   
+			$js = new jscript;	
+			$js->load_js($code,null,1);		
+			unset ($js);
+	   }	
+	}	
   
 	protected function mailform() {
 		$sFormErr = GetGlobal('sFormErr');

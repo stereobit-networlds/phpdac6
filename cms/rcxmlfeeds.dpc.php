@@ -43,6 +43,9 @@ $__LOCALE['RCXMLFEEDS_DPC'][26]='_price0;Price 1;Αξία 1';
 $__LOCALE['RCXMLFEEDS_DPC'][27]='_price1;Price 2;Αξία 2';
 $__LOCALE['RCXMLFEEDS_DPC'][28]='_color;Color;Χρώμα';
 $__LOCALE['RCXMLFEEDS_DPC'][29]='_resources;Res;Συσχ.';
+$__LOCALE['RCXMLFEEDS_DPC'][30]='_weight;Weight;Βάρος';
+$__LOCALE['RCXMLFEEDS_DPC'][31]='_volume;Volume;Όγκος';
+$__LOCALE['RCXMLFEEDS_DPC'][32]='_itmfname;Title;Τίτλος';
 
 class rcxmlfeeds {
 

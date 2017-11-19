@@ -87,11 +87,11 @@ class cmssubscribe {
     public function event($event) {	
   
 	    switch ($event) {
-	        case 'subscribeajax'   :  $this->dosubscribe(); break;											
-	        case 'unsubscribeajax' :  $this->dounsubscribe(); break;			 
+	        case 'subscribeajax'   :  $this->dosubscribe(GetReq('m')); break;											
+	        case 'unsubscribeajax' :  $this->dounsubscribe(GetReq('m')); break;			 
 		 
-	        case 'subscribe'       :  $this->dosubscribe(); break;											
-	        case 'unsubscribe'     :  $this->dounsubscribe();
+	        case 'subscribe'       :  $this->dosubscribe(GetReq('m')); break;											
+	        case 'unsubscribe'     :  $this->dounsubscribe(GetReq('m'));
 	                                  break;				  								  
 									  
 			default                :
@@ -218,7 +218,7 @@ class cmssubscribe {
 		$db = GetGlobal('db');	
 		$mail_tell_user = isset($telltouser) ? $telltouser : $this->tell_user;
 		$ulistname = GetParam('ulistname') ? GetParam('ulistname') : 'default';	    
-		$mail = $mail ? $mail : GetReq('submail'); 
+		$mail = $mail ? $mail : GetParam('submail'); 
 		if (!$mail) return;		   
 	   
 		if ($this->checkmail($mail))  {

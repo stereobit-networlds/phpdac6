@@ -193,10 +193,11 @@ class rcitemqpolicy {
         $width = $width ? $width : null; //wide	
 		$mode = $mode ? $mode : 'd';
 		$noctrl = $noctrl ? 0 : 1;				   
-	    $lan = getlocal() ? getlocal() : 0;  
-		$title = localize('_items', getlocal()); 
+	    $lan = getlocal();// ? getlocal() : 0;  
+		$title = localize('_items', $lan); 
+		$iname = $lan ? 'itmname' : 'itmfname';
 		
-        $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,itmname,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
+        $xsSQL = "SELECT * from (select id,sysins,code5,xml,itmactive,active,$iname,uniname1,ypoloipo1,price0,price1,manufacturer,size,color from products) o ";		   
 		//code3,cat0,cat1,cat2,cat3,cat4,resources
 		   							
 		_m("mygrid.column use grid1+id|".localize('id',getlocal())."|2|0|");//"|link|5|"."javascript:editform(\"{id}\");".'||');			
@@ -204,7 +205,7 @@ class rcitemqpolicy {
 		_m("mygrid.column use grid1+active|".localize('_active',getlocal())."|2|0|");//"|boolean|1|101:0|");
 		_m("mygrid.column use grid1+sysins|".localize('_date',getlocal())."|5|0|");		
 		_m("mygrid.column use grid1+code5|".localize('_code',getlocal())."|5|0|");	
-		_m("mygrid.column use grid1+itmname|".localize('_title',getlocal())."|link|10|"."javascript:editform(\"{code5}\");".'||');	
+		_m("mygrid.column use grid1+$iname|".localize('_title',getlocal())."|link|10|"."javascript:editform(\"{code5}\");".'||');	
 		_m("mygrid.column use grid1+uniname1|".localize('_uniname1',getlocal())."|5|0|");		
 		_m("mygrid.column use grid1+ypoloipo1|".localize('_ypoloipo1',getlocal())."|5|1|");			
 		_m("mygrid.column use grid1+price0|".localize('_price0',getlocal())."|5|1|");		

@@ -113,7 +113,8 @@ class i18n {
 		else {
 			$this->filePath = $this->prpath . 'lang/' . 'lang_{LANGUAGE}.ini';
 		}
-
+		//echo $this->filePath;
+		
         if ($cachePath != NULL) {
             $this->cachePath = $this->prpath . $cachePath;
         }

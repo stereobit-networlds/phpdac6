@@ -81,7 +81,9 @@ class cmsmenu {
 		else //slideshow.ini	
 			$conf = @parse_ini_file($this->sliderfile, 1, INI_SCANNER_RAW);
 
-		//print_r($conf);	
+		//echo $slfile; print_r($conf);
+		if (empty($conf)) return null;
+		
 		foreach ($conf as $section=>$params) {
 			
 			$tokens = array();
@@ -96,12 +98,13 @@ class cmsmenu {
 		$slides = $gstart . implode(''. $gend . $gstart , $slide) . $gend;
 
 		if ($subslider_template) {
+			//echo $subslider_template . '>';
 			$subtmpl = _m('cmsrt.select_template use ' . $subslider_template);
 			$ret = $this->combine_tokens($subtmpl, array(0=>$slides), true);
 		}
 		else
 			$ret = $slides;		
-
+		
 		return ($ret);	
 	}	
    			
@@ -208,8 +211,10 @@ class cmsmenu {
 		$sSQL.= " ORDER BY orderid";
 	    $result = $db->Execute($sSQL);	
 
-		foreach ($result as $r=>$rec)
-			$ret[] = $rec[0];
+		foreach ($result as $r=>$rec) {
+			if ($rec[0])
+				$ret[] = $rec[0];
+		}	
 			
 		return ($ret);	
 	}	
