@@ -356,7 +356,9 @@ class shcart extends storebuffer {
 			//echo $p;
 			$this->process = new Process\process($this, $p, GetReq('t'));	
 		}
-	
+		//echo base64_encode(serialize($this->buffer));
+		//echo serialize($this->buffer);
+		//echo json_encode($this->buffer);
     }
 	
 	//called by controller after event
@@ -3965,12 +3967,14 @@ function addtocart(id,cartdetails)
 	
 	public function base64CartEncode($str=null) {
 		if (!$str) return null;
-		return unserialize(base64_decode(urldecode($str)));
+		//return unserialize(base64_decode(urldecode($str)));
+		return json_decode(base64_decode(urldecode($str)));		
 	}
 	
 	/*used by js behavior */
 	public function base64CartSession() {				
-		$theCartData = urlencode(base64_encode(serialize($this->buffer)));
+		//$theCartData = urlencode(base64_encode(serialize($this->buffer)));
+		$theCartData = urlencode(base64_encode(json_encode($this->buffer)));
 		return $theCartData;	
 	}	
 	
