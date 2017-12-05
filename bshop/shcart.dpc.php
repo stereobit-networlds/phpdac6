@@ -356,10 +356,7 @@ class shcart extends storebuffer {
 			//echo $p;
 			$this->process = new Process\process($this, $p, GetReq('t'));	
 		}
-
-		//load cart details cookie
-		//$this->loadCartCookie();
-		//print_r($_COOKIES);	
+	
     }
 	
 	//called by controller after event
@@ -431,7 +428,7 @@ class shcart extends storebuffer {
 									$this->status = 0;
 
 									$this->jsDialog(localize('_BLN3', $this->lan), localize('_CART', $this->lan));	
-									$this->js_cleanCart();
+									//$this->js_cleanCart(); //moved to clear()
 									
 									$this->jsBrowser();
 									$this->fbjs();
@@ -441,11 +438,12 @@ class shcart extends storebuffer {
 										SetSessionParam('cartstatus',0); 
 										$this->status = 0; 
 										
+										//$this->js_cleanCart();
+										
 										if (GetReq('ajax')) //ajax call cookie restore
 											die(localize('_LOADED', $this->lan));
 									
 										$this->jsDialog(localize('_BLN1', $this->lan), localize('_CART', $this->lan));
-										$this->js_cleanCart();
 									}
 									$this->jsBrowser();
 									$this->fbjs();
@@ -874,20 +872,20 @@ function addtocart(id,cartdetails)
 	
 	//save cart details cookie	
 	protected function js_storeCart() {	
-		//return $this->saveCartCookie();
-			                        
-	    // js cc alt
+
 		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {	
 		
-		    //$this->quick_recalculate();
-		    /*
-			$theCartData = $this->notempty() ? 
-						   $this->base64CartSession() : '';
-			*/
-			$theCartData = $this->base64CartSession();
+			if ($this->notempty()) { 
+				$theCartData = $this->base64CartSession();
+				$out = "cc('mycart','$theCartData',$daystosave);";
+			}
+			else
+				$out = "cc('mycart','',-1);"; //remove
+			
+			/*$theCartData = $this->base64CartSession();
 			$out = $theCartData ? "	
 	cc('mycart','$theCartData',$daystosave);
-	" : null;
+	" : null;*/
 		
 			$js = new jscript;	
 			$js->load_js($out,"",1);			   
@@ -900,9 +898,6 @@ function addtocart(id,cartdetails)
 	
 	//clean cart details cookie	
 	protected function js_cleanCart() {	
-		//return $this->cleanCartCookie();
-			                        
-	    // js cc alt
 	
 		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
 			$out = "	
@@ -1153,7 +1148,8 @@ function addtocart(id,cartdetails)
 		$sxolia = $this->getDetailSelection('sxolia');
 		$customer = $this->getDetailSelection('customerway');		
 		$fkey = 'id';
-		$user = $this->user;		
+		$user = $this->user;
+		$submit = false;	
 
 		$this->quick_recalculate();
 	   	   
@@ -1203,7 +1199,7 @@ function addtocart(id,cartdetails)
 				SetSessionParam('TransactionID',$this->transaction_id);
 
 				if ($doSubmit==true) {
-					$this->submitCartOrder($this->transaction_id);
+					$submit = $this->submitCartOrder($this->transaction_id);
 				}
 				//else called by payengines when end of procedure
 			}	
@@ -1220,7 +1216,9 @@ function addtocart(id,cartdetails)
 			
 			echo $e->getMessage(); 
 			throw $e;
-		}		
+		}
+
+		return $submit;	
     }
 	
 	//used by pay engines
@@ -3934,41 +3932,36 @@ function addtocart(id,cartdetails)
 			$js->load_js($code,"",1);			   
 			unset ($js);
 		}			   	   	     
-	}		
-	
-	
-	/****************** funcs ***********************************/	
-	/*
-	protected function saveCartCookie() {
-		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
-			//echo 'cookie add';
-			//setcookie('mycart', serialize($this->buffer), time()+3600); //$daystosave * 86400
-			$_COOKIES['mycart'] = serialize($this->buffer); 
-			return true;
-		}
-		return false;
-	}
-	
-	protected function loadCartCookie() {
-		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
-			//echo 'cookie read';
-			$mycookiecart = unserialize($_COOKIES['mycart']);
-			print_r($mycookiecart);
-			print_r($_COOKIES);
-			return true;
-	    }
-
-		return false;	
 	}	
-	
-	protected function cleanCartCookie() {
-		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
-			$_COOKIES['mycart'] = ''; 
-			return true;
-		}
-		return false;
+
+	//override
+	public function clear() {
+		parent::clear();
+		
+		$this->js_cleanCart();
 	}
-    */    
+
+	//override with arg (cookie use)
+    /*public function notempty($buffer=null) {
+        $b = $buffer ? $buffer : $this->buffer;
+		
+        reset ($b); 
+        while (list ($buffer_num, $buffer_data) = each ($b)) {
+           $mchar = strlen($buffer_data); 
+           if ($mchar > 1) return true;
+        }                       
+        return false;
+    }*/	
+	
+	
+	/****************** funcs ***********************************/	   
+	
+	/*public function base64isCartEmpty($str=null) {
+		if (!$str) return true;
+		$data = unserialize(base64_decode(urldecode($str)));
+		
+		return $this->notempty($data);
+	}*/	
 	
 	public function base64CartEncode($str=null) {
 		if (!$str) return null;
@@ -3976,11 +3969,7 @@ function addtocart(id,cartdetails)
 	}
 	
 	/*used by js behavior */
-	public function base64CartSession() {
-		/*
-		$theCartData = $this->notempty() ? 
-						urlencode(base64_encode(serialize($this->buffer))) : '';
-		*/				
+	public function base64CartSession() {				
 		$theCartData = urlencode(base64_encode(serialize($this->buffer)));
 		return $theCartData;	
 	}	
