@@ -181,7 +181,7 @@ $__LOCALE['SHCART_DPC'][94]='_invalidpostcode;Invalid postcode;Ο ταχ. κωδ
 $__LOCALE['SHCART_DPC'][95]='_invalidcountry;Invalid country;Η πόλη,χώρα δεν συμπληρώθηκε;';
 $__LOCALE['SHCART_DPC'][96]='_invalidphone;Invalid phone number;Ο αριθμός τηλεφώνου δεν συμπληρώθηκε;';
 $__LOCALE['SHCART_DPC'][97]='_guesterr;Guest details;Συμπλήρωση στοιχείων;';
-
+$__LOCALE['SHCART_DPC'][98]='_LOADED;Loaded;Ανακτήθηκε;';
 $__LOCALE['SHCART_DPC'][99]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
 
 $__PARSECOM['SHCART_DPC']['quickview']='_VIEWCART_';
@@ -211,7 +211,7 @@ class shcart extends storebuffer {
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
-	var $process;
+	var $process, $_NOTAVAL;
 	
     public function __construct($p=null) {
 		$UserName = GetGlobal('UserName');
@@ -332,6 +332,10 @@ class shcart extends storebuffer {
 		$this->transaction_id = GetSessionParam('TransactionID') ? GetSessionParam('TransactionID') : null;
 		$this->fastpick = GetSessionParam('fastpick') ? true : false;
 		$this->is_reseller = GetSessionParam('RESELLER');	
+		
+		$this->_NOTAVAL = localize('_ZEROVAL',$this->lan) ?
+						  localize('_ZEROVAL',$this->lan) :	
+		                  localize('_NOTAVAL',$this->lan);
 			
 		$useragent = $_SERVER["HTTP_USER_AGENT"];		
 		$this->agentIsIE = (strpos($useragent, 'Trident') !== false) ? '1' : '0';	 //ie 11 
@@ -351,7 +355,11 @@ class shcart extends storebuffer {
 		if ((defined('PROCESS_DPC')) && ($p))	{
 			//echo $p;
 			$this->process = new Process\process($this, $p, GetReq('t'));	
-		}	
+		}
+
+		//load cart details cookie
+		//$this->loadCartCookie();
+		//print_r($_COOKIES);	
     }
 	
 	//called by controller after event
@@ -399,7 +407,9 @@ class shcart extends storebuffer {
 			                        break;									
 			
 			case "addtocart"     : 	$p = $this->addtocart();
+			
 									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN1', $this->lan));
+									$this->js_storeCart();
 									
 									$this->jsBrowser();
 									$this->fbjs();
@@ -410,6 +420,7 @@ class shcart extends storebuffer {
 									$this->status = 0;
 
 									$this->jsDialog($this->replace_cartchars($p[1],true), localize('_BLN2', $this->lan));	
+									$this->js_storeCart();
 									
 									$this->jsBrowser();
 									$this->fbjs();
@@ -420,17 +431,22 @@ class shcart extends storebuffer {
 									$this->status = 0;
 
 									$this->jsDialog(localize('_BLN3', $this->lan), localize('_CART', $this->lan));	
+									$this->js_cleanCart();
 									
 									$this->jsBrowser();
 									$this->fbjs();
 									break;	
 									
-			case "loadcart"      : 	$this->loadcart(); 
-									SetSessionParam('cartstatus',0); 
-									$this->status = 0; 
+			case "loadcart"      : 	if ($load = $this->loadcart()) { 
+										SetSessionParam('cartstatus',0); 
+										$this->status = 0; 
+										
+										if (GetReq('ajax')) //ajax call cookie restore
+											die(localize('_LOADED', $this->lan));
 									
-									$this->jsDialog(localize('_BLN1', $this->lan), localize('_CART', $this->lan));
-									
+										$this->jsDialog(localize('_BLN1', $this->lan), localize('_CART', $this->lan));
+										$this->js_cleanCart();
+									}
 									$this->jsBrowser();
 									$this->fbjs();
 									break;			  
@@ -439,6 +455,8 @@ class shcart extends storebuffer {
 			case 'calc'          : 	//for auto select and calc reason
 									SetSessionParam('cartstatus',0); 
 									$this->recalculate(); 
+									
+									$this->js_storeCart();
 									
 									$this->jsBrowser();
 									$this->fbjs();
@@ -545,7 +563,8 @@ class shcart extends storebuffer {
 			case "transcart" 	:   break;
 							
 			case 'searchtopic'	:	//handler from shkatalog
-			case 'addtocart'  	:
+									break;
+			case 'addtocart'  	:   
 			case 'removefromcart': 	break;							
 		 
 			case "cartcustselect": 
@@ -578,7 +597,7 @@ class shcart extends storebuffer {
 	
 	//called by shusers.dologin
 	public function jsBrowser() {
-	   
+
 		switch ($this->status) {
 			case 3      :   $code = $this->jsStatus3(); break;
 			case 2      :   $code = $this->jsStatus2(); break;
@@ -829,6 +848,7 @@ EOF;
 	}
 	
 	protected function js_addtocart() {
+
 		$out = "	
 function addtocart(id,cartdetails)
 {
@@ -850,6 +870,51 @@ function addtocart(id,cartdetails)
 			$js->load_js($code,"",1);			   
 			unset ($js);
 		}			   	   	     
+	}	
+	
+	//save cart details cookie	
+	protected function js_storeCart() {	
+		//return $this->saveCartCookie();
+			                        
+	    // js cc alt
+		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {	
+		
+		    //$this->quick_recalculate();
+		    /*
+			$theCartData = $this->notempty() ? 
+						   $this->base64CartSession() : '';
+			*/
+			$theCartData = $this->base64CartSession();
+			$out = $theCartData ? "	
+	cc('mycart','$theCartData',$daystosave);
+	" : null;
+		
+			$js = new jscript;	
+			$js->load_js($out,"",1);			   
+			unset ($js);
+
+			return true;	
+		}
+		return false;
+	}
+	
+	//clean cart details cookie	
+	protected function js_cleanCart() {	
+		//return $this->cleanCartCookie();
+			                        
+	    // js cc alt
+	
+		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
+			$out = "	
+	cc('mycart','',-1);
+";	
+			$js = new jscript;	
+			$js->load_js($out,"",1);			   
+			unset ($js);
+
+			return true;			
+		}
+		return false;	
 	}	
 	
 	protected function jsDialog($text=null, $title=null) {
@@ -1544,7 +1609,7 @@ function addtocart(id,cartdetails)
 		}
 		else {
 			if (!($this->isin($param[0]))) 
-				$out = $this->myf_button(localize('_NOTAVAL',$this->lan),'#notavailable','_NOTAVAL');
+				$out = $this->myf_button($this->_NOTAVAL,_m('cmsrt.php_self use 1') . '#notavailable','_NOTAVAL');
 			
 			if ($allowremove) {
 				$mr = "remcart/$ar/$gr/$page/";
@@ -1860,7 +1925,7 @@ function addtocart(id,cartdetails)
 	    $a = $transid ? $transid : GetReq('tid');
 		$transdata = array();
 		
-		if (is_number($a)) {
+		if (is_number($a)) { //transaction
 			if (defined('SHTRANSACTIONS_DPC')) {
 
 				$transdata = _m('shtransactions.getTransaction use '.$a);
@@ -1884,6 +1949,24 @@ function addtocart(id,cartdetails)
 					return true;
 				}
 			}
+		} //stored cookie
+		elseif (is_array($this->base64CartEncode($a))) {
+			$decodecookie = $this->base64CartEncode($a);
+			//print_r($decodecookie);
+			
+			foreach ($decodecookie as $i=>$trcartrec) {
+				/**** add log records to stats ****/ 
+				//$cartstr = explode(';', $trcartrec);
+				//$item = $cartstr[0];
+				//_m("cmsvstats.update_item_statistics use $item+cartin");				
+				
+				$this->buffer[] = $trcartrec;
+			}	
+			  
+			$this->setStore();
+			$this->colideCart();
+			  
+			return true;			
 		}
 		
 		return false;
@@ -1904,9 +1987,17 @@ function addtocart(id,cartdetails)
 
 			$transdata = _m('shtransactions.getTransaction use '.$id);
 			$buffer = unserialize($transdata);	
-			
-			if (!empty($buffer)) {
-			  foreach ($buffer as $prod_id => $product) {
+		} //stored cookie
+		elseif (is_array($this->base64CartEncode($id))) {
+		
+			$buffer = $this->base64CartEncode($id);
+			//print_r($decodecookie);
+		}
+		else
+			return null;
+		
+		if (!empty($buffer)) {
+			foreach ($buffer as $prod_id => $product) {
 
 				if (($product) && ($product!='x')) {
 					$aa+=1;
@@ -1945,7 +2036,6 @@ function addtocart(id,cartdetails)
 					unset ($data);
 					unset ($param);
 				}
-			  }
 			}
 		}
 	   	   
@@ -3149,6 +3239,18 @@ function addtocart(id,cartdetails)
 		return ($default ? $default : $qtymeter);		
 	}	
 	
+	//fix price view sub-template for all templates in theme
+	public function getCartPriceSubTemplate($tmpl=null,$price1=null,$itmcode=null,$cartbutton=null,$zeroreturn=false) {
+		$template = $tmpl ? $tmpl : 'shcartprice-subtemplate';
+		if (($zeroreturn) && (floatval($price1)==0.0))
+			return null;
+		
+		$mytemplate = _m("cmsrt.select_template use " . $template);		  
+		$out = $this->combine_tokens($mytemplate, array(0=>$cartbutton, 1=>$price1, 2=>$itmcode),true);
+		
+		return ($out);
+	}
+	
 	protected function colideCart() {
 		if (empty($this->buffer)) return;
 	
@@ -3801,7 +3903,7 @@ function addtocart(id,cartdetails)
 				
 				$toks = explode(';', $product);	
 				$tokens[0] = $toks[0]; //item code
-				$tokens[1] = addslashes($this->replace_cartchars($toks[1]), true); //item title
+				$tokens[1] = addslashes($this->replace_cartchars($toks[1], true)); //item title
 				$tokens[8] = number_format(floatval($toks[8]),$this->dec_num); //item net price 
 				$tokens[9] = $toks[9]; //qty
 				//extra order tokens
@@ -3836,6 +3938,52 @@ function addtocart(id,cartdetails)
 	
 	
 	/****************** funcs ***********************************/	
+	/*
+	protected function saveCartCookie() {
+		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
+			//echo 'cookie add';
+			//setcookie('mycart', serialize($this->buffer), time()+3600); //$daystosave * 86400
+			$_COOKIES['mycart'] = serialize($this->buffer); 
+			return true;
+		}
+		return false;
+	}
+	
+	protected function loadCartCookie() {
+		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
+			//echo 'cookie read';
+			$mycookiecart = unserialize($_COOKIES['mycart']);
+			print_r($mycookiecart);
+			print_r($_COOKIES);
+			return true;
+	    }
+
+		return false;	
+	}	
+	
+	protected function cleanCartCookie() {
+		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
+			$_COOKIES['mycart'] = ''; 
+			return true;
+		}
+		return false;
+	}
+    */    
+	
+	public function base64CartEncode($str=null) {
+		if (!$str) return null;
+		return unserialize(base64_decode(urldecode($str)));
+	}
+	
+	/*used by js behavior */
+	public function base64CartSession() {
+		/*
+		$theCartData = $this->notempty() ? 
+						urlencode(base64_encode(serialize($this->buffer))) : '';
+		*/				
+		$theCartData = urlencode(base64_encode(serialize($this->buffer)));
+		return $theCartData;	
+	}	
 	
     public function price_with_tax($price=null) {
 		if (!$price) return '0,00';
