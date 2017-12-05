@@ -373,6 +373,12 @@ class shcart extends storebuffer {
 	}	
 
     public function event($event) {
+		/*echo $this->base64CartSession($this->buffer);
+		echo '<br/>';
+		echo $this->cookie_fetch_cart($id);
+		echo '<br/>';
+		*/
+		//echo (strcmp($scart, $pcart)==0) ? '0' : '1';
 
 		switch ($event) {
 			case "cartguestreg"  :  die($this->guestRegistration()); 
@@ -873,21 +879,24 @@ function addtocart(id,cartdetails)
 	}	
 	
 	//save cart details cookie	
-	protected function js_storeCart() {	
+	protected function js_storeCart() {
+		$usr = $this->user ? $this->user : $_SERVER['REMOTE_ADDR'];//session_id();	
 
 		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {	
 		
 			if ($this->notempty()) { 
 				$theCartData = $this->base64CartSession();
 				$out = "cc('mycart','$theCartData',$daystosave);";
+				
+				$this->cookie_store_cart();
+				$out .= "cc('pcart','$usr',$daystosave);";
 			}
-			else
+			else {
 				$out = "cc('mycart','',-1);"; //remove
-			
-			/*$theCartData = $this->base64CartSession();
-			$out = $theCartData ? "	
-	cc('mycart','$theCartData',$daystosave);
-	" : null;*/
+				
+				$this->cookie_clean_cart();
+				$out .= "cc('pcart','',-1);"; //remove
+			}	
 		
 			$js = new jscript;	
 			$js->load_js($out,"",1);			   
@@ -899,11 +908,16 @@ function addtocart(id,cartdetails)
 	}
 	
 	//clean cart details cookie	
-	protected function js_cleanCart() {	
+	protected function js_cleanCart() {
+		$usr = $this->user ? $this->user : $_SERVER['REMOTE_ADDR'];//session_id();
 	
 		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
+			
+			$this->cookie_clean_cart();
+			
 			$out = "	
 	cc('mycart','',-1);
+	cc('pcart','',-1);
 ";	
 			$js = new jscript;	
 			$js->load_js($out,"",1);			   
@@ -1924,7 +1938,7 @@ function addtocart(id,cartdetails)
 	public function loadcart($transid=null) {
 	    $a = $transid ? $transid : GetReq('tid');
 		$transdata = array();
-		
+
 		if (is_number($a)) { //transaction
 			if (defined('SHTRANSACTIONS_DPC')) {
 
@@ -1955,11 +1969,6 @@ function addtocart(id,cartdetails)
 			//print_r($decodecookie);
 			
 			foreach ($decodecookie as $i=>$trcartrec) {
-				/**** add log records to stats ****/ 
-				//$cartstr = explode(';', $trcartrec);
-				//$item = $cartstr[0];
-				//_m("cmsvstats.update_item_statistics use $item+cartin");				
-				
 				$this->buffer[] = $trcartrec;
 			}	
 			  
@@ -1967,6 +1976,23 @@ function addtocart(id,cartdetails)
 			$this->colideCart();
 			  
 			return true;			
+		}
+		else { //pcart cookie named session
+			if (($data = $this->cookie_fetch_cart($a)) &&
+				(is_array($this->base64CartEncode($data)))) {
+					
+				$decodecookie = $this->base64CartEncode($data);
+				foreach ($decodecookie as $i=>$trcartrec) {
+					$this->buffer[] = $trcartrec;
+				}	
+			  
+				$this->setStore();
+				$this->colideCart();
+				
+				//$this->js_cleanCart(); //<<<< clean cookie
+				
+				return true;
+			}		
 		}
 		
 		return false;
@@ -1992,9 +2018,12 @@ function addtocart(id,cartdetails)
 		
 			$buffer = $this->base64CartEncode($id);
 			//print_r($decodecookie);
-		}
-		else
-			return null;
+		} //pcart cookie named session
+		elseif (($data = $this->cookie_fetch_cart($id)) &&
+			(is_array($this->base64CartEncode($data)))) {
+				
+			$buffer = $this->base64CartEncode($data);
+		}	
 		
 		if (!empty($buffer)) {
 			foreach ($buffer as $prod_id => $product) {
@@ -3955,15 +3984,74 @@ function addtocart(id,cartdetails)
         return false;
     }*/	
 	
-	
-	/****************** funcs ***********************************/	   
-	
-	/*public function base64isCartEmpty($str=null) {
-		if (!$str) return true;
-		$data = unserialize(base64_decode(urldecode($str)));
+	protected function cookie_store_cart() {
+        $db = GetGlobal('db');
+		$user = $this->user ? $this->user : $_SERVER['REMOTE_ADDR'];//session_id();	
 		
-		return $this->notempty($data);
-	}*/	
+		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
+			return false;
+
+		$sSQL = "select id from pcart where userid=" . $db->qstr($user);	
+		$res = $db->Execute($sSQL);				
+		if ($existedid = $res->fields[0]) {
+			$sSQL = "update pcart set";					
+			//$sSQL.= " userid =" . $db->qstr($user) . ',';		
+			$sSQL.= " data=" . $db->qstr($this->base64CartSession());
+			$sSQL.= " where id=" . $existedid;
+		}
+		else { //insert
+			$sSQL = "insert into pcart (userid,data) values (";					
+			$sSQL.= $db->qstr($user) . ',';		
+			$sSQL.= $db->qstr($this->base64CartSession()). ")";					
+		}
+
+		$db->Execute($sSQL,1);	 
+		//echo $sSQL;
+		
+		if ($db->Affected_Rows()) 
+			return true;
+ 
+		return false;		
+	}
+	
+	protected function cookie_clean_cart() {
+        $db = GetGlobal('db');
+		$user = $this->user ? $this->user : $_SERVER['REMOTE_ADDR'];//session_id();	
+		
+		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
+			return false;
+
+		$sSQL = "update pcart set data=''";
+		$sSQL.= " where userid=" . $db->qstr($user);
+
+		$db->Execute($sSQL,1);	 
+		//echo $sSQL;
+			
+		if ($db->Affected_Rows()) 
+			return true;
+
+		return false;		
+	}	
+	
+	protected function cookie_fetch_cart($id=null) {
+        $db = GetGlobal('db');
+		$user = $id ? $id : ($this->user ? $this->user : $_SERVER['REMOTE_ADDR']);//session_id());	
+		
+		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
+			return false;
+
+		$sSQL = "select data from pcart where userid=" . $db->qstr($user);	
+		$sSQL.= " order by datein DESC LIMIT 1";
+		$res = $db->Execute($sSQL);	
+		//echo $sSQL;	
+		if ($data = $res->fields[0]) {
+			return $data;
+		}
+		
+		return false;		
+	}	
+	
+	/****************** funcs ***********************************/	   		
 	
 	public function base64CartEncode($str=null) {
 		if (!$str) return null;
@@ -3976,6 +4064,14 @@ function addtocart(id,cartdetails)
 		//$theCartData = urlencode(base64_encode(serialize($this->buffer)));
 		$theCartData = urlencode(base64_encode(json_encode($this->buffer)));
 		return $theCartData;	
+	}	
+	
+	/*used by js behavior */
+	public function cookie_diff_cart($id=null) {
+		$scart = $this->base64CartSession($this->buffer);
+		$pcart = $this->cookie_fetch_cart($id);
+		
+		return (strcmp($scart, $pcart)==0) ? '0' : '1';
 	}	
 	
     public function price_with_tax($price=null) {
