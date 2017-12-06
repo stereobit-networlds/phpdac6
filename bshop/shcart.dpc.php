@@ -99,7 +99,7 @@ $__LOCALE['SHCART_DPC'][16]='_SHIPZONE;Shipping Zone;Ζώνη αποστολής
 $__LOCALE['SHCART_DPC'][17]='_PARCELOF;Parcel;Δέμα βάρους';
 $__LOCALE['SHCART_DPC'][18]='_CONTINUESHOP;Continue shopping;Συνέχισε τις αγορές';
 $__LOCALE['SHCART_DPC'][19]='_CLEARCARTITEMS;Remove all items;Άδειασε το καλάθι';
-$__LOCALE['SHCART_DPC'][20]='_ADDCARTITEM;Add item;Στο καλάθι';
+$__LOCALE['SHCART_DPC'][20]='_ADDCARTITEM;Add item;Στο καλάθι'; //_INCART db var
 $__LOCALE['SHCART_DPC'][21]='_REMCARTITEM;Remove;Διαγραφή';
 $__LOCALE['SHCART_DPC'][22]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
 $__LOCALE['SHCART_DPC'][23]='_TRANSPRINT;Print;Εκτύπωση';
@@ -373,12 +373,6 @@ class shcart extends storebuffer {
 	}	
 
     public function event($event) {
-		/*echo $this->base64CartSession($this->buffer);
-		echo '<br/>';
-		echo $this->cookie_fetch_cart($id);
-		echo '<br/>';
-		*/
-		//echo (strcmp($scart, $pcart)==0) ? '0' : '1';
 
 		switch ($event) {
 			case "cartguestreg"  :  die($this->guestRegistration()); 
@@ -446,7 +440,7 @@ class shcart extends storebuffer {
 										SetSessionParam('cartstatus',0); 
 										$this->status = 0; 
 										
-										//$this->js_cleanCart();
+										//$this->js_cleanCart(); //moved to loadcart()
 										
 										if (GetReq('ajax')) //ajax call cookie restore
 											die(localize('_LOADED', $this->lan));
@@ -495,11 +489,16 @@ class shcart extends storebuffer {
 			case $this->checkout : 	if (!GetGlobal('UserID')) {
 										$this->todo = 'loginorregister';
 										$this->recalculate();
+										
+										$this->js_storeCart(); //re-save when step
 									}
 									else {
 										SetSessionParam('cartstatus',1); 
 										$this->status = 1; 
 										$this->recalculate();
+										
+										$this->js_storeCart(); //re-save when step
+										
 										$this->loopcartdata = $this->loopcart();
 										$this->looptotals = $this->foot();
 									}  
@@ -880,20 +879,22 @@ function addtocart(id,cartdetails)
 	
 	//save cart details cookie	
 	protected function js_storeCart() {
-		$usr = $this->user ? $this->user : $_SERVER['REMOTE_ADDR'];//session_id();	
+		$usr = $this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']);//session_id();	
 
 		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {	
 		
 			if ($this->notempty()) { 
+			    /* disabled method
 				$theCartData = $this->base64CartSession();
 				$out = "cc('mycart','$theCartData',$daystosave);";
-				
+				*/
 				$this->cookie_store_cart();
 				$out .= "cc('pcart','$usr',$daystosave);";
 			}
 			else {
+				/* disabled method
 				$out = "cc('mycart','',-1);"; //remove
-				
+				*/
 				$this->cookie_clean_cart();
 				$out .= "cc('pcart','',-1);"; //remove
 			}	
@@ -909,14 +910,14 @@ function addtocart(id,cartdetails)
 	
 	//clean cart details cookie	
 	protected function js_cleanCart() {
-		$usr = $this->user ? $this->user : $_SERVER['REMOTE_ADDR'];//session_id();
+		$usr = $this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']);//session_id();
 	
 		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
 			
 			$this->cookie_clean_cart();
 			
+			/* cc('mycart','',-1); */
 			$out = "	
-	cc('mycart','',-1);
 	cc('pcart','',-1);
 ";	
 			$js = new jscript;	
@@ -1602,13 +1603,13 @@ function addtocart(id,cartdetails)
 				else
 					$ml = "addcart/$ar/$gr/$page/$myqty/";
 				
-				$out = $this->myf_button(localize('_ADDCARTITEM',$this->lan),$ml,'_ADDCARTITEM');
+				$out = $this->myf_button(localize('_INCART',$this->lan),$ml,'_INCART');
 			}
 			else {
 		   
 				if (($this->notallowremove)&&(!$allowremove)) {//add again 		   	 		   
 					$ml = "addcart/$ar/$gr/$page/$myqty/";			 
-					$out = $this->myf_button(localize('_ADDCARTITEM',$this->lan),$ml,'_ADDCARTITEM');
+					$out = $this->myf_button(localize('_INCART',$this->lan),$ml,'_INCART');
 				}	 
 				else {//remove 		   	 		   
 					$mr = "remcart/$ar/$gr/$page/";
@@ -1963,8 +1964,8 @@ function addtocart(id,cartdetails)
 					return true;
 				}
 			}
-		} //stored cookie
-		elseif (is_array($this->base64CartEncode($a))) {
+		} //stored cookie (disabled method)
+		/*elseif (is_array($this->base64CartEncode($a))) {
 			$decodecookie = $this->base64CartEncode($a);
 			//print_r($decodecookie);
 			
@@ -1974,9 +1975,11 @@ function addtocart(id,cartdetails)
 			  
 			$this->setStore();
 			$this->colideCart();
+			
+			$this->js_cleanCart(); //<<<< clean cookie
 			  
 			return true;			
-		}
+		}*/
 		else { //pcart cookie named session
 			if (($data = $this->cookie_fetch_cart($a)) &&
 				(is_array($this->base64CartEncode($data)))) {
@@ -1989,7 +1992,7 @@ function addtocart(id,cartdetails)
 				$this->setStore();
 				$this->colideCart();
 				
-				//$this->js_cleanCart(); //<<<< clean cookie
+				$this->js_cleanCart(); //<<<< clean cookie
 				
 				return true;
 			}		
@@ -2013,12 +2016,13 @@ function addtocart(id,cartdetails)
 
 			$transdata = _m('shtransactions.getTransaction use '.$id);
 			$buffer = unserialize($transdata);	
-		} //stored cookie
-		elseif (is_array($this->base64CartEncode($id))) {
+		} //stored cookie (disabled method)
+		/*elseif (is_array($this->base64CartEncode($id))) {
 		
 			$buffer = $this->base64CartEncode($id);
 			//print_r($decodecookie);
-		} //pcart cookie named session
+		} */
+		//pcart cookie named session
 		elseif (($data = $this->cookie_fetch_cart($id)) &&
 			(is_array($this->base64CartEncode($data)))) {
 				
@@ -3271,7 +3275,7 @@ function addtocart(id,cartdetails)
 	//fix price view sub-template for all templates in theme
 	public function getCartPriceSubTemplate($tmpl=null,$price1=null,$itmcode=null,$cartbutton=null,$zeroreturn=false) {
 		$template = $tmpl ? $tmpl : 'shcartprice-subtemplate';
-		if (($zeroreturn) && (floatval($price1)==0.0))
+		if (($zeroreturn) && (floatval(str_replace(',','.',$price1))==0.0))
 			return null;
 		
 		$mytemplate = _m("cmsrt.select_template use " . $template);		  
@@ -3986,7 +3990,7 @@ function addtocart(id,cartdetails)
 	
 	protected function cookie_store_cart() {
         $db = GetGlobal('db');
-		$user = $this->user ? $this->user : $_SERVER['REMOTE_ADDR'];//session_id();	
+		$user = $this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']);//session_id();	
 		
 		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;
@@ -4016,7 +4020,7 @@ function addtocart(id,cartdetails)
 	
 	protected function cookie_clean_cart() {
         $db = GetGlobal('db');
-		$user = $this->user ? $this->user : $_SERVER['REMOTE_ADDR'];//session_id();	
+		$user = $this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']);//session_id();	
 		
 		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;
@@ -4035,7 +4039,7 @@ function addtocart(id,cartdetails)
 	
 	protected function cookie_fetch_cart($id=null) {
         $db = GetGlobal('db');
-		$user = $id ? $id : ($this->user ? $this->user : $_SERVER['REMOTE_ADDR']);//session_id());	
+		$user = $id ? $id : ($this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']));//session_id());	
 		
 		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;
@@ -4044,9 +4048,9 @@ function addtocart(id,cartdetails)
 		$sSQL.= " order by datein DESC LIMIT 1";
 		$res = $db->Execute($sSQL);	
 		//echo $sSQL;	
-		if ($data = $res->fields[0]) {
+		
+		if ($data = $res->fields[0]) 
 			return $data;
-		}
 		
 		return false;		
 	}	
