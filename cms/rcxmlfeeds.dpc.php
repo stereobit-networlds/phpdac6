@@ -214,10 +214,10 @@ class rcxmlfeeds {
 				$align = 'left';
 				//$title = stristr($f,$this->xmlindex) ? localize('_xmlindex',getlocal()) : localize('_'.$f,getlocal());
 			}				
-			GetGlobal('controller')->calldpc_method("mygrid.column use grid9+$f|".localize('_'.$f,getlocal())."|$type|$edit|$options|$link_option|$search|$hidden|$align");	
+			_m("mygrid.column use grid9+$f|".localize('_'.$f,getlocal())."|$type|$edit|$options|$link_option|$search|$hidden|$align");	
 		}
 			
-		$out = GetGlobal('controller')->calldpc_method("mygrid.grid use grid9+products+$sSQL+e+$title+id+1+1+12+300++0+1+1");
+		$out = _m("mygrid.grid use grid9+products+$sSQL+e+$title+id+1+1+12+300++0+1+1");
 			
 		return ($out);	
 	}	

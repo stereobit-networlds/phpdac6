@@ -77,8 +77,21 @@ class shagent extends cmsagent {
 		if ($this->isLoadedMessage()) //return $this->renderMessage($this->currentDiv . "($this->msgId)");
 			return null;		
 	
-		//$this->saveMessage(); //moved just before return of msg
-		return $this->showMessage();
+		//return $this->showMessage();
+		
+        //phpdac processing...
+		$data = $this->showMessage();
+		
+		$pattern = "@<phpdac.*?>(.*?)</phpdac>@s";
+		preg_match_all($pattern, $data, $matches, PREG_PATTERN_ORDER);
+
+		foreach ($matches[1] as $r=>$cmd) {
+			$_cmd = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", "", $cmd)));
+			$ret = _m($_cmd,1); //,1); //no error stop 					 
+			$data = str_replace("<phpdac>".$cmd."</phpdac>",$ret,$data);
+		}
+		return ($data);	
+			
 	}	
 	
 	//override

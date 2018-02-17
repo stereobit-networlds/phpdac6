@@ -15,6 +15,7 @@ $__EVENTS['RCTAGS_DPC'][2]='cpaddtag';
 $__EVENTS['RCTAGS_DPC'][3]='cpedittag';
 $__EVENTS['RCTAGS_DPC'][4]='cpeditctag';
 $__EVENTS['RCTAGS_DPC'][5]='cpedititag';
+$__EVENTS['RCTAGS_DPC'][6]='cptagsall';
 
 $__ACTIONS['RCTAGS_DPC'][0]='cptags';
 $__ACTIONS['RCTAGS_DPC'][1]='tags';
@@ -22,6 +23,7 @@ $__ACTIONS['RCTAGS_DPC'][2]='cpaddtag';
 $__ACTIONS['RCTAGS_DPC'][3]='cpedittag';
 $__ACTIONS['RCTAGS_DPC'][4]='cpeditctag';
 $__ACTIONS['RCTAGS_DPC'][5]='cpedititag';
+$__ACTIONS['RCTAGS_DPC'][6]='cptagsall';
 
 $__LOCALE['RCTAGS_DPC'][0]='RCTAGS_DPC;Tags;Tags';
 $__LOCALE['RCTAGS_DPC'][1]='_LEVEL1;Category Level 1;Κατηγορία επιπέδου 1';
@@ -76,6 +78,8 @@ class rctags extends shtags {
 	    if ($login!='yes') return null;				
 	
 	    switch ($event) {
+			
+		  case 'cptagsall'  :   break;	
 
 		  case 'cpeditctag' :	break;	
 		  case 'cpedititag' :	break;			  							
@@ -87,18 +91,21 @@ class rctags extends shtags {
 	public function action($action=null) {	 		 
 	
 	    switch ($action) {	
-			
+		
+		  case 'cptagsall'  : 	$out = $this->show_alltags_list_grid(null,300,12,null,'d',true);	
+								break;
 		  case 'cpeditctag' :	 
 		  case 'cpedititag' :									
           case 'cptags'     : 
-		  default           :   $out = $this->show_tag_list_grid(null,null,null,null,'d',true); 		
+		  default           :   $out = $this->show_tag_list_grid(null,300,12,null,'d',true); 
+								//$out.= $this->show_alltags_list_grid(null,300,12,null,'d',true);
 											
         }
 		
 		return ($out);
     }	
 
-	function show_tags() {
+	public function show_tags() {
         $db = GetGlobal('db');
 		$cpGet = _v('rcpmenu.cpGet');		
 		$item = _m("cmsrt.getRealItemCode use " . $cpGet['id']);
@@ -128,7 +135,7 @@ class rctags extends shtags {
         return ($ret);        		
     }	
   
-  function add_tags($code=null) {
+	public function add_tags($code=null) {
        $db = GetGlobal('db'); 
 	   $lan = getlocal();
 	   $itmkeywords = $lan ? 'keywords'.$lan : 'keywords0';
@@ -182,7 +189,7 @@ class rctags extends shtags {
 	   } //id
 	   
        return ($out);  
-  }
+    }
   
 	public function edit_tags($code=null) {
 		$db = GetGlobal('db'); 
@@ -235,80 +242,7 @@ class rctags extends shtags {
             //return ($code);//as-is..no tag
 		return false;	
 	}
-  /*
-	public function show_tag_list() {
-       $db = GetGlobal('db'); 
-	   $lan = getlocal();
-	   $itmkeywords = $lan ? 'keywords'.$lan : 'keywords0';
-	   $itmdescr = $lan ? 'descr'.$lan : 'descr0'; 
-       $itmtitle = $lan ? 'title'.$lan : 'title0';
-	   $ret = array();
 
-	   //title head
-	   $viewdata[] = localize('_code',getlocal()); 
-       $viewattr[] = "left;5%";		  
-	   $viewdata[] = localize('_tag',getlocal()); 
-       $viewattr[] = "left;20%";	
-	   $viewdata[] = localize('_title',getlocal());
-       $viewattr[] = "left;25%";	
-	   $viewdata[] = localize('_descr',getlocal()); 
-       $viewattr[] = "left;25%";	
-	   $viewdata[] = localize('_keywords',getlocal());
-       $viewattr[] = "left;25%";			  
-		  
-	   $myrec = new window('',$viewdata,$viewattr);
-	   $title = $myrec->render("center::100%::0::group_article_table::left::3::3::");
-	   unset ($myrec);
-	   unset ($viewdata);
-	   unset ($viewattr);	 	   
-
-       $sSQL = "select code,tag,$itmkeywords,$itmdescr,$itmtitle from ptags ";
-	   
-	   if ($id = GetReq('id')) {//item
-	     $first_letter = $id{0}; //echo '>',$first_letter;
-		 $length = strlen($id);
-	     //$sSQL .= " WHERE code like '$first_leter%'";	
-		 $sSQL .= " WHERE length(code)=$length";
-	   }	 
-	   elseif ($cat = GetReq('cat')) {
-	     $root = array_shift(explode($this->cseparator,$cat));
-	     $sSQL .= " WHERE code like '$root%'";
-	   }	 
-       //else all	   
-	   
-	   $resultset = $db->Execute($sSQL,2);	
-	   //print_r($resultset->fields);
-	   
-	   foreach ($resultset as $n=>$rec) {
-	      
-          $cc = $id ? $rec['code'] : ($n+1);	  
-          $link = $id ? seturl('t=cpedittag&editmode=1&id='.$rec['code'],$cc) :
-                  ($cat ? seturl('t=cpedittag&editmode=1&cat='.$rec['code'],$cc) : 'null'); 			  
-		  
-	      $viewdata[] = $link;//$cc;//$rec['code']; 
-          $viewattr[] = "left;5%";		  
-	      $viewdata[] = $rec['tag'] ? $rec['tag'] : "null"; 
-          $viewattr[] = "left;20%";	
-	      $viewdata[] = $rec[$itmtitle] ? $rec[$itmtitle] : "null"; 
-          $viewattr[] = "left;25%";	
-	      $viewdata[] = $rec[$itmdescr] ? $rec[$itmdescr] : "null"; 
-          $viewattr[] = "left;25%";	
-	      $viewdata[] = $rec[$itmkeywords] ? $rec[$itmkeywords] : "null"; 
-          $viewattr[] = "left;25%";			  
-		  
-	      $myrec = new window('',$viewdata,$viewattr);
-	      $ret[] = $myrec->render();
-		  unset ($myrec);
-	      unset ($viewdata);
-	      unset ($viewattr);	   
-	   }
-	   	   
-	   
-	   $myrec = new window($title,$ret);
-	   $out .= $myrec->render("center::100%::0::group_article_table::left::3::3::");
-	   return ($out); 		  
-  }
- */ 
 	public function show_tag_list_grid($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
 	    $height = $height ? $height : 600;
         $rows = $rows ? $rows : 26;
@@ -372,16 +306,84 @@ class rctags extends shtags {
 					$options = null; 
 				}
 				$title = $tarr[$i];//localize('_'.$t,getlocal());
-				GetGlobal('controller')->calldpc_method("mygrid.column use grid1+$t|".$title."|$type|$edit|$options");
+				_m("mygrid.column use grid1+$t|".$title."|$type|$edit|$options");
 			} 
 
-			$out .= GetGlobal('controller')->calldpc_method("mygrid.grid use grid1+ptags+$xsSQL+$mode+{$this->title}+id+$noctrl+1+$rows+$height+$width");			
+			$out .= _m("mygrid.grid use grid1+ptags+$xsSQL+$mode+{$this->title}+id+$noctrl+1+$rows+$height+$width");			
 		}  
 		else 
 		   $out .= 'Initialize jqgrid.';
 	   
 		return ($out);
 	}  
+	
+	
+	//all tags 2nd grid
+	public function show_alltags_list_grid($width=null, $height=null, $rows=null, $editlink=null, $mode=null, $noctrl=false) {
+	    $height = $height ? $height : 600;
+        $rows = $rows ? $rows : 26;
+        $width = $width ? $width : null; //wide
+        $mode = $mode ? $mode : 'd';
+	    $noctrl = $noctrl ? 0 : 1;  
+	    $lan = getlocal() ? getlocal() : 0;	
+				 
+		if (defined('MYGRID_DPC')) {
+		
+			//$xsSQL = "select id,code,tag,keywords{$lan},descr{$lan},title{$lan} from ptags ";
+			//$out .= _m("mygrid.grid use grid1+ptags+$xsSQL+d++id+1+1+20+400");
+			
+			$myfields = 'id,code,tag,';
+			$mytitles = localize('_tagid',getlocal()) . ',' . localize('_tagcode',getlocal()) . ',' . localize('_tagtag',getlocal()) . ',';				 		
+			$myfields .= "keywords{$lan},descr{$lan},title{$lan}";
+			$mytitles .= localize('_tagkeywords',getlocal()) . ',' . localize('_tagdescr',getlocal()) . ',' . localize('_tagtitle',getlocal()) . ',';		 		 
+		
+			$xsSQL = 'select * from (select '.$myfields . " from ptags) as o";
+
+			$farr = explode(',',$myfields);
+			$tarr = explode(',',$mytitles);
+			foreach ($farr as $i=>$t) {
+				if ($t=='id') {
+					$type = 6;
+					$edit = null;	
+					$options = null;					    
+				}
+				elseif ($t=='code') {
+					if ((($mode=='e') || ($mode=='r')) && ($editlink)) {//only edit/read mode
+						$type = 'link';
+						$edit = 6;			  
+						$options = $editlink ;
+					}
+					else {
+						$type = 6;
+						$edit = 1;	
+						$options = null;	
+					}				
+				}		   
+				/*elseif (stristr($t,'active') || stristr($t,'search') || stristr($t,'view')) {
+					$type = 'boolean';
+					$edit = 1;
+					$options = "1:0";
+				}
+				elseif (stristr($t,'cat')) {
+					$type = 10;//'select';//if jqgrid is not paid, not applicable
+					$edit = 1;
+				}*/
+				else {
+					$type = 20;
+					$edit = 1;
+					$options = null; 
+				}
+				$title = $tarr[$i];//localize('_'.$t,getlocal());
+				_m("mygrid.column use grid2+$t|".$title."|$type|$edit|$options");
+			} 
+
+			$out .= _m("mygrid.grid use grid2+ptags+$xsSQL+$mode+{$this->title}+id+$noctrl+1+$rows+$height+$width");			
+		}  
+		else 
+		   $out .= 'Initialize jqgrid.';
+	   
+		return ($out);
+	}	
   
 	/*used by fast item insert cp*/
 	public function add_tags_data($code=null,$title=null,$descr=null,$keywords=null) {

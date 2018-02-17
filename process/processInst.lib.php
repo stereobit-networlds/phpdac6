@@ -9,7 +9,7 @@ class processInst extends Process\pstack {
 				
 		parent::__construct($caller); //not a name or stack in this
 		
-		$this->debug = true;//override;	
+		//$this->debug = true;//override;	
 		
 		//$this->event = null;
 		$this->stack = (array) $stack; //GetGlobal('controller')->getProcessStack();

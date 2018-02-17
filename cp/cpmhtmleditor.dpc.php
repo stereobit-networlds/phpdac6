@@ -305,7 +305,7 @@ class cpmhtmleditor {
     protected function render_edit() { 
 		$db = GetGlobal('db');
 		$type = '.html'; //default type for text attachment
-	    $lan = $lang ? $lang : getlocal();
+	    $lan = getlocal();
 	    $itmname = $lan ? 'itmname' : 'itmfname';
 	    $itmdescr = $lan ? 'itmdescr' : 'itmfdescr';		
 		$cpGet = _v('rcpmenu.cpGet');
@@ -378,7 +378,7 @@ class cpmhtmleditor {
 				$sSQL .= " WHERE {$this->activecode}=" . $db->qstr($id);
 				$res = $db->Execute($sSQL);	
 				$this->record = $res->fields;
-			
+			    //echo $sSQL; print_r($this->record);
 				$this->messages[] = "Load record";
 			}
 		}
@@ -1564,8 +1564,8 @@ class cpmhtmleditor {
 		if ($currentmcpage)
 			$sSQL = "update wftmpl set mcname=" . $db->qstr($mcpage);
 		else
-			$sSQL = "insert into wftmpl set (mcid,mcname,mctmpl) values ('$id','$mcpage', '$templatename')";
-		
+			$sSQL = "insert into wftmpl (mcid,mcname,mctmpl) values ('$id','$mcpage', '$templatename')";
+		//echo $sSQL;
 		$res = $db->Execute($sSQL);
 		
 		return true;
@@ -1598,15 +1598,29 @@ class cpmhtmleditor {
 	}
 	
 	public function getField($field=null, $scan=false) {
+	    $lan = getlocal();
+	    $itmname = $lan ? 'itmname' : 'itmfname';
+	    $itmdescr = $lan ? 'itmdescr' : 'itmfdescr';		
 		if (!$field) return null;
 		$ret = null;
 		
 		if (!empty($this->record)) {
 			
+		    switch ($field) {
+				//2 way call for update form
+				case 'itmname'   : return $this->record[$itmname]; break;
+				case 'itmdescr'  : return $this->record[$itmdescr]; break;
+				
+				case 'itmfname'  : return $this->record[$itmname]; break;
+				case 'itmfdescr' : return $this->record[$itmdescr]; break;				
+				//---
+				default : //continue	
+			}
+			
 			if (!$scan)
 				return ($this->record[$field]);
 
-		    switch ($field) {
+		    switch ($field) {				
 				case 'itmactive' : $ret = ($this->record[$field]>0) ? 'checked' : null; break;
 				case 'active'    : $ret = ($this->record[$field]>0) ? 'checked' : null; break;
 				default 		 : $ret = $this->record[$field];

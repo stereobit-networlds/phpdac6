@@ -24,7 +24,7 @@ $__ACTIONS['RCCONTROLPANEL_DPC'][6]='cpupgrade';
 
 $__LOCALE['RCCONTROLPANEL_DPC'][0]='RCCONTROLPANEL_DPC;Control Panel;Control Panel';
 $__LOCALE['RCCONTROLPANEL_DPC'][1]='_BACKCP;Back;Επιστροφή';
-$__LOCALE['RCCONTROLPANEL_DPC'][2]='_DASHBOARD;CP Dashboard;Πινακας Ελεγχου';
+$__LOCALE['RCCONTROLPANEL_DPC'][2]='_DASHBOARD;Dashboard;Πινακας Ελεγχου';
 $__LOCALE['RCCONTROLPANEL_DPC'][3]='_MENU;General info;Βασικές πληροφορίες';
 $__LOCALE['RCCONTROLPANEL_DPC'][4]='_statisticscat;Category Viewed/Month;Επισκεψιμότητα κατηγοριών';
 $__LOCALE['RCCONTROLPANEL_DPC'][5]='_statistics;Items Viewed/Month;Επισκεψιμότητα ειδών';
@@ -216,6 +216,7 @@ $__LOCALE['RCCONTROLPANEL_DPC'][186]='_actinbox;Activation;Ενεργοποίη�
 $__LOCALE['RCCONTROLPANEL_DPC'][187]='_logfail;Login failed;Αποτυχημένη είσοδος';
 $__LOCALE['RCCONTROLPANEL_DPC'][188]='_upgradeplan;Please upgrade your hosting plan;Παρακαλώ αυξήστε τον χώρο φιλοξενίας';
 $__LOCALE['RCCONTROLPANEL_DPC'][189]='_sizeconsumed;Size near to limit;Κατανάλωση χωρητικότητας';
+$__LOCALE['RCCONTROLPANEL_DPC'][190]='_views;Views;Προβολές';
 
 class rccontrolpanel {
 

@@ -688,8 +688,7 @@ window.onload=function(){
 				$out2 .= "<input type=\"hidden\" value=\"$updcmd\" name=\"FormAction\"/>";			  
 				$out2 .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"" . localize('_UPDATE',getlocal()) . "\">";// onclick=\"document.forms('Registration2').FormAction.value = '$updcmd';\">";
 			}
-
-			if (seclevel('DELETECUSTOMER_',$this->userLevelID)) {
+			elseif (seclevel('DELETECUSTOMER_',$this->userLevelID)) {
 				$out2 = "<input type=\"hidden\" value=\"delete2\" name=\"FormAction\"/>";		   
 				$out2 .= "<input type=\"submit\" class=\"".self::$myf_button_submit_class."\" value=\"" . localize('_DELETE',getlocal()) . "\">";// onclick=\"document.forms('Registration2').FormAction.value = 'delete2';\">";
 			}

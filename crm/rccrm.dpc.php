@@ -76,6 +76,9 @@ $__LOCALE['RCCRM_DPC'][40]='_age;Age;Ηλικία';
 $__LOCALE['RCCRM_DPC'][41]='_level;Level;Πρόσβαση';
 $__LOCALE['RCCRM_DPC'][42]='_firstname;Firstname;Όνομα';
 $__LOCALE['RCCRM_DPC'][43]='_lastname;Lastname;Επώνυμο';
+$__LOCALE['RCCRM_DPC'][44]='_breg;Registered users;Εγγραφές χρηστών';
+$__LOCALE['RCCRM_DPC'][45]='_mailsent;e-Mails sent;Απεσταλμένα e-mails';
+
 
 $__LOCALE['RCCRM_DPC'][55]='_mail;e-mail;e-mail';
 $__LOCALE['RCCRM_DPC'][56]='_name;Name;Όνομα';

@@ -163,6 +163,10 @@ class cms extends fronthtmlpage {
 		
     //URL funcs	
 	
+	public function getHttpUrl() {
+		return ($this->httpurl);
+	}	
+	
 	//page cntrl logic url creator
 	protected function getpurl($query=null, $title=null) {
 	

@@ -100,7 +100,7 @@ $__LOCALE['SHCART_DPC'][17]='_PARCELOF;Parcel;Δέμα βάρους';
 $__LOCALE['SHCART_DPC'][18]='_CONTINUESHOP;Continue shopping;Συνέχισε τις αγορές';
 $__LOCALE['SHCART_DPC'][19]='_CLEARCARTITEMS;Remove all items;Άδειασε το καλάθι';
 $__LOCALE['SHCART_DPC'][20]='_ADDCARTITEM;Add item;Στο καλάθι'; //_INCART db var
-$__LOCALE['SHCART_DPC'][21]='_REMCARTITEM;Remove;Διαγραφή';
+$__LOCALE['SHCART_DPC'][21]='_REMCARTITEM;Remove;Αφαίρεση';
 $__LOCALE['SHCART_DPC'][22]='_SUBMITORDER2;Submit Order;Τέλος Συναλλαγής';
 $__LOCALE['SHCART_DPC'][23]='_TRANSPRINT;Print;Εκτύπωση';
 $__LOCALE['SHCART_DPC'][24]='_ORDERSUBJECT;Order No ;Παραγγελία No ';
@@ -207,7 +207,7 @@ class shcart extends storebuffer {
     var $rewrite, $readonly, $minus, $plus, $removeitemclass, $maxlenght;
     var $twig_invoice_template_name;//, $appname, $mtrackimg; 
     var $agentIsIE, $baseurl, $fastpick, $continue_shopping_goto_cmd;
-	var $loyalty, $ppolicynotes, $isValidCoupon;	
+	var $loyalty, $ppolicynotes, $isValidCoupon, $cusrid;	
 	
 	static $staticpath, $myf_button_class, $myf_button_submit_class;	
 	
@@ -218,6 +218,9 @@ class shcart extends storebuffer {
 		$UserSecID = GetGlobal('UserSecID');	
 		$this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);		
 		$this->user = decode($UserName);
+		
+		//cookie store id
+	    $this->cusrid = md5($_SERVER['REMOTE_ADDR']); //$this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']);	
 		
 		storebuffer::__construct('cart');
 		
@@ -335,7 +338,7 @@ class shcart extends storebuffer {
 		
 		$this->_NOTAVAL = localize('_ZEROVAL',$this->lan) ?
 						  localize('_ZEROVAL',$this->lan) :	
-		                  localize('_NOTAVAL',$this->lan);
+		                  localize('_NOTAVAILABLE',$this->lan);
 			
 		$useragent = $_SERVER["HTTP_USER_AGENT"];		
 		$this->agentIsIE = (strpos($useragent, 'Trident') !== false) ? '1' : '0';	 //ie 11 
@@ -879,7 +882,7 @@ function addtocart(id,cartdetails)
 	
 	//save cart details cookie	
 	protected function js_storeCart() {
-		$usr = $this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']);//session_id();	
+		$usr = $this->cusrid;
 
 		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {	
 		
@@ -910,7 +913,7 @@ function addtocart(id,cartdetails)
 	
 	//clean cart details cookie	
 	protected function js_cleanCart() {
-		$usr = $this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']);//session_id();
+		$usr = $this->cusrid;
 	
 		if ($daystosave = _m('cms.paramload use ESHOP+saveCartCookie')) {
 			
@@ -942,11 +945,28 @@ function addtocart(id,cartdetails)
 			$js->load_js($code,null,1);		
 			unset ($js);
 	   }	
-	}	
+	}
+
+	//redirection when blank spaces exist when redir (headers sent)
+	protected function _header($to=null) {
+		if( !headers_sent() ){
+			header("Location: " . $to);
+		}
+		else{
+			echo '
+			<script type="text/javascript">
+			document.location.href="'. $to .'";
+			</script>
+			Redirecting to <a href="' . $to . '">'. $to .'</a>
+			';
+		}
+		die();
+	}
 	
 	protected function dispatch_pay_engines() {
 		$payway = strtoupper(trim(GetSessionParam('payway')));
 		$finalCost = ($this->test2pay>0) ? $this->test2pay : $this->myfinalcost;
+	    $urlgo = _v('cmsrt.httpurl') . '/cart-submit/';
 	  
 		if (strcmp($payway,'PAYPAL')==0) {
 
@@ -962,7 +982,8 @@ function addtocart(id,cartdetails)
 				SetSessionParam('cartstatus',0); 
 				$this->status = 0;		  
 
-				header("Location: ".strtolower(GetSessionParam('payway')).'/');
+				//header("Location: " . $urlgo . strtolower(GetSessionParam('payway')).'/');
+				$this->_header($urlgo . strtolower(GetSessionParam('payway')) . '/');
 				exit;
 			}
 		}
@@ -979,7 +1000,8 @@ function addtocart(id,cartdetails)
 				SetSessionParam('cartstatus',0); 
 				$this->status = 0;		  
 			
-				header("Location: ".strtolower(GetSessionParam('payway')).'/');
+				//header("Location: " . $urlgo . strtolower(GetSessionParam('payway')).'/');
+				$this->_header($urlgo . strtolower(GetSessionParam('payway')) . '/');
 				exit;
 			}
 		}
@@ -997,7 +1019,9 @@ function addtocart(id,cartdetails)
 				$this->status = 0;		  
 
 				//header("Location: ".strtolower(GetSessionParam('payway')).'.php');
-				header("Location: ".strtolower(GetSessionParam('payway')).'/');
+				//echo "Location: " . $urlgo . strtolower(GetSessionParam('payway')).'/';
+				//header("Location: " . $urlgo . strtolower(GetSessionParam('payway')).'/');
+				$this->_header($urlgo . strtolower(GetSessionParam('payway')) . '/');
 				exit;
 			}
 		}	  
@@ -1249,6 +1273,8 @@ function addtocart(id,cartdetails)
 	//alias, used by pay engines
 	public function cancelCartOrder() {
 		//$this->cancel_order(); //!!! not affceted
+		
+		//$this->quick_recalculate();
 	}	
 	
 	//used by pay engines when comeback
@@ -3956,12 +3982,14 @@ function addtocart(id,cartdetails)
 		$referer = $_SESSION['http_referer']; //as saved by vstats
 		
 		$rstr = _m('cms.paramload use ESHOP+refererAnalytics');
-		$refs = $rstr ? str_replace(',','|',strtolower($mstr)) : "skroutz|bestprice|google";
+		$refs = $rstr ? str_replace(',','|',strtolower($rstr)) : "skroutz|bestprice|google";
+		//echo 'refs:' . $refs;
 		
 		//create analytics script if referer
 		if (preg_match("/($refs)/i", $referer, $matches)) {
 			
 			$code = $this->submitScript($matches[0]);	
+			//echo $code;
 			
 			$js = new jscript;	
 			$js->load_js($code,"",1);			   
@@ -3990,7 +4018,7 @@ function addtocart(id,cartdetails)
 	
 	protected function cookie_store_cart() {
         $db = GetGlobal('db');
-		$user = $this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']);//session_id();	
+		$user = $this->cusrid; 
 		
 		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;
@@ -4020,7 +4048,7 @@ function addtocart(id,cartdetails)
 	
 	protected function cookie_clean_cart() {
         $db = GetGlobal('db');
-		$user = $this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']);//session_id();	
+		$user = $this->cusrid; 
 		
 		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;
@@ -4039,7 +4067,7 @@ function addtocart(id,cartdetails)
 	
 	protected function cookie_fetch_cart($id=null) {
         $db = GetGlobal('db');
-		$user = $id ? $id : ($this->user ? md5($this->user) : md5($_SERVER['REMOTE_ADDR']));//session_id());	
+		$user = $id ? $id : $this->cusrid; 
 		
 		if ((GetSessionParam('ADMIN')) || (_m("cms.isUaBot")))
 			return false;

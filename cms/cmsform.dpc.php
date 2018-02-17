@@ -180,7 +180,7 @@ class cmsform {
        if (defined('JSDIALOGSTREAM_DPC')) {
 	   
 			if ($text)	
-				$code = _m("jsdialogstream.say use $text+$title++2000");
+				$code = _m("jsdialogstream.say use $text+$title++5000");
 			else
 				$code = _m('jsdialogstream.streamDialog use jsdtime');
 		   

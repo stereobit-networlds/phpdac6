@@ -2119,6 +2119,9 @@ This email and any files transmitted with it are confidential and intended solel
 	}	
 	
 	public function encUrl($url, $nohost=false) {
+		
+		$url = $url ? $url : _m('cms.getHttpUrl'); //default this
+		
 		if ($url) {
 			
 			if (($this->isHostedApp)&&($nohost==false)) {

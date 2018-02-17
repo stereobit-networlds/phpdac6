@@ -1398,7 +1398,7 @@ EOF;
 							3=>$itemunit,
 							4=>$rec['itmremark'],
 							5=> number_format(floatval($itemprice),2,',','.'),
-							6=>_m("shcart.showsymbol use $itemcode;$citemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;+$cat+$page",1),
+							6=>_m("shcart.showsymbol use $itemcode;$citemtitle;;;$cat;$page;;$itemphoto;$itemprice;$itemqty;+$cat+$page",0),
 							7=>_m('shkatalogmedia.show_availability use '. $rec['ypoloipo1'],1),
 							8=>'',
 							9=>'',
@@ -1721,6 +1721,8 @@ EOF;
 		$db = GetGlobal('db');
 		if (!$csvItems) return false;
 		
+		$itmname = $this->lan ? 'itmname' : 'itmfname';
+		
 		if ($aliasID = $this->useUrlAlias()) {
 			
 			if ($isStr) {
@@ -1731,7 +1733,7 @@ EOF;
 				$items = $csvItems;
 			
 			$sSQL = "update products set $aliasID = ";
-			$sSQL.= " replace(replace(replace(replace(replace(replace(replace(replace(replace(itmname,'#','-'),\"'\",'-'),'\"','-'),',','-'),'+','-'),'/','-'),'&','-'),'.','-'),' ','-')";
+			$sSQL.= " replace(replace(replace(replace(replace(replace(replace(replace(replace($itmname,'#','-'),\"'\",'-'),'\"','-'),',','-'),'+','-'),'/','-'),'&','-'),'.','-'),' ','-')";
 			$sSQL.= " where {$this->fcode} IN (" . $items . ")";
 			$res = $db->Execute($sSQL);
 			

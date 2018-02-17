@@ -45,7 +45,7 @@ $__ACTIONS['SHKATALOGMEDIA_DPC'][16]='ktree';
 
 $__LOCALE['SHKATALOGMEDIA_DPC'][0]='SHKATALOGMEDIA_DPC;Catalogue;Καταλογος';
 $__LOCALE['SHKATALOGMEDIA_DPC'][1]='pcs;pcs;τμχ';
-$__LOCALE['SHKATALOGMEDIA_DPC'][2]='_array;Table;Ομάδα';
+$__LOCALE['SHKATALOGMEDIA_DPC'][2]='_array;Items;Στοιχεία';
 $__LOCALE['SHKATALOGMEDIA_DPC'][3]='_next;Next;Εμπρος';
 $__LOCALE['SHKATALOGMEDIA_DPC'][4]='_prev;Prev;Πίσω';
 $__LOCALE['SHKATALOGMEDIA_DPC'][5]='_recent;Recent;Πρόσφατα';
@@ -64,7 +64,7 @@ $__LOCALE['SHKATALOGMEDIA_DPC'][17]='_NOTAX;net value;χωρίς ΦΠΑ';
 $__LOCALE['SHKATALOGMEDIA_DPC'][18]='_MANUFACTURER;Manufacturer;Κατασκευαστής';
 $__LOCALE['SHKATALOGMEDIA_DPC'][19]='_code;Code;Κωδικός';
 $__LOCALE['SHKATALOGMEDIA_DPC'][20]='_descr;Description;Περιγραφή';
-$__LOCALE['SHKATALOGMEDIA_DPC'][21]='_axia;Cost;Τιμή';
+$__LOCALE['SHKATALOGMEDIA_DPC'][21]='_axia;Price;Τιμή';
 $__LOCALE['SHKATALOGMEDIA_DPC'][22]='_uniname1;MM;ΜΜ';
 $__LOCALE['SHKATALOGMEDIA_DPC'][23]='_order;Order by:;Ταξινόμηση:';
 $__LOCALE['SHKATALOGMEDIA_DPC'][24]='_item;Item;Προιόν';
@@ -532,7 +532,7 @@ function jsShowPhoto(name) {
 			'title':  name});		
 	}	
 }
-function jsShowPhotoAdd(pic) {	
+function jsShowPhotoAdd(name,pic) {	
 	if (/{$mobileDevices}/i.test(navigator.userAgent)) {
 	}	
 	else {	
@@ -1769,12 +1769,12 @@ JSFILTER;
 	public function show_aditional_files($id,$nojs=null,$altname=null,$tmpl=null) {
 	    if (!$id) return;
 	    $cat = GetReq('cat');
-		$title = $altname ? $altname : $id;
-		$name = $id;
+		$name = $this->replace_spchars($id,1);
+		$title = $altname ? $altname : $name;
 		$id = $this->encode_image_id($id); //_m('shkategories.encode_image_id use '.$id);
 		 
-	    $addfx = $this->addfx?$this->addfx:100;
-	    $addfy = $this->addfy?$this->addfy:null;//free y size //75;	
+	    $addfx = $this->addfx ? $this->addfx : 100;
+	    $addfy = $this->addfy ? $this->addfy : null;//free y size //75;	
 	    $this->allow_show_resource = true; //enable it after show main item image		
 	
 	    $template= $tmpl ? $tmpl : 'fpitemaddfiles';	    	
@@ -1797,14 +1797,14 @@ JSFILTER;
 
 				switch ($restype) {
                 
-					default:$addtional_photo_link = _m("cmsrt.seturl use t=kshow&cat=$cat&id=" . GetReq('id') . "&thub=" . $i . "#photo+++1"); 
+					default:$addtional_photo_link = _m("cmsrt.seturl use t=kshow&cat=$cat&id=" . $this->realID . "&thub=" . $i . "#photo+++1"); 
 			                $plink = "<a href=\"$addtional_photo_link\">";				  
 			                $lo = "<img src=\"" . $ad_photo_big . "\" border=\"0\" alt=\"". localize('_IMAGE',$this->lan) . "\">" . "</a>"; 
 			                $adnphoto = $plink . $lo;
 			 
-			                $remarks = 'PHOTO';			 
+			                $remarks = $title .'-' . $i;//'PHOTO';			 
 							$tokens = array(0=>$id.$i,
-											1=>'',
+											1=>$title,
 											2=>$adnphoto,
 											3=>$remarks,
 											4=>$slide_index,
@@ -1854,7 +1854,7 @@ JSFILTER;
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) 
 		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= $p." >0 and ".$p." IS NOT NULL and itmactive>0 and active>0";	
@@ -1885,7 +1885,7 @@ JSFILTER;
 		$sSQL .= " WHERE ";	
 		$sSQL .= "sysins>='" . convert_date(trim($entrydate),"-DMY",1) . "' and ";
 		
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) 
 		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= "itmactive>0 and active>0";	
@@ -1916,7 +1916,7 @@ JSFILTER;
 		  $sSQL .= " cat{$i}='$myc' and ";	
 		}   
 		
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) 
 		  $sSQL .= $this->getmapf('code') . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= $this->getmapf('offer')."='".$this->toggler[1]."' and itmactive>0 and active>0";	
@@ -1966,7 +1966,7 @@ JSFILTER;
 		if ($selected_cat3 = $fields['cat3']) 
 		  $sSQL .= "cat3 not like '" . $selected_cat3 . "' and ";		
 		
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) //GetReq('id')) 
 		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= $p." >0 and ".$p." IS NOT NULL and itmactive>0 and active>0";	
@@ -2006,7 +2006,7 @@ JSFILTER;
 		  $sSQL .= " (cat{$ii} IS NULL or cat{$ii}='') and ";		
 		}  		
 
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) 
 		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= "itmactive>0 and active>0";	
@@ -2057,7 +2057,7 @@ JSFILTER;
 		if ($selected_cat3 = $fields['cat3']) 
 		  $sSQL .= "cat3 not like '" . $selected_cat3 . "' and ";		
 		
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) 
 		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= "orderid >0 and orderid IS NOT NULL and itmactive>0 and active>0";	
@@ -2112,7 +2112,7 @@ JSFILTER;
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";	
 		
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) 
 		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= $contition."='".$this->toggler[1]."' and itmactive>0 and active>0";	
@@ -2160,6 +2160,73 @@ JSFILTER;
 		  
 		return ($out);	
 	}	 
+	
+	/*side-select based on itmremark*/
+	public function is_side_select($code=null) {	
+		$db = GetGlobal('db');
+		if ($incart = GetReq('a')) {
+			$cc = explode(';', $incart);
+			$itemcode = $cc[0];
+        }
+		else
+			$itemcode = $code ? $code : $this->realID;
+		
+		if ($itemcode) {
+			$sSQL0 = "select itmremark from products where {$this->fcode}='$itemcode'";
+			$res = $db->Execute($sSQL0);	
+			$ccitems = $res->fields[0];	
+		
+			return ($ccitems);
+		}
+	}		
+	
+	public function show_side_select($items=10,$linemax=null,$template=null,$photosize=null) {
+        $db = GetGlobal('db');					
+		$pz = $photosize ? $photosize : 1;
+		
+		if ($incart = GetReq('a')) {
+			$cc = explode(';', $incart);
+			$itemcode = $cc[0];
+        }
+		else
+			$itemcode = $this->realID;
+
+		if ($itemcode) {
+			$sSQL0 = "select itmremark from products where {$this->fcode}='$itemcode'";
+			$res = $db->Execute($sSQL0);	
+			$ccitems = $res->fields[0];
+			
+			if ($ccitems) {
+			
+				$sSQL = $this->selectSQL;
+				$sSQL .= " WHERE " . $this->fcode . 
+						 " in ($ccitems)";  //coma sep codes
+				$sSQL .= " and itmactive>0 and active>0";	
+				$sSQL .= " ORDER BY {$this->orderid}";			
+				$sSQL .= $this->bypass_order_list ? null : 
+						 ($this->orderid ? ",{$this->itmname} {$this->sortdef} " : "{$this->itmname} {$this->sortdef} ");
+				$sSQL .= $items ? " LIMIT " . $items : null;		 
+				//echo $sSQL;
+		
+				$resultset = $db->Execute($sSQL,2);	
+				$this->result = $resultset;		
+		
+				if ($linemax>1)
+					$out = $this->list_katalog_table($linemax,null,$template,$pz,1);
+				else  	
+					$out = $this->list_katalog(0,null,$template,$pz,1);
+		  
+				return ($out);	
+			}
+		}
+
+		if ($template = _m('cmsrt.select_template use emptyrec')) {
+				
+			$tokens = array(0=>'');//localize('_norec',$this->lan));
+			$out = $this->combine_tokens($template, $tokens, true);
+			return ($out);
+		}		
+	}	
 	 
 	//override
 	public function show_special($items=10,$linemax=null,$template=null,$photosize=null,$contition=null,$days=12) {
@@ -2171,7 +2238,7 @@ JSFILTER;
         $sSQL = $this->selectSQL;				
 		$sSQL .= " WHERE ";	
 		
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) 
 		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= $contition."='".$this->toggler[1]."' and itmactive>0 and active>0";	
@@ -2255,7 +2322,7 @@ JSFILTER;
 		
 		$sSQL .= ") and itmactive>0 and active>0";
 		 	
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) 
 		  $sSQL .= " and " . $this->fcode . " not like '" . $selected_item . "'";
 		  
 		//MULTIPLE CHECKS  
@@ -2288,7 +2355,7 @@ JSFILTER;
 	
 	public function show_relative_sales($items=10,$linemax=null,$template=null,$photosize=null,$id=null) {
 		$db = GetGlobal('db');	
-		$myid = $id ? $id : GetReq('id');		
+		$myid = $id ? $id : $this->realID;		
 		$pz = $photosize ? $photosize : 1;	  	    
 	
 		if ( (defined('SHTRANSACTIONS_DPC')) && (seclevel('SHTRANSACTIONS_DPC',decode(GetSessionParam('UserSecID')))) ) {
@@ -2347,7 +2414,7 @@ JSFILTER;
 			$sSQL .= " (cat{$ii} IS NULL or cat{$ii}='') and ";		
 		}  		
 		
-		if (($selected_item = GetReq('id')) && (!$xor)) 
+		if (($selected_item = $this->realID) && (!$xor)) 
 			$sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  
 		//MULTIPLE CHECKS  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2395,7 +2462,7 @@ JSFILTER;
 				$sSQL .= "cat".$cc."='" . $category . "' and ";
 	    }
 		
-		if ($selected_item = GetReq('id')) 
+		if ($selected_item = $this->realID) 
 		  $sSQL .= $this->fcode . " not like '" . $selected_item ."' and ";
 		  		
 		$sSQL .= $this->getmapf('offer')."='".$this->toggler[1]."' and itmactive>0 and active>0";	
@@ -2628,7 +2695,7 @@ JSFILTER;
 	
 	public function read_item_attr($code=null,$attr=null,$islink=null) {
         $db = GetGlobal('db');					
-		$item = $code ? $code : GetReq('id');	
+		$item = $code ? $code : $this->realID;	
 		
         $sSQL = $this->selectSQL;
 		$sSQL .= " WHERE ";
@@ -3410,7 +3477,7 @@ JSFILTER;
         $db = GetGlobal('db');					
 		$lastprice = $this->getmapf('lastprice') ? ',' . $this->getmapf('lastprice') : null;		
 		
-		$itemcode = $code ? $code : GetReq('id');
+		$itemcode = $code ? $code : $this->realID;
 	    $retfield = $field ? $field : $this->itmname;	                       
 						   
         $sSQL = $this->selectSQL;
@@ -3430,7 +3497,7 @@ JSFILTER;
 	public function get_xml_links($mylan=null,$feed_id=null,$dpcfeed=null) {
 		$lan = $mylan ? $mylan : getlocal();
 		$lnk = array();
-		$id = GetReq('id');
+		$id = $this->realID; //GetReq('id');
 		$cat = GetReq('cat'); //echo $cat;
 		$page = GetReq('page') ? GetReq('page') : '0';
 		$feed_cmd = $feed_id ? $feed_id : 'feed';	  

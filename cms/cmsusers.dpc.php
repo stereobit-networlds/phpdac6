@@ -527,7 +527,7 @@ FB.api('/me?fields=id,email,first_name,last_name,gender,timezone', function(resp
 	}
 	
     //mail registration info to the company
-	protected function mailtohost($username=null,$password=null,$fname=null,$lname=null,$tell=false) {
+	public function mailtohost($username=null,$password=null,$fname=null,$lname=null,$tell=false) {
 		
 		$tellit =	$tell ? $tell : $this->tell_it;
 		

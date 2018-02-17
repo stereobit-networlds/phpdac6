@@ -166,7 +166,7 @@ class rcusers extends cmsusers {
 		    _m("mygrid.column use grid1+code2|".localize('_code',$lan)."|20|1|");			
 			_m("mygrid.column use grid1+seclevid|".localize('_level',$lan)."|5|$editf|");
 		   
-		    $out .= _m("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',$lan)."+id+0+1+36+600++0+1+1");
+		    $out .= _m("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',$lan)."+id+0+1+25+600++0+1+1");
 		   
 		    return ($out); 	
 	    }
@@ -203,7 +203,7 @@ class rcusers extends cmsusers {
 		    _m("mygrid.column use grid1+email|".localize('_email',$lan)."|20|1|");
 		    _m("mygrid.column use grid1+code2|".localize('_code',$lan)."|20|1|");			
 		    _m("mygrid.column use grid1+seclevid|".localize('_level',$lan)."|5|$edif|");		   
-		    $out .= _m("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',$lan)."+id+0+1+36+600++0+1+1");
+		    $out .= _m("mygrid.grid use grid1+users+$xsSQL+$edit+".localize('RCUSERS_DPC',$lan)."+id+0+1+25+600++0+1+1");
 		   
 		    return ($out); 	
 	    }

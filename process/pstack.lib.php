@@ -15,7 +15,7 @@ class pstack {
 							($_SESSION['ADMINSecID'] ? $_SESSION['ADMINSecID'] :
 								(((decode($UserSecID))) ? (decode($UserSecID)) : 0));		
 					
-		$this->debug = false;					
+		$this->debug = GetGlobal('processDebug'); //false;					
 		$this->db = GetGlobal('db');
 		$this->pMethod = GetGlobal('processMethod');
 		

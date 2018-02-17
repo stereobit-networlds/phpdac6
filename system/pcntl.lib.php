@@ -296,8 +296,13 @@ parse_ini_string_m:
 		    if ($trimedline = trim($line)) {
 				if ((substr_compare($trimedline, '#',0,1)!=0) && 
 				    (substr_compare($trimedline, '/',0,1)!=0)) {
+						
 					//echo $trimedline."<br>";
-					$lines[] = $trimedline;					
+					//$lines[] = $trimedline;
+					
+					//one or more spaces between
+                    //echo preg_replace('/\s\s+/', ' ', $trimedline) . '<br/>'; 
+					$lines[] = preg_replace('/\s\s+/', ' ', $trimedline);
 				} 
 			}
 		}
@@ -312,7 +317,9 @@ parse_ini_string_m:
 			//then...read tokens  			
 			foreach ($token as $tid=>$tcmd) {
 			  
-			    $part = explode(' ',$tcmd);
+			    $part = explode(' ',$tcmd); //one space anyway (preg before)
+				//$part = preg_replace('/\s\s+/', ' ', $tcmd); //one or more spaces between
+				
 			    switch ($part[0]) {
 			     case 'system'	: 	//include and load a set of system lib dpc
 									$syslibs = explode(",",$part[1]);
@@ -388,8 +395,30 @@ parse_ini_string_m:
 				 case 'member'	: 	$dpcmods[] = $part[1];
 									break;		
 								
-				 case 'dpccode' : 	echo $this->execute_dpc_code($part[1]);	break;																	  
-				 case 'phpcode' : 	echo $this->execute_php_code($part[1]);	break;		
+				 case 'dpccode' : 	$fpart = array_shift($part); //exclude cmd
+									//echo implode(' ',$part);
+				                    echo $this->execute_dpc_code(implode(' ',$part), false);	
+									break;	
+									
+				 case 'phpcode' : 	$fpart = array_shift($part); //exclude cmd
+									//echo implode(' ',$part);
+				                    echo $this->execute_php_code(implode(' ',$part), false);	
+									break;
+									
+			     case 'nvl'     :   $fpart = array_shift($part); //exclude cmd
+									$part1 = array_shift($part); //1st dpc
+									$part2 = array_shift($part); //2nd dpc
+				                    if ($this->execute_php_code(implode(' ',$part), true)==true) { //remain code must return true
+										echo $part1;
+										//$this->set_include($part1,'dpc');	
+										//$dpcmods[] = $part1; 
+									}
+									else {
+										echo $part2;
+										//$this->set_include($part2,'dpc');	
+										//$dpcmods[] = $part2; 
+									}
+									break;
 				 
 				 case 'private' :	//loads dpc from private dir
 									if ($m = $part[1]) {
@@ -447,18 +476,27 @@ parse_ini_string_m:
 	    return ($dpcmods); //return the array of included dpcs 
     }    
    
-    public function execute_dpc_code($code) {
-   
-		$code_cmds = explode(';',$code);
+    public function execute_dpc_code($code, $verbose=false) {
+		$ccode = str_replace(':',';',$code);
+		
+		if ($verbose)
+			echo $ccode . '<br/>';
+		
+		$code_cmds = explode(';',$ccode);
 		foreach ($code_cmds as $line=>$cmd) 
 			$ret .= $this->calldpc_method($cmd,1);//1=no error			
 	  
 		return ($ret);
     }
    
-    public function execute_php_code($code) {
-
-		$ret = eval($code);
+    public function execute_php_code($code, $verbose=false) {
+	    $ccode = str_replace(':',';',$code);
+		
+		if ($verbose)
+			echo $ccode . '<br/>';
+		
+		$ret = eval($ccode);
+		
 		return ($ret);
     }   
 	

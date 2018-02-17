@@ -148,7 +148,7 @@ class shtags {
 		  $this->keywords = $this->item;// . ',' . $thetree;		
 		}
         else { //front page
-		  $this->item = null;
+		  $this->item = null;//localize(GetReq('t'), getlocal());
 		  $this->descr = remote_paramload('INDEX','meta-description', $this->prpath);
 		  $this->price = null;
 		  $this->keywords = remote_paramload('INDEX','meta-keywords', $this->prpath);			
@@ -228,7 +228,7 @@ class shtags {
 	    $itmdescr = $lan?'descr'.$lan:'descr0';  
 		$itmtitle = $lan?'title'.$lan:'title0';
 
-        $code = $item ? $item : $cat;		
+        $code = $item ? $item : ($cat ? $cat : GetReq('t'));		
 		
         $sSQL = "select code,tag,$itmkeywords,$itmdescr,$itmtitle from ptags ";
 	    $sSQL .= " WHERE code='" . $code . "'";
