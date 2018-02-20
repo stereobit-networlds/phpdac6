@@ -191,12 +191,15 @@ $__DPCEXT['SHCART_DPC']='showsymbol';
 
 class shcart extends storebuffer {
 
-	var $uniname2, $status, $qtytotal, $lan;
-	var $liveupdate, $moneysymbol, $maxcart, $test2pay;
+	var $path, $lan, $autopay, $test2pay;
+	var $uniname2, $status, $qtytotal;
+	var $liveupdate, $moneysymbol, $maxcart;
 	var $allowqtyover, $mailerror, $submiterror, $sxolia, $continue_button;
     var $rejectqty, $checkout, $order, $submit, $cancel, $recalc;
-	var $detailqty, $stock_msg, $overitem, $ignoreqtyzero, $qtytototal,$total;
-	var $path,$autopay, $mydiscount, $mytaxcost, $myfinalcost, $myshippingcost, $discount;
+	var $detailqty, $stock_msg, $overitem, $ignoreqtyzero;
+	var $mytaxcost, $myfinalcost, $qtytototal, $total;
+	var $mydiscount, $myshippingcost, $mypaymentcost, $mytransportcost;
+	var $discount, $shippingcost, $paymentcost, $transportcost;
 
 	var $urlpath, $user, $aftersubmitgoto, $aftercancelgoto, $onSuccessGotoTitle;
 	var $todo, $quicktax,$showtaxretail,$is_reseller, $cartlinedetails, $notallowremove;
@@ -288,6 +291,11 @@ class shcart extends storebuffer {
 		$sx = remote_paramload('SHCART','shipcost',$this->path);	   
 		$this->shippingcost = GetSessionParam('shipcost') ? GetSessionParam('shipcost') : $sx;	   
 		$this->shipcalcmethod = remote_arrayload('SHCART','shipcalcmethod',$this->path);
+		
+		//payment cost based on payment choosen
+		$this->paymentcost = GetSessionParam('paycost');
+		//transport cost based on transport choosen
+		$this->transportcost = GetSessionParam('transcost');		
 
 		//price per client else cart discount global
 		$percentoffperclient = remote_arrayload('SHCART','priceoffperclient',$this->path);
@@ -326,11 +334,15 @@ class shcart extends storebuffer {
 
 		$this->status = GetSessionParam('cartstatus') ? GetSessionParam('cartstatus') : 0;			
 		$this->total = floatval(GetSessionParam('subtotal'));
-		$this->myfinalcost = floatval(GetSessionParam('total'));
 		$this->qty_total = GetSessionParam('qty_total');	   
-		$this->myshippingcost = floatval(GetSessionParam('myshippingcost'));	   
-		$this->mytaxcost = floatval(GetSessionParam('mytaxcost'));	
-		$this->mydiscount = floatval(GetSessionParam('mydiscount'));		
+		
+		$this->myfinalcost = floatval(GetSessionParam('total'));		
+		$this->myshippingcost = 0;  //floatval(GetSessionParam('myshippingcost'));	   
+		$this->mytaxcost = 0;  //floatval(GetSessionParam('mytaxcost'));	
+		$this->mydiscount = 0;  //floatval(GetSessionParam('mydiscount'));		
+		$this->mypaymentcost = 0;
+		$this->mytransportcost = 0;
+		
 		$this->printout = GetSessionParam('printout') ? GetSessionParam('printout') : null;	  
 		$this->transaction_id = GetSessionParam('TransactionID') ? GetSessionParam('TransactionID') : null;
 		$this->fastpick = GetSessionParam('fastpick') ? true : false;
@@ -1039,6 +1051,10 @@ function addtocart(id,cartdetails)
 			SetSessionParam('invway',null);	
 			SetSessionParam('sxolia',null);								 
 			SetSessionParam('qty_total',null);
+			
+			SetSessionParam('transcost',null);
+			SetSessionParam('paycost',null);
+			SetSessionParam('shipcost',null);
 		} 
 	}		
 
@@ -1175,10 +1191,10 @@ function addtocart(id,cartdetails)
 	
 	public function getDetailSelection($selection=null) {
 		if (!$selection) return null;
-		
+
 		$ret = GetParam($selection) ? GetParam($selection) :
 									  GetSessionParam($selection);
-									  
+		//echo $selection.':'.$ret.'<br/>';									  
 		return ($ret);							  
 	}	
 	
@@ -1743,14 +1759,14 @@ function addtocart(id,cartdetails)
 					case 1  : 	break;
 						 
 					case 2  :   SetSessionParam('ordercart',$this->quickview());
-					
+					            //print_r($_POST);
 								$details  = '<br/>'.localize('_PWAY',$this->lan) . ':'. GetParam('payway');
 								$details .= '<br/>'.localize('_RWAY',$this->lan) . ':'. GetParam('roadway');
 								$details .= '<br/>'.localize('_IWAY',$this->lan) . ':'. GetParam('invway');	   
 								$details .= '<br/>'.localize('_DELIVADDRESS',$this->lan) . ':'. GetParam('addressway');	   
 								$details .= '<br/>'.localize('_SXOLIA',$this->lan) .':'. GetParam('sxolia');		   
 								SetSessionParam('orderdetails',$details);
-				
+								//echo $details;
 								break;
 						 
 					case 0  :	 
@@ -3044,6 +3060,7 @@ function addtocart(id,cartdetails)
 	
 		$this->quick_recalculate();	
 	   
+	    //0 token
 		$_ttc =  number_format(floatval($this->total),$this->dec_num,',','.'). $this->moneysymbol;
 		$tokens[] = $_ttc; 
 		
@@ -3072,7 +3089,7 @@ function addtocart(id,cartdetails)
 				$tokens[] = '';		 
 	    }
 	    else {
-		 
+		    //1 token
 			if ($this->discount) {
 				
 				$this->mydiscount = ($this->discount) ? 
@@ -3086,7 +3103,8 @@ function addtocart(id,cartdetails)
 			} 
 			else 
 				$tokens[] = '';		 
-		  	 		 	   
+		  	
+			//2 token	
 			if ((($this->tax) && ($this->is_reseller)) ||
 				(($this->tax) && (!$this->showtaxretail))) {
 			
@@ -3099,6 +3117,7 @@ function addtocart(id,cartdetails)
 			else
 				$tokens[] = '';	
 		 
+		    //3 token
 			if ($this->shippingcost) {   
 				$_shcost = number_format(floatval($this->shippingcost),$this->dec_num,',','.'). $this->moneysymbol;		   
 				$tokens[] = $_shcost;		   
@@ -3106,7 +3125,7 @@ function addtocart(id,cartdetails)
 			else
 				$tokens[] = '';			 
 		  		 
-			//final cost
+			//4 token, final cost
 			if (($this->discount) || ($this->shippingcost) || ($this->tax)) {
 		 
 				$finalcost = ($this->total-$this->mydiscount) +
@@ -3122,6 +3141,7 @@ function addtocart(id,cartdetails)
 			else
 				$tokens[] = '';	
 		 
+		    /* DISABLED TOKENS	
 		    foreach ($this->customerway() as $t=>$tt)
 				$tokens[] = $tt;
 			foreach ($this->invoiceway() as $t=>$tt)
@@ -3130,7 +3150,7 @@ function addtocart(id,cartdetails)
 				$tokens[] = $tt;
 			foreach ($this->payway() as $t=>$tt)
 				$tokens[] = $tt;
-				
+			
 			if (!$nodeliv = remote_paramload('SHCART','nodelivery',$this->path)) {			 
 				foreach ($this->addressway(true) as $t=>$tt)
 					$tokens[] = $tt;
@@ -3138,7 +3158,26 @@ function addtocart(id,cartdetails)
 			if (!$nocomm = remote_paramload('SHCART','nocomments',$this->path)) {		 
 				foreach ($this->comments() as $t=>$tt)
 					$tokens[] = $tt;
-			}			   
+			}
+			*/	
+			
+			//EXTRA TOKENS
+			
+		    //5 token
+			if ($this->transportcost) {   
+				$_trcost = number_format(floatval($this->transportcost),$this->dec_num,',','.'). $this->moneysymbol;		   
+				$tokens[] = $_trcost;		   
+			}
+			else
+				$tokens[] = '';		
+
+		    //6 token
+			if ($this->paymentcost) {   
+				$_prcost = number_format(floatval($this->paymentcost),$this->dec_num,',','.'). $this->moneysymbol;		   
+				$tokens[] = $_prcost;		   
+			}
+			else
+				$tokens[] = '';				
 	    }
 		
 		//echo $this->total,':',$this->mydiscount;	
@@ -3559,23 +3598,35 @@ function addtocart(id,cartdetails)
 	protected function calcShipping() {
 		$db = GetGlobal('db');	
 
+		//transport cost
 		if ($code = $this->getDetailSelection('roadway')) {
 			$sSQL = "select cost from ptransports where ";
 			$sSQL.= "code=" . $db->qstr($code);
-		}	
-		//echo $sSQL;
-		$res = $db->Execute($sSQL);	
-		$tcost = $res->fields[0];
+			$res = $db->Execute($sSQL);	
+			$tcost = $res->fields[0];
+			
+			//save transport cost
+			$this->transportcost = floatval($tcost);
+			SetSessionParam('transcost', $this->transportcost);
+		}
+		else
+			$this->transportcost = GetSessionParam('transcost');	
 		
+		//payment cost
 		if ($code = $this->getDetailSelection('payway')) {
-			$sSQL = "select cost from ppayments where code=" . $db->qstr($code);
-		}			
-		$res = $db->Execute($sSQL);	
-		$pcost = $res->fields[0];
+			$sSQL = "select cost from ppayments where code=" . $db->qstr($code);	
+			$res = $db->Execute($sSQL);	
+			$pcost = $res->fields[0];
+			
+			//save payment cost
+			$this->paymentcost = floatval($pcost);
+			SetSessionParam('paycost', $this->paymentcost);
+		}
+		else
+			$this->paymentcost = GetSessionParam('paycost');
 		
-		$result = floatval($tcost) + floatval($pcost);
-		
-		//save shipping cost
+		//save shipping cost as result of transp cost + payment cost
+		$result = floatval($this->transportcost) + floatval($this->paymentcost);
 		$this->shippingcost = $result;
 		SetSessionParam('shipcost', $this->shippingcost);
 		
@@ -3923,7 +3974,7 @@ function addtocart(id,cartdetails)
 		return ($ret);
 	}
 
-	protected function submitScript($referer=null) {
+	protected function submitScript($referer=null, $test=false) {
 		$ret = "/* $referer submit analytics script */";
 		
 		$roadway = GetSessionParam('roadway');
@@ -3933,12 +3984,16 @@ function addtocart(id,cartdetails)
 		$invway = GetSessionParam('invway');	
 		$sxolia = GetSessionParam('sxolia');								 
 		$qtytotal =	GetSessionParam('qty_total');	
+		//$paycost =	GetSessionParam('paycost');
+		//$transcost = GetSessionParam('transcost');
 
 		$ordertotal = str_replace(',', '.', $this->myfinalcost);
 		$ordersubtotal = str_replace(',', '.', $this->total);
 		$orderdiscount = $this->discount ? str_replace(',', '.', $this->discount) : '0.0';
 		$shipcost = $this->shippingcost ? str_replace(',', '.', $this->shippingcost) : '0.0';
 		$taxcost = $this->mytaxcost ? str_replace(',', '.', $this->mytaxcost) : '0.0';
+		$transportcost = $this->transportcost ? str_replace(',', '.', $this->transportcost) : '0.0';
+		$paymentcost = $this->paymentcost ? str_replace(',', '.', $this->paymentcost) : '0.0';
 		
 		$trid = GetSessionParam('TransactionID') ;//$this->transaction_id		
 		
@@ -3951,9 +4006,18 @@ function addtocart(id,cartdetails)
 						3=>number_format(floatval($shipcost),$this->dec_num), 
 						4=>number_format(floatval($discount),$this->dec_num), 
 						5=>number_format(floatval($taxcost),$this->dec_num),
-						);	
-						
-
+						6=>number_format(floatval($transportcost),$this->dec_num),
+						7=>number_format(floatval($paymentcost),$this->dec_num),
+						8=>number_format(floatval($ordersubtotal)+
+						                 floatval($taxcost)+
+										 floatval($transportcost),$this->dec_num),
+						9=>number_format(floatval($ordersubtotal)+
+						                 floatval($taxcost),$this->dec_num),				 
+						);
+		/*				
+		if ($test==true)					
+			print_r($tokens);				
+		*/
 		$ret .= _m("cmsrt._ct use $tmplbody+" . serialize($tokens) . '+1');
 		
 		$tokens = array();
@@ -3994,7 +4058,10 @@ function addtocart(id,cartdetails)
 			$js = new jscript;	
 			$js->load_js($code,"",1);			   
 			unset ($js);
-		}			   	   	     
+		}
+		/*else { //test
+			echo $this->submitScript(null,true);
+		}*/	
 	}	
 
 	//override
