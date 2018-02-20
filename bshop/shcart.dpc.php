@@ -524,8 +524,17 @@ class shcart extends storebuffer {
 			case 'cart-order'    :
 			case $this->order    : 	SetSessionParam('cartstatus',2); 
 									$this->status = 2; 
+									
+									//hold post params (ver2 of tokens do not save - ajax calls)
+									SetSessionParam('payway', GetParam('payway'));
+									SetSessionParam('roadway', GetParam('roadway'));
+									SetSessionParam('customerway', GetParam('customerway'));
+									SetSessionParam('addressway', GetParam('addressway'));
+									SetSessionParam('invway', GetParam('invway'));
+									SetSessionParam('sxolia', GetParam('sxolia'));
 									//$this->calculate_shipping();
 									$this->calcShipping();
+									
 									$this->loopcartdata = $this->loopcart();
 									$this->looptotals = $this->foot();
 									
