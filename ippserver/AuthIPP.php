@@ -162,7 +162,7 @@ super database;
 ',1);	
 
 			$db = GetGlobal('db');
-			$sSQL = "SELECT username, notes FROM users"; 
+			$sSQL = "SELECT username, active FROM users"; 
 			$sSQL .= " WHERE username ='" . $this->name . "' AND password='" . md5($this->pass) . "'";
 			$sSQL .= " and seclevid>5";	// 7 or higher
 			$result = $db->Execute($sSQL,2);
@@ -171,7 +171,7 @@ super database;
 			
 			if (!empty($result)) { 
 			
-			    if (($result->fields['username']) && (strcmp(trim($result->fields['notes']),"DELETED")!=0)) {
+			    if (($result->fields['username']) && ($result->fields['active']>0)) {
 										
 					//ipp access
 					$username = $this->name; 

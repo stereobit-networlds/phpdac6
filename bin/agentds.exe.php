@@ -2,14 +2,20 @@
 
 require_once("agents/network.lib.php");
 require_once("agents/daemon.lib.php");
-//require_once("agents/agentds.lib.php");
+require_once("agents/agentds.lib.php"); //2nd ver
+
+//fire
+$argc = $GLOBALS['argc'];
+$argv = $GLOBALS['argv'];
+$k = new agentds($argv[2],'0.0.0.0',19125);
+
 
 //require_once("system/sysdb.lib.php");
 //require_once("system/controller.lib.php");
 //require_once("system/session.lib.php");
 //require_once("system/system.lib.php");
 
-class agentds extends network {
+class agentds_OLD extends network {
 
    var $daemon_ip;
    var $daemon_port;
@@ -31,7 +37,7 @@ class agentds extends network {
    var $agn_attr;
    
    //environment vars
-   var $env;
+   var $env, $promptString;
 
    var $active_agent,$active_o_agent; 
 
@@ -82,7 +88,9 @@ class agentds extends network {
 	  $this->env['domain'] = $_SERVER['USERDNSDOMAIN'];				 
 	  $this->env['appdata'] = $_SERVER['APPDATA'];	  
 	  $this->env['homepath'] = $_SERVER['HOMEPATH'];	  
-	  //var_dump($this->env);				 			   
+	  //var_dump($this->env);
+
+	  $this->promptString = 'phpagn5>';	
 	  
 	  //INITIALIZE AGENTS
 	  $this->active_agent = null;
@@ -112,10 +120,10 @@ class agentds extends network {
       $this->dmn->setPort ($this->daemon_port);
       $this->dmn->Header = "PHPDAC5 Agent Server (v0.0.1a) at ". $this->env['name'];
 
-      $this->dmn->start ('phpagn5>');  //this routine creates a socket	
+      $this->dmn->start($this->promptString);  //this routine creates a socket	
 	  
       $this->dmn->setCommands (array ("help", "quit", "date", "shutdown","echo","silence",
-	                                  "ver", "callagent", "uncall", "callagentc", "helo", "run", "net",
+	                                  "ver", "call", "callagent", "uncall", "callagentc", "helo", "run", "net",
 									  "create", "destroy", "show", "move", "accept",
 									  "***"));
       //list of valid commands that must be accepted by the server	
@@ -126,15 +134,16 @@ class agentds extends network {
       $this->dmn->CommandAction ("shutdown", array($this,"command_handler"));
 	  
       $this->dmn->CommandAction ("echo", array($this,"command_handler"));	  
-      $this->dmn->CommandAction ("silence", array($this,"command_handler"));		  
-	  
-      $this->dmn->CommandAction ("ver", array($this,"command_handler"));	  	
-      $this->dmn->CommandAction ("callagent", array($this,"command_handler"));	  
-      $this->dmn->CommandAction ("uncall", array($this,"command_handler"));	  
-      $this->dmn->CommandAction ("callagentc", array($this,"command_handler"));//client version quit after		  
+      $this->dmn->CommandAction ("silence", array($this,"command_handler"));		  	  
+      $this->dmn->CommandAction ("ver", array($this,"command_handler"));
       $this->dmn->CommandAction ("helo", array($this,"command_handler"));	
       $this->dmn->CommandAction ("run", array($this,"command_handler"));
       $this->dmn->CommandAction ("net", array($this,"command_handler"));	  
+	  
+	  $this->dmn->CommandAction ("call", array($this,"command_handler"));
+      $this->dmn->CommandAction ("callagent", array($this,"command_handler"));	  
+      $this->dmn->CommandAction ("uncall", array($this,"command_handler"));	  
+      $this->dmn->CommandAction ("callagentc", array($this,"command_handler"));//client version quit after		  	  
 
       $this->dmn->CommandAction ("create", array($this,"command_handler"));	  
       $this->dmn->CommandAction ("destroy", array($this,"command_handler"));	  
@@ -194,6 +203,7 @@ class agentds extends network {
                 return true;
                 break;						
 				
+		case 'CALL':				
 		case 'CALLAGENT'://server version
 		        $data = $this->call_agent($arguments[0],$dmn);
 		        $dmn->Println ($data);
@@ -205,7 +215,7 @@ class agentds extends network {
 		        $dmn->Println ($data);
                 return true;
                 break;					
-				
+						
 		case 'CALLAGENTC'://client version ... moves agent from server to client
 		        $dmn->setEcho(0);//echo off
 				//header from 1st command still appear...must set client silence off				
@@ -273,7 +283,7 @@ class agentds extends network {
 		  if (method_exists($this->active_o_agent,$command))
 		    $ret = $this->active_o_agent->$command($arguments[0],$arguments[1],$arguments[2]);
 		  else
-		    $ret = "Invalid command.\n" . var_dump(get_class_methods($this->active_o_agent));  
+		    $ret = "Invalid command.\n\n" . implode("\n",get_class_methods($this->active_o_agent));  
 		  
 		  $dmn->Println ($ret); 
 		  return true;  
@@ -324,7 +334,7 @@ class agentds extends network {
           }
 		  else {	
 		    $this->savestate($shm_max);
-	        echo "Ok!\n";
+	        echo "Openmemagn shared Ok!\n";
 		  }  		
 	    }	 
 	  }
@@ -332,7 +342,8 @@ class agentds extends network {
 	    
 		$this->agn_mem_store .= $buffer; 
 		$this->savestate($shm_max);
-	    echo $this->agn_mem_store," Ok!\n";		
+	    //echo $this->agn_mem_store," Ok!\n";		
+		echo "Openmemagn Ok!\n";
 	  }  
    }
    
@@ -345,8 +356,8 @@ class agentds extends network {
    
    function addmemagn($agent,$agn_serialized) {
    
-      echo "\n,.",strlen($this->shared_buffer),$this->shared_buffer;
-	  echo "\n,.",strlen($this->agn_mem_store),$this->agn_mem_store;
+      //echo "\n,.",strlen($this->shared_buffer),$this->shared_buffer;
+	  //echo "\n,.",strlen($this->agn_mem_store),$this->agn_mem_store;
    
       $a_index = strlen($this->shared_buffer);     	
       $a_size = strlen($agn_serialized);
@@ -422,7 +433,7 @@ class agentds extends network {
 	    $current_size = $this->agn_length[$id];		
 		
 		$s_agent = substr($this->agn_mem_store,$current_index,$current_size);
-	    echo '>',$s_agent,'<',strlen($s_agent); 		
+	    //echo '>',$s_agent,'<',strlen($s_agent); 		
 		
 		$removed_agent = str_repeat('x',$current_size);
 		if ($s_agent==$removed_agent) {
@@ -468,7 +479,7 @@ class agentds extends network {
 		else {
 		  $s_agent = substr($this->agn_mem_store,$current_index,$current_size);
 		}
-	    echo '>',$s_agent,'<',strlen($s_agent); 		
+	    //echo '>',$s_agent,'<',strlen($s_agent); 		
 	    //$s_agent= substr($this->shared_buffer,$value,$current_size);
 		
 		$removed_agent = str_repeat('x',$current_size);
@@ -542,7 +553,7 @@ class agentds extends network {
    
    /////////////////////////////////////////////// HI-LEVEL AGENT HANDLERS
    
-   //reead file of agents to initialize
+   //read file of agents to initialize
    private function init_agents($ip,$port) {   
    
 	   $this->reservemem(4,'aek;');    
@@ -599,43 +610,60 @@ class agentds extends network {
    }  
    
    function create_agent($agent,$resident=null,$include_ip=null,$as_name=null) {
-      global $__DPC;   
-   
+      global $__DPC; 
+	  $class = strtoupper($agent).'_DPC';	  
+	  //echo $class;
+	  if (defined($class)) {
+		  echo $agent . " exists!\n";
+		  return false;
+	  }	  
+	  
+      //try {
       if (isset($include_ip))
 	    require("phpdac5://$include_ip:$this->phpdac_port" . "/agents/$agent" . '.dpc.php');    
 	  else 
 	    require("phpdac5://$this->phpdac_ip:$this->phpdac_port" . "/agents/$agent" . '.dpc.php');    
 	  
-	  $class = strtoupper($agent).'_DPC';	 
-	  //echo $class;
+	 
 	  if ((defined($class)) &&
 	      (class_exists($__DPC[$class])) ) {
 		  
-          $o_agent =  & new $__DPC[$class]($this);//this is the class as environment
+		  try {
+			$o_agent =  & new $__DPC[$class]($this);//this is the class as environment
 		  
-		  if (is_object($o_agent)) {
-		    $s_agent = serialize($o_agent); 
+			if (is_object($o_agent)) {
+				$s_agent = serialize($o_agent); 
 			
-			if (isset($as_name)) {
-		      $this->addmemagn($as_name,$s_agent);
-			  echo 'create agent ..',$agent," as $as_name\n";			
+				if (isset($as_name)) {
+					$this->addmemagn($as_name,$s_agent);
+					echo 'create agent:',$agent," as $as_name\n";			
+				}
+				else {
+					$this->addmemagn($agent,$s_agent);
+					echo 'create agent:',$agent,"\n";
+				}  
+				if ($resident=='RESIDENT') {
+					$this->agn_attr[$agent] = $resident;
+					echo "(resident)\n";
+				}
+				return true;
 			}
-			else {
-		      $this->addmemagn($agent,$s_agent);
-			  echo 'create agent ..',$agent,"\n";
-			}  
-			if ($resident=='RESIDENT') {
-			  $this->agn_attr[$agent] = $resident;
-			  echo "(resident)\n";
-			}
-		    return true;
-		  }
-		  else {
+		  /*else {
             echo 'loading agent ..',$agent,"..failed!\n";
 		    return false;		  
+		    }*/
+		  
 		  }
+		  catch (Exception $e) {
+			  echo "Agent ($agent) failed to initialize";
+		  }  
 	  }
-      echo 'failed agent ..',$agent,"\n";
+      //echo 'failed agent ..',$agent,"\n";
+	  
+	/*}
+	catch (Exception $e) {
+			  echo "Agent ($agent) failed to initialize";
+	 }*/	  
 	  return false;	 	   
    } 
    
@@ -665,7 +693,7 @@ class agentds extends network {
 		else {
 		  $s_agent = substr($this->agn_mem_store,$a_index,$a_size);		
 		}  
-	    echo '>',$s_agent,'<',strlen($s_agent); 
+	    //echo '>',$s_agent,'<',strlen($s_agent); 
 	  
 	    $o_agent = unserialize($s_agent);
 	  
@@ -701,7 +729,7 @@ class agentds extends network {
 	  
         $this->active_o_agent = null;
 		$this->active_agent = null;	
-		$daemon->changePrompt();	
+		$daemon->changePrompt($this->promptString);	
   	    $ret = "Ok!";					  
 	  }
 	  else
@@ -726,7 +754,7 @@ class agentds extends network {
 		else {
 		  $s_agent = substr($this->agn_mem_store,$a_index,$a_size);		
 		}		
-	    echo '>',$s_agent,'<',strlen($s_agent); 
+	    //echo '>',$s_agent,'<',strlen($s_agent); 
 	  
 	  /*  $o_agent = unserialize($s_agent);
         //seems to load the 1st agent in case of invalid agent name   
@@ -806,8 +834,8 @@ class agentds extends network {
    
       if (!is_array($this->agn_addr)) return -1;
 	  
-      var_dump($this->agn_addr);	  
-	  var_dump($this->agn_length);  
+      //var_dump($this->agn_addr);	  
+	  //var_dump($this->agn_length);  
    
       foreach ($this->agn_addr as $agn=>$addr) {
 	  
@@ -817,7 +845,7 @@ class agentds extends network {
 		else {
           $s_agent = substr($this->agn_mem_store,$addr,$this->agn_length[$agn]);  		
 		}  
-		echo $s_agent,"\n";
+		//echo $s_agent,"\n";
 		
 		$o_agent = unserialize($s_agent);	
 		
@@ -853,10 +881,10 @@ class agentds extends network {
    }  
    
 }
-
+/*
 //fire
 $argc = $GLOBALS['argc'];
 $argv = $GLOBALS['argv'];
 $k = new agentds($argv[2],'0.0.0.0',19125);
-
+*/
 ?>

@@ -5,7 +5,7 @@ define("SENAGN_DPC",true);
 $__DPC['SENAGN_DPC'] = 'senagn';
 
 //echo getcwd();
-require_once("adodb/adodb.ext.php"); ///local requirement .../bin directory
+require_once("phpdac5://localhost:19123/system/extensions/adodb/adodb.ext.php"); ///local requirement .../bin directory
 
 
 class senagn {
@@ -17,7 +17,7 @@ class senagn {
 	
 	  $this->env = $env; 
 	  $this->classname = get_class($this);
-	  
+	  /*
 	  $this->env->gtkds_conn->set_async_code("
 		   \$lbl = new GtkButton($this->classname);
 		   \$lbl->set_name($this->classname);	
@@ -26,7 +26,8 @@ class senagn {
 		   //\$window->add(\$lbl);
 		   \$this->agentbox->pack_start(\$lbl,false);
 		   \$window->show_all();
-	   ");			  
+	   ");	
+		*/
     }
 	
 	function sen_connect() {
@@ -183,12 +184,13 @@ class senagn {
 	}	
 	
 	function destroy() {
-	
+	/*
 		$this->env->gtkds_conn->set_async_code("
 		foreach (\$this->agentbox->children() as \$num=>\$child) {
 		   if (\$child->get_name()==$this->classname) \$this->agentbox->remove(\$child);
 		}	
-	    ");		
+	    ");	
+	*/		
 	}		
 	
 	function __destruct() {

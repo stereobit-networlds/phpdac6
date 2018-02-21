@@ -862,7 +862,7 @@ class BasicIPP
   }
   
   //$wstring = '>>>>>>>>>>>>>>>>>>>>'.$this->host.':'.$this->port.'>>>>>>>>>>>>>>>>>>>>>>';
-  $http->write2disk('ippclient.log',"\r\nREQUEST[".$this->host.':'.$this->port.']:'."\r\n");
+  $this->write2disk('ippclient.log',"\r\nREQUEST[".$this->host.':'.$this->port.']:'."\r\n");
   
   $url = "http://" . $this->host;
   if ($this->ssl) $url = "https://" . $this->host;

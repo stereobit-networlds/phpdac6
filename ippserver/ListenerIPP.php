@@ -89,7 +89,7 @@ class IPPlistener extends ServerIPP {
 	    spl_autoload_register(array($this, 'loader'));
 		//set_error_handler(array($this,'handleError'));		
 		
-        $this->ip = $_SERVER['SERVER_NAME'] . $_SERVER['SERVER_PORT']; //port 80
+        $this->ip = $_SERVER['SERVER_NAME'] .':'. $_SERVER['SERVER_PORT']; //port 80
         $this->printer_path_name = $_SERVER['PHP_SELF'];
         $this->printers_path = $_SERVER['DOCUMENT_ROOT'] .'/'.pathinfo($_SERVER['PHP_SELF'],PATHINFO_DIRNAME).'/';//'/printers/'; 		
        

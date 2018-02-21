@@ -4,15 +4,17 @@ define("ASKBILL_DPC",true);
 
 $__DPC['ASKBILL_DPC'] = 'askbill';
 
-require ("gengtk.gtk.php");
+require ("phpdac5://localhost:19123/askbill/gengtk.gtk.php");
 //$d = GetGlobal('controller')->require_dpc('askbill/gengtk.lib.php');
 //require_once($d); 
-require ("mbox.gtk.php");
+require ("askbill/mbox.gtk.php");
 //$e = GetGlobal('controller')->require_dpc('askbill/mbox.lib.php');
 //require_once($e); 
-require ("excel.lib.php");
+require ("askbill/excel.lib.php");
 //$z = GetGlobal('controller')->require_dpc('askbill/excel.lib.php');
 //require_once($z); 
+
+require_once("tcp/PrintIPP.lib.php");
 
 class askbill {  
    
@@ -49,6 +51,36 @@ class askbill {
 		  $this->action = $command[0]; 
   
           switch ($this->action) {
+			  
+		   case 'printipp' : 	 
+		   
+				if ($text = $command[1]) {						
+					$ipp = new PrintIPP();
+
+					//$ipp->setUnix();
+
+					$ipp->setHost($command[2] ? $command[2] : 'www.stereobit.gr');
+					$ipp->setPort($command[3] ? $command[3] : 80);
+
+					//$ipp->setPrinterUri("ipp://localhost:631/printers/Parallel_Port_1");
+					//$ipp->setPrinterUri("http://www.stereobit.gr/e-Enterprise.printer");
+					$ipp->setPrinterUri("e-Enterprise.printer");
+
+					$ipp->setData($text);
+					//$ipp->setUserName($user);
+
+					//$ipp->setCharset('utf-8');
+					//$ipp->setLanguage($language);
+
+					//$ipp->setAuthentication('vasalex21@gmail.com','basilvk7dp');
+
+					echo "printing job: ", $ipp->printJob(), "\n";
+					unset($ipp);
+				}
+				else
+					echo "No text specified.\n";
+			               break;
+						   
            case 'level'  : $ret = $this->userLevelID; break;
            case 'ver'    : $ret =  'shell script engine V0.01 on PHP'. phpversion(); break;
 		   case 'time'   : 
@@ -56,7 +88,9 @@ class askbill {
            case 'foo'    : $ret = 'bar'; break;	
 		   case 'quit'   :
 		   case 'exit'   :			
-           case 'q'      : $this->quit(); exit(); break;
+           case 'q'      : //$this->quit(); 
+							//exit(); break;
+							break(2);
 
 		   case 'mis'    : $ret = $this->exportCrystalReportToPDF($command[1],$command[2]); break;		   
 		   case 'explore': $ret = $this->iexplorer($command[1]); break;
@@ -64,7 +98,9 @@ class askbill {
 		   	   					   
 			   
            default       : //$ret = $this->exe_project($command[0]);
-		                   $ret = $this->search_excel($command[0]);
+		                   //$ret = $this->search_excel($command[0]);
+						   
+						   $ret = shell_exec($command[0]);
           }		
 		  
 		  if ($ret) echo $ret . "\n";  
