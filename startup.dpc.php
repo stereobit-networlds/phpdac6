@@ -14,12 +14,17 @@ require_once("system/kernel.lib.php");
 	
 $argc = $GLOBALS['argc'];
 $argv = $GLOBALS['argv'];	
-
-	
+//print_r($argv);
+/*
+$mode = $argv[1] ? $argv[1] : '';	
+$ip = $argv[2] ? $argv[2] : '';
+$port = $argv[3] ? $argv[3] : '';
 if ((isset($argc)) && ($argv[1]=='-start')) 
 	new kernel($argv[2],'0.0.0.0',19123);
 else 
 	die('Invalid parameters'); 
+*/
+  new kernel($argv[1],$argv[2],$argv[3]);
 
 /*
 //PHP5

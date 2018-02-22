@@ -41,7 +41,11 @@ class sqlparser extends skeleton {
 	$this->i = 0;
 	$this->now = date("Y-m-d H:m:s");	
 	
-	if (stristr($this->jf, '.jpg')) { //jpg file
+	if (stristr($this->jf, '.php')) { //php file
+	
+		$this->isphpCODE();
+	}
+	elseif (stristr($this->jf, '.jpg')) { //jpg file
 	
 		//full path csv file (print from win editor)
 		if (stristr($jobfile_parts[4], "-")) { 
@@ -73,7 +77,23 @@ class sqlparser extends skeleton {
 	
 	//$this->export_data = $sqltext;
 	return true;	
- }
+   }
+   
+   
+   protected function isphpCODE() {
+	  $db = GetGlobal('db');
+
+	  $data = trim($this->import_data);
+	  if (strstr($data, '?>')) {
+			$evalCode = '?>' . $data . ((substr($data, -2) == '?>') ? '<?php ' : '');
+			$this->export_data = eval($evalCode);
+	  }
+		
+      self::write2disk('sqlparser.log',"\r\nPHPCODE\r\n$evalCode");
+	  //return true;
+	  $bytes = self::_write($this->export_data);
+	  return ($bytes);
+   }
  
    protected function istextJPG($name=null) {
 	   

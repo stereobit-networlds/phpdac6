@@ -31,16 +31,23 @@ class kernel {
    var $extra_space;
    
    function kernel($dtype,$ip='127.0.0.1',$port='19123') {
-   
 	  $UserSecID = GetGlobal('UserSecID');
       $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);   
+	  $argc = $GLOBALS['argc'];
+      $argv = $GLOBALS['argv'];  
 	  
 	  $this->extra_space = 1000;
 	  
- 	  //REGISTER PHPRES (client side,resources) protocol...
-      //require_once("resstream.lib.php");			
-      require_once("agents/resstream.lib.php"); 
+      $dtype = $argv[1] ? $argv[1] : '';
+	  //if (($dtype == '-inetd') || ($dtype=='-standalone'))
+	  $this->daemon_type = str_replace("-","",$dtype);
+	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';//$ip;//'192.168.4.203';
+	  $this->daemon_port = $argv[3] ? $argv[3] : '19123';//$port;//19123;
+	  	  
+	  echo("Daemon repository at $this->daemon_ip:$this->daemon_port\n");
 	  
+ 	  //REGISTER PHPRES (client side,resources) protocol...			
+      require_once("agents/resstream.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpres5","c_resstream");
 	  if (!$phpdac_c) echo("Client resource protocol failed to registered!\n");
 		         else echo("Client resource protocol registered!\n"); 	  
@@ -73,12 +80,6 @@ class kernel {
 	  
 	  $this->use = null;
 	  $this->agent = 'SH';//default
-      
-	  if (($dtype == '-inetd') || ($dtype=='-standalone'))
-	    $this->daemon_type = str_replace("-","",$dtype);
-	  $this->daemon_ip = $ip;//'192.168.4.203';
-	  $this->daemon_port = $port;//19123;
-	  
 	  $this->usemem = 1;
 	  
 	  //called in schedules!!!!!

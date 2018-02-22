@@ -1,6 +1,6 @@
 <?php
 
-class agentds extends network {
+class agentds /*extends network*/ {
 
    var $daemon_ip;
    var $daemon_port;
@@ -22,12 +22,12 @@ class agentds extends network {
    var $agn_attr;
    
    //environment vars
-   var $env;
+   var $env, $promptString;
 
    var $active_agent,$active_o_agent; 
    var $resources,$timer,$scheduler;
    
-   var $gtkds_conn;//handle gtkds connection
+   var $gtk, $gtkds_conn;//handle gtkds connection
    var $window, $agentbox;   
 
    function agentds($dtype,$ip='127.0.0.1',$port='19125',$dacip='127.0.0.1',$dacport='19123') { 
@@ -43,43 +43,43 @@ class agentds extends network {
 	  
 	  $this->use = null;
 	  $this->agent = 'SH';//default
-      
-	  if (($dtype == '-inetd') || ($dtype=='-standalone'))
-	    $this->daemon_type = str_replace("-","",$dtype);
-	  $this->daemon_ip = $ip;//'192.168.4.203';
-	  $this->daemon_port = $port;//19123;
+
+	  $dtype = $argv[1] ? $argv[1] : ''; 
+	  //if (($dtype == '-inetd') || ($dtype=='-standalone'))
+	  $this->daemon_type = str_replace("-","",$dtype);
+	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';//$ip;//'192.168.4.203';
+	  $this->daemon_port = $argv[3] ? $argv[3] : '19125';//$port;//19123;
 	  
 	  //dac server
-	  if ((isset($argc)) && (isset($argv[1])))
+	  /*if ((isset($argc)) && (isset($argv[1])))
 	    $this->phpdac_ip = $argv[1];
-	  else	
-	    $this->phpdac_ip = $dacip;
+	  else*/	
+	    $this->phpdac_ip = $argv[5] ? $argv[5] : '127.0.0.1';//$dacip;
 		
-	  $this->phpdac_port = $dacport;
+	  $this->phpdac_port = $argv[6] ? $argv[6] : '19123';//$dacport;
 	  
-	  echo("Phpdac5 repository at $this->phpdac_ip\n"); 
+	  echo("Phpagn5 daemon at $this->daemon_ip:$this->daemon_port\n"); 
+	  echo("Phpdac5 repository at $this->phpdac_ip:$this->phpdac_port\n"); 
 	  //echo $this->phpdac_ip,'>>>>>';
-	  
+	    
  	  //REGISTER PHPDAC (client side)protocol...	MOVED TO TOP...  
-      //require_once("dacstreamc.lib.php");			
-	  //$phpdac_c = stream_wrapper_register("phpdac5","c_dacstream");
-	  //if (!$phpdac_c) echo("Client dac protocol failed to registered!\n");
-		//         else echo("Client dac protocol registered!\n"); 	
-				 
+      require_once("system/dacstreamc.lib.php");			
+	  $phpdac_c = stream_wrapper_register("phpdac5","c_dacstream");
+	  if (!$phpdac_c) die("Client dac protocol failed to registered!\n");
+		         else echo("Client dac protocol registered!\n"); 	
+				
  	  //REGISTER PHPAGN (client side,interconnections) protocol...
-      //require_once("agnstreamc.lib.php");			
-	  require_once("phpdac5://$this->phpdac_ip:$this->phpdac_port/agents/agnstreamc.lib.php"); 
-	  
+      //require_once("agents/agnstreamc.lib.php");			
+	  require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/agnstreamc.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpagn5","c_agnstream");
-	  if (!$phpdac_c) echo("Client agent protocol failed to registered!\n");
+	  if (!$phpdac_c) die("Client agent protocol failed to registered!\n");
 		         else echo("Client agent protocol registered!\n"); 	
 
  	  //REGISTER PHPRES (client side,resources) protocol...
-      //require_once("resstream.lib.php");			
-      require_once("phpdac5://$this->phpdac_ip:$this->phpdac_port/agents/resstream.lib.php"); 
-	  
+      //require_once("agents/resstream.lib.php");			
+      require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/resstream.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpres5","c_resstream");
-	  if (!$phpdac_c) echo("Client resource protocol failed to registered!\n");
+	  if (!$phpdac_c) die("Client resource protocol failed to registered!\n");
 		         else echo("Client resource protocol registered!\n"); 
 				 				 
 	  //INITIALIZE ENVIRONMENT
@@ -91,7 +91,9 @@ class agentds extends network {
 	  $this->env['homepath'] = $_SERVER['HOMEPATH'];	  
 	  $this->env['name'] = $_SERVER['COMPUTERNAME'];	
 	  $this->env['host'] = $_SERVER['REMOTE_ADDR'];  
-	  var_dump($this->env);				 			   
+	  //var_dump($this->env);	
+
+	  $this->promptString = 'phpagn5>';		  
 	  
 	  /* LOADED AS AGENTS...removed from agents.exe as libs include
 	  $this->timer = new timer;	
@@ -102,54 +104,59 @@ class agentds extends network {
 	  $this->resources = new resources(&$this);	  
 	  */
 	  
-	  //initialize GTk connector (for calling proc from this ($env) class ...purposes)
-      echo("GTK connector loaded!\n");	  
-	  $this->gtkds_conn = new gtkds_connector();
-	  
-	  
-      //////////////////////////////////// gtk win
-      if ($argv[3]==='-gtk') new gtkds($this,0);//connector init is off ..bellow loaded!
-      /////////////////////////////////////	  
-	  
-	  
 	  //INITIALIZE AGENTS
 	  $this->active_agent = null;
 	  $this->active_o_agent = null;	  
-	  //if ($this->exist_dpc_server('127.0.0.1','19123'))
-	    $this->init_agents($this->phpdac_ip,$this->phpdac_port);
-	  //else
-	    //echo "DAC Server not on-line\n";			
+	  $this->init_agents($this->phpdac_ip,$this->phpdac_port);
+			
 	  //print_r($this->get_agent('scheduler'));
 	  
+	  //(starting at scheduler construction)
       //register_tick_function(array($this->get_agent('scheduler'),"checkschedules"),true);	  
-	  register_tick_function(array(&$this,"tick_dummy"),true);
-	  //declare(ticks=2) {		  
-	  
+
 	  //initialize task from already loaded agents (BEWARE TO LOAD THE DEFAULT AGENTS)
-      $this->get_agent('scheduler')->schedule('env.show_connections','every','20');
-  	  
+      //$this->get_agent('scheduler')->schedule('env.show_connections','every','20'); 
+  
+  
+	  //initialize GTk connector (for calling proc from this ($env) class ...purposes)
+	  $this->gtk = ($argv[4]==='-gtk') ? true : false;
 	  
+	  if ($this->gtk) {
+		require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/gtklib.lib.php");  		
+		echo("GTK connector loaded!\n");	  
+		$this->gtkds_conn = new gtkds_connector();
+	  }
+	  
+	  
+      //////////////////////////////////// gtk win
+      if ($this->gtk) {
+		  require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/gtkds.lib.php");
+		  //new gtkds($this,0);//connector init is off ..bellow loaded!
+	  }	  
+      /////////////////////////////////////	  
+	    
+  
+      require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/daemon.lib.php");
 	  $this->startdaemon();  
-	  
-	  //}
 	  
    }
    
    function destroy() {
-	 Gtk::main_quit();
+	   if ($this->gtk) 
+			Gtk::main_quit();
    }   
-   
-   function tick_dummy() {
-   }
    
    function startdaemon() {
    
       $this->dmn = new daemon($this->daemon_type,true);//'standalone',false);
+	  //$this->dmn = new daemon('inetd',true);
+	  //$this->dmn = new daemon('standalone',true);
+	  //$this->dmn = new daemon('xyz',true);	  
       $this->dmn->setAddress ($this->daemon_ip);//'127.0.0.1');
       $this->dmn->setPort ($this->daemon_port);
       $this->dmn->Header = "PHPDAC5 Agent Server (v0.0.1a) at ". $this->env['name'];
 
-      $this->dmn->start ('phpagn5>');  //this routine creates a socket	
+      $this->dmn->start($this->promptString);  //this routine creates a socket	
 	  
       $this->dmn->setCommands (array ("help", "quit", "date", "shutdown","echo","silence",
 	                                  "ver", "callagent", "uncall", "callagentc", "call", "helo", "run", "net",
@@ -377,12 +384,13 @@ class agentds extends network {
 		        break;										
 				
 		case 'STARTGTK':
-		        $c = "Starting GTK Console...\r\n";
-				echo $c;
-		        //if ($argv[3]==='-gtk') 
-				new gtkds($this,0);
-				$dmn->Println($c);
-				return true;
+		        if ($this->gtk) {
+					echo "Starting GTK Console...\r\n";
+					new gtkds($this,0);
+					$dmn->Println($c);
+					return true;
+				}
+				
 		        break;					
         }		
    }  
@@ -398,7 +406,7 @@ class agentds extends network {
 		  if (method_exists($this->active_o_agent,$command))
 		    $ret = $this->active_o_agent->$command($arguments[0],$arguments[1],$arguments[2]);
 		  else
-		    $ret = "Invalid command.\n" . var_dump(get_class_methods($this->active_o_agent));  
+		    $ret = "Invalid command.\n\n" . implode("\n",get_class_methods($this->active_o_agent));  
 		  
 		  $dmn->Println ($ret); 
 		  return true;  
@@ -792,7 +800,14 @@ class agentds extends network {
    
    function create_agent($agent,$resident=null,$include_ip=null,$as_name=null,$type='dpc') {
       global $__DPC;   
-   
+   	  $class = strtoupper($agent).'_DPC';	  
+	  //echo $class;
+	  
+	  if (defined($class)) {
+		  echo $agent . " exists!\n";
+		  return false;
+	  }	  
+	  
       if (isset($include_ip))
 	    require("phpdac5://$include_ip:$this->phpdac_port" . "/agents/$agent" . '.'.$type.'.php');    
 	  else 
@@ -802,7 +817,8 @@ class agentds extends network {
 	  //echo $class;
 	  if ((defined($class)) &&
 	      (class_exists($__DPC[$class])) ) {
-		  
+		try {
+			  
           $o_agent = & new $__DPC[$class]($this);//this is the class as environment
 		  		  
 		  if (is_object($o_agent)) {
@@ -829,10 +845,14 @@ class agentds extends network {
 		  }
 		  else {
             echo 'loading agent ..',$agent,"..failed!\n";
-		    return false;		  
+		    //return false;		  
 		  }
+		}
+		catch (Exception $e) {
+		  echo "Agent ($agent) failed to initialize";
+		} 
 	  }
-      echo 'failed agent ..',$agent,"\n";
+      //echo 'failed agent ..',$agent,"\n";
 	  return false;	 	   
    } 
    
@@ -988,7 +1008,7 @@ class agentds extends network {
 	  
         $this->active_o_agent = null;
 		$this->active_agent = null;	
-		$daemon->changePrompt();	
+		$daemon->changePrompt($this->promptString);	
   	    $ret = "Ok!";					  
 	  }
 	  else
@@ -1095,12 +1115,13 @@ class agentds extends network {
    
    function free_agents() {
    
+      if ($this->gtk) {
 		$this->gtkds_conn->set_async_code("
 		foreach (\$this->agentbox->children() as \$num=>\$child) {
 		   \$this->agentbox->remove(\$child);
 		}	
 	    ");		      
-   
+	  } 
       $this->closememagn();
    }
    
@@ -1145,8 +1166,7 @@ class agentds extends network {
    function shutdown() {
    
 	  //unregister_tick_function($this->get_agent('scheduler'),'checkschedules');
-	  //unregister_tick_function(array(&$this,'tick_dummy'));
-	  
+
 	  //is agents now
 	  //unset($this->timer);
 	  //unset($this->scheduler);

@@ -1,13 +1,14 @@
 <?php
 
-require_once("agents/network.lib.php");
-require_once("agents/daemon.lib.php");
 require_once("agents/agentds.lib.php"); //2nd ver
-
 //fire
 $argc = $GLOBALS['argc'];
 $argv = $GLOBALS['argv'];
 $k = new agentds($argv[2],'0.0.0.0',19125);
+
+/*
+require_once("agents/network.lib.php");
+require_once("agents/daemon.lib.php");
 
 
 //require_once("system/sysdb.lib.php");
@@ -15,7 +16,7 @@ $k = new agentds($argv[2],'0.0.0.0',19125);
 //require_once("system/session.lib.php");
 //require_once("system/system.lib.php");
 
-class agentds_OLD extends network {
+class agentds extends network {
 
    var $daemon_ip;
    var $daemon_port;
@@ -54,7 +55,7 @@ class agentds_OLD extends network {
 	  
 	  $this->use = null;
 	  $this->agent = 'SH';//default
-      
+
 	  if (($dtype == '-inetd') || ($dtype=='-standalone'))
 	    $this->daemon_type = str_replace("-","",$dtype);
 	  $this->daemon_ip = $ip;//'192.168.4.203';
@@ -100,11 +101,6 @@ class agentds_OLD extends network {
 	  //else
 	    //echo "DAC Server not on-line\n";	
 		
-	  /*$time = new timer;	
-      register_tick_function(array(&$time,"showtime"),true);	
-	  $scheduler = new scheduler;		  
-      register_tick_function(array(&$scheduler,"checkschedules"),true);	  
-	  declare(ticks=1);			*/
 	  
 	  $this->startdaemon();
 	  
@@ -294,27 +290,7 @@ class agentds_OLD extends network {
 		}
    }   
    
-   //WARNING::after exec crash at connections
-  /* function exist_dpc_server($address,$port) {
-	  
-      $fp = @stream_socket_client("tcp://$address:$port", $errno, $errstr, 30);
-	  
-      if (!$fp) {
-	  
-        echo "$errstr ($errno)\n";
-        return false;
-      } 
-	  else {
-        $ret = fgets($fp,7);
-        echo $ret;
-        fclose($fp);
-		
-        if (stristr('phpdac5',$ret)) 
-		  return true;
-		else 
-		  return false; 
-      }   
-   } */ 
+
    
    ////////////////////////////////////////////////////////// LOW-LEVEL AGENTS HANDLERS
    ////////////////////////////////////////////////////////// called by HI-LEVEL HANDLERS
@@ -618,7 +594,6 @@ class agentds_OLD extends network {
 		  return false;
 	  }	  
 	  
-      //try {
       if (isset($include_ip))
 	    require("phpdac5://$include_ip:$this->phpdac_port" . "/agents/$agent" . '.dpc.php');    
 	  else 
@@ -648,10 +623,6 @@ class agentds_OLD extends network {
 				}
 				return true;
 			}
-		  /*else {
-            echo 'loading agent ..',$agent,"..failed!\n";
-		    return false;		  
-		    }*/
 		  
 		  }
 		  catch (Exception $e) {
@@ -659,11 +630,7 @@ class agentds_OLD extends network {
 		  }  
 	  }
       //echo 'failed agent ..',$agent,"\n";
-	  
-	/*}
-	catch (Exception $e) {
-			  echo "Agent ($agent) failed to initialize";
-	 }*/	  
+	  	  
 	  return false;	 	   
    } 
    
@@ -756,17 +723,6 @@ class agentds_OLD extends network {
 		}		
 	    //echo '>',$s_agent,'<',strlen($s_agent); 
 	  
-	  /*  $o_agent = unserialize($s_agent);
-        //seems to load the 1st agent in case of invalid agent name   
-	    if (is_object($o_agent)) {
-          //$daemon->changePrompt($agent.">");   
-          if (method_exists($o_agent,'iam')) 
-		    $ret = $o_agent->iam();
-		  else 
-		    $ret = "Ok!";
-	    }
-	    else
-	      $ret = "Invalid agent!";*/
 			
 	    //return ($ret);      
 	    //echo $ret;
@@ -794,11 +750,6 @@ class agentds_OLD extends network {
       $f_agent = file_get_contents("phpagn5://$from:19125/" . $agent);//call callagentc from $from
 	  $s_agent = substr($f_agent,68,strlen($f_agent)-68-1);//header of daemon OFF
       echo '>',$s_agent,'<';
-	  /*for ($i=0;$i<68;$i++) {
-	    echo ord($f_agent{$i}),'.';
-		$x .= $f_agent{$i};
-	  }	
-	  echo $x;*/
 	  
 	  if (isset($s_agent)) {
 	    //MUST BE INCLUDED TO UNSERIALZE OBJECTS
@@ -881,7 +832,7 @@ class agentds_OLD extends network {
    }  
    
 }
-/*
+
 //fire
 $argc = $GLOBALS['argc'];
 $argv = $GLOBALS['argv'];

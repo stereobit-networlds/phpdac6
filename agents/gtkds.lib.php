@@ -19,7 +19,7 @@ class gtkds {
 	 if ($env) $this->env = $env;
 
 	 //initialize GTk connector .. for inside this proc call and standalone purposes
-     echo("GTK connector loaded!\n");	  
+   /*  echo("GTK connector loaded!\n");	  
 	 $this->gtkds_conn = new gtkds_connector(); 
 	  
    
@@ -45,8 +45,53 @@ class gtkds {
 	 $this->there_is_code(); //first time code search
 	 
 	 
-     Gtk::timeout_add(1000, array(&$this,'there_is_code'));			 
+     //Gtk::timeout_add(1000, array(&$this,'there_is_code'));			 
+	 */
+	 //Gtk::main();
+	 /*while (Gtk::events_pending()) {
+         Gtk::main_iteration();//(false);
+     }*/
 	 
+	 /*
+		if (!@$GLOBALS['framework']) {
+			new WindowTest($env);
+			Gtk::main();
+		}	 
+	  */
+
+/**
+* In this part of the code, indenting matches the
+* widgets containment, not the code structure
+*/
+$win = new GtkWindow();
+  $vbox = new GtkVPaned();
+    $win->add($vbox);
+      $scrolled_win = new GtkScrolledWindow();
+      $scrolled_win->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+      $vbox->add1($scrolled_win);
+ 
+        $php_edit = new PhpEditWidget();
+        $php_edit->load_file(__FILE__);
+        $scrolled_win->add_with_viewport($php_edit);    // note 1
+
+      # test for a split-window like feature       // note 9
+      $scrolled_win = new GtkScrolledWindow();
+      $scrolled_win->set_policy(
+        Gtk::POLICY_AUTOMATIC,
+        Gtk::POLICY_AUTOMATIC);
+ 
+      $vbox->add2($scrolled_win);
+        $scrolled_win->add_with_viewport($php_edit->split());   // note 9
+
+$win->set_size_request(400, 600);
+$win->maximize();
+$win->set_position(Gtk::WIN_POS_CENTER);
+
+$win->show_all();
+$win->set_title("PhpEditWidget - demo");
+$win->connect_simple("destroy", array("Gtk", "main_quit"));
+	  Gtk::main();
+
    }
    
   function destroy() {
@@ -121,4 +166,103 @@ class gtkds {
 	 }
    }
 }
+
+class WindowTest extends GtkWindow
+{
+    function __construct($env=null)
+    {
+        parent::__construct();
+		require_once("phpdac5://{$env->phpdac_ip}:{$env->phpdac_port}/agents/WidgetEditor.lib.php");
+
+        $this->set_default_size(200,200);
+        $this->set_title('GtkWindow demo');
+        $this->connect_simple('destroy', array('gtk', 'main_quit'));
+        $this->add($this->__create_box());
+        $this->show_all();
+    }
+
+    function __create_box() 
+    {
+        $vbox = new GtkVBox();
+        $label = new GtkLabel('Window test');
+        $button = new GtkButton('Click the button!');
+
+        $vbox->pack_start($label);
+        $vbox->pack_start($button);
+
+        $editor = new WidgetEditor(
+            $this, 
+            array(
+                array('decorated'           , GtkToggleButton::gtype),
+//                array('has_frame'         , GtkToggleButton::gtype),//doesn't work after the window is realized
+                array('resizable'           , GtkToggleButton::gtype),
+                array('skip_pager_hint'     , GtkToggleButton::gtype),
+                array('skip_taskbar_hint'   , GtkToggleButton::gtype),
+                array('accept_focus'        , GtkToggleButton::gtype),
+                array('modal'               , GtkToggleButton::gtype),
+                array('keep_above'          , GtkToggleButton::gtype, 'on', 'off', false),
+                array('keep_below'          , GtkToggleButton::gtype, 'on', 'off', false),
+
+                array('iconify'             , GtkButton::gtype, 'deiconify'),
+                array('fullscreen'          , GtkButton::gtype, 'unfullscreen'),
+                array('maximize'            , GtkButton::gtype, 'unmaximize'),
+                array('stick'               , GtkButton::gtype, 'unstick'),
+
+                array('present'             , GtkButton::gtype),
+            )
+        );
+
+        return $vbox;
+    }
+}
+
+
+
+
+class PhpEditWidget extends GtkSourceView {  // Note 1
+  protected $buffer;                        // note 5
+  protected $lang;
+  protected $mime_lang;
+
+  function __construct() {
+    parent::__construct();  // note 2
+
+    # default lang
+    $this->mime_lang = 'text/x-php-source';    // note 3
+    $this->set_lang($this->mime_lang);        // note 3
+
+    $this->buffer = new GtkSourceBuffer();     // note 4, note 5
+    $this->set_buffer($this->buffer);              // note 4
+
+    $this->set_show_line_numbers(true);
+    $this->set_show_line_markers(true);
+
+    $this->buffer->set_language($this->lang);
+    $this->buffer->set_highlight(true);
+  }
+
+  protected function set_lang($mime_type) {      // note 3
+    $lang_manager = new GtkSourceLanguagesManager();
+    $this->lang = $lang_manager->get_language_from_mime_type($mime_type);
+  }
+
+  public function load_file($file) {    // note 6
+    if (!file_exists($file))
+      return false;
+
+    $lines = file_get_contents($file);
+
+    $this->buffer->begin_not_undoable_action();  // note 8
+    $this->buffer->set_text($lines);   // note 7
+    $this->buffer->end_not_undoable_action();   // note 8
+    return true;
+  }
+
+  function split() {                               // note 9
+    $edit = new PhpEditWidget();
+    $edit->set_buffer($this->get_buffer());
+    return $edit;
+  }
+} // end of class PhpEditWidget
+
 ?>

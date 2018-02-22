@@ -46,12 +46,13 @@ class scheduledtask {
 	  $this->value = 200; //ok
       $this->printer = $this->env->get_agent('resources')->get_resource('printer');   
 	  
-      printer_write($this->printer, date("l dS of F Y h:i:s A")."\n\r");  
+      //printer_write($this->printer, date("l dS of F Y h:i:s A")."\n\r");  
+	  echo date("l dS of F Y h:i:s A")."\n\r";  
 		
 	  //print_r($this->env->get_agent('resources')->_resptr);
 	  //print_r($this->env->get_agent('resources')->_resources);	  
-	  echo $this->printer;//lost?????????????????
-	  echo "\n",$this->x,"........................\n"; 
+	  //echo $this->printer;//lost?????????????????
+	  //echo "\n",$this->x,"........................\n"; 
 	  
 	  //$this->env->update_agent($this,'scheduleprint');	  	
 	  //$this->x =  $this->env->get_agent('resources')->get_resource('variable');			

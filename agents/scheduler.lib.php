@@ -17,7 +17,8 @@ class scheduler {
      $this->timeline = array();
 	 $this->env = $env;
 	 
-     register_tick_function(array(&$this,"checkschedules"),true);		 
+	 //no need (see schedule method)
+     //register_tick_function(array(&$this,"checkschedules"),true);		 
    }
    
 	function agents() {
