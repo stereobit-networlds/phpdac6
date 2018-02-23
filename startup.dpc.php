@@ -1,29 +1,20 @@
+#!/usr/bin/env php
 <?php
- 
-/*if ((isset($GLOBALS['argc'])) && ($GLOBALS['argv'][1]=='-?')) die("Helpme!!!");  
-if ((isset($GLOBALS['argc'])) && ($GLOBALS['argv'][1]=='-start')) {   
 
-	//print_r($GLOBALS['argv'])  ;
-	//server mode
-	$srv = new startup;
-	unset($srv);
+$argc = $GLOBALS['argc'];
+$argv = $GLOBALS['argv'];	
+//print_r($argv); 
+
+//error_reporting(E_ALL|E_STRICT);
+/*if (!isset($argv[1]))
+{
+  echo "usage: ",$argv[0], ' "file"|"string"',"\n";
+  exit(1);
 }*/
 
 require_once("system/system.lib.php");	
 require_once("system/kernel.lib.php");
-	
-$argc = $GLOBALS['argc'];
-$argv = $GLOBALS['argv'];	
-//print_r($argv);
-/*
-$mode = $argv[1] ? $argv[1] : '';	
-$ip = $argv[2] ? $argv[2] : '';
-$port = $argv[3] ? $argv[3] : '';
-if ((isset($argc)) && ($argv[1]=='-start')) 
-	new kernel($argv[2],'0.0.0.0',19123);
-else 
-	die('Invalid parameters'); 
-*/
+
   new kernel($argv[1],$argv[2],$argv[3]);
 
 /*

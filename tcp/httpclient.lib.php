@@ -15,7 +15,7 @@ define('HTTP_CLIENT_ERROR_CANNOT_ACCESS_LOCAL_FILE', 4);
 define('HTTP_CLIENT_ERROR_PROTOCOL_FAILURE',         5);
 define('HTTP_CLIENT_ERROR_INVALID_PARAMETERS',       6);
 
-class http_class
+class httpclient
 {
 	var $host_name="";
 	var $host_port=0;

@@ -27,7 +27,7 @@ class c_dacstream {
 		  return false;
 		}
         $dpcmem = substr($path,1);//exclude '/' from the begining of str
-		$request = "getdpcmemc " . $dpcmem . "\r\n\r\n";//client version of getdpcmem
+		$request = "getdpcmemc " . $dpcmem . "\r\n";//client version of getdpcmem
         fputs($socket, $request); 
         $ret = ''; 
         while (!feof($socket)) { 

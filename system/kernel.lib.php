@@ -97,7 +97,7 @@ class kernel {
       $this->dmn = new daemon($this->daemon_type,true);//,$this->printout);//'standalone',false);
       $this->dmn->setAddress ($this->daemon_ip);//'127.0.0.1');
       $this->dmn->setPort ($this->daemon_port);
-      $this->dmn->Header = "PHPDAC5 server (v0.0.1b)";
+      $this->dmn->Header = "PHPDAC5 Kernel v2, " . $this->daemon_ip . ':' . $this->daemon_port;
 
       $this->dmn->start ();  //this routine creates a socket	
 	  

@@ -63,6 +63,7 @@ class scheduler {
 	 //echo time(),"\n"; 	 
 	 
 	 $new_timeline = array();
+	 $error = null;
 	 
 	 foreach ($this->timeline as $inittime=>$entry) {
 	   

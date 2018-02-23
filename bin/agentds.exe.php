@@ -1,10 +1,19 @@
+#!/usr/bin/env php
 <?php
 
-require_once("agents/agentds.lib.php"); //2nd ver
-//fire
 $argc = $GLOBALS['argc'];
-$argv = $GLOBALS['argv'];
-$k = new agentds($argv[2],'0.0.0.0',19125);
+$argv = $GLOBALS['argv'];	
+//print_r($argv); 
+
+//error_reporting(E_ALL|E_STRICT);
+/*if (!isset($argv[1]))
+{
+  echo "usage: ",$argv[0], ' "file"|"string"',"\n";
+  exit(1);
+}*/
+require_once("agents/agentds.lib.php"); //2nd ver
+
+  new agentds($argv[2],'0.0.0.0',19125);
 
 /*
 require_once("agents/network.lib.php");

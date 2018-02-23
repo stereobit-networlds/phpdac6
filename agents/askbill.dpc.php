@@ -14,7 +14,6 @@ require ("askbill/excel.lib.php");
 //$z = GetGlobal('controller')->require_dpc('askbill/excel.lib.php');
 //require_once($z); 
 
-require_once("tcp/PrintIPP.lib.php");
 
 class askbill {  
    
@@ -52,8 +51,135 @@ class askbill {
   
           switch ($this->action) {
 			  
+		   case 'http' :
+		        require_once("tcp/sasl.lib.php");
+				require_once("tcp/httpclient.lib.php");
+				//set_time_limit(0);
+				$http=new httpclient;
+				$http->timeout=0;
+				$http->data_timeout=0;
+				$http->debug=1;
+				$http->html_debug=1;				
+				$http->user_agent="Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)";
+				$http->follow_redirect=0;
+				$http->prefer_curl=0;
+				$user="info@e-basis.gr";
+				$password="basis2012!@";
+				$realm="";       /* Authentication realm or domain      */
+				$workstation=""; /* Workstation for NTLM authentication */
+				$authentication=(strlen($user) ? UrlEncode($user).":".UrlEncode($password)."@" : "");
+				
+				$url="http://".$authentication.$command[1];//"www.php.net/";
+				
+				$error=$http->GetRequestArguments($url,$arguments);
+
+				if(strlen($realm))
+					$arguments["AuthRealm"]=$realm;
+
+				if(strlen($workstation))
+					$arguments["AuthWorkstation"]=$workstation;
+
+				$http->authentication_mechanism=""; // force a given authentication mechanism;
+				$arguments["Headers"]["Pragma"]="nocache";
+				
+				echo "<LI><H2>Opening connection to:</H2>\n<P><TT>",HtmlSpecialChars($arguments["HostName"]),"</TT></P>\n";
+				flush();
+				$error=$http->Open($arguments);
+				
+	if($error=="")
+	{
+		echo "<LI><H2>Sending request for page:</H2>\n<P><TT>";
+		echo HtmlSpecialChars($arguments["RequestURI"]),"\n";
+		if(strlen($user))
+			echo "\nLogin:    ",$user,"\nPassword: ",str_repeat("*",strlen($password));
+		echo "</TT></P>\n";
+		flush();
+		$error=$http->SendRequest($arguments);
+		echo "</LI>\n";
+
+		if($error=="")
+		{
+			echo "<LI><H2>Request:</H2>\n<PRE>\n".HtmlSpecialChars($http->request)."</PRE></LI>\n";
+			echo "<LI><H2>Request headers:</H2>\n<PRE>\n";
+			for(Reset($http->request_headers),$header=0;$header<count($http->request_headers);Next($http->request_headers),$header++)
+			{
+				$header_name=Key($http->request_headers);
+				if(GetType($http->request_headers[$header_name])=="array")
+				{
+					for($header_value=0;$header_value<count($http->request_headers[$header_name]);$header_value++)
+						echo $header_name.": ".$http->request_headers[$header_name][$header_value],"\r\n";
+				}
+				else
+					echo $header_name.": ".$http->request_headers[$header_name],"\r\n";
+			}
+			echo "</PRE>\n";
+			flush();
+
+			$headers=array();
+			$error=$http->ReadReplyHeaders($headers);
+			echo "</LI>\n";
+			if($error=="")
+			{
+				echo "<LI><H2>Response status code:</H2>\n<P>".$http->response_status;
+				switch($http->response_status)
+				{
+					case "301":
+					case "302":
+					case "303":
+					case "307":
+						echo " (redirect to <TT>".$headers["location"]."</TT>)<BR>\nSet the <TT>follow_redirect</TT> variable to handle redirect responses automatically.";
+						break;
+				}
+				echo "</P></LI>\n";
+				echo "<LI><H2>Response headers:</H2>\n<PRE>\n";
+				for(Reset($headers),$header=0;$header<count($headers);Next($headers),$header++)
+				{
+					$header_name=Key($headers);
+					if(GetType($headers[$header_name])=="array")
+					{
+						for($header_value=0;$header_value<count($headers[$header_name]);$header_value++)
+							echo $header_name.": ".$headers[$header_name][$header_value],"\r\n";
+					}
+					else
+						echo $header_name.": ".$headers[$header_name],"\r\n";
+				}
+				echo "</PRE></LI>\n";
+				flush();
+
+				echo "<LI><H2>Response body:</H2>\n<PRE>\n";
+
+				/*
+					You can read the whole reply body at once or
+					block by block to not exceed PHP memory limits.
+				*/
+
+				/*
+				$error = $http->ReadWholeReplyBody($body);
+				if(strlen($error) == 0)
+					echo HtmlSpecialChars($body);
+				*/
+
+				for(;;)
+				{
+					$error=$http->ReadReplyBody($body,1000);
+					if($error!=""
+					|| strlen($body)==0)
+						break;
+					echo HtmlSpecialChars($body);
+				}
+
+				echo "</PRE></LI>\n";
+				flush();
+			}
+		}
+		$http->Close();
+	}
+	if(strlen($error))
+		echo "<H2 align=\"center\">Error: ",$error,"</H2>\n";				
+                break;		   
+			  
 		   case 'printipp' : 	 
-		   
+		        require_once("tcp/PrintIPP.lib.php");
 				if ($text = $command[1]) {						
 					$ipp = new PrintIPP();
 
