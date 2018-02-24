@@ -27,7 +27,7 @@ class scheduledtask {
 	  //agent now
 	  $sh = $this->env->get_agent('scheduler');
 	  $sh->schedule('scheduledtask.scheduleprint','every','10');
-				  
+	  //$sh->schedule('batch/askbill.bat','every','25'); 			  
 	  $this->env->update_agent($sh,'scheduler');
 	  
 	  //print_r($this->env->get_agent('scheduler')->timeline); 	  

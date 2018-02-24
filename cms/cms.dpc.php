@@ -40,6 +40,7 @@ class cms extends fronthtmlpage {
 	var $user, $seclevid, $userDemoIds, $useragent, $mobile;
 	var $session_use_cookie, $protocol, $secprotocol, $sslpath;
 	var $activeSSL, $encURLparam, $shellfn, $aliasExt, $aliasID, $aliasUrl;
+	var $cmsSdkLoc;
 		
 	public function __construct() {
 		$UserName = GetGlobal('UserName');		
@@ -71,6 +72,7 @@ class cms extends fronthtmlpage {
 		$this->activeSSL = paramload('SHELL','ssl');
         $this->encURLparam = paramload('SHELL','encodeurl');
 		$this->shellfn = paramload('SHELL','filename');
+		$this->cmsSdkLoc = ($this->lan==1) ? 'el_GR' : 'en_US';
 
 		$this->loadVariables();
 		

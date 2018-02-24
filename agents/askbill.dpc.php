@@ -38,16 +38,27 @@ class askbill {
       //define ('STDIN',fopen("php://stdin","r"));
    }  
 
-   function render() {      	   
-		  
-       while (!0) {
+   function render($arg1=null,$arg2=null,$arg3=false) {      	   
+	   $executed = false;
+
+	   while (!0) { 
 
           echo $this->proj."ASKBILL $>"; 
 
 		  //$this->action = trim(fgets(STDIN,256)); //echo $action;
-		  
-		  $command = explode(" ",trim(fgets(STDIN,256)));
-		  $this->action = $command[0]; 
+		  if (($arg1) && (!$executed)) {
+			  //echo $cmd . "----\n";
+			  $command = array($arg1,$arg2,$arg3); 
+			  //print_r($command);
+			  $this->action = $arg1; //$command[0];
+			  $executed = true;
+		  }
+		  else {//echo $i++ , $arg1 , $arg3, $executed;
+		      if ($arg3) break; //exit code for arg3
+			  
+              $command = explode(" ",trim(fgets(STDIN,256)));
+			  $this->action = $command[0]; 
+		  }
   
           switch ($this->action) {
 			  
@@ -82,25 +93,25 @@ class askbill {
 				$http->authentication_mechanism=""; // force a given authentication mechanism;
 				$arguments["Headers"]["Pragma"]="nocache";
 				
-				echo "<LI><H2>Opening connection to:</H2>\n<P><TT>",HtmlSpecialChars($arguments["HostName"]),"</TT></P>\n";
+				echo "Opening connection to:\n",HtmlSpecialChars($arguments["HostName"]),"\n";
 				flush();
 				$error=$http->Open($arguments);
 				
 	if($error=="")
 	{
-		echo "<LI><H2>Sending request for page:</H2>\n<P><TT>";
+		echo "Sending request for page:\n";
 		echo HtmlSpecialChars($arguments["RequestURI"]),"\n";
 		if(strlen($user))
 			echo "\nLogin:    ",$user,"\nPassword: ",str_repeat("*",strlen($password));
-		echo "</TT></P>\n";
+		echo "\n";
 		flush();
 		$error=$http->SendRequest($arguments);
-		echo "</LI>\n";
+		echo "\n";
 
 		if($error=="")
 		{
-			echo "<LI><H2>Request:</H2>\n<PRE>\n".HtmlSpecialChars($http->request)."</PRE></LI>\n";
-			echo "<LI><H2>Request headers:</H2>\n<PRE>\n";
+			echo "Request:\n\n".HtmlSpecialChars($http->request)."\n";
+			echo "Request headers:\n\n";
 			for(Reset($http->request_headers),$header=0;$header<count($http->request_headers);Next($http->request_headers),$header++)
 			{
 				$header_name=Key($http->request_headers);
@@ -112,26 +123,26 @@ class askbill {
 				else
 					echo $header_name.": ".$http->request_headers[$header_name],"\r\n";
 			}
-			echo "</PRE>\n";
+			echo "\n";
 			flush();
 
 			$headers=array();
 			$error=$http->ReadReplyHeaders($headers);
-			echo "</LI>\n";
+			echo "\n";
 			if($error=="")
 			{
-				echo "<LI><H2>Response status code:</H2>\n<P>".$http->response_status;
+				echo "Response status code:\n".$http->response_status;
 				switch($http->response_status)
 				{
 					case "301":
 					case "302":
 					case "303":
 					case "307":
-						echo " (redirect to <TT>".$headers["location"]."</TT>)<BR>\nSet the <TT>follow_redirect</TT> variable to handle redirect responses automatically.";
+						echo " (redirect to ".$headers["location"].")\nSet the follow_redirect variable to handle redirect responses automatically.";
 						break;
 				}
-				echo "</P></LI>\n";
-				echo "<LI><H2>Response headers:</H2>\n<PRE>\n";
+				echo "\n";
+				echo "Response headers:\n\n";
 				for(Reset($headers),$header=0;$header<count($headers);Next($headers),$header++)
 				{
 					$header_name=Key($headers);
@@ -143,16 +154,13 @@ class askbill {
 					else
 						echo $header_name.": ".$headers[$header_name],"\r\n";
 				}
-				echo "</PRE></LI>\n";
+				echo "\n";
 				flush();
 
-				echo "<LI><H2>Response body:</H2>\n<PRE>\n";
-
-				/*
-					You can read the whole reply body at once or
-					block by block to not exceed PHP memory limits.
+				echo "Response body:\n\n";
+				/*You can read the whole reply body at once or
+				block by block to not exceed PHP memory limits.
 				*/
-
 				/*
 				$error = $http->ReadWholeReplyBody($body);
 				if(strlen($error) == 0)
@@ -165,18 +173,20 @@ class askbill {
 					if($error!=""
 					|| strlen($body)==0)
 						break;
-					echo HtmlSpecialChars($body);
+					echo $body;//HtmlSpecialChars($body);
 				}
 
-				echo "</PRE></LI>\n";
+				echo "\n";
 				flush();
 			}
 		}
 		$http->Close();
 	}
 	if(strlen($error))
-		echo "<H2 align=\"center\">Error: ",$error,"</H2>\n";				
-                break;		   
+		echo "Error: ",$error,"\n";				
+                break;	
+
+				
 			  
 		   case 'printipp' : 	 
 		        require_once("tcp/PrintIPP.lib.php");
@@ -185,20 +195,20 @@ class askbill {
 
 					//$ipp->setUnix();
 
-					$ipp->setHost($command[2] ? $command[2] : 'www.stereobit.gr');
+					$ipp->setHost($command[2] ? $command[2] : 'www.e-basis.gr');
 					$ipp->setPort($command[3] ? $command[3] : 80);
 
 					//$ipp->setPrinterUri("ipp://localhost:631/printers/Parallel_Port_1");
 					//$ipp->setPrinterUri("http://www.stereobit.gr/e-Enterprise.printer");
-					$ipp->setPrinterUri("e-Enterprise.printer");
+					$ipp->setPrinterUri("http://www.e-basis.gr/e-Enterprise.printer");
 
 					$ipp->setData($text);
-					//$ipp->setUserName($user);
+					//$ipp->setUserName('info@e-basis.gr');
 
 					//$ipp->setCharset('utf-8');
 					//$ipp->setLanguage($language);
 
-					//$ipp->setAuthentication('vasalex21@gmail.com','basilvk7dp');
+					//$ipp->setAuthentication('info@e-basis.gr','basis2012!@');
 
 					echo "printing job: ", $ipp->printJob(), "\n";
 					unset($ipp);
@@ -230,7 +240,7 @@ class askbill {
           }		
 		  
 		  if ($ret) echo $ret . "\n";  
-       }   
+       }
    } 
    
    function quit() {

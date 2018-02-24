@@ -53,7 +53,8 @@ class scheduler {
 	 
 	 $this->env->update_agent($this,'scheduler');
 	 
-     register_tick_function(array($this,"checkschedules"),true);	 	 
+	 unregister_tick_function(array(&$this,"checkschedules"));
+     register_tick_function(array(&$this,"checkschedules"),true);	 	 
    }
    
    public function checkschedules() {
@@ -120,31 +121,36 @@ class scheduler {
 		  
 	      //$this->env->update_agent($this,'scheduler');		  
 	   
-	      if ($entry['freq']==0)//once
-	        return 0;
-	      else 
-	        return ($entry);//new array element  	   
+	      return ($entry['freq']==0) ? 0 : $entry;//once or new array element 	   
 	   }
 	   else {
 	     //in case of 'env' execute from env'
 		 if (($agent=='env') && (method_exists($this->env,$cmd))) {
-		   
-		   $ret = $this->env->$cmd(); 
-		   $this->env->dmn->Println ($ret);
-		   
-	       $entry['lasttime'] = $now;
-		   $entry['counter'] = $entry['counter']+1;
+
+			$ret = $this->env->$cmd(); 
+			$this->env->dmn->Println ($ret);
+
+			$entry['lasttime'] = $now;
+			$entry['counter'] = $entry['counter']+1;
 		  
-	       //$this->env->update_agent($this,'scheduler');		  
+			//$this->env->update_agent($this,'scheduler');		  
 	   
-	       if ($entry['freq']==0)//once
-	         return 0;
-	       else 
-	         return ($entry);//new array element  			   
+			return ($entry['freq']==0) ? 0 : $entry;//once or new array element 			   
 		 }
-		 else
+		 else {
+			 //dmn dispatch, batch files, commands, etc
+			 $this->env->dmn->dispatch(str_replace('/',' ',$entry['agent']),null); 
+
+			 $entry['lasttime'] = $now;
+			 $entry['counter'] = $entry['counter']+1;
+		  
+			 //$this->env->update_agent($this,'scheduler');		  
+	   
+			 return ($entry['freq']==0) ? 0 : $entry;//once or new array element			 
+		 }
+		 /*else
 	       //echo "ERROR";
-	       return -1;//not an objet error...
+	       return -1;//not an objet error...*/
 	   }	           
      }
 	 else

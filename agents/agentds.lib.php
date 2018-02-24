@@ -183,8 +183,8 @@ class agentds /*extends network*/ {
 									  "create", "destroy", "show", "move", "accept", "print",  
 									  "getresource", "getresourcec", "showresources", 
 									  "findresource", "findresourcec", "setresource", "delresource",
-									  "checkschedules", "showschedules", "who", "startgtk",
-									  "***"));
+									  "checkschedules", "showschedules", "setschedule",
+									  "who", "startgtk", "system", "batch", "***"));
       //list of valid commands that must be accepted by the server	
 	  
       $this->dmn->CommandAction ("help", array($this,"command_handler")); //add callback
@@ -219,13 +219,18 @@ class agentds /*extends network*/ {
       $this->dmn->CommandAction ("delresource", array($this,"command_handler"));		  
       $this->dmn->CommandAction ("checkschedules", array($this,"command_handler"));	
       $this->dmn->CommandAction ("showschedules", array($this,"command_handler"));
+	  $this->dmn->CommandAction ("setschedule", array($this,"command_handler"));
       $this->dmn->CommandAction ("who", array($this,"command_handler"));
       $this->dmn->CommandAction ("startgtk", array($this,"command_handler"));	  
-	  	  	  	  	  	  	  	  
+	  $this->dmn->CommandAction ("system", array($this,"command_handler"));
+	  $this->dmn->CommandAction ("batch", array($this,"command_handler"));
+	  
 	  $this->dmn->CommandAction ("***", array(&$this,"agent_handler"));//handle everyting else...	  
 	  
+	  //now scheduler job
 	  //$this->dmn->RegisterAction(array(&$this,'timer'));
 	  
+	  $this->exebatchfile($this->dmn);//init batch
       $this->dmn->listen(1); 	    	       
    }
    
@@ -395,7 +400,16 @@ class agentds /*extends network*/ {
 		        $s = $this->get_agent('scheduler')->showschedules();
 				$dmn->Println ($s);
                 return true;
-                break;	
+                break;
+
+		case 'SETSCHEDULE' :
+		        $sh = $this->get_agent('scheduler');
+				$entry = (array)$sh->schedule($arguments[0],$arguments[1],$arguments[2]);				
+				$this->update_agent($sh,'scheduler');
+				
+				$dmn->Println(implode(' ',$entry));
+				return true;
+		        break;
 				
 		case 'WHO':
 		        $sessions = $this->show_connections(1,$arguments[0]);//$dmn->show_connections();
@@ -411,9 +425,39 @@ class agentds /*extends network*/ {
 					return true;
 				}
 				
-		        break;					
+		        break;	
+
+		case 'SYSTEM': 
+				$ret = shell_exec($arguments[0]);	
+				$dmn->Println ($ret);
+				return true;
+				break;
+
+		case 'BATCH': 
+				$this->exebatchfile($dmn,$arguments[0]);
+				return true;
+				break;
         }		
    }  
+   
+   function exebatchfile(&$dmn,$file=null) {
+		$batchfile = getcwd() . '/' . ($file ? $file : 'init.ash');
+		if ($f = @file($batchfile)) {
+		    foreach ($f as $command_line) {
+				if (!empty ($command_line)) {
+					 //echo $command_line . "---\n";
+                     $dmn->dispatch($command_line,null);
+                }
+		    }
+			if (!$file) //init
+				$dmn->Println (@file_get_contents($batchfile));
+			return true;	
+		}
+		else 
+			$dmn->Println ($batchfile . " not found.");
+	
+		return false;
+   }
    
    //agent command dispatcher (all *** commands)
    function agent_handler($command, $arguments, $dmn) {

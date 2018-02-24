@@ -43,14 +43,15 @@
 
     // {{{ required and included files
             
-            require_once("ippserver/BasicIPP.php");
+    require_once("tcp/BasicIPP.lib.php");
+	//require_once("ippserver/BasicIPP.php");
             
     // }}}
-
+/* DISABLED : implemented at agentds.lib
 function _($text) {
     return $text;
 }
-
+*/
 class PrintIPP extends BasicIPP {
 
     // {{{ constructor

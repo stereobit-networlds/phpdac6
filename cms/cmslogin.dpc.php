@@ -327,7 +327,7 @@ class cmslogin {
 		  $fbRedir
         };	
 		
-		(function(d, s, id){
+		/*MOVED TO PAGE (function(d, s, id){
 			var js, fjs = d.getElementsByTagName(s)[0];
 			if (d.getElementById(id)) {return;}
 			js = d.createElement(s); js.id = id;
@@ -335,7 +335,7 @@ class cmslogin {
 			fjs.parentNode.insertBefore(js, fjs);
 		}(document, 'script', 'facebook-jssdk'));
 
-		/*function testAPI() {
+		function testAPI() {
 			console.log('Welcome!  Fetching your information.... ');
 			FB.api('/me?fields=id,email,name', function(response) {
 				console.log('Successful login for: ' + response.email);
