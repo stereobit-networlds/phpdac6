@@ -28,7 +28,7 @@
 define ("VERBOSE", true);
 define ("VERBOSE_LEVEL", 2);//5
 define ("DAEMON_BUFFER", 1024);
-define ("MAX_CONNECTIONS", 4);
+define ("MAX_CONNECTIONS", 4);//4
 define ("SILENCE",1);//0
 
 /* can be set to 'standalone' for listening on specified port. When run
@@ -745,14 +745,19 @@ declare(ticks=10) {
 		  //print_r($this->cpool);
 		  //echo "</pre>";
 		  if (is_array($this->cpool)) {
-            foreach ($this->cpool as $conn) {
-		      if (is_array($conn->session))	
-			    $sessions[] = $conn->session;
+            foreach ($this->cpool as $i=>$conn) {
+		      if (is_array($conn->session)) {	
+			    //$sessions[] = $conn->session;
+				if ($i==0)
+					echo implode("\t",array_keys($conn->session)) . "\n";
+			    echo implode("\t",$conn->session) . "\n";
+			  }	
 		    }	
-		  
-            echo "<pre>";
-		    print_r($sessions);
-		    echo "</pre>";
+		    
+            //echo "<pre>";
+		    //print_r($sessions);
+		    //echo "</pre>";
+			
 		  }		  	  
 		  
 		  return ($sessions);

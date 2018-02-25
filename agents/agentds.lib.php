@@ -9,7 +9,7 @@
 		//echo null;
    }
    
-class agentds /*extends network*/ {
+class agentds {
 
    var $daemon_ip;
    var $daemon_port;
@@ -38,7 +38,7 @@ class agentds /*extends network*/ {
    
    var $gtk, $gtkds_conn;//handle gtkds connection
    var $window, $agentbox;  
-   var $echoLevel, $ldscheme;	
+   var $echoLevel, $ldscheme, $argbatch;	
 
    function agentds($dtype,$ip='127.0.0.1',$port='19125',$dacip='127.0.0.1',$dacport='19123') { 
 	  $argc = $GLOBALS['argc'];
@@ -54,8 +54,11 @@ class agentds /*extends network*/ {
 	  $this->use = null;
 	  $this->agent = 'SH';//default
 
-	  $dtype = $argv[1] ? $argv[1] : ''; 
-	  $this->daemon_type = str_replace("-","",$dtype);
+	  //argv1 is daemon type -param or batchfile .ash
+	  $this->argbatch = (substr($argv[1],0,1)!='-') ? $argv[1].'.ash' : '';
+	  //$dtype = $argv[1] ? substr($argv[1],1) : ''; 
+	  $this->daemon_type = (substr($argv[1],0,1)=='-') ? substr($argv[1],1) : ''; //$dtype
+	  
 	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';//$ip;//'192.168.4.203';
 	  $this->daemon_port = $argv[3] ? $argv[3] : '19125';//$port;//19123;
 	  _("Phpagn5 client at $this->daemon_ip:$this->daemon_port");	  
@@ -67,6 +70,7 @@ class agentds /*extends network*/ {
 	    
  	  //REGISTER PHPDAC (client side)protocol.  
       require_once("system/dacstreamc.lib.php");			
+	  //require_once($this->ldscheme . "/system/dacstreamc.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpdac5","c_dacstream");
 	  if (!$phpdac_c) {
 		  _("Client dac protocol failed to registered!");
@@ -219,8 +223,10 @@ class agentds /*extends network*/ {
 	  
 	  //now scheduler job
 	  //$this->dmn->RegisterAction(array(&$this,'timer'));
-	  
-	  $this->exebatchfile($this->dmn);//init batch
+	   
+	  //init batch
+	  $this->exebatchfile($this->dmn, $this->argbatch, true);
+	  //daemon listen
       $this->dmn->listen(1); 	    	       
    }
    
@@ -430,22 +436,26 @@ class agentds /*extends network*/ {
         }		
    }  
    
-   function exebatchfile(&$dmn,$file=null) {
-		$batchfile = getcwd() . '/' . ($file ? $file : 'init.ash');
-		if ($f = @file($batchfile)) {
+   function exebatchfile(&$dmn,$file=null,$w=false) {
+	    if ((!$file) || ($file=='.ash')) //empty argbatch 
+			$file = 'init.ash';
+		
+		$batchfile = getcwd() . '/' . $file;
+		if ($w)
+			_('Init batch file: ' . $batchfile); 
+		
+		if ((is_readable($batchfile)) && ($f = @file($batchfile))) {
 		    foreach ($f as $command_line) {
 				if (!empty ($command_line)) {
 					 //echo $command_line . "---\n";
                      $dmn->dispatch($command_line,null);
                 }
 		    }
-			if (!$file) //init
-				$dmn->Println (@file_get_contents($batchfile));
+			//if (!$file) //init
+				_(@file_get_contents($batchfile));
 			return true;	
 		}
-		else 
-			$dmn->Println ($batchfile . " not found.");
-	
+		 
 		return false;
    }
    
@@ -796,7 +806,7 @@ class agentds /*extends network*/ {
    private function init_agents($ip,$port) {   
    
 	   $this->openmemagn('aek;');    
-       _('Ini file: ' . getcwd() . "/agentds.ini"); 
+       _('Init agents file: ' . getcwd() . "/agentds.ini"); 
        if (!is_file(getcwd() ."/agentds.ini")) return -1;   
 		  
        $code = @file_get_contents(getcwd() . "/agentds.ini");

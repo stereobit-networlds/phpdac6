@@ -249,7 +249,7 @@ class askbill {
    function quit() {
    
        fclose(STDIN);
-	   die('Bye');
+	   die("\nAskbill died!\n");
    }
    
    function use_project($path,$proj) {   
