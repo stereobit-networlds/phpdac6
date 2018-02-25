@@ -22,11 +22,13 @@ class askbill {
    var $proj;
 
 
-   function askbill() {	
+   function askbill($env=null) {	
       global $argv; 
 	  
 	  $this->proj = null;  
 	  $this->path = null;
+	  
+	  $this->env = $env;
 	  
     /*  if (!class_exists('gtk')) {	  
       if (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN') 
@@ -63,10 +65,10 @@ class askbill {
           switch ($this->action) {
 			  
 		   case 'http' :
-		        require_once("tcp/sasl.lib.php");
-				require_once("tcp/httpclient.lib.php");
-				//set_time_limit(0);
-				$http=new httpclient;
+				//require_once($this->env->ldscheme . "/tcp/saslclient.lib.php");
+				//require_once($this->env->ldscheme . "/tcp/httpclient.lib.php");
+				//include at agents.ini
+				$http=new httpclient($this->env);
 				$http->timeout=0;
 				$http->data_timeout=0;
 				$http->debug=1;
@@ -183,13 +185,15 @@ class askbill {
 		$http->Close();
 	}
 	if(strlen($error))
-		echo "Error: ",$error,"\n";				
+		echo "Error: ",$error,"\n";
+                //MEM ALLOC ERROR (intime)
+				//$this->env->get_agent('resources')->set_resource('httpvar',$body);
                 break;	
 
 				
 			  
 		   case 'printipp' : 	 
-		        require_once("tcp/PrintIPP.lib.php");
+		        require_once($this->env->ldscheme . "/tcp/PrintIPP.lib.php");
 				if ($text = $command[1]) {						
 					$ipp = new PrintIPP();
 
@@ -222,9 +226,8 @@ class askbill {
 		   case 'time'   : 
            case 'date'   : $ret = date("d-M-Y H:i:s", time()); break;
            case 'foo'    : $ret = 'bar'; break;	
-		   case 'quit'   :
-		   case 'exit'   :			
-           case 'q'      : //$this->quit(); 
+           case 'q'      : $this->quit();		   
+		   case 'quit'   :			 
 							//exit(); break;
 							break(2);
 
@@ -245,11 +248,8 @@ class askbill {
    
    function quit() {
    
-       //$this->http_connection->Close(); 
-	   //echo "Connection closed!\n";
-   
        fclose(STDIN);
-	   //die('Bye');
+	   die('Bye');
    }
    
    function use_project($path,$proj) {   

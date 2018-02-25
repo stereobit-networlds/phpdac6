@@ -1,6 +1,6 @@
 <?php
 /*
- * http.php
+ * http.php >httpclient for phpdac5 agent
  *
  * @(#) $Header: /opt2/ena/metal/http/http.php,v 1.94 2016/05/03 02:07:04 mlemos Exp $
  *
@@ -108,6 +108,11 @@ class httpclient
 	var $connected_host = '';
 	var $connected_port = -1;
 	var $connected_ssl = 0;
+	
+    function __construct($env=null) { //<<<<<<<<<<<<<
+		
+		$this->env = $env;
+	}
 
 	/* Private methods - DO NOT CALL */
 
@@ -1736,7 +1741,7 @@ class httpclient
 				else
 					$mechanisms[]=$mechanism;
 			}
-			$sasl=new sasl_client_class;
+			$sasl=new sasl_client_class($this->env); //<<<<
 			if(IsSet($user))
 				$sasl->SetCredential("user",$user);
 			if(IsSet($password))

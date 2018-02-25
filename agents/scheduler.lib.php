@@ -53,6 +53,7 @@ class scheduler {
 	 
 	 $this->env->update_agent($this,'scheduler');
 	 
+	 //re-register
 	 unregister_tick_function(array(&$this,"checkschedules"));
      register_tick_function(array(&$this,"checkschedules"),true);	 	 
    }

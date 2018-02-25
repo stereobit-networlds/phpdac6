@@ -27,8 +27,8 @@ class scheduledtask {
 	  //agent now
 	  $sh = $this->env->get_agent('scheduler');
 	  $sh->schedule('scheduledtask.scheduleprint','every','10');
-	  //$sh->schedule('batch/askbill.bat','every','25'); 			  
-	  $this->env->update_agent($sh,'scheduler');
+	  //$sh->schedule('batch/askbill.ash','every','25'); 			  
+	  //$this->env->update_agent($sh,'scheduler'); //done in sh->schedule
 	  
 	  //print_r($this->env->get_agent('scheduler')->timeline); 	  
 	}
@@ -44,9 +44,10 @@ class scheduledtask {
     function scheduleprint() {
 	
 	  $this->value = 200; //ok
-      $this->printer = $this->env->get_agent('resources')->get_resource('printer');   
+      //$this->printer = $this->env->get_agent('resources')->get_resource('printer');   
+	  //printer_write($this->printer, date("l dS of F Y h:i:s A")."\n\r");  
 	  
-      //printer_write($this->printer, date("l dS of F Y h:i:s A")."\n\r");  
+	  echo @file_get_contents($this->env->ldscheme . "/www.e-basis.gr/pdo.php");
 	  echo date("l dS of F Y h:i:s A")."\n\r";  
 		
 	  //print_r($this->env->get_agent('resources')->_resptr);

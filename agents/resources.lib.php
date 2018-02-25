@@ -36,17 +36,18 @@ class resources {
 	  	  print_r($this->_resources);
 	  }   
 	  else*/if (is_object($resource)) {
-
+		//echo 'RESOURCE object:'.$rname. '(' . memory_get_usage() .")\n";
 	    $this->_resources[$rname] = serialize($resource);//serialized object???
 		$this->_resptr[$rname] = & $resource;//object instance		
 		//print_r($this->_resources);	
 	    $this->env->update_agent($this,'resources');			
+		
+		return true;
 	  }
 	  elseif (is_resource($resource)) {
-
+        //echo 'RESOURCE resource:'.$rname. '(' . memory_get_usage() .")\n";
 	    $type = get_resource_type($resource);
 		$this->_resources[$type] = $rname;
-		
 		$this->_resptr[$type] = & $resource;
 	    //print_r($this->_resptr);
 		//print_r($this->_resources);
@@ -54,13 +55,13 @@ class resources {
    
 		return true;
 	  }
-	  elseif (is_scalar($resource)) {//integer,float,string.boolean
-	  
+	  elseif (is_scalar($resource)) {//integer,float,string,boolean
+	    //echo 'RESOURCE scalar:'.$rname. '(' . memory_get_usage() .")\n";
 	    $this->_resources[$rname] = $resource;
 	    $this->_resptr[$rname] = & $resource;	
 		//print_r($this->_resources);		
 	    $this->env->update_agent($this,'resources');			
-	
+	    //echo '>>>',$resource;
 	    return true;
 	  }
       echo "WARNING:resource [$rname] failed to register!\r\n";
@@ -200,11 +201,11 @@ class resources {
 	 //echo 'z';
      foreach ($this->_resources as $t=>$d) {
 	   //$ret .= "[" . $t . "]\r\n";
-	   $ret .= $t . "=" . $d . "...";
+	   $ret .= $t . "=" . $d;
 	   if (is_object($this->_resptr[$t]))
-	     $ret .= get_class($this->_resptr[$t]) . "\r\n";
+	     $ret .= " (object) " . get_class($this->_resptr[$t]) . "\r\n";
 	   else
-	     $ret .= $this->_resptr[$t] . "\r\n";
+	     $ret .= " (scalar) " . $this->_resptr[$t] . "\r\n";
 	 }  
   
      return ($ret);  

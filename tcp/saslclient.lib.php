@@ -1,6 +1,6 @@
 <?php
 /*
- * sasl.php ////>>>> server phpdac5 load libs
+ * sasl.php > saslclient for phpdac5 agent
  *
  * @(#) $Id: sasl.php,v 1.11 2005/10/31 18:43:27 mlemos Exp $
  *
@@ -124,6 +124,12 @@ class sasl_client_class
 		"Basic"    => array("basic_sasl_client_class",    "basic_sasl_client.lib.php"    )
 	);
 	var $credentials=array();
+	
+    function __construct($env=null) { //<<<<<<<<<<<<<
+		
+		$this->env = $env;
+	}
+	
 
 	/* Public functions */
 
@@ -158,6 +164,8 @@ class sasl_client_class
 		<do>
 {/metadocument}
 */
+
+
 	Function SetCredential($key,$value)
 	{
 		$this->credentials[$key]=$value;
@@ -308,9 +316,10 @@ class sasl_client_class
 		{
 			$mechanism=$mechanisms[$m];
 			if(IsSet($this->drivers[$mechanism]))
-			{
+			{  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+		        //echo '>>>>>' . $this->env->ldscheme;
 				if(!class_exists($this->drivers[$mechanism][0]))
-					require(dirname(__FILE__)."/".$this->drivers[$mechanism][1]);
+					require_once($this->env->ldscheme . "/tcp/".$this->drivers[$mechanism][1]);
 				$this->driver=new $this->drivers[$mechanism][0];
 				if($this->driver->Initialize($this))
 				{

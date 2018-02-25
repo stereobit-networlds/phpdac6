@@ -19,7 +19,7 @@ class agentds /*extends network*/ {
    var $mysh;
    var $agent;
    
-   var $agn_mem_type = 0;//shared vs convensional
+   var $agn_mem_type = 0;//shared 1 vs convensional
    var $agn_mem_store;//string that holds serial data (string functions =0=)
    
    var $shm_id;
@@ -38,7 +38,7 @@ class agentds /*extends network*/ {
    
    var $gtk, $gtkds_conn;//handle gtkds connection
    var $window, $agentbox;  
-   var $echoLevel;	
+   var $echoLevel, $ldscheme;	
 
    function agentds($dtype,$ip='127.0.0.1',$port='19125',$dacip='127.0.0.1',$dacport='19123') { 
 	  $argc = $GLOBALS['argc'];
@@ -55,35 +55,30 @@ class agentds /*extends network*/ {
 	  $this->agent = 'SH';//default
 
 	  $dtype = $argv[1] ? $argv[1] : ''; 
-	  //if (($dtype == '-inetd') || ($dtype=='-standalone'))
 	  $this->daemon_type = str_replace("-","",$dtype);
 	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';//$ip;//'192.168.4.203';
 	  $this->daemon_port = $argv[3] ? $argv[3] : '19125';//$port;//19123;
+	  _("Phpagn5 client at $this->daemon_ip:$this->daemon_port");	  
 	  
-	  //dac server
-	  /*if ((isset($argc)) && (isset($argv[1])))
-	    $this->phpdac_ip = $argv[1];
-	  else*/	
-	    $this->phpdac_ip = $argv[5] ? $argv[5] : '127.0.0.1';//$dacip;
-		
-	  $this->phpdac_port = $argv[6] ? $argv[6] : '19123';//$dacport;
-	  
-	  _("Phpagn5 daemon at $this->daemon_ip:$this->daemon_port"); 
-	  _("Phpdac5 repository at $this->phpdac_ip:$this->phpdac_port"); 
-	  //echo $this->phpdac_ip,'>>>>>';
+	  //dac server	
+	  $this->phpdac_ip = $argv[5] ? $argv[5] : '127.0.0.1';//$dacip;
+	  $this->phpdac_port = $argv[6] ? $argv[6] : '19123';//$dacport; 
+	  _("Phpdac5 server at $this->phpdac_ip:$this->phpdac_port"); 
 	    
- 	  //REGISTER PHPDAC (client side)protocol...	MOVED TO TOP...  
+ 	  //REGISTER PHPDAC (client side)protocol.  
       require_once("system/dacstreamc.lib.php");			
 	  $phpdac_c = stream_wrapper_register("phpdac5","c_dacstream");
 	  if (!$phpdac_c) {
 		  _("Client dac protocol failed to registered!");
 		  die();
 	  }	  
-	  else _("Client dac protocol registered!"); 	
+	  else _("Client dac protocol registered!");
+	  
+	  $this->ldscheme = "phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}";	
 				
- 	  //REGISTER PHPAGN (client side,interconnections) protocol...
+ 	  //REGISTER PHPAGN (client side,interconnections) protocol.
       //require_once("agents/agnstreamc.lib.php");			
-	  require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/agnstreamc.lib.php"); 
+	  require_once($this->ldscheme . "/agents/agnstreamc.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpagn5","c_agnstream");
 	  if (!$phpdac_c) {
 		  _("Client agent protocol failed to registered!");
@@ -91,9 +86,9 @@ class agentds /*extends network*/ {
 	  }	  
 	  else _("Client agent protocol registered!"); 	
 
- 	  //REGISTER PHPRES (client side,resources) protocol...
+ 	  //REGISTER PHPRES (client side,resources) protocol.
       //require_once("agents/resstream.lib.php");			
-      require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/resstream.lib.php"); 
+      require_once($this->ldscheme . "/agents/resstream.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpres5","c_resstream");
 	  if (!$phpdac_c) {
 		  _("Client resource protocol failed to registered!");
@@ -142,21 +137,16 @@ class agentds /*extends network*/ {
 	  $this->gtk = ($argv[4]==='-gtk') ? true : false;
 	  
 	  if ($this->gtk) {
-		require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/gtklib.lib.php");  		
-		_("GTK connector loaded!");	  
-		$this->gtkds_conn = new gtkds_connector();
+		  require_once($this->ldscheme . "/agents/gtklib.lib.php");  		
+		  _("GTK connector loaded!");	  
+		  $this->gtkds_conn = new gtkds_connector();
+		
+		  //////////////////////////////////// gtk win
+		  require_once($this->ldscheme . "/agents/gtkds.lib.php");
+		  //new gtkds($this,0);//connector init is off ..bellow loaded!		
 	  }
 	  
-	  
-      //////////////////////////////////// gtk win
-      if ($this->gtk) {
-		  require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/gtkds.lib.php");
-		  //new gtkds($this,0);//connector init is off ..bellow loaded!
-	  }	  
-      /////////////////////////////////////	  
-	    
-  
-      require_once("phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}/agents/daemon.lib.php");
+      require_once($this->ldscheme . "/agents/daemon.lib.php");
 	  $this->startdaemon();  
 	  
    }
@@ -174,7 +164,7 @@ class agentds /*extends network*/ {
 	  //$this->dmn = new daemon('xyz',true);	  
       $this->dmn->setAddress ($this->daemon_ip);//'127.0.0.1');
       $this->dmn->setPort ($this->daemon_port);
-      $this->dmn->Header = "PHPDAC5 Agent v1, at ". $this->env['name'] . ' ' . $this->daemon_ip .':'. $this->daemon_port;
+      $this->dmn->Header = "PHPDAC5 Agent v2, at ". $this->env['name'] . ' ' . $this->daemon_ip .':'. $this->daemon_port;
 
       $this->dmn->start($this->promptString);  //this routine creates a socket	
 	  
@@ -806,10 +796,10 @@ class agentds /*extends network*/ {
    private function init_agents($ip,$port) {   
    
 	   $this->openmemagn('aek;');    
-
-       if (!is_file("agentds.ini")) return -1;   
+       _('Ini file: ' . getcwd() . "/agentds.ini"); 
+       if (!is_file(getcwd() ."/agentds.ini")) return -1;   
 		  
-       $code = file_get_contents("agentds.ini");
+       $code = @file_get_contents(getcwd() . "/agentds.ini");
 	   
 	   if ($file = explode("\n",$code)) {
 			//clean code by nulls and commends and hold it as array
@@ -838,16 +828,23 @@ class agentds /*extends network*/ {
 				                $name = explode(".",trim($part[0]));
 				                break;				  
 								
-			     case 'schedule':	//run scheduled cmds
+			     case 'schedule'://run scheduled cmds
 				                $this->get_agent('scheduler')->schedule($part[1],$part[2],$part[3]); 
 				                break;
 								
 				 case 'library' : if ($part[1]) {
 
 								  $name = explode(".",trim($part[1]));
-								  $this->create_agent($name[1],$part[2],null,null,'lib');
+								  $this->create_agent($name[1],$name[0],null,null,'lib',false);
 								} 
-				                break; 													
+				                break; 
+
+				 case 'include' : if ($part[1]) {
+
+								  $name = explode(".",trim($part[1]));
+								  $this->create_agent($name[1],$name[0],null,null,'lib',true);
+								} 
+				                break;								
 							  
 				 default      : //create agents  
 			  		            if ($part[0]) {
@@ -855,7 +852,7 @@ class agentds /*extends network*/ {
 								  //$this->load_agent($includer,$part[0]);
 								  
 								  $name = explode(".",trim($part[0]));
-								  $this->create_agent($name[1],$part[1]);
+								  $this->create_agent($name[1],$name[0]);//$part[1]);-RESIDENT disbaled
 								} 
 				                
 			   }//switch
@@ -865,8 +862,9 @@ class agentds /*extends network*/ {
 	   }
    }  
    
-   function create_agent($agent,$resident=null,$include_ip=null,$as_name=null,$type='dpc') {
-      global $__DPC;   
+   function create_agent($agent,$domain=null,$include_ip=null,$as_name=null,$type='dpc',$includeonly=false) {
+      global $__DPC;  
+	  $dpc = $domain ? : 'agents';
    	  $class = strtoupper($agent).'_DPC';	  
 	  //echo $class;
 	  
@@ -876,9 +874,14 @@ class agentds /*extends network*/ {
 	  }	  
 	  
       if (isset($include_ip))
-	    require("phpdac5://$include_ip:$this->phpdac_port" . "/agents/$agent" . '.'.$type.'.php');    
+	    require("phpdac5://$include_ip:$this->phpdac_port" . "/$dpc/$agent" . '.'.$type.'.php');    
 	  else 
-	    require("phpdac5://$this->phpdac_ip:$this->phpdac_port" . "/agents/$agent" . '.'.$type.'.php');    
+	    require("phpdac5://$this->phpdac_ip:$this->phpdac_port" . "/$dpc/$agent" . '.'.$type.'.php');    
+	  
+	  if (($type=='lib') && ($includeonly)) {
+		  _('include library: '.$agent);
+		  return true;
+	  }	  
 	  
 	  $class = strtoupper($agent).'_DPC';	 
 	  //echo $class;
@@ -893,24 +896,24 @@ class agentds /*extends network*/ {
 			
 			if (isset($as_name)) {
 		      $this->addmemagn($as_name,$s_agent);
-			  _("Create agent:$agent as $as_name",0,false);//\n";			
+			  _("Create agent:$agent as $as_name");//,0,false);//\n";			
 			}
 			else {
 		      $this->addmemagn($agent,$s_agent);
-			  _("Create agent:$agent",0,false);//,"\n";
+			  _("Create agent:$agent");//,0,false);//,"\n";
 			}  
-
+            /* DISABLED
 			if ($resident=='RESIDENT') {
 			  $this->agn_attr[$agent] = $resident;
 			  _(" -resident");
 			}
 			else
 			  _(" ");	
-	    
+	        */
 	        //var_dump($this->agn_addr);
 	        //var_dump($this->agn_length);	  
 	        //echo "\n",substr($this->agn_mem_store,0,256),"\n",strlen($this->agn_mem_store),"\n";				
-		  			
+		  	//echo "NEW AGENT(".strlen($s_agent)."):" . get_class($o_agent) . '(' . memory_get_usage() .")\n";		
 		    return true;
 		  }
 		  else {
@@ -1030,12 +1033,13 @@ class agentds /*extends network*/ {
 		  return ($s_agent);
 		}
 		else {  
+		  $size = strlen($s_agent);
 	      $o_agent = unserialize($s_agent);
 	  
 		  //auto update
 		  $o_agent->env = &$this;
 		  
-		  //echo get_class($o_agent),"\n";
+		  //echo "get_agent($size):" . get_class($o_agent) . '(' . memory_get_usage() .")\n";
 		  return ($o_agent);
 		}  
 	  }
