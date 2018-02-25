@@ -5,11 +5,33 @@ require_once("agents/timer.lib.php");
 require_once("agents/resources.lib.php");
 require_once("agents/scheduler.lib.php");
 
+   $glevel = 1;
+   function _($str, $level=0, $crln=true) {
+	    global $glevel;
+	    $cr = $crln ? PHP_EOL : null;
+		if ($level<=$glevel)
+			echo ucfirst($str) . $cr;
+		
+		//echo null;
+   }
+   
+   function _dump($data=null,$mode=null,$filename=null) {
+	   $m = $mode ? $mode : 'w';
+	   $f = $filename ? $filename : '/dumpsrv.log';
+
+       if ($fp = @fopen (getcwd() . $f , $m)) {
+           fwrite ($fp, $data);
+           fclose ($fp);
+           return true;
+       }
+       return false;
+   }    
+
 class kernelv2 {
 
    var $userLeveID;
    var $daemon_ip, $daemon_port, $daemon_type;
-   var $dmn, $useprj, $agent;
+   var $dmn, $useprj, $agent, $dpcpath;
    
    var $shm_id, $dpc_shm_id, $dpc_addr, $dpc_length;
    var $shared_buffer ,$shared_buffer_sepdata;
@@ -18,16 +40,18 @@ class kernelv2 {
    var $scheduler, $resources, $timer;
    var $extra_space;
    
-   function __construct($dtype,$ip='127.0.0.1',$port='19123') {
+   function __construct($dtype=null,$ip='127.0.0.1',$port='19123') {
 	  $UserSecID = GetGlobal('UserSecID');
       $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);   
 	  $argc = $GLOBALS['argc'];
       $argv = $GLOBALS['argv'];  
 	  
-	  $this->extra_space = 1000;
-	  
-      $dtype = $argv[1] ? $argv[1] : '';
-	  $this->daemon_type = str_replace("-","",$dtype);
+	  $this->extra_space = 1024 * 10; //kb //1000;// per file
+	  $this->dataspace = 1024000 * 1; //mb //50000;
+		  
+	  $this->dpcpath = $argv[1] ? ((substr($argv[1],0,1)!='-') ? $argv[1] : './') : './';
+      //$dtype = $argv[1] ? $argv[1] : '';
+	  $this->daemon_type = $argv[1] ? ((substr($argv[1],0,1)=='-') ? substr($argv[1],1) : '') : '';//str_replace("-","",$dtype);
 	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';//$ip;//'192.168.4.203';
 	  $this->daemon_port = $argv[3] ? $argv[3] : '19123';//$port;//19123;
 	  	  
@@ -47,7 +71,6 @@ class kernelv2 {
 	  $this->dpc_length = array();
 	  $this->shared_buffer = null;
 	  $this->shared_buffer_sepdata = null;
-	  $this->dataspace = 50000;
 	  $this->datastreams = array();
 	  
 	  $this->useprj = null;
@@ -333,14 +356,15 @@ class kernelv2 {
 	  
 	  ///////////////allocate dpc tree
 	  // Create shared memory block with system id if 0xff3
-	  echo "Allocate shared memory segment ...\n";
+	  $space = $shm_max + $this->dataspace;
+	  echo "Allocate shared memory segment ...$space bytes\n";
       $this->dpc_shm_id = shmop_open(0xfff, "c", 0644, $shm_max + $this->dataspace);
       if(!$this->dpc_shm_id) 
 		die("Couldn't create shared memory segment. System Halted.\n");
 	  else {  
         $shm_bytes_written = shmop_write($this->dpc_shm_id, $this->shared_buffer, 0);
         if($shm_bytes_written != $shm_max) {
-          echo "Couldn't write the entire length of data\n";
+          die("Couldn't write the entire length of data\n");
         }
 		else	
 		  $this->savestate($shm_max);	
@@ -373,7 +397,7 @@ class kernelv2 {
 	                         $this->dpc_addr[$dpc], 
 			  			     $this->dpc_length[$dpc]);
         if(!$my_dpc) 
-          $ret = "Couldn't read from shared memory block the $dpc\n";
+          $ret = "$dpc : couldn't read from shared memory block\n";
 	    else
           $ret = $my_dpc . $this->dpc_addr[$dpc].':'.$this->dpc_length[$dpc]."\n";
 		  //echo $this->dpc_addr[$dpc],':',$this->dpc_length[$dpc],"\n";
@@ -387,16 +411,71 @@ class kernelv2 {
    //client version
    private function getdpcmemc($dpc) {
 	  $data =null; 
+	  $checkDataSize = false;
    
       if (isset($this->dpc_addr[$dpc])) {
-   
+		//fetch dpc  
+        echo "AAAAAAAAAAAAAAAAAAAAAA\n";
+		if ($this->dpc_addr[$dpc] > $this->shared_buffer_sepdata) {
+			//in data area
+			if (substr($dpc,0,4)==='www.') {
+				echo "111111111111111111111111\n";
+				//include user/pass at url
+				//$dpc = 'www.e-basis.gr/pdo.php';
+				$user = 'info@e-basis.gr';
+				$pass = "basis2012!@";
+				$data = $this->httpcl($dpc,$user,$pass);
+				echo $data . "\n\n"; //show new data
+			}
+			else {
+				echo "222222222222222222222222\n";
+				//local storage reload
+				$data = @file_get_contents($this->dpcpath . $dpc); 
+				$checkDataSize = true;
+				//echo $data . "\n\n"; //dont show data
+			}	
+			$offset = $this->dpc_addr[$dpc];
+			//compute new length and remaing extra space
+			$old_length = $this->dpc_length[$dpc];
+			$current_length = strlen($data);
+			$dock_length = $old_length + $this->extra_space;
+			
+			//checkDataSize
+			if (($checkDataSize===true) && ($current_length!=$old_length)) {
+			if ($current_length <= $dock_length) {
+				//clean mem var
+				$c = str_repeat(' ',$dock_length);
+				$this->shared_buffer = substr_replace($this->shared_buffer,$c,$offset,$dock_length);	
+				//compure remaining
+				$remaining = $dock_length - $current_length; 
+				$data .=  str_repeat(' ',$remaining);
+				$this->shared_buffer = substr_replace($this->shared_buffer,$data,$offset,$dock_length);
+				
+				if(!$this->dpc_shm_id) 
+					die("Shared memory segment error. System Halted.\n");
+				else //data + extra spaces (cleaned)  
+					$shm_bytes_written = shmop_write($this->dpc_shm_id, $data, $offset);
+				
+				//update length and state
+				$this->dpc_length[$dpc] = $current_length;
+				$this->savestate($shm_max);
+				
+				echo "$dpc Ok!\n";
+				_dump("UPDATE\n\n\n\n" . $this->shared_buffer);
+			}
+			else
+				die($dpc . " error, increase extra space!\n"); 
+		    }//checkDataSize;
+		}
+		//read
 		$data = shmop_read($this->dpc_shm_id, 
 	                       $this->dpc_addr[$dpc], 
 			  			   $this->dpc_length[$dpc]);
 	  }
-	  else { //fetch and save, new dpc or new data stream
-	  
-	    if (is_readable('./'.$dpc)) {
+	  else { 
+	    //fetch and save, new dpc or new data stream
+	    if (is_readable($this->dpcpath . $dpc)) {
+			echo "BBBBBBBBBBBBBBBBBBBB\n";
 			//remote storage
 			/** // Create a stream
 			$opts = array(
@@ -410,22 +489,22 @@ class kernelv2 {
 			// Open the file using the HTTP headers set above
 			$file = file_get_contents('http://www.example.com/', false, $context);
 			*/
-			
+			//https://raw.github.com/stereobit-networlds/phpdac6/master/
 			//local storage
-			$data = file_get_contents('./'.$dpc);
+			$data = @file_get_contents($this->dpcpath . $dpc);
 		}
-		elseif (class_exists('httpcl'))  {
+		else  {
+			echo "CCCCCCCCCCCCCCCCCCCC\n";
 			//include user/pass at url
-			$user = '';
-			$pass= '';
+			$dpc = 'www.e-basis.gr/pdo.php';
+			$user = 'info@e-basis.gr';
+			$pass = "basis2012!@";
 		    $data = $this->httpcl($dpc,$user,$pass);
 			
 			//$this->scheduleDataStream(); //cron...
 		}
-		else {
-			echo "Agent httpcl is missing!\n";
-		}
-
+		echo $data . "\n\n";
+		
 		if (!$data) return false;	
 		
 		//echo $data . "\n\n";
@@ -455,10 +534,11 @@ class kernelv2 {
 				
 			$this->savestate($shm_max);
 				
-			echo "$dpc Ok!\n";		
+			echo "$dpc Ok!\n";
+			_dump("INSERT:\n\n\n\n" . $this->shared_buffer);
 		}
 		else	
-			echo "$dpc Couldn't write the entire length of data\n";		
+			$dpc . " error, increase data space!\n";		
 		
 		echo "Data : " . $databytes . "\n";
 	  }
@@ -514,11 +594,10 @@ class kernelv2 {
 	
 	
    //DPC DIR FUNCS	
-	
    private function read_dpcs() {
    
-        $dpath = "./";//"c:/php/webos/dpc";
-		$selections = array('agents','tcp');
+        $dpath = $this->dpcpath;
+		$selections = array('libs');//array('agents','tcp'); 
    
 	    if (is_dir($dpath)) {
 		
@@ -554,7 +633,7 @@ class kernelv2 {
    //UNDER CONSTRUCTION: all php files must be readed (memory!! in large libs)
    private function read_extensions() {
    
-        $dpath = "./system/extensions";//"c:/php/webos/dpc";
+        $dpath = $this->dpcpath . "system/extensions";
    
 	    if (is_dir($dpath)) {
 		
@@ -591,19 +670,21 @@ class kernelv2 {
 	   //echo "loading dpc extensions...\n";	
 	   //$exts = $this->read_extensions();
 	   
-	   if (is_array($exts)) $tree = array_merge($libs,$exts); 
-	                   else $tree = $libs;
+	   if (is_array($exts)) 
+		   $tree = array_merge($libs,$exts); 
+	   else 
+		   $tree = $libs;
 	   //print_r($tree);  
 	  
-	   if ($libs) {
-	   //print_r($libs);
+	   if ($tree) {
+	   //print_r($tree);
 	   //echo ".....\n";
 	    $offset = 0;
 	    foreach($tree as $dpc_id=>$dpc_mod) {
 		  $dpcf = trim($dpc_mod);
 	      if (($dpcf!='') && ($dpcf[0]!=';')) {
 		
-		    $shared_dpc = file_get_contents($dpcf);
+		    $shared_dpc = @file_get_contents($dpcf);
 
 		    if ($shared_dpc) {
 			  $this->dpc_addr[$dpcf] = $offset;			
@@ -636,7 +717,7 @@ class kernelv2 {
 	
 	//check dpc modules for source editing!!!!(dif in size)
 	//check if a new file added in dir also
-	private function check_dpcs() {
+	/*private function check_dpcs() {
 	
 	   echo "check dpc modules...\n";	
 	   $libs = $this->read_dpcs();
@@ -686,13 +767,13 @@ class kernelv2 {
 	  }
 	  else
 	    return false; 		
-	}
-	
+	}*/
+	/*
     private function reload_dpc_at_runtime($dpcf) {
        
 	    if (is_file($dpcf)) { 
    
-		    $shared_dpc = file_get_contents($dpcf);
+		    $shared_dpc = @file_get_contents($dpcf);
 			
 		    if ($shared_dpc) {
 			
@@ -755,7 +836,7 @@ class kernelv2 {
 		}
 		
 		return false;			   
-    }  	   
+    } */ 	   
    
    
     //UTILS
@@ -794,17 +875,20 @@ class kernelv2 {
 		return true;
 	}
 
-    public function scheduleprint() {	
+    public function scheduleprint() {
+		//start a client (auto)
+		exec('start /D d:\php\bin agentds pdo');// pdo');// -inetd');
+	
         $url = 'www.e-basis.gr/pdo.php';
 		$user = 'info@e-basis.gr';
 		$pass = "basis2012!@";
 		//$data = $this->httpcl($url,$user,$pass);
 		//if (isset($data)) {
-		if ($data = $this->httpcl($url,$user,$pass)) {
-			/*$lines = explode('@;@', $data);
-			foreach ($lines as $line)
-				$jd[] = json_decode($line);
-			print_r($jd);*/
+		/*if ($data = $this->httpcl($url,$user,$pass)) {
+			//$lines = explode('@;@', $data);
+			//foreach ($lines as $line)
+				//$jd[] = json_decode($line);
+			//print_r($jd);
 			echo $data . "\n\n";
 			//$this->resources->set_resource('http',$data);
 			
@@ -833,14 +917,13 @@ class kernelv2 {
 			exec('start /D d:\php\bin agentds pdo');// -inetd');
 		}
 		
-	    /*  
-         printer_write($this->resources->get_resource('printer'),
-	                "SERVER print"."\n\r");  
-		*/
+	      
+        //printer_write($this->resources->get_resource('printer'), "SERVER print"."\n\r");  
+		
 		
 		$databytes = strlen($data);	
 		echo "Data : " . $databytes . "\n";
-		
+		*/
 		echo "SERVER print"."\n\r";		
 		$totalbytes = strlen($this->shared_buffer);
 	    echo "\nTotal Bytes : ".$totalbytes. '(' . memory_get_usage() .")\n";

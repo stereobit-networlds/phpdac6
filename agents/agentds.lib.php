@@ -5,9 +5,19 @@
 	    $cr = $crln ? PHP_EOL : null;
 		if ($level<=$glevel)
 			echo ucfirst($str) . $cr;
-		
-		//echo null;
    }
+   
+   function _dump($data=null,$mode=null,$filename=null) {
+	   $m = $mode ? $mode : 'w';
+	   $f = $filename ? $filename : '/dumpagn.log';
+
+        if ($fp = @fopen (getcwd() . $f , $m)) {
+            fwrite ($fp, $data);
+            fclose ($fp);
+            return true;
+        }
+        return false;
+   }   
    
 class agentds {
 
@@ -56,7 +66,6 @@ class agentds {
 
 	  //argv1 is daemon type -param or batchfile .ash
 	  $this->argbatch = (substr($argv[1],0,1)!='-') ? $argv[1].'.ash' : '';
-	  //$dtype = $argv[1] ? substr($argv[1],1) : ''; 
 	  $this->daemon_type = (substr($argv[1],0,1)=='-') ? substr($argv[1],1) : ''; //$dtype
 	  
 	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';//$ip;//'192.168.4.203';
@@ -445,14 +454,16 @@ class agentds {
 			_('Init batch file: ' . $batchfile); 
 		
 		if ((is_readable($batchfile)) && ($f = @file($batchfile))) {
-		    foreach ($f as $command_line) {
-				if (!empty ($command_line)) {
-					 //echo $command_line . "---\n";
+			if (!empty($f)) {
+		      foreach ($f as $command_line) {
+				if (trim($command_line)) {
+					 echo "-" . $command_line . "\n";
                      $dmn->dispatch($command_line,null);
                 }
-		    }
-			//if (!$file) //init
-				_(@file_get_contents($batchfile));
+		      }
+			  //if (!$file) //init
+				 // _(@file_get_contents($batchfile));			  
+			}
 			return true;	
 		}
 		 

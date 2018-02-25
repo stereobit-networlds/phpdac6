@@ -49,6 +49,8 @@ class scheduledtask {
 	  
 	  echo @file_get_contents($this->env->ldscheme . "/www.e-basis.gr/pdo.php");
 	  echo date("l dS of F Y h:i:s A")."\n\r";  
+	  //out of scheme dpc (load in data area)
+	  //echo @file_get_contents($this->env->ldscheme . "/gui/ajax.dpc.php");
 		
 	  //print_r($this->env->get_agent('resources')->_resptr);
 	  //print_r($this->env->get_agent('resources')->_resources);	  
