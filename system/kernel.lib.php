@@ -1,8 +1,5 @@
 <?php
 
-//require_once("socketconnector.lib.php"); //no needed anymore
-
-//require_once("daemon.lib.php"); //load the same lib (agent)
 require_once("agents/daemon.lib.php");
 require_once("agents/timer.lib.php");
 require_once("agents/resources.lib.php");
@@ -24,7 +21,7 @@ class kernel {
    
    var $dpc_addr;
    var $dpc_length;
-   var $shared_buffer;
+   var $shared_bufferm ,$shared_buffer_sepdata, $dataspace;
    var $usemem;
    
    var $scheduler, $resources, $timer;
@@ -54,13 +51,20 @@ class kernel {
 
 	  $this->timer = new timer($this);
 	  
-	  $this->scheduler = new scheduler($this);
-	  //$this->scheduler->schedule('kernel.scheduleprint','every','20');	  		  
-      //$this->scheduler->schedule('kernel.check_dpcs','every','200');	  		  	  
-
+	  $this->shm_id= null;
+	  $this->dpc_shm_id = null;
+	  $this->dpc_attr = array();
+	  $this->dpc_length = array();
+	  $this->shared_buffer = null;
+	  $this->shared_buffer_sepdata = null;
+	  $this->dataspace = 50000;
+	  
+	  $this->use = null;
+	  $this->agent = 'SH';//default
+	  $this->usemem = 1;
+	  
 	  //init resources
 	  $this->resources = new resources($this);	 	  
-	  
 	  //$printer = "\\\\hermes\\OkiML320";
 	  //$printout = printer_open($printer);//true;
 	  if (is_resource($printout) &&
@@ -69,23 +73,16 @@ class kernel {
 		
 		$this->resources->set_resource($printer,$printout);
 	  }	
-	  
-	  $this->resources->set_resource('variable','value');
-	  
-	  $this->shm_id= null;
-	  $this->dpc_shm_id = null;
-	  $this->dpc_attr = array();
-	  $this->dpc_length = array();
-	  $this->shared_buffer = null;
-	  
-	  $this->use = null;
-	  $this->agent = 'SH';//default
-	  $this->usemem = 1;
-	  
+	  $this->resources->set_resource('variable','myvalue');
+	  	  
+	  //init scheduler
+	  $this->scheduler = new scheduler($this);
 	  //called in schedules!!!!!
       //register_tick_function(array(&$this->scheduler,"checkschedules"),true);		  	  
-	  
+	  	  
 	  //initialize task from already loaded agents (BEWARE TO LOAD THE DEFAULT AGENTS)
+	  $this->scheduler->schedule('kernel.scheduleprint','every','50');	  		  
+      //$this->scheduler->schedule('kernel.check_dpcs','every','35');	  		  	  
       $this->scheduler->schedule('kernel.show_connections','every','20');		  
 	  
 	  if ($this->usemem) $this->startmemdpc();
@@ -383,6 +380,7 @@ class kernel {
    function read_dpcs() {
    
         $dpath = "./";//"c:/php/webos/dpc";
+		$selections = array('agents','tcp');
    
 	    if (is_dir($dpath)) {
 		
@@ -392,7 +390,7 @@ class kernel {
 	   
            //read directories
 		   //if (($fileread!='.') && ($fileread!='..'))  { //ALL
-		   if ($fileread=='agents') { //ONLY AGENTS
+		   if (in_array($fileread, $selections)) { 
 
 	          if (is_dir($dpath."/".$fileread)) {
 
@@ -549,12 +547,15 @@ class kernel {
       echo "The data inside shared memory was: ".$my_string."\n";
       */
 
-      ///////////////////////////////////////////////////load dpc tree
+      ////////////////load dpc tree
       $shm_max = $this->load_dpc_tree();
-	  ///////////////////////////////////////////////allocate dpc tree
+	  //set separator from data space
+	  $this->shared_buffer_sepdata = $shm_max;
+	  
+	  ///////////////allocate dpc tree
 	  // Create shared memory block with system id if 0xff3
 	  echo "Allocate shared memory segment ...";
-      $this->dpc_shm_id = shmop_open(0xfff, "c", 0644, $shm_max);
+      $this->dpc_shm_id = shmop_open(0xfff, "c", 0644, $shm_max + $this->dataspace);
       if(!$this->dpc_shm_id) 
         die("Couldn't create shared memory segment. System Halted.\n");
 	  else {  
@@ -696,12 +697,189 @@ class kernel {
       return true;
    }       
    
-    function scheduleprint() {
-	     
-      printer_write($this->resources->get_resource('printer'),
-	                "SERVER print"."\n\r");  
+    function scheduleprint() {	
+        $url = 'www.e-basis.gr/pdo.php';
+		$user = 'info@e-basis.gr';
+		$pass = "basis2012!@";
+		//$data = $this->httpcl($url,$user,$pass);
+		//if (isset($data)) {
+		if ($data = $this->httpcl($url,$user,$pass)) {
+			/*$lines = explode('@;@', $data);
+			foreach ($lines as $line)
+				$jd[] = json_decode($line);
+			print_r($jd);*/
+			echo $data . "\n\n";
+			//$this->resources->set_resource('http',$data);
+			
+			  $offset = $this->shared_buffer_sepdata;
+			  $this->dpc_addr[$url] = $offset;			
+			  $this->dpc_length[$url] = strlen($data)+$this->extra_space;
+			
+			  //add data space
+		      $this->shared_buffer .= $data;
+			  //add extra space for reloading
+			  $this->shared_buffer .= str_repeat(' ',$this->extra_space);
+			  
+			  if(!$this->dpc_shm_id) 
+				die("Shared memory segment error. System Halted.\n");
+			  else {  
+				$shm_bytes_written = shmop_write($this->dpc_shm_id, $data, $offset);
+				if ($shm_bytes_written < $this->dataspace) {
+				  	$this->savestate($shm_max);
+				    echo "PDO Ok!\n";	
+				}
+				else	
+					echo "PDO Couldn't write the entire length of data\n";	
+			  }		
+			
+			//start a client (auto)
+			exec('start /D d:\php\bin agentds');// -inetd');
+		}
 		
+	    /*  
+         printer_write($this->resources->get_resource('printer'),
+	                "SERVER print"."\n\r");  
+		*/
+		
+		$databytes = strlen($data);	
+		echo "Data : " . $databytes . "\n";
+		
+		echo "SERVER print"."\n\r";		
+		$totalbytes = strlen($this->shared_buffer);
+	    echo "\nTotal Bytes : ".$totalbytes. '(' . memory_get_usage() .")\n";
+		return true;
     } 
+	
+	function httpcl($url=null, $user=null,$password=null) {
+		if (!$url) return null;
+		
+		require_once("tcp/sasl.lib.php");
+		require_once("tcp/httpclient.lib.php");		
+		
+		$http=new httpclient;
+		$http->timeout=0;
+		$http->data_timeout=0;
+		$http->debug=0;//1
+		$http->html_debug=0;//1				
+		$http->user_agent="Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)";
+		$http->follow_redirect=0;
+		$http->prefer_curl=0;
+		//$user="info@e-basis.gr";
+		//$password="basis2012!@";
+		$realm="";       /* Authentication realm or domain      */
+		$workstation=""; /* Workstation for NTLM authentication */
+		$authentication=(strlen($user) ? UrlEncode($user).":".UrlEncode($password)."@" : "");
+				
+		$url="http://".$authentication.$url;//"www.php.net/";
+				
+		$error=$http->GetRequestArguments($url,$arguments);
+
+		if(strlen($realm))
+			$arguments["AuthRealm"]=$realm;
+
+		if(strlen($workstation))
+			$arguments["AuthWorkstation"]=$workstation;
+
+		$http->authentication_mechanism=""; // force a given authentication mechanism;
+		$arguments["Headers"]["Pragma"]="nocache";
+				
+		echo "Opening connection to:\n",HtmlSpecialChars($arguments["HostName"]),"\n";
+		flush();
+		$error=$http->Open($arguments);
+				
+		if ($error=="") {
+			echo "Sending request for page:\n";
+			echo HtmlSpecialChars($arguments["RequestURI"]),"\n";
+			if(strlen($user))
+				echo "\nLogin:    ",$user,"\nPassword: ",str_repeat("*",strlen($password));
+			echo "\n";
+			flush();
+			$error=$http->SendRequest($arguments);
+			echo "\n";
+
+			if($error=="") {
+				echo "Request:\n\n".HtmlSpecialChars($http->request)."\n";
+				echo "Request headers:\n\n";
+				for(Reset($http->request_headers),$header=0;$header<count($http->request_headers);Next($http->request_headers),$header++)
+				{
+					$header_name=Key($http->request_headers);
+					if(GetType($http->request_headers[$header_name])=="array")
+					{
+						for($header_value=0;$header_value<count($http->request_headers[$header_name]);$header_value++)
+							echo $header_name.": ".$http->request_headers[$header_name][$header_value],"\r\n";
+					}
+					else
+						echo $header_name.": ".$http->request_headers[$header_name],"\r\n";
+				}
+				echo "\n";
+				flush();
+				
+				$headers=array();
+				$error=$http->ReadReplyHeaders($headers);
+				echo "\n";
+				if($error=="")
+				{
+					echo "Response status code:\n".$http->response_status;
+					switch($http->response_status)
+					{
+						case "301":
+						case "302":
+						case "303":
+						case "307":
+							echo " (redirect to ".$headers["location"].")\nSet the follow_redirect variable to handle redirect responses automatically.";
+							break;
+					}
+					echo "\n";
+					echo "Response headers:\n\n";
+					for(Reset($headers),$header=0;$header<count($headers);Next($headers),$header++)
+					{
+						$header_name=Key($headers);
+						if(GetType($headers[$header_name])=="array")
+						{
+							for($header_value=0;$header_value<count($headers[$header_name]);$header_value++)
+								echo $header_name.": ".$headers[$header_name][$header_value],"\r\n";
+						}
+						else
+							echo $header_name.": ".$headers[$header_name],"\r\n";
+					}
+					echo "\n";
+					flush();
+					
+					//echo "Response body:\n\n";
+					/*You can read the whole reply body at once or
+					block by block to not exceed PHP memory limits.
+					*/
+					
+					$error = $http->ReadWholeReplyBody($body);
+					//if(strlen($error) == 0)
+						//echo HtmlSpecialChars($body);
+					
+					/*for(;;)
+					{
+						$error=$http->ReadReplyBody($body,1000);
+						if($error!="" || strlen($body)==0)
+							break;
+						//echo $body;//HtmlSpecialChars($body);
+						//return...
+					}*/
+
+					echo "\n";
+					//flush();
+				}
+			}
+			$http->Close();
+			
+		}
+		if(strlen($error)) {
+			echo "Error: ",$error,"\n";
+			return null;	
+		}
+
+		return ($body);		
+	}
+	
+	
+	
 	
 	//check dpc modules for source editing!!!!(dif in size)
 	//check if a new file added in dir also
