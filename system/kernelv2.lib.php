@@ -55,13 +55,13 @@ class kernelv2 {
 	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';//$ip;//'192.168.4.203';
 	  $this->daemon_port = $argv[3] ? $argv[3] : '19123';//$port;//19123;
 	  	  
-	  echo("Daemon repository at $this->daemon_ip:$this->daemon_port\n");
+	  _("Daemon repository at $this->daemon_ip:$this->daemon_port");
 	  
  	  //REGISTER PHPRES (client side,resources) protocol...			
       require_once("agents/resstream.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpres5","c_resstream");
-	  if (!$phpdac_c) echo("Client resource protocol failed to registered!\n");
-		         else echo("Client resource protocol registered!\n"); 	  
+	  if (!$phpdac_c) _("Client resource protocol failed to registered!");
+		         else _("Client resource protocol registered!"); 	  
 
 	  $this->timer = new timer($this);
 	  
@@ -320,7 +320,7 @@ class kernelv2 {
 
    private function startmemdpc() {
    
-	  echo "Start..\n";   
+	  _("Start",1);   
    
 	  if (!extension_loaded('shmop')) 
 		  dl('php_shmop.dll');
@@ -357,7 +357,7 @@ class kernelv2 {
 	  ///////////////allocate dpc tree
 	  // Create shared memory block with system id if 0xff3
 	  $space = $shm_max + $this->dataspace;
-	  echo "Allocate shared memory segment ...$space bytes\n";
+	  _("Allocate shared memory segment... $space bytes",1);
       $this->dpc_shm_id = shmop_open(0xfff, "c", 0644, $shm_max + $this->dataspace);
       if(!$this->dpc_shm_id) 
 		die("Couldn't create shared memory segment. System Halted.\n");
@@ -380,7 +380,7 @@ class kernelv2 {
             echo "shm_id not saved!!!\n";
 			return false;
 		}
-		echo "Save state\n";
+		_("Save state",1);
 		$data = $shm_max_mem ."^". serialize($this->dpc_addr) . 
 		                      "^". serialize($this->dpc_length); 
 
@@ -425,24 +425,25 @@ class kernelv2 {
 				$user = 'info@e-basis.gr';
 				$pass = "basis2012!@";
 				$data = $this->httpcl($dpc,$user,$pass);
-				echo $data . "\n\n"; //show new data
+				_($data,2); //show new data
 			}
 			else {
 				echo "222222222222222222222222\n";
 				//local storage reload
-				$data = @file_get_contents($this->dpcpath . $dpc); 
-				$checkDataSize = true;
-				//echo $data . "\n\n"; //dont show data
+				/*$data = @file_get_contents($this->dpcpath . $dpc); 
+				$checkDataSize = true;*/
+				//_($data,1); //dont show data
 			}	
-			$offset = $this->dpc_addr[$dpc];
-			//compute new length and remaing extra space
-			$old_length = $this->dpc_length[$dpc];
-			$current_length = strlen($data);
-			$dock_length = $old_length + $this->extra_space;
-			
+
 			//checkDataSize
 			if (($checkDataSize===true) && ($current_length!=$old_length)) {
-			if ($current_length <= $dock_length) {
+			  $offset = $this->dpc_addr[$dpc];
+			  //compute new length and remaing extra space
+			  $old_length = $this->dpc_length[$dpc];
+			  $current_length = strlen($data);
+			  $dock_length = $old_length + $this->extra_space;
+							
+			  if ($current_length <= $dock_length) {
 				//clean mem var
 				$c = str_repeat(' ',$dock_length);
 				$this->shared_buffer = substr_replace($this->shared_buffer,$c,$offset,$dock_length);	
@@ -460,10 +461,10 @@ class kernelv2 {
 				$this->dpc_length[$dpc] = $current_length;
 				$this->savestate($shm_max);
 				
-				echo "$dpc Ok!\n";
+				_("$dpc Ok!",1);
 				_dump("UPDATE\n\n\n\n" . $this->shared_buffer);
-			}
-			else
+			  }
+			  else
 				die($dpc . " error, increase extra space!\n"); 
 		    }//checkDataSize;
 		}
@@ -503,7 +504,7 @@ class kernelv2 {
 			
 			//$this->scheduleDataStream(); //cron...
 		}
-		echo $data . "\n\n";
+		_($data,2);
 		
 		if (!$data) return false;	
 		
@@ -534,13 +535,13 @@ class kernelv2 {
 				
 			$this->savestate($shm_max);
 				
-			echo "$dpc Ok!\n";
-			_dump("INSERT:\n\n\n\n" . $this->shared_buffer);
+			_("$dpc Ok!",1);
+			_dump("INSERT\n\n\n\n" . $this->shared_buffer);
 		}
 		else	
-			$dpc . " error, increase data space!\n";		
+			_($dpc . " error, increase data space!",1);		
 		
-		echo "Data : " . $databytes . "\n";
+		_("Data : " . $databytes, 1);
 	  }
 			
 	  return ($data);	      
@@ -557,15 +558,14 @@ class kernelv2 {
 	  */
 	  
       if(!shmop_delete($this->dpc_shm_id)) {
-        echo "Couldn't mark shared memory block for deletion.\n";
+        _("Couldn't mark shared memory block for deletion",1);
       }	  
 	  shmop_close($this->dpc_shm_id);	
 	  $this->dpc_shm_id = null;   
 	  
 	  //delete id file
-	  echo "Deleting state..";
 	  unlink("shm.id");
-	  echo "Ok!\n";   
+	  _("Deleting state..Ok!",1);   
    }
    
    private function shutdown() {
@@ -576,7 +576,7 @@ class kernelv2 {
 	      get_resource_type($printout)=='printer')
    	    printer_close($printout);	
    
-	  echo "\nShutdown....\n";
+	  _("\nShutdown....\n",1);
       if ($this->usemem) $this->closememdpc();
    }       
    
@@ -665,7 +665,7 @@ class kernelv2 {
    
    private function load_dpc_tree() {
    	
-	   echo "loading dpc modules...\n";	
+	   _("loading dpc modules...",1);	
 	   $libs = $this->read_dpcs();
 	   //echo "loading dpc extensions...\n";	
 	   //$exts = $this->read_extensions();
@@ -695,16 +695,16 @@ class kernelv2 {
 			  //add extra space for reloading
 			  $this->shared_buffer .= str_repeat(' ',$this->extra_space);
 			  
-			  echo $dpcf . " Ok\n";
+			  _($dpcf . " Ok",1);
 		    }
-		    else {
-	          echo $dpcf . " Error\n";
-		    }	 
+		    else 
+	          _($dpcf . " Error",1);
+	 
 		  }
 	    }
 	    //print $shared_buffer;
 	    $totalbytes = strlen($this->shared_buffer);
-	    echo "\nTotal Bytes : ",$totalbytes,"\n";
+	    _("\nTotal Bytes : ".$totalbytes,1);
 		
 		//print_r($this->dpc_addr);
 		//print_r($this->dpc_length);
@@ -713,130 +713,7 @@ class kernelv2 {
 	  }
 	  else
 	    die("Dpc tree error. System Halted.\n"); 		
-   }   	
-	
-	//check dpc modules for source editing!!!!(dif in size)
-	//check if a new file added in dir also
-	/*private function check_dpcs() {
-	
-	   echo "check dpc modules...\n";	
-	   $libs = $this->read_dpcs();
-	   //echo "loading dpc extensions...\n";	
-	   //$exts = $this->read_extensions();
-	   
-	   if (is_array($exts)) $tree = array_merge($libs,$exts); 
-	                   else $tree = $libs;
-	   //print_r($tree);  
-	  
-	   if ($libs) {
-	   //print_r($libs);
-	   //echo ".....\n";
-	    $offset = 0;
-	    foreach($tree as $dpc_id=>$dpc_mod) {
-		  $dpcf = trim($dpc_mod);
-	      if (($dpcf!='') && ($dpcf[0]!=';')) {
-		
-		    //$modules[] = $dpc_mod; 
-			if (is_file($dpcf)) {
-		      $checked_dpc_size = filesize($dpcf)+$this->extra_space;
-			  
-		      if ($checked_dpc_size) {
-			    if ($checked_dpc_size!=$this->dpc_length[$dpcf]) {
-			      $ret .= $dpcf . " Changed\n";
-				  $this->reload_dpc_at_runtime($dpcf);
-			    }	
-			    else	
-			      $ret .= $dpcf . " Ok\n";
-		      }
-		      else {
-	            $ret .= $dpcf . " Missing\n";
-		      }
-			}
-			else { //???
-	          $ret .= $dpcf . " New entry\n";
-			  $this->reload_dpc_at_runtime($dpcf);
-		    }
-			  	 
-		  }
-	    }
-	  
-	    $this->prn($ret);
-		echo $ret;
-	  
-        return true; 
-	  }
-	  else
-	    return false; 		
-	}*/
-	/*
-    private function reload_dpc_at_runtime($dpcf) {
-       
-	    if (is_file($dpcf)) { 
-   
-		    $shared_dpc = @file_get_contents($dpcf);
-			
-		    if ($shared_dpc) {
-			
-			  if ($offset = $this->dpc_addr[$dpcf]) {//exist
-			    $this->dpc_addr[$dpcf] = $offset; //the same
-				//compute new lenght and remaing extra space
-				$old_length = $this->dpc_length[$dpcf];
-				$current_length = strlen($shared_dpc);
-				$dock_lenght = $old_length + $this->extra_space;
-				if ($current_length<=$dock_lenght) {
-				
-				  $remaining = $dock_lenght - $current_lenght; 
-			      //$this->dpc_length[$dpcf] = $current_length+$remaining;//ALLWAYS SAME
-				  $data = $shared_dpc . str_repeat(' ',$remaining);
-				  $this->shared_buffer = substr_replace($this->shared_buffer,$data,$offset,$dock_length);
-				}
-				else
-				  echo $dpcf . " Error: increase extra space!";  
-			  }
-			  else {//add new
-			    $offset = strlen($this->shared_buffer); //at the end
-			    $this->dpc_addr[$dpcf] = $offset;			
-			    $this->dpc_length[$dpcf] = strlen($shared_dpc)+$this->extra_space;
-			    $offset+=$this->dpc_length[$dpcf];			
-			    //add data space
-		        $this->shared_buffer .= $shared_dpc;
-			    //add extra space for reloading
-			    $this->shared_buffer .= str_repeat(' ',$this->extra_space);
-			  }
-			  echo $dpcf . " Ok\n";
-			  $ret = "Ok!";
-		    }
-		    else {
-	          echo $dpcf . " Error\n";
-			  $ret = "Error!";
-		    }	
-			
-	        //print $shared_buffer;
-	        $totalbytes = strlen($this->shared_buffer);
-	        echo "\nTotal Bytes : ",$totalbytes,"\n";
-			
-            if ($this->usemem) $this->closememdpc(); //destroy
-	  
-	        $shm_max = $totalbytes; 
-	  			
-	        echo "Allocate shared memory segment ...\n"; //create
-            $this->dpc_shm_id = shmop_open(0xfff, "c", 0644, $shm_max);
-            if(!$this->dpc_shm_id) 
-				die("Couldn't create shared memory segment. System Halted.\n");
-	        else {  
-				$shm_bytes_written = shmop_write($this->dpc_shm_id, $this->shared_buffer, 0);
-				if($shm_bytes_written != $shm_max) {
-					echo "Couldn't write the entire length of data\n";
-				}
-				else	
-					$this->savestate($shm_max);		 						
-			}
-			//return ($totalbytes);
-			return ($ret);
-		}
-		
-		return false;			   
-    } */ 	   
+   }   	   
    
    
     //UTILS
@@ -922,11 +799,11 @@ class kernelv2 {
 		
 		
 		$databytes = strlen($data);	
-		echo "Data : " . $databytes . "\n";
+		_("Data : " . $databytes,1);
 		*/
-		echo "SERVER print"."\n\r";		
+		_("SERVER print");		
 		$totalbytes = strlen($this->shared_buffer);
-	    echo "\nTotal Bytes : ".$totalbytes. '(' . memory_get_usage() .")\n";
+	    _("\nTotal Bytes : ".$totalbytes. '(' . memory_get_usage() .")",1);
 		return true;
     } 	
    
