@@ -1,5 +1,6 @@
 <?php
-   $glevel = 1;
+define ("GLEVEL", 1); 
+
    function _($str, $level=0, $crln=true) {
 	    global $glevel;
 	    $cr = $crln ? PHP_EOL : null;
@@ -21,27 +22,19 @@
    
 class agentds {
 
-   var $daemon_ip;
-   var $daemon_port;
-   var $daemon_type;
-   var $dmn;
-   var $use;
-   var $mysh;
-   var $agent;
+   var $daemon_ip, $daemon_port, $daemon_type;
+   var $dmn, $agent;
    
    var $agn_mem_type = 0;//shared 1 vs convensional
    var $agn_mem_store;//string that holds serial data (string functions =0=)
    
-   var $shm_id;
-   var $agn_shm_id;
-   
-   var $agn_addr;
-   var $agn_length;
+   var $shm_id, $agn_shm_id;
+   var $agn_addr, $agn_length;
    var $shared_buffer;//used by shared shm functions -1-
    var $agn_attr;
    
    //environment vars
-   var $env, $promptString;
+   var $env, $verboseLevel, $promptString;
 
    var $active_agent,$active_o_agent; 
    var $resources,$timer,$scheduler;
@@ -50,7 +43,7 @@ class agentds {
    var $window, $agentbox;  
    var $echoLevel, $ldscheme, $argbatch;	
 
-   function agentds($dtype,$ip='127.0.0.1',$port='19125',$dacip='127.0.0.1',$dacport='19123') { 
+   function __construct($dtype,$ip='127.0.0.1',$port='19125',$dacip='127.0.0.1',$dacport='19123') { 
 	  $argc = $GLOBALS['argc'];
 	  $argv = $GLOBALS['argv'];
 	  //print_r($argv);
@@ -61,7 +54,7 @@ class agentds {
 	  $this->agn_length = array();
 	  $this->shared_buffer = null;
 	  
-	  $this->use = null;
+	  $this->verboseLevel = GLEVEL;	  
 	  $this->agent = 'SH';//default
 
 	  //argv1 is daemon type -param or batchfile .ash
@@ -171,7 +164,7 @@ class agentds {
    
    function startdaemon() {
    
-      $this->dmn = new daemon($this->daemon_type,true);//'standalone',false);
+      $this->dmn = new daemon($this->daemon_type,true,$this);//'standalone',false);
 	  //$this->dmn = new daemon('inetd',true);
 	  //$this->dmn = new daemon('standalone',true);
 	  //$this->dmn = new daemon('xyz',true);	  
@@ -187,7 +180,7 @@ class agentds {
 									  "getresource", "getresourcec", "showresources", 
 									  "findresource", "findresourcec", "setresource", "delresource",
 									  "checkschedules", "showschedules", "setschedule",
-									  "who", "startgtk", "system", "batch", "***"));
+									  "who", "http", "startgtk", "system", "batch", "***"));
       //list of valid commands that must be accepted by the server	
 	  
       $this->dmn->CommandAction ("help", array($this,"command_handler")); //add callback
@@ -224,6 +217,7 @@ class agentds {
       $this->dmn->CommandAction ("showschedules", array($this,"command_handler"));
 	  $this->dmn->CommandAction ("setschedule", array($this,"command_handler"));
       $this->dmn->CommandAction ("who", array($this,"command_handler"));
+	  $this->dmn->CommandAction ("http", array($this,"command_handler"));	  
       $this->dmn->CommandAction ("startgtk", array($this,"command_handler"));	  
 	  $this->dmn->CommandAction ("system", array($this,"command_handler"));
 	  $this->dmn->CommandAction ("batch", array($this,"command_handler"));
@@ -239,8 +233,32 @@ class agentds {
       $this->dmn->listen(1); 	    	       
    }
    
+   private function exebatchfile(&$dmn,$file=null,$w=false) {
+	    if ((!$file) || ($file=='.ash')) //empty argbatch 
+			$file = 'init.ash';
+		
+		$batchfile = getcwd() . '/' . $file; 
+		
+		if ((is_readable($batchfile)) && ($f = @file($batchfile))) {
+			
+			if ($w)
+			  _('Init batch file: ' . $batchfile);			
+			
+			if (!empty($f)) {
+		      foreach ($f as $command_line) {
+				if (trim($command_line)) {
+					 //echo "-" . $command_line;
+                     $dmn->dispatch($command_line,null);
+                }
+		      }		  
+			}
+			return true;	
+		}
+		return false;
+   }   
+   
    //general purpose commands
-   function command_handler ($command, $arguments, $dmn) {
+   public function command_handler ($command, $arguments, $dmn) {
    
      switch ($command) {
         case 'HELP':
@@ -409,10 +427,10 @@ class agentds {
 
 		case 'SETSCHEDULE' :
 		        $sh = $this->get_agent('scheduler');
-				$entry = (array)$sh->schedule($arguments[0],$arguments[1],$arguments[2]);				
+				$entry = $sh->schedule($arguments[0],$arguments[1],$arguments[2]);				
 				$this->update_agent($sh,'scheduler');
 				
-				$dmn->Println(implode(' ',$entry));
+				$dmn->Println($entry);
 				return true;
 		        break;
 				
@@ -420,7 +438,13 @@ class agentds {
 		        $sessions = $this->show_connections(1,$arguments[0]);//$dmn->show_connections();
 				$dmn->Println($sessions);
 				return true;
-		        break;										
+		        break;	
+
+		case 'HTTP':
+		        $h = $this->httpcl($arguments[0],$arguments[1],$arguments[2]);
+				$dmn->Println($h);
+				return true;
+		        break;					
 				
 		case 'STARTGTK':
 		        if ($this->gtk) {
@@ -445,33 +469,8 @@ class agentds {
         }		
    }  
    
-   function exebatchfile(&$dmn,$file=null,$w=false) {
-	    if ((!$file) || ($file=='.ash')) //empty argbatch 
-			$file = 'init.ash';
-		
-		$batchfile = getcwd() . '/' . $file;
-		if ($w)
-			_('Init batch file: ' . $batchfile); 
-		
-		if ((is_readable($batchfile)) && ($f = @file($batchfile))) {
-			if (!empty($f)) {
-		      foreach ($f as $command_line) {
-				if (trim($command_line)) {
-					 echo "-" . $command_line . "\n";
-                     $dmn->dispatch($command_line,null);
-                }
-		      }
-			  //if (!$file) //init
-				 // _(@file_get_contents($batchfile));			  
-			}
-			return true;	
-		}
-		 
-		return false;
-   }
-   
    //agent command dispatcher (all *** commands)
-   function agent_handler($command, $arguments, $dmn) {
+   public function agent_handler($command, $arguments, $dmn) {
    		
 		//create command line from daemon			
 		$shell_command = $command . " " . implode(' ',$arguments);			
@@ -481,7 +480,8 @@ class agentds {
 		  if (method_exists($this->active_o_agent,$command))
 		    $ret = $this->active_o_agent->$command($arguments[0],$arguments[1],$arguments[2]);
 		  else
-		    $ret = "Invalid command.\n\n" . implode("\n",get_class_methods($this->active_o_agent));  
+		    $ret = "Invalid command.\n\n" . 
+					implode("\n",get_class_methods($this->active_o_agent)) . "\n";  
 		  
 		  $dmn->Println ($ret); 
 		  return true;  
@@ -492,33 +492,8 @@ class agentds {
 		}
    }   
    
-   //WARNING::after exec crash at connections
-  /* function exist_dpc_server($address,$port) {
-	  
-      $fp = @stream_socket_client("tcp://$address:$port", $errno, $errstr, 30);
-	  
-      if (!$fp) {
-	  
-        echo "$errstr ($errno)\n";
-        return false;
-      } 
-	  else {
-        $ret = fgets($fp,7);
-        echo $ret;
-        fclose($fp);
-		
-        if (stristr('phpdac5',$ret)) 
-		  return true;
-		else 
-		  return false; 
-      }   
-   } */ 
-   
-   ////////////////////////////////////////////////////////// LOW-LEVEL AGENTS HANDLERS
-   ////////////////////////////////////////////////////////// called by HI-LEVEL HANDLERS
-
    //buffer2 used as optional when reconf-clean mem  
-   function openmemagn($buffer,$buffer2=null) {
+   private function openmemagn($buffer,$buffer2=null) {
    
       $shm_max = strlen($buffer) + strlen($buffer2);
    
@@ -552,7 +527,7 @@ class agentds {
 	  }  
    }
    
-   function closememagn() {
+   private function closememagn() {
    
       if ($this->agn_mem_type==1) {//shared	   
    	    if (!$this->agn_shm_id) return -1;
@@ -575,7 +550,7 @@ class agentds {
    }   
    
    //save shared mem resource id and mem alloc arrays
-   function savestate($shm_max_mem) {
+   private function savestate($shm_max_mem) {
    
 		$fd = @fopen( "agn.id", "w" );
 
@@ -595,7 +570,7 @@ class agentds {
 		return true;
    }   
    
-   function addmemagn($agent,$agn_serialized) {
+   private function addmemagn($agent,$agn_serialized) {
      
 	  //if ($agent=='scheduler') {
       //echo "\n,.",strlen($this->shared_buffer)/*,$this->shared_buffer*/;
@@ -641,7 +616,7 @@ class agentds {
 	  }	
    }
    
-   function updatememagn($agent,$agn_serialized) {
+   private function updatememagn($agent,$agn_serialized) {
    
       //replace agent info table  
 	  $a_index = $this->agn_addr[$agent];			
@@ -686,7 +661,7 @@ class agentds {
 	  return false;	
    }
    
-   function removememagn($agent) {
+   private function removememagn($agent) {
    
       $a_index = $this->agn_addr[$agent];   
       $a_size = $this->agn_length[$agent];
@@ -721,7 +696,7 @@ class agentds {
 	  return true;
    }
    
-   function clean_mem_store() {
+   private function clean_mem_store() {
       $offset = 0;
 	  //var_dump($this->agn_addr);
 	  //var_dump($this->agn_length);	  
@@ -771,7 +746,7 @@ class agentds {
 	  
    }
    
-   function cleanmemagn() {
+   private function cleanmemagn() {
    
 	  $shm_max = 0;
 	  
@@ -883,7 +858,7 @@ class agentds {
 	   }
    }  
    
-   function create_agent($agent,$domain=null,$include_ip=null,$as_name=null,$type='dpc',$includeonly=false) {
+   private function create_agent($agent,$domain=null,$include_ip=null,$as_name=null,$type='dpc',$includeonly=false) {
       global $__DPC;  
 	  $dpc = $domain ? : 'agents';
    	  $class = strtoupper($agent).'_DPC';	  
@@ -950,7 +925,7 @@ class agentds {
 	  return false;	 	   
    } 
    
-   function destroy_agent($agent) {
+   private function destroy_agent($agent) {
    
 	  $o_agent = $this->get_agent($agent);
 	  
@@ -983,7 +958,7 @@ class agentds {
    }
    
    //update the object data in shared mem
-   function update_agent(&$o_agent,$agent) {
+   public function update_agent(&$o_agent,$agent) {
    
 	  //var_dump($this->agn_addr);
 	  //var_dump($this->agn_length);	  
@@ -1028,7 +1003,7 @@ class agentds {
    } 
    
    //return object pointer of agent OR serialized string of agent
-   function get_agent($agent,$serialized=null) {
+   public function get_agent($agent,$serialized=null) {
 
 	  //echo $agent,"\n>>>>>>>>>>>>>";
       if (isset($this->agn_addr[$agent])) {
@@ -1069,7 +1044,7 @@ class agentds {
    }    
    
    //call agent's methods from cmd line!!!
-   function call_agent($agent,$daemon) {
+   public function call_agent($agent,$daemon) {
    
 		$o_agent = $this->get_agent($agent);
 	  
@@ -1097,7 +1072,7 @@ class agentds {
    }
    
    //uncall agent from cmd
-   function uncall_agent($daemon) {
+   private function uncall_agent($daemon) {
    
 	  if (is_object($this->active_o_agent)) {   
 	  
@@ -1114,7 +1089,7 @@ class agentds {
    
    //call agent from sh mem buffer (client version)
    //use local
-   function call_agentc($agent) {
+   private function call_agentc($agent) {
    
 		
 		$s_agent = $this->get_agent($agent,1);
@@ -1127,12 +1102,12 @@ class agentds {
    }
    
    //send agent to other agent station
-   function move_agentc($agent,$to) {
+   private function move_agentc($agent,$to) {
    }   
    
    //accept agent from other agent station
    //$from = ip:port
-   function accept_agentc($agent,$from,$include=null) {
+   private function accept_agentc($agent,$from,$include=null) {
    
       //get agent
       $f_agent = file_get_contents("phpagn5://$from:19125/" . $agent);//call callagentc from $from
@@ -1174,7 +1149,7 @@ class agentds {
 	  return ($ret);	   
    }
    
-   function show_agents() {
+   private function show_agents() {
    
       if (!is_array($this->agn_addr)) return -1;
 	  
@@ -1208,7 +1183,7 @@ class agentds {
 	  return ($ret);
    }
    
-   function free_agents() {
+   private function free_agents() {
    
       if ($this->gtk) {
 		$this->gtkds_conn->set_async_code("
@@ -1231,7 +1206,7 @@ class agentds {
 	     printer_write($printout,$message."\n\r");  	 
    }
    
-   function show_connections($show=null,$dacserver=null) {
+   private function show_connections($show=null,$dacserver=null) {
    
       if ($dacserver) {//get sesions from phpdac server's daemon...
 	    $sret = $this->get_agent('resources')->get_resourcec('_sessions',$this->phpdac_ip,$this->phpdac_port);
@@ -1269,6 +1244,136 @@ class agentds {
 	  _(PHP_EOL . "Shutdown...");
       $this->free_agents();
    } 
+   
+   
+	public function httpcl($url=null, $user=null,$password=null) {
+		if (!$url) return null;
+		
+		//require_once($this->ldscheme . "tcp/sasl.lib.php");
+		//require_once($this->ldscheme . "tcp/httpclient.lib.php");		
+		//include at agents.ini
+		
+		$http=new httpclient;
+		$http->timeout=0;
+		$http->data_timeout=0;
+		$http->debug=0;//1
+		$http->html_debug=0;//1				
+		$http->user_agent="Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)";
+		$http->follow_redirect=0;
+		$http->prefer_curl=0;
+		//$user="info@e-basis.gr";
+		//$password="basis2012!@";
+		$realm="";       /* Authentication realm or domain      */
+		$workstation=""; /* Workstation for NTLM authentication */
+		$authentication=(strlen($user) ? UrlEncode($user).":".UrlEncode($password)."@" : "");
+				
+		$url="http://".$authentication.$url;//"www.php.net/";
+				
+		$error=$http->GetRequestArguments($url,$arguments);
+
+		if(strlen($realm))
+			$arguments["AuthRealm"]=$realm;
+
+		if(strlen($workstation))
+			$arguments["AuthWorkstation"]=$workstation;
+
+		$http->authentication_mechanism=""; // force a given authentication mechanism;
+		$arguments["Headers"]["Pragma"]="nocache";
+				
+		_("Opening connection to: " . HtmlSpecialChars($arguments["HostName"]),1);
+		flush();
+		$error=$http->Open($arguments);
+				
+		if ($error=="") {
+			_("Sending request for page: " . HtmlSpecialChars($arguments["RequestURI"]),1);
+			if(strlen($user))
+				_("\nLogin:    ".$user."\nPassword: ".str_repeat("*",strlen($password)),2);
+			_('',2);
+			flush();
+			$error=$http->SendRequest($arguments);
+			_('',2);
+
+			if($error=="") {
+				_("Request:\n\n".HtmlSpecialChars($http->request),2);
+				_("Request headers:\n",2);
+				for(Reset($http->request_headers),$header=0;$header<count($http->request_headers);Next($http->request_headers),$header++)
+				{
+					$header_name=Key($http->request_headers);
+					if(GetType($http->request_headers[$header_name])=="array")
+					{
+						for($header_value=0;$header_value<count($http->request_headers[$header_name]);$header_value++)
+							_($header_name.": ".$http->request_headers[$header_name][$header_value],2);
+					}
+					else
+						_($header_name.": ".$http->request_headers[$header_name],2);
+				}
+				_('',2);
+				flush();
+				
+				$headers=array();
+				$error=$http->ReadReplyHeaders($headers);
+				_('',2);
+				if($error=="")
+				{
+					_("Response status code:\n".$http->response_status,2);
+					switch($http->response_status)
+					{
+						case "301":
+						case "302":
+						case "303":
+						case "307":
+							_(" (redirect to ".$headers["location"].")\nSet the follow_redirect variable to handle redirect responses automatically.",2);
+							break;
+					}
+					_('');
+					_("Response headers:\n",2);
+					for(Reset($headers),$header=0;$header<count($headers);Next($headers),$header++)
+					{
+						$header_name=Key($headers);
+						if(GetType($headers[$header_name])=="array")
+						{
+							for($header_value=0;$header_value<count($headers[$header_name]);$header_value++)
+								_($header_name.": ".$headers[$header_name][$header_value],2);
+						}
+						else
+							_($header_name.": ".$headers[$header_name],2);
+					}
+					_('',2);
+					flush();
+					
+					//echo "Response body:\n\n";
+					/*You can read the whole reply body at once or
+					block by block to not exceed PHP memory limits.
+					*/
+					
+					$error = $http->ReadWholeReplyBody($body);
+					//if(strlen($error) == 0)
+						//echo HtmlSpecialChars($body);
+					
+					/*for(;;)
+					{
+						$error=$http->ReadReplyBody($body,1000);
+						if($error!="" || strlen($body)==0)
+							break;
+						//echo $body;//HtmlSpecialChars($body);
+						//return...
+					}*/
+
+					_('',2);
+					//flush();
+				}
+			}
+			$http->Close();
+			
+		}
+		
+		if(strlen($error)) {
+			_("Error: ".$error,1);
+			return null;	
+		}
+
+		return ($body);		
+	}   
 
 }
 

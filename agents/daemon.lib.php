@@ -68,14 +68,17 @@ class daemon {
 		protected $idle_timeout;
 		
 		var $cpool;
+		var $env;
 		
-        function daemon($type='standalone',$prompt=true,$env=null) {
+        function __construct($type='standalone',$prompt=true,$env=null) {
 		
                 define ("SERVER_TYPE", $type);//added by me!
                 define ("SHOW_PROMPT", $prompt); //should a prompt be displayed? 
 				$this->active = null;
 				$this->timeout = 1*30;//=secs
-				$this->idle_timeout = 1*30;//=secs				
+				$this->idle_timeout = 1*30;//=secs
+
+				$this->env = $env;	
 				
 		        if (!extension_loaded('sockets')) dl('php_sockets.dll');
                 set_time_limit (0); 
@@ -84,7 +87,11 @@ class daemon {
         }
 
         function verbose ($level, $msg) {
-                if (VERBOSE && $level <= VERBOSE_LEVEL && SERVER_TYPE != 'inetd') {
+			    $vl = $this->env->verboseLevel ? 
+				      $this->env->verboseLevel :
+					  VERBOSE_LEVEL;
+					  
+                if (VERBOSE && $level <= $vl && SERVER_TYPE != 'inetd') {
                         echo str_repeat ("*", $level) . " $msg " . str_repeat ("*", $level)
                         . "\n";
                 }
@@ -127,7 +134,7 @@ class daemon {
 				           $this->cpool[$i] = new connect_pool();	
 						   
 						   
-                        $this->verbose (1, "Server Ready for connections");
+                        $this->verbose (2, "Server Ready for connections");
                         /* This is being run as a standalone server. lets create a socket
                          */
                         $sock = socket_create (AF_INET, SOCK_STREAM, SOL_TCP);
@@ -213,7 +220,7 @@ class daemon {
                 //if (SERVER_TYPE != 'inetd') {
 				        //if (!$socket) $socket = $this->msg_socket;
 						socket_getpeername ($this->cpool[$id]->resource, $peer_addr, $peer_port);
-                        $this->verbose (1, "---------------Connection closed from $id>$peer_addr:$peer_port ------------");
+                        $this->verbose (2, "---------------Connection closed from $id>$peer_addr:$peer_port ------------");
                         //socket_shutdown ($this->clientFD[$id]);
 						socket_close($this->cpool[$id]->resource);
 
@@ -275,7 +282,7 @@ class daemon {
 			   
                         //$this->println ('*** Server Shutting down ***');
 						$this->BroadPrint ('*** Server Shutting down ***');
-                        $this->verbose (1, '=======Server Shutdown=========');
+                        $this->verbose (2, '=======Server Shutdown=========');
                         //$this->close ();
 						//socket_shutdown ($this->socket);
 						socket_close($this->socket);
@@ -396,7 +403,7 @@ class daemon {
                   if ($this->cpool[$id]->session['First_time']==true) {
 				        //if (!$socket) $socket = $this->msg_socket;
                         socket_getpeername ($this->cpool[$id]->resource, $peer_addr, $peer_port);
-                        $this->verbose (1, "---------Connection from $id>$peer_addr:$peer_port-----------");
+                        $this->verbose (2, "---------Connection from $id>$peer_addr:$peer_port-----------");
                         $this->Println ($this->Header,$id);
                   }
                   $this->cpool[$id]->session['First_time'] = false;
@@ -575,10 +582,9 @@ class daemon {
                                             }	
 										}
 										else {
-                                                //NO EVENTS... 
-                                                $this->Println ('`' . $command_set['command'] . '\' defined but not implemented');
-                                                $this->verbose (1, '`' . $command_set['command'] . '\'
-                                                not implemented!');
+                                            //NO EVENTS... 
+                                            $this->Println ("'" . $command_set['command'] . "' defined but not implemented");
+                                            $this->verbose (2, "'" . $command_set['command'] . "' not implemented!");
                                         }
                                 /*} else {
                                         $this->showError ('NOTIFY', 'Command `' .

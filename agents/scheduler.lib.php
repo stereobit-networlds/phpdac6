@@ -10,7 +10,7 @@ class scheduler {
 
    var $timeline, $env;
  
-   function scheduler($env=null) {
+   function __construct($env=null) {
    
 	 //var_dump($env->agn_addr);   
    
@@ -18,7 +18,7 @@ class scheduler {
 	 $this->env = $env;
 	 
 	 //no need (see schedule method)
-     //register_tick_function(array(&$this,"checkschedules"),true);		 
+     //register_tick_function(array($this,"checkschedules"),true);		 
    }
    
 	function agents() {
@@ -27,7 +27,9 @@ class scheduler {
 	}   
    
    public function schedule($agent,$frequency,$time) {
-   
+	 if ($this->findschedule($agent)==true)
+		 return false;
+		 
      $schedules = array();
      $schedules['agent'] = $agent;
 	 
@@ -39,13 +41,13 @@ class scheduler {
 	 
 	 $schedules['time'] = $time;
 	 
-	 $timein = time();
+	 //$timein = time();// + rand(10,1000); 
 	 //due to speed up it is possible to have
 	 //multiple schedules entry in the same time, so add 1 sec
 	 if (array_key_exists($timein,$this->timeline))
-	   $this->timeline[$timein+1] = $schedules;  
+	   $this->timeline[] = $schedules;  	
 	 else
-	   $this->timeline[$timein] = $schedules; 
+	   $this->timeline[] = $schedules; 
 	 
 	 //$this->env->update_agent($this,'scheduler'); must called by caller to update env
 	 //print_r($this->timeline); //test scheduler
@@ -54,8 +56,10 @@ class scheduler {
 	 $this->env->update_agent($this,'scheduler');
 	 
 	 //re-register
-	 unregister_tick_function(array(&$this,"checkschedules"));
-     register_tick_function(array(&$this,"checkschedules"),true);	 	 
+	 unregister_tick_function(array($this,"checkschedules"));
+     register_tick_function(array($this,"checkschedules"),true);	 	 
+	 
+	 return (implode("\t", $schedules));//true;
    }
    
    public function checkschedules() {
@@ -98,37 +102,22 @@ class scheduler {
 	 else
 	   $last_time = $inittime;
 	 
-	 $agn = explode('.',$entry['agent']);
+	 $str = explode(' ',$entry['agent']);
+	 $agn = explode('.',$str[0]);
 	 $agent = $agn[0];
 	 $cmd = $agn[1]; 
+	 $p1 = $str[1];
+	 $p2 = $str[2];
+	 $p3 = $str[3];
 	  
 	 $now = time();  
-	 if ($now-$last_time>=$entry['time']) {
+	 if ($now-$last_time >= $entry['time']) {
 	 
 	   //echo $agent,"...\n";
-	   $o_agent = $this->env->get_agent($agent);	 
-       //print_r($o_agent);
-	   if (is_object($o_agent)) {   
+	   //in case of 'env' execute from env'
+	   if (($agent=='env') && (method_exists($this->env,$cmd))) {
 
-		  if (method_exists($o_agent,$cmd)) 
-		    $ret = $o_agent->$cmd();
-		  else
-		    $ret = "Invalid command.\n" . var_dump(get_class_methods($o_agent));  
-		  
-		  $this->env->dmn->Println ($ret);  
-	   	   
-	      $entry['lasttime'] = $now;
-		  $entry['counter'] = $entry['counter']+1;
-		  
-	      //$this->env->update_agent($this,'scheduler');		  
-	   
-	      return ($entry['freq']==0) ? 0 : $entry;//once or new array element 	   
-	   }
-	   else {
-	     //in case of 'env' execute from env'
-		 if (($agent=='env') && (method_exists($this->env,$cmd))) {
-
-			$ret = $this->env->$cmd(); 
+			$ret = $this->env->$cmd($p1,$p2,$p3); 
 			$this->env->dmn->Println ($ret);
 
 			$entry['lasttime'] = $now;
@@ -137,21 +126,37 @@ class scheduler {
 			//$this->env->update_agent($this,'scheduler');		  
 	   
 			return ($entry['freq']==0) ? 0 : $entry;//once or new array element 			   
-		 }
-		 else {
-			 //dmn dispatch, batch files, commands, etc
-			 $this->env->dmn->dispatch(str_replace('/',' ',$entry['agent']),null); 
+	   }
+	   else {
+			$o_agent = $this->env->get_agent($agent);	 
+			//print_r($o_agent);
+			if ((is_object($o_agent)) && (method_exists($o_agent,$cmd))) {   
 
-			 $entry['lasttime'] = $now;
-			 $entry['counter'] = $entry['counter']+1;
+				if (method_exists($o_agent,$cmd)) 
+					$ret = $o_agent->$cmd($p1,$p2,$p3);
+				else
+					$ret = "Invalid command.\n" . implode("\n",get_class_methods($o_agent)) . "\n";  
 		  
-			 //$this->env->update_agent($this,'scheduler');		  
+				$this->env->dmn->Println($ret);  
+	   	   
+				$entry['lasttime'] = $now;
+				$entry['counter'] = $entry['counter']+1;
+		  
+				//$this->env->update_agent($this,'scheduler');		  
 	   
-			 return ($entry['freq']==0) ? 0 : $entry;//once or new array element			 
-		 }
-		 /*else
-	       //echo "ERROR";
-	       return -1;//not an objet error...*/
+				return ($entry['freq']==0) ? 0 : $entry;//once or new array element 	   
+			}
+			else {
+				//dmn dispatch, batch files, commands, etc
+				$this->env->dmn->dispatch(str_replace("\\"," ",$entry['agent']),null); 
+
+				$entry['lasttime'] = $now;
+				$entry['counter'] = $entry['counter']+1;
+		  
+				//$this->env->update_agent($this,'scheduler');		  
+	   
+				return ($entry['freq']==0) ? 0 : $entry;//once or new array element			 
+			}
 	   }	           
      }
 	 else
@@ -159,22 +164,38 @@ class scheduler {
 	   return ($entry);//not executed yet 
   }
   
+  function findschedule($agent=null) {
+	  if (!$agent) return false;
+	  
+	  foreach ($this->timeline as $inittime=>$entry) {
+		/*
+		$str = explode(' ',$entry['agent']);
+		$ca = (is_array($str)) ? $str[0] : $str;
+		if ($ca==$agent)*/
+		if (strstr($agent,$entry['agent']))
+			return true;
+	  }	
+	  return false;
+	   
+  }
+  
   //show the schedules running ........
   function showschedules() {
-  
+     $header= true;
+     echo "Schedules\n";
      foreach ($this->timeline as $t=>$d) {
-	   $ret .= "[" . $t . "]\r\n";
-	   foreach ($d as $t=>$data)
-	     $ret .= $t . "=" . $data . "\r\n";
+	   if ($header) {		
+			echo implode("\t",array_keys($d)) ."\n";	 	
+			$header = false;
+	   }			
+	   echo implode("\t",$d) . "\n";	 		
 	 }  
-  
-     return ($ret);  
+     //return ($ret);  
   }
   
   function __destruct() {
   
-	  //unregister_tick_function(array(&$this,'checkschedules'));  
-	  //zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+	  unregister_tick_function(array($this,'checkschedules'));  
   }
   	 
 };
