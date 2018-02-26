@@ -13,12 +13,12 @@ define ("GLEVEL", 1);
 		if ($level<=GLEVEL)
 			echo ucfirst($str) . $cr;
 		
-		//echo null;
+		_dump(date ("Y-m-d H:i:s :").$str.PHP_EOL,'a+','/dumpsrv-'.$_SERVER['COMPUTERNAME'].'.log');
    }
    
    function _dump($data=null,$mode=null,$filename=null) {
 	   $m = $mode ? $mode : 'w';
-	   $f = $filename ? $filename : '/dumpsrv.log';
+	   $f = $filename ? $filename : '/dumpmem-'.$_SERVER['COMPUTERNAME'].'.log';
 
        if ($fp = @fopen (getcwd() . $f , $m)) {
            fwrite ($fp, $data);
@@ -202,7 +202,7 @@ class kernelv2 {
                 return false;
                 break;
         case 'DATE':
-                $dmn->Println (date ("H:i:s d/m/Y"));
+                $dmn->Println (date ("Y-m-d H:i:s"));
                 return true;
                 break;
         case 'SHUTDOWN':
@@ -433,31 +433,24 @@ class kernelv2 {
 		return true;
    }
    
-   private function getdpcmem($dpc) {
+   //fetch shared mem
+   private function loaddpcmem($dpc) {
+	    $dpc = $this->dehttpDpc($dpc);
+	   
+		if (isset($this->dpc_addr[$dpc])) {
    
-      if (isset($this->dpc_addr[$dpc])) {
-   
-        $my_dpc = shmop_read($this->dpc_shm_id, 
-	                         $this->dpc_addr[$dpc], 
-			  			     $this->dpc_length[$dpc]);
-        if(!$my_dpc) 
-          $ret = "$dpc : couldn't read from shared memory block\n";
-	    else
-          $ret = $my_dpc . 
-				 $this->dpc_addr[$dpc] .':'.
-				 $this->dpc_length[$dpc] .':'.
-				 $this->dpc_free[$dpc] ."\n";
-		  //echo $ret . "\n";
-	  }
-	  else
-	    $ret = "Invalid dpc!";
-			
-	  return ($ret);	      
-   }
+			return 
+			shmop_read($this->dpc_shm_id, 
+	                   $this->dpc_addr[$dpc], 
+			 	       $this->dpc_length[$dpc]);
+        }
+		return false; 	
+   }   
    
    //save calls,urls etc into shared mem
    private function savedpcmem($dpc,&$data) {
-		  
+	   $dpc = $this->dehttpDpc($dpc);
+	   
 	   if (isset($this->dpc_addr[$dpc])) {
 			//rewrite
 			//fetch dpc   
@@ -495,8 +488,8 @@ class kernelv2 {
 				$this->dpc_free[$dpc] = $remaining;
 				$this->savestate($shm_max);
 				
-				_("$dpc updated",1);
-				_dump("UPDATE\n\n\n\n" . $this->shared_buffer);
+				_("$dpc saved",1);
+				_dump("SAVE\n\n\n\n" . $this->shared_buffer);
 			  }
 			  else
 				die($dpc . " error, increase extra space!\n"); 
@@ -535,8 +528,8 @@ class kernelv2 {
 				
 				$this->savestate($shm_max);
 				
-				_("$dpc Ok",2);
-				_dump("INSERT\n\n\n\n" . $this->shared_buffer);
+				_("$dpc Ok",1);
+				_dump("LOAD\n\n\n\n" . $this->shared_buffer);
 			}
 			else	
 				die($dpc . " error, increase data space!");		
@@ -545,12 +538,42 @@ class kernelv2 {
 	   }
 	   
 	   return ($data);
-   }   
+   }    
+   
+   private function getdpcmem($dpc) {
+	   $dpc = $this->dehttpDpc($dpc);
+   
+      /*if (isset($this->dpc_addr[$dpc])) {
+   
+        $my_dpc = shmop_read($this->dpc_shm_id, 
+	                         $this->dpc_addr[$dpc], 
+			  			     $this->dpc_length[$dpc]);
+        if(!$my_dpc) 
+          $ret = "$dpc : couldn't read from shared memory block\n";
+	    else
+          $ret = $my_dpc . 
+				 $this->dpc_addr[$dpc] .':'.
+				 $this->dpc_length[$dpc] .':'.
+				 $this->dpc_free[$dpc] ."\n";
+		  //echo $ret . "\n";
+	  }
+	  else
+	    $ret = "Invalid dpc!";*/
+	  if ($data = $this->loaddpcmem($dpc))
+		  $ret = $data . 
+			     $this->dpc_addr[$dpc] .':'.
+				 $this->dpc_length[$dpc] .':'.
+				 $this->dpc_free[$dpc] ."\n";
+	  else
+		  $ret = "Invalid dpc!";
+	  
+	  return ($ret);	      
+   }	  
    
    //client version
    private function getdpcmemc($dpc) {
-	  $data = null; 
-	  $scheduleStream = true; //when true schedule datastreams else call url
+	  $dpc = $this->dehttpDpc($dpc);
+	  $data = null; 	  
 
       if (isset($this->dpc_addr[$dpc])) {
 		//fetch dpc   
@@ -571,7 +594,7 @@ class kernelv2 {
 				$user = 'info@e-basis.gr';
 				$pass = "basis2012!@";
 				
-				if (!$this->scheduler->findschedule("http\\".$dpc)) {
+				if (!$this->scheduler->findschedule($dpc)) {
 					$data = $this->httpcl($dpc,$user,$pass);
 					_($data,3); //show new data
 				}
@@ -664,10 +687,10 @@ class kernelv2 {
 			//$dpc = 'www.e-basis.gr/pdo.php';
 			$user = 'info@e-basis.gr';
 			$pass = "basis2012!@";
-			//if (!$this->scheduler->findschedule("http\\".$dpc)) 
+			if (!$this->scheduler->findschedule($dpc)) 
 				$data = $this->httpcl($dpc,$user,$pass);
-			//else
-				//$data = null; //bypass				
+			else
+				$data = null; //bypass				
 		}
 		
 		if (!$data) return false;	
@@ -680,7 +703,7 @@ class kernelv2 {
 		    ($this->shared_buffer_sepdata + $this->dataspace)) {
 			
 			//find index to start
-			$offset = 0;
+			$offset = 0; //$sb ????
 			foreach ($this->dpc_length as $size)
 				$offset += $size;
 			  
@@ -700,7 +723,7 @@ class kernelv2 {
 				
 			$this->savestate($shm_max);
 				
-			_("$dpc Ok",2);
+			_("$dpc Ok",1);
 			_dump("INSERT\n\n\n\n" . $this->shared_buffer);
 		}
 		else	
@@ -710,11 +733,7 @@ class kernelv2 {
 	  }
 			
 	  return ($data);	      
-   }  
-   //alias for scheduler use
-   public function call($dpc) {
-	   return $this->getdpcmemc($dpc);
-   }   
+   }    
    
    private function closememdpc() {
    
@@ -890,6 +909,17 @@ class kernelv2 {
    
    
     //UTILS
+	
+	//for data streams dpc address extract args
+	public function dehttpDpc($dpc) {
+		
+	  if (strstr($dpc,"\\")) { //data stream
+			//cut cmd params
+			$arg = explode("\\",$dpc);
+			return $arg[1];
+      }
+	  return $dpc; //as is
+    }   
 	
     public function prn($message) {
    

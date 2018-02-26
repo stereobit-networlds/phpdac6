@@ -6,11 +6,13 @@ define ("GLEVEL", 1);
 	    $cr = $crln ? PHP_EOL : null;
 		if ($level<=$glevel)
 			echo ucfirst($str) . $cr;
+		
+		_dump(date ("Y-m-d H:i:s :").$str.PHP_EOL,'a+');
    }
    
    function _dump($data=null,$mode=null,$filename=null) {
 	   $m = $mode ? $mode : 'w';
-	   $f = $filename ? $filename : '/dumpagn.log';
+	   $f = $filename ? $filename : '/dumpagn-'.$_SERVER['COMPUTERNAME'].'.log';
 
         if ($fp = @fopen (getcwd() . $f , $m)) {
             fwrite ($fp, $data);
@@ -108,8 +110,7 @@ class agentds {
 	  $this->env['os'] = $_SERVER['OS'];	  
 	  $this->env['domain'] = $_SERVER['USERDNSDOMAIN'];				 
 	  $this->env['appdata'] = $_SERVER['APPDATA'];	  
-	  $this->env['homepath'] = $_SERVER['HOMEPATH'];	  
-	  $this->env['name'] = $_SERVER['COMPUTERNAME'];	
+	  $this->env['homepath'] = $_SERVER['HOMEPATH'];	  	
 	  $this->env['host'] = $_SERVER['REMOTE_ADDR'];  
 	  //var_dump($this->env);	
 
@@ -277,7 +278,7 @@ class agentds {
                 return false;
                 break;
         case 'DATE':
-                $dmn->Println (date ("H:i:s d/m/Y"));
+                $dmn->Println (date ("Y-m-d H:i:s"));
                 return true;
                 break;
         case 'SHUTDOWN':

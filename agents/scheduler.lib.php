@@ -27,9 +27,12 @@ class scheduler {
 	}   
    
    public function schedule($agent,$frequency,$time) {
+	   
 	 if ($this->findschedule($agent)==true)
 		 return false;
-		 
+	 
+	 //echo $agent. "," . $frequency . "," , $time, "," ,">>>>>>>\n";	 
+	 
      $schedules = array();
      $schedules['agent'] = $agent;
 	 
@@ -101,17 +104,17 @@ class scheduler {
 	   $last_time = $entry['lasttime'];
 	 else
 	   $last_time = $inittime;
-	 
-	 $str = explode(' ',$entry['agent']);
-	 $agn = explode('.',$str[0]);
-	 $agent = $agn[0];
-	 $cmd = $agn[1]; 
-	 $p1 = $str[1];
-	 $p2 = $str[2];
-	 $p3 = $str[3];
 	  
 	 $now = time();  
 	 if ($now-$last_time >= $entry['time']) {
+		 
+	   $str = explode(' ',$entry['agent']);
+	   $agn = explode('.',$str[0]);
+	   $agent = $agn[0];
+	   $cmd = $agn[1]; 
+	   $p1 = $str[1];
+	   $p2 = $str[2];
+	   $p3 = $str[3];		 
 	 
 	   //echo $agent,"...\n";
 	   //in case of 'env' execute from env'
@@ -148,6 +151,7 @@ class scheduler {
 			}
 			else {
 				//dmn dispatch, batch files, commands, etc
+				$cmd = str_replace("\\"," ",$entry['agent']);
 				$this->env->dmn->dispatch(str_replace("\\"," ",$entry['agent']),null); 
 
 				$entry['lasttime'] = $now;
@@ -172,8 +176,18 @@ class scheduler {
 		$str = explode(' ',$entry['agent']);
 		$ca = (is_array($str)) ? $str[0] : $str;
 		if ($ca==$agent)*/
-		if (strstr($agent,$entry['agent']))
-			return true;
+
+		if (strstr($entry['agent'],"\\")) {
+			//cut cmd params
+			$arg = explode("\\",$entry['agent']);
+			$ca = $arg[1];//$arg[0] . "\\" . $arg[1];
+			if (strstr($ca,$agent))
+				return true;
+		}
+		else {
+			if (strstr($agent,$entry['agent']))
+				return true;
+		}
 	  }	
 	  return false;
 	   
@@ -188,7 +202,20 @@ class scheduler {
 			echo implode("\t",array_keys($d)) ."\n";	 	
 			$header = false;
 	   }			
-	   echo implode("\t",$d) . "\n";	 		
+
+	   if (strstr($d['agent'],"\\")) {	
+			//cut cmd params
+			$arg = explode("\\",$d['agent']);
+			$agent = $arg[1];//$arg[0] . "\\" . $arg[1];
+			$u = isset($arg[2]) ? '*' : null; //username
+			$p = isset($arg[3]) ? '*' : null; //password
+			echo $agent.$u.$p . "\t" . $d['freq'] . "\t" . 
+				$d['time']. "\t" . $d['lasttime'] . "\t" . 
+				$d['counter'] ."\n";
+			unset($arg);	
+	   }
+	   else
+		  echo implode("\t",$d) . "\n";	
 	 }  
      //return ($ret);  
   }
