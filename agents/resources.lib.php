@@ -21,9 +21,8 @@ class resources {
       $this->_resptr = array();	
 	  
 	  $this->ip2get = $env->phpdac_ip; 
-	  //echo 'zzzz',$this->ip2get,'ccccc',$this->port2get; 
-	  $this->port2get = $env->phpdac_port; //dac server port 
-	  $this->daemon_port = $env->daemon_port;//clients port
+	  $this->port2get = $env->phpdac_port;  
+	  $this->daemon_port = $env->daemon_port;
    }
   
    function set_resource($rname,$resource) {
@@ -31,11 +30,7 @@ class resources {
       //in case of resource name with spaces
       $rname = str_replace(' ','_',$rname);
 
-	  /*if (empty($resource)) {// network error
-	      echo 'zzz';
-	  	  print_r($this->_resources);
-	  }   
-	  else*/if (is_object($resource)) {
+	  if (is_object($resource)) {
 		//echo 'RESOURCE object:'.$rname. '(' . memory_get_usage() .")\n";
 	    $this->_resources[$rname] = serialize($resource);//serialized object???
 		$this->_resptr[$rname] = & $resource;//object instance		
@@ -64,7 +59,7 @@ class resources {
 	    //echo '>>>',$resource;
 	    return true;
 	  }
-      echo "WARNING:resource [$rname] failed to register!\r\n";
+      _("WARNING:resource [$rname] failed to register!",1);
 	  return false;
    }
    
@@ -80,7 +75,7 @@ class resources {
    
    //local version
    //name called by stream of server
-   function &get_resource($resource,$name=null) {
+   function get_resource($resource,$name=null) {
    
 	   //print_r($this->_resources); 
 	   //print_r($this->_resptr);	    
@@ -97,7 +92,7 @@ class resources {
 		   else //else scalar 
 		     $this->set_resource($resource,$r);//save it to local resource table	
 		    	 
-		   echo 'remote:[',$this->ip2get,']:',$resource,"\n";
+		   _('remote:['.$this->ip2get.']:'.$resource,2);
 		 }
 	   }
 	   /*elseif ($res = file_get_contents("phpres5://192.168.1.35:19125/" . $resource)) {
@@ -110,7 +105,7 @@ class resources {
 	       $rp = $this->create_resource($resource,$this->_resources[$resource]); 
 		 else  
 		   $rp = $this->_resptr[$resource];
-	     echo 'local:',$resource,"\n";
+	     _('local:'.$resource,2);
 	   }	 
 		 
 	   //print_r($this->_resources);
@@ -132,8 +127,8 @@ class resources {
    //remote version
    function get_resourcec($resource,$from=null,$port=null) {
    
-      $ip = ($from?$from:$this->ip2get);
-	  $po = ($port?$port:$this->port2get);
+      $ip = ($from ? $from : $this->ip2get);
+	  $po = ($port ? $port : $this->port2get);
 	   
       //if (!$port)
 	    //$port = '19123';//server port = default connection
@@ -147,8 +142,7 @@ class resources {
       //echo '>',$s_res,'<';   
 	  
 	  //copy it in local resources array
-	  if ($r=trim($s_res)) {
-
+	  if ($r = trim($s_res)) {
 	    //$this->create_resource($resource,$r); //PRINTER DLL?????
 	    return ($r);
 	  }
@@ -164,7 +158,7 @@ class resources {
 	   return false;	 
    }
    
-   function &create_resource($resource_name,$resource_string) {
+   function create_resource($resource_name,$resource_string) {
    
       switch ($resource_name) {
 	  
@@ -246,7 +240,7 @@ class resources {
 	     echo implode("\r\n",array_unique($hosts));	
 	   }
 	 }//local*/
-	 echo 'zzzzzzzzzz';
+	 //echo 'zzzzzzzzzz';
 	 //$res = $this->get_resourcec($resource,'192.168.1.247','19125');
 	 $res = file_get_contents("phpres5://192.168.1.247:19125/" . $resource);
 	 

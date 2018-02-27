@@ -10,7 +10,7 @@ define("SASL_CRAM_MD5_STATE_START",             0);
 define("SASL_CRAM_MD5_STATE_RESPOND_CHALLENGE", 1);
 define("SASL_CRAM_MD5_STATE_DONE",              2);
 
-class cram_md5_sasl_client_class
+class cram_md5_sasl_client
 {
 	var $credentials=array();
 	var $state=SASL_CRAM_MD5_STATE_START;

@@ -5,7 +5,7 @@
  * @(#) $Id: basic_sasl_client.php,v 1.1 2004/11/17 08:01:23 mlemos Exp $
  *
  */
-//namespace LIB\tcp; 
+//namespace LIB\agents; 
 
 define("SASL_BASIC_STATE_START",    0);
 define("SASL_BASIC_STATE_DONE",     1);

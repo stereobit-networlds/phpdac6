@@ -5,7 +5,7 @@
  * @(#) $Id: sasl.php,v 1.11 2005/10/31 18:43:27 mlemos Exp $
  *
  */
-//namespace LIB\tcp;
+//namespace LIB\agents;
 
 define("SASL_INTERACT", 2);
 define("SASL_CONTINUE", 1);
@@ -22,11 +22,9 @@ class sasl_interact_class
 	var $result;
 };
 
-
 class sasl_client_class
 {
 	/* Public variables */
-
 	var $error='';
 	var $mechanism='';
 	var $encode_response=1;
@@ -35,23 +33,16 @@ class sasl_client_class
 
 	var $driver;
 	var $drivers=array(
-		"Digest"   => array("digest_sasl_client_class",   "digest_sasl_client.lib.php"   ),
-		"CRAM-MD5" => array("cram_md5_sasl_client_class", "cram_md5_sasl_client.lib.php" ),
-		"LOGIN"    => array("login_sasl_client_class",    "login_sasl_client.lib.php"    ),
-		"NTLM"     => array("ntlm_sasl_client_class",     "ntlm_sasl_client.lib.php"     ),
-		"PLAIN"    => array("plain_sasl_client_class",    "plain_sasl_client.lib.php"    ),
-		"Basic"    => array("basic_sasl_client",    "/tcp/basic_sasl_client.lib.php"    )
+		"Digest"   => array("digest_sasl_client",   "digest_sasl_client"   ),
+		"CRAM-MD5" => array("cram_md5_sasl_client", "cram_md5_sasl_client" ),
+		"LOGIN"    => array("login_sasl_client",    "login_sasl_client"    ),
+		"NTLM"     => array("ntlm_sasl_client",     "ntlm_sasl_client"     ),
+		"PLAIN"    => array("plain_sasl_client",    "plain_sasl_client"    ),
+		"Basic"    => array("basic_sasl_client",    'agents/basic_sasl_client.lib.php')
 	);
 	var $credentials=array();
-	
-    function __construct($env=null) { //<<<<<<<<<<<<<
-		
-		$this->env = $env;
-	}
-	
 
 	/* Public functions */
-
 
 	Function SetCredential($key,$value)
 	{
@@ -81,7 +72,7 @@ class sasl_client_class
 		}
 		return(SASL_CONTINUE);
 	}
-
+	
 	Function Start($mechanisms, &$message, &$interactions)
 	{
 		if(strlen($this->error))
@@ -93,12 +84,12 @@ class sasl_client_class
 		{
 			$mechanism=$mechanisms[$m];
 			if(IsSet($this->drivers[$mechanism]))
-			{  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-		        //echo '>>>>>' . $this->env->ldscheme;
+			{
 				if(!class_exists($this->drivers[$mechanism][0]))
-					//require_once($this->env->ldscheme . $this->drivers[$mechanism][1]);
-				    require_once($this->drivers[$mechanism][1]);
-				$this->driver=new $this->drivers[$mechanism][0];
+					//require_once($this->drivers[$mechanism][1]);
+					require_once($this->env->ldscheme . $this->drivers[$mechanism][1]);
+				//$drv = '\LIB\tcp\\' . $this->drivers[$mechanism][0];
+				$this->driver= new $this->drivers[$mechanism][0];//$drv;
 				if($this->driver->Initialize($this))
 				{
 					$this->encode_response=1;
@@ -139,7 +130,6 @@ class sasl_client_class
 			return(SASL_FAIL);
 		return($this->driver->Step($this,$response,$message,$interactions));
 	}
-
 
 };
 

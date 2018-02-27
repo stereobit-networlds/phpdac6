@@ -11,7 +11,7 @@ define("SASL_LOGIN_STATE_IDENTIFY_USER",     1);
 define("SASL_LOGIN_STATE_IDENTIFY_PASSWORD", 2);
 define("SASL_LOGIN_STATE_DONE",              3);
 
-class login_sasl_client_class
+class login_sasl_client
 {
 	var $credentials=array();
 	var $state=SASL_LOGIN_STATE_START;

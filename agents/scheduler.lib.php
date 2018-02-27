@@ -189,8 +189,8 @@ class scheduler {
 				return true;
 		}
 	  }	
-	  return false;
-	   
+	  
+	  return false; 
   }
   
   //show the schedules running ........
@@ -217,7 +217,8 @@ class scheduler {
 	   else
 		  echo implode("\t",$d) . "\n";	
 	 }  
-     //return ($ret);  
+	 
+     return ($this->timeline);  
   }
   
   function __destruct() {

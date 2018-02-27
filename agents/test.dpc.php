@@ -53,7 +53,8 @@ class test {
 	  $this->ps = arrayload('SMDR','paternstart');
 	  $this->pl = arrayload('SMDR','paternlength');
 	  
-	  $this->t_smdrlist = localize('_SMDRLIST',getlocal());	  	  */
+	  $this->t_smdrlist = localize('_SMDRLIST',getlocal());	  	  
+	  */
 	  $this->message = null;	  
 	  
 	  $this->year = "2003";

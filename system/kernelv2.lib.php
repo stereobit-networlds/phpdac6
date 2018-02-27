@@ -1,5 +1,52 @@
 <?php
 
+/**
+ * An example of a project-specific implementation.
+ *
+ * After registering this autoload function with SPL, the following line
+ * would cause the function to attempt to load the \Foo\Bar\Baz\Qux class
+ * from /path/to/project/src/Baz/Qux.php:
+ *
+ *      new \Foo\Bar\Baz\Qux;
+ *
+ * @param string $class The fully-qualified class name.
+ * @return void
+ */
+/*spl_autoload_register(function ($class) {
+
+    // project-specific namespace prefix
+    $prefix = 'Foo\\Bar\\';
+
+    // base directory for the namespace prefix
+    $base_dir = __DIR__ . '/src/';
+
+    // does the class use the namespace prefix?
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        // no, move to the next registered autoloader
+        return;
+    }
+
+    // get the relative class name
+    $relative_class = substr($class, $len);
+
+    // replace the namespace prefix with the base directory, replace namespace
+    // separators with directory separators in the relative class name, append
+    // with .php
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    // if the file exists, require it
+    if (file_exists($file)) {
+        require $file;
+    }
+});
+*/
+
+//namespace LIB\agents;
+
+//spl_autoload_register('kernelv2::ClassLoader');
+//spl_autoload_register('kernelv2::autoload'); //!!!
+	
 require_once("agents/daemon.lib.php");
 require_once("agents/timer.lib.php");
 require_once("agents/resources.lib.php");
@@ -30,33 +77,30 @@ define ("GLEVEL", 1);
 
 class kernelv2 {
 
-   var $userLeveID, $verboseLevel;
    var $daemon_ip, $daemon_port, $daemon_type;
-   var $dmn, $useprj, $agent, $dpcpath;
-   
-   var $shm_id, $dpc_shm_id, $dpc_addr, $dpc_length, $dpc_free;
-   var $shared_buffer ,$shared_buffer_sepdata;
-   var $usemem, $dataspace, $datastreams;
-   
+   var $verboseLevel, $dmn, $agent, $dpcpath;
    var $scheduler, $resources, $timer;
-   var $extra_space;
    
-   function __construct($dtype=null,$ip='127.0.0.1',$port='19123') {
-	  $UserSecID = GetGlobal('UserSecID');
-      $this->userLevelID = (((decode($UserSecID))) ? (decode($UserSecID)) : 0);   
+   private $shm_id, $dpc_shm_id, $dpc_addr, $dpc_length, $dpc_free;
+   private $shared_buffer, $shared_buffer_sepdata;
+   private $dataspace, $extra_space;
+   
+   function __construct($dtype=null,$ip='127.0.0.1',$port='19123') {  
 	  $argc = $GLOBALS['argc'];
-      $argv = $GLOBALS['argv']; 
-
-	  $this->verboseLevel = GLEVEL;	  
+      $argv = $GLOBALS['argv'];
 	  
+	  //graph
+	  $this->headerGrapffiti(6);	
+
+	  $this->agent = 'SH';//default !?!
+	  $this->verboseLevel = GLEVEL;	  
 	  $this->extra_space = 1024 * 10; //kb //1000;// per file
 	  $this->dataspace = 1024000 * 1; //mb //50000;
 		  
 	  $this->dpcpath = $argv[1] ? ((substr($argv[1],0,1)!='-') ? $argv[1] : './') : './';
-      //$dtype = $argv[1] ? $argv[1] : '';
 	  $this->daemon_type = $argv[1] ? ((substr($argv[1],0,1)=='-') ? substr($argv[1],1) : '') : '';//str_replace("-","",$dtype);
-	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';//$ip;//'192.168.4.203';
-	  $this->daemon_port = $argv[3] ? $argv[3] : '19123';//$port;//19123;
+	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';
+	  $this->daemon_port = $argv[3] ? $argv[3] : '19123';
 	  	  
 	  _("Daemon repository at $this->daemon_ip:$this->daemon_port",1);
 	  
@@ -65,8 +109,6 @@ class kernelv2 {
 	  $phpdac_c = stream_wrapper_register("phpres5","c_resstream");
 	  if (!$phpdac_c) _("Client resource protocol failed to registered!");
 		         else _("Client resource protocol registered!",2); 	  
-
-	  $this->timer = new timer($this);
 	  
 	  $this->shm_id= null;
 	  $this->dpc_shm_id = null;
@@ -75,34 +117,54 @@ class kernelv2 {
 	  $this->dpc_free = array();
 	  $this->shared_buffer = null;
 	  $this->shared_buffer_sepdata = null;
-	  $this->datastreams = array();
 	  
-	  $this->useprj = null;
-	  $this->agent = 'SH';//default
-	  $this->usemem = 1;
+	  //start mem	  
+	  if ($this->startmemdpc()) {	
+	    //clear log
+	    unlink('dumpmem-'.$_SERVER['COMPUTERNAME'].'.log');
+			  
+		//init timer
+		$this->timer = new timer($this);
 	  
-	  //init resources
-	  $this->resources = new resources($this);	 	  
-	  //$printer = "\\\\hermes\\OkiML320";
-	  //$printout = printer_open($printer);//true;
-	  /*if (is_resource($printout) &&
-		  get_resource_type($printout)=='printer') {
-	    printer_set_option($printout, PRINTER_MODE, 'RAW'); 
-		
-		$this->resources->set_resource($printer,$printout);
-	  }	*/
-	  $this->resources->set_resource('variable','myvalue');
+		//init resources
+		$this->resources = new resources($this);
+		$this->resources->set_resource('variable','myservervalue');	  
+      
+		//init printer	  
+		//$printer = "FinePrint pdfFactory Pro";
+		$printer = "\\\http://www.e-basis.gr\\e-Enterprise.printer";
+		$printout = @printer_open($printer);//true;
+		if (is_resource($printout) &&
+			get_resource_type($printout)=='printer') {
+			  
+			printer_set_option($printout, PRINTER_MODE, 'RAW'); 
+			$this->resources->set_resource('printer',$printout);
+			_("printer:" . $printer . " connected.",1);
+			//printer_close($printout);
+		}
+		else
+			_("printer:" . $printer . " error: Could not connect!",1);  
+		  	  
+		  
+		//init scheduler
+		$this->scheduler = new scheduler($this);
+		//$this->scheduler->schedule('env.show_connections','every','20');		  	  		  
+		$this->scheduler->schedule('env.scheduleprint','every','20');	  
+		$this->scheduler->schedule('env.internalClient','every','50');	  		  
 	  	  
-	  //init scheduler
-	  $this->scheduler = new scheduler($this);
-      //$this->scheduler->schedule('env.show_connections','every','20');		  	  		  
-	  $this->scheduler->schedule('env.scheduleprint','every','20');	  
-	  $this->scheduler->schedule('env.internalClient','every','50');	  		  
-	  
-	  if ($this->usemem) 
-		  $this->startmemdpc();
-	  
-	  $this->startdaemon();
+		//init db
+		try {
+		  $dbh = new PDO('mysql:host=localhost;dbname=stereobi_basis;charset=utf8', 'stereobit', 'reviosob');
+	    } catch (PDOException $e) {
+            _("Failed to get DB handle: " . $e->getMessage(),1);
+        }
+		
+		$this->startdaemon();
+	  }
+	  else {
+		  _('Shared memory critical error!');
+		  $this->shutdown(true);
+	  }	  
    }
    
    private function startdaemon() {
@@ -157,15 +219,20 @@ class kernelv2 {
 	  	  	  	  	  
 	  $this->dmn->CommandAction ("***", array($this,"phpdac_handler"));//handle everyting else...	  
 	  
-	  //init batch
+	  //dispatch batch
 	  $this->exebatchfile($this->dmn, 'kernel.ash', true);
+	  
+	  //continue shceduling after ash run
+	  $this->retrieve_schedules();
+	  
+	  //listen
       $this->dmn->listen(1); 	    	       
    }
    
    private function exebatchfile(&$dmn,$file=null,$w=false) {
 	    if (!$file) return false;
 		
-		$batchfile = getcwd() . '/' . $file;
+		$batchfile = getcwd() . DIRECTORY_SEPARATOR . $file;
 		
 		if ((is_readable($batchfile)) && ($f = @file($batchfile))) {
 			
@@ -241,10 +308,10 @@ class kernelv2 {
                 break;
 				
 		case 'SETLEVEL' : 
-				$this->userLevelID = $arguments[0]; 
-				SetSessionParam("UserSecID",encode($arguments[0]));
+				//$this->userLevelID = $arguments[0]; 
+				//SetSessionParam("UserSecID",encode($arguments[0]));
 		case 'LEVEL':
-		        $dmn->Println ('Level is '.decode(GetSessionParam("UserSecID")));
+		        $dmn->Println ('Level is ...');//.decode(GetSessionParam("UserSecID")));
                 return true;
                 break;				
 				
@@ -272,20 +339,21 @@ class kernelv2 {
                 break;							
 				
 		case 'PRINT':
-		        $this->prn(implode(" ",$arguments));
+		        $this->prn($arguments[0],$arguments[1]);
                 return true;
                 break;	
 				
-		case 'GETRESOURCE' :
-		        $dmn->setEcho(0);//echo off
-				$dmn->setSilence(1);//silence off...???
+		case 'GETRESOURCE' : //local version
+		        //$dmn->setEcho(0);//echo off
+				//$dmn->setSilence(1);//silence off...???
 		        $resource = $this->resources->get_resource($arguments[0],1);
 		        $dmn->Println ($resource);
+				//return true;
 		        //return ($resource);
-				return false;//and quit
+				return false;//and quit replied answer to agn
 		        break; 
 				
-		case 'GETRESOURCEC' :
+		case 'GETRESOURCEC' :  //client version
 		        $resource = $this->resources->get_resourcec($arguments[0],$arguments[1],$arguments[2]);
 		        $dmn->Println ($resource);
 				return true;
@@ -410,7 +478,9 @@ class kernelv2 {
         }
 		else	
 		  $this->savestate($shm_max);	
-	  }	   
+	  }
+
+	  return true; 	
    } 
    
    //save shared mem resource id and mem alloc arrays
@@ -439,10 +509,10 @@ class kernelv2 {
 	   
 		if (isset($this->dpc_addr[$dpc])) {
    
-			return 
+			return rtrim(//not empty trails
 			shmop_read($this->dpc_shm_id, 
 	                   $this->dpc_addr[$dpc], 
-			 	       $this->dpc_length[$dpc]);
+			 	       $this->dpc_length[$dpc]));
         }
 		return false; 	
    }   
@@ -465,11 +535,11 @@ class kernelv2 {
 			  //$dock_length = $length + $this->extra_space;			
 			  $dataLength = strlen($data); 
 			  $remaining = $length - $dataLength;
-			  _("diff:" . $length.':'.$dataLength,1);
+			  _("diff:" . $length.':'.$dataLength,2);
 				
 			  $hold = md5($oldData);	
 			  $hnew = md5($data . str_repeat(' ',$remaining));
-			  _("md5:" . $hold . ':'. $hnew,1);
+			  _("md5:" . $hold . ':'. $hnew,2);
 						
 			  if ($dataLength < $length) {
 				//clean mem var
@@ -591,20 +661,20 @@ class kernelv2 {
 				//echo "111111111111111111111111\n";
 				//include user/pass at url
 				//$dpc = 'www.e-basis.gr/pdo.php';
-				$user = 'info@e-basis.gr';
-				$pass = "basis2012!@";
+				//$user = 'info@e-basis.gr';
+				//$pass = "basis2012!@";
 				
 				if (!$this->scheduler->findschedule($dpc)) {
 					$data = $this->httpcl($dpc,$user,$pass);
 					_($data,3); //show new data
 				}
 				else {
-					$data = null; //bypass
+					$data = null; //bypass and read
 					_('Scheduled data stream:' . $dpc,1);
 					_($data,3);
 				}	
 			}
-			else {
+			elseif (is_readable($this->dpcpath . $dpc)) {
 				//echo "222222222222222222222222\n";
 				//local storage reload  
 				$sf = filesize($this->dpcpath . $dpc);
@@ -614,7 +684,11 @@ class kernelv2 {
 					_($data,3); 
 				}	
 				else
-					$data = null; //bypass
+					$data = null; //bypass and read
+			}
+			else  { //variable
+				_($dpc . ' reading variable',1);	
+				$data = null ;//bypass and read
 			}	
 			
 			if (isset($data)) {
@@ -655,14 +729,28 @@ class kernelv2 {
 		}
 		
 		//else read mem
-		_("$dpc read",2);
-		$data = shmop_read($this->dpc_shm_id, 
+		_("$dpc reading",2);
+		$data = rtrim(
+		        shmop_read($this->dpc_shm_id, 
 	                       $offset, 
-			  			   $length);
+			  			   $length));
 	  }
 	  else { 
 	    //fetch and save, new dpc or new data stream
-	    if (is_readable($this->dpcpath . $dpc)) {
+		
+		//datastream
+		if (substr($dpc,0,4)==='www.') {
+			//echo "CCCCCCCCCCCCCCCCCCCC\n";
+			//include user/pass at url
+			//$dpc = 'www.e-basis.gr/pdo.php';
+			//$user = 'info@e-basis.gr';
+			//$pass = "basis2012!@";
+			if (!$this->scheduler->findschedule($dpc)) 
+				$data = $this->httpcl($dpc,$user,$pass);
+			else
+				$data = null; //bypass			
+		}	
+	    elseif (is_readable($this->dpcpath . $dpc)) {
 			//echo "BBBBBBBBBBBBBBBBBBBB\n";
 			//remote storage
 			/** // Create a stream
@@ -681,16 +769,8 @@ class kernelv2 {
 			//local storage
 			$data = @file_get_contents($this->dpcpath . $dpc);
 		}
-		else  { //datastream 
-			//echo "CCCCCCCCCCCCCCCCCCCC\n";
-			//include user/pass at url
-			//$dpc = 'www.e-basis.gr/pdo.php';
-			$user = 'info@e-basis.gr';
-			$pass = "basis2012!@";
-			if (!$this->scheduler->findschedule($dpc)) 
-				$data = $this->httpcl($dpc,$user,$pass);
-			else
-				$data = null; //bypass				
+		else  { //unknown call !!! (from spl_loaders)
+			_($dpc . ' not found!',1);	
 		}
 		
 		if (!$data) return false;	
@@ -754,19 +834,7 @@ class kernelv2 {
 	  //delete id file //<<<<<<<<<<<<<<<<< recall ???
 	  unlink("shm.id");
 	  _("Deleting state..Ok!",2);   
-   }
-   
-   private function shutdown() {
-   
-      $printout = $this->resources->get_resource('printer');   
-   
-	  if (is_resource($printout) &&
-	      get_resource_type($printout)=='printer')
-   	    printer_close($printout);	
-   
-	  _("\nShutdown....\n",1);
-      if ($this->usemem) $this->closememdpc();
-   }       
+   }     
    
     //return pseudo pointer for comaptibility with agentds class
     function get_agent($agent,$serialized=null) {
@@ -921,13 +989,21 @@ class kernelv2 {
 	  return $dpc; //as is
     }   
 	
-    public function prn($message) {
-   
-      $printout = $this->resources->get_resource('printer');
-   
-	  if (is_resource($printout) &&
-		  get_resource_type($printout)=='printer')
-	     printer_write($printout,$message."\n\r");  	 
+    public function prn($message=null,$doctitle=null) {
+		if (!$message) return false;
+		
+		$pr = $this->resources->get_resource('printer');
+		if (is_resource($pr) &&
+			get_resource_type($pr)=='printer') {
+			printer_start_doc($pr, $doctitle);	  
+			printer_write($pr,$message."\n\r");  	 
+			//printer_end_doc($pr, $doctitle); //double print 0 bytes when enabled !!!!
+			_($message,1);
+			return true;
+		}
+	  
+		_("printing error!",1); 
+		return false;	
     }
    
     public function show_connections($show=null) {
@@ -953,11 +1029,39 @@ class kernelv2 {
     public function show_schedules() {
    
       $sh = $this->scheduler->showschedules();
+	  //print_r($sh);
 	  
-	  //save in resources
-      $this->resources->set_resource('_schedules',serialize($sh));	  
-	 
+	  //save in resources (..to disable not here)
+      //$this->resources->set_resource('_schedules',serialize($sh));	  
+	  
+	  //savein mem,save dump
+	  $this->savedpcmem('srvSchedules',json_encode($sh));
+	  _dump(json_encode($sh),'w','/dumpsh-'.$_SERVER['COMPUTERNAME'].'.log');
+	  
 	  //return ($sh);
+	  return null;
+    }	
+	
+    private function retrieve_schedules() {	  
+	
+	  //load dump
+	  if ($jsonsh = @file_get_contents(getcwd() . '/dumpsh-'.$_SERVER['COMPUTERNAME'].'.log')) {
+	  //shared mem not yet
+	  //if ($this->loaddpcmem('srvSchedules')) { 
+	  
+	  	  _("Loading schedules from dump file",1);
+		 $sh = json_decode($jsonsh); 
+		 //print_r($sh);
+		 
+		 //save in resources (..to disable NOT SAVING,NOT HERE)
+         $this->resources->set_resource('_schedules',serialize($sh));
+		 
+		 //save in sh mem as resource var (not in resources)
+	     $this->savedpcmem('srvSchedules',json_encode($sh));
+		 return true;
+	  }
+	  
+	  return false;
     }	
 	
 	public function internalClient($set=false) {
@@ -1014,9 +1118,12 @@ class kernelv2 {
 		$databytes = strlen($data);	
 		_("Data : " . $databytes,2);
 		*/
-		_("SERVER print",1);
+		//_("SERVER print",1);
+		
 		_($this->show_connections(),1);
 		_($this->show_schedules(),1);
+		
+		$this->headerGrapffiti();		
 			
 		$totalbytes = strlen($this->shared_buffer);
 	    _("Total buffer : ".$totalbytes. ', usage: ' . memory_get_usage(),1);
@@ -1025,11 +1132,13 @@ class kernelv2 {
    
 	public function httpcl($url=null, $user=null,$password=null) {
 		if (!$url) return null;
-		
-		require_once("tcp/sasl.lib.php");
+		//echo ">>>>>>>>>>>>>$url<<<<<<<<<<<<<<<\n";
+		require_once("tcp/saslclient.lib.php");
 		require_once("tcp/httpclient.lib.php");		
 		
-		$http=new httpclient;
+		//$http=new \LIB\tcp\httpclient;
+		$http= new httpclient;
+		
 		$http->timeout=0;
 		$http->data_timeout=0;
 		$http->debug=0;//1
@@ -1149,7 +1258,294 @@ class kernelv2 {
 		}
 
 		return ($body);		
-	}   
+	}
+
+   private function shutdown($now=false) {
+	  if ($now) die(); 
+   	
+	  _("Shutdown....",1);
+	  
+      //close printer
+      $printout = $this->resources->get_resource('printer');   
+	  if (is_resource($printout) &&
+	      get_resource_type($printout)=='printer')
+   	    printer_close($printout);	  
+	
+      //close mem	
+	  $this->closememdpc();
+   }  
+   
+	function __destruct() {
+        if(!$this->dpc_shm_id)
+            return;		
+		
+		shmop_delete($this->dpc_shm_id);	
+	}
+
+  public static function ClassLoader($className) {
+	
+        _("Trying to load ". $className. ' via '. __METHOD__ ,1);
+		require_once('tcp/'. $className . '.lib.php'); 
+		
+		/*try {
+			if (substr($className, 0,3)=='DPC') {
+				$class = str_replace(array('DPC\\','\\'), array('','/'), $className);
+				require_once($class . '.dpc.php'); 
+			}
+			else {
+				$class = str_replace(array('LIB\\','\\'), array('','/'), $className);
+				require_once($class . '.lib.php'); 
+			}
+	 
+		    //$class = str_replace(array('\\DPC\\','\\'), array('','/'), $className); 
+			_("Class $class loaded!",1);
+		} 
+		catch (Exception $e) {
+            _("\r\n File $className not exist!",1);
+			//debug_print_backtrace();		
+        }*/
+		
+        //_("End of load ". $class. ' via '. __METHOD__. "()\r\n",1);		
+    } 
+
+   public static function autoload($className) {
+	
+        _("Trying to load lib ". $className. ' via '. __METHOD__ ,1);
+		
+		$className = ltrim($className, '\\');
+		$classType = strstr($className,'LIB\\') ? 'LIB' : 'DPC';
+		$fileName  = '';
+		$namespace = '';
+		if ($lastNsPos = strrpos($className, '\\')) {
+			$namespace = str_replace($classType.'\\','',substr($className, 0, $lastNsPos));
+			$className = substr($className, $lastNsPos + 1);
+			$fileName  = str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
+			echo $namespace,':',$className,':',$classType,"\n";
+			
+		//$fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.'.strtolower($classType).'.php';
+		$fileName .= $className .'.'.strtolower($classType).'.php';
+		_("End of load ". $filename,1);
+		require_once($fileName);
+		return true;
+		}
+		
+		_("\r\n************************************************************",1);
+		_("******      Loading failed for ". $className . "      ******",1);
+		_("************************************************************",1);
+		return false;
+				
+    } 	
+
+	//http://patorjk.com/software/taag
+	public function headerGrapffiti($x=null) {
+		$xz = $x ? $x : rand(1,10);
+		
+		switch ($xz) {
+			
+	    case 8 :
+
+
+echo "\n __      __        .__  __ /\      /\    ";
+echo "\n/  \    /  \_____  |__|/  |\ \    /  \   ";
+echo "\n\   \/\/   /\__  \ |  \   __\ \   \/\/   ";
+echo "\n \        /  / __ \|  ||  |  \ \         ";
+echo "\n  \__/\  /  (____  /__||__|   \ \        ";
+echo "\n       \/        \/            \/        ";
+	
+		echo "\r\n\r\n";
+		break;
+				
+		case 7 :
+echo "\n~~~~~~_~~~~~~~~~~~~~~~~~~~~~~_~~~~~_~_~~~";
+echo "\n~~~~~|~|~~~~~~~~~~~~~~~~~~~~|~|~~~(_)~|~~";
+echo "\n~~___|~|_~___~_~__~___~~___~|~|__~~_|~|_~";
+echo "\n~/~__|~__/~_~\~'__/~_~\/~_~\|~'_~\|~|~__|";
+echo "\n~\__~\~||~~__/~|~|~~__/~(_)~|~|_)~|~|~|_~";
+echo "\n~|___/\__\___|_|~~\___|\___/|_.__/|_|\__|";
+echo "\n~~~~~|~|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~__|~|~__~_~~___~_~__~___~~~___~~_~__~~";
+echo "\n~~/~_\`~|/~_\`~|/~_~\~'_~\`~_~\~/~_~\|~\~";
+echo "\n~|~(_|~|~(_|~|~~__/~|~|~|~|~|~(_)~|~|~|~|";
+echo "\n~~\__,_|\__,_|\___|_|~|_|~|_|\___/|_|~|_|";
+echo "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+
+
+		echo "\r\n\r\n";
+		break;
+				
+		case 6 :	
+echo "\n~~~oo_~~~(o)__(o)~~~~~))~~~~~~~~~~~~~.-.~~~~~_~~~wW~~Ww(o)__(o)~~~~~~~~~~~~~~~~";
+echo "\n~~/~~_)-<(__~~__)wWw~(Oo)-.~wWw~~~~c(O_O)c~~/||_~(O)(O)(__~~__)~~~~~~~~~~~~~~~~";
+echo "\n~~\__~\`.~~~(~~)~~(O)_~|~(_))(O)_~~,'.---.\`,~~/\`_)~(..)~(~~)~~~~~~~~~~~~~~~~~";
+echo "\n~~~~~\`.~|~~~)(~~.'~__)|~~.'.'~__)/~/|_|_|\~\|~~\`.~~||~~~~~)(~~~~~~~~~~~~~~~~~";
+echo "\n~~~~~_|~|~~(~~)(~~_)~~)|\\(~~_)~~|~\_____/~||~(_))_||_~~~(~~)~~~~~~~~~~~~~~~~~~";
+echo "\n~~,-'~~~|~~~)/~~\`.__)(/~~\)\`.__)~'.~\`---'~.\`(.'-'(_/\_)~~~)~~~~~~~~~~~~~~~~";
+echo "\n~(_..--'~~~(~~~~~~~~~~)~~~~~~~~~~~~\`-...-'~~~)~~~~~~~~~~~(~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~~~~_~~~~~~~~~~~~~\\\~~~~///~~~.-.~~~\\\~~///~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~~_||\~~/)~~~~wWw~((O)~~(O))~c(O_O)c~((O)(O))~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~(_'\~(o)(O)~~(O)_~|~\~~/~|~,'.---.\`,~|~\~||~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~.'~~|~//\\~~.'~__)||\\//||/~/|_|_|\~\||\\||~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~((_)~||(__)|(~~_)~~||~\/~|||~\_____/~|||~\~|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~\`-\`.)/,-.~|~\`.__)~||~~~~||'.~\`---'~.\`||~~||~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~~~~(-'~~~''~~~~~~(_/~~~~\_)~\`-...-'~(_/~~\_)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+
+
+		echo "\r\n\r\n";
+		break;
+		
+		case 5:
+echo "\n~~~_~~~_~~~_~~~_~~~_~~~_~~~_~~~_~~~_~~";
+echo "\n~~/~\~/~\~/~\~/~\~/~\~/~\~/~\~/~\~/~\~";
+echo "\n~(~s~|~t~|~e~|~r~|~e~|~o~|~b~|~i~|~t~)";
+echo "\n~~\_/~\_/~\_/~\_/~\_/~\_/~\_/~\_/~\_/~";
+echo "\n~~~_~~~_~~~_~~~_~~~_~~~_~~~~~~~~~~~~~~";
+echo "\n~~/~\~/~\~/~\~/~\~/~\~/~\~~~~~~~~~~~~~";
+echo "\n~(~d~|~a~|~e~|~m~|~o~|~n~)~~~~~~~~~~~~";
+echo "\n~~\_/~\_/~\_/~\_/~\_/~\_/~~~~~~~~~~~~~";
+
+
+		echo "\r\n\r\n";
+		break;
+			
+		case 4:
+		
+echo "\n~~~~~~_~~~~~~~~~~~~~~~~~~~~~~_~~~~~_~_~~~";
+echo "\n~~___|~|_~___~_~__~___~~___~|~|__~(_)~|_~";
+echo "\n~/~__|~__/~_~\~'__/~_~\/~_~\|~'_~\|~|~__|";
+echo "\n~\__~\~||~~__/~|~|~~__/~(_)~|~|_)~|~|~|_~";
+echo "\n~|___/\__\___|_|~~\___|\___/|_.__/|_|\__|";
+echo "\n~~~~~~_~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~__|~|~__~_~~___~_~__~___~~~___~~_~__~~";
+echo "\n~~/~_\`~|/~_\`~|/~_~\~'_~\`~_~\~/~_~\|~\~";
+echo "\n~|~(_|~|~(_|~|~~__/~|~|~|~|~|~(_)~|~|~|~|";
+echo "\n~~\__,_|\__,_|\___|_|~|_|~|_|\___/|_|~|_|";
+echo "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+		
+		echo "\r\n\r\n";
+		break;
+
+		case 3 :
+echo "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~___~~~~~~~~";
+echo "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/~_~\~~~~~~~";
+echo "\n~~____~___~___~~___~~___~___~|~|_)~)_~___~";
+echo "\n~/~~._|~~~)~__)/~_~\/~__)~_~\|~~_~<|~(~~~)";
+echo "\n(~()~)~|~|>~_)|~|_)~>~_|~(_)~)~|_)~)~||~|~";
+echo "\n~\__/~~~\_)___)~~__/\___)___/|~~__/~\_)\_)";
+echo "\n~~~~~~~~~~~~~~|~|~~~~~~~~~~~~|~|~~~~~~~~~~";
+echo "\n~~~~~~~~~~~~~~|_|~~~~~~~~~~~~|_|~~~~~~~~~~";
+echo "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~__~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~/~_)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~\~\~~~__~~_____~_~~~_~~___~~_~~__~~~~~~~";
+echo "\n~/~_~\~/~~\/~/~__)~|~|~|/~_~\|~|/~/~~~~~~~";
+echo "\n(~(_)~|~()~~<>~_)|~|_|~(~(_)~)~/~/~~~~~~~~";
+echo "\n~\___/~\__/\_\___)~._,_|\___/|__/~~~~~~~~~";
+echo "\n~~~~~~~~~~~~~~~~~|~|~~~~~~~~~~~~~~~~~~~~~~";
+echo "\n~~~~~~~~~~~~~~~~~|_|~~~~~~~~~~~~~~~~~~~~~~";
+		
+		echo "\r\n\r\n";
+		break;
+		
+        case 2 :
+echo "\n*****_**********************_*****_*_***";
+echo "\n****|*|********************|*|***(_)*|**";
+echo "\n*___|*|_*___*_*__*___**___*|*|__**_|*|_*";
+echo "\n/*__|*__/*_*\*'__/*_*\/*_*\|*'_*\|*|*__|";
+echo "\n\__*\*||**__/*|*|**__/*(_)*|*|_)*|*|*|_*";
+echo "\n|___/\__\___|_|**\___|\___/|_.__/|_|\__|";
+echo "\n****************************************";
+echo "\n****************************************";
+echo "\n*****_**********************************";
+echo "\n****|*|*********************************";
+echo "\n**__|*|*__*_**___*_*__*___***___**_*__**";
+echo "\n*/*_\`*|/*_\`*|/*_*\*'_*\`*_*\*/*_*\|*\*";
+echo "\n|*(_|*|*(_|*|**__/*|*|*|*|*|*(_)*|*|*|*|";
+echo "\n*\__,_|\__,_|\___|_|*|_|*|_|\___/|_|*|_|";
+echo "\n****************************************";
+echo "\n****************************************";
+		
+		
+		echo "\r\n\r\n";
+		break;
+		
+		case 1 :
+echo "\n*****_**********************_*****_*_***";
+echo "\n*___|*|_*___*_*__*___**___*|*|__*(_)*|_*";
+echo "\n/*__|*__/*_*\*'__/*_*\/*_*\|*'_*\|*|*__|";
+echo "\n\__*\*||**__/*|*|**__/*(_)*|*|_)*|*|*|_*";
+echo "\n|___/\__\___|_|**\___|\___/|_.__/|_|\__|";
+echo "\n****************************************";
+echo "\n*****_**********************************";
+echo "\n**__|*|*__*_**___*_*__*___***___**_*__**";
+echo "\n*/*_\`*|/*_\`*|/*_*\*'_*\`*_*\*/*_*\|*\*";
+echo "\n|*(_|*|*(_|*|**__/*|*|*|*|*|*(_)*|*|*|*|";
+echo "\n*\__,_|\__,_|\___|_|*|_|*|_|\___/|_|*|_|";
+echo "\n****************************************";
+		
+		echo "\r\n\r\n";
+		break;
+		
+		default :
+		
+echo "\n*****_**********************_*****_*_***";
+echo "\n*___|*|_*___*_*__*___**___*|*|__*(_)*|_*";
+echo "\n/*__|*__/*_*\*'__/*_*\/*_*\|*'_*\|*|*__|";
+echo "\n\__*\*||**__/*|*|**__/*(_)*|*|_)*|*|*|_*";
+echo "\n|___/\__\___|_|**\___|\___/|_.__/|_|\__|";
+echo "\n****************************************";
+echo "\n*****_**********************************";
+echo "\n**__|*|*__*_**___*_*__*___***___**_*__**";
+echo "\n*/*_\`*|/*_\`*|/*_*\*'_*\`*_*\*/*_*\|*\*";
+echo "\n|*(_|*|*(_|*|**__/*|*|*|*|*|*(_)*|*|*|*|";
+echo "\n*\__,_|\__,_|\___|_|*|_|*|_|\___/|_|*|_|";
+echo "\n****************************************";
+		
+		echo "\r\n\r\n";		
+		
+echo "\n**************************************************";
+echo "\n* stereobit daemon - a minimal script agency*.   *";
+echo "\n*                                                *";
+echo "\n*   Copyright 2015-18,  balexiou@stereobit.com   *";
+echo "\n*                                                *";
+echo "\n*   This digital loop is owned by the numbers.   *";
+echo "\n*   Is free for them but you can play as long    *";
+echo "\n*   your personal pc can consume electric energy.*";
+echo "\n*   Distribute with care and ask for detailsit   *";
+echo "\n*   if you like to modify it under the terms of  *";
+echo "\n*   the GNU Library General Public License.      *";
+echo "\n*                                                *";
+echo "\n*   License as published by the Free Software    *";
+echo "\n*   Foundation; either version 2 of the License, *";
+echo "\n*   (at your option) any later version.          *";
+echo "\n*                                                *";
+echo "\n*   This piece of software is distributed in the *";
+echo "\n*   hope that it will be useful somehow,         *";
+echo "\n*   but WITHOUT ANY WARRANTY without even        *";
+echo "\n*   the implied warranty of MERCHANTABILITY or   *";
+echo "\n*   FITNESS FOR A PARTICULAR PURPOSE.            *";
+echo "\n*   See the GNU Library General Public License   *";
+echo "\n*   for Library General Public License for more  *";
+echo "\n*   details.                                     *";
+echo "\n*                                                *";
+echo "\n*   You should have received a copy of the GNU   *";
+echo "\n*   Library General Public License along with    *";
+echo "\n*   this library.                                *";
+echo "\n*	If not, write to the Free Software			 *";
+echo "\n*                                                *";
+echo "\n*   (*)If you feel that writing scripts and code *";
+echo "\n*   is your forte, these are some agents who     *";
+echo "\n*   specialise in handling this type of material *";
+echo "\n*                                                *";
+echo "\n**************************************************";
+
+	    echo "\n\r\n\r";
+			
+			
+			
+		}//switch
+	}	
    
 }
 ?>

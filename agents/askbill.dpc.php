@@ -4,16 +4,9 @@ define("ASKBILL_DPC",true);
 
 $__DPC['ASKBILL_DPC'] = 'askbill';
 
-require ("phpdac5://localhost:19123/askbill/gengtk.gtk.php");
-//$d = GetGlobal('controller')->require_dpc('askbill/gengtk.lib.php');
-//require_once($d); 
-require ("askbill/mbox.gtk.php");
-//$e = GetGlobal('controller')->require_dpc('askbill/mbox.lib.php');
-//require_once($e); 
-require ("askbill/excel.lib.php");
-//$z = GetGlobal('controller')->require_dpc('askbill/excel.lib.php');
-//require_once($z); 
-
+//require_once("phpdac5://localhost:19123/askbill/gengtk.gtk.php");
+//require_once("askbill/mbox.gtk.php");
+//require_once("askbill/excel.lib.php");
 
 class askbill {  
    
@@ -30,7 +23,7 @@ class askbill {
 	  
 	  $this->env = $env;
 	  
-    /*  if (!class_exists('gtk')) {	  
+    /*if (!class_exists('gtk')) {	  
       if (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN') 
         dl('php_gtk.dll'); 
       else 
@@ -193,9 +186,12 @@ class askbill {
 				
 			  
 		   case 'printipp' : 	 
+		   
 		        require_once($this->env->ldscheme . "/tcp/PrintIPP.lib.php");
+				
 				if ($text = $command[1]) {						
-					$ipp = new PrintIPP();
+				    $ipp = new PrintIPP();
+					//$ipp = new \LIB\tcp\PrintIPP();
 
 					//$ipp->setUnix();
 

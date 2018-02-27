@@ -42,12 +42,12 @@
 //require_once ("tcp/http_class.lib.php");
 
 // If you want http backend from http://www.phpclasses.org/browse/package/3.html
-require_once("tcp/httpclient.lib.php");
+/*require_once("tcp/httpclient.lib.php");
 include_once("tcp/sasl.lib.php");
 include_once("tcp/basic_sasl_client.php");
 include_once("tcp/digest_sasl_client.php");
 include_once("tcp/ntlm_sasl_client.php");
-
+*/
 /**
  * Class and Function List:
  * Function list:

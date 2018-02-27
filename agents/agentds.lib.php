@@ -1,16 +1,19 @@
 <?php
-define ("GLEVEL", 1); 
+	//spl_autoload_register('agentds::ClassLoader');
+	//spl_autoload_register('agentds::LibraryLoader');
 
-   function _($str, $level=0, $crln=true) {
+	define ("GLEVEL", 1); 
+
+	function _($str, $level=0, $crln=true) {
 	    global $glevel;
 	    $cr = $crln ? PHP_EOL : null;
 		if ($level<=$glevel)
 			echo ucfirst($str) . $cr;
 		
 		_dump(date ("Y-m-d H:i:s :").$str.PHP_EOL,'a+');
-   }
+	}
    
-   function _dump($data=null,$mode=null,$filename=null) {
+	function _dump($data=null,$mode=null,$filename=null) {
 	   $m = $mode ? $mode : 'w';
 	   $f = $filename ? $filename : '/dumpagn-'.$_SERVER['COMPUTERNAME'].'.log';
 
@@ -20,7 +23,7 @@ define ("GLEVEL", 1);
             return true;
         }
         return false;
-   }   
+	}   
    
 class agentds {
 
@@ -28,11 +31,11 @@ class agentds {
    var $dmn, $agent;
    
    var $agn_mem_type = 0;//shared 1 vs convensional
-   var $agn_mem_store;//string that holds serial data (string functions =0=)
+   var $agn_mem_store;
    
    var $shm_id, $agn_shm_id;
    var $agn_addr, $agn_length;
-   var $shared_buffer;//used by shared shm functions -1-
+   var $shared_buffer;
    var $agn_attr;
    
    //environment vars
@@ -43,7 +46,8 @@ class agentds {
    
    var $gtk, $gtkds_conn;//handle gtkds connection
    var $window, $agentbox;  
-   var $echoLevel, $ldscheme, $argbatch;	
+   var $echoLevel, $ldscheme, $argbatch;
+   public static $ldschemeS;   
 
    function __construct($dtype,$ip='127.0.0.1',$port='19125',$dacip='127.0.0.1',$dacport='19123') { 
 	  $argc = $GLOBALS['argc'];
@@ -82,7 +86,8 @@ class agentds {
 	  }	  
 	  else _("Client dac protocol registered!");
 	  
-	  $this->ldscheme = "phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}";	
+	  $this->ldscheme = "phpdac5://{$this->phpdac_ip}:{$this->phpdac_port}";
+	  self::$ldschemeS = "phpdac5://". ($argv[5] ? $argv[5] : '127.0.0.1') .":". ($argv[6] ? $argv[6] : '19123');	
 				
  	  //REGISTER PHPAGN (client side,interconnections) protocol.
       //require_once("agents/agnstreamc.lib.php");			
@@ -102,10 +107,14 @@ class agentds {
 		  _("Client resource protocol failed to registered!");
 		  die();
 	  }	  
-	  else _("Client resource protocol registered!"); 
+	  else 
+		  _("Client resource protocol registered!"); 
 				 				 
 	  //INITIALIZE ENVIRONMENT
 	  //var_dump($_SERVER);
+	  //clear log
+	  unlink('dumpagn-'.$_SERVER['COMPUTERNAME'].'.log');
+		  
 	  $this->env['name'] = $_SERVER['COMPUTERNAME'];  			 
 	  $this->env['os'] = $_SERVER['OS'];	  
 	  $this->env['domain'] = $_SERVER['USERDNSDOMAIN'];				 
@@ -115,30 +124,44 @@ class agentds {
 	  //var_dump($this->env);	
 
 	  $this->promptString = 'phpagn5>';	
-	  $this->echoLevel = 1; 	
+	  $this->echoLevel = 1;     	  
+	  
+	  //INITIALIZE AGENTS
+	  $this->active_agent = null;
+	  $this->active_o_agent = null;	
+	  
+	  $this->init_agents($this->phpdac_ip,$this->phpdac_port);
 	  
 	  /* LOADED AS AGENTS...removed from agents.exe as libs include
 	  $this->timer = new timer;	
       //register_tick_function(array(&$time,"showtime"),true);	
 	  $this->scheduler = new scheduler(&$this);		  			
 	  
-	  //init resources
-	  $this->resources = new resources(&$this);	  
-	  */
-	  
-	  //INITIALIZE AGENTS
-	  $this->active_agent = null;
-	  $this->active_o_agent = null;	  
-	  $this->init_agents($this->phpdac_ip,$this->phpdac_port);
+	  //init resources (loaded as lib agent)
+	  $this->resources = new resources($this);	  
+	  */		  
 			
-	  //print_r($this->get_agent('scheduler'));
-	  
+      //init printer	  
+	  //$printer = "FinePrint pdfFactory Pro";
+	  $printer = "\\\http://www.e-basis.gr\\e-Enterprise.printer";
+	  $printout = @printer_open($printer);//true;
+	  if (is_resource($printout) &&
+		  get_resource_type($printout)=='printer') {
+			  
+	    printer_set_option($printout, PRINTER_MODE, 'RAW'); 
+		$this->get_agent('resources')->set_resource($printer,$printout);
+		_("printer:" . $printer . " connected.",1);
+	  }
+	  else
+		_("printer:" . $printer . " error: Could not connect!",1);  
+	  				
+						  
 	  //(starting at scheduler construction)
       //register_tick_function(array($this->get_agent('scheduler'),"checkschedules"),true);	  
-
+	  //print_r($this->get_agent('scheduler'));
+	  
 	  //initialize task from already loaded agents (BEWARE TO LOAD THE DEFAULT AGENTS)
-      //$this->get_agent('scheduler')->schedule('env.show_connections','every','20'); 
-  
+      $this->get_agent('scheduler')->schedule('env.show_connections','every','20'); 
   
 	  //initialize GTk connector (for calling proc from this ($env) class ...purposes)
 	  $this->gtk = ($argv[4]==='-gtk') ? true : false;
@@ -228,9 +251,10 @@ class agentds {
 	  //now scheduler job
 	  //$this->dmn->RegisterAction(array(&$this,'timer'));
 	   
-	  //init batch
+	  //dispatch batch
 	  $this->exebatchfile($this->dmn, $this->argbatch, true);
-	  //daemon listen
+	  
+	  //listen
       $this->dmn->listen(1); 	    	       
    }
    
@@ -238,7 +262,7 @@ class agentds {
 	    if ((!$file) || ($file=='.ash')) //empty argbatch 
 			$file = 'init.ash';
 		
-		$batchfile = getcwd() . '/' . $file; 
+		$batchfile = getcwd() . DIRECTORY_SEPARATOR . $file; 
 		
 		if ((is_readable($batchfile)) && ($f = @file($batchfile))) {
 			
@@ -332,7 +356,12 @@ class agentds {
 				
 		case 'RUN':
                 return true;
-                break;		
+                break;	
+
+		case 'PRINT':
+		        $this->prn($arguments[0],$arguments[1]);
+                return true;
+                break;				
 				
 		case 'NET':
 		        if (method_exists($this,$arguments[0])) {
@@ -371,21 +400,17 @@ class agentds {
                 return true;
                 break;																	
 
-		case 'GETRESOURCE' :
+		case 'GETRESOURCE' : //this resource
 		        $resource = $this->get_agent('resources')->get_resource($arguments[0],$arguments[1]);
 		        $dmn->Println ($resource);
-				//return true;
-				return false;//and quit
-		        break;				
+				return true;
+				//return false;//and quit				
+		        break;										
 				
-		case 'PRINT':
-		        $this->prn(implode(" ",$arguments));
-                return true;
-                break;						
-				
-		case 'GETRESOURCEC' :
-		        $resource = $this->get_agent('resources')->get_resourcec($arguments[0],$this->phpdac_ip,$this->phpdac_port);
-		        $dmn->Println ($resource);
+		case 'GETRESOURCEC' : //phpdac5 resource
+		        //$resource = $this->get_agent('resources')->get_resourcec($arguments[0],$this->phpdac_ip,$this->phpdac_port);
+				$resource = file_get_contents($this->ldscheme .'/'. $arguments[0]);
+				$dmn->Println ($resource);
 				return true;
 		        break;
 				
@@ -545,7 +570,7 @@ class agentds {
 	  //delete id file
 	  if (is_file('agn.id')) {
 	    _("Deleting state...",2);
-	    unlink("agn.id");
+	    unlink("agn.id"); //!!!permisions denied when multiple agns
 	  }
 	  //echo "Ok!\n";   
    }   
@@ -587,7 +612,7 @@ class agentds {
       //extend agent info table
 	  $this->agn_addr[$agent] = $a_index;			
 	  $this->agn_length[$agent] = $a_size;		
-	  _("New $agent ". $a_index.':'.$a_size);
+	  _("New $agent ". $a_index.':'.$a_size,1);
 	  //var_dump($this->agn_addr);
 	  		
       $shm_max = $a_index + $a_size;	
@@ -666,7 +691,7 @@ class agentds {
    
       $a_index = $this->agn_addr[$agent];   
       $a_size = $this->agn_length[$agent];
-	  _("Remove ". $agent.'>'.$a_index.':'.$a_size);		  
+	  _("Remove ". $agent.'>'.$a_index.':'.$a_size,2);		  
 	  
 	  $deleted_agent = str_repeat('x',$a_size);
 	  
@@ -765,7 +790,7 @@ class agentds {
 		$removed_agent = str_repeat('x',$current_size);
 		if ($s_agent==$removed_agent) {
 		  //is a deleted agent
-		  _("removed");
+		  _("removed",2);
 		}
 		else {
 	      $a_size = $current_size;		
@@ -799,22 +824,21 @@ class agentds {
        $code = @file_get_contents(getcwd() . "/agentds.ini");
 	   
 	   if ($file = explode("\n",$code)) {
-			//clean code by nulls and commends and hold it as array
+			//clean code by nulls and commends
 			foreach ($file as $num=>$line) {
 			  $trimedline = trim($line);
 		      if (($trimedline) && //check if empty line			  
-			      ($trimedline[0]!="#")) {  //check commends        
-			     //echo $trimedline."<br>";			    
+			      ($trimedline[0]!="#")) {  //check comments        
+			    
 				 $lines[] = $trimedline;
 			  }
 			}
 			//print_r($lines);
-			//implode lines because one line may have more than one cmds sep by ;
+			//one line may have more than one cmds sep by ;
 			$toktext = implode("",$lines);
 			//tokenize
 			$token = explode(";",$toktext);		
 
-		   
 	        //then...read tokens  			
 	        foreach ($token as $tid=>$tcmd) {
 			  
@@ -855,8 +879,9 @@ class agentds {
 			   }//switch
 			   $i+=1; 
 	        }//foreach		 
-         
 	   }
+	   
+	   return true;
    }  
    
    private function create_agent($agent,$domain=null,$include_ip=null,$as_name=null,$type='dpc',$includeonly=false) {
@@ -867,7 +892,7 @@ class agentds {
 	  
 	  if (defined($class)) {
 		  _($agent . " exists!");
-		  return false;
+		  return true;
 	  }	  
 	  
       if (isset($include_ip))
@@ -989,13 +1014,13 @@ class agentds {
    	        if ($removed) {//2nd method		
 			  
 		      $this->addmemagn($agent,$s_agent);
-		      _('Update agent:'.$agent);			
+		      _('Update agent:'.$agent,2);			
 		    }
 		    else
-		     _('Update agent:'.$agent."..failed!");
+		     _('Update agent:'.$agent."..failed!",2);
 		  }
 		  else
-		    _('Update agent:'.$agent."..not neccesery!");	 
+		    _('Update agent:'.$agent."..not neccesery!",2);	 
 	  }
 	  
 	  //var_dump($this->agn_addr);
@@ -1165,7 +1190,7 @@ class agentds {
 		else {
           $s_agent = substr($this->agn_mem_store,$addr,$this->agn_length[$agn]);  		
 		} 
-		_(":".$this->agn_length[$agn]);
+		_($this->agn_addr[$agn].":".$this->agn_length[$agn],2);
 		//echo $s_agent,"\n";
 		
 		$o_agent = unserialize($s_agent);	
@@ -1196,18 +1221,25 @@ class agentds {
       $this->closememagn();
    }
    
-   function prn($message) {
-   
-      $printout = $this->get_agent('resources')->get_resource('printer');
-   
+   public function prn($message=null,$doctitle=null) {
+	  if (!$message) return false;
+	  
+      $pr = $this->get_agent('resources')->get_resource('printer');
       //$this->update_agent($this->get_agent('resources'),'resources');
-   
-	  if (is_resource($printout) &&
-		  get_resource_type($printout)=='printer')
-	     printer_write($printout,$message."\n\r");  	 
+	  if (is_resource($pr) &&
+		  get_resource_type($pr)=='printer') {
+		 printer_start_doc($pr, $doctitle);	  
+	     printer_write($pr,$message."\n\r");  	 
+		 //printer_end_doc($pr, $doctitle); //double print 0 bytes when enabled !!!!
+		 _($message,1);
+		 return true;
+	  }
+	  
+	  _("printing error!",1);  
+	  return false;
    }
    
-   private function show_connections($show=null,$dacserver=null) {
+   public function show_connections($show=null,$dacserver=null) {
    
       if ($dacserver) {//get sesions from phpdac server's daemon...
 	    $sret = $this->get_agent('resources')->get_resourcec('_sessions',$this->phpdac_ip,$this->phpdac_port);
@@ -1233,18 +1265,6 @@ class agentds {
 	  	
 	  	
    }      
-   
-   function shutdown() {
-   
-	  //unregister_tick_function($this->get_agent('scheduler'),'checkschedules');
-
-	  //is agents now
-	  //unset($this->timer);
-	  //unset($this->scheduler);
-   
-	  _(PHP_EOL . "Shutdown...");
-      $this->free_agents();
-   } 
    
    
 	public function httpcl($url=null, $user=null,$password=null) {
@@ -1374,7 +1394,68 @@ class agentds {
 		}
 
 		return ($body);		
-	}   
+	} 
+	
+	
+
+   function shutdown() {
+   
+	  //unregister_tick_function($this->get_agent('scheduler'),'checkschedules');
+
+	  //is agents now
+	  //unset($this->timer);
+	  //unset($this->scheduler);
+	  	  
+   
+	  _("Shutdown...",1);
+	  	
+      $this->free_agents();
+	  
+	  //close printer	  
+	  $printout = $this->get_agent('resources')->get_resource('printer');   		
+	  if (is_resource($printout) &&
+			get_resource_type($printout)=='printer')
+			printer_close($printout);
+			
+   } 	
+   
+   function __destruct() {
+	  //shmop_delete($this->dpc_agn_id);
+   }
+
+   public static function ClassLoader($className) {
+	
+        _("Trying to load dpc ". $className. ' via '. __METHOD__ ,1);
+		
+		try {
+		    $class = str_replace(array('\\DPC\\','\\'), '/', $className);
+            require_once(self::$ldschemeS . '/' . $class . '.dpc.php');  
+			_("Class $className loaded!",1);
+		} 
+		catch (Exception $e) {
+            _("\r\n File $className not exist!",1);
+			//debug_print_backtrace();		
+        }
+		
+        _("End of load ". $className. ' via '. __METHOD__. "()\r\n",1);		
+    } 
+
+   public static function LibraryLoader($className) {
+	
+        _("Trying to load lib ". $className. ' via '. __METHOD__ ,1);
+		
+		try {
+		    $class = str_replace(array('\\LIB\\','\\'), '/', $className);
+            require_once(self::$ldschemeS . '/' . $class . '.lib.php');  
+			_("Class $className loaded!",1);
+		} 
+		catch (Exception $e) {
+            _("\r\n File $className not exist!",1);
+			//debug_print_backtrace();		
+        }
+		
+        _("End of load ". $className. ' via '. __METHOD__. "()\r\n",1);		
+    } 	
 
 }
 

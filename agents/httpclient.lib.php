@@ -1720,11 +1720,10 @@ class httpclient
 		}
 		if(IsSet($headers[$authenticate_header])
 		&& $this->sasl_authenticate)
-		{   
+		{
 			if(function_exists("class_exists")
 			&& !class_exists("sasl_client_class"))
 				return($this->SetError("the SASL client class needs to be loaded to be able to authenticate".($proxy ? " with the proxy server" : "")." and access this site", HTTP_CLIENT_ERROR_INVALID_PARAMETERS));
-				
 			if(GetType($headers[$authenticate_header])=="array")
 				$authenticate=$headers[$authenticate_header];
 			else
@@ -1745,9 +1744,9 @@ class httpclient
 					$mechanisms[]=$mechanism;
 			}
 			
-			$sasl = new sasl_client_class($this->env); //<<<<
-			//$sasl = new \LIB\tcp\sasl_client_class($this->env); //<<<<
-
+			//$sasl = new sasl_client_class($this->env); //<<<<
+			$sasl = new saslclient($this->env); //<<<<
+			
 			if(IsSet($user))
 				$sasl->SetCredential("user",$user);
 			if(IsSet($password))
