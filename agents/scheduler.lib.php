@@ -193,6 +193,15 @@ class scheduler {
 	  return false; 
   }
   
+  public function overwriteschedules(&$sh=null) {
+	  if (!empty($sh)) {
+		  
+		$this->timeline = $sh;
+		return true;
+	  }
+	  return false;	
+  }
+  
   //show the schedules running ........
   function showschedules() {
      $header= true;

@@ -220,7 +220,7 @@ class daemon {
                 //if (SERVER_TYPE != 'inetd') {
 				        //if (!$socket) $socket = $this->msg_socket;
 						socket_getpeername ($this->cpool[$id]->resource, $peer_addr, $peer_port);
-                        $this->verbose (2, "---------------Connection closed from $id>$peer_addr:$peer_port ------------");
+                        $this->verbose (2, "--------------- Connection from $id>$peer_addr:$peer_port closed ---------------");
                         //socket_shutdown ($this->clientFD[$id]);
 						socket_close($this->cpool[$id]->resource);
 
@@ -403,7 +403,7 @@ class daemon {
                   if ($this->cpool[$id]->session['First_time']==true) {
 				        //if (!$socket) $socket = $this->msg_socket;
                         socket_getpeername ($this->cpool[$id]->resource, $peer_addr, $peer_port);
-                        $this->verbose (2, "---------Connection from $id>$peer_addr:$peer_port-----------");
+                        $this->verbose (2, "--------------- Connection from $id>$peer_addr:$peer_port opened ---------------");
                         $this->Println ($this->Header,$id);
                   }
                   $this->cpool[$id]->session['First_time'] = false;

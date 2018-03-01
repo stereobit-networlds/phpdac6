@@ -4,7 +4,8 @@
 
 	define ("GLEVEL", 1); 
 
-	function _($str, $level=0, $crln=true) {
+	function _($str, $level=0, $crln=true) 
+	{
 	    global $glevel;
 	    $cr = $crln ? PHP_EOL : null;
 		if ($level<=$glevel)
@@ -13,7 +14,8 @@
 		_dump(date ("Y-m-d H:i:s :").$str.PHP_EOL,'a+');
 	}
    
-	function _dump($data=null,$mode=null,$filename=null) {
+	function _dump($data=null,$mode=null,$filename=null) 
+	{
 	   $m = $mode ? $mode : 'w';
 	   $f = $filename ? $filename : '/dumpagn-'.$_SERVER['COMPUTERNAME'].'.log';
 
@@ -27,29 +29,24 @@
    
 class agentds {
 
-   var $daemon_ip, $daemon_port, $daemon_type;
-   var $dmn, $agent;
+	var $daemon_ip, $daemon_port, $daemon_type, $dmn;
+	var $agn_mem_type = 0;//shared 1 vs convensional
+	var $agn_mem_store;
+	var $agent; 
    
-   var $agn_mem_type = 0;//shared 1 vs convensional
-   var $agn_mem_store;
+	var $shm_id, $agn_shm_id;
+	var $agn_addr, $agn_length, $agn_attr;
+	var $shared_buffer;
    
-   var $shm_id, $agn_shm_id;
-   var $agn_addr, $agn_length;
-   var $shared_buffer;
-   var $agn_attr;
-   
-   //environment vars
-   var $env, $verboseLevel, $promptString;
+	var $env, $verboseLevel, $promptString;
+	var $active_agent,$active_o_agent; 
+	var $resources, $timer, $scheduler;
+	var $gtk, $gtkds_conn, $window, $agentbox;  
+	var $echoLevel, $ldscheme, $argbatch;
+	
+	public static $ldschemeS;   
 
-   var $active_agent,$active_o_agent; 
-   var $resources,$timer,$scheduler;
-   
-   var $gtk, $gtkds_conn;//handle gtkds connection
-   var $window, $agentbox;  
-   var $echoLevel, $ldscheme, $argbatch;
-   public static $ldschemeS;   
-
-   function __construct($dtype,$ip='127.0.0.1',$port='19125',$dacip='127.0.0.1',$dacport='19123') { 
+   function __construct() { //$dtype=null,$ip='127.0.0.1',$port='19125',$dacip='127.0.0.1',$dacport='19123') { 
 	  $argc = $GLOBALS['argc'];
 	  $argv = $GLOBALS['argv'];
 	  //print_r($argv);
@@ -80,7 +77,8 @@ class agentds {
       require_once("system/dacstreamc.lib.php");			
 	  //require_once($this->ldscheme . "/system/dacstreamc.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpdac5","c_dacstream");
-	  if (!$phpdac_c) {
+	  if (!$phpdac_c) 
+	  {
 		  _("Client dac protocol failed to registered!");
 		  die();
 	  }	  
@@ -93,7 +91,8 @@ class agentds {
       //require_once("agents/agnstreamc.lib.php");			
 	  require_once($this->ldscheme . "/agents/agnstreamc.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpagn5","c_agnstream");
-	  if (!$phpdac_c) {
+	  if (!$phpdac_c) 
+	  {
 		  _("Client agent protocol failed to registered!");
 		  die();
 	  }	  
@@ -103,7 +102,8 @@ class agentds {
       //require_once("agents/resstream.lib.php");			
       require_once($this->ldscheme . "/agents/resstream.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpres5","c_resstream");
-	  if (!$phpdac_c) {
+	  if (!$phpdac_c) 
+	  {
 		  _("Client resource protocol failed to registered!");
 		  die();
 	  }	  
@@ -113,7 +113,7 @@ class agentds {
 	  //INITIALIZE ENVIRONMENT
 	  //var_dump($_SERVER);
 	  //clear log
-	  unlink('dumpagn-'.$_SERVER['COMPUTERNAME'].'.log');
+	  @unlink('dumpagn-'.$_SERVER['COMPUTERNAME'].'.log');
 		  
 	  $this->env['name'] = $_SERVER['COMPUTERNAME'];  			 
 	  $this->env['os'] = $_SERVER['OS'];	  
@@ -146,7 +146,8 @@ class agentds {
 	  $printer = "\\\http://www.e-basis.gr\\e-Enterprise.printer";
 	  $printout = @printer_open($printer);//true;
 	  if (is_resource($printout) &&
-		  get_resource_type($printout)=='printer') {
+		  get_resource_type($printout)=='printer') 
+	  {
 			  
 	    printer_set_option($printout, PRINTER_MODE, 'RAW'); 
 		$this->get_agent('resources')->set_resource($printer,$printout);
@@ -166,7 +167,8 @@ class agentds {
 	  //initialize GTk connector (for calling proc from this ($env) class ...purposes)
 	  $this->gtk = ($argv[4]==='-gtk') ? true : false;
 	  
-	  if ($this->gtk) {
+	  if ($this->gtk) 
+	  {
 		  require_once($this->ldscheme . "/agents/gtklib.lib.php");  		
 		  _("GTK connector loaded!");	  
 		  $this->gtkds_conn = new gtkds_connector();
@@ -181,22 +183,21 @@ class agentds {
 	  
    }
    
-   function destroy() {
+   private function destroy() 
+   {
 	   if ($this->gtk) 
 			Gtk::main_quit();
    }   
    
-   function startdaemon() {
+   private function startdaemon() 
+   {
    
-      $this->dmn = new daemon($this->daemon_type,true,$this);//'standalone',false);
-	  //$this->dmn = new daemon('inetd',true);
-	  //$this->dmn = new daemon('standalone',true);
-	  //$this->dmn = new daemon('xyz',true);	  
+      $this->dmn = new daemon($this->daemon_type,true,$this);	  
       $this->dmn->setAddress ($this->daemon_ip);//'127.0.0.1');
       $this->dmn->setPort ($this->daemon_port);
       $this->dmn->Header = "PHPDAC5 Agent v2, at ". $this->env['name'] . ' ' . $this->daemon_ip .':'. $this->daemon_port;
 
-      $this->dmn->start($this->promptString);  //this routine creates a socket	
+      $this->dmn->start($this->promptString);  
 	  
       $this->dmn->setCommands (array ("help", "quit", "date", "shutdown","echo","silence",
 	                                  "ver", "callagent", "uncall", "callagentc", "call", "helo", "run", "net",
@@ -258,20 +259,24 @@ class agentds {
       $this->dmn->listen(1); 	    	       
    }
    
-   private function exebatchfile(&$dmn,$file=null,$w=false) {
-	    if ((!$file) || ($file=='.ash')) //empty argbatch 
+   private function exebatchfile(&$dmn,$file=null,$w=false) 
+   {
+	    if ((!$file) || ($file=='.ash')) //empty ashbatch 
 			$file = 'init.ash';
 		
 		$batchfile = getcwd() . DIRECTORY_SEPARATOR . $file; 
 		
-		if ((is_readable($batchfile)) && ($f = @file($batchfile))) {
-			
+		if ((is_readable($batchfile)) && ($f = @file($batchfile))) 
+		{
 			if ($w)
 			  _('Init batch file: ' . $batchfile);			
 			
-			if (!empty($f)) {
-		      foreach ($f as $command_line) {
-				if (trim($command_line)) {
+			if (!empty($f)) 
+			{
+		      foreach ($f as $command_line) 
+			  {
+				if (trim($command_line)) 
+				{
 					 //echo "-" . $command_line;
                      $dmn->dispatch($command_line,null);
                 }
@@ -283,9 +288,11 @@ class agentds {
    }   
    
    //general purpose commands
-   public function command_handler ($command, $arguments, $dmn) {
+   public function command_handler ($command, $arguments, $dmn) 
+   {
    
-     switch ($command) {
+     switch ($command) 
+	 {
         case 'HELP':
                 //commands are converted to uppercase by default. If you want to
                 //disable this, look into tokenise().
@@ -364,7 +371,8 @@ class agentds {
                 break;				
 				
 		case 'NET':
-		        if (method_exists($this,$arguments[0])) {
+		        if (method_exists($this,$arguments[0])) 
+				{
                   $data = $this->{$arguments[0]}($arguments[1],$arguments[2],$arguments[3]);		
 		          $dmn->Println ($data);		        
 				}
@@ -473,7 +481,8 @@ class agentds {
 		        break;					
 				
 		case 'STARTGTK':
-		        if ($this->gtk) {
+		        if ($this->gtk) 
+				{
 					_("Starting GTK Console...");
 					new gtkds($this,0);
 					$dmn->Println($c);
@@ -496,13 +505,13 @@ class agentds {
    }  
    
    //agent command dispatcher (all *** commands)
-   public function agent_handler($command, $arguments, $dmn) {
-   		
+   public function agent_handler($command, $arguments, $dmn) 
+   {	
 		//create command line from daemon			
 		$shell_command = $command . " " . implode(' ',$arguments);			
 		
-		if (is_object($this->active_o_agent)) {
-		  
+		if (is_object($this->active_o_agent)) 
+		{
 		  if (method_exists($this->active_o_agent,$command))
 		    $ret = $this->active_o_agent->$command($arguments[0],$arguments[1],$arguments[2]);
 		  else
@@ -519,43 +528,48 @@ class agentds {
    }   
    
    //buffer2 used as optional when reconf-clean mem  
-   private function openmemagn($buffer,$buffer2=null) {
-   
+   private function openmemagn($buffer,$buffer2=null) 
+   {
       $shm_max = strlen($buffer) + strlen($buffer2);
    
       if ($this->agn_mem_type==1) {//shared
    
         $this->agn_shm_id = shmop_open(0xfff, "c", 0644, $shm_max);
 	  
-        if(!$this->agn_shm_id) { 
+        if(!$this->agn_shm_id) 
+		{ 
           _("Couldn't create shared memory segment.");
 		  _("System Halted.");
 		  die();
 		}  
-	    else {  
+	    else 
+		{  
           $shm_bytes_written = shmop_write($this->agn_shm_id, $buffer, 0);
-          if($shm_bytes_written != $shm_max) {
+          if($shm_bytes_written != $shm_max) 
+		  {
             _("Couldn't write the entire length of data");
 		    _($shm_max.":".$shm_bytes_written.">".$buffer);
           }
-		  else {	
+		  else 
+		  {	
 		    $this->shared_buffer = $buffer . $buffer2;
 		    $this->savestate($shm_max);
 	        //echo "Ok!\n";
 		  }  		
 	    }	 
 	  }
-	  else {//default
-	    
+	  else 
+	  { //default
 		$this->agn_mem_store = $buffer . $buffer2; 
 		$this->savestate($shm_max);
 	    //echo $this->agn_mem_store," Ok!\n";		
 	  }  
    }
    
-   private function closememagn() {
-   
-      if ($this->agn_mem_type==1) {//shared	   
+   private function closememagn() 
+   {
+      if ($this->agn_mem_type==1) 
+	  {//shared	   
    	    if (!$this->agn_shm_id) return -1;
 	  
         if(!shmop_delete($this->agn_shm_id)) {
@@ -564,7 +578,6 @@ class agentds {
 	  
 	    shmop_close($this->agn_shm_id);	
 	    $this->agn_shm_id = null;  
-		
 	  }
 
 	  //delete id file
@@ -576,36 +589,36 @@ class agentds {
    }   
    
    //save shared mem resource id and mem alloc arrays
-   private function savestate($shm_max_mem) {
-   
+   private function savestate($shm_max_mem) 
+   {
 		$fd = @fopen( "agn.id", "w" );
 
-		if (!$fd) {
+		if (!$fd) 
+		{
             _("agn_id not saved!!!");
 			return false;
 		}
 
 		_("Saving state.",2);
-		$data = $shm_max_mem ."^". serialize($this->agn_addr) . 
-		                      "^". serialize($this->agn_length); 
+		$data = $shm_max_mem ."^". 
+		        serialize($this->agn_addr) ."^". 
+				serialize($this->agn_length); 
 
 		fwrite($fd, $data);
-
 		fclose($fd);      
-		
 		return true;
    }   
    
-   private function addmemagn($agent,$agn_serialized) {
-     
-	  //if ($agent=='scheduler') {
+   private function addmemagn($agent,$agn_serialized) 
+   {
+	  //if ($agent=='scheduler') 
+	  //{
       //echo "\n,.",strlen($this->shared_buffer)/*,$this->shared_buffer*/;
 	  //echo "\n,.",strlen($this->agn_mem_store),$this->agn_mem_store;
 	  //}
-	  if ($this->agn_mem_type==1)   
-        $a_index = strlen($this->shared_buffer); //echo $a_index,"\n";
-	  else
-	    $a_index = strlen($this->agn_mem_store);
+	  $a_index = ($this->agn_mem_type==1) ?
+                  strlen($this->shared_buffer) : 
+	              strlen($this->agn_mem_store);
 	  
       $a_size = strlen($agn_serialized);
 	  
@@ -616,12 +629,13 @@ class agentds {
 	  //var_dump($this->agn_addr);
 	  		
       $shm_max = $a_index + $a_size;	
-	  if ($this->agn_mem_type==1) 	
+	  /*if ($this->agn_mem_type==1) 	
 	    $this->shared_buffer .= $agn_serialized;
-	  else
-	    $this->agn_mem_store .= $agn_serialized;	
+	  else*/
+	  $this->agn_mem_store .= $agn_serialized;	
 	  
-      if ($this->agn_mem_type==1) {//shared	  
+      if ($this->agn_mem_type==1) 
+	  { //shared	  
 	    //extend and add the new agent at sh mem
    	    if ($this->agn_shm_id) { 
 	      _("Close shared memory segment",2);	  
@@ -634,7 +648,8 @@ class agentds {
 	      $this->openmemagn($this->shared_buffer); 	  	  
 	    }
 	  }
-	  else {
+	  else 
+	  {
 	    _("Close standart memory segment",2);	  
 	    $this->closememagn();	   
         _("Allocate standart memory segment",2);
@@ -642,35 +657,37 @@ class agentds {
 	  }	
    }
    
-   private function updatememagn($agent,$agn_serialized) {
-   
+   private function updatememagn($agent,$agn_serialized) 
+   {
       //replace agent info table  
 	  $a_index = $this->agn_addr[$agent];			
-	  $a_old_size = $this->agn_length[$agent];		
-	  //echo "Update old ",$a_index,':',$a_old_size,"\n";   
+	  $a_old_size = $this->agn_length[$agent];		  
 	  $a_new_size = strlen($agn_serialized);
+	  //echo "Update old ",$a_index,':',$a_old_size,"\n"; 
 	  //echo "update new ",$a_index,':',$a_new_size,"\n";	
 	  
-	  if ($a_old_size==$a_new_size) { //1st method
-		
-        if ($this->agn_mem_type==1) {//shared	  
-		
+	  if ($a_old_size==$a_new_size) 
+	  { //1st method
+        if ($this->agn_mem_type==1) 
+		{ //shared	  
           $this->shared_buffer = substr_replace($this->shared_buffer,$agn_serialized,$a_index,$a_old_size);    		
 		  
 	      //update and replace the new agent at sh mem
-   	      if ($this->agn_shm_id) { 
+   	      if ($this->agn_shm_id) 
+		  { 
 	        _("Close shared memory segment",2);	  
 	        $this->closememagn();	 
 	        _("Re-allocate shared memory segment",2);
 	        $this->openmemagn($this->shared_buffer); 	  
 	      }
-	      else {
+	      else 
+		  {
             _("Allocate shared memory segment",2);
 	        $this->openmemagn($this->shared_buffer); 	  	  
 	      }
 	    }
-	    else {
-		
+	    else 
+		{
           $this->agn_mem_store = substr_replace($this->agn_mem_store,$agn_serialized,$a_index,$a_old_size);    		
 		
 	      _("Close standart memory segment",2);	  
@@ -687,30 +704,32 @@ class agentds {
 	  return false;	
    }
    
-   private function removememagn($agent) {
-   
+   private function removememagn($agent) 
+   {
       $a_index = $this->agn_addr[$agent];   
       $a_size = $this->agn_length[$agent];
 	  _("Remove ". $agent.'>'.$a_index.':'.$a_size,2);		  
 	  
 	  $deleted_agent = str_repeat('x',$a_size);
 	  
-      if ($this->agn_mem_type==1) {//shared		
-	  
+      if ($this->agn_mem_type==1) 
+	  {  //shared		
 	    //update shared buffer
         $this->shared_buffer = substr_replace($this->shared_buffer,$deleted_agent,$a_index,$a_size);	      
 		
-	    if (!shmop_write($this->agn_shm_id,$deleted_agent,$a_index)) {
+	    if (!shmop_write($this->agn_shm_id,$deleted_agent,$a_index)) 
+		{
 	      _("[$agent] Couldn't mark shared memory block for writing.");
 		  return false;
 	    }  
 	  }
-	  else {
+	  else 
+	  {
         //echo "\n",$this->agn_mem_store,"\n",strlen($this->agn_mem_store),"\n";	  
 	    $this->agn_mem_store = substr_replace($this->agn_mem_store,$deleted_agent,$a_index,$a_size);
 		//echo "\n",$this->agn_mem_store,"\n",strlen($this->agn_mem_store),"\n";
 	  }
-	  //if ckean remark this...
+	  //if clean remark this...
 	  //unset($this->agn_addr[$agent]);
 	  //unset($this->agn_length[$agent]);
 
@@ -722,28 +741,31 @@ class agentds {
 	  return true;
    }
    
-   private function clean_mem_store() {
+   private function clean_mem_store() 
+   {
       $offset = 0;
 	  //var_dump($this->agn_addr);
 	  //var_dump($this->agn_length);	  
 	  //echo "\n",$this->agn_mem_store,"\n",strlen($this->agn_mem_store),"\n";	
 	  
 	  reset($this->agn_addr);
-      foreach ($this->agn_addr as $id=>$value) {
-
+      foreach ($this->agn_addr as $id=>$value) 
+	  {
         $current_index = $value;				
 	    $current_size = $this->agn_length[$id];		
 		
 		$s_agent = substr($this->agn_mem_store,$current_index,$current_size);
 	    //echo '>',$s_agent,'<',strlen($s_agent); 		
-		
 		$removed_agent = str_repeat('x',$current_size);
-		if ($s_agent==$removed_agent) {
+		
+		if ($s_agent==$removed_agent) 
+		{
 		  //is a deleted agent
 		  //echo "\nclean $id $current_index:$current_size\n";
 		  $offset = strlen($s_agent);
 		}
-		else {
+		else 
+		{
 	      $a_size = $current_size;		
 		  
 		  $local_agn_addr[$id] = $current_index - $offset;
@@ -768,17 +790,16 @@ class agentds {
 	  $this->openmemagn('aek;',$local_agn_mem_store);
 	  
 	  //var_dump($this->agn_addr);
-	  //var_dump($this->agn_length);		  
-	  
+	  //var_dump($this->agn_length);		   
    }
    
-   private function cleanmemagn() {
-   
+   private function cleanmemagn() 
+   {
 	  $shm_max = 0;
 	  
 	  reset($this->agn_addr);
-      foreach ($this->agn_addr as $id=>$value) {
-
+      foreach ($this->agn_addr as $id=>$value) 
+	  {
         $current_index = $value;				
 	    $current_size = $this->agn_length[$id];		
 			
@@ -788,11 +809,13 @@ class agentds {
 	    //$s_agent= substr($this->shared_buffer,$value,$current_size);
 		
 		$removed_agent = str_repeat('x',$current_size);
-		if ($s_agent==$removed_agent) {
+		if ($s_agent==$removed_agent) 
+		{
 		  //is a deleted agent
 		  _("removed",2);
 		}
-		else {
+		else 
+		{
 	      $a_size = $current_size;		
 		  
 		  $local_agn_addr[$id] = $current_index;
@@ -815,20 +838,22 @@ class agentds {
    /////////////////////////////////////////////// HI-LEVEL AGENT HANDLERS
    
    //reead file of agents to initialize
-   private function init_agents($ip,$port) {   
-   
+   private function init_agents($ip,$port) 
+   {   
 	   $this->openmemagn('aek;');    
        _('Init agents file: ' . getcwd() . "/agentds.ini"); 
        if (!is_file(getcwd() ."/agentds.ini")) return -1;   
 		  
        $code = @file_get_contents(getcwd() . "/agentds.ini");
 	   
-	   if ($file = explode("\n",$code)) {
+	   if ($file = explode("\n",$code)) 
+	   {
 			//clean code by nulls and commends
 			foreach ($file as $num=>$line) {
 			  $trimedline = trim($line);
-		      if (($trimedline) && //check if empty line			  
-			      ($trimedline[0]!="#")) {  //check comments        
+		      if (($trimedline) &&       //empty line			  
+			      ($trimedline[0]!="#")) //comment  
+			  {        
 			    
 				 $lines[] = $trimedline;
 			  }
@@ -840,8 +865,8 @@ class agentds {
 			$token = explode(";",$toktext);		
 
 	        //then...read tokens  			
-	        foreach ($token as $tid=>$tcmd) {
-			  
+	        foreach ($token as $tid=>$tcmd) 
+			{  
 			   $part = explode(' ',$tcmd);
 			   switch ($part[0]) {	
 			   
@@ -853,22 +878,23 @@ class agentds {
 				                $this->get_agent('scheduler')->schedule($part[1],$part[2],$part[3]); 
 				                break;
 								
-				 case 'library' : if ($part[1]) {
-
+				 case 'library' : if ($part[1]) 
+				                {
 								  $name = explode(".",trim($part[1]));
 								  $this->create_agent($name[1],$name[0],null,null,'lib',false);
 								} 
 				                break; 
 
-				 case 'include' : if ($part[1]) {
-
+				 case 'include' : if ($part[1]) 
+								{
 								  $name = explode(".",trim($part[1]));
 								  $this->create_agent($name[1],$name[0],null,null,'lib',true);
 								} 
 				                break;								
 							  
 				 default      : //create agents  
-			  		            if ($part[0]) {
+			  		            if ($part[0]) 
+								{
 								  //$includer = "phpdac5://$ip:$port/" . str_replace(".","/",trim($part[0])) . "." . 'dpc' . ".php";
 								  //$this->load_agent($includer,$part[0]);
 								  
@@ -877,20 +903,22 @@ class agentds {
 								} 
 				                
 			   }//switch
-			   $i+=1; 
+			   $i+=1;
 	        }//foreach		 
 	   }
 	   
 	   return true;
    }  
    
-   private function create_agent($agent,$domain=null,$include_ip=null,$as_name=null,$type='dpc',$includeonly=false) {
+   private function create_agent($agent,$domain=null,$include_ip=null,$as_name=null,$type='dpc',$includeonly=false) 
+   {
       global $__DPC;  
 	  $dpc = $domain ? : 'agents';
    	  $class = strtoupper($agent).'_DPC';	  
 	  //echo $class;
 	  
-	  if (defined($class)) {
+	  if (defined($class)) 
+	  {
 		  _($agent . " exists!");
 		  return true;
 	  }	  
@@ -898,19 +926,20 @@ class agentds {
       if (isset($include_ip))
 	    require("phpdac5://$include_ip:$this->phpdac_port" . "/$dpc/$agent" . '.'.$type.'.php');    
 	  else 
-	    require("phpdac5://$this->phpdac_ip:$this->phpdac_port" . "/$dpc/$agent" . '.'.$type.'.php');    
+	    require($this->ldscheme . "/$dpc/$agent" . '.'.$type.'.php');    
 	  
-	  if (($type=='lib') && ($includeonly)) {
+	  if (($type=='lib') && ($includeonly)) 
+	  {
 		  _('include library: '.$agent);
 		  return true;
 	  }	  
 	  
 	  $class = strtoupper($agent).'_DPC';	 
 	  //echo $class;
-	  if ((defined($class)) &&
-	      (class_exists($__DPC[$class])) ) {
-		try {
- 
+	  if ((defined($class)) && (class_exists($__DPC[$class])) ) 
+	  {
+		try 
+		{
           $o_agent = & new $__DPC[$class]($this);//this is the class as environment
 		  		  
 		  if (is_object($o_agent)) {
@@ -951,15 +980,15 @@ class agentds {
 	  return false;	 	   
    } 
    
-   private function destroy_agent($agent) {
-   
+   private function destroy_agent($agent) 
+   {
 	  $o_agent = $this->get_agent($agent);
 	  
       //seems to load the 1st agent in case of invalid agent name   
 	  if (is_object($o_agent) && ($this->active_agent!=$agent)) {   
      
-	    if ($this->removememagn($agent)) {
-		
+	    if ($this->removememagn($agent)) 
+		{
 		  $o_agent->destroy();
 		
 	      unset($this->agn_attr[$agent]);//RESIDENT ATTRIBUTE
@@ -967,40 +996,43 @@ class agentds {
 		  
 		  return true;
 	    }	
-	    else {
+	    else 
+		{
 	      _("[$agent] NOT destroyed!");			
 		  return false;
 	    }	
-	  
 	  }
 	  else
 	    _("Invalid object or activated!");
    }
    
    
-   function __wakeup() {
+   //obj serialization sleep/wakeup (old test)
+   function __wakeup() 
+   {
    
      //echo "WWWWWWWWWWWWW";
    }
    
    //update the object data in shared mem
-   public function update_agent(&$o_agent,$agent) {
-   
+   public function update_agent(&$o_agent,$agent) 
+   {
 	  //var_dump($this->agn_addr);
 	  //var_dump($this->agn_length);	  
 	  //echo "\n",$this->agn_mem_store,"\n",strlen($this->agn_mem_store),"\n";   
       //echo "\n,.",strlen($this->shared_buffer),$this->shared_buffer;
 	   
-	  if (is_object($o_agent)) {
-	  
+	  if (is_object($o_agent)) 
+	  {
 	      $old_agent = $this->get_agent($agent,true);
           
 		  //$o_agent->env = $this;
 		  $s_agent = serialize($o_agent);    
 		  
-		  //if (strlen($old_agent)!=strlen($s_agent)) {
-		  if (strcmp($old_agent,$s_agent)) {
-		  
+		  //if (strlen($old_agent)!=strlen($s_agent)) 
+		  //{
+		  if (strcmp($old_agent,$s_agent)) 
+		  {
 		    //echo '+++++',strcmp($old_agent,$s_agent),'++++'; 
 		  
 		    //1st method
@@ -1011,8 +1043,8 @@ class agentds {
 	  		//echo  strlen($this->agn_mem_store),">>>>>\n";			
 	        $removed = $this->removememagn($agent);
 	  		//echo  strlen($this->agn_mem_store),">>>>>\n";
-   	        if ($removed) {//2nd method		
-			  
+   	        if ($removed) 
+			{		  
 		      $this->addmemagn($agent,$s_agent);
 		      _('Update agent:'.$agent,2);			
 		    }
@@ -1029,32 +1061,34 @@ class agentds {
    } 
    
    //return object pointer of agent OR serialized string of agent
-   public function get_agent($agent,$serialized=null) {
-
+   public function get_agent($agent,$serialized=null) 
+   {
 	  //echo $agent,"\n>>>>>>>>>>>>>";
-      if (isset($this->agn_addr[$agent])) {
-	  
+      if (isset($this->agn_addr[$agent])) 
+	  {
 	    $a_index = $this->agn_addr[$agent];
 	    $a_size = $this->agn_length[$agent];
 	    //echo $a_index,':',$a_size,"\n";
 		//var_dump($this->agn_addr);
 		//var_dump($this->agn_length);		
 	  
-        if ($this->agn_mem_type==1) {//shared	  
+        if ($this->agn_mem_type==1) 
+		{ 	  
 	      $s_agent = shmop_read($this->agn_shm_id,$a_index,$a_size); 
 		}
-		else {
+		else 
+		{
 		  $s_agent = substr($this->agn_mem_store,$a_index,$a_size);		
 		}  
 	    //echo '>',$s_agent,'<',strlen($s_agent); 
 
-	    if ($serialized) {
-		
-		  //auto update ?????
-		  
+	    if ($serialized) 
+		{
+		  //auto update ?????  
 		  return ($s_agent);
 		}
-		else {  
+		else 
+		{  
 		  $size = strlen($s_agent);
 	      $o_agent = unserialize($s_agent);
 	  
@@ -1070,12 +1104,13 @@ class agentds {
    }    
    
    //call agent's methods from cmd line!!!
-   public function call_agent($agent,$daemon) {
-   
+   public function call_agent($agent,$daemon) 
+   {
 		$o_agent = $this->get_agent($agent);
 	  
         //seems to load the 1st agent in case of invalid agent name   
-	    if (is_object($o_agent)) {
+	    if (is_object($o_agent)) 
+		{
           //$daemon->changePrompt($agent.">");   
           if (method_exists($o_agent,'iam')) 
 		    $ret = $o_agent->iam();
@@ -1089,19 +1124,17 @@ class agentds {
 		
 		  $ret = implode(".",get_class_methods($this->active_o_agent)) . "\n";
 	    }
-	    else {
-	      //$this->active_o_agent = null;
-	      $ret = "Invalid agent!";
-	    }	
+	    else 
+	      $ret = "Invalid agent!";	
 	
-	  return ($ret);	      
+		return ($ret);	      
    }
    
    //uncall agent from cmd
-   private function uncall_agent($daemon) {
-   
-	  if (is_object($this->active_o_agent)) {   
-	  
+   private function uncall_agent($daemon) 
+   {
+	  if (is_object($this->active_o_agent)) 
+	  {   
         $this->active_o_agent = null;
 		$this->active_agent = null;	
 		$daemon->changePrompt($this->promptString);	
@@ -1115,9 +1148,8 @@ class agentds {
    
    //call agent from sh mem buffer (client version)
    //use local
-   private function call_agentc($agent) {
-   
-		
+   private function call_agentc($agent) 
+   {	
 		$s_agent = $this->get_agent($agent,1);
 	  
 	    //delete agent from host
@@ -1128,43 +1160,44 @@ class agentds {
    }
    
    //send agent to other agent station
-   private function move_agentc($agent,$to) {
+   private function move_agentc($agent,$to) 
+   {
    }   
    
    //accept agent from other agent station
    //$from = ip:port
-   private function accept_agentc($agent,$from,$include=null) {
-   
+   private function accept_agentc($agent,$from,$include=null) 
+   {
       //get agent
       $f_agent = file_get_contents("phpagn5://$from:19125/" . $agent);//call callagentc from $from
 	  $s_agent = substr($f_agent,68,strlen($f_agent)-68-1);//header of daemon OFF
       _('>'.$s_agent.'<');
-	  /*for ($i=0;$i<68;$i++) {
+	  /*for ($i=0;$i<68;$i++) 
+	  {
 	    echo ord($f_agent{$i}),'.';
 		$x .= $f_agent{$i};
 	  }	
 	  echo $x;*/
 	  
-	  if (isset($s_agent)) {
+	  if (isset($s_agent)) 
+	  {
 	    //MUST BE INCLUDED TO UNSERIALZE OBJECTS
-	    if (!isset($include)) {
-		 if (isset($this->phpdac_ip)) 
-		   $include = $this->phpdac_ip;
-		 else
-		   $include = $from;
+	    if (!isset($include)) 
+		{
+		 $include = (isset($this->phpdac_ip)) ?
+					$this->phpdac_ip : $from;
 		}   
-        require("phpdac5://$include:19123/" . "agents/$agent." . 'dpc' . ".php");
+        require("phpdac5://$include:19123/" . "agents/$agent.dpc.php");
 	  	  
 	    $o_agent = unserialize($s_agent);	  
       
-	    if (is_object($o_agent)) {
-          //$daemon->changePrompt($agent.">");   
-          if (method_exists($o_agent,'iam')) 
-		    $ret = $o_agent->iam();
-		  else 
-		    $ret = "Ok!";
+	    if (is_object($o_agent)) 
+		{
+			//$daemon->changePrompt($agent.">");   
+			$ret = (method_exists($o_agent,'iam')) ?
+					$o_agent->iam() : "Ok!";
 		  
-		  $this->addmemagn($agent,$s_agent);   
+			$this->addmemagn($agent,$s_agent); 
 	    }
 	    else
 	      $ret = "Invalid agent!";	
@@ -1175,32 +1208,32 @@ class agentds {
 	  return ($ret);	   
    }
    
-   private function show_agents() {
-   
+   private function show_agents() 
+   {
       if (!is_array($this->agn_addr)) return -1;
 	  
       //var_dump($this->agn_addr);	  
 	  //var_dump($this->agn_length);  
    
-      foreach ($this->agn_addr as $agn=>$addr) {
+      foreach ($this->agn_addr as $agn=>$addr) 
+	  {
 	    _(PHP_EOL . $agn . $addr,1,false);
-        if ($this->agn_mem_type==1) {//shared	  
+		
+        if ($this->agn_mem_type==1) 
 	      $s_agent = shmop_read($this->agn_shm_id,$addr,$this->agn_length[$agn]);  
-		}
-		else {
+		else 
           $s_agent = substr($this->agn_mem_store,$addr,$this->agn_length[$agn]);  		
-		} 
+ 
 		_($this->agn_addr[$agn].":".$this->agn_length[$agn],2);
 		//echo $s_agent,"\n";
 		
 		$o_agent = unserialize($s_agent);	
 		
-	    if (is_object($o_agent)) {
+	    if (is_object($o_agent)) 
+		{
           //$daemon->changePrompt($agent.">");   
-          if (method_exists($o_agent,'iam')) 
-		    $ret .= $o_agent->iam()."\n";
-		  else 
-		    $ret .= $agn." Ok!"."\n";
+          $ret .= (method_exists($o_agent,'iam')) ?
+					$o_agent->iam()."\n" : $agn." Ok!"."\n";
 	    }
 		else
 		  $ret .= "Invalid agent!\n";		    
@@ -1209,9 +1242,10 @@ class agentds {
 	  return ($ret);
    }
    
-   private function free_agents() {
-   
-      if ($this->gtk) {
+   private function free_agents() 
+   {
+      if ($this->gtk) 
+	  {
 		$this->gtkds_conn->set_async_code("
 		foreach (\$this->agentbox->children() as \$num=>\$child) {
 		   \$this->agentbox->remove(\$child);
@@ -1221,13 +1255,15 @@ class agentds {
       $this->closememagn();
    }
    
-   public function prn($message=null,$doctitle=null) {
+   public function prn($message=null,$doctitle=null) 
+   {
 	  if (!$message) return false;
 	  
       $pr = $this->get_agent('resources')->get_resource('printer');
       //$this->update_agent($this->get_agent('resources'),'resources');
 	  if (is_resource($pr) &&
-		  get_resource_type($pr)=='printer') {
+		  get_resource_type($pr)=='printer') 
+	  {
 		 printer_start_doc($pr, $doctitle);	  
 	     printer_write($pr,$message."\n\r");  	 
 		 //printer_end_doc($pr, $doctitle); //double print 0 bytes when enabled !!!!
@@ -1239,21 +1275,25 @@ class agentds {
 	  return false;
    }
    
-   public function show_connections($show=null,$dacserver=null) {
-   
-      if ($dacserver) {//get sesions from phpdac server's daemon...
+   public function show_connections($show=null,$dacserver=null) 
+   {
+      if ($dacserver) 
+	  { //get sessions from phpdac server's daemon...
 	    $sret = $this->get_agent('resources')->get_resourcec('_sessions',$this->phpdac_ip,$this->phpdac_port);
 		$ret = unserialize($sret);
 	  }
-	  else {//get session from this agentds daemon
+	  else 
+	  { //get session from this agentds daemon
         $ret = $this->dmn->show_connections();
 	  
 	    //save in resources
         $this->get_agent('resources')->set_resource('_sessions',serialize($ret));		  
 	  }
 	  
-	  if ($show) {
-	    if (!empty($ret)) {
+	  if ($show) 
+	  {
+	    if (!empty($ret)) 
+		{
 	      //print out
 	      foreach ($ret as $session)
 	        $out .= implode("-",$session). "\r\n";	  
@@ -1264,10 +1304,10 @@ class agentds {
 	    return ($ret);
 	  	
 	  	
-   }      
+    }      
    
-   
-	public function httpcl($url=null, $user=null,$password=null) {
+	public function httpcl($url=null, $user=null,$password=null) 
+	{
 		if (!$url) return null;
 		
 		//require_once($this->ldscheme . "tcp/sasl.lib.php");
@@ -1398,15 +1438,14 @@ class agentds {
 	
 	
 
-   function shutdown() {
-   
+    function shutdown() 
+	{
 	  //unregister_tick_function($this->get_agent('scheduler'),'checkschedules');
 
 	  //is agents now
 	  //unset($this->timer);
 	  //unset($this->scheduler);
 	  	  
-   
 	  _("Shutdown...",1);
 	  	
       $this->free_agents();
@@ -1419,20 +1458,26 @@ class agentds {
 			
    } 	
    
-   function __destruct() {
-	  //shmop_delete($this->dpc_agn_id);
+   function __destruct() 
+   {
+        if(!$this->dpc_agn_id)
+            return;			   
+		
+	    shmop_delete($this->dpc_agn_id);
    }
 
-   public static function ClassLoader($className) {
-	
+   public static function ClassLoader($className) 
+   {
         _("Trying to load dpc ". $className. ' via '. __METHOD__ ,1);
 		
-		try {
+		try 
+		{
 		    $class = str_replace(array('\\DPC\\','\\'), '/', $className);
             require_once(self::$ldschemeS . '/' . $class . '.dpc.php');  
 			_("Class $className loaded!",1);
 		} 
-		catch (Exception $e) {
+		catch (Exception $e) 
+		{
             _("\r\n File $className not exist!",1);
 			//debug_print_backtrace();		
         }
@@ -1444,12 +1489,14 @@ class agentds {
 	
         _("Trying to load lib ". $className. ' via '. __METHOD__ ,1);
 		
-		try {
+		try 
+		{
 		    $class = str_replace(array('\\LIB\\','\\'), '/', $className);
             require_once(self::$ldschemeS . '/' . $class . '.lib.php');  
 			_("Class $className loaded!",1);
 		} 
-		catch (Exception $e) {
+		catch (Exception $e) 
+		{
             _("\r\n File $className not exist!",1);
 			//debug_print_backtrace();		
         }
@@ -1458,13 +1505,5 @@ class agentds {
     } 	
 
 }
-
-class rules {
-
-   function rules() {
-   }
-   
-   
-};
 
 ?>
