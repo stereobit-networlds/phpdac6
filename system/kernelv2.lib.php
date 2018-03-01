@@ -86,9 +86,9 @@ class kernelv2 {
    var $verboseLevel, $dmn, $agent, $dpcpath;
    var $scheduler, $resources, $timer;
    
-   private $shm_id, $dpc_shm_id, $dpc_addr, $dpc_length, $dpc_free;
-   private $shared_buffer, $shared_buffer_sepdata;
+   private $shm_id, $shm_max, $dpc_addr, $dpc_length, $dpc_free;
    private $dataspace, $extra_space;
+   private $ipcKey;
    
    function __construct($dtype=null,$ip='127.0.0.1',$port='19123') 
    {  
@@ -96,7 +96,13 @@ class kernelv2 {
       $argv = $GLOBALS['argv'];
 	  
 	  //graph
-	  $this->headerGrapffiti(1);	
+	  $this->grapffiti(1);	  
+	  
+	  $this->shm_id = null;
+	  $this->shm_max = 0;
+	  $this->dpc_attr = array();
+	  $this->dpc_length = array();
+	  $this->dpc_free = array();	  
 
 	  $this->agent = 'SH';//default !?!
 	  $this->verboseLevel = GLEVEL;	  
@@ -110,20 +116,14 @@ class kernelv2 {
 	  	  
 	  _("Daemon repository at $this->daemon_ip:$this->daemon_port",1);
 	  
- 	  //REGISTER PHPRES (client side,resources) protocol...			
+ 	  //REGISTER PHPRES (client side,resources) 		
       require_once("agents/resstream.lib.php"); 
 	  $phpdac_c = stream_wrapper_register("phpres5","c_resstream");
 	  if (!$phpdac_c) _("Client resource protocol failed to registered!");
 		         else _("Client resource protocol registered!",2); 	  
 	  
-	  $this->shm_id= null;
-	  $this->dpc_shm_id = null;
-	  $this->dpc_attr = array();
-	  $this->dpc_length = array();
-	  $this->dpc_free = array();
-	  $this->shared_buffer = null;
-	  $this->shared_buffer_sepdata = null;
-	  
+	  //create ipc key (if..)	
+	  $this->ipcKey = $this->_ftok($pathname, 's'); //create ipc Key
 	  //start mem	  
 	  if ($this->startmemdpc()) 
 	  {	
@@ -236,7 +236,7 @@ class kernelv2 {
 	  
 	  //continue shceduling after ash run
 	  $this->retrieve_schedules();
-	  
+	  	  
 	  //listen
       $this->dmn->listen(1); 	    	       
    }
@@ -443,71 +443,49 @@ class kernelv2 {
 		return true;  
    } 
 
-   private function startmemdpc() 
-   {
-	  _("Start",1);   
-   
+   private function startmemdpc($ipcKey=null) 
+   {   
+      $iKey = $ipcKey ? $ipcKey : 0xfff;
+	  
 	  if (!extension_loaded('shmop')) 
 		  dl('php_shmop.dll');
-
-      // Create 100 bytes shared memory block with system id if 0xff3
-      /*$this->shm_id = shmop_open(0xff3, "c", 0644, 100);
-      if(!$this->shm_id) 
-	  {
-        echo "Couldn't create shared memory segment\n";
-      }
-
-      // Get shared memory block's size
-      $shm_size = shmop_size($this->shm_id);
-      echo "SHM Block Size: ".$shm_size. " has been created.\n";
-
-      // Lets write a test string into shared memory
-      $shm_bytes_written = shmop_write($this->shm_id, "my shared memory block", 0);
-      if($shm_bytes_written != strlen("my shared memory block")) 
-	  {
-        echo "Couldn't write the entire length of data\n";
-      }
-
-      // Now lets read the string back
-      $my_string = shmop_read($this->shm_id, 0, $shm_size);
-      if(!$my_string) {
-        echo "Couldn't read from shared memory block\n";
-      }
-      echo "The data inside shared memory was: ".$my_string."\n";
-      */
-
-      ////////////////load dpc tree
-      $shm_max = $this->load_dpc_tree();
-	  //set separator from data space
-	  $this->shared_buffer_sepdata = $shm_max;
+	  
+	  _("Start",1);   
+	  
+	  $data =null;
+      $this->shm_max = $this->load_dpc_tree($data); //\0 included
+	  //echo ">>>>>>>>>>>>>>>", $this->shm_max;
+	  
+	  _dump($data ,'w', '/dumpmem-loadedtree'.$_SERVER['COMPUTERNAME'].'.log');
 	  
 	  ///////////////allocate dpc tree
 	  // Create shared memory block with system id if 0xff3
-	  $space = $shm_max + $this->dataspace;
-	  _("Allocate shared memory segment... $space bytes",2);
-      $this->dpc_shm_id = shmop_open(0xfff, "c", 0644, $shm_max + $this->dataspace);
-      if(!$this->dpc_shm_id) {
-		  
-		die("Couldn't create shared memory segment. System Halted.\n");
-	  }	
-	  else {  
+	  $space = $this->shm_max + $this->dataspace;
 	  
-        $shm_bytes_written = shmop_write($this->dpc_shm_id, $this->shared_buffer, 0);
-        if($shm_bytes_written != $shm_max) 
+	  _("Allocate shared memory segment... $space bytes",2);
+      $this->shm_id = shmop_open($ikey, "c", 0644, $space);
+	  
+      if ($this->shm_id) 
+	  {
+		// Do not Check SpinLock		
+		$bw = shmop_write($this->shm_id, $data, 0);
+		
+        if($bw != $this->shm_max) 
 		{
           die("Couldn't write the entire length of data\n");
-        }
+		}  
 		else	
-		  $this->savestate($shm_max);	
+		  $this->savestate();	
 	  }
+	  else
+		die("Couldn't create shared memory segment. System Halted.\n");
 
 	  return true; 	
    } 
    
    //save shared mem resource id and mem alloc arrays
-   private function savestate($shm_max_mem) 
+   private function savestate() 
    {
-   
 		$fd = @fopen( "shm.id", "w" );
 
 		if (!$fd) 
@@ -516,14 +494,37 @@ class kernelv2 {
 			return false;
 		}
 		_("Save state",2);
-		$data = $shm_max_mem ."@^@". serialize($this->dpc_addr) . 
-		                      "@^@". serialize($this->dpc_length). 
-							  "@^@". serialize($this->dpc_free). 
-							  "@^@". serialize($this->shared_buffer); 
+		$data = $this->shm_max ."@^@". serialize($this->dpc_addr) . 
+		                       "@^@". serialize($this->dpc_length). 
+							   "@^@". serialize($this->dpc_free);//. 
+							   //"@^@". serialize($this->shared_buffer); 
 
 		fwrite($fd, $data);
 		fclose($fd);      
 		return true;
+   }
+   
+   private function getShmOffset() {
+		$offset = 0; 
+		$zeros = 0;
+		
+		foreach ($this->dpc_length as $_dpc=>$_size)
+		{
+			$offset += $_size;
+			$zeros +=2; //\0...\0
+		}
+		$offset += $zeros; //segments x 2		   
+		return ($offset); //+1 into calling function
+   }
+   
+   // Check SpinLock
+   private function checkSpinLock($dpc)
+   {   
+       $offset = $this->dpc_addr[$dpc] -1;
+	   if (shmop_read($this->shm_id, $offset, 1) !== "\0")
+		   return false;
+	   
+	   return true;
    }
    
    //fetch shared mem
@@ -533,10 +534,10 @@ class kernelv2 {
 	   
 		if (isset($this->dpc_addr[$dpc])) 
 		{
-			return rtrim(//not empty trails
-			shmop_read($this->dpc_shm_id, 
+			return 
+			shmop_read($this->shm_id, 
 	                   $this->dpc_addr[$dpc], 
-			 	       $this->dpc_length[$dpc]));
+			 	       $this->dpc_length[$dpc]);
         }
 		return false; 	
    }   
@@ -544,7 +545,8 @@ class kernelv2 {
    //save calls,urls etc into shared mem
    private function savedpcmem($dpc, &$data) 
    {
-	   $dpc = $this->dehttpDpc($dpc);
+	   $dataLength = strlen($data); 	   
+	   $dpc = $this->dehttpDpc($dpc); //if it is a http call
 	   
 	   if (isset($this->dpc_addr[$dpc])) 
 	   {
@@ -554,88 +556,71 @@ class kernelv2 {
 			$length = $this->dpc_length[$dpc]; 
 			$free = $this->dpc_free[$dpc];
 			$rlength = intval($length - $free);
-			$oldData = substr($this->shared_buffer,$offset,$length);		
+			//$oldData = substr($this->shared_buffer,$offset,$length);		
 		     
-			if (isset($data)) 
-			{
-			
-			  //$dock_length = $length + $this->extra_space;			
-			  $dataLength = strlen($data); 
-			  $remaining = $length - $dataLength;
-			  _("diff:" . $length.':'.$dataLength,2);
-				
+			if (isset($data)) //replace
+			{				
+			  $remaining = $length - $dataLength;			  
+			  _("diff:" . $rlength.':'.$dataLength,2);
+			  
+			  //$oldData = $this->loaddpcmem($dpc);		
+			  $oldData = shmop_read($this->shm_id, $offset, $rlength); 				
 			  $hold = md5($oldData);	
-			  $hnew = md5($data . str_repeat(' ',$remaining));
+			  $hnew = md5($data);// . str_repeat(' ',$remaining));
 			  _("md5:" . $hold . ':'. $hnew,2);
 						
 			  if ($dataLength < $length) 
 			  {
-				//clean mem var
-				$c = str_repeat(' ',$length);
-				$this->shared_buffer = substr_replace($this->shared_buffer,$c,$offset,$length);	
- 
-				$data .=  str_repeat(' ',$remaining);
-				$this->shared_buffer = substr_replace($this->shared_buffer,$data,$offset,$length);
-				
-				if(!$this->dpc_shm_id) 
-					die("Shared memory segment error. System Halted.\n");
-				else //data + extra spaces (cleaned)  
-					$shm_bytes_written = shmop_write($this->dpc_shm_id, $data, $offset);
-				
-				//update free space and save state
-				$this->dpc_free[$dpc] = $remaining;
-				$this->savestate($shm_max);
-				
-				_("$dpc saved",1);
-				_dump("SAVE\n\n\n\n" . $this->shared_buffer);
+					//update free space and save state
+					$this->dpc_free[$dpc] = $remaining;
+									    
+					if ($this->checkSpinLock($dpc)===false)
+						_(">>>>>>>>>>>>>>>>>>>>>>>>>>>spinlock 0:$dpc",1);		
+			
+			        $data .=  str_repeat(' ',$remaining);
+					if (shmop_write($this->shm_id, $data, $offset))
+					{	
+						$this->savestate();
+						_("$dpc saved",1);
+						_dump("SAVE\n\n\n\n" . $data);
+					}	
 			  }
 			  else
-				die($dpc . " error, increase extra space!\n"); 
+					die($dpc . " error, increase extra space!\n"); 
 			
 			}//if data			 
 	   }
-	   else { //write
+	   else { //write first time (append)
 	   
 			if (!$data) return false;	
 			_($data,3);
 		
-			$databytes = strlen($data);
-			$sb = strlen($this->shared_buffer);
+			$offset = $this->getShmOffset();
 			
-			if (($sb + $databytes + $this->extra_space) < 
-				($this->shared_buffer_sepdata + $this->dataspace)) 
+			if ((($offset+1+1) + $dataLength + $this->extra_space) < 
+				($this->shm_max + $this->dataspace)) 
 			{
-			
-				//find index to start
-				$offset = 0; //sb ??????????
-				foreach ($this->dpc_length as $size)
-					$offset += $size;
-			  
-				$this->dpc_addr[$dpc] = $offset;			
-				$this->dpc_length[$dpc] = $databytes + $this->extra_space;
+				$this->dpc_addr[$dpc] = $offset + 1; //\0 new head			
+				$this->dpc_length[$dpc] = $dataLength + $this->extra_space;
 				$this->dpc_free[$dpc] = $this->extra_space;
-			
-				//add data space
-				$this->shared_buffer .= $data;
-				//add extra space for reloading
-				$this->shared_buffer .= str_repeat(' ',$this->extra_space);
-			  
-				if(!$this->dpc_shm_id) 
-					die("Shared memory segment error. System Halted.\n");
-				else   
-					$shm_bytes_written = shmop_write($this->dpc_shm_id, $data, $offset);
-				
-				$this->savestate($shm_max);
-				
-				_("$dpc Ok",1);
-				_dump("LOAD\n\n\n\n" . $this->shared_buffer);
+
+				if ($this->checkSpinLock($dpc)===false)
+					_(">>>>>>>>>>>>>>>>>>>>>>>>>>>spinlock 1:$dpc",1); 
+					
+				$data .= str_repeat(' ',$this->extra_space);
+				if (shmop_write($this->shm_id, "\0". $data ."\0", $offset))
+				{
+					$this->savestate();
+					_("$dpc loaded",1);
+					_dump("LOAD\n\n\n\n" . $data);
+				}
 			}
 			else	
 				die($dpc . " error, increase data space!");		
-		
-			_("Data : " . $databytes, 2);	     
+			     
 	   }
 	   
+	   _("Data : " . $dataLength, 2);	   
 	   return ($data);
    }    
    
@@ -667,24 +652,18 @@ class kernelv2 {
 	    $length = $this->dpc_length[$dpc]; 
 		$free = $this->dpc_free[$dpc];
 		$rlength = intval($length - $free);
-		$oldData = substr($this->shared_buffer,$offset,$length);		
+		//$oldData = substr($this->shared_buffer,$offset,$length);		
 		
         //echo "AAAAAAAAAAAAAAAAAAAAAA\n";
 		//dpc and streams that exists in data area only
-		if ($offset >= $this->shared_buffer_sepdata) 
+		if ($offset >= $this->shm_max) 
 		{
- 
 			if (substr($dpc,0,4)==='www.') 
 			{
 				//echo "111111111111111111111111\n";
-				//include user/pass at url
-				//$dpc = 'www.e-basis.gr/pdo.php';
-				//$user = 'info@e-basis.gr';
-				//$pass = "basis2012!@";
-				
 				if (!$this->scheduler->findschedule($dpc)) 
 				{
-					$data = $this->httpcl($dpc,$user,$pass);
+					$data = $this->httpcl($dpc);//,$user,$pass);
 					_($data,3); //show new data
 				}
 				else 
@@ -712,37 +691,35 @@ class kernelv2 {
 				$data = null ;//bypass and read
 			}	
 			
-			if (isset($data)) 
-			{
-			  //$dock_length = $length + $this->extra_space;			
+			if (isset($data)) //update 
+			{ 			
 			  $dataLength = strlen($data); 
 			  $remaining = $length - $dataLength;
-			  _("diff:" . $length.':'.$dataLength,2);
+			  _("diff:" . $rlength.':'.$dataLength,2);
 				
+			  //$oldData = $this->loaddpcmem($dpc);	
+			  $oldData = shmop_read($this->shm_id, $offset, $rlength);
+			  //$newData = $data;// . str_repeat(' ',$remaining);
+			  
 			  $hold = md5($oldData);	
-			  $hnew = md5($data . str_repeat(' ',$remaining));
+			  $hnew = md5($data);
 			  _("md5:" . $hold . ':'. $hnew,2);
 						
 			  if ($dataLength < $length) 
 			  {
-				//clean mem var
-				$c = str_repeat(' ',$length);
-				$this->shared_buffer = substr_replace($this->shared_buffer,$c,$offset,$length);	
- 
-				$data .=  str_repeat(' ',$remaining);
-				$this->shared_buffer = substr_replace($this->shared_buffer,$data,$offset,$length);
-				
-				if(!$this->dpc_shm_id) 
-					die("Shared memory segment error. System Halted.\n");
-				else //data + extra spaces (cleaned)  
-					$shm_bytes_written = shmop_write($this->dpc_shm_id, $data, $offset);
-				
 				//update free space and save state
-				$this->dpc_free[$dpc] = $remaining;
-				$this->savestate($shm_max);
-				
-				_("$dpc updated",1);
-				_dump("UPDATE\n\n\n\n" . $this->shared_buffer);
+				$this->dpc_free[$dpc] = $remaining;				  
+				  
+				if ($this->checkSpinLock($dpc)===false)
+					_(">>>>>>>>>>>>>>>>>>>>>>>>>>>spinlock 2:$dpc",1); 
+					
+				$data .= str_repeat(' ',$remaining);
+				if (shmop_write($this->shm_id, $data, $offset))
+				{
+					$this->savestate();
+					_("$dpc saved",1);
+					_dump("UPDATE\n\n\n\n" . $data);//$this->shared_buffer);
+				}	
 			  }
 			  else
 				die($dpc . " error, increase extra space!\n"); 
@@ -751,11 +728,16 @@ class kernelv2 {
 		}
 		
 		//else read mem
-		_("$dpc reading",2);
-		$data = rtrim(
-		        shmop_read($this->dpc_shm_id, 
+		_("reading $dpc ",2);
+		
+		if ($this->checkSpinLock($dpc)===true)
+			_(">>>>>>>>>>>>>>>>>>>>>>>>>>>spinlock reader:$dpc",1);
+		
+		$data = shmop_read($this->shm_id, 
 	                       $offset, 
-			  			   $length));
+			  			   $length);
+						   
+		_("Data : " . strlen($data), 2);
 	  }
 	  else 
 	  { 
@@ -765,14 +747,8 @@ class kernelv2 {
 		if (substr($dpc,0,4)==='www.') 
 		{
 			//echo "CCCCCCCCCCCCCCCCCCCC\n";
-			//include user/pass at url
-			//$dpc = 'www.e-basis.gr/pdo.php';
-			//$user = 'info@e-basis.gr';
-			//$pass = "basis2012!@";
-			if (!$this->scheduler->findschedule($dpc)) 
-				$data = $this->httpcl($dpc,$user,$pass);
-			else
-				$data = null; //bypass			
+			$data = (!$this->scheduler->findschedule($dpc)) ?
+				    $this->httpcl($dpc) : null; //bypass	
 		}	
 	    elseif (is_readable($this->dpcpath . $dpc)) 
 		{
@@ -800,76 +776,152 @@ class kernelv2 {
 		if (!$data) return false;	
 		_($data,3);		
 		
-		$databytes = strlen($data);
-		$sb = strlen($this->shared_buffer);
+		$dataLength = strlen($data);
+		
+		//$sb = strlen($this->shared_buffer);
+		//foreach ($this->dpc_length as $_dpc=>$_length)
+			//$sb+= $_length + $this->dpc_free[$_dpc]; //calc		
+		$offset = $this->getShmOffset();
 			
-		if (($sb + $databytes + $this->extra_space) < 
-		    ($this->shared_buffer_sepdata + $this->dataspace)) 
-		{
-			
-			//find index to start
-			$offset = 0; //$sb ????
-			foreach ($this->dpc_length as $size)
-				$offset += $size;
-			  
-			$this->dpc_addr[$dpc] = $offset;			
-			$this->dpc_length[$dpc] = $databytes + $this->extra_space;
+		if ((($offset+1+1) + $dataLength + $this->extra_space) < 
+		    ($this->shm_max + $this->dataspace)) 
+		{	  
+			$this->dpc_addr[$dpc] = $offset + 1; //\0 new head			
+			$this->dpc_length[$dpc] = $dataLength + $this->extra_space;
 			$this->dpc_free[$dpc] = $this->extra_space;
 			
-			//add data space
-			$this->shared_buffer .= $data;
-			//add extra space for reloading
-			$this->shared_buffer .= str_repeat(' ',$this->extra_space);
-			  
-			if(!$this->dpc_shm_id) 
-				die("Shared memory segment error. System Halted.\n");
-			else   
-				$shm_bytes_written = shmop_write($this->dpc_shm_id, $data, $offset);
-				
-			$this->savestate($shm_max);
-				
-			_("$dpc Ok",1);
-			_dump("INSERT\n\n\n\n" . $this->shared_buffer);
+			if ($this->checkSpinLock($dpc)===false)
+				_(">>>>>>>>>>>>>>>>>>>>>>>>>>>spinlock 3:$dpc",1); 
+			
+			$data .= str_repeat(' ',$this->extra_space);
+			if (shmop_write($this->shm_id, "\0". $data ."\0", $offset))
+			{
+				$this->savestate();
+				_("$dpc inserted",1);
+				_dump("INSERT\n\n\n\n" . $data);
+			}	
 		}
 		else	
 			die($dpc . " error, increase data space!");		
 		
-		_("Data : " . $databytes, 2);
+		_("Data : " . $dataLength, 2);		
 	  }
-			
-	  return ($data);	      
-   }    
-   
-   private function closememdpc() 
-   {
-      //Now lets delete the block and close the shared memory segment
-      /*if(!shmop_delete($this->shm_id)) {
-        echo "Couldn't mark shared memory block for deletion.\n";
-      }	  
-      shmop_close($this->shm_id);  
-	  $this->shm_id = null;
-	  */
 	  
-      if(!shmop_delete($this->dpc_shm_id)) 
+	  return ($data);	      
+    }  
+
+ 	//set flag to \0, must written before read  
+    public function readSafe($dpc)
+    {
+		$dpc = $this->dehttpDpc($dpc);
+		
+	    if ($this->checkSpinLock($dpc)===true) {
+			//spinLock = \0
+			_("Locked segment (must written):" . $dpc);
+			return false;
+		}	
+		$offset = $this->dpc_addr[$dpc];
+		$size = $this->dpc_length[$dpc];
+		$dataSize = $this->dpc_length[$dpc] - $this->dpc_free[$dpc];		
+        
+        $data = shmop_read($this->shm_id, $offset, $dataSize);
+		
+        // release spinlocks
+        shmop_write($this->shm_id, "\0", $offset-1);
+		shmop_write($this->shm_id, "\0", $size+1);
+        return $data;
+    }
+    
+	//set flag to \1, must read
+    public function writeSafe($dpc,$data)
+    {
+		$dpc = $this->dehttpDpc($dpc);
+		
+	    if ($this->checkSpinLock($dpc)===false) 
+		{   //spinLock = \1
+			_("Locked segment (not readed):" . $dpc);
+			return false;
+		}	  
+		
+	    $dataSize = strlen($data);
+		
+		if ($this->dpc_addr[$dpc]) 
+		{  //update
+			$offset = $this->dpc_addr[$dpc];
+			$size = $this->dpc_length[$dpc];
+			$oldSize = $this->dpc_length[$dpc] - $this->dpc_free[$dpc];		
+						
+			if ($dataSize < $size)
+			{
+				$remaining = $size - $dataSize;
+				_("diff:" . $oldSize.':'.$dataSize,1);
+				
+				$oldData = shmop_read($this->shm_id,$offset,$oldSize);
+				$hold = md5($oldData);	
+				$hnew = md5($newData);
+				_("md5:" . $hold . ':'. $hnew,1);				
+				
+				$newData = $data . str_repeat(' ',$remaining);								
+			}	
+			else	
+			{	
+				//throw new Exception('dataSize > block');
+				_("Error::::::::::::::: Update: DataSize > block :" . $dpc);
+			}			
+        }
+		else 
+		{   
+	        //append / insert
+			$offset = $this->getShmOffset();
+			
+			//+1+1 = \lock flags
+			if ((($offset+1+1) + $dataSize + $this->extra_space) < 
+				($this->shm_max + $this->dataspace)) 
+			{
+                $this->dpc_addr[$dpc] = $offset + 1; //\0 new head			
+				$this->dpc_length[$dpc] = $dataSize + $this->extra_space;
+				$this->dpc_free[$dpc] = $this->extra_space;	
+				
+				$newData = $data . str_repeat(' ',$this->extra_space);
+			}
+			else			
+			{
+				//throw new Exception('dataSize > block');
+				_("Error::::::::::::::: Insert: DataSize > dataspace :" . $dpc);
+			}	
+		}
+	    // set spinlocks	
+		shmop_write($this->shmId, "\1", $offset-1);
+		shmop_write($this->shm_id, $newData, $offset);
+		shmop_write($this->shmId, "\1", strlen($newData)+1);
+		
+        return true;
+    }   
+   
+    private function closememdpc() 
+    {
+      if (!shmop_delete($this->shm_id)) 
 	  {
         _("Couldn't mark shared memory block for deletion",1);
+		return false;
       }	  
-	  shmop_close($this->dpc_shm_id);	
-	  $this->dpc_shm_id = null;   
+	  shmop_close($this->shm_id);	
+	  $this->shm_id = null;   
 	  
-	  //delete id file //<<<<<<<<<<<<<<<<< recall ???
-	  unlink("shm.id");
-	  _("Deleting state..Ok!",2);   
-   }     
+	  @unlink("shm.id");
+	  _("Deleting state..!",2); 
+	  
+	  return true;	
+    }     
    
     //return pseudo pointer for comaptibility with agentds class
-    function get_agent($agent,$serialized=null) 
+    public function get_agent($agent,$serialized=null) 
 	{
 	  return $this;	   
     }
    
     //return pseudo pointer for comaptibility with agentds class   
-    function update_agent(&$o_agent,$agent) 
+    public function update_agent(&$o_agent,$agent) 
 	{
       return true;
     }       
@@ -927,9 +979,7 @@ class kernelv2 {
         $dpath = $this->dpcpath . "system/extensions";
    
 	    if (is_dir($dpath)) {
-		
           $mydir = dir($dpath);
-		 
           while ($fileread = $mydir->read ()) 
 		  {
 		   if (($fileread!='.') && ($fileread!='..'))  
@@ -953,7 +1003,7 @@ class kernelv2 {
 		return ($mydpcext);   
    }   
    
-   private function load_dpc_tree() {
+   private function load_dpc_tree(&$data) {
    	
 	   _("loading dpc modules...",2);	
 	   $libs = $this->read_dpcs();
@@ -969,28 +1019,32 @@ class kernelv2 {
 	    //print_r($tree);
 	    //echo ".....\n";
 	    $offset = 0;
-	    foreach($tree as $dpc_id=>$dpc_mod) 
+	    foreach($tree as $dpc_id=>$dpcf) 
 		{
-		  $dpcf = trim($dpc_mod);
 	      if (($dpcf!='') && ($dpcf[0]!=';')) 
 		  {
-		
-		    $shared_dpc = @file_get_contents($dpcf);
-
-		    if ($shared_dpc) 
+		    if ($f = @file_get_contents($dpcf)) 
 			{	
-			  $this->dpc_addr[$dpcf] = $offset;			
-			  $this->dpc_length[$dpcf] = strlen($shared_dpc)+$this->extra_space;
+			  $this->dpc_addr[$dpcf] = $offset + 1; //\0head			
+			  $this->dpc_length[$dpcf] = strlen($f) + $this->extra_space;
 			  $this->dpc_free[$dpcf] = $this->extra_space;
 			  
-			  $offset+=$this->dpc_length[$dpcf];
+			  $offset+= $this->dpc_length[$dpcf] + 1; //\0foot
+			  
+			  //add header sign
+			  $data .= "\0";
 			  
 			  //add data space
-		      $this->shared_buffer .= $shared_dpc;
+		      //$this->shared_buffer .= $f;
+			  $data .= $f;
 			  //add extra space for reloading
-			  $this->shared_buffer .= str_repeat(' ',$this->extra_space);
+			  //$this->shared_buffer .= str_repeat(' ',$this->extra_space);
+			  $data .= str_repeat(' ',$this->extra_space);
 			  
-			  _($dpcf . " Ok",2);
+			  //add foot sign
+			  $data .= "\0";
+			  
+			  _($dpcf . " loaded",2);
 		    }
 		    else 
 	          _($dpcf . " Error",2);
@@ -998,7 +1052,7 @@ class kernelv2 {
 		  }
 	    }
 	    //print $shared_buffer;
-	    $totalbytes = strlen($this->shared_buffer);
+	    $totalbytes = strlen($data);//$this->shared_buffer);
 	    _("\nTotal Bytes : ".$totalbytes,2);
 		
 		//print_r($this->dpc_addr);
@@ -1136,9 +1190,12 @@ class kernelv2 {
 		_($this->show_connections(),1);
 		_($this->show_schedules(),1);
 		
-		$this->headerGrapffiti();		
+		$this->grapffiti();		
 			
-		$totalbytes = strlen($this->shared_buffer);
+		//$totalbytes = strlen($this->shared_buffer);
+		foreach ($this->dpc_length as $_dpc=>$_length)
+			$totalbytes+= $_length + $this->dpc_free[$_dpc]; //calc
+	
 	    _("Total buffer : ".$totalbytes. ', usage: ' . memory_get_usage(),1);
 		
 		return true;
@@ -1276,6 +1333,12 @@ class kernelv2 {
 
 		return ($body);		
 	}
+	
+	public function convert($size)
+	{
+		$unit=array('b','kb','mb','gb','tb','pb');
+		return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
+	}	
 
    private function shutdown($now=false) 
    {
@@ -1290,15 +1353,27 @@ class kernelv2 {
    	    printer_close($printout);	  
 	
       //close mem	
-	  $this->closememdpc();
-   }  
+	  return ($this->closememdpc());
+    }
+
+	public function _ftok($pathname, $proj_id) 
+	{
+		$st = @stat($pathname);
+		if (!$st) 
+		{
+			return -1;
+		}
+  
+		$key = sprintf("%u", (($st['ino'] & 0xffff) | (($st['dev'] & 0xff) << 16) | (($proj_id & 0xff) << 24)));
+		return $key;
+	}	
    
 	function __destruct() 
 	{
-        if(!$this->dpc_shm_id)
+        if(!$this->shm_id)
             return;		
 		
-		shmop_delete($this->dpc_shm_id);	
+		shmop_delete($this->shm_id);	
 	}
 
   public static function ClassLoader($className) 
@@ -1361,7 +1436,7 @@ class kernelv2 {
     } 	
 
 	//http://patorjk.com/software/taag
-	public function headerGrapffiti($x=null) 
+	public function grapffiti($x=null) 
 	{
 		$xz = $x ? $x : rand(2,12); //+2 empty
 		//echo '>>>>>>>>>>>>>>>>>>>>>>.'.$xz."\n";
