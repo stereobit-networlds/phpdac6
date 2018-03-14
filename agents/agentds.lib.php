@@ -30,7 +30,7 @@
 class agentds {
 
 	var $daemon_ip, $daemon_port, $daemon_type, $dmn;
-	var $agn_mem_type = 1;//shared 1 vs convensional
+	var $agn_mem_type = 2;//shared 1 vs convensional
 	var $agn_mem_store;
 	var $agent; 
    
@@ -554,8 +554,12 @@ class agentds {
 		
 		if (!extension_loaded('shmop')) 
 			dl('php_shmop.dll');		
+		if (!extension_loaded('sync')) 
+			dl('php_sync.dll');		
 		
 		_("Start",1);
+		if ($this->agn_mem_type==2) 
+			return true;
 		
 		$this->shm_max = 1024;
 		$data = "\0" . str_repeat('~',$this->shm_max) . "\0"; 	
@@ -713,15 +717,35 @@ class agentds {
 	  
 		if ($this->agn_mem_type==2) 	
 		{	
+			$mem = new SyncSharedMemory($agent, $this->extra_space);
+			if ($mem->first())
+			{
+				// Do first time initialization work here.
+			}
+
+			if ($mem->write($data,0)) 
+			{
+				$this->agn_addr[$agent] = &$mem;
+				$this->agn_length[$agent] = $a_size;
+				$this->agn_free[$agent] = $this->extra_space - $a_size;
+				_("addmemagn: $agent start". ':'.$a_size,1);
+				return true;
+			}
+			
+			_("addmemagn: $agent failed". ':'.$a_size,1);
+			return false;
+			/*
 			$a_index = $this->getAgnOffset();
 			
 			//extend agent info table
 			$this->agn_addr[$agent] = $a_index;			
 			$this->agn_length[$agent] = $a_size + $this->extra_space;
-			$this->agn_free[$agent] = $this->extra_space;	
+			$this->agn_free[$agent] = $this->extra_space;
+				
 			_("New $agent ". $a_index.':'.$a_size,1);
 			//var_dump($this->agn_addr);			
-			
+			*/
+			/*
 			$this->shm_max = $a_index + $a_size + $this->extra_space;	
 			$data .= str_repeat(' ',$this->extra_space);
 			if (shmop_write($this->shm_id, "\0". $data ."\0", $offset))
@@ -730,6 +754,7 @@ class agentds {
 				_("$agent inserted",1);
 				_dump("INSERT\n\n\n\n" . $data);
 			}
+			*/
 		}
 		elseif ($this->agn_mem_type==1) 	
 		{
@@ -778,11 +803,10 @@ class agentds {
    
    private function updatememagn($agent,$data) 
    {
-
 		if ($this->agn_mem_type==2)
 		{
 			//replace agent info table  
-			$offset = $this->agn_addr[$agent];			
+			/*$offset = $this->agn_addr[$agent];			
 			$length = $this->agn_length[$agent];
 			$rlength = $length - $this->agn_free[$agent];		  
 			$dataLength = strlen($data);
@@ -798,7 +822,29 @@ class agentds {
 				$hold = md5($oldData);	
 				$hnew = md5($data);// . str_repeat(' ',$remaining));
 				_("md5:" . $hold . ':'. $hnew,2);
-			}
+			}*/
+			
+			$mem = &$this->agn_addr[$agent];
+			$length = $this->agn_length[$agent];
+			$rlength = $length - $this->agn_free[$agent];
+			$dataLength = strlen($data);
+			if ($dataLength < $this->extra_space) 
+			{ 			  
+				_("diff:" . $rlength.':'.$dataLength,2);
+			    if ($mem->write($data,0)) 
+				{
+					//$this->agn_addr[$agent] = &$mem;
+					$this->agn_length[$agent] = $dataLength;
+					$this->agn_free[$agent] = $this->extra_space - $datalength;
+					_("updatememagn: $agent modified". ':'.$dataLength,1);
+					return true;
+				}
+			
+				_("updatememagn: $agent failed to modified". ':'.$dataLength,1);
+				return false;
+			}			
+			_("updatememagn: $agent length error". ':'.$dataLength,1);
+			return false;
 		}			
 		else //1,0
 		{
@@ -851,11 +897,17 @@ class agentds {
 	{
 		if ($this->agn_mem_type==2) 
 		{  	
-			$offset = $this->agn_addr[$agent];   
+			$mem = &$this->agn_addr[$agent];   
 			$length = $this->agn_length[$agent];
-			_("Remove ". $agent.'>'.$offset.':'.$length,2);		  
-	  
-			$deleted_agent = str_repeat('x',$length);
+			
+			if ($mem->write(str_repeat(' ',$this->extra_space),0)) 
+			{
+				$this->agn_free[$agent] = -1;
+				_("Remove ". $agent.'>'.':'.$length,1);		  
+				return true;
+			}
+			_("Remove ". $agent.'>'.':'.$length,1);		  
+			return false;
 	  
 		}	
 		elseif ($this->agn_mem_type==1) 
@@ -901,6 +953,7 @@ class agentds {
 		
 		if ($this->agn_mem_type==2) 
 		{
+			//do nothing
 		}
 		else 
 		{		
@@ -962,6 +1015,7 @@ class agentds {
 	{
 		if ($this->agn_mem_type==2) 
 		{
+			//do nothing
 		}
 		else
 		{
@@ -1186,6 +1240,29 @@ class agentds {
 	//update the object data in shared mem
 	public function update_agent(&$o_agent,$agent) 
 	{
+		
+		if ($this->agn_mem_type==2)
+		{
+			$mem = & $this->agn_addr[$agent];
+			$length = $this->agn_length[$agent];
+			$free = $this->agn_free[$agent];
+			
+			if ($free>0)
+			{
+				$s_agent = serialize($o_agent);
+				if ($mem->write($s_agent,0)) 
+				{
+					$this->agn_length[$agent] = strlen($s_agent);
+					$this->agn_free[$agent] = $this->extra_space - strlen($s_agent);
+					_("update Agent ok:" . $length,1);	
+					return true;		
+				}
+				_("update write failed:" . $length,1);	
+				return false;						
+			}	
+			_("update Agent failed:" . $length,1);
+			return false;
+		}
 		//var_dump($this->agn_addr);
 		//var_dump($this->agn_length);	  
 		//echo "\n",$this->agn_mem_store,"\n",strlen($this->agn_mem_store),"\n";   
@@ -1215,10 +1292,10 @@ class agentds {
 				if ($removed) 
 				{		  
 					$this->addmemagn($agent,$s_agent);
-					_('Update agent:'.$agent,2);			
+					_('Update agent:'.$agent,1);			
 				}
 				else
-					_('Update agent:'.$agent."..failed!",2);
+					_('Update agent:'.$agent."..failed!",1);
 			}
 			else
 				_('Update agent:'.$agent."..not neccesery!",2);	 
@@ -1232,13 +1309,45 @@ class agentds {
 	//return object pointer of agent OR serialized string of agent
 	public function get_agent($agent,$serialized=null) 
 	{
+		if ($this->agn_mem_type==2)
+		{
+			$mem = & $this->agn_addr[$agent];
+			$length = $this->agn_length[$agent];
+			$free = $this->agn_free[$agent];
+			
+			if ($free>0) 
+			{
+				if ($s_agent = $mem->read(0,$length)) 
+				{
+					_("getAgent ok:" . $length,1);
+					
+					if (!$serialized) 
+					{
+						$o_agent = unserialize($s_agent);
+	  
+						//auto update
+						$o_agent->env = &$this;
+		  
+						//echo "get_agent($size):" . get_class($o_agent) . '(' . memory_get_usage() .")\n";
+						return ($o_agent);
+					}
+					
+					return ($s_agent);
+				}
+				_("getAgent read error:" . $length,1);		  
+				return false;
+			}
+			_("getAgent free error :" . $length,1);		  
+			return false;
+		}
+		
 		//echo $agent,"\n>>>>>>>>>>>>>";
 		if (isset($this->agn_addr[$agent])) 
 		{
 			//var_dump($this->agn_addr);
 			//var_dump($this->agn_length);		
 	  
-			if ($this->agn_mem_type==2) 
+			/*if ($this->agn_mem_type==2) 
 			{ 	  
 				$offset = $this->agn_addr[$agent];
 				$length = $this->agn_length[$agent];
@@ -1248,7 +1357,7 @@ class agentds {
 				//echo $offset,':',$length,"\n";		
 				$s_agent = shmop_read($this->shm_id,$offset,$rlength); 
 			}
-	        elseif ($this->agn_mem_type==1) 
+	        else*/if ($this->agn_mem_type==1) 
 			{
 				$a_index = $this->agn_addr[$agent];
 				$a_size = $this->agn_length[$agent];
@@ -1337,9 +1446,9 @@ class agentds {
 		$s_agent = $this->get_agent($agent,1);
 	  
 	    //delete agent from host
-		if ($this->agn_attr[$agent]!='RESIDENT') //???
+		/*if ($this->agn_attr[$agent]!='RESIDENT') //???
 			$this->destroy_agent($agent);
-	  	  
+	  	*/  
 	    return ($s_agent);
 	}
    
@@ -1401,18 +1510,28 @@ class agentds {
    
       foreach ($this->agn_addr as $agn=>$addr) 
 	  {
-			_(PHP_EOL . $agn . $addr,1,false);
+		  _(PHP_EOL . $agn . $addr,1,false);
+					
+		  if ($this->agn_mem_type==2) 
+		  {
+			  $mem = & $addr;
+			  $length = $this->agn_length[$agn];
+			  $free = $this->agn_free[$agn];
+			  $s_agent = $mem->read(0,$length);
+		  }
+		  else 
+		  {
 
-			if ($this->agn_mem_type==2) 
+			/*if ($this->agn_mem_type==2) 
 				$s_agent = shmop_read($this->shm_id,$addr,$this->agn_length[$agn]);  
-			elseif ($this->agn_mem_type==1) 
+			else*/if ($this->agn_mem_type==1) 
 				$s_agent = shmop_read($this->agn_shm_id,$addr,$this->agn_length[$agn]);  
 			else 
 				$s_agent = substr($this->agn_mem_store,$addr,$this->agn_length[$agn]);  		
  
 			_($this->agn_addr[$agn].":".$this->agn_length[$agn],2);
 			//echo $s_agent,"\n";
-		
+		   }
 			$o_agent = unserialize($s_agent);	
 		
 			if (is_object($o_agent)) 
@@ -1422,7 +1541,8 @@ class agentds {
 							$o_agent->iam()."\n" : $agn." Ok!"."\n";
 			}
 			else
-				$ret .= "Invalid agent!\n";		    
+				$ret .= "Invalid agent!\n";	
+	    
 		}
 	  
 		return ($ret);
@@ -1622,8 +1742,11 @@ class agentds {
 	} 
 	
     //if ($this->agn_mem_type==2) 
-    private function closememagn2() 
+    private function stopmemagn() 
     { 
+	  if ($this->agn_mem_type==2)  
+		  return true;
+	
       if (!shmop_delete($this->shm_id)) 
 	  {
         _("Couldn't mark shared memory block for deletion",1);
@@ -1660,8 +1783,8 @@ class agentds {
 				get_resource_type($printout)=='printer')
 			printer_close($printout);
 			
-		$this->closememagn2(); //final	
-			
+		$this->stopmemagn(); //final	
+		return true;	
 	} 
 
 	public function _ftok($pathname, $proj_id) 
