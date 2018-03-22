@@ -2846,7 +2846,7 @@ JSFILTER;
 	                            $xml->addtag('webMaster','channel',null,null);									
 	                            $xml->addtag('ttl','channel','15',null);									
 	   					        break; 
-				case 'atom'    :$xml->addtag('feed',null,null,"xmlns=http//www.w3.org/2005/Atom");							
+				case 'atom'    :$xml->addtag('feed',null,null,"xmlns=http://www.w3.org/2005/Atom");							
 	                            $xml->addtag('title','feed',$xml->urltitle,null);
 	                            $xml->addtag('subtitle','feed',null,null);								
 	                            $xml->addtag('link','feed','/',"href=" . $this->httpurl . "/atom/|rel=self");									
@@ -2913,7 +2913,7 @@ JSFILTER;
 								$xml->addtag('updated','entry',$date,null);				   			   
 								$xml->addtag('summary','entry',$params[1],null);				   
 								break; 
-			   default ://seo links
+			   default : //seo links
 								$xml->addtag('product','products',null,"id=");
 			   
 								$xml->addtag('name','product',$xml->cdata('name'),null);  //cdata val
@@ -2986,7 +2986,7 @@ JSFILTER;
 		$itemlinkname = _m("cmsrt.url use t=kshow&cat=$cat&id=" . $rec[$this->fcode] . "+". $rec[$this->itmname]);
 			
 		//tokens
-		$tokens[] = $itemlinkname; //***use href token 11 / name token 16
+		$tokens[] = $itemlinkname; //use href token 11 / name token 16
 		$tokens[] = $rec[$this->itmdescr];
 		$tokens[] = $this->list_photo($rec[$this->fcode],null,null,1,$cat,$imgsize,null,$rec[$this->itmname]);
 		$units = $rec['uniname2'] ? localize($rec['uniname1'], $this->lan) .' / '. localize($rec['uniname2'], $this->lan):

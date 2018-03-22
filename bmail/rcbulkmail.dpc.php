@@ -259,9 +259,10 @@ class rcbulkmail {
 		$ckeditorVersion = remote_paramload('RCBULKMAIL','ckeditor',$this->prpath);		
 		$this->ckeditver = $ckeditorVersion ? $ckeditorVersion : 4; //default version 4
 		//override ckeditver
-		$this->ckeditver = (($_GET['t']=='cptemplatenew')||($_GET['t']=='cptemplatesav')) ? 3 : 4; //depends on select or edit/new template
-				
-		
+		$this->ckeditver = (($_GET['t']=='cptemplatenew') ||
+							($_GET['t']=='cptemplatesav')) ? 
+							3 : 4; //depends on select or edit/new template
+
 		$this->newtemplatebody = null;	
 		$this->newsubtemplatebody = null;
 		$this->newpatternbody = null;
@@ -2156,6 +2157,15 @@ This email and any files transmitted with it are confidential and intended solel
 	}
 	
 
+	public function ckjavascript() {
+		if ($this->ckeditver==3)
+			return '<script src="' . 
+					_v('cms.paramload use CKEDITOR+ckeditorjs') .
+					'"></script>';
+		else
+			return '<script src="assets/ckeditor/ckeditor.js"></script>';
+	}
+	
     public function ckeditorjs($element=null, $maxmininit=false, $disable=false) {
 
 		$readonly = $disable ? 1 : 0;  	

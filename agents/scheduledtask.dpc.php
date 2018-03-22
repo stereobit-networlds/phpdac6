@@ -49,6 +49,8 @@ class scheduledtask {
 	  
 	  echo @file_get_contents($this->env->ldscheme . "/www.e-basis.gr/pdo.php");
 	  echo date("l dS of F Y h:i:s A")."\n\r";  
+	  
+	  echo @file_get_contents($this->env->ldscheme . "/select-*-from-ulists-limit-10");
 	  //out of scheme dpc (load in data area)
 	  //echo @file_get_contents($this->env->ldscheme . "/gui/ajax.dpc.php");
 		

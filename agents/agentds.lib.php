@@ -149,7 +149,7 @@ class agentds {
 			$this->timer = new timer;	
 			//register_tick_function(array(&$time,"showtime"),true);	
 			$this->scheduler = new scheduler(&$this);		  			
-	  
+	        
 			//init resources (loaded as lib agent)
 			$this->resources = new resources($this);	  
 			*/		  
@@ -603,7 +603,7 @@ class agentds {
 				die();
 			}
 			
-			$bw = shmop_write($this->agn_shm_id, $buffer, 0);	
+			$bw = shmop_write($this->shm_id, $buffer, 0);	
 			return ($bw);
 		}
 		elseif ($this->agn_mem_type==1) 
@@ -1168,7 +1168,7 @@ class agentds {
 		{
 			try 
 			{
-				$o_agent = & new $__DPC[$class]($this);
+				$o_agent = new $__DPC[$class]($this);
 		  		  
 				if (is_object($o_agent)) 
 				{ 
@@ -1509,9 +1509,7 @@ class agentds {
 	  //var_dump($this->agn_length);  
    
       foreach ($this->agn_addr as $agn=>$addr) 
-	  {
-		  _(PHP_EOL . $agn . $addr,1,false);
-					
+	  {					
 		  if ($this->agn_mem_type==2) 
 		  {
 			  $mem = & $addr;

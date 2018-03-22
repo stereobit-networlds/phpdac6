@@ -84,7 +84,7 @@ class kernelv2 {
 
    var $daemon_ip, $daemon_port, $daemon_type;
    var $verboseLevel, $dmn, $agent, $dpcpath;
-   var $scheduler, $resources, $timer;
+   var $scheduler, $resources, $timer, $pdo;
    
    private $shm_id, $shm_max, $dpc_addr, $dpc_length, $dpc_free;
    private $dataspace, $extra_space;
@@ -109,7 +109,7 @@ class kernelv2 {
 	  $this->extra_space = 1024 * 10; //kb //1000;// per file
 	  $this->dataspace = 1024000 * 1; //mb //50000;
 		  
-	  $this->dpcpath = $argv[1] ? ((substr($argv[1],0,1)!='-') ? $argv[1] : './') : './';
+	  $this->dpcpath = $argv[1] ? ((substr($argv[1],0,1)!='-') ? $argv[1] . '/' : './') : './';
 	  $this->daemon_type = $argv[1] ? ((substr($argv[1],0,1)=='-') ? substr($argv[1],1) : '') : '';//str_replace("-","",$dtype);
 	  $this->daemon_ip = $argv[2] ? $argv[2] : '127.0.0.1';
 	  $this->daemon_port = $argv[3] ? $argv[3] : '19123';
@@ -128,7 +128,7 @@ class kernelv2 {
 	  if ($this->startmemdpc()) 
 	  {	
 	    //clear log
-	    unlink('dumpmem-'.$_SERVER['COMPUTERNAME'].'.log');
+	    @unlink('dumpmem-'.$_SERVER['COMPUTERNAME'].'.log');
 			  
 		//init timer
 		$this->timer = new timer($this);
@@ -162,7 +162,8 @@ class kernelv2 {
 		//init db
 		try 
 		{
-		  $dbh = @new PDO('mysql:host=localhost;dbname=stereobi_basis;charset=utf8', 'stereobit', 'reviosob');
+		  $this->pdo = @new PDO('mysql:host=localhost;dbname=basis;charset=utf8', 'e-basis', 'sisab2018');
+		  _("PDO connection: ok!" ,1);
 	    } 
 		catch (PDOException $e) 
 		{
@@ -658,12 +659,32 @@ class kernelv2 {
 		//dpc and streams that exists in data area only
 		if ($offset >= $this->shm_max) 
 		{
-			if (substr($dpc,0,4)==='www.') 
+			if (substr($dpc,0,7)==='select-') 
+			{
+				//echo "PDO 00000000000000000000000\n";
+				if (!$this->scheduler->findschedule($dpc)) 
+				{
+					$pdodpc = str_replace('-',' ',$dpc);
+					foreach($this->pdo->query($pdodpc, PDO::FETCH_ASSOC) as $row) {
+						//$data.= json_encode($row).'@;@';
+						$_data[] = $row;
+					}
+					$data = json_encode($_data);
+					_($data,3); //show new data
+				}
+				else 
+				{
+					$data = null; //bypass and read
+					_('Scheduled PDO stream:' . $dpc,1);
+					_($data,3);
+				}
+			}
+			elseif (substr($dpc,0,4)==='www.') 
 			{
 				//echo "111111111111111111111111\n";
 				if (!$this->scheduler->findschedule($dpc)) 
 				{
-					$data = $this->httpcl($dpc);//,$user,$pass);
+					$data = $this->httpcl($dpc);
 					_($data,3); //show new data
 				}
 				else 
@@ -742,9 +763,22 @@ class kernelv2 {
 	  else 
 	  { 
 	    //fetch and save, new dpc or new data stream
-		
-		//datastream
-		if (substr($dpc,0,4)==='www.') 
+
+		//PDO stream
+		if (substr($dpc,0,7)==='select-') 
+		{   //echo "PDO SELECTCCCCCCCCCCCCCCCCCCCCC\n";
+			if (!$this->scheduler->findschedule($dpc)) {
+				$pdodpc = str_replace('-',' ',$dpc);
+				foreach($this->pdo->query($pdodpc, PDO::FETCH_ASSOC) as $row) {
+					//$data.= json_encode($row).'@;@';
+					$_data[] = $row;
+				}
+				$data = json_encode($_data);
+			}
+			else
+				$data = null; //bypass		
+		} //datastream	
+		elseif (substr($dpc,0,4)==='www.') 
 		{
 			//echo "CCCCCCCCCCCCCCCCCCCC\n";
 			$data = (!$this->scheduler->findschedule($dpc)) ?
@@ -770,8 +804,8 @@ class kernelv2 {
 			//local storage
 			$data = @file_get_contents($this->dpcpath . $dpc);
 		}
-		else //unknown call !!! (from spl_loaders)
-			_($dpc . ' not found!',1);	
+		else 
+			_($this->dpcpath . $dpc . ' not found!',1);	
 		
 		if (!$data) return false;	
 		_($data,3);		

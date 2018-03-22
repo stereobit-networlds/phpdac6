@@ -12,7 +12,7 @@ $argv = $GLOBALS['argv'];
   exit(1);
 }*/
 
-require_once("system/system.lib.php");	
+//require_once("system/system.lib.php");	
 require_once("system/kernelv2.lib.php");
 
   new kernelv2();//$argv[1],$argv[2],$argv[3]);
