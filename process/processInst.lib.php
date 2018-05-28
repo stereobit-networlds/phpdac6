@@ -313,7 +313,7 @@ class processInst extends Process\pstack {
 	//test
 	protected function runCode($status=0, $event=null) {
 		$db = GetGlobal('db');
-		$formName = $this->callerName .'.'. $this->processStepName . ($event ? '.'.$event : null);
+		$formName = $this->callerName .'.'. $this->processStepName;// . ($event ? '.'.$event : null);
 		
 		//crm forms
 		$sSQL = "select codedata from crmforms where class='process' AND code=" . $db->qstr($formName);
@@ -322,7 +322,10 @@ class processInst extends Process\pstack {
 		$_code = base64_decode($res->fields['codedata']);
 		//echo $_code;
 		
-		$code = $_code ? $_code : "<? 
+		$code = $_code ? 
+				str_replace(array('<@','@>'),
+				array('<?php','?>'),$_code) : 
+	"<? 
 if (\$this->caller->status>=$status) { 
 	if (\$this->caller->status==$status) {
 		
@@ -332,9 +335,9 @@ if (\$this->caller->status>=$status) {
 }	
 return false; 
 ?>";
-		//echo $code;
+		//echo $_code . '<br/>';
 		$ret = $this->dCompile($code);
-
+        //echo $code . ' > ' . $ret . '<br/>'; 
 		return ($ret);
 	}	
 	

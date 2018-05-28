@@ -2121,7 +2121,7 @@ This email and any files transmitted with it are confidential and intended solel
 	
 	public function encUrl($url, $nohost=false) {
 		
-		$url = $url ? $url : _m('cms.getHttpUrl'); //default this
+		$url = $url ? $url : _m('cmsrt.getHttpUrl'); //default this
 		
 		if ($url) {
 			
@@ -2160,7 +2160,7 @@ This email and any files transmitted with it are confidential and intended solel
 	public function ckjavascript() {
 		if ($this->ckeditver==3)
 			return '<script src="' . 
-					_v('cms.paramload use CKEDITOR+ckeditorjs') .
+					_v('cmsrt.paramload use CKEDITOR+ckeditorjs') .
 					'"></script>';
 		else
 			return '<script src="assets/ckeditor/ckeditor.js"></script>';
