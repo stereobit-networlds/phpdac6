@@ -427,6 +427,7 @@ class shcart extends storebuffer {
 									
 									$this->jsBrowser();
 									$this->fbjs();
+									//$this->analytics('cartadd'); //moved to shkatalog
 									break;					 	
 									
 			case "removefromcart": 	$p = $this->remove(); 
@@ -438,6 +439,7 @@ class shcart extends storebuffer {
 									
 									$this->jsBrowser();
 									$this->fbjs();
+									//$this->analytics('cartrem'); //moved to shkatalog
 									break;
 									
 			case "clearcart"     : 	$this->clear(); 
@@ -516,6 +518,8 @@ class shcart extends storebuffer {
 										
 										$this->loopcartdata = $this->loopcart();
 										$this->looptotals = $this->foot();
+										
+										$this->analytics('cartcheckout');
 									}  
 									
 									$this->jsBrowser();
@@ -539,6 +543,7 @@ class shcart extends storebuffer {
 									$this->looptotals = $this->foot();
 									
 									$this->jsBrowser();
+									$this->analytics('cartorder');
 									break;
 			case 'cart-submit'   :						 
 			case $this->submit2  : 
@@ -1272,6 +1277,9 @@ function addtocart(id,cartdetails)
 			else {
 				$this->submiterror = 'Invalid transaction ID.';
 				$this->update_statistics('cart-error-' . $this->submiterror, $this->user);		
+				
+				//popup message
+				$this->jsDialog(localize('_CARTERROR', $this->lan) ,localize('_CART', $this->lan),6000);				
 			}	
 		}
 		catch(Exception $e){
@@ -1322,23 +1330,35 @@ function addtocart(id,cartdetails)
 			
 		if (!$error = $this->goto_mailer($_trid, $subject)) { 
 			
-			$this->analytics();
-			$this->logcart();
-			$this->savePoints($this->user ,$_trid);
-			$this->clear();
+			if ($this->cartPurchase()===true) {
+							
+				$this->analytics();
+				$this->logcart();
+				$this->savePoints($this->user ,$_trid);
 			
-			//transport save
-			if (defined('TRANSPORT_DPC')) 
-				_m("transport.finalize use $_trid+" . $this->shippingcost);						
+				//transport save
+				if (defined('TRANSPORT_DPC')) 
+					_m("transport.finalize use $_trid+" . $this->shippingcost);						
 
-			$this->update_statistics('cart-submit', $this->user);
-				
-			return true;
+				$this->update_statistics('cart-submit', $this->user);
+			
+				$this->clear();	
+				return true;
+			}
+			//else
+			//popup message
+			$this->jsDialog('Internal DB error', 
+							localize('_CART', $this->lan),6000);				
+			return false;			
 		}
 
 		$this->mailerror = $error; //set mail error
 		$this->update_statistics('cart-error-' . $this->mailerror, $this->user);		
 		
+		//popup message
+		$this->jsDialog(localize('_CARTERROR', $this->lan) .
+						' ' . $this->mailerror ,
+						localize('_CART', $this->lan),6000);		
 		return false;	
 	}
 
@@ -3346,6 +3366,19 @@ function addtocart(id,cartdetails)
 		return ($default ? $default : $qtymeter);		
 	}	
 	
+	/* get the cart position id in list */
+	public function getCartItemPosition($id=null) {
+		if (!$id) return;
+	
+		foreach ($this->buffer as $i=>$rec) {
+			$data = explode(';',$rec);
+			if ($data[0]==$id) 
+				return ($i+1);
+		}
+		
+		return 1;		
+	}	
+	
 	//fix price view sub-template for all templates in theme
 	public function getCartPriceSubTemplate($tmpl=null,$price1=null,$itmcode=null,$cartbutton=null,$zeroreturn=false) {
 		$template = $tmpl ? $tmpl : 'shcartprice-subtemplate';
@@ -3973,43 +4006,142 @@ function addtocart(id,cartdetails)
 			return ($ret);		  
 		}
 	}	
+		
+		
+		
+	/*send js data line by line */
+	protected function getCartItemsScript($referer=null, $tid=null) {
+		$db = GetGlobal('db');
+		$items = array();
+		$tokens = array();
+		$ret = null;
+		
+		$tmplprod = $referer ? $referer . '-cartitem-js-analytics' : 'cartitem-js-analytics';				
+		$mytemplate = _m('cmsrt.select_template use '. $tmplprod);	
+		
+		if ($tid) { //refund
+			$sSQL1 = "select pid,qty,net,vat,ref,memo from pcartitems ";
+			$sSQL1.= "where tid='$tid'";
+			$res = $db->Execute($sSQL1);
+
+			foreach ($res as $n=>$rec) {
 				
+				$prodID = $rec['pid'];
+				$tokens = (array) _m('shkatalogmedia.fetchProductTokens use '. $prodID);
+				
+				//override tokens
+				$tokens[13] = $rec['qty']; //qty
+				$pwt = $this->pricewithtax(floatval($rec['net']), intval($rec['vat']));
+				$tokens[48] = number_format($pwt, $this->dec_num,',','.'); //price 
+				$tokens[51] = $n + 1; //position in cart list
+				
+				$items[] = $this->combine_tokens($mytemplate, $tokens, true);
+				unset($tokens);				
+			}	
+		}		
+		else { // current cart data		
+		
+			foreach ($this->buffer as $prod_id => $product) {
+				if (($product) && ($product!='x')) {
+				
+					$toks = explode(';', $product);
+					$prodID = $toks[0]; //item code
+					$tokens = (array) _m('shkatalogmedia.fetchProductTokens use '. $prodID);
+					
+					$items[] = $this->combine_tokens($mytemplate, $tokens, true);
+					unset($tokens);
+				}	
+			}
+		}	
+		//print_r($items);
+		return (!empty($items)) ? implode(',',$items) : $ret;	
+	}	
 	
-	/****************** referer js analytics scripts ********/	
+	/*get token data line by line */
+	protected function getCartItemsTokens($tid=null) {		
+		$db = GetGlobal('db');	
+		$tokens = array();
+		
+		if ($tid) { //refund
+			$sSQL1 = "select pid,qty,net,vat,ref,memo from pcartitems ";
+			$sSQL1.= "where tid='$tid'";
+			$res = $db->Execute($sSQL1);
 
-	/*call from shcartsuccess tmpl for analytics*/
-	public function postSubmitScript() {
-		$ret = "/* post submit script */";
-		return ($ret);
-	}
+			foreach ($res as $n=>$rec) {
+				$prodID = $rec['pid'];
+				$tokens[] = (array) _m('shkatalogmedia.fetchProductTokens use '. $prodID);
+			}	
+		}		
+		else { // current cart data
+			foreach ($this->buffer as $prod_id => $product) {
+				if (($product) && ($product!='x')) {
+				
+					$toks = explode(';', $product);
+					$prodID = $toks[0]; //item code
+					$tokens[] = (array) _m('shkatalogmedia.fetchProductTokens use '. $prodID);
+				}	
+			}
+		}
+		return (array) $tokens;	
+	}	
+	
+	/*get cart elements */	
+	protected function getCartTransactionTokens($referer=null, $tid=null) {
+		$db = GetGlobal('db');
+		
+		if ($tid) { //refund
+			$sSQL1 = "select cid,ref,total,subt,shipc,disc,taxc,trac,payc,roadway,payway,addrway,custway,invway,memo from pcartvalues ";
+			$sSQL1.= "where tid='$tid'";
+			$res = $db->Execute($sSQL1);
 
-	protected function submitScript($referer=null, $test=false) {
-		$ret = "/* $referer submit analytics script */";
+			$tokens = array(0=>$tid, 
+		                1=>number_format(floatval($res->fields['total']),$this->dec_num), 
+		                2=>number_format(floatval($res->fields['subt']),$this->dec_num), 
+						3=>number_format(floatval($res->fields['shipc']),$this->dec_num), 
+						4=>number_format(floatval($res->fields['disc']),$this->dec_num), 
+						5=>number_format(floatval($res->fields['taxc']),$this->dec_num),
+						6=>number_format(floatval($res->fields['trac']),$this->dec_num),
+						7=>number_format(floatval($res->fields['payc']),$this->dec_num),
+						8=>number_format(floatval($res->fields['subt'])+
+						                 floatval($res->fields['taxc'])+
+										 floatval($res->fields['trac']),$this->dec_num),
+						9=>number_format(floatval($res->fields['subt'])+
+						                 floatval($res->fields['taxc']),$this->dec_num),				 
+						);			
+			
+			$tokens[] = $referer ? $this->getCartItemsScript($referer, $tid) : 
+									$this->getCartItemsTokens($tid);	
+			
+			$tokens[] = $res->fields['roadway'];
+			$tokens[] = $res->fields['payway'];
+			$tokens[] = $res->fields['addrway'];
+			$tokens[] = $res->fields['custway'];
+			$tokens[] = $res->fields['invway'];
+			$tokens[] = $res->fields['memo'];
+		}
+		else {	// current cart data		
+			$roadway = $this->getDetailSelection('roadway');
+			$payway = $this->getDetailSelection('payway');	
+			$addressway = $this->getDetailSelection('addressway');
+			$customerway = $this->getDetailSelection('customerway');								 	   		   
+			$invway = $this->getDetailSelection('invway');	
+			$sxolia = $this->getDetailSelection('sxolia');
 		
-		$roadway = GetSessionParam('roadway');
-		$payway = GetSessionParam('payway');	
-		$addressway = GetSessionParam('addressway');
-		$customerway = GetSessionParam('customerway');								 	   		   
-		$invway = GetSessionParam('invway');	
-		$sxolia = GetSessionParam('sxolia');								 
-		$qtytotal =	GetSessionParam('qty_total');	
-		//$paycost =	GetSessionParam('paycost');
-		//$transcost = GetSessionParam('transcost');
+			$qtytotal =	GetSessionParam('qty_total');	
+			//$paycost =	GetSessionParam('paycost');
+			//$transcost = GetSessionParam('transcost');
 
-		$ordertotal = str_replace(',', '.', $this->myfinalcost);
-		$ordersubtotal = str_replace(',', '.', $this->total);
-		$orderdiscount = $this->discount ? str_replace(',', '.', $this->discount) : '0.0';
-		$shipcost = $this->shippingcost ? str_replace(',', '.', $this->shippingcost) : '0.0';
-		$taxcost = $this->mytaxcost ? str_replace(',', '.', $this->mytaxcost) : '0.0';
-		$transportcost = $this->transportcost ? str_replace(',', '.', $this->transportcost) : '0.0';
-		$paymentcost = $this->paymentcost ? str_replace(',', '.', $this->paymentcost) : '0.0';
+			$ordertotal = str_replace(',', '.', $this->myfinalcost);
+			$ordersubtotal = str_replace(',', '.', $this->total);
+			$orderdiscount = $this->discount ? str_replace(',', '.', $this->discount) : '0.0';
+			$shipcost = $this->shippingcost ? str_replace(',', '.', $this->shippingcost) : '0.0';
+			$taxcost = $this->mytaxcost ? str_replace(',', '.', $this->mytaxcost) : '0.0';
+			$transportcost = $this->transportcost ? str_replace(',', '.', $this->transportcost) : '0.0';
+			$paymentcost = $this->paymentcost ? str_replace(',', '.', $this->paymentcost) : '0.0';
 		
-		$trid = GetSessionParam('TransactionID') ;//$this->transaction_id		
-		
-		$tmplbody = $referer ? $referer . '-js-analytics' : 'cart-js-analytics';
-		$tmplline = $referer ? $referer . '-js-item-analytics' : 'cart-js-item-analytics';		
-		
-		$tokens = array(0=>$trid, 
+			$trid = GetSessionParam('TransactionID') ;//$this->transaction_id		
+				
+			$tokens = array(0=>$trid, 
 		                1=>number_format(floatval($ordertotal),$this->dec_num), 
 		                2=>number_format(floatval($ordersubtotal),$this->dec_num), 
 						3=>number_format(floatval($shipcost),$this->dec_num), 
@@ -4023,13 +4155,42 @@ function addtocart(id,cartdetails)
 						9=>number_format(floatval($ordersubtotal)+
 						                 floatval($taxcost),$this->dec_num),				 
 						);
-		/*				
-		if ($test==true)					
-			print_r($tokens);				
-		*/
+			$tokens[] = $referer ? $this->getCartItemsScript($referer, $tid) : 
+									$this->getCartItemsTokens($tid);	
+			$tokens[] = $roadway;
+			$tokens[] = $payway;
+			$tokens[] = $addressway;
+			$tokens[] = $customerway;
+			$tokens[] = $invway;
+			$tokens[] = $sxolia;
+		}
+		
+		return (array) $tokens;	
+	}
+	
+	/****************** referer js analytics scripts ********/	
+
+	/*call from shcartsuccess tmpl for analytics*/
+	public function postSubmitScript() {
+		$ret = "/* post submit script */". PHP_EOL;
+		return ($ret);
+	}	
+
+	protected function submitScript($referer=null, $tid=null) {
+		$ret = "/* $referer submit analytics script */". PHP_EOL;
+		$tmplbody = $referer ? $referer . '-js-analytics' : 'noref-js-analytics';
+		$tmplline = $referer ? $referer . '-js-item-analytics' : 'noref-js-item-analytics';		
+		
+		/*submit transcation data and cart items as array (token 10) */
+		$tokens = $this->getCartTransactionTokens($referer, $tid);		
 		$ret .= _m("cmsrt._ct use $tmplbody+" . serialize($tokens) . '+1');
 		
+		if ($tid) //when refund do not a line by line items submit
+			return ($ret);
+		
+		/*submit cart items line by line */
 		$tokens = array();
+		$mytemplate = _m('cmsrt.select_template use '. $tmplline);
 		foreach ($this->buffer as $prod_id => $product) {
 			if (($product) && ($product!='x')) {
 				
@@ -4041,7 +4202,8 @@ function addtocart(id,cartdetails)
 				//extra order tokens
 				$tokens[19] = $trid; //max combine no
 				
-				$ret .= _m("cmsrt._ct use $tmplline+" . serialize($tokens) . '+1');
+				//$ret .= _m("cmsrt._ct use $tmplline+" . serialize($tokens) . '+1');
+				$ret .= $this->combine_tokens($mytemplate, $tokens, true);
 				unset($tokens);
 			}	
 		}		
@@ -4049,9 +4211,10 @@ function addtocart(id,cartdetails)
 		return ($ret);		
 
 	}
+	
     /*call from this submit_order */
-	protected function analytics() {
-		
+	protected function analytics($event=null, $tid=null) {
+		$ev = $event ? $event : 'cart';
 		$referer = $_SESSION['http_referer']; //as saved by vstats
 		
 		$rstr = _m('cms.paramload use ESHOP+refererAnalytics');
@@ -4061,17 +4224,131 @@ function addtocart(id,cartdetails)
 		//create analytics script if referer
 		if (preg_match("/($refs)/i", $referer, $matches)) {
 			
-			$code = $this->submitScript($matches[0]);	
-			//echo $code;
-			
+			$code = $this->submitScript($matches[0], $tid);	
+		}
+		
+		$code .= $this->submitScript($ev, $tid);
+		//echo $code;
+		
+		if ($code) {
 			$js = new jscript;	
 			$js->load_js($code,"",1);			   
 			unset ($js);
-		}
-		/*else { //test
-			echo $this->submitScript(null,true);
-		}*/	
+		}		
 	}	
+		
+	/****************** cart save / refund **********************/
+			
+	/*save cart elements - purchase */	
+	protected function cartPurchase() {
+		$db = GetGlobal('db');
+		$fcode = _v("cmsrt.fcode");
+		
+		$tokens = $this->getCartTransactionTokens();
+		if (!empty($tokens)) {
+			
+			$tid = $tokens[0];
+			$cid = $this->user;
+			$refund = 0;	
+			$tdate = date("Y-m-d H:i:s"); //use mysql now()			
+			
+			$sSQL1 = "insert into pcartvalues (tdate,tid,cid,ref,total,subt,shipc,disc,taxc,trac,payc,roadway,payway,addrway,custway,invway,memo) values (";
+			$sSQL1.= "'$tdate','$tid','$cid',$refund,{$tokens[1]},{$tokens[2]},{$tokens[3]},{$tokens[4]},{$tokens[5]},{$tokens[6]},{$tokens[7]},'{$tokens[11]}','{$tokens[12]}','{$tokens[13]}','{$tokens[14]}','{$tokens[15]}','{$tokens[16]}'";
+			$sSQL1.= ")";
+			
+			$db->Execute($sSQL1,1);	 
+			//echo $sSQL1;
+		
+			if ($db->Affected_Rows()) {
+				
+				foreach ($this->buffer as $prod_id => $product) {
+					if (($product) && ($product!='x')) {
+				
+						$toks = explode(';', $product);	
+						$prodID = $toks[0]; //item code				
+						$qty = $toks[9]; //quantity	
+						$title = addslashes($this->replace_cartchars($toks[1], true));
+						$netprice = number_format(floatval($toks[8]),$this->dec_num); 						
+						$vat = $this->tax;
+						
+						$sSQL2 = "insert into pcartitems (tdate,tid,pid,qty,net,vat,ref,memo) values (";
+						$sSQL2.= "'$tdate','$tid','$prodID',$qty,$netprice,$vat,$refund,'$title'";
+						$sSQL2.= ")";	
+				
+						$db->Execute($sSQL2,1);	 
+						//echo $sSQL2;
+						if ($db->Affected_Rows()) {
+							//update inventory
+							$sSQL3 = "update products set ypoloipo1=ypoloipo1-$qty where $fcode='$prodID'";
+							$db->Execute($sSQL3,1);	
+							//echo $sSQL3;
+						}
+						else {	
+							$this->jsDialog($tid .' error 0x02', localize('_CARTERROR', $this->lan));
+							return false;
+						}						
+					}	
+				}
+				return true;			
+			}
+			else
+				$this->jsDialog($tid .' error 0x01', localize('_CARTERROR', $this->lan));
+			
+			return false;
+		}
+		return false;
+	}
+	
+	/*refund cart elements used by shtransactions */	
+	public function cartRefund($tid=null) {
+		$db = GetGlobal('db');
+		$fcode = _v("cmsrt.fcode");
+		if (!$tid) return false;
+		
+		$sSQL1 = "update pcartvalues set ref=1 where tid='$tid'";
+		$db->Execute($sSQL1,1);	 
+		//echo $sSQL1;	
+		
+		if ($db->Affected_Rows()) {
+
+			$sSQL = "select pid,qty from pcartitems where tid='$tid'";
+			$res = $db->Execute($sSQL);
+			
+			if ($res) {
+				foreach ($res as $n=>$rec) {
+					
+					$prodID = $rec['pid'];
+					$qty = intval($rec['qty']);
+					
+					$sSQL2 = "update pcartitems set ref=1 where pid='$prodID'";
+					$db->Execute($sSQL2,1);	
+			
+					if ($db->Affected_Rows()) {
+						//update inventory
+						$sSQL3 = "update products set ypoloipo1=ypoloipo1+$qty where $fcode='$prodID'";
+						$db->Execute($sSQL3,1);	
+						//echo $sSQL3;						
+					}
+					else {	
+						$this->jsDialog($tid .' error!', localize('_trusercancel', $this->lan));
+						return false;				
+					}
+				}
+			}
+			
+			$this->jsDialog($tid, localize('_trusercancel', $this->lan));
+			
+			/* refund analytics */
+			$this->analytics('refund', $tid);
+			
+			return true;
+		}
+		//else
+			//echo $sSQL1; //older transactions
+		
+		return false;	
+	}	
+	
 
 	//override
 	public function clear() {
@@ -4303,7 +4580,7 @@ function addtocart(id,cartdetails)
 		    $ret = str_replace("$".$i."$",$tok,$ret);
 	    }
 
-		for ($x=$i;$x<40;$x++)
+		for ($x=$i;$x<60;$x++)
 			$ret = str_replace("$".$x."$",'',$ret);
 		
 		if (($execafter) && (defined('FRONTHTMLPAGE_DPC'))) {
