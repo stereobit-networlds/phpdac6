@@ -235,8 +235,9 @@ class shcart extends storebuffer {
 		$this->urlpath = paramload('SHELL','urlpath');
 
 		//$this->baseurl = paramload('SHELL','urlbase');
-		$this->baseurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
-		$this->baseurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];
+		//$this->baseurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		//$this->baseurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];
+		$this->baseurl = _v('cmsrt.httpurl');
 		$this->url = $this->baseurl; 		
 		
 		$this->minus = remote_paramload('SHCART','minusqtyclass',$this->path);
@@ -526,7 +527,10 @@ class shcart extends storebuffer {
 									$this->fbjs();
 									break;
 			case 'cart-order'    :
-			case $this->order    : 	SetSessionParam('cartstatus',2); 
+			case $this->order    : 	if (!GetGlobal('UserID')) 
+										die('Invalid operation 0x00f');
+			
+									SetSessionParam('cartstatus',2); 
 									$this->status = 2; 
 									
 									//hold post params (ver2 of tokens do not save - ajax calls)
@@ -547,14 +551,21 @@ class shcart extends storebuffer {
 									break;
 			case 'cart-submit'   :						 
 			case $this->submit2  : 
-			case $this->submit   : 	SetSessionParam('cartstatus',3);
-									$this->status = 3; 		  
-									//$this->calculate_shipping();		  
-									$this->calcShipping();
-									$this->loopcartdata = $this->loopcart();
-									$this->looptotals = $this->foot();
+			case $this->submit   : 	if (!GetGlobal('UserID')) 
+										die('Invalid operation 0x0ff');
+									
+									//no page refresh 
+									if ($this->getcartCount()>0) {
+										
+										SetSessionParam('cartstatus',3);
+										$this->status = 3; 		  
+										//$this->calculate_shipping();		  
+										$this->calcShipping();
+										$this->loopcartdata = $this->loopcart();
+										$this->looptotals = $this->foot();
 
-									$this->dispatch_pay_engines();									 
+										$this->dispatch_pay_engines();									 
+									}
 									break;
 						 
 			case "fastpick"      : 	if ($this->fastpick==false) {
@@ -958,7 +969,7 @@ function addtocart(id,cartdetails)
 		return false;	
 	}	
 	
-	protected function jsDialog($text=null, $title=null) {
+	public function jsDialog($text=null, $title=null) {
 	
        if (defined('JSDIALOGSTREAM_DPC')) {
 	   

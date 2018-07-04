@@ -13,6 +13,9 @@ require_once($v);
 $a = GetGlobal('controller')->require_dpc('libs/appkey.lib.php');
 require_once($a);
 
+//use at runtime
+//$b = GetGlobal('controller')->require_dpc('crypt/cryptopost.lib.php');
+//require_once($b);
 
 $__EVENTS['RCBULKMAIL_DPC'][0]='cpbulkmail';
 $__EVENTS['RCBULKMAIL_DPC'][1]='cpsavemailadv';
@@ -177,9 +180,9 @@ class rcbulkmail {
 	var $appname, $appkey, $cptemplate, $urlRedir, $urlRedir2, $webview, $nsPage;
 	var $owner, $seclevid, $isHostedApp;
 	
-	var $userDemoIds, $crmLevel, $maxinpvars, $batchid, $ckeditver;
+	var $userDemoIds, $crmLevel, $maxinpvars, $batchid, $ckeditver, $ckjsurl;
 	var $newtemplatebody, $saved, $savedname, $newsubtemplatebody, $newpatternbody;
-	var $_OPT, $exitCode;
+	var $_OPT, $exitCode, $cryptPost;
 		
     public function __construct() {
 	  
@@ -256,6 +259,7 @@ class rcbulkmail {
 		$this->userDemoIds = array(5,6);//,7); //remote_arrayload('RCBULKMAIL','demouser', $this->prpath);
 		$this->crmLevel = 9;
 		
+		$this->ckjsurl = remote_paramload('CKEDITOR', 'ckeditorjs',$this->prpath);
 		$ckeditorVersion = remote_paramload('RCBULKMAIL','ckeditor',$this->prpath);		
 		$this->ckeditver = $ckeditorVersion ? $ckeditorVersion : 4; //default version 4
 		//override ckeditver
@@ -271,8 +275,11 @@ class rcbulkmail {
 		$this->iscollection = false;
 
 		$this->_OPT = false;
-		$this->exitCode = '-001';	
-	}
+		$this->exitCode = '-001';
+
+		$this->cryptPost = defined('CRYPTOPOST_DPC') ? true : false;	
+		//echo '>'.$this->cryptPost;
+	}	
 	
     public function event($event=null) {
 	
@@ -281,8 +288,7 @@ class rcbulkmail {
 		
 		if (defined('RCCOLLECTIONS_DPC')) //used by wizard html page !!
 			$this->iscollection = _m('rccollection.isCollection');  		
-					
-  
+										
 	    switch ($event) {
 			
 			case 'cptemplatenew'	: 	$this->newcopyTemplate(); 
@@ -321,9 +327,10 @@ class rcbulkmail {
 										//$this->javascript(); dont allow second push
 										break; 									 
 			
-	        case 'cpsavemailadv'  	:	$this->save_campaign();
+	        case 'cpsavemailadv'  	:	$this->decryptPost();
+			                            $this->save_campaign();
 										SetSessionParam('messages',$this->messages); //save messages
-										$this->javascript(); 
+										$this->javascript($encrypted); 
 										break;
 									
 			case 'cppausecamp'    	: 	$this->pause_campaign(); 
@@ -350,14 +357,15 @@ class rcbulkmail {
 										$this->javascript(); 
 										break;				
 														
-			case 'cpbulkmail'     	:
+			case 'cpbulkmail'     	:   
 			default               	:	if ($this->template) {
 											//also when returns in cp and template is selected
 											if ($this->iscollection>0)
 												$this->loadTemplate2(); //subtemp						  
 											else
 												$this->loadTemplate();						  
-										}									
+										}
+										$this->javascript($encrypted);		
         }			
 			
     }	
@@ -424,20 +432,24 @@ class rcbulkmail {
 		return ($ret);  
 	}
 	
-	protected function javascript() {	
-	    return null; //!!!!!!
+	protected function javascript($enc=null) {	
+	    //return null; //disable
+		
 		//if ($this->isDemoUser()) return;
 		//if (!$this->cid) return;
 
         if (iniload('JAVASCRIPT')) {   
-	        $code = $this->javascript_code();	   	
+		
+			$code = "cryptoPost.decrypt('$enc');"; //$this->postDecrypt($enc);
+			
+	        //$code .= $this->javascript_code();			
 		    $js = new jscript;
             $js->load_js($code,null,1);   			   
 		    unset ($js);
 	    }	
 	}		
 	
-	//call from page
+	//disabled: call from page
 	public function javascript_code()  {
 		
 	    $ajaxurl = seturl("t=");	
@@ -502,8 +514,92 @@ function startcampaign(subject, from, xcid, bid, isrecur)
 }		
 EOF;
 		return ($js);	
-    }		
+    }	
+
 	
+	protected function decryptPost() {
+		//var_dump($_POST);			
+		// Check for FORM encrypted data
+		if ((defined('CRYPTOPOST_DPC')) /*&& 
+			(isset($_POST['cryptoPost']))*/)   {
+			/*	
+			echo '***>>>';// . $_POST['cryptoPost'] . '>';
+			
+			$cryptedPost = $_POST;              // Save crypted data for debug
+			$formId = _m('cryptopost.decodeForm');//$crypto->decodeForm();    // Decrypt $_POST contents
+		    */	
+			//echo $formId . '>'.$event;
+			$this->aesDebug();//$cryptedPost); //already decrypted use var
+		    //print_r($_POST);
+			// Encrypt processed data if you need to fill form again:
+			//$encrypted = _m('cryptopost.encodeData use +'.$formId);//$crypto->encodeData($_POST, $formId);		
+		}		
+	}
+	
+	protected function aesDebug($crPost=null) {
+		    $cryptedPost = isset($crPost) ? $crPost : $_POST;
+		
+            // Debug
+            //echo '<h2>Session keys:</h2>';
+            if (isset($_SESSION['RSA_Public_key'])){
+                //echo 'RSA public key (hex) = '. $_SESSION['RSA_Public_key'];
+                //echo '<br /><br />';
+				$this->messages[] = 'RSA public key (hex) = '. $_SESSION['RSA_Public_key']; 
+            }
+            if (isset($_SESSION['aesKey'])){
+                //echo 'AES key (hex) = '. bin2hex($_SESSION['aesKey']);
+                //echo '<br />';
+				$this->messages[] = 'AES key (hex) = '. bin2hex($_SESSION['aesKey']);
+            }
+			else
+				$this->messages[] = 'AES key NOT FOUND';
+			
+            if (isset($cryptedPost)){
+                //echo '<h2>Received POST data:</h2><pre>';
+                //var_dump($cryptedPost);
+				//$this->messages[] = 'Received POST data:' . var_export($cryptedPost, true);
+                //echo '</pre><br />';
+                //echo '<h2>Decrypted POST data:</h2><pre>';
+                //var_dump($_POST);
+                //echo '</pre><br />';
+				//$this->messages[] = 'Decrypted POST data:' . var_export($_POST, true);
+            }		
+	}	
+	
+	public function cryptOnSubmit($formname) {
+		
+		if ($this->cryptPost)
+			return 'onsubmit="return cryptoPost.encrypt(\''.$formname.'\')"';
+		
+		return null;
+	}
+	
+	public function onSubmitJS($formname) {
+		
+		if ($this->cryptPost)
+			return 'cryptoPost.encrypt(\''.$formname.'\'); document.tForm.submit();';
+		
+		return 'document.getElementById(\''.$formname.'\').submit();';
+	}	
+	
+	// Encrypt processed data if you need to fill form again:
+	// Fill form input fields 
+	public function postDecrypt($enc=null) {
+		
+		if ($this->cryptPost)
+			return "<script>cryptoPost.decrypt('$enc');</script>";
+		
+		return null;
+	}	
+	
+	public function getmyRSAPublickey() {
+		
+		if ($this->cryptPost)
+			return _m('cryptopost.getmyRSAPublickey');
+		
+		return null;
+	}	
+
 	
 	
 	protected function campaigns_grid($width=null, $height=null, $rows=null, $mode=null, $noctrl=false) {
@@ -1295,7 +1391,7 @@ EOF;
 		}	
 		
 		return false;
-	}		
+	}
 	
     /*type : 0 save text as mail body /1 save collections as text to reproduce (offers, katalogs) */	
     protected function save_campaign($type=null) {
@@ -1585,7 +1681,7 @@ EOF;
 		}
 	   
 	    /*app users checkbox (todo, make ulist)*/
-	    if ((!$this->isDemoUser()) && ($users = $_POST['siteusers'])) {		
+	    /*if ((!$this->isDemoUser()) && ($users = $_POST['siteusers'])) {		
 			$seclevid = 1;
 			$this->messages[] = 'Call user mail list ' . $seclevid;			
 			 
@@ -1604,10 +1700,10 @@ EOF;
 			if (!empty($ret)) {  
 				$mails .= $_s . implode($_s,$ret); 
 			}
-	    }
+	    }*/
 		
 	    /*app customers checkbox (todo, make ulist)*/
-	    if ((!$this->isDemoUser()) &&($users = $_POST['sitecusts'])) {
+	    /*if ((!$this->isDemoUser()) &&($users = $_POST['sitecusts'])) {
 		
 			$this->messages[] = 'Call customers mail list ';			
 			  
@@ -1623,7 +1719,7 @@ EOF;
 			if (!empty($ret)) {  
 				$mails .= $_s . implode($_s,$ret); 
 			}
-	    }
+	    }*/
 		
 		if ($mails) {
 			$mcsv = explode($_s, str_replace($_s . $_s, $_s, $mails)); //clean ;;->;
@@ -2098,12 +2194,12 @@ EOF;
 		$text0 = "This e-mail sent to _SUBSCRIBER_ from _MAILSENDER_. This e-mail can not be considered spam as long as we include: Contact information & remove instructions. 
 If you have somehow gotten on this list in error, or for any other reason would like to be removed, please click _UNSUBSCRIBE_. 
 This email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed. Any unauthorized disclosure, use of dissemination, either whole or partial, is prohibited.
-(Relative as A5-270/2001 of European Council).";
+(Regulation EU 2016/679).";
 	  
 		$text1 = "Αυτο το e-mail στάλθηκε στον λογαριασμό ηλ. ταχυδρομείου _SUBSCRIBER_ από τον λογαριασμό _MAILSENDER_. Δεν μπορει να θεωρηθεί spam εφόσον αναγράφονται τα στοιχεία του αποστολέα και διαδικασίες διαγραφής απο την λίστα παραληπτών.  
 Αν είσαστε σε αυτή τη λίστα κατα λάθος ή για οποιονδήποτε άλλο λογο θέλετε να διαγραφεί το e-mail απο αυτή τη λίστα παραληπτών e-mail απλά πατήστε _UNSUBSCRIBE_.   
 Το μήνυμα πληρεί τις προυποθέσεις της Ευρωπαικής Νομοθεσίας περί διαφημιστικών μηνυμάτων. Κάθε μήνυμα θα πρέπει να φέρει τα πλήρη στοιχεια του αποστολέα ευκρινώς και θα πρέπει να δίνει στο δέκτη τη δυνατότητα διαγραφής. 
-(Directiva 2002/31/CE του Ευρωπαικού Κοινοβουλίου).";	
+(Κανονισμός EU 2016/679).";		
 
         $ret = $lan ? $text1 : $text0;	
 		return ($ret);
@@ -2159,9 +2255,10 @@ This email and any files transmitted with it are confidential and intended solel
 
 	public function ckjavascript() {
 		if ($this->ckeditver==3)
-			return '<script src="' . 
+			/*return '<script src="' . 
 					_v('cmsrt.paramload use CKEDITOR+ckeditorjs') .
-					'"></script>';
+					'"></script>';*/
+			return "<script src='{$this->ckjsurl}'></script>";		
 		else
 			return '<script src="assets/ckeditor/ckeditor.js"></script>';
 	}

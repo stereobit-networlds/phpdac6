@@ -1,4 +1,4 @@
-<?
+<?php
 /*
  * Class has simple interface to download any file from a server
  * without displaying the location of the file

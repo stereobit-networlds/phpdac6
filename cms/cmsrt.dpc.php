@@ -74,7 +74,8 @@ class cmsrt extends cms  {
 		$this->imgxval = $image_def_xsize ? $image_def_xsize : ((!empty($this->autoresize)) ? $this->autoresize[0] : 0);//90;//as it is
 		$this->imgyval = $image_def_ysize ? $image_def_ysize : 0;//90; //as it is	
 		
-		$this->photodb = remote_paramload('RCITEMS','photodb',$this->prpath);
+		$pdb = remote_paramload('RCITEMS','photodb',$this->prpath);
+		$this->photodb = $pdb ? true : false; 
 		
 		$ip = remote_paramload('RCCOLLECTIONS','imagepath',$this->prpath); //???
 		$ipath = $ip ? $ip : '/images/';
@@ -861,7 +862,8 @@ goBack();
                      $stype = '';		   
 		}
 
-		if ($interface = $this->photodb) { 
+		$interface = $this->photodb;
+		if (isset($interface)) { 
 			if (is_numeric($interface))	  
 				$photo = seturl('t=showimage&id='.$code.'&type='.$stype);
 			else  
@@ -1685,7 +1687,11 @@ EOF;
 
 	public function dotnum($fnum=null) {
 		return str_replace(',','.',$fnum);
-	}		
+	}
+
+	public function replace($str, $s, $t) {
+		return str_replace($s, $t, $str);
+	}	
 
 	public function replace_spchars($string, $reverse=false, $rep=null) {
 		$repl = $rep ? $rep : $this->replacepolicy;
@@ -1859,6 +1865,39 @@ EOF;
 	}	
 	
 	
+	/* db based include part */
+	public function include_partDb($fname=null, $args=null, $uselans=null, $tmplname=null) {	
+		$db = GetGlobal('db'); 	
+		$pattern = "@<(.*?)>@"; /*search for content params*/
+		$arguments = explode('|',$args);		
+
+		$sSQL = "select data from cmstemplates where name=" . $db->qstr($fname);
+		$sSQL.= isset($tmplname) ? " and class=" . $db->qstr($tmplname) : null;
+		$res = $db->Execute($sSQL);				
+		$ret = base64_decode($res->fields['data']);	
+		if (isset($res->fields['data'])) {			
+				
+			$data = base64_decode($res->fields['data']);	
+			$contents = $this->dCompile($data);
+				
+			//replace content args
+			if (!empty($arguments)) {
+				preg_match_all($pattern,$contents,$matches);
+				foreach ($matches[1] as $r=>$cmd) {
+					$arg = array_shift($arguments); //form 1st to last
+					$contents = str_replace('<arg'.$r.'>',$arg,$contents);
+				}				
+			}	
+			//execute commands
+			$ret = $this->process_commands($contents);
+			
+			return ($ret);			
+		}	
+		else
+			$ret = null;
+		
+		return $ret;			
+	}	
 	
 	//override
 	public function include_part($fname=null, $args=null, $uselans=null, $tmplname=null) {	

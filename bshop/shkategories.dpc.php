@@ -41,8 +41,9 @@ class shkategories {
 		$this->title2 = localize('SHSUBKATEGORIES_',getlocal());	  
 		
 		//$this->httpurl = paramload('SHELL','urlbase');  
-		$this->httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
-		$this->httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];				
+		//$this->httpurl = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
+		//$this->httpurl.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];				
+		$this->httpurl = _v('cmsrt.httpurl');
 		
 		$this->path = paramload('SHELL','prpath');		  
 		$this->urlpath = paramload('SHELL','urlpath');

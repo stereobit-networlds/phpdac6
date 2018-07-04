@@ -294,8 +294,19 @@ function remote_paramload($section,$param,$remoteapppath,$usepath=null) {
   $config = GetGlobal('config');
 	
   if ($usepath) {//switch db case
-    $config = @parse_ini_file($remoteapppath."config.ini",true);
-	$t_config = @parse_ini_file($remoteapppath."myconfig.txt",true);
+  
+	$rmpath = $remoteapppath ? $remoteapppath : getcwd();
+	
+	if (is_readable($rmpath . "/config.ini.php")) { //.ini/php
+		include($rmpath . "/config.ini.php");
+		$config = @parse_ini_string($conf, 1, INI_SCANNER_RAW);//NORMAL); 
+		include($rmpath . "/myconfig.txt.php");
+		$t_config = parse_ini_string($myconf, 1, INI_SCANNER_RAW);
+	}
+	else { //old method
+		$config = @parse_ini_file($remoteapppath."config.ini",true);
+		$t_config = @parse_ini_file($remoteapppath."myconfig.txt",true);
+	}
 	
     if (is_array($t_config[$section]) && isset($t_config[$section][$param])) 
       return ($t_config[$section][$param]);
@@ -495,7 +506,7 @@ function seturl($query='',$title='',$ssl=0,$jscript='',$sid=1,$rewrite=null) {
 	   $name = $protocol . $ip; 
 */
 	$name = (isset($_SERVER['HTTPS'])) ? 'https://' : 'http://';
-	$name.= (strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
+	$name.= $_SERVER['HTTP_HOST']; //(strstr($_SERVER['HTTP_HOST'], 'www')) ? $_SERVER['HTTP_HOST'] : 'www.' . $_SERVER['HTTP_HOST'];		
                            
 						 //mv controller or page controller caller???
 						 $xurl = "/".pathinfo($_SERVER['PHP_SELF'],PATHINFO_BASENAME);
