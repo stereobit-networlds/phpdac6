@@ -648,6 +648,9 @@ window.onload=function(){
 
     protected function makeform($fields='',$notitle=null,$cmd=null,$isupdate=null,$go_to=null,$setinvtype=null) {
 	    $sFormErr = GetGlobal('sFormErr');
+		if (!$this->userid) 
+			return localize('_ACCDENIED',getlocal());
+		
 		$customerid = GetParam('a');
 	    $goto = $go_to ? $go_to : "editcus/$customerid/"; //"t=signup2&a=".GetParam('a'); 
 	   
