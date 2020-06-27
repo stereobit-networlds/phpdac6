@@ -291,9 +291,10 @@ class shform {
 	 
 	 protected function valid_recaptcha() {
 	 
-	    if ((!defined('RECAPTCHA_DPC')) || ($this->recaptcha==false)) return true;
+	    //if ((!defined('RECAPTCHA_DPC')) || ($this->recaptcha==false)) return true;
 		  
-        if ($_POST["recaptcha_response_field"]) {
+		if ((defined('RECAPTCHA_DPC')) && ($this->recaptcha==true)) {  
+          if ($_POST["recaptcha_response_field"]) {
             $resp = recaptcha_check_answer ($this->recaptcha_private_key,
                                             $_SERVER["REMOTE_ADDR"],
                                             $_POST["recaptcha_challenge_field"],
@@ -307,12 +308,17 @@ class shform {
 				$ret = false;
 		        $this->formerror = $resp->error;				
             }
-		}
-		else {
+		  }
+		  else {
 		    $ret = false;
 		    $this->formerror = "Recaptcha entry required!";			  
+		  }
 		}
-		  
+		else {
+			$ret = _m('cmsrt.valid_captcha');
+			$this->formerror = ($ret==true) ? 'Thank you, we will respond as soon as possible' : "Captcha entry required!";
+		}	
+		
 		SetGlobal('sFormErr',$this->formerror);
 		return ($ret);																		 
     }  
